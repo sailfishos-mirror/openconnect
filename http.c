@@ -47,6 +47,8 @@ void buf_append_urlencoded(struct oc_text_buf *buf, const char *str)
 		unsigned char c = *str;
 		if (c < 0x80 && (isalnum((int)(c)) || c=='-' || c=='_' || c=='.' || c=='~'))
 			buf_append_bytes(buf, str, 1);
+		else if (c==' ')
+			buf_append_bytes(buf, "+", 1);
 		else
 			buf_append(buf, "%%%02x", c);
 
@@ -781,6 +783,22 @@ void dump_buf(struct openconnect_info *vpninfo, char prefix, char *buf)
 	}
 }
 
+void dump_buf_hex(struct openconnect_info *vpninfo, int loglevel, char prefix, unsigned char *buf, int len)
+{
+	char linebuf[80];
+	int i;
+
+	for (i = 0; i < len; i++) {
+		if (i % 16 == 0) {
+			if (i)
+				vpn_progress(vpninfo, loglevel, "%c %s\n", prefix, linebuf);
+			sprintf(linebuf, "%04x:", i);
+		}
+		sprintf(linebuf + strlen(linebuf), " %02x", buf[i]);
+	}
+	vpn_progress(vpninfo, loglevel, "%c %s\n", prefix, linebuf);
+}
+
 /* Inputs:
  *  method:             GET or POST
  *  vpninfo->hostname:  Host DNS name
@@ -937,7 +955,15 @@ int do_https_request(struct openconnect_info *vpninfo, const char *method,
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Unexpected %d result from server\n"),
 			     result);
-		result = -EINVAL;
+		if (result == 401 || result == 403)
+			result = -EPERM;
+		else if (result == 512 || result == 513)
+			/* 512 = GlobalProtect login failed due to invalid username/password
+			 * 513 = GlobalProtect login failed due to invalid client cert
+			 */
+			result = -result;
+		else
+			result = -EINVAL;
 		goto out;
 	}
 

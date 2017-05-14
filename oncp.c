@@ -110,22 +110,6 @@ static void buf_append_tlv_be32(struct oc_text_buf *buf, uint16_t val, uint32_t 
 	buf_append_tlv(buf, val, 4, d);
 }
 
-static void buf_hexdump(struct openconnect_info *vpninfo, unsigned char *d, int len)
-{
-	char linebuf[80];
-	int i;
-
-	for (i = 0; i < len; i++) {
-		if (i % 16 == 0) {
-			if (i)
-				vpn_progress(vpninfo, PRG_DEBUG, "%s\n", linebuf);
-			sprintf(linebuf, "%04x:", i);
-		}
-		sprintf(linebuf + strlen(linebuf), " %02x", d[i]);
-	}
-	vpn_progress(vpninfo, PRG_DEBUG, "%s\n", linebuf);
-}
-
 static const char authpkt_head[] = { 0x00, 0x04, 0x00, 0x00, 0x00 };
 static const char authpkt_tail[] = { 0xbb, 0x01, 0x00, 0x00, 0x00, 0x00 };
 
@@ -497,7 +481,7 @@ static int parse_conf_pkt(struct openconnect_info *vpninfo, unsigned char *bytes
 	eparse:
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Failed to parse KMP message\n"));
-		buf_hexdump(vpninfo, bytes, pktlen);
+		dump_buf_hex(vpninfo, PRG_ERR, '<', bytes, pktlen);
 		return -EINVAL;
 	}
 
@@ -648,7 +632,7 @@ int oncp_connect(struct openconnect_info *vpninfo)
 		ret = buf_error(reqbuf);
 		goto out;
 	}
-	buf_hexdump(vpninfo, (void *)reqbuf->data, reqbuf->pos);
+	dump_buf_hex(vpninfo, PRG_DEBUG, '>', (void *)reqbuf->data, reqbuf->pos);
 	ret = vpninfo->ssl_write(vpninfo, reqbuf->data, reqbuf->pos);
 	if (ret != reqbuf->pos) {
 		if (ret >= 0) {
@@ -666,7 +650,7 @@ int oncp_connect(struct openconnect_info *vpninfo)
 		goto out;
 	vpn_progress(vpninfo, PRG_TRACE,
 		     _("Read %d bytes of SSL record\n"), ret);
-	
+
 	if (ret != 3 || bytes[0] != 1 || bytes[1] != 0) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Unexpected response of size %d after hostname packet\n"),
@@ -694,7 +678,7 @@ int oncp_connect(struct openconnect_info *vpninfo)
 	if (len < 0x16 || load_le16(bytes) + 2 != len) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Invalid packet waiting for KMP 301\n"));
-		buf_hexdump(vpninfo, bytes, len);
+		dump_buf_hex(vpninfo, PRG_ERR, '<', bytes, len);
 		ret = -EINVAL;
 		goto out;
 	}
@@ -778,7 +762,7 @@ int oncp_connect(struct openconnect_info *vpninfo)
 	put_len16(reqbuf, kmp);
 
 #ifdef HAVE_ESP
-	if (!setup_esp_keys(vpninfo)) {
+	if (!setup_esp_keys(vpninfo, 1)) {
 		struct esp *esp = &vpninfo->esp_in[vpninfo->current_esp_in];
 		/* Since we'll want to do this in the oncp_mainloop too, where it's easier
 		 * *not* to have an oc_text_buf and build it up manually, and since it's
@@ -798,7 +782,8 @@ int oncp_connect(struct openconnect_info *vpninfo)
 	/* Length at the start of the packet is little-endian */
 	store_le16(reqbuf->data, reqbuf->pos - 2);
 
-	buf_hexdump(vpninfo, (void *)reqbuf->data, reqbuf->pos);
+	vpn_progress(vpninfo, PRG_DEBUG, _("oNCP negotiation request outgoing:\n"));
+	dump_buf_hex(vpninfo, PRG_DEBUG, '>', (void *)reqbuf->data, reqbuf->pos);
 	ret = vpninfo->ssl_write(vpninfo, reqbuf->data, reqbuf->pos);
 	if (ret == reqbuf->pos)
 		ret = 0;
@@ -830,7 +815,7 @@ static int oncp_receive_espkeys(struct openconnect_info *vpninfo, int len)
 	int ret;
 
 	ret = parse_conf_pkt(vpninfo, vpninfo->cstp_pkt->oncp.kmp, len + 20, 301);
-	if (!ret && !setup_esp_keys(vpninfo)) {
+	if (!ret && !setup_esp_keys(vpninfo, 1)) {
 		struct esp *esp = &vpninfo->esp_in[vpninfo->current_esp_in];
 		unsigned char *p = vpninfo->cstp_pkt->oncp.kmp;
 
@@ -1070,8 +1055,8 @@ int oncp_mainloop(struct openconnect_info *vpninfo, int *timeout)
 		unknown_pkt:
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("Unknown KMP message %d of size %d:\n"), kmp, kmplen);
-			buf_hexdump(vpninfo, vpninfo->cstp_pkt->oncp.kmp,
-				    vpninfo->cstp_pkt->len);
+			dump_buf_hex(vpninfo, PRG_ERR, '<', vpninfo->cstp_pkt->oncp.kmp,
+				     vpninfo->cstp_pkt->len);
 			if (kmplen + 20 != vpninfo->cstp_pkt->len)
 				vpn_progress(vpninfo, PRG_DEBUG,
 					     _(".... + %d more bytes unreceived\n"),
@@ -1090,8 +1075,9 @@ int oncp_mainloop(struct openconnect_info *vpninfo, int *timeout)
 		unmonitor_write_fd(vpninfo, ssl);
 
 		vpn_progress(vpninfo, PRG_TRACE, _("Packet outgoing:\n"));
-		buf_hexdump(vpninfo, vpninfo->current_ssl_pkt->oncp.rec,
-			    vpninfo->current_ssl_pkt->len + 22);
+		dump_buf_hex(vpninfo, PRG_TRACE, '>',
+			     vpninfo->current_ssl_pkt->oncp.rec,
+			     vpninfo->current_ssl_pkt->len + 22);
 
 		ret = ssl_nonblock_write(vpninfo,
 					 vpninfo->current_ssl_pkt->oncp.rec,
@@ -1256,4 +1242,29 @@ int oncp_mainloop(struct openconnect_info *vpninfo, int *timeout)
 
 	/* Work is not done if we just got rid of packets off the queue */
 	return work_done;
+}
+
+int oncp_bye(struct openconnect_info *vpninfo, const char *reason)
+{
+	char *orig_path;
+	char *res_buf=NULL;
+	int ret;
+
+	/* We need to close and reopen the HTTPS connection (to kill
+	 * the oncp tunnel) and submit a new HTTPS request to logout.
+	 */
+	openconnect_close_https(vpninfo, 0);
+
+	orig_path = vpninfo->urlpath;
+	vpninfo->urlpath = strdup("dana-na/auth/logout.cgi"); /* redirect segfaults without strdup */
+	ret = do_https_request(vpninfo, "GET", NULL, NULL, &res_buf, 0);
+	vpninfo->urlpath = orig_path;
+
+	if (ret < 0)
+		vpn_progress(vpninfo, PRG_ERR, _("Logout failed.\n"));
+	else
+		vpn_progress(vpninfo, PRG_INFO, _("Logout successful.\n"));
+
+	free(res_buf);
+	return ret;
 }

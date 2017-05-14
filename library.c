@@ -109,6 +109,9 @@ err:
 const struct vpn_proto openconnect_protos[] = {
 	{
 		.name = "anyconnect",
+		.pretty_name = "Cisco AnyConnect or openconnect",
+		.description = "Compatible with Cisco AnyConnect SSL VPN, as well as ocserv",
+		.flags = OC_PROTO_PROXY | OC_PROTO_CSD | OC_PROTO_AUTH_CERT | OC_PROTO_AUTH_OTP | OC_PROTO_AUTH_STOKEN,
 		.vpn_close_session = cstp_bye,
 		.tcp_connect = cstp_connect,
 		.tcp_mainloop = cstp_mainloop,
@@ -122,7 +125,10 @@ const struct vpn_proto openconnect_protos[] = {
 #endif
 	}, {
 		.name = "nc",
-		.vpn_close_session = NULL,
+		.pretty_name = "Juniper Network Connect",
+		.description = "Compatible with Juniper Network Connect / Pulse Secure SSL VPN",
+		.flags = OC_PROTO_PROXY | OC_PROTO_CSD | OC_PROTO_AUTH_CERT | OC_PROTO_AUTH_OTP,
+		.vpn_close_session = oncp_bye,
 		.tcp_connect = oncp_connect,
 		.tcp_mainloop = oncp_mainloop,
 		.add_http_headers = oncp_common_headers,
@@ -132,10 +138,53 @@ const struct vpn_proto openconnect_protos[] = {
 		.udp_mainloop = esp_mainloop,
 		.udp_close = esp_close,
 		.udp_shutdown = esp_shutdown,
+		.udp_send_probes = esp_send_probes,
+		.udp_catch_probe = esp_catch_probe,
+#endif
+	}, {
+		.name = "gp",
+		.pretty_name = "Palo Alto Networks GlobalProtect",
+		.description = "Compatible with Palo Alto Networks (PAN) GlobalProtect SSL VPN",
+		.flags = OC_PROTO_PROXY | OC_PROTO_AUTH_CERT,
+		.vpn_close_session = gpst_bye,
+		.tcp_connect = gpst_setup,
+		.tcp_mainloop = gpst_mainloop,
+		.add_http_headers = gpst_common_headers,
+		.obtain_cookie = gpst_obtain_cookie,
+#ifdef HAVE_ESP
+		.udp_setup = esp_setup,
+		.udp_mainloop = esp_mainloop,
+		.udp_close = esp_close_secret,
+		.udp_shutdown = esp_shutdown,
+		.udp_send_probes = esp_send_probes_gp,
+		.udp_catch_probe = esp_catch_probe_gp,
 #endif
 	},
 	{ /* NULL */ }
 };
+
+int openconnect_get_supported_protocols(struct oc_vpn_proto **protos)
+{
+	struct oc_vpn_proto *pr;
+	const struct vpn_proto *p;
+
+	*protos = pr = calloc(sizeof(openconnect_protos)/sizeof(*openconnect_protos), sizeof(*pr));
+	if (!pr)
+		return -ENOMEM;
+
+	for (p = openconnect_protos; p->name; p++, pr++) {
+		pr->name = p->name;
+		pr->pretty_name = _(p->pretty_name);
+		pr->description = _(p->description);
+		pr->flags = p->flags;
+	}
+	return (p - openconnect_protos);
+}
+
+void openconnect_free_supported_protocols(struct oc_vpn_proto *protos)
+{
+	free((void *)protos);
+}
 
 int openconnect_set_protocol(struct openconnect_info *vpninfo, const char *protocol)
 {
@@ -1099,4 +1148,3 @@ retry:
 
 	return ret;
 }
-
