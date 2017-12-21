@@ -70,6 +70,7 @@ openconnect \- Multi-protocol VPN client, for Cisco AnyConnect VPNs and others
 .OP \-\-version\-string string
 .OP \-\-local\-hostname string
 .OP \-\-os string
+.OP \-\-request-ip ip
 .B [\-\-server] [https://]\fIhost\fB[:\fIport\fB][/\fIgroup\fB]
 .YS
 
@@ -708,6 +709,11 @@ applied to the VPN session.  If the gateway requires CSD, it will also cause
 the corresponding CSD trojan binary to be downloaded, so you may need to use
 .B \-\-csd\-wrapper
 if this code is not executable on the local machine.
+.TP
+.B \-\-request-ip=IP
+Request a specific Legacy IP or IPv6 address from the gateway.  Currently,
+OpenConnect will print a warning but will not abort if the gateway
+provides a different IP address from the one requested.
 .SH SIGNALS
 In the data phase of the connection, the following signals are handled:
 .TP

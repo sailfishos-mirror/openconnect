@@ -39,6 +39,7 @@ extern "C" {
  * API version 5.8:
  *  - Add openconnect_set_external_browser_callback()
  *  - Add openconnect_set_mca_cert() and openconnect_set_mca_key_password()
+ *  - Add openconnect_set_requested_ip()
  *
  * API version 5.7 (v8.20; 2022-02-20):
  *  - Add openconnect_get_connect_url()
@@ -202,6 +203,7 @@ extern "C" {
 #define OC_PROTO_PERIODIC_TROJAN	(1<<5)
 #define OC_PROTO_HIDDEN	(1<<6)
 #define OC_PROTO_AUTH_MCA	(1<<7)
+#define OC_PROTO_REQUEST_IP	(1<<8)
 
 struct oc_vpn_proto {
 	const char *name;
@@ -641,6 +643,7 @@ void openconnect_set_dpd(struct openconnect_info *, int min_seconds);
 void openconnect_set_trojan_interval(struct openconnect_info *, int seconds);
 int openconnect_get_idle_timeout(struct openconnect_info *);
 time_t openconnect_get_auth_expiration(struct openconnect_info *);
+int openconnect_set_requested_ip(struct openconnect_info *, const char *addr);
 
 /* The returned structures are owned by the library and may be freed/replaced
    due to rekey or reconnect. Assume that once the mainloop starts, the

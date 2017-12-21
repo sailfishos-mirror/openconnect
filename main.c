@@ -215,6 +215,7 @@ enum {
 	OPT_PROTOCOL,
 	OPT_PASSTOS,
 	OPT_VERSION,
+	OPT_REQUEST_IP,
 	OPT_SERVER,
 	OPT_MULTICERT_CERT,
 	OPT_MULTICERT_KEY,
@@ -308,6 +309,7 @@ static const struct option long_options[] = {
 	OPTION("no-system-trust", 0, OPT_NO_SYSTEM_TRUST),
 	OPTION("protocol", 1, OPT_PROTOCOL),
 	OPTION("form-entry", 1, 'F'),
+	OPTION("request-ip", 1, OPT_REQUEST_IP),
 #ifdef OPENCONNECT_GNUTLS
 	OPTION("gnutls-debug", 1, OPT_GNUTLS_DEBUG),
 	OPTION("gnutls-priority", 1, OPT_CIPHERSUITES),
@@ -1028,6 +1030,7 @@ static void usage(void)
 #endif
 
 	printf("\n%s:\n", _("Tunnel control"));
+	printf("      --request-ip=IP             %s\n", _("Request a specific Legacy IP or IPv6 address"));
 	printf("      --disable-ipv6              %s\n", _("Do not ask for IPv6 connectivity"));
 	printf("  -x, --xmlconfig=CONFIG          %s\n", _("XML config file"));
 	printf("  -m, --mtu=MTU                   %s\n", _("Request MTU from server (legacy servers only)"));
@@ -1971,6 +1974,12 @@ int main(int argc, char **argv)
 		case OPT_AUTHGROUP:
 			authgroup = keep_config_arg();
 			break;
+		case OPT_REQUEST_IP:
+			if (openconnect_set_requested_ip(vpninfo, config_arg) < 0) {
+				fprintf(stderr, _("Requested IP %s does not appear to be an IPv4 or IPv6 address\n"), config_arg);
+				exit(1);
+			}
+			break;
 		case 'C':
 			vpninfo->cookie = dup_config_arg();
 			break;
@@ -2290,6 +2299,16 @@ int main(int argc, char **argv)
 			exit(1);
 
 		free(url);
+	}
+
+	/* Need to check if requesting a specific IP address is
+	 * supported after protocol is known.
+	 */
+	if (vpninfo->ip_info.addr || vpninfo->ip_info.addr6) {
+		if (!(vpninfo->proto->flags & OC_PROTO_REQUEST_IP)) {
+			fprintf(stderr, _("Protocol %s does not support requesting a specific IP address\n"), vpninfo->proto->name);
+			exit(1);
+		}
 	}
 
 	/* Historically, the path in the URL superseded the one in the

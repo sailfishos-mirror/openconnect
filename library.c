@@ -124,7 +124,7 @@ static const struct vpn_proto openconnect_protos[] = {
 		.pretty_name = N_("Cisco AnyConnect or openconnect"),
 		.description = N_("Compatible with Cisco AnyConnect SSL VPN, as well as ocserv"),
 		.proto = PROTO_ANYCONNECT,
-		.flags = OC_PROTO_PROXY | OC_PROTO_CSD | OC_PROTO_AUTH_CERT | OC_PROTO_AUTH_OTP | OC_PROTO_AUTH_STOKEN | OC_PROTO_AUTH_MCA,
+		.flags = OC_PROTO_PROXY | OC_PROTO_CSD | OC_PROTO_AUTH_CERT | OC_PROTO_AUTH_OTP | OC_PROTO_AUTH_STOKEN | OC_PROTO_AUTH_MCA | OC_PROTO_REQUEST_IP,
 		.vpn_close_session = cstp_bye,
 		.tcp_connect = cstp_connect,
 		.tcp_mainloop = cstp_mainloop,
@@ -165,7 +165,7 @@ static const struct vpn_proto openconnect_protos[] = {
 		.pretty_name = N_("Palo Alto Networks GlobalProtect"),
 		.description = N_("Compatible with Palo Alto Networks (PAN) GlobalProtect SSL VPN"),
 		.proto = PROTO_GPST,
-		.flags = OC_PROTO_PROXY | OC_PROTO_CSD | OC_PROTO_AUTH_CERT | OC_PROTO_AUTH_OTP | OC_PROTO_AUTH_STOKEN | OC_PROTO_PERIODIC_TROJAN,
+		.flags = OC_PROTO_PROXY | OC_PROTO_CSD | OC_PROTO_AUTH_CERT | OC_PROTO_AUTH_OTP | OC_PROTO_AUTH_STOKEN | OC_PROTO_PERIODIC_TROJAN | OC_PROTO_REQUEST_IP,
 		.vpn_close_session = gpst_bye,
 		.tcp_connect = gpst_setup,
 		.tcp_mainloop = gpst_mainloop,
@@ -957,6 +957,39 @@ int openconnect_get_ip_info(struct openconnect_info *vpninfo,
 		*cstp_options = vpninfo->cstp_options;
 	if (dtls_options)
 		*dtls_options = vpninfo->dtls_options;
+	return 0;
+}
+
+int openconnect_set_requested_ip(struct openconnect_info *vpninfo,
+			    const char *addr)
+{
+	union { struct in6_addr addr6; struct in_addr addr; } a;
+	char norm[MAX(INET_ADDRSTRLEN, INET6_ADDRSTRLEN)];
+
+	if (vpninfo->ssl_times.last_tx != 0) {
+		/* XX: This API function should only be called before
+		 * openconnect_make_cstp_connection() has been used.
+		 * We cannot try to request different IP address(es)
+		 * after successful connection.
+		 */
+		return -EINVAL;
+	} else if (addr == NULL) {
+		free((void *)(vpninfo->ip_info.addr));
+		free((void *)(vpninfo->ip_info.addr6));
+		vpninfo->ip_info.addr = NULL;
+		vpninfo->ip_info.addr6 = NULL;
+	} else if (inet_pton(AF_INET6, addr, &a.addr6) > 0) {
+		inet_ntop(AF_INET6, &a.addr6, norm, sizeof(norm));
+		free((void *)(vpninfo->ip_info.addr6));
+		vpninfo->ip_info.addr6 = strdup(norm);
+	} else if (inet_aton(addr, &a.addr) > 0) {
+		inet_ntop(AF_INET, &a.addr, norm, sizeof(norm));
+		free((void *)(vpninfo->ip_info.addr));
+		vpninfo->ip_info.addr = strdup(norm);
+	} else {
+		/* addr cannot be parsed as either IPv4 or IPv6 */
+		return -EINVAL;
+	}
 	return 0;
 }
 
