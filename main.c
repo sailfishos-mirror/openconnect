@@ -62,6 +62,11 @@
 static const char *legacy_charset;
 #endif
 
+#if ENABLE_KEYCHAIN
+#include <CoreFoundation/CoreFoundation.h>
+#include <Security/Security.h>
+#endif
+
 static int write_new_config(void *_vpninfo,
 			    const char *buf, int buflen);
 static void __attribute__ ((format(printf, 3, 4)))
@@ -85,6 +90,7 @@ static int do_passphrase_from_fsid;
 static int non_inter;
 static int cookieonly;
 static int allow_stdin_read;
+static int use_keychain;
 
 static char *token_filename;
 static char *server_cert = NULL;
@@ -171,6 +177,7 @@ enum {
 	OPT_NO_XMLPOST,
 	OPT_PIDFILE,
 	OPT_PASSWORD_ON_STDIN,
+	OPT_USE_KEYCHAIN,
 	OPT_PRINTCOOKIE,
 	OPT_RECONNECT_TIMEOUT,
 	OPT_SERVERCERT,
@@ -246,6 +253,9 @@ static const struct option long_options[] = {
 	OPTION("xmlconfig", 1, 'x'),
 	OPTION("cookie-on-stdin", 0, OPT_COOKIE_ON_STDIN),
 	OPTION("passwd-on-stdin", 0, OPT_PASSWORD_ON_STDIN),
+#if ENABLE_KEYCHAIN
+	OPTION("use-keychain", 0, OPT_USE_KEYCHAIN),
+#endif
 	OPTION("no-passwd", 0, OPT_NO_PASSWD),
 	OPTION("reconnect-timeout", 1, OPT_RECONNECT_TIMEOUT),
 	OPTION("dtls-ciphers", 1, OPT_DTLS_CIPHERS),
@@ -1284,6 +1294,11 @@ int main(int argc, char **argv)
 			read_stdin(&password, 0, 0);
 			allow_stdin_read = 1;
 			break;
+#if ENABLE_KEYCHAIN
+		case OPT_USE_KEYCHAIN:
+			use_keychain = 1;
+			break;
+#endif
 		case OPT_NO_PASSWD:
 			vpninfo->nopasswd = 1;
 			break;
@@ -1946,6 +1961,84 @@ retry:
 	return 0;
 }
 
+#if ENABLE_KEYCHAIN
+static char *lookup_keychain_password(const char *user, struct openconnect_info *vpninfo)
+{
+    OSStatus err = 0;
+
+    CFMutableDictionaryRef query = NULL;
+    CFStringRef account = NULL, server = NULL, path = NULL;
+    CFTypeRef data = NULL;
+    char *result = NULL;
+
+	if (verbose > PRG_ERR) {
+		fprintf(stderr, "Lookup keychain for user: %s url: https://%s%s\n", user, vpninfo->hostname, vpninfo->urlpath);
+	}
+
+    query = CFDictionaryCreateMutable(kCFAllocatorDefault, 0, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+    if (!query) goto end;
+
+    account = CFStringCreateWithCString(kCFAllocatorDefault, user, kCFStringEncodingUTF8);
+	if (!account) goto end;
+    server = CFStringCreateWithCString(kCFAllocatorDefault, vpninfo->hostname, kCFStringEncodingUTF8);
+	if (!server) goto end;
+	// `vpninfo->urlpath` may be redirected path so probably not good for `kSecAttrPath`.
+    path = CFStringCreateWithCString(kCFAllocatorDefault, vpninfo->urlpath, kCFStringEncodingUTF8);
+	if (!path) goto end;
+
+    CFDictionaryAddValue(query, kSecClass, kSecClassInternetPassword);
+    CFDictionaryAddValue(query, kSecAttrAccount, account);
+    CFDictionaryAddValue(query, kSecAttrProtocol, kSecAttrProtocolHTTPS);
+    CFDictionaryAddValue(query, kSecAttrServer, server);
+    CFDictionaryAddValue(query, kSecAttrPath, path);
+    CFDictionaryAddValue(query, kSecMatchLimit, kSecMatchLimitOne);
+    CFDictionaryAddValue(query, kSecReturnData, kCFBooleanTrue);
+
+    err = SecItemCopyMatching(query, &data);
+	if (err == errSecItemNotFound) {
+		if (data) CFRelease(data);
+
+		fprintf(stderr, "Item not found in Keychain\n");
+
+		result = prompt_for_input("password", vpninfo, 1);
+		if (!result) goto end;
+		size_t len = strlen(result);
+		if (len == 0) goto end;
+
+		data = CFDataCreate(kCFAllocatorDefault, (UInt8 *)result, len + 1);
+		if (!data) goto end;
+
+		CFDictionaryAddValue(query, kSecValueData, data);
+		CFDictionaryRemoveValue(query, kSecReturnData);
+
+		err = SecItemAdd(query, NULL);
+		if (err != errSecSuccess) {
+			if (verbose > PRG_ERR) {
+				fprintf(stderr, "Fail to add item to Keychain\n");
+			}
+		}
+		goto end;
+	}
+    if (err != errSecSuccess) goto end;
+	if (!data || CFGetTypeID(data) != CFDataGetTypeID()) goto end;
+
+	CFIndex size = CFDataGetLength(data);
+	result = malloc((size_t)size);
+	if (!result) goto end;
+
+	CFDataGetBytes(data, CFRangeMake(0, size), (UInt8 *)result);
+
+end:
+	if (query) CFRelease(query);
+	if (account) CFRelease(account);
+	if (server) CFRelease(server);
+	if (path) CFRelease(path);
+	if (data) CFRelease(data);
+
+	return result;
+}
+#endif
+
 /* Return value:
  *  < 0, on error
  *  = 0, when form was parsed and POST required
@@ -1955,8 +2048,9 @@ static int process_auth_form_cb(void *_vpninfo,
 				struct oc_auth_form *form)
 {
 	struct openconnect_info *vpninfo = _vpninfo;
-	struct oc_form_opt *opt;
+	struct oc_form_opt *opt, *prev_opt;
 	int empty = 1;
+	char *user;
 
 	if (form->banner && verbose > PRG_ERR)
 		fprintf(stderr, "%s\n", form->banner);
@@ -1981,6 +2075,18 @@ static int process_auth_form_cb(void *_vpninfo,
 		}
 	}
 
+	// Reorder `opts` to bring `user` first.
+	for (prev_opt = NULL, opt = form->opts; opt; prev_opt = opt, opt = opt->next) {
+		if ((opt->type == OC_FORM_OPT_TEXT) && !strncmp(opt->name, "user", 4)) {
+			if (prev_opt) {
+				prev_opt->next = opt->next;
+				opt->next = form->opts;
+				form->opts = opt;
+			}
+			break;
+		}
+	}
+
 	for (opt = form->opts; opt; opt = opt->next) {
 
 		if (opt->flags & OC_FORM_OPT_IGNORE)
@@ -1998,10 +2104,14 @@ static int process_auth_form_cb(void *_vpninfo,
 			empty = 0;
 
 		} else if (opt->type == OC_FORM_OPT_TEXT) {
-			if (username &&
-			    !strncmp(opt->name, "user", 4)) {
-				opt->_value = username;
-				username = NULL;
+			if (!strncmp(opt->name, "user", 4)) {
+				if (username) {
+					opt->_value = username;
+					username = NULL;
+				} else {
+					opt->_value = prompt_for_input(opt->label, vpninfo, 0);
+				}
+				user = opt->_value;
 			} else {
 				opt->_value = prompt_for_input(opt->label, vpninfo, 0);
 			}
@@ -2014,7 +2124,13 @@ static int process_auth_form_cb(void *_vpninfo,
 			if (password) {
 				opt->_value = password;
 				password = NULL;
-			} else {
+			}
+#if ENABLE_KEYCHAIN
+			else if (use_keychain && user && !strncmp(opt->name, "password", 9)) {
+				opt->_value = lookup_keychain_password(user, vpninfo);
+			}
+#endif
+			else {
 				opt->_value = prompt_for_input(opt->label, vpninfo, 1);
 			}
 

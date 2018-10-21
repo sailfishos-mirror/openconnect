@@ -204,6 +204,21 @@ AC_CHECK_FUNC(__android_log_vprint, [], AC_CHECK_LIB(log, __android_log_vprint, 
 AC_ENABLE_SHARED
 AC_DISABLE_STATIC
 
+keychain_support=no
+AC_ARG_ENABLE([keychain],
+	AS_HELP_STRING([--enable-keychain], [Enable Keychain support]),
+	[ENABLE_KEYCHAIN=$enableval],
+	[ENABLE_KEYCHAIN=no])
+if test "$ENABLE_KEYCHAIN" = "yes"; then
+	AC_CHECK_HEADER([CoreFoundation/CoreFoundation.h],
+		[], [AC_MSG_ERROR(Cannot find CoreFoundaation header.)])
+	AC_CHECK_HEADER([Security/Security.h],
+		[], [AC_MSG_ERROR(Cannot find Security header.)])
+	AC_DEFINE([ENABLE_KEYCHAIN], 1, [Enable Keychain support])
+	keychain_support=yes
+	AC_SUBST(KEYCHAIN_LIBS, ["-framework Foundation -framework Security"])
+fi
+
 AC_CHECK_FUNC(nl_langinfo, [AC_DEFINE(HAVE_NL_LANGINFO, 1, [Have nl_langinfo() function])], [])
 
 if test "$ac_cv_func_nl_langinfo" = "yes"; then
@@ -1042,6 +1057,7 @@ SUMMARY([Java bindings], [$with_java])
 SUMMARY([Build docs], [$build_www])
 SUMMARY([Unit tests], [$have_cwrap])
 SUMMARY([Net namespace tests], [$have_netns])
+SUMMARY([Keychain support], [$keychain_support])
 
 if test "$ssl_library" = "OpenSSL"; then
     AC_MSG_WARN([[
