@@ -90,7 +90,7 @@ static int do_passphrase_from_fsid;
 static int non_inter;
 static int cookieonly;
 static int allow_stdin_read;
-static int use_keychain;
+static char *keychain_opt_name = NULL;
 
 static char *token_filename;
 static char *server_cert = NULL;
@@ -254,7 +254,7 @@ static const struct option long_options[] = {
 	OPTION("cookie-on-stdin", 0, OPT_COOKIE_ON_STDIN),
 	OPTION("passwd-on-stdin", 0, OPT_PASSWORD_ON_STDIN),
 #if ENABLE_KEYCHAIN
-	OPTION("use-keychain", 0, OPT_USE_KEYCHAIN),
+	OPTION("use-keychain", 1, OPT_USE_KEYCHAIN),
 #endif
 	OPTION("no-passwd", 0, OPT_NO_PASSWD),
 	OPTION("reconnect-timeout", 1, OPT_RECONNECT_TIMEOUT),
@@ -823,6 +823,9 @@ static void usage(void)
 #ifndef HAVE_LIBPCSCLITE
 	printf("                                  %s\n", _("(NOTE: Yubikey OATH disabled in this build)"));
 #endif
+#if ENABLE_KEYCHAIN
+	printf("      --use-keychain=NAME         %s\n", _("Name of password option to lookup Keychain"));
+#endif
 
 	printf("\n%s:\n", _("Server validation"));
 	printf("      --servercert=FINGERPRINT    %s\n", _("Server's certificate SHA1 fingerprint"));
@@ -1296,7 +1299,8 @@ int main(int argc, char **argv)
 			break;
 #if ENABLE_KEYCHAIN
 		case OPT_USE_KEYCHAIN:
-			use_keychain = 1;
+			free(keychain_opt_name);
+			keychain_opt_name = dup_config_arg();
 			break;
 #endif
 		case OPT_NO_PASSWD:
@@ -1962,7 +1966,7 @@ retry:
 }
 
 #if ENABLE_KEYCHAIN
-static char *lookup_keychain_password(const char *user, struct openconnect_info *vpninfo)
+static char *lookup_keychain_password(const char *user, const char *prompt, struct openconnect_info *vpninfo)
 {
     OSStatus err = 0;
 
@@ -1982,7 +1986,6 @@ static char *lookup_keychain_password(const char *user, struct openconnect_info 
 	if (!account) goto end;
     server = CFStringCreateWithCString(kCFAllocatorDefault, vpninfo->hostname, kCFStringEncodingUTF8);
 	if (!server) goto end;
-	// `vpninfo->urlpath` may be redirected path so probably not good for `kSecAttrPath`.
     path = CFStringCreateWithCString(kCFAllocatorDefault, vpninfo->urlpath, kCFStringEncodingUTF8);
 	if (!path) goto end;
 
@@ -2000,7 +2003,7 @@ static char *lookup_keychain_password(const char *user, struct openconnect_info 
 
 		fprintf(stderr, "Item not found in Keychain\n");
 
-		result = prompt_for_input("password", vpninfo, 1);
+		result = prompt_for_input(prompt, vpninfo, 1);
 		if (!result) goto end;
 		size_t len = strlen(result);
 		if (len == 0) goto end;
@@ -2126,8 +2129,9 @@ static int process_auth_form_cb(void *_vpninfo,
 				password = NULL;
 			}
 #if ENABLE_KEYCHAIN
-			else if (use_keychain && user && !strncmp(opt->name, "password", 9)) {
-				opt->_value = lookup_keychain_password(user, vpninfo);
+			else if (keychain_opt_name && user && !strcmp(opt->name, keychain_opt_name)) {
+				opt->_value = lookup_keychain_password(user, opt->label, vpninfo);
+				keychain_opt_name = NULL;
 			}
 #endif
 			else {
