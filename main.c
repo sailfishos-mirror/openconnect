@@ -1968,36 +1968,36 @@ retry:
 #if ENABLE_KEYCHAIN
 static char *lookup_keychain_password(const char *user, const char *prompt, struct openconnect_info *vpninfo)
 {
-    OSStatus err = 0;
+	OSStatus err = 0;
 
-    CFMutableDictionaryRef query = NULL;
-    CFStringRef account = NULL, server = NULL, path = NULL;
-    CFTypeRef data = NULL;
-    char *result = NULL;
+	CFMutableDictionaryRef query = NULL;
+	CFStringRef account = NULL, server = NULL, path = NULL;
+	CFTypeRef data = NULL;
+	char *result = NULL;
 
 	if (verbose > PRG_ERR) {
 		fprintf(stderr, "Lookup keychain for user: %s url: https://%s%s\n", user, vpninfo->hostname, vpninfo->urlpath);
 	}
 
-    query = CFDictionaryCreateMutable(kCFAllocatorDefault, 0, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
-    if (!query) goto end;
+	query = CFDictionaryCreateMutable(kCFAllocatorDefault, 0, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+	if (!query) goto end;
 
-    account = CFStringCreateWithCString(kCFAllocatorDefault, user, kCFStringEncodingUTF8);
+	account = CFStringCreateWithCString(kCFAllocatorDefault, user, kCFStringEncodingUTF8);
 	if (!account) goto end;
-    server = CFStringCreateWithCString(kCFAllocatorDefault, vpninfo->hostname, kCFStringEncodingUTF8);
+	server = CFStringCreateWithCString(kCFAllocatorDefault, vpninfo->hostname, kCFStringEncodingUTF8);
 	if (!server) goto end;
-    path = CFStringCreateWithCString(kCFAllocatorDefault, vpninfo->urlpath, kCFStringEncodingUTF8);
+	path = CFStringCreateWithCString(kCFAllocatorDefault, vpninfo->urlpath, kCFStringEncodingUTF8);
 	if (!path) goto end;
 
-    CFDictionaryAddValue(query, kSecClass, kSecClassInternetPassword);
-    CFDictionaryAddValue(query, kSecAttrAccount, account);
-    CFDictionaryAddValue(query, kSecAttrProtocol, kSecAttrProtocolHTTPS);
-    CFDictionaryAddValue(query, kSecAttrServer, server);
-    CFDictionaryAddValue(query, kSecAttrPath, path);
-    CFDictionaryAddValue(query, kSecMatchLimit, kSecMatchLimitOne);
-    CFDictionaryAddValue(query, kSecReturnData, kCFBooleanTrue);
+	CFDictionaryAddValue(query, kSecClass, kSecClassInternetPassword);
+	CFDictionaryAddValue(query, kSecAttrAccount, account);
+	CFDictionaryAddValue(query, kSecAttrProtocol, kSecAttrProtocolHTTPS);
+	CFDictionaryAddValue(query, kSecAttrServer, server);
+	CFDictionaryAddValue(query, kSecAttrPath, path);
+	CFDictionaryAddValue(query, kSecMatchLimit, kSecMatchLimitOne);
+	CFDictionaryAddValue(query, kSecReturnData, kCFBooleanTrue);
 
-    err = SecItemCopyMatching(query, &data);
+	err = SecItemCopyMatching(query, &data);
 	if (err == errSecItemNotFound) {
 		if (data) CFRelease(data);
 
@@ -2022,7 +2022,7 @@ static char *lookup_keychain_password(const char *user, const char *prompt, stru
 		}
 		goto end;
 	}
-    if (err != errSecSuccess) goto end;
+	if (err != errSecSuccess) goto end;
 	if (!data || CFGetTypeID(data) != CFDataGetTypeID()) goto end;
 
 	CFIndex size = CFDataGetLength(data);
