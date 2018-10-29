@@ -808,6 +808,9 @@ static void usage(void)
 	printf("      --no-passwd                 %s\n", _("Disable password/SecurID authentication"));
 	printf("      --non-inter                 %s\n", _("Do not expect user input; exit if it is required"));
 	printf("      --passwd-on-stdin           %s\n", _("Read password from standard input"));
+#if ENABLE_KEYCHAIN
+	printf("      --use-keychain=NAME         %s\n", _("Name of password form option that look up Keychain to fill"));
+#endif
 	printf("      --authgroup=GROUP           %s\n", _("Choose authentication login selection"));
 	printf("  -c, --certificate=CERT          %s\n", _("Use SSL client certificate CERT"));
 	printf("  -k, --sslkey=KEY                %s\n", _("Use SSL private key file KEY"));
@@ -822,9 +825,6 @@ static void usage(void)
 #endif
 #ifndef HAVE_LIBPCSCLITE
 	printf("                                  %s\n", _("(NOTE: Yubikey OATH disabled in this build)"));
-#endif
-#if ENABLE_KEYCHAIN
-	printf("      --use-keychain=NAME         %s\n", _("Name of password option to lookup Keychain"));
 #endif
 
 	printf("\n%s:\n", _("Server validation"));
