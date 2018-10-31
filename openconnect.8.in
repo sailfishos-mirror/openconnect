@@ -427,10 +427,13 @@ Do not expect user input; exit if it is required.
 .B \-\-passwd\-on\-stdin
 Read password from standard input
 .TP
-.B \-\-use\-keychain=NAME
-Look up Keychain to fill one of password form options.
-.I NAME
-is the name of the password form option. It may be "password".
+.B \-\-use\-keychain=ACCOUNT
+Look up Keychain to fill password form options.
+.I ACCOUNT
+is a base name of Keychain items. For example, if
+.I ACCOUNT
+is "companyvpn", it creates item named "companyvpn:token" for "token"
+password form option.
 .TP
 .B \-\-protocol=PROTO
 Select VPN protocol
