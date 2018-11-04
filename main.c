@@ -809,7 +809,7 @@ static void usage(void)
 	printf("      --non-inter                 %s\n", _("Do not expect user input; exit if it is required"));
 	printf("      --passwd-on-stdin           %s\n", _("Read password from standard input"));
 #if ENABLE_KEYCHAIN
-	printf("      --use-keychain=ACCOUNT      %s\n", _("Look up Keychain to fill password form options"));
+	printf("      --use-keychain=ACCOUNT      %s\n", _("Look up Keychain to fill password form fields"));
 #endif
 	printf("      --authgroup=GROUP           %s\n", _("Choose authentication login selection"));
 	printf("  -c, --certificate=CERT          %s\n", _("Use SSL client certificate CERT"));

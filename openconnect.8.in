@@ -57,7 +57,7 @@ openconnect \- Multi-protocol VPN client, for Cisco AnyConnect VPNs and others
 .OP \-\-no\-xmlpost
 .OP \-\-non\-inter
 .OP \-\-passwd\-on\-stdin
-.OP \-\-use-keychain string
+.OP \-\-use\-keychain string
 .OP \-\-protocol proto
 .OP \-\-token\-mode mode
 .OP \-\-token\-secret {secret\fR[\fI,counter\fR]|@\fIfile\fR}
@@ -428,12 +428,12 @@ Do not expect user input; exit if it is required.
 Read password from standard input
 .TP
 .B \-\-use\-keychain=ACCOUNT
-Look up Keychain to fill password form options.
+Look up Keychain to fill password form field.
 .I ACCOUNT
 is a base name of Keychain items. For example, if
 .I ACCOUNT
-is "companyvpn", it creates item named "companyvpn:token" for "token"
-password form option.
+is "companyvpn", it looks up Keychain item named "companyvpn:token" for
+"token" password form field.
 .TP
 .B \-\-protocol=PROTO
 Select VPN protocol
