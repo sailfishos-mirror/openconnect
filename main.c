@@ -1299,8 +1299,7 @@ int main(int argc, char **argv)
 			break;
 #if ENABLE_KEYCHAIN
 		case OPT_USE_KEYCHAIN:
-			free(keychain_account);
-			keychain_account = dup_config_arg();
+			keychain_account = keep_config_arg();
 			break;
 #endif
 		case OPT_NO_PASSWD:
