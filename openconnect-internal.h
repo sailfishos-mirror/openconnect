@@ -197,6 +197,11 @@ struct oc_text_buf {
 	int error;
 };
 
+struct oc_text_list_item {
+	char *data;
+	struct oc_text_list_item *next;
+};
+
 #define TLS_MASTER_KEY_SIZE 48
 
 #define RECONNECT_INTERVAL_MIN	10

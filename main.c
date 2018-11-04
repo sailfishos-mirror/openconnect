@@ -91,6 +91,7 @@ static int non_inter;
 static int cookieonly;
 static int allow_stdin_read;
 static char *keychain_account = NULL;
+static struct oc_text_list_item *keychain_saving_fields = NULL;
 
 static char *token_filename;
 static char *server_cert = NULL;
@@ -178,6 +179,7 @@ enum {
 	OPT_PIDFILE,
 	OPT_PASSWORD_ON_STDIN,
 	OPT_USE_KEYCHAIN,
+	OPT_SAVE_TO_KEYCHAIN,
 	OPT_PRINTCOOKIE,
 	OPT_RECONNECT_TIMEOUT,
 	OPT_SERVERCERT,
@@ -255,6 +257,7 @@ static const struct option long_options[] = {
 	OPTION("passwd-on-stdin", 0, OPT_PASSWORD_ON_STDIN),
 #if ENABLE_KEYCHAIN
 	OPTION("use-keychain", 1, OPT_USE_KEYCHAIN),
+	OPTION("save-to-keychain", 1, OPT_SAVE_TO_KEYCHAIN),
 #endif
 	OPTION("no-passwd", 0, OPT_NO_PASSWD),
 	OPTION("reconnect-timeout", 1, OPT_RECONNECT_TIMEOUT),
@@ -810,6 +813,7 @@ static void usage(void)
 	printf("      --passwd-on-stdin           %s\n", _("Read password from standard input"));
 #if ENABLE_KEYCHAIN
 	printf("      --use-keychain=ACCOUNT      %s\n", _("Look up Keychain to fill password form fields"));
+	printf("      --save-to-keychain=NAME     %s\n", _("Name of password form field to be saved to Keychain"));
 #endif
 	printf("      --authgroup=GROUP           %s\n", _("Choose authentication login selection"));
 	printf("  -c, --certificate=CERT          %s\n", _("Use SSL client certificate CERT"));
@@ -1301,6 +1305,13 @@ int main(int argc, char **argv)
 		case OPT_USE_KEYCHAIN:
 			keychain_account = keep_config_arg();
 			break;
+		case OPT_SAVE_TO_KEYCHAIN: {
+			struct oc_text_list_item *field = malloc(sizeof(*field));
+			field->data = keep_config_arg();
+			field->next = keychain_saving_fields;
+			keychain_saving_fields = field;
+			break;
+		}
 #endif
 		case OPT_NO_PASSWD:
 			vpninfo->nopasswd = 1;
@@ -2007,26 +2018,31 @@ static char *lookup_keychain_password(const char *acc,
 		size_t len = strlen(result);
 		if (len == 0) goto end;
 
-		label = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("openconnect: %@ (%@)"), account, name);
-		if (!label) goto end;
-		data = CFDataCreate(kCFAllocatorDefault, (UInt8 *)result, len + 1);
-		if (!data) goto end;
+		for (struct oc_text_list_item *field = keychain_saving_fields; field; field = field->next) {
+			if (strcmp(opt->name, field->data))
+				continue;
 
-		CFDictionaryAddValue(query, kSecAttrLabel, label);
-		CFDictionaryAddValue(query, kSecValueData, data);
-		CFDictionaryRemoveValue(query, kSecReturnData);
+			label = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("openconnect: %@ (%@)"), account, name);
+			if (!label) goto end;
+			data = CFDataCreate(kCFAllocatorDefault, (UInt8 *)result, len + 1);
+			if (!data) goto end;
 
-		err = SecItemAdd(query, NULL);
-		if (err != errSecSuccess) {
-			if (verbose > PRG_ERR)
-				fprintf(stderr, "Failed to add item to Keychain error: %d\n", err);
-		} else {
-			if (verbose > PRG_INFO)
-				fprintf(stderr, "Item saved in Keychain\n");
+			CFDictionaryAddValue(query, kSecAttrLabel, label);
+			CFDictionaryAddValue(query, kSecValueData, data);
+			CFDictionaryRemoveValue(query, kSecReturnData);
+
+			err = SecItemAdd(query, NULL);
+			if (err != errSecSuccess) {
+				if (verbose > PRG_ERR)
+					fprintf(stderr, "Failed to add item to Keychain error: %d\n", err);
+			} else {
+				if (verbose > PRG_INFO)
+					fprintf(stderr, "Item saved in Keychain\n");
+			}
+			goto end;
 		}
 		goto end;
-	}
-	if (err != errSecSuccess) {
+	} else if (err != errSecSuccess) {
 		if (verbose > PRG_ERR)
 			fprintf(stderr, "Failed to find item in Keychain error: %d\n", err);
 		goto end;
