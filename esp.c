@@ -461,9 +461,15 @@ int openconnect_setup_esp_keys(struct openconnect_info *vpninfo, int new_keys)
 	vpninfo->esp_out.seq = vpninfo->esp_out.seq_backlog = 0;
 	esp_in->seq = esp_in->seq_backlog = 0;
 
-	ret = init_esp_ciphers(vpninfo, &vpninfo->esp_out, esp_in);
-	if (ret)
-		return ret;
+#ifdef AESNI_ASM
+	if (vpninfo->esp_hmac != HMAC_SHA1 ||
+	    aesni_init_esp_ciphers(vpninfo, &vpninfo->esp_out, esp_in))
+#endif
+	{
+		ret = init_esp_ciphers(vpninfo, &vpninfo->esp_out, esp_in);
+		if (ret)
+			return ret;
+	}
 
 	if (vpninfo->dtls_state == DTLS_NOSECRET)
 		vpninfo->dtls_state = DTLS_SECRET;

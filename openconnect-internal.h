@@ -1367,6 +1367,7 @@ int openconnect_construct_esp_packet(struct openconnect_info *vpninfo, struct pk
 
 /* {gnutls,openssl}-esp.c */
 int init_esp_ciphers(struct openconnect_info *vpninfo, struct esp *out, struct esp *in);
+int aesni_init_esp_ciphers(struct openconnect_info *vpninfo, struct esp *out, struct esp *in);
 
 /* {gnutls,openssl}.c */
 const char *openconnect_get_tls_library_version(void);

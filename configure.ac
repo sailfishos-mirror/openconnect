@@ -3,6 +3,7 @@ AC_CONFIG_HEADERS([config.h])
 
 PKG_PROG_PKG_CONFIG
 AC_LANG_C
+AM_PROG_AS
 AC_CANONICAL_HOST
 AM_MAINTAINER_MODE([enable])
 AM_INIT_AUTOMAKE([foreign tar-ustar subdir-objects])
@@ -34,7 +35,9 @@ symver_win32_setenv=
 AC_PROG_CC
 AC_PROG_CC_C99
 
+aesni_flavour=elf
 have_vhost=no
+
 case $host_os in
  *linux* | *gnu* | *nacl*)
     case $host_cpu in
@@ -58,9 +61,11 @@ case $host_os in
     AC_MSG_NOTICE([Applying workaround for broken SunOS time() function])
     AC_DEFINE(HAVE_SUNOS_BROKEN_TIME, 1, [On SunOS time() can go backwards])
     symver_time="openconnect__time;"
+    aesni_flavour=
     ;;
  *mingw32*|*mingw64*|*msys*)
     AC_MSG_NOTICE([Applying feature macros for MinGW/Windows build])
+    aesni_flavour=mingw64
     # For GetVolumeInformationByHandleW() which is Vista+
     AC_DEFINE(_WIN32_WINNT, 0x600, [Windows API version])
     have_win=yes
@@ -97,6 +102,7 @@ case $host_os in
     AC_CHECK_DECL(getenv_s, [AC_DEFINE(HAVE_GETENV_S_DECL, 1, [MinGW declares getenv_s])], [], [#include <sec_api/stdlib_s.h>])
     ;;
  *darwin*)
+    aesni_flavour=macosx
     system_pcsc_libs="-Wl,-framework -Wl,PCSC"
     system_pcsc_cflags=
     ;;
@@ -312,6 +318,26 @@ if test "$ac_cv_func_nl_langinfo" = "yes"; then
     fi
 fi
 AM_CONDITIONAL(OPENCONNECT_ICONV, [test "$am_cv_func_iconv" = "yes"])
+
+aesni=no
+if test "$host_cpu" = "x86_64" -a "$aesni_flavour" != ""; then
+   try_aesni=
+   AC_ARG_ENABLE([aesni],
+	AS_HELP_STRING([--disable-aesni], [Do not use x86_64 AES-NI acceleration]),
+	[try_aesni=$enableval])
+   if test "$try_aesni" != "no"; then
+      AC_PATH_PROG(PERL, perl)
+      if test "$PERL" != ""; then
+	 AC_DEFINE(AESNI_ASM, 1, [Have AES-NI assembler])
+	 AC_SUBST(AESNI_FLAVOUR, [$aesni_flavour])
+	 aesni=yes
+      fi
+   fi
+   if test "$try_aesni" = "yes" -a "$aesni" = "no"; then
+      AC_ERROR([AES-NI could not be enabled because perl was not found])
+   fi
+fi
+AM_CONDITIONAL(OPENCONNECT_AESNI, [test "$aesni" = "yes"])
 
 AC_ARG_ENABLE([nls],
 	AS_HELP_STRING([--disable-nls], [Do not use Native Language Support]),
@@ -1352,6 +1378,7 @@ SUMMARY([[PKCS#11 support]], [$pkcs11_support])
 if test "$ssl_library" = "GnuTLS"; then
  SUMMARY([TSS2 library], [$tss2lib])
 fi
+SUMMARY([AESNI support], [$aesni])
 SUMMARY([DTLS support], [$dtls])
 SUMMARY([ESP support], [$esp])
 SUMMARY([libproxy support], [$libproxy_pkg])
