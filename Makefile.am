@@ -55,6 +55,7 @@ library_srcs += $(lib_srcs_juniper) $(lib_srcs_cisco) $(lib_srcs_oath) \
 		$(lib_srcs_f5) $(lib_srcs_fortinet) $(lib_srcs_json) \
 		$(lib_srcs_array)
 
+lib_srcs_aesni = aesni-esp.c aesni-esp.h
 lib_srcs_gnutls = gnutls.c gnutls_tpm.c gnutls_tpm2.c
 lib_srcs_openssl = openssl.c openssl-pkcs11.c
 lib_srcs_win32 = wintun.c tun-win32.c sspi.c
@@ -69,7 +70,7 @@ lib_srcs_vhost = vhost.c
 
 POTFILES = $(openconnect_SOURCES) gnutls-esp.c gnutls-dtls.c openssl-esp.c openssl-dtls.c \
 	   $(lib_srcs_esp) $(lib_srcs_dtls) gnutls_tpm2_esys.c gnutls_tpm2_ibm.c \
-	   $(lib_srcs_openssl) $(lib_srcs_gnutls) $(library_srcs) \
+	   $(lib_srcs_openssl) $(lib_srcs_gnutls) $(library_srcs) $(lib_srcs_aesni) \
 	   $(lib_srcs_win32) $(lib_srcs_posix) $(lib_srcs_gssapi) $(lib_srcs_iconv) \
 	   $(lib_srcs_yubikey) $(lib_srcs_stoken) $(lib_srcs_oidc) $(lib_srcs_vhost)
 
@@ -103,6 +104,9 @@ lib_srcs_dtls += openssl-dtls.c
 endif
 if OPENCONNECT_DTLS
 lib_srcs_cisco += $(lib_srcs_dtls)
+endif
+if OPENCONNECT_AESNI
+lib_srcs_esp += x86_64cpuid.s aesni-sha1-x86_64.s aesni-x86_64.s sha1-x86_64.s $(lib_srcs_aesni)
 endif
 if OPENCONNECT_ESP
 lib_srcs_juniper += $(lib_srcs_esp)
@@ -183,6 +187,11 @@ bashcompletion_DATA = bash/openconnect
 
 # main.c includes version.c
 openconnect-main.$(OBJEXT): version.c
+
+# s/OPENSSL/OPENCONNECT/ here instead of doing it in the .pl files, so
+# that they can remain pristine copies from upstream.
+%.s: aesni/%.pl
+	CC="$(CC)" $(PERL) $< $(AESNI_FLAVOUR) | sed s/OPENSSL_ia32/OPENCONNECT_ia32/g > $@
 
 version.c: $(library_srcs) $(lib_openssl_srcs) $(lib_gnutls_srcs) \
 	   $(openconnect_SOURCES) Makefile.am configure.ac \
