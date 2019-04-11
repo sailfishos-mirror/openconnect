@@ -1363,7 +1363,7 @@ void esp_close(struct openconnect_info *vpninfo);
 void esp_shutdown(struct openconnect_info *vpninfo);
 int print_esp_keys(struct openconnect_info *vpninfo, const char *name, struct esp *esp);
 int openconnect_setup_esp_keys(struct openconnect_info *vpninfo, int new_keys);
-int construct_esp_packet(struct openconnect_info *vpninfo, struct pkt *pkt, uint8_t next_hdr);
+int openconnect_construct_esp_packet(struct openconnect_info *vpninfo, struct pkt *pkt, uint8_t next_hdr);
 
 /* {gnutls,openssl}-esp.c */
 int init_esp_ciphers(struct openconnect_info *vpninfo, struct esp *out, struct esp *in);
