@@ -97,7 +97,7 @@ int esp_setup(struct openconnect_info *vpninfo)
 	return 0;
 }
 
-int construct_esp_packet(struct openconnect_info *vpninfo, struct pkt *pkt, uint8_t next_hdr)
+int openconnect_construct_esp_packet(struct openconnect_info *vpninfo, struct pkt *pkt, uint8_t next_hdr)
 {
 	const int blksize = 16;
 	int i, padlen, ret;
@@ -343,7 +343,7 @@ int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			if (vpninfo->dtls_tos_optname)
 				udp_tos_update(vpninfo, this);
 
-			len = construct_esp_packet(vpninfo, this, 0);
+			len = openconnect_construct_esp_packet(vpninfo, this, 0);
 			if (len < 0) {
 				/* Should we disable ESP? */
 				free_pkt(vpninfo, this);

@@ -145,8 +145,13 @@ TESTS_ENVIRONMENT = srcdir="$(srcdir)" \
 
 C_TESTS = lzstest seqtest buftest
 
+esptest_CFLAGS = $(libopenconnect_la_CFLAGS)
+esptest_LDADD = ../libopenconnect.la
+
 if OPENCONNECT_WIN32
 C_TESTS += list-taps
+else
+C_TESTS += esptest
 endif
 
 if CHECK_DTLS

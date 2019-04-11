@@ -1486,7 +1486,7 @@ int gpst_esp_send_probes(struct openconnect_info *vpninfo)
 			dump_buf_hex(vpninfo, PRG_TRACE, '>', pkt->data, pkt->len);
 		}
 
-		int pktlen = construct_esp_packet(vpninfo, pkt, vpninfo->esp_magic_af == AF_INET6 ? IPPROTO_IPV6 : IPPROTO_IPIP);
+		int pktlen = openconnect_construct_esp_packet(vpninfo, pkt, vpninfo->esp_magic_af == AF_INET6 ? IPPROTO_IPV6 : IPPROTO_IPIP);
 		if (pktlen < 0 ||
 		    send(vpninfo->dtls_fd, (void *)&pkt->esp, pktlen, 0) < 0)
 			vpn_progress(vpninfo, PRG_DEBUG, _("Failed to send ESP probe\n"));

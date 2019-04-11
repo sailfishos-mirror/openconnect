@@ -125,6 +125,8 @@ OPENCONNECT_PRIVATE {
 	openconnect_sha1;
 	openconnect_version_str;
 	openconnect_read_file;
+	openconnect_setup_esp_keys;
+	openconnect_construct_esp_packet;
  local:
 	*;
 };

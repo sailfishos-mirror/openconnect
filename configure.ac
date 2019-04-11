@@ -843,7 +843,7 @@ AS_IF([test "$with_builtin_json" != "no"  && test "$json" = "" ],
 	 AC_SEARCH_LIBS(pow, [m])
 	 LIBS="$oldLIBS"
 	 AC_SUBST([JSON_LIBS], [$ac_cv_search_pow])
-	 AC_SUBST([JSON_CFLAGS], ['-I$(srcdir)/json'])
+	 AC_SUBST([JSON_CFLAGS], ['-I$(abs_top_srcdir)/json'])
       ])
 
 AS_IF([test "$json" = ""],
