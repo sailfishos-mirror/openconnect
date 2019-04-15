@@ -27,6 +27,11 @@
 #include <stdlib.h>
 #include <errno.h>
 
+static int decrypt_esp_packet(struct openconnect_info *vpninfo, struct esp *esp,
+			      struct pkt *pkt);
+static int encrypt_esp_packet(struct openconnect_info *vpninfo, struct pkt *pkt,
+			      int crypt_len);
+
 #if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 
 #define EVP_CIPHER_CTX_free(c) do {				\
@@ -45,7 +50,7 @@ static inline HMAC_CTX *HMAC_CTX_new(void)
 }
 #endif
 
-void destroy_esp_ciphers(struct esp *esp)
+static void destroy_esp_ciphers(struct esp *esp)
 {
 	if (esp->cipher) {
 		EVP_CIPHER_CTX_free(esp->cipher);
@@ -103,6 +108,10 @@ static int init_esp_cipher(struct openconnect_info *vpninfo, struct esp *esp,
 		destroy_esp_ciphers(esp);
 	}
 
+	vpninfo->decrypt_esp_packet = decrypt_esp_packet;
+	vpninfo->encrypt_esp_packet = encrypt_esp_packet;
+	vpninfo->destroy_esp_ciphers = destroy_esp_ciphers;
+
 	return 0;
 }
 
@@ -151,7 +160,8 @@ int init_esp_ciphers(struct openconnect_info *vpninfo, struct esp *esp_out, stru
 }
 
 /* pkt->len shall be the *payload* length. Omitting the header and the 12-byte HMAC */
-int decrypt_esp_packet(struct openconnect_info *vpninfo, struct esp *esp, struct pkt *pkt)
+static int decrypt_esp_packet(struct openconnect_info *vpninfo, struct esp *esp,
+			      struct pkt *pkt)
 {
 	unsigned char hmac_buf[MAX_HMAC_SIZE];
 	unsigned int hmac_len = sizeof(hmac_buf);
@@ -189,7 +199,7 @@ int decrypt_esp_packet(struct openconnect_info *vpninfo, struct esp *esp, struct
 	return 0;
 }
 
-int encrypt_esp_packet(struct openconnect_info *vpninfo, struct pkt *pkt, int crypt_len)
+static int encrypt_esp_packet(struct openconnect_info *vpninfo, struct pkt *pkt, int crypt_len)
 {
 	int blksize = 16;
 	unsigned int hmac_len = vpninfo->hmac_out_len;
