@@ -39,6 +39,10 @@ struct aesni_sha1 {
 	uint64_t N; /* The CRYPTOGAMS routines don't touch this */
 };
 
+struct aesni_hmac {
+	struct aesni_sha1 o;
+	struct aesni_sha1 i;
+};
 
 int aesni_set_encrypt_key (const unsigned char *userKey, int bits,
 			   struct aesni_key *key);
