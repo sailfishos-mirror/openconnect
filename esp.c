@@ -121,7 +121,7 @@ int construct_esp_packet(struct openconnect_info *vpninfo, struct pkt *pkt, uint
 
 	memcpy(pkt->esp.iv, vpninfo->esp_out.iv, sizeof(pkt->esp.iv));
 
-	ret = encrypt_esp_packet(vpninfo, pkt, pkt->len + padlen + 2);
+	ret = vpninfo->encrypt_esp_packet(vpninfo, pkt, pkt->len + padlen + 2);
 	if (ret)
 		return ret;
 
@@ -179,14 +179,14 @@ int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		pkt->len = len;
 
 		if (pkt->esp.spi == esp->spi) {
-			if (decrypt_esp_packet(vpninfo, esp, pkt))
+			if (vpninfo->decrypt_esp_packet(vpninfo, esp, pkt))
 				continue;
 		} else if (pkt->esp.spi == old_esp->spi &&
 			   ntohl(pkt->esp.seq) + esp->seq < vpninfo->old_esp_maxseq) {
 			vpn_progress(vpninfo, PRG_TRACE,
 				     _("Received ESP packet from old SPI 0x%x, seq %u\n"),
 				     (unsigned)ntohl(old_esp->spi), (unsigned)ntohl(pkt->esp.seq));
-			if (decrypt_esp_packet(vpninfo, old_esp, pkt))
+			if (vpninfo->decrypt_esp_packet(vpninfo, old_esp, pkt))
 				continue;
 		} else {
 			vpn_progress(vpninfo, PRG_DEBUG,
@@ -406,9 +406,11 @@ void esp_close(struct openconnect_info *vpninfo)
 
 void esp_shutdown(struct openconnect_info *vpninfo)
 {
-	destroy_esp_ciphers(&vpninfo->esp_in[0]);
-	destroy_esp_ciphers(&vpninfo->esp_in[1]);
-	destroy_esp_ciphers(&vpninfo->esp_out);
+	if (vpninfo->destroy_esp_ciphers) {
+		vpninfo->destroy_esp_ciphers(&vpninfo->esp_in[0]);
+		vpninfo->destroy_esp_ciphers(&vpninfo->esp_in[1]);
+		vpninfo->destroy_esp_ciphers(&vpninfo->esp_out);
+	}
 	if (vpninfo->proto->udp_close)
 		vpninfo->proto->udp_close(vpninfo);
 	if (vpninfo->dtls_state != DTLS_DISABLED)

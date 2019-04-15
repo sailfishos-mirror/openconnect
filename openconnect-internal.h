@@ -752,6 +752,10 @@ struct openconnect_info {
 		DELAY_CLOSE_IMMEDIATE_CALLBACK,
 	} delay_close;                          /* Delay close of mainloop */
 
+	void (*destroy_esp_ciphers)(struct esp *esp);
+	int (*decrypt_esp_packet)(struct openconnect_info *vpninfo, struct esp *esp, struct pkt *pkt);
+	int (*encrypt_esp_packet)(struct openconnect_info *vpninfo, struct pkt *pkt, int crypt_len);
+
 	int verbose;
 	void *cbdata;
 	openconnect_validate_peer_cert_vfn validate_peer_cert;
@@ -1362,10 +1366,7 @@ int openconnect_setup_esp_keys(struct openconnect_info *vpninfo, int new_keys);
 int construct_esp_packet(struct openconnect_info *vpninfo, struct pkt *pkt, uint8_t next_hdr);
 
 /* {gnutls,openssl}-esp.c */
-void destroy_esp_ciphers(struct esp *esp);
 int init_esp_ciphers(struct openconnect_info *vpninfo, struct esp *out, struct esp *in);
-int decrypt_esp_packet(struct openconnect_info *vpninfo, struct esp *esp, struct pkt *pkt);
-int encrypt_esp_packet(struct openconnect_info *vpninfo, struct pkt *pkt, int crypt_len);
 
 /* {gnutls,openssl}.c */
 const char *openconnect_get_tls_library_version(void);

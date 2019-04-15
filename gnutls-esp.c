@@ -28,7 +28,12 @@
 #include <stdlib.h>
 #include <errno.h>
 
-void destroy_esp_ciphers(struct esp *esp)
+static int decrypt_esp_packet(struct openconnect_info *vpninfo, struct esp *esp,
+			      struct pkt *pkt);
+static int encrypt_esp_packet(struct openconnect_info *vpninfo, struct pkt *pkt,
+			      int crypt_len);
+
+static void destroy_esp_ciphers(struct esp *esp)
 {
 	if (esp->cipher) {
 		gnutls_cipher_deinit(esp->cipher);
@@ -114,11 +119,16 @@ int init_esp_ciphers(struct openconnect_info *vpninfo, struct esp *esp_out, stru
 		return ret;
 	}
 
+	vpninfo->decrypt_esp_packet = decrypt_esp_packet;
+	vpninfo->encrypt_esp_packet = encrypt_esp_packet;
+	vpninfo->destroy_esp_ciphers = destroy_esp_ciphers;
+
 	return 0;
 }
 
 /* pkt->len shall be the *payload* length. Omitting the header and the 12-byte HMAC */
-int decrypt_esp_packet(struct openconnect_info *vpninfo, struct esp *esp, struct pkt *pkt)
+static int decrypt_esp_packet(struct openconnect_info *vpninfo, struct esp *esp,
+			      struct pkt *pkt)
 {
 	unsigned char hmac_buf[MAX_HMAC_SIZE];
 	int err;
