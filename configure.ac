@@ -58,6 +58,7 @@ case $host_os in
     system_pcsc_libs="-lwinscard"
     system_pcsc_cflags=
     AC_CHECK_TOOL([WINDRES], [windres], [])
+    extra_test_cflags="-mwin32"
     ;;
  *darwin*)
     system_pcsc_libs="-Wl,-framework -Wl,PCSC"
@@ -173,7 +174,8 @@ AS_COMPILER_FLAGS(WFLAGS,
          -Wmissing-include-dirs
          -Wnested-externs
          -Wpointer-arith
-         -Wwrite-strings")
+         -Wwrite-strings
+         $extra_test_cflags")
 AC_SUBST(WFLAGS, [$WFLAGS])
 
 oldCFLAGS="$CFLAGS"
