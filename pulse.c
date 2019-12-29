@@ -85,6 +85,12 @@
 #define J2_PASSRETRY	0x81
 #define J2_PASSFAIL	0xc5
 
+#define TTLS_RECVSIZE (16384)
+
+#define TTLS_LEN	(1<<7)
+#define TTLS_MORE	(1<<6)
+#define TTLS_START	(1<<5)
+
 static void buf_append_be16(struct oc_text_buf *buf, uint16_t val)
 {
 	unsigned char b[2];
@@ -145,7 +151,7 @@ static int buf_append_eap_hdr(struct oc_text_buf *buf, uint8_t code, uint8_t ide
 static void buf_fill_eap_len(struct oc_text_buf *buf, int ofs)
 {
 	/* EAP length word is always at 0x16, and counts bytes from 0x14 */
-	if (ofs >= 0 && !buf_error(buf) && buf->pos > ofs + 8)
+	if (ofs >= 0 && !buf_error(buf) && buf->pos >= ofs + 4)
 		store_be16(buf->data + ofs + 2, buf->pos - ofs);
 }
 
@@ -1556,11 +1562,12 @@ static int pulse_authenticate(struct openconnect_info *vpninfo, int connecting)
 			goto bad_ift;
 
 		vpninfo->ttls_eap_ident = bytes[0x15];
-		vpninfo->ttls_recvbuf = malloc(16384);
+		vpninfo->ttls_recvbuf = malloc(TTLS_RECVSIZE);
 		if (!vpninfo->ttls_recvbuf)
 			return -ENOMEM;
 		vpninfo->ttls_recvlen = 0;
 		vpninfo->ttls_recvpos = 0;
+		vpninfo->ttls_msgleft = 0;
 		ttls = establish_eap_ttls(vpninfo);
 		if (!ttls) {
 			vpn_progress(vpninfo, PRG_ERR,
@@ -1957,6 +1964,16 @@ static int pulse_authenticate(struct openconnect_info *vpninfo, int connecting)
 	return ret;
 }
 
+static void buf_append_ttls_headers(struct openconnect_info *vpninfo, struct oc_text_buf *buf)
+{
+	buf_append_ift_hdr(buf, VENDOR_TCG, IFT_CLIENT_AUTH_RESPONSE);
+	buf_append_be32(buf, JUNIPER_1); /* IF-T/TLS Auth Type */
+	buf_append_eap_hdr(buf, EAP_RESPONSE, vpninfo->ttls_eap_ident,
+			   EAP_TYPE_TTLS, 0);
+	/* Flags byte for EAP-TTLS */
+	buf_append_bytes(buf, "\0", 1);
+
+}
 int pulse_eap_ttls_send(struct openconnect_info *vpninfo, const void *data, int len)
 {
 	struct oc_text_buf *buf = vpninfo->ttls_pushbuf;
@@ -1969,33 +1986,57 @@ int pulse_eap_ttls_send(struct openconnect_info *vpninfo, const void *data, int 
 
 	/* We concatenate sent data into a single EAP-TTLS frame which is
 	 * sent just before we actually need to read something. */
-	if (!buf->pos) {
-		buf_append_ift_hdr(buf, VENDOR_TCG, IFT_CLIENT_AUTH_RESPONSE);
-		buf_append_be32(buf, JUNIPER_1); /* IF-T/TLS Auth Type */
-		buf_append_eap_hdr(buf, EAP_RESPONSE, vpninfo->ttls_eap_ident,
-				   EAP_TYPE_TTLS, 0);
-		/* Flags byte for EAP-TTLS */
-		buf_append_bytes(buf, "\0", 1);
-	}
+	if (!buf->pos)
+		buf_append_ttls_headers(vpninfo, buf);
+
 	buf_append_bytes(buf, data, len);
 	return len;
 }
 
 int pulse_eap_ttls_recv(struct openconnect_info *vpninfo, void *data, int len)
 {
-	struct oc_text_buf *pushbuf= vpninfo->ttls_pushbuf;
+	struct oc_text_buf *pushbuf;
 	int ret;
+
+	if (!len && (vpninfo->ttls_recvlen || vpninfo->ttls_msgleft)) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("EAP-TTLS failure: Flushing output with pending input bytes\n"));
+		return -EIO;
+	}
 
 	if (!vpninfo->ttls_recvlen) {
 		uint8_t flags;
 
-		if (pushbuf && !buf_error(pushbuf) && pushbuf->pos) {
-			buf_fill_eap_len(pushbuf, 0x14);
-			ret = send_ift_packet(vpninfo, pushbuf);
-			if (ret)
-				return ret;
-			buf_truncate(pushbuf);
-		} /* else send a continue? */
+		if (vpninfo->ttls_msgleft) {
+			/* Fragments left to receive of current message.
+			 * Send an Acknowledge frame */
+			pushbuf = buf_alloc();
+			buf_append_ttls_headers(vpninfo, pushbuf);
+		} else {
+			/* Send the pending outbound bytes as a single message */
+			pushbuf = vpninfo->ttls_pushbuf;
+			vpninfo->ttls_pushbuf = NULL;
+		}
+		if (buf_error(pushbuf))
+			return buf_free(pushbuf);
+
+		/* This can never happen. We *always* put the header in. */
+		if (pushbuf->pos < 0x19) {
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("Error creating EAP-TTLS buffer\n"));
+			return -EIO;
+		}
+
+		/* Fill in the EAP header ident and length */
+		pushbuf->data[0x15] = vpninfo->ttls_eap_ident;
+		buf_fill_eap_len(pushbuf, 0x14);
+
+		ret = send_ift_packet(vpninfo, pushbuf);
+		buf_free(pushbuf);
+		if (ret)
+			return ret;
+
+		/* If called just to flush outbound, return now. */
 		if (!len)
 			return 0;
 
@@ -2014,23 +2055,67 @@ int pulse_eap_ttls_recv(struct openconnect_info *vpninfo, void *data, int len)
 		    vpninfo->ttls_recvbuf[0x18] != EAP_TYPE_TTLS) {
 		bad_pkt:
 			vpn_progress(vpninfo, PRG_ERR,
-				     _("Bad EAP-TTLS packet\n"));
+				     _("Bad EAP-TTLS packet (len %d, left %d)\n"),
+				     vpninfo->ttls_recvlen, vpninfo->ttls_msgleft);
 			return -EIO;
 		}
 		vpninfo->ttls_eap_ident = vpninfo->ttls_recvbuf[0x15];
 		flags = vpninfo->ttls_recvbuf[0x19];
-		if (flags & 0x7f)
+
+		/* Start, Reserved bits and version (we only support version zero) */
+		if (flags & 0x3f)
 			goto bad_pkt;
-		if (flags & 0x80) {
-			/* Length bit. */
-			if (vpninfo->ttls_recvlen < 0x1e ||
-			    load_be32(vpninfo->ttls_recvbuf + 0x1a) != vpninfo->ttls_recvlen - 0x1e)
+
+		if (vpninfo->ttls_msgleft) {
+			/* Second and subsequent fragments MUST NOT have L bit set */
+			if (flags & TTLS_LEN)
 				goto bad_pkt;
-			vpninfo->ttls_recvpos = 0x1e;
-			vpninfo->ttls_recvlen -= 0x1e;
-		} else {
+
+			/* The header doesn't contain a length word. Just IF-T/TLS, EAP, TTLS */
 			vpninfo->ttls_recvpos = 0x1a;
 			vpninfo->ttls_recvlen -= 0x1a;
+
+			if (flags & TTLS_MORE) {
+				/* If the More Fragments bit is set, this packet
+				 * must contain fewer bytes than are left. */
+				if (vpninfo->ttls_recvlen >= vpninfo->ttls_msgleft)
+					goto bad_pkt;
+			} else {
+				/* If the More Fragments bit is set, this packet
+				   must contain precisely the number of bytes left. */
+				if (vpninfo->ttls_recvlen != vpninfo->ttls_msgleft)
+					goto bad_pkt;
+			}
+			vpninfo->ttls_msgleft -= vpninfo->ttls_recvlen;
+		} else if (flags & TTLS_MORE) {
+			/* First fragment MUST have Length */
+			if (!(flags & TTLS_LEN) || vpninfo->ttls_recvlen < 0x1e)
+				goto bad_pkt;
+
+			vpninfo->ttls_recvpos = 0x1e;
+			vpninfo->ttls_recvlen -= 0x1e;
+
+			vpninfo->ttls_msgleft = load_be32(vpninfo->ttls_recvbuf + 0x1a);
+			if (vpninfo->ttls_msgleft <= vpninfo->ttls_recvlen || !vpninfo->ttls_recvlen)
+				goto bad_pkt;
+
+			vpninfo->ttls_msgleft -= vpninfo->ttls_recvlen;
+		} else {
+			/* Unfragmented message */
+			if (flags & TTLS_LEN) {
+				/* Length bit. */
+				if (vpninfo->ttls_recvlen < 0x1e ||
+				    load_be32(vpninfo->ttls_recvbuf + 0x1a) != vpninfo->ttls_recvlen - 0x1e)
+					goto bad_pkt;
+				vpninfo->ttls_recvpos = 0x1e;
+				vpninfo->ttls_recvlen -= 0x1e;
+			} else {
+				vpninfo->ttls_recvpos = 0x1a;
+				vpninfo->ttls_recvlen -= 0x1a;
+			}
+			vpninfo->ttls_msgleft = 0;
+			if (!vpninfo->ttls_recvlen)
+				goto bad_pkt;
 		}
 	}
 
