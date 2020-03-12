@@ -1786,7 +1786,7 @@ static int pulse_authenticate(struct openconnect_info *vpninfo, int connecting)
 					j2_found = load_be32(avp_c + 8);
 					j2_code = avp_c[12];
 					if (j2_code == J2_PASSREQ || j2_code == J2_PASSRETRY || j2_code == J2_PASSCHANGE) {
-						if (avp_len != 13)
+						if (avp_len < 13)
 							goto auth_unknown;
 						/* Precisely one byte, which is j2_code. OK. */
 					} else if (j2_code == J2_PASSFAIL) {
