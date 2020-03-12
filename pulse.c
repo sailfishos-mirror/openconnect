@@ -1025,7 +1025,7 @@ static int pulse_request_session_kill(struct openconnect_info *vpninfo, struct o
 }
 
 static int pulse_request_user_auth(struct openconnect_info *vpninfo, struct oc_text_buf *reqbuf,
-				   uint8_t eap_ident, int prompt_flags, char *user_prompt, char *pass_prompt)
+				   uint8_t eap_ident, int prompt_flags, char *user_prompt, char *pass_prompt, int two_or_five)
 {
 	struct oc_auth_form f;
 	struct oc_form_opt o[2];
@@ -1091,7 +1091,7 @@ static int pulse_request_user_auth(struct openconnect_info *vpninfo, struct oc_t
 	eap_avp[9] = eap_ident;
 	store_be16(eap_avp + 10, l + 15); /* EAP length */
 	store_be32(eap_avp + 12, EXPANDED_JUNIPER);
-	store_be32(eap_avp + 16, 2);
+	store_be32(eap_avp + 16, two_or_five);
 
 	/* EAP Juniper/2 payload: 02 02 <len> <password> */
 	eap_avp[20] = eap_avp[21] = 0x02;
@@ -1782,7 +1782,8 @@ static int pulse_authenticate(struct openconnect_info *vpninfo, int connecting)
 			} else if (avp_len >= 13 && load_be32(avp_c + 4) == EXPANDED_JUNIPER) {
 				switch (load_be32(avp_c + 8)) {
 				case 2: /*  Expanded Juniper/2: password */
-					j2_found = 1;
+				case 5: /* Is this handled the same? */
+					j2_found = load_be32(avp_c + 8);
 					j2_code = avp_c[12];
 					if (j2_code == J2_PASSREQ || j2_code == J2_PASSRETRY || j2_code == J2_PASSCHANGE) {
 						if (avp_len != 13)
@@ -1823,7 +1824,7 @@ static int pulse_authenticate(struct openconnect_info *vpninfo, int connecting)
 	}
 
 	/* We want it to be precisely one type of request, not a mixture. */
-	if (realm_entry + !!realms_found + j2_found + gtc_found + cookie_found + !!old_sessions != 1 &&
+	if (realm_entry + !!realms_found + !!j2_found + gtc_found + cookie_found + !!old_sessions != 1 &&
 	    !signin_prompt) {
 	auth_unknown:
 		vpn_progress(vpninfo, PRG_ERR,
@@ -1872,7 +1873,8 @@ static int pulse_authenticate(struct openconnect_info *vpninfo, int connecting)
 				/* Present user/password form to user */
 				ret = pulse_request_user_auth(vpninfo, reqbuf, eap2_ident, prompt_flags,
 							      (prompt_flags & PROMPT_PRIMARY) ? user_prompt : user2_prompt,
-							      (prompt_flags & PROMPT_PRIMARY) ? pass_prompt : pass2_prompt);
+							      (prompt_flags & PROMPT_PRIMARY) ? pass_prompt : pass2_prompt,
+							      j2_found);
 			} else {
 				vpn_progress(vpninfo, PRG_ERR,
 					     _("Pulse password request with unknown code 0x%02x. Please report.\n"),
