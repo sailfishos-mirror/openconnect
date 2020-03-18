@@ -90,6 +90,7 @@ struct openconnect_info *openconnect_vpninfo_new(const char *useragent,
 	vpninfo->xmlpost = 1;
 	vpninfo->verbose = PRG_TRACE;
 	vpninfo->try_http_auth = 1;
+	vpninfo->legacy_headers = 1;
 	vpninfo->proxy_auth[AUTH_TYPE_BASIC].state = AUTH_DEFAULT_DISABLED;
 	vpninfo->http_auth[AUTH_TYPE_BASIC].state = AUTH_DEFAULT_DISABLED;
 	openconnect_set_reported_os(vpninfo, NULL);
@@ -1209,6 +1210,14 @@ retry:
 		int second_auth = opt->flags & OC_FORM_OPT_SECOND_AUTH;
 		opt->flags &= ~OC_FORM_OPT_IGNORE;
 
+		if (opt->type == OC_FORM_OPT_SSO && vpninfo->open_webview) {
+			opt->_value = vpninfo->open_webview(vpninfo->cbdata,
+				vpninfo->sso_login,
+				vpninfo->sso_login_final,
+				vpninfo->sso_token_cookie,
+				vpninfo->sso_error_cookie);
+		}
+
 		if (!auth_choice ||
 		    (opt->type != OC_FORM_OPT_TEXT && opt->type != OC_FORM_OPT_PASSWORD))
 			continue;
@@ -1242,4 +1251,12 @@ retry:
 		nuke_opt_values(form->opts);
 
 	return ret;
+}
+
+void openconnect_set_webview_callback(struct openconnect_info *vpninfo,
+				      openconnect_open_webview_vfn webview_fn)
+{
+	vpninfo->open_webview = webview_fn;
+	vpninfo->legacy_headers = 0;
+	vpninfo->try_http_auth = 0;
 }

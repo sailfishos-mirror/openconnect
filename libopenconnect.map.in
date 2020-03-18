@@ -106,6 +106,7 @@ OPENCONNECT_5_5 {
 OPENCONNECT_5_6 {
  global:
 	openconnect_set_trojan_interval;
+	openconnect_set_webview_callback;
 } OPENCONNECT_5_5;
 
 OPENCONNECT_PRIVATE {
