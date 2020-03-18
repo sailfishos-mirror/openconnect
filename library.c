@@ -1572,6 +1572,13 @@ retry:
 		int second_auth = opt->flags & OC_FORM_OPT_SECOND_AUTH;
 		opt->flags &= ~OC_FORM_OPT_IGNORE;
 
+		if (opt->type == OC_FORM_OPT_SSO && vpninfo->open_webview) {
+		    vpninfo->sso_cookie_value = NULL;
+		    vpninfo->open_webview(vpninfo, vpninfo->sso_login, NULL);
+		    opt->_value = vpninfo->sso_cookie_value;
+		    vpninfo->sso_cookie_value = NULL;
+		}
+
 		if (!auth_choice ||
 		    (opt->type != OC_FORM_OPT_TEXT && opt->type != OC_FORM_OPT_PASSWORD))
 			continue;
@@ -1610,11 +1617,28 @@ retry:
 void openconnect_set_webview_callback(struct openconnect_info *vpninfo,
 				      openconnect_open_webview_vfn webview_fn)
 {
-	return;
+	vpninfo->open_webview = webview_fn;
+	vpninfo->try_http_auth = 0;
 }
 
 int openconnect_webview_load_changed(struct openconnect_info *vpninfo,
 				      const struct oc_webview_result *result)
 {
-	return -EOPNOTSUPP;
+    int i;
+
+    // If we're not at the final URI, tell the webview to keep going
+    if (strcmp(result->uri, vpninfo->sso_login_final)) {
+        return 1;
+    }
+
+    for (i=0; result->cookies[i] != NULL; i+=2) {
+        if (!strcmp(vpninfo->sso_token_cookie, result->cookies[i]))
+        {
+            vpninfo->sso_cookie_value = strdup(result->cookies[i+1]);
+            break;
+        }
+    }
+
+    // Tell the webview to terminate
+    return 0;
 }

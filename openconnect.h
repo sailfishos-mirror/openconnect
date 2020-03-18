@@ -214,6 +214,7 @@ struct oc_vpn_proto {
 #define OC_FORM_OPT_SELECT	3
 #define OC_FORM_OPT_HIDDEN	4
 #define OC_FORM_OPT_TOKEN	5
+#define OC_FORM_OPT_SSO 	6
 
 #define OC_FORM_RESULT_ERR		-1
 #define OC_FORM_RESULT_OK		0
