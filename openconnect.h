@@ -43,6 +43,8 @@ extern "C" {
  *  - Add openconnect_get_auth_expiration()
  *  - Add openconnect_disable_dtls()
  *  - Make openconnect_disable_ipv6() return int
+ *  - Add openconnect_set_webview_callback()
+ *  - Add openconnect_webview_load_changed()
  *
  * API version 5.6 (v8.06; 2020-03-31):
  *  - Add openconnect_set_trojan_interval()
@@ -322,6 +324,17 @@ struct oc_cert {
 	int der_len;
 	unsigned char *der_data;
 	void *reserved;
+};
+
+/* Used by openconnect_webview_load_changed() to return data to OC.
+ * The arrays must contain an even number of const strings, with names and
+ * values, and a NULL to terminate. E.g.:
+ * name0, val0, name1, val1, NULL
+ */
+struct oc_webview_result {
+	const char *uri;
+	const char **cookies;
+	const char **headers;
 };
 
 /****************************************************************************/
@@ -731,6 +744,16 @@ struct openconnect_info *openconnect_vpninfo_new(const char *useragent,
 						 openconnect_progress_vfn,
 						 void *privdata);
 void openconnect_vpninfo_free(struct openconnect_info *vpninfo);
+
+typedef int (*openconnect_open_webview_vfn) (struct openconnect_info *,
+					     const char *uri,
+					     void *privdata);
+
+void openconnect_set_webview_callback(struct openconnect_info *vpninfo,
+				      openconnect_open_webview_vfn);
+
+int openconnect_webview_load_changed(struct openconnect_info *vpninfo,
+                                     const struct oc_webview_result *result);
 
 /* Callback to allow binding a newly created socket's file descriptor to
    a specific interface, e.g. with SO_BINDTODEVICE. This tells the kernel

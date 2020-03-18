@@ -1606,3 +1606,15 @@ retry:
 
 	return ret;
 }
+
+void openconnect_set_webview_callback(struct openconnect_info *vpninfo,
+				      openconnect_open_webview_vfn webview_fn)
+{
+	return;
+}
+
+int openconnect_webview_load_changed(struct openconnect_info *vpninfo,
+				      const struct oc_webview_result *result)
+{
+	return -EOPNOTSUPP;
+}
