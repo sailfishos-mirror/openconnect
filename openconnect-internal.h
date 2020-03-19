@@ -1066,6 +1066,12 @@ int openconnect_ppp_new(struct openconnect_info *vpninfo, int encap, int want_ip
 int ppp_reset(struct openconnect_info *vpninfo);
 int check_http_status(const char *buf, int len);
 
+/* array.c */
+int array_obtain_cookie(struct openconnect_info *vpninfo);
+int array_connect(struct openconnect_info *vpninfo);
+int array_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable);
+int array_bye(struct openconnect_info *vpninfo, const char *reason);
+
 /* auth-globalprotect.c */
 int gpst_obtain_cookie(struct openconnect_info *vpninfo);
 void gpst_common_headers(struct openconnect_info *vpninfo, struct oc_text_buf *buf);
