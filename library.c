@@ -1211,11 +1211,10 @@ retry:
 		opt->flags &= ~OC_FORM_OPT_IGNORE;
 
 		if (opt->type == OC_FORM_OPT_SSO && vpninfo->open_webview) {
-			opt->_value = vpninfo->open_webview(vpninfo->cbdata,
-				vpninfo->sso_login,
-				vpninfo->sso_login_final,
-				vpninfo->sso_token_cookie,
-				vpninfo->sso_error_cookie);
+		    vpninfo->sso_cookie_value = NULL;
+		    vpninfo->open_webview(vpninfo, vpninfo->sso_login);
+		    opt->_value = vpninfo->sso_cookie_value;
+		    vpninfo->sso_cookie_value = NULL;
 		}
 
 		if (!auth_choice ||
@@ -1259,4 +1258,34 @@ void openconnect_set_webview_callback(struct openconnect_info *vpninfo,
 	vpninfo->open_webview = webview_fn;
 	vpninfo->legacy_headers = 0;
 	vpninfo->try_http_auth = 0;
+}
+
+int openconnect_webview_load_changed(struct openconnect_info *vpninfo,
+                                     const char *uri,
+                                     const char **cookies,
+                                     const char **headers)
+{
+    int i;
+    int cookie_name_len = strlen(vpninfo->sso_token_cookie);
+
+    // If we're not at the final URI, tell the webview to keep going
+    if (strcmp(uri, vpninfo->sso_login_final)) {
+        return 1;
+    }
+
+    for (i=0;; i++) {
+        if (cookies[i] == NULL) {
+            break;
+        }
+
+        if (!strncmp(vpninfo->sso_token_cookie, cookies[i], cookie_name_len)
+            && cookies[i][cookie_name_len] == '=')
+        {
+            vpninfo->sso_cookie_value = strdup(&cookies[i][cookie_name_len+1]);
+            break;
+        }
+    }
+
+    // Tell the webview to terminate
+    return 0;
 }

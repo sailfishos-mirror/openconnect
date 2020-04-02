@@ -644,14 +644,16 @@ struct openconnect_info *openconnect_vpninfo_new(const char *useragent,
 						 void *privdata);
 void openconnect_vpninfo_free(struct openconnect_info *vpninfo);
 
-typedef char* (*openconnect_open_webview_vfn) (void *privdata,
-					     const char *start_uri,
-                                             const char *final_uri,
-                                             const char *token_cookie,
-                                             const char *error_cookie);
+typedef void (*openconnect_open_webview_vfn) (struct openconnect_info *,
+					     const char *uri);
 
 void openconnect_set_webview_callback(struct openconnect_info *vpninfo,
 				      openconnect_open_webview_vfn);
+
+int openconnect_webview_load_changed(struct openconnect_info *vpninfo,
+                                     const char *uri,
+                                     const char **cookies,
+                                     const char **headers);
 
 /* Callback to allow binding a newly created socket's file descriptor to
    a specific interface, e.g. with SO_BINDTODEVICE. This tells the kernel
