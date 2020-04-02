@@ -1,0 +1,9 @@
+Document: openconnect
+Title: OpenConnect VPN Client
+Author: David Woodhouse
+Abstract: User and developer documentation for the OpenConnect VPN client.
+Section: Network/Communication
+
+Format: HTML
+Index: /usr/share/doc/openconnect/html/index.html
+Files: /usr/share/doc/openconnect/html/*.html

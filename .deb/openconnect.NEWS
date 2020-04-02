@@ -1,0 +1,8 @@
+openconnect (3.20-2) unstable; urgency=low
+
+  OpenConnect is now configured to use the script provided by the vpnc-scripts
+  package by default. If you were downloading this script as suggested by the
+  OpenConnect documentation, you can now use it as shipped in Debian without
+  any custom configuration.
+
+ -- Mike Miller <mtmiller@ieee.org>  Wed, 06 Jun 2012 08:45:27 -0400

@@ -1,0 +1,7 @@
+Tests: upstream-test-suite
+Depends: @,
+         libsocket-wrapper,
+         libuid-wrapper,
+         locales-all,
+         ocserv (>= 0.12.1-2),
+         softhsm2

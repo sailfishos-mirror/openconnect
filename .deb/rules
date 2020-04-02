@@ -1,0 +1,29 @@
+#!/usr/bin/make -f
+
+include /usr/share/dpkg/pkg-info.mk
+
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+
+# Link with --as-needed to eliminate unused or indirect library dependencies
+export DEB_LDFLAGS_MAINT_APPEND = -Wl,--as-needed
+
+%:
+	dh $@
+
+override_dh_auto_configure:
+	dh_auto_configure -- \
+		--disable-dsa-tests \
+		--htmldir=/usr/share/doc/openconnect/html \
+		--with-gnutls \
+		--with-vpnc-script=/usr/share/vpnc-scripts/vpnc-script
+	$(MAKE) version.c
+	sed -i -e 's|".*"|"v$(DEB_VERSION)"|' version.c
+
+override_dh_installchangelogs:
+	dh_installchangelogs www/changelog.html
+
+override_dh_compress:
+	dh_compress -Xhtml/changelog.html
+
+override_dh_autoreconf:
+	dh_autoreconf --as-needed
