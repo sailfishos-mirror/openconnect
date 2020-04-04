@@ -151,8 +151,8 @@ fi
 COOKIE_HEADER="Cookie: sdesktop=$TOKEN"
 CONTENT_HEADER="Content-Type: text/xml"
 URL="https://$CSD_HOSTNAME/+CSCOE+/sdesktop/scan.xml?reusebrowser=1"
-curl $PINNEDPUBKEY -H "$CONTENT_HEADER" -H "$COOKIE_HEADER" --data @$RESPONSE "$URL" > $RESULT
 
-cat $RESULT || :
-
-exit 0
+# Exit status is used to indicate success/failure of the CSD process: we don't want
+# OpenConnect to continue if curl fails, because the rest of the authentication
+# probably won't succeed.
+curl $PINNEDPUBKEY -v -H "$CONTENT_HEADER" -H "$COOKIE_HEADER" --data @$RESPONSE "$URL"

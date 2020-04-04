@@ -132,4 +132,11 @@ sleep $TIMEOUT
 if kill -0 $CSTUB_PID 2> /dev/null; then
     echo "Killing cstub process after $TIMEOUT seconds"
     kill $CSTUB_PID 2> /dev/null || kill -9 $CSTUB_PID 2> /dev/null
+
+    # Exit status is used to indicate success/failure of the CSD process: we don't want
+    # OpenConnect to continue if CSD fails.
+    exit 1
 fi
+
+# cstub completed within the timeout period. Let's assume success.
+exit 0

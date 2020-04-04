@@ -191,3 +191,8 @@ cat <<EOF
 	</categories>
 </hip-report>
 EOF
+
+# Exit status indicates success/failure of the HIP report generation
+# process: we don't want OpenConnect to continue if it failed because
+# the rest of the authentication probably won't succeed.
+exit 0

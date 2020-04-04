@@ -56,3 +56,8 @@ echo "			<host-id>$HOSTID</host-id>"
 echo '		</entry>'
 echo '	</categories>'
 echo '</hip-report>'
+
+# Exit status indicates success/failure of the HIP report generation
+# process: we don't want OpenConnect to continue if it failed because
+# the rest of the authentication probably won't succeed.
+exit 0
