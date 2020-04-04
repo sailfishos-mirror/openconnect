@@ -155,7 +155,7 @@ static const struct vpn_proto openconnect_protos[] = {
 		.vpn_close_session = gpst_bye,
 		.tcp_connect = gpst_setup,
 		.tcp_mainloop = gpst_mainloop,
-		.add_http_headers = gpst_common_headers,
+		.add_http_headers = http_common_headers,
 		.obtain_cookie = gpst_obtain_cookie,
 		.udp_protocol = "ESP",
 #ifdef HAVE_ESP

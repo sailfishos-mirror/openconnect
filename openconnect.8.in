@@ -550,7 +550,13 @@ be accepted, if it is at least 4 characters past the prefix.
 Use
 .I STRING
 as 'User\-Agent:' field value in HTTP header.
-(e.g. \-\-useragent 'Cisco AnyConnect VPN Agent for Windows 2.2.0133')
+(e.g. \-\-useragent 'Cisco AnyConnect VPN Agent for Windows 4.8.01090')
+
+Some old GlobalProtect servers may require the exact value 'PAN GlobalProtect'
+while some old Juniper servers may require the exact value 'ncsvc'. If it makes
+a difference, please report this information to the
+.B openconnect\-devel@lists.infradead.org
+mailing list.
 .TP
 .B \-\-version\-string=STRING
 Use

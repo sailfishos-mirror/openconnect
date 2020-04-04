@@ -924,7 +924,6 @@ int pulse_eap_ttls_recv(struct openconnect_info *vpninfo, void *data, int len);
 
 /* auth-globalprotect.c */
 int gpst_obtain_cookie(struct openconnect_info *vpninfo);
-void gpst_common_headers(struct openconnect_info *vpninfo, struct oc_text_buf *buf);
 int gpst_bye(struct openconnect_info *vpninfo, const char *reason);
 const char *gpst_os_name(struct openconnect_info *vpninfo);
 

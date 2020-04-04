@@ -16,6 +16,7 @@
    <li><b>OpenConnect HEAD</b>
      <ul>
        <li>Install bash completion script as /usr/share/bash-completion/completions/openconnect.</li>
+       <li>No more hardcoding of GlobalProtect user-agent, but suggest override for old servers that may still require it in manual</li>
      </ul><br/>
   </li>
   <li><b><a href="ftp://ftp.infradead.org/pub/openconnect/openconnect-8.09.tar.gz">OpenConnect v8.09</a></b>
