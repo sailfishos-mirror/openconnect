@@ -35,7 +35,7 @@ do_test()
 
 WORD=1
 RESULT="HOSTNAME"
-do_test ""
+do_test f
 
 WORD=1
 RESULT="--certificate"
@@ -44,7 +44,7 @@ do_test -c
 WORD=3
 RESULT="FILENAME
 !*.@(pem|der|p12|crt)"
-do_test foo -k ''
+do_test foo -k f
 
 WORD=2
 RESULT="--protocol"
@@ -57,7 +57,7 @@ do_test somehost --proto
 WORD=3
 RESULT="FILENAME
 !*.@(pem|der|crt)"
-do_test foo --cafile ''
+do_test foo --cafile f
 
 WORD=4
 RESULT="none
