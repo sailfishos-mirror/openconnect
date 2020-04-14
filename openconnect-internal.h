@@ -300,6 +300,10 @@ struct vpn_proto {
 
 	/* Catch probe packet confirming the (UDP) session */
 	int (*udp_catch_probe)(struct openconnect_info *vpninfo, struct pkt *p);
+
+	/* Handle load_changed from authentication webview */
+	int (*webview_load_changed)(struct openconnect_info *vpninfo, const char *uri,
+				    const char **cookies, const char **headers);
 };
 
 struct pkt_q {
@@ -911,6 +915,8 @@ int compress_packet(struct openconnect_info *vpninfo, int compr_type, struct pkt
 /* auth-juniper.c */
 int oncp_obtain_cookie(struct openconnect_info *vpninfo);
 void oncp_common_headers(struct openconnect_info *vpninfo, struct oc_text_buf *buf);
+int oncp_webview_load_changed(struct openconnect_info *vpninfo, const char *uri,
+			      const char **cookies, const char **headers);
 
 /* oncp.c */
 int oncp_connect(struct openconnect_info *vpninfo);

@@ -33,11 +33,12 @@ extern "C" {
 #endif
 
 #define OPENCONNECT_API_VERSION_MAJOR 5
-#define OPENCONNECT_API_VERSION_MINOR 6
+#define OPENCONNECT_API_VERSION_MINOR 7
 
 /*
  * API version 5.7:
  *  - add openconnect_set_webview_callback()
+ *  - add openconnect_webview_load_changed()
  *
  * API version 5.6 (v8.06; 2020-03-31):
  *  - Add openconnect_set_trojan_interval()

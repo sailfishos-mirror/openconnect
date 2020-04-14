@@ -597,7 +597,7 @@ static struct oc_auth_form *parse_roles_form_node(xmlNodePtr node)
 	return form;
 }
 
-int oncp_obtain_cookie(struct openconnect_info *vpninfo)
+static int oncp_obtain_cookie_html(struct openconnect_info *vpninfo)
 {
 	int ret;
 	struct oc_text_buf *resp_buf = NULL;
@@ -772,4 +772,48 @@ int oncp_obtain_cookie(struct openconnect_info *vpninfo)
 		free_auth_form(form);
 	buf_free(resp_buf);
 	return ret;
+}
+
+
+int oncp_obtain_cookie(struct openconnect_info *vpninfo)
+{
+	struct oc_text_buf *url;
+
+	if (!vpninfo->open_webview)
+		return oncp_obtain_cookie_html(vpninfo);
+
+	url = buf_alloc();
+	buf_append(url, "https://%s", vpninfo->hostname);
+	if (vpninfo->port != 443)
+		buf_append(url, ":%d", vpninfo->port);
+	buf_append(url, "/");
+	if (vpninfo->urlpath)
+		buf_append(url, "%s", vpninfo->urlpath);
+
+	if (buf_error(url))
+		return buf_free(url);
+
+	vpninfo->open_webview(vpninfo, url->data);
+	printf("Cookie %s\n", vpninfo->cookie);
+	return vpninfo->cookie ? 0 : -EIO;
+}
+
+
+int oncp_webview_load_changed(struct openconnect_info *vpninfo, const char *uri,
+			      const char **cookies, const char **headers)
+{
+	int i;
+
+	for (i = 0; cookies[i]; i++) {
+		char *equals = strchr(cookies[i], '=');
+		char *cookiename;
+
+		if (!equals)
+			continue;
+		cookiename = strndup(cookies[i], equals - cookies[i]);
+		vpn_progress(vpninfo, PRG_DEBUG, _("Add cookie %s=%s\n"),
+			     cookiename, equals + 1);
+		http_add_cookie(vpninfo, cookiename, equals + 1, 1);
+	}
+	return !!check_cookie_success(vpninfo);
 }

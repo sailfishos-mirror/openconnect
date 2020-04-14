@@ -139,6 +139,7 @@ static const struct vpn_proto openconnect_protos[] = {
 		.tcp_mainloop = oncp_mainloop,
 		.add_http_headers = oncp_common_headers,
 		.obtain_cookie = oncp_obtain_cookie,
+		.webview_load_changed = oncp_webview_load_changed,
 		.udp_protocol = "ESP",
 #ifdef HAVE_ESP
 		.udp_setup = esp_setup,
@@ -1269,13 +1270,17 @@ int openconnect_webview_load_changed(struct openconnect_info *vpninfo,
                                      const char **headers)
 {
     int i;
-    int cookie_name_len = strlen(vpninfo->sso_token_cookie);
+    int cookie_name_len;
+
+    if (vpninfo->proto->webview_load_changed)
+	    return vpninfo->proto->webview_load_changed(vpninfo, uri, cookies, headers);
 
     // If we're not at the final URI, tell the webview to keep going
     if (strcmp(uri, vpninfo->sso_login_final)) {
         return 1;
     }
 
+    cookie_name_len = strlen(vpninfo->sso_token_cookie);
     for (i=0;; i++) {
         if (cookies[i] == NULL) {
             break;
