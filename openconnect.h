@@ -36,6 +36,9 @@ extern "C" {
 #define OPENCONNECT_API_VERSION_MINOR 6
 
 /*
+ * API version 5.7:
+ *  - add openconnect_set_webview_callback()
+ *
  * API version 5.6 (v8.06; 2020-03-31):
  *  - Add openconnect_set_trojan_interval()
  *
@@ -203,6 +206,7 @@ struct oc_vpn_proto {
 #define OC_FORM_OPT_SELECT	3
 #define OC_FORM_OPT_HIDDEN	4
 #define OC_FORM_OPT_TOKEN	5
+#define OC_FORM_OPT_SSO 	6
 
 #define OC_FORM_RESULT_ERR		-1
 #define OC_FORM_RESULT_OK		0
@@ -643,6 +647,17 @@ struct openconnect_info *openconnect_vpninfo_new(const char *useragent,
 						 openconnect_progress_vfn,
 						 void *privdata);
 void openconnect_vpninfo_free(struct openconnect_info *vpninfo);
+
+typedef void (*openconnect_open_webview_vfn) (struct openconnect_info *,
+					     const char *uri);
+
+void openconnect_set_webview_callback(struct openconnect_info *vpninfo,
+				      openconnect_open_webview_vfn);
+
+int openconnect_webview_load_changed(struct openconnect_info *vpninfo,
+                                     const char *uri,
+                                     const char **cookies,
+                                     const char **headers);
 
 /* Callback to allow binding a newly created socket's file descriptor to
    a specific interface, e.g. with SO_BINDTODEVICE. This tells the kernel
