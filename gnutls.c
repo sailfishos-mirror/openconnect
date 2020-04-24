@@ -2070,6 +2070,67 @@ static int load_certificate(struct openconnect_info *vpninfo)
 	return ret;
 }
 
+/**
+ * check if the key purpose is compatible with authentication.
+ * If not warn.
+ */
+static unsigned int check_key_purpose(struct openconnect_info *vpninfo,
+		gnutls_x509_crt_t crt)
+{
+#define MAX_OID 128
+	char oid[MAX_OID];
+	unsigned int i, usage, critical;
+	int gerr;
+
+	/**
+	 * extendedKeyUsage of either clientAuth or msSmartcardLogin
+	 * would satify the purpose of authentication.
+	 */
+	for (i = 0; ; i++) {
+		size_t oid_size = sizeof oid;
+
+		gerr = gnutls_x509_crt_get_key_purpose_oid(crt, i, oid,
+				&oid_size, &critical);
+		if (gerr < 0) {
+			if (gerr != GNUTLS_E_REQUESTED_DATA_NOT_AVAILABLE)
+				vpn_progress(vpninfo, PRG_DEBUG,
+					_("gnutls_x509_crt_get_key_purpose_oid: (%d) %s\n"),
+					gerr, gnutls_strerror(gerr));
+			break;
+		}
+#ifndef GNUTLS_KP_TLS_WWW_CLIENT
+#  define GNUTLS_KP_TLS_WWW_CLIENT	"1.3.6.1.5.5.7.3.2"
+#endif
+#ifndef GNUTLS_KP_MS_SMART_CARD_LOGON
+#  define GNUTLS_KP_MS_SMART_CARD_LOGON	"1.3.6.1.4.1.311.20.2.2"
+#endif
+		if (strcmp(oid, GNUTLS_KP_TLS_WWW_CLIENT) == 0
+			|| strcmp(oid, GNUTLS_KP_MS_SMART_CARD_LOGON) == 0)
+			return 1;
+	}
+
+	/**
+	 * keyUsage of digitalSignature or nonRepudiation would also
+	 * work, too
+	 */
+	gerr = gnutls_x509_crt_get_key_usage(crt, &usage, &critical);
+	if (gerr < 0) {
+		if (gerr != GNUTLS_E_REQUESTED_DATA_NOT_AVAILABLE)
+			vpn_progress(vpninfo, PRG_DEBUG,
+				_("gnutls_X509_crt_get_key_usge: (%d) %s\n"),
+				gerr, gnutls_strerror(gerr));
+		usage = 0;
+	}
+
+	if (usage & (GNUTLS_KEY_DIGITAL_SIGNATURE|GNUTLS_KEY_NON_REPUDIATION))
+		return 1;
+
+	vpn_progress(vpninfo, PRG_INFO,
+			_("Key doesn't specify a usage or purpose"
+			    " compatible with authentication\n"));
+	return 0;
+}
+
 static int pem_encode(const gnutls_datum_t *data,
 		gnutls_datum_t *result)
 {
@@ -2208,6 +2269,8 @@ int cert_auth_challenge_response(struct openconnect_info *vpninfo,
 		goto cleanup;
 
 	pk = gnutls_pubkey_get_pk_algorithm(pubkey, NULL);
+
+	check_key_purpose(vpninfo, chain[0]);
 
 	/* Export identity as PKCS7 */
 	err = gnutls_pkcs7_init(&p7);
