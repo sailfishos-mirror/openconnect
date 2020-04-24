@@ -2285,8 +2285,22 @@ int openconnect_open_https(struct openconnect_info *vpninfo)
 			}
 		}
 	}
-	gnutls_init(&vpninfo->https_sess, GNUTLS_CLIENT|GNUTLS_FORCE_CLIENT_CERT);
-	gnutls_session_set_ptr(vpninfo->https_sess, (void *) vpninfo);
+
+/**
+ * Should we disable the TLS ticket extension since we are not resuming
+ * sessions?
+ */
+	err = gnutls_init(&vpninfo->https_sess, GNUTLS_CLIENT|GNUTLS_FORCE_CLIENT_CERT);
+	if (err < 0) {
+		vpn_progress(vpninfo, PRG_ERR,
+		    _("Failed initializing session: (%d) %s\n"),
+		    err, gnutls_strerror(err));
+		gnutls_certificate_free_credentials(vpninfo->https_cred);
+		vpninfo->https_cred = NULL;
+		closesocket(ssl_sock);
+		return -ENOMEM;
+	}
+	gnutls_session_set_ptr(vpninfo->https_sess, vpninfo);
 	/*
 	 * For versions of GnuTLS older than 3.2.9, we try to avoid long
 	 * packets by silently disabling extensions such as SNI.
