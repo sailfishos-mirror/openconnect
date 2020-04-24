@@ -621,8 +621,7 @@ static int get_cert_name(gnutls_x509_crt_t cert, char *name, size_t namelen)
 static int assign_privkey(struct openconnect_info *vpninfo,
 			  gnutls_privkey_t pkey,
 			  gnutls_x509_crt_t *certs,
-			  unsigned int nr_certs,
-			  uint8_t *free_certs)
+			  unsigned int nr_certs)
 {
 	gnutls_pcert_st *pcerts = calloc(nr_certs, sizeof(*pcerts));
 	int i, err;
@@ -1111,10 +1110,9 @@ static int load_certificate(struct openconnect_info *vpninfo)
 	gnutls_x509_crt_t last_cert, cert = NULL;
 	gnutls_x509_crt_t *extra_certs = NULL, *supporting_certs = NULL;
 	unsigned int nr_supporting_certs = 0, nr_extra_certs = 0;
-	uint8_t *free_supporting_certs = NULL;
 	int err; /* GnuTLS error */
 	int ret;
-	int i;
+	unsigned int i;
 	int cert_is_p11 = 0, key_is_p11 = 0;
 	int cert_is_sys = 0, key_is_sys = 0;
 	char name[80];
@@ -1230,12 +1228,6 @@ static int load_certificate(struct openconnect_info *vpninfo)
 		else if (!ret) {
 			if (nr_supporting_certs) {
 				cert = supporting_certs[0];
-				free_supporting_certs = gnutls_malloc(nr_supporting_certs);
-				if (!free_supporting_certs) {
-					ret = -ENOMEM;
-					goto out;
-				}
-				memset(free_supporting_certs, 1, nr_supporting_certs);
 				goto got_key;
 			}
 			vpn_progress(vpninfo, PRG_ERR,
@@ -1705,21 +1697,12 @@ static int load_certificate(struct openconnect_info *vpninfo)
 		supporting_certs[0] = cert;
 		nr_supporting_certs = 1;
 
-		free_supporting_certs = gnutls_malloc(1);
-		if (!free_supporting_certs) {
-			vpn_progress(vpninfo, PRG_ERR,
-				     _("Failed to allocate memory for certificate\n"));
-			ret = -ENOMEM;
-			goto out;
-		}
-		free_supporting_certs[0] = 1;
 	}
 	last_cert = supporting_certs[nr_supporting_certs-1];
 
 	while (1) {
-		uint8_t free_issuer;
-		gnutls_x509_crt_t issuer;
-		void *tmp;
+		gnutls_x509_crt_t issuer = NULL;
+		gnutls_x509_crt_t *clist = NULL;
 
 		for (i = 0; i < nr_extra_certs; i++) {
 			if (extra_certs[i] &&
@@ -1731,15 +1714,13 @@ static int load_certificate(struct openconnect_info *vpninfo)
 			/* We found the next cert in the chain in extra_certs[] */
 			issuer = extra_certs[i];
 			extra_certs[i] = NULL;
-			free_issuer = 1;
 		} else {
 			/* Look for it in the system trust cafile too. */
 			err = gnutls_certificate_get_issuer(vpninfo->https_cred,
-							    last_cert, &issuer, 0);
-			free_issuer = 0;
-
+							    last_cert, &issuer, GNUTLS_TL_GET_COPY);
 #ifdef HAVE_P11KIT
-			if (err && cert_is_p11) {
+			if (err == GNUTLS_E_REQUESTED_DATA_NOT_AVAILABLE
+				&& cert_is_p11) {
 				gnutls_datum_t t;
 
 				err = gnutls_pkcs11_get_raw_issuer(cert_url, last_cert, &t, GNUTLS_X509_FMT_DER, 0);
@@ -1749,8 +1730,6 @@ static int load_certificate(struct openconnect_info *vpninfo)
 						err = gnutls_x509_crt_import(issuer, &t, GNUTLS_X509_FMT_DER);
 						if (err)
 							gnutls_x509_crt_deinit(issuer);
-						else
-							free_issuer = 1;
 					}
 					gnutls_free(t.data);
 				}
@@ -1774,35 +1753,24 @@ static int load_certificate(struct openconnect_info *vpninfo)
 			/* Don't actually include the root CA. If they don't already trust it,
 			   then handing it to them isn't going to help. But don't omit the
 			   original certificate if it's self-signed. */
-			if (free_issuer)
-				gnutls_x509_crt_deinit(issuer);
+			gnutls_x509_crt_deinit(issuer);
 			break;
 		}
 
 		/* OK, we found a new cert to add to our chain. */
-		tmp = supporting_certs;
+		clist = supporting_certs;
 		supporting_certs = gnutls_realloc(supporting_certs,
 						  sizeof(cert) * (nr_supporting_certs+1));
 		if (!supporting_certs) {
-			supporting_certs = tmp;
-		realloc_failed:
+			supporting_certs = clist;
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("Failed to allocate memory for supporting certificates\n"));
-			if (free_issuer)
-				gnutls_x509_crt_deinit(issuer);
+			gnutls_x509_crt_deinit(issuer);
 			break;
-		}
-
-		tmp = free_supporting_certs;
-		free_supporting_certs = gnutls_realloc(free_supporting_certs, nr_supporting_certs+1);
-		if (!free_supporting_certs) {
-			free_supporting_certs = tmp;
-			goto realloc_failed;
 		}
 
 		/* Append the new one */
 		supporting_certs[nr_supporting_certs] = issuer;
-		free_supporting_certs[nr_supporting_certs] = free_issuer;
 		nr_supporting_certs++;
 		last_cert = issuer;
 	}
@@ -1813,13 +1781,6 @@ static int load_certificate(struct openconnect_info *vpninfo)
 			     _("Adding supporting CA '%s'\n"), name);
 	}
 
-	/* OK, now we've checked the cert expiry and warned the user if it's
-	   going to expire soon, and we've built up as much of a trust chain
-	   in supporting_certs[] as we can find, to help the server work around
-	   OpenSSL RT#1942. Set up the GnuTLS credentials with the appropriate
-	   key and certs. GnuTLS makes us do this differently for X509 privkeys
-	   vs. TPM/PKCS#11 "generic" privkeys, and the latter is particularly
-	   'fun' for GnuTLS 2.12... */
 #if GNUTLS_VERSION_NUMBER >= 0x030600
 	if (gnutls_privkey_get_pk_algorithm(pkey, NULL) == GNUTLS_PK_RSA) {
 		/*
@@ -1850,7 +1811,7 @@ static int load_certificate(struct openconnect_info *vpninfo)
 	   key and certs.
 	*/
 	err = assign_privkey(vpninfo, pkey, supporting_certs,
-		             nr_supporting_certs, free_supporting_certs);
+		             nr_supporting_certs);
 	if (err) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Setting certificate failed: %s\n"),
@@ -1868,13 +1829,9 @@ static int load_certificate(struct openconnect_info *vpninfo)
 	gnutls_x509_privkey_deinit(key);
 	if (supporting_certs) {
 		for (i = 0; i < nr_supporting_certs; i++) {
-			/* We get here in an error case with !free_supporting_certs
-			   and should free them all in that case */
-			if (!free_supporting_certs || free_supporting_certs[i])
-				gnutls_x509_crt_deinit(supporting_certs[i]);
+			gnutls_x509_crt_deinit(supporting_certs[i]);
 		}
 		gnutls_free(supporting_certs);
-		gnutls_free(free_supporting_certs);
 	} else if (cert) {
 		/* Not if supporting_certs. It's supporting_certs[0] then and
 		   was already freed. */
