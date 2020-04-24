@@ -2024,6 +2024,223 @@ static int load_certificate(struct openconnect_info *vpninfo)
 	return ret;
 }
 
+static int pem_encode(const gnutls_datum_t *data,
+		gnutls_datum_t *result)
+{
+	char *r, *s, *p = NULL;
+	size_t r_n, s_n, p_n = 0;
+	int ret;
+
+	if (result == NULL)
+		return GNUTLS_E_INVALID_REQUEST;
+
+	r = (char *)data->data;
+	r_n = data->size;
+
+	/* handle when data->size == 0 */
+	if (r_n == 0) {
+		ret = 0;
+		goto done;
+	}
+
+	/* size of encoding */
+	p_n = ((r_n + 2) / 3) * 4;
+	/* plus newlines (subtract off nul) */
+	p_n += ((p_n + 63) / 64) - 1;
+	/* plus nul */
+	p = s = malloc(p_n + 1); s_n = p_n;
+	if (p == NULL)
+		return GNUTLS_E_MEMORY_ERROR;
+
+	/**
+	 * r := ptr to data to encode
+	 * r_n := the length of data to encode
+	 * s := output pointer
+	 * s_n := length of output, not including terminating nul
+	 */
+	while (r_n > 0) {
+		/* encode one line at at time */
+		const gnutls_datum_t datum = {(void *)r, r_n > 48 ? 48 : r_n};
+		char tmp[66];
+		size_t n = sizeof tmp;
+
+		r += datum.size; r_n -= datum.size;
+		ret = gnutls_pem_base64_encode(NULL, &datum, tmp, &n);
+		/* check assumptions */
+		if ((ret < 0) || (n > 64) || (n > s_n)) {
+			ret = GNUTLS_E_BASE64_ENCODING_ERROR;
+			goto cleanup;
+		}
+		/* append nul */
+		tmp[n++] = '\n';
+		/* copy */
+		memcpy(s, tmp, n);
+		/* s_n will wrap on the last block */
+		s += n; s_n -= n;
+	}
+	/* nul terminate */
+	p[p_n] = 0;
+
+ done:
+	*result = (gnutls_datum_t) {(void *)p, p_n};
+	p = NULL;
+
+ cleanup:
+	free(p);
+	return ret;
+}
+
+/**
+ * Sign the challenge provide by the server.
+ *
+ * challenge is the XML response provided by the server. An example is
+ * <?xml version="1.0" encoding="UTF-8"?>
+ * <config-auth client="vpn" type="auth-request" aggregate-auth-version="       2">
+ * <opaque is-for="sg">
+ * <tunnel-group>ANYCONNECT-MCA</tunnel-group>
+ * <aggauth-handle>136775778</aggauth-handle>
+ * <auth-method>multiple-cert</auth-method>
+ * <auth-method>single-sign-on</auth-method>
+ * <config-hash>1506879881148</config-hash>
+ * </opaque>
+ * <multiple-client-cert-request>
+ * <hash-algorithm>sha256</hash-algorithm>
+ * <hash-algorithm>sha384</hash-algorithm>
+ * <hash-algorithm>sha512</hash-algorithm>
+ * </multiple-client-cert-request>
+ * <random>FA4003BD87436B227####snip####C138A08FF724F0100015B863F75091483       9EE79C86DFE8F0B9A0199E2</random>
+ * <cert-authenticated></cert-authenticated>
+ * </config-auth>
+ *
+ * identity is a PEM-encoded (base64, line length of 64) PKCS7
+ * certificate chain. Note that I have only gotten anyconnect to
+ * use a single certificate for signing a challenge.
+ *
+ * response is the PEM-encoded signature of the callenge.
+ */
+int cert_auth_challenge_response(struct openconnect_info *vpninfo,
+		int cert_rq, const char *challenge, char **identity,
+		struct challenge_response *response)
+{
+	const struct table_entry {
+		int id;
+		gnutls_digest_algorithm_t digest;
+	} *entry, table[] = {
+		{ CERT_AUTH_DIGEST_SHA512, GNUTLS_DIG_SHA512 },
+		{ CERT_AUTH_DIGEST_SHA384, GNUTLS_DIG_SHA384 },
+		{ CERT_AUTH_DIGEST_SHA256, GNUTLS_DIG_SHA256 },
+		{ CERT_AUTH_DIGEST_UNKNOWN, GNUTLS_DIG_UNKNOWN },
+	};
+	gnutls_privkey_t key = NULL;
+	gnutls_pubkey_t pubkey = NULL;
+	gnutls_x509_crt_t *chain = NULL;
+	unsigned int chain_len = 0;
+	gnutls_pkcs7_t p7 = NULL;
+	gnutls_datum_t p7bin, p7pem = {NULL, 0};
+	const gnutls_datum_t dat = {(void *)challenge, strlen(challenge)};
+	gnutls_datum_t sig, sigpem = {NULL, 0};
+	unsigned int i;
+	int pk;
+	int ret = -ENOMEM, err = 0;
+
+	if (response == NULL)
+		return -EINVAL;
+
+	ret = load_keycert(vpninfo, vpninfo->key2, vpninfo->cert2,
+			vpninfo->key2_password, &key, &chain, &chain_len, NULL);
+	if (ret < 0)
+		goto cleanup;
+	/**
+	 * Get PK algorithm of the certificate
+	 */
+	err = gnutls_pubkey_init(&pubkey);
+	if (err < 0)
+		goto cleanup;
+
+	err = gnutls_pubkey_import_x509(pubkey, chain[0], 0);
+	if (err < 0)
+		goto cleanup;
+
+	pk = gnutls_pubkey_get_pk_algorithm(pubkey, NULL);
+
+	/* Export identity as PKCS7 */
+	err = gnutls_pkcs7_init(&p7);
+	if (err < 0)
+		goto cleanup;
+
+	for (i = 0; i < chain_len; i++) {
+		err = gnutls_pkcs7_set_crt(p7, chain[i]);
+		if (err < 0)
+			goto cleanup;
+	}
+
+	err = gnutls_pkcs7_export2(p7, GNUTLS_X509_FMT_DER, &p7bin);
+	if (err < 0)
+		goto cleanup;
+
+	/* export as PEM */
+	err = pem_encode(&p7bin, &p7pem);
+	free_datum(&p7bin);
+	if (err < 0)
+		goto cleanup;
+
+	/**
+	 * Sign the challenge
+	 * Anyconnect prefers SHA512
+	 */
+	for (entry = table; entry->digest != GNUTLS_DIG_UNKNOWN; entry++) {
+		gnutls_digest_algorithm_t algo = entry->digest;
+
+		if ((cert_rq & entry->id) != entry->id)
+			continue;
+#if GNUTLS_VERSION_NUMBER >= 0x030600
+		err = gnutls_privkey_sign_data2(key, gnutls_pk_to_sign(pk, algo), 0, &dat, &sig);
+#else /* GNUTLS_VERSION_NUMBER < 0x030600 */
+		err = gnutls_privkey_sign_data(key, algo, 0, &dat, &sig);
+#endif
+		if (err != GNUTLS_E_INVALID_REQUEST
+			&& err != GNUTLS_E_CONSTRAINT_ERROR)
+			break;
+	}
+	if (entry->digest == GNUTLS_DIG_UNKNOWN) {
+		err = GNUTLS_E_UNSUPPORTED_SIGNATURE_ALGORITHM;
+		ret = -EINVAL;
+	}
+	if (err < 0)
+		goto cleanup;
+
+	err = pem_encode(&sig, &sigpem);
+	free_datum(&sig);
+	if (err < 0)
+		goto cleanup;
+
+	/* Success! */
+	*identity = (char *)p7pem.data;
+	p7pem = (gnutls_datum_t) {0};
+	*response =
+	  (struct challenge_response) {entry->id, (char *)sigpem.data};
+	sigpem = (gnutls_datum_t) {0};
+	ret = 0;
+
+ cleanup:
+	if (err < 0) {
+		vpn_progress(vpninfo, PRG_ERR,
+		    _("Failed responding to the challenge: (%d) %s\n"),
+		    err, gnutls_strerror(err));
+		vpn_progress(vpninfo, PRG_DEBUG,
+		    _("cert_rq = 0x%.2x"), cert_rq);
+	}
+	free_datum(&sigpem);
+	free_datum(&p7pem);
+	gnutls_pkcs7_deinit(p7);
+	gnutls_privkey_deinit(key);
+	gnutls_pubkey_deinit(pubkey);
+	for (i = 0; i < chain_len; i++)
+		gnutls_x509_crt_deinit(chain[i]);
+	gnutls_free(chain);
+	return ret;
+}
+
 static int get_cert_fingerprint(struct openconnect_info *vpninfo,
 				gnutls_x509_crt_t cert,
 				gnutls_digest_algorithm_t algo,
