@@ -44,6 +44,14 @@ static int cstp_can_gen_tokencode(struct openconnect_info *vpninfo,
 				  struct oc_auth_form *form,
 				  struct oc_form_opt *opt);
 
+/* multiple certificate-based authentication */
+static int announce_auth_methods(struct openconnect_info *vpninfo,
+	xmlNodePtr root);
+static void parse_multicert_request(struct openconnect_info *vpninfo,
+	xmlNodePtr node, int *cert_rq);
+static int multicert_response(struct openconnect_info *vpninfo,
+	int cert_rq, const char *challenge, struct oc_text_buf *body);
+
 int openconnect_set_option_value(struct oc_form_opt *opt, const char *value)
 {
 	if (opt->type == OC_FORM_OPT_SELECT) {
@@ -575,7 +583,7 @@ static int parse_xml_response(struct openconnect_info *vpninfo, char *response,
 			continue;
 		} else if (xmlnode_is_named(xml_node, "client-cert-request")) {
 			if (cert_rq)
-				*cert_rq = 1;
+				*cert_rq |= CERT_AUTH_REQ_CERT1;
 			else {
 				vpn_progress(vpninfo, PRG_ERR,
 					     _("Received <client-cert-request> when not expected.\n"));
@@ -594,6 +602,22 @@ static int parse_xml_response(struct openconnect_info *vpninfo, char *response,
 			ret = parse_host_scan_node(vpninfo, xml_node);
 		} else if (xmlnode_is_named(xml_node, "config")) {
 			parse_config_node(vpninfo, xml_node);
+		} else if (xmlnode_is_named(xml_node, "multiple-client-cert-request")) {
+			if (cert_rq) {
+				*cert_rq |= CERT_AUTH_REQ_CERT1|CERT_AUTH_REQ_CERT2;
+				parse_multicert_request(vpninfo, xml_node, cert_rq);
+			} else {
+				vpn_progress(vpninfo, PRG_ERR,
+				    _("Received <multiple-client-cert-request> when not expected.\n"));
+				ret = -EINVAL;
+			}
+		} else if (xmlnode_is_named(xml_node, "cert-authenticated")) {
+			/**
+			 * cert-authenticated indicates that the certificate for the
+			 * TLS session is valid. Thus, remove flag for CERT1 request.
+			 */
+			if (cert_rq)
+				*cert_rq &= ~CERT_AUTH_REQ_CERT1;
 		} else {
 			xmlnode_get_text(xml_node, "session-token", &vpninfo->cookie);
 			xmlnode_get_text(xml_node, "error", &form->error);
@@ -805,9 +829,14 @@ static int xmlpost_initial_req(struct openconnect_info *vpninfo,
 	if (buf_error(url_buf))
 		goto bad;
 
-	node = xmlNewTextChild(root, NULL, XCAST("group-access"), XCAST(url_buf->data));
+	node = xmlNewTextChild(root, NULL, XCAST("group-access"),
+		XCAST(url_buf->data));
 	if (!node)
 		goto bad;
+
+	if (announce_auth_methods(vpninfo, root) < 0)
+		goto bad;
+
 	if (cert_fail) {
 		node = xmlNewTextChild(root, NULL, XCAST("client-cert-fail"), NULL);
 		if (!node)
@@ -1362,7 +1391,7 @@ newgroup:
 		if (result < 0)
 			goto fail;
 
-		if (cert_rq) {
+		if (cert_rq & CERT_AUTH_REQ_CERT1) {
 			int cert_failed = 0;
 
 			free_auth_form(form);
@@ -1386,7 +1415,26 @@ newgroup:
 			if (result < 0)
 				goto fail;
 			continue;
+		} else if (cert_rq & CERT_AUTH_REQ_CERT2) {
+			// load cert
+			free_auth_form(form); form = NULL;
+			buf_truncate(request_body);
+			result = multicert_response(vpninfo, cert_rq, form_buf,
+				request_body);
+			if (result < 0)
+				goto fail;
+			/**
+			 * Hack!!!
+			 * If we processed a redirect, ntries == 3 once execution
+			 * returns to the top of the for loop.
+			 * This causes the client to attempt GET instead of POST. This
+			 * is not what we want. Thus, we decrement tries by one as
+			 * a work around.
+			 */
+			tries -= tries > 0;
+			continue;
 		}
+
 		if (form && form->action) {
 			vpninfo->redirect_url = strdup(form->action);
 			handle_redirect(vpninfo);
@@ -1551,4 +1599,251 @@ out:
 	}
 
 	return result;
+}
+
+/**
+ * Multiple certificate-based authentication
+ *
+ * Two certificates are employed: a "machine" certificate and a
+ * "user" certificate. The machine certificate is used to establish
+ * the TLS session. The user certificate is used to sign a challenge.
+ *
+ * An example XML exchange follows:
+ * CLIENT
+ * <?xml version="1.0" encoding="UTF-8"?>
+ * <config-auth client="vpn" type="init" aggregate-auth-version="2">
+ * <version who="vpn">4.4.01054</version>
+ * <device-id device-type="VMware, Inc. VMware Virtual Platform" platform-version="10.0.14393 #snip#  win</device-id>
+ * <mac-address-list>
+ * <mac-address>00-0c-29-e4-f5-bd</mac-address></mac-address-list>
+ * <group-select>ANYCONNECT-MCA</group-select>
+ * <group-access>https://10.197.223.81/MCA</group-access>
+ * <capabilities>
+ * <auth-method>single-sign-on</auth-method>
+ * <auth-method>multiple-cert</auth-method></capabilities>
+ * </config-auth>
+ *
+ * SERVER
+ * <?xml version="1.0" encoding="UTF-8"?>
+ * <config-auth client="vpn" type="auth-request" aggregate-auth-version="2">
+ * <opaque is-for="sg">
+ * <tunnel-group>ANYCONNECT-MCA</tunnel-group>
+ * <aggauth-handle>136775778</aggauth-handle>
+ * <auth-method>multiple-cert</auth-method>
+ * <auth-method>single-sign-on</auth-method>
+ * <config-hash>1506879881148</config-hash>
+ * </opaque>
+ * <multiple-client-cert-request>
+ * <hash-algorithm>sha256</hash-algorithm>
+ * <hash-algorithm>sha384</hash-algorithm>
+ * <hash-algorithm>sha512</hash-algorithm>
+ * </multiple-client-cert-request>
+ * <random>FA4003BD87436B227####snip####C138A08FF724F0100015B863F750914839EE79C86DFE8F0B9A0199E2</random>
+ * <cert-authenticated></cert-authenticated>
+ * </config-auth>
+ *
+ * CLIENT
+ * <?xml version="1.0" encoding="UTF-8"?>
+ * <config-auth client="vpn" type="auth-reply" aggregate-auth-version="2">
+ * <version who="vpn">4.4.01054</version>
+ * <device-id device-type="VMware, Inc. VMware Virtual Platform" platform-version="10.0.14393 ##snip##   win</device-id>
+ * <mac-address-list>
+ * <mac-address>00-0c-29-e4-f5-bd</mac-address></mac-address-list>
+ * <session-token></session-token>
+ * <session-id></session-id>
+ * <opaque is-for="sg">
+ *
+ * <tunnel-group>ANYCONNECT-MCA</tunnel-group>
+ * <aggauth-handle>608423386</aggauth-handle>
+ * <auth-method>multiple-cert</auth-method>
+ * <auth-method>single-sign-on</auth-method>
+ * <config-hash>1506879881148</config-hash></opaque>
+ * <auth>
+ * <client-cert-chain cert-store="1M">
+ * <client-cert-sent-via-protocol></client-cert-sent-via-protocol></client-cert-chain>
+ * <client-cert-chain cert-store="1U">
+ * <client-cert cert-format="pkcs7">MIIG+AYJKoZIhvcNAQcCoIIG6TCCBuU
+ * yTCCAzwwggIkAgkApaQuJKNF4RowDQYJKoZIhvcNAQELBQAwWTELMAkGA1UEBhMC
+ * #Snip#
+ * gSCx8Luo9V76nPjDI8PORurSFVWL9jiGJH0rLakYoGv
+ * </client-cert>
+ * <client-cert-auth-signature hash-algorithm-chosen="sha512">FIYur1Dzb4VPThVZtYwxSsCVRBUin/8MwWK+G5u2Phr4fJ
+ * #snip#
+ * EYt4G2hQ4hySySYqD4L4iV91uCT5b5Bmr5HZmSqKehg0zrDBjqxx7CLMSf2pSmQnjMwi6D0ygT=</client-cert-auth-signature>
+ * </client-cert-chain>
+ * </auth>
+ * </config-auth>
+ */
+
+ /**
+  * Announce our authentication capabilities
+  */
+int announce_auth_methods(struct openconnect_info *vpninfo,
+	xmlNodePtr root)
+{
+	xmlNodePtr node;
+
+	if (vpninfo->cert2 != NULL) {
+		node = xmlNewChild(root, NULL, XCAST("capabilities"), NULL);
+		if (node)
+			node = xmlNewTextChild(node, NULL, XCAST("auth-method"),
+				XCAST("multiple-cert"));
+		if (!node)
+			goto bad;
+	}
+
+	return 0;
+
+ bad:
+
+	return -ENOMEM;
+}
+
+struct multicert_digest_entry {
+		const xmlChar *name;
+		int id;
+};
+
+static const struct multicert_digest_entry multicert_digests[] = {
+		{ XCAST("sha512"), CERT_AUTH_DIGEST_SHA512 },
+		{ XCAST("sha384"), CERT_AUTH_DIGEST_SHA384 },
+		{ XCAST("sha256"), CERT_AUTH_DIGEST_SHA256 },
+		{ NULL, CERT_AUTH_DIGEST_UNKNOWN },
+};
+
+static int multicert_digest_by_name(const xmlChar *name)
+{
+	const struct multicert_digest_entry *entry;
+	int id = CERT_AUTH_DIGEST_UNKNOWN;
+
+	for (entry = multicert_digests; entry->name != NULL; entry++) {
+		if (xmlStrcasecmp(entry->name, name) == 0) {
+			id = entry->id;
+			break;
+		}
+	}
+  return id;
+}
+
+static const xmlChar *multicert_digest_by_id(int id)
+{
+	const struct multicert_digest_entry *entry;
+	const xmlChar *ret = NULL;
+
+	for (entry = multicert_digests; entry->name != NULL; entry++) {
+		if (entry->id == id) {
+			ret = entry->name;
+			break;
+		}
+	}
+
+	return ret;
+}
+
+void parse_multicert_request(struct openconnect_info *vpninfo,
+		xmlNodePtr node, int *cert_rq)
+{
+	xmlNodePtr child;
+	xmlChar *content;
+	int digest;
+
+	/* node is a multiple-client-cert-request element */
+	for (child = node->children; child; child = child->next) {
+		if (child->type != XML_ELEMENT_NODE)
+			continue;
+
+		if (xmlStrcmp(child->name, XCAST("hash-algorithm")) != 0)
+			continue;
+
+		content = xmlNodeGetContent(child);
+
+		digest = multicert_digest_by_name(content);
+		/* not found */
+		if (digest == CERT_AUTH_DIGEST_UNKNOWN)
+			vpn_progress(vpninfo, PRG_INFO,
+			    _("Algorithm '%s' is unknown.\n"),
+			    (char *)content);
+		else
+			*cert_rq |= digest;
+		xmlFree(content);
+	}
+}
+
+int multicert_response(struct openconnect_info *vpninfo,
+		int cert_rq, const char *challenge, struct oc_text_buf *body)
+{
+	xmlDocPtr doc = NULL;
+	xmlNodePtr root, auth, node, chain;
+	const xmlChar *digest_name;
+	char *identity = NULL;
+	struct challenge_response resp = {0};
+	int ret;
+
+	if ((cert_rq & CERT_AUTH_DIGEST_MASK) == 0) {
+		vpn_progress(vpninfo, PRG_ERR,
+		    _("Couldn't agree on signature algorithm"));
+		return xmlpost_initial_req(vpninfo, body, 1);
+	}
+
+	ret = cert_auth_challenge_response(vpninfo, cert_rq, challenge,
+			&identity, &resp);
+	if (ret < 0)
+		return xmlpost_initial_req(vpninfo, body, 1);
+
+	digest_name = multicert_digest_by_id(resp.digest);
+	if (digest_name == NULL)
+		goto bad;
+
+	doc = xmlpost_new_query(vpninfo, "auth-reply", &root);
+	if (!doc)
+		goto bad;
+
+	node = xmlNewChild(root, NULL, XCAST("session-token"), NULL);
+	if (!node)
+		goto bad;
+
+	node = xmlNewChild(root, NULL, XCAST("session-id"), NULL);
+	if (!node)
+		goto bad;
+
+	if (vpninfo->opaque_srvdata != NULL) {
+		node = xmlCopyNode(vpninfo->opaque_srvdata, 1);
+		if (!node || !xmlAddChild(root, node))
+			goto bad;
+	}
+	// key1 ownership is proved by TLS session
+	auth = xmlNewChild(root, NULL, XCAST("auth"), NULL);
+	if (!auth)
+		goto bad;
+
+	chain = xmlNewChild(auth, NULL, XCAST("client-cert-chain"), NULL);
+	if (!chain || !xmlNewProp(chain, XCAST("cert-store"), XCAST("1M")))
+		goto bad;
+
+	if (!xmlNewChild(chain, NULL, XCAST("client-cert-sent-via-protocol"),
+	NULL))
+		goto bad;
+	// key2 ownership is proved by signing the challenge
+	chain = xmlNewChild(auth, NULL, XCAST("client-cert-chain"), NULL);
+	if (!chain || !xmlNewProp(chain, XCAST("cert-store"), XCAST("1U")))
+		goto bad;
+
+	node = xmlNewTextChild(chain, NULL, XCAST("client-cert"),
+			XCAST(identity));
+	if (!node || !xmlNewProp(node, XCAST("cert-format"), XCAST("pkcs7")))
+		goto bad;
+
+	node = xmlNewTextChild(chain, NULL,
+			XCAST("client-cert-auth-signature"), XCAST(resp.data));
+	if (!node || !xmlNewProp(node, XCAST("hash-algorithm-chosen"),
+				digest_name))
+		goto bad;
+
+	free(identity); free(resp.data);
+	return xmlpost_complete(doc, body);
+
+ bad:
+	free(identity); free(resp.data);
+	xmlpost_complete(doc, NULL);
+	return -ENOMEM;
 }

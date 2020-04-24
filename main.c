@@ -194,6 +194,9 @@ enum {
 	OPT_PROTOCOL,
 	OPT_PASSTOS,
 	OPT_VERSION,
+	OPT_MULTICERT_CERT2,
+	OPT_MULTICERT_KEY2,
+	OPT_MULTICERT_KEY2_PASSWORD,
 };
 
 #ifdef __sun__
@@ -285,6 +288,11 @@ static const struct option long_options[] = {
 #elif defined(OPENCONNECT_OPENSSL)
 	OPTION("openssl-ciphers", 1, OPT_CIPHERSUITES),
 #endif
+#if ENABLE_MULTICERT > 0
+	OPTION("cert2", 1, OPT_MULTICERT_CERT2),
+	OPTION("key2", 1, OPT_MULTICERT_KEY2),
+	OPTION("key2-password", 1, OPT_MULTICERT_KEY2_PASSWORD),
+#endif /* ENABLE_MULTICERT */
 	OPTION(NULL, 0, 0)
 };
 
@@ -831,6 +839,16 @@ static void usage(void)
 #ifndef HAVE_LIBPCSCLITE
 	printf("                                  %s\n", _("(NOTE: Yubikey OATH disabled in this build)"));
 #endif
+
+#if ENABLE_MULTICERT > 0
+	printf("\n%s:\n", _("Multiple certificate-based authentication"));
+	printf("      --cert2=CERT2               %s\n",
+		_("User certificate CERT2"));
+	printf("      --key2=KEY2                 %s\n",
+		_("User key KEY2"));
+	printf("      --key2-password=PASS2       %s\n",
+		_("Passpharse PASS2 for CERT2/KEY2"));
+#endif /* ENABLE_MULTICERT > 0 */
 
 	printf("\n%s:\n", _("Server validation"));
 	printf("      --servercert=FINGERPRINT    %s\n", _("Server's certificate SHA1 fingerprint"));
@@ -1800,6 +1818,18 @@ int main(int argc, char **argv)
 				  );
 
 			strncpy(vpninfo->ciphersuite_config, config_arg, sizeof(vpninfo->ciphersuite_config) - 1);
+			break;
+		case OPT_MULTICERT_CERT2:
+			free(vpninfo->cert2);
+			vpninfo->cert2 = dup_config_arg();
+			break;
+		case OPT_MULTICERT_KEY2:
+			free(vpninfo->key2);
+			vpninfo->key2 = dup_config_arg();
+			break;
+		case OPT_MULTICERT_KEY2_PASSWORD:
+			free(vpninfo->key2_password);
+			vpninfo->key2_password = dup_config_arg();
 			break;
 		default:
 			usage();

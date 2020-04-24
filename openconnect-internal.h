@@ -752,6 +752,10 @@ struct openconnect_info {
 #define vpn_perror(vpninfo, msg) vpn_progress((vpninfo), PRG_ERR, "%s: %s\n", (msg), strerror(errno))
 
 /* certificate authentication */
+#if !defined(ENABLE_MULTICERT) && defined(OPENCONNECT_GNUTLS)
+#  define ENABLE_MULTICERT 1
+#endif
+
 typedef enum {
 	CERT_AUTH_REQ_CERT1 = (1U<<0),
 #define CERT_AUTH_REQ_CERT1 CERT_AUTH_REQ_CERT1
