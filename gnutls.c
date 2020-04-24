@@ -1102,6 +1102,89 @@ static unsigned int check_key_cert_match(struct openconnect_info *vpninfo,
 	return err >= 0;
 }
 
+static int load_trust(struct openconnect_info *vpninfo)
+{
+	gnutls_x509_trust_list_t tlist;
+	int err, ret;
+
+	err = gnutls_x509_trust_list_init(&tlist, 0);
+	if (err < 0) {
+		vpn_progress(vpninfo, PRG_ERR,
+		    _("Failed to initialize trusts: (%d) %s\n"),
+		    err, gnutls_strerror(err));
+		return -ENOMEM;
+	}
+
+	if (!vpninfo->no_system_trust) {
+		err = gnutls_x509_trust_list_add_system_trust(tlist,
+			GNUTLS_TL_NO_DUPLICATES|GNUTLS_TL_USE_IN_TLS, 0);
+		if (err < 0) {
+			vpn_progress(vpninfo, PRG_ERR,
+				_("Error loading system trust: (%d) %s\n"),
+				err, gnutls_strerror(err));
+			ret = -EIO;
+			goto cleanup;
+		} else {
+			vpn_progress(vpninfo, PRG_INFO,
+				_("Loaded system trust (%d CAs available)\n"),
+				err);
+		}
+	}
+
+	if (vpninfo->cafile) {
+		if (gnutls_url_is_supported(vpninfo->cafile)) {
+			/**
+			 * Handle pkcs11: and other GnuTLS URLS
+			 */
+			err = gnutls_x509_trust_list_add_trust_file(tlist,
+				vpninfo->cafile, NULL, GNUTLS_X509_FMT_PEM,
+				GNUTLS_TL_NO_DUPLICATES|GNUTLS_TL_USE_IN_TLS,
+				0);
+		} else {
+			/**
+			 * Handle files and ANDROID_KEYSTORE
+		   */
+			gnutls_datum_t tmp = {NULL, 0};
+
+			ret = load_datum(vpninfo, &tmp, vpninfo->cafile);
+			if (ret < 0)
+				goto cleanup;
+
+			err = gnutls_x509_trust_list_add_trust_mem(tlist, &tmp, NULL,
+				GNUTLS_X509_FMT_PEM,
+				GNUTLS_TL_NO_DUPLICATES|GNUTLS_TL_USE_IN_TLS,
+				0);
+
+			gnutls_free(tmp.data);
+		}
+
+		if (err == GNUTLS_E_NO_CERTIFICATE_FOUND)
+			err = 0;
+
+		if (err < 0) {
+			vpn_progress(vpninfo, PRG_ERR,
+				_("Error loading cafile: (%d) %s\n"),
+				err, gnutls_strerror(err));
+			ret = -EINVAL;
+			goto cleanup;
+		} else {
+			vpn_progress(vpninfo, PRG_INFO,
+				_("Loaded cafile (%d CAs available)\n"),
+				err);
+		}
+	}
+
+	/**
+	 * set_trust_list takes ownership of tlist
+	 */
+	gnutls_certificate_set_trust_list(vpninfo->https_cred, tlist, 0);
+	return 0;
+
+ cleanup:
+	gnutls_x509_trust_list_deinit(tlist, 1);
+	return ret;
+}
+
 static int load_certificate(struct openconnect_info *vpninfo)
 {
 	gnutls_datum_t fdata = {NULL, 0};
@@ -2164,78 +2247,19 @@ int openconnect_open_https(struct openconnect_info *vpninfo)
 
 	if (!vpninfo->https_cred) {
 		gnutls_certificate_allocate_credentials(&vpninfo->https_cred);
-		if (!vpninfo->no_system_trust)
-			gnutls_certificate_set_x509_system_trust(vpninfo->https_cred);
+
+		err = load_trust(vpninfo);
+		if (err < 0) {
+			vpn_progress(vpninfo, PRG_ERR,
+			    _("Failed loading trusts. Aborting.\n"));
+			gnutls_certificate_free_credentials(vpninfo->https_cred);
+			vpninfo->https_cred = NULL;
+			closesocket(ssl_sock);
+			return err;
+		}
 
 		gnutls_certificate_set_verify_function(vpninfo->https_cred,
 						       verify_peer);
-
-#ifdef ANDROID_KEYSTORE
-		if (vpninfo->cafile && !strncmp(vpninfo->cafile, "keystore:", 9)) {
-			gnutls_datum_t datum;
-			unsigned int nr_certs;
-
-			err = load_datum(vpninfo, &datum, vpninfo->cafile);
-			if (err < 0) {
-				gnutls_certificate_free_credentials(vpninfo->https_cred);
-				vpninfo->https_cred = NULL;
-				return err;
-			}
-
-			/* For GnuTLS 3.x We should use gnutls_x509_crt_list_import2() */
-			nr_certs = count_x509_certificates(&datum);
-			if (nr_certs) {
-				gnutls_x509_crt_t *certs;
-				int i;
-
-				certs = calloc(nr_certs, sizeof(*certs));
-				if (!certs) {
-					vpn_progress(vpninfo, PRG_ERR,
-						     _("Failed to allocate memory for cafile certs\n"));
-					gnutls_free(datum.data);
-					gnutls_certificate_free_credentials(vpninfo->https_cred);
-					vpninfo->https_cred = NULL;
-					closesocket(ssl_sock);
-					return -ENOMEM;
-				}
-				err = gnutls_x509_crt_list_import(certs, &nr_certs, &datum,
-								  GNUTLS_X509_FMT_PEM, 0);
-				gnutls_free(datum.data);
-				if (err >= 0) {
-					nr_certs = err;
-					err = gnutls_certificate_set_x509_trust(vpninfo->https_cred,
-										certs, nr_certs);
-				}
-				for (i = 0; i < nr_certs; i++)
-					gnutls_x509_crt_deinit(certs[i]);
-				free(certs);
-				if (err < 0) {
-					/* From crt_list_import or set_x509_trust */
-					vpn_progress(vpninfo, PRG_ERR,
-						     _("Failed to read certs from cafile: %s\n"),
-						     gnutls_strerror(err));
-					gnutls_certificate_free_credentials(vpninfo->https_cred);
-					vpninfo->https_cred = NULL;
-					closesocket(ssl_sock);
-					return -EINVAL;
-				}
-			}
-		} else
-#endif
-		if (vpninfo->cafile) {
-			err = gnutls_certificate_set_x509_trust_file(vpninfo->https_cred,
-								     vpninfo->cafile,
-								     GNUTLS_X509_FMT_PEM);
-			if (err < 0) {
-				vpn_progress(vpninfo, PRG_ERR,
-					     _("Failed to open CA file '%s': %s\n"),
-					     vpninfo->cafile, gnutls_strerror(err));
-				gnutls_certificate_free_credentials(vpninfo->https_cred);
-				vpninfo->https_cred = NULL;
-				closesocket(ssl_sock);
-				return -EINVAL;
-			}
-		}
 
 		if (vpninfo->cert) {
 			err = load_certificate(vpninfo);
