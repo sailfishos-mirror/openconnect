@@ -40,7 +40,7 @@
 #endif
 
 #if defined(HAVE_P11KIT) || defined(HAVE_GNUTLS_SYSTEM_KEYS)
-static int gnutls_pin_callback(void *priv, int attempt, const char *uri,
+static int pin_callback(void *user, int attempt, const char *token_uri,
 			       const char *token_label, unsigned int flags,
 			       char *pin, size_t pin_max);
 #endif /* HAVE_P11KIT || HAVE_GNUTLS_SYSTEM_KEYS */
@@ -444,6 +444,7 @@ static int load_datum(struct openconnect_info *vpninfo,
 
 static int load_pkcs12_certificate_(struct openconnect_info *vpninfo,
 				   gnutls_datum_t *datum,
+				   const char *password,
 				   gnutls_x509_privkey_t *key,
 				   gnutls_x509_crt_t **chain,
 				   unsigned int *chain_len,
@@ -469,7 +470,16 @@ static int load_pkcs12_certificate_(struct openconnect_info *vpninfo,
 		return NOT_PKCS12;
 	}
 
-	pass = vpninfo->cert_password;
+	pass = NULL;
+	if (password && (pass = strdup(password)) == NULL) {
+		err = GNUTLS_E_MEMORY_ERROR;
+		goto error;
+	}
+	/**
+	 * A check of pass == password determines if this is the first
+	 * attempt.
+	 */
+	password = pass;
 	while ((err = gnutls_pkcs12_verify_mac(p12, pass)) == GNUTLS_E_MAC_VERIFY_FAILED) {
 		if (!pass) {
 			/* OpenSSL's PKCS12_parse() code will try both NULL and "" automatically,
@@ -483,7 +493,7 @@ static int load_pkcs12_certificate_(struct openconnect_info *vpninfo,
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("Failed to decrypt PKCS#12 certificate file\n"));
 		free_pass(&pass);
-		vpninfo->cert_password = NULL;
+		password = NULL;
 		err = request_passphrase(vpninfo, "openconnect_pkcs12", &pass,
 					 _("Enter PKCS#12 pass phrase:"));
 		if (err) {
@@ -493,6 +503,7 @@ static int load_pkcs12_certificate_(struct openconnect_info *vpninfo,
 	}
 	/* If it wasn't GNUTLS_E_MAC_VERIFY_FAILED, then the problem wasn't just a
 	   bad password. Give up. */
+ error:
 	if (err) {
 		int level = PRG_ERR;
 		int ret = -EINVAL;
@@ -501,11 +512,13 @@ static int load_pkcs12_certificate_(struct openconnect_info *vpninfo,
 
 		/* If the first attempt, and we didn't know for sure it was PKCS#12
 		   anyway, bail out and try loading it as something different. */
-		if (pass == vpninfo->cert_password) {
+		if (pass == password) {
 			/* Make it non-fatal... */
 			level = PRG_DEBUG;
 			ret = NOT_PKCS12;
 		}
+
+		free_pass(&pass);
 
 		vpn_progress(vpninfo, level,
 			     _("Failed to process PKCS#12 file: %s\n"),
@@ -515,7 +528,7 @@ static int load_pkcs12_certificate_(struct openconnect_info *vpninfo,
 	err = gnutls_pkcs12_simple_parse(p12, pass, key, chain, chain_len,
 					 extra_certs, extra_certs_len, crl, 0);
 	free_pass(&pass);
-	vpninfo->cert_password = NULL;
+	password = NULL;
 
 	gnutls_pkcs12_deinit(p12);
 	if (err) {
@@ -529,6 +542,7 @@ static int load_pkcs12_certificate_(struct openconnect_info *vpninfo,
 
 static int load_pkcs12_certificate(struct openconnect_info *vpninfo,
 				   gnutls_datum_t *datum,
+				   const char *password,
 				   gnutls_privkey_t *key,
 				   gnutls_x509_crt_t **chain,
 				   unsigned int *chain_len,
@@ -544,7 +558,7 @@ static int load_pkcs12_certificate(struct openconnect_info *vpninfo,
 	unsigned int i;
 	int gerr, ret;
 
-	ret = load_pkcs12_certificate_(vpninfo, datum, &x509key,
+	ret = load_pkcs12_certificate_(vpninfo, datum, password, &x509key,
 			&crts, &ncrts, &xcrts, &nxcrts, &crevoke);
 	if (ret != 0)
 		return ret;
@@ -714,7 +728,8 @@ static int openssl_hash_password(struct openconnect_info *vpninfo, char *pass,
 
 static int import_openssl_pem(struct openconnect_info *vpninfo,
 			      gnutls_x509_privkey_t key,
-			      char type, char *pem_header, size_t pem_size)
+			      char type, char *pem_header, size_t pem_size,
+			      const char *password)
 {
 	gnutls_cipher_hd_t handle;
 	gnutls_cipher_algorithm_t cipher;
@@ -846,8 +861,11 @@ static int import_openssl_pem(struct openconnect_info *vpninfo,
 	if (!key_data)
 		goto out_enc_key;
 
-	pass = vpninfo->cert_password;
-	vpninfo->cert_password = NULL;
+	if ((pass = strdup(password)) == NULL) {
+		vpn_progress(vpninfo, PRG_ERR,
+			_("Out of memory.\n"));
+		goto out;
+	}
 
 	while (1) {
 		memcpy(key_data, b64_data.data, b64_data.size);
@@ -1218,14 +1236,18 @@ static void check_tls13(struct openconnect_info *vpninfo,
 	(void) key;
 }
 
-static int load_certificate(struct openconnect_info *vpninfo)
+static int load_keycert(struct openconnect_info *vpninfo,
+		const char *key_path, const char *cert_path, const char *password,
+		gnutls_privkey_t *key_,
+		gnutls_x509_crt_t **chain_, unsigned int *chain_len_,
+		gnutls_x509_crl_t *crl_)
 {
 	gnutls_datum_t fdata = {NULL, 0};
 	gnutls_x509_privkey_t key = NULL;
 	gnutls_privkey_t pkey = NULL;
 	gnutls_datum_t pkey_sig = {NULL, 0};
-	char *cert_url = (char *)vpninfo->cert;
-	char *key_url = (char *)vpninfo->sslkey;
+	char *key_url = NULL;
+	char *cert_url = NULL;
 #ifdef HAVE_P11KIT
 	gnutls_pkcs11_privkey_t p11key = NULL;
 #endif
@@ -1241,12 +1263,24 @@ static int load_certificate(struct openconnect_info *vpninfo)
 	int cert_is_sys = 0, key_is_sys = 0;
 	char name[80];
 
-	key_is_p11 = !strncmp(vpninfo->sslkey, "pkcs11:", 7);
-	cert_is_p11 = !strncmp(vpninfo->cert, "pkcs11:", 7);
+	if (cert_path == NULL || cert_path[0] == 0)
+		return -EINVAL;
+
+	if (key_path == NULL || key_path[0] == 0)
+		key_path = cert_path;
+
+	if (key_ == NULL || chain_ == NULL || chain_len_ == NULL)
+		return -EINVAL;
+
+	cert_url = (char *)cert_path;
+	key_url = (char *)key_path;
+
+	key_is_p11 = !strncmp(key_path, "pkcs11:", 7);
+	cert_is_p11 = !strncmp(cert_path, "pkcs11:", 7);
 
 	/* GnuTLS returns true for pkcs11:, tpmkey:, system:, and custom URLs. */
-	key_is_sys = !key_is_p11 && gnutls_url_is_supported(vpninfo->sslkey);
-	cert_is_sys = !cert_is_p11 && gnutls_url_is_supported(vpninfo->cert);
+	key_is_sys = !key_is_p11 && gnutls_url_is_supported(key_path);
+	cert_is_sys = !cert_is_p11 && gnutls_url_is_supported(cert_path);
 
 #ifndef HAVE_GNUTLS_SYSTEM_KEYS
 	if (key_is_sys || cert_is_sys) {
@@ -1286,7 +1320,7 @@ static int load_certificate(struct openconnect_info *vpninfo)
 
 		if (key_is_p11 &&
 		    !p11_kit_uri_parse(key_url, P11_KIT_URI_FOR_ANY, uri)) {
-			if (vpninfo->sslkey == vpninfo->cert ||
+			if (key_path == cert_path ||
 			    !p11_kit_uri_get_attribute(uri, CKA_CLASS)) {
 				class = CKO_PRIVATE_KEY;
 				p11_kit_uri_set_attribute(uri, &attr);
@@ -1311,7 +1345,7 @@ static int load_certificate(struct openconnect_info *vpninfo)
 			goto out;
 		}
 
-		gnutls_x509_crt_set_pin_function(cert, gnutls_pin_callback, vpninfo);
+		gnutls_x509_crt_set_pin_function(cert, pin_callback, vpninfo);
 
 		/* Yes, even for *system* URLs the only API GnuTLS offers us is
 		   ...import_pkcs11_url(). */
@@ -1333,17 +1367,17 @@ static int load_certificate(struct openconnect_info *vpninfo)
 
 	/* OK, not a PKCS#11 certificate so it must be coming from a file... */
 	vpn_progress(vpninfo, PRG_DEBUG,
-		     _("Using certificate file %s\n"), vpninfo->cert);
+		     _("Using certificate file %s\n"), cert_path);
 
 	/* Load file contents */
-	ret = load_datum(vpninfo, &fdata, vpninfo->cert);
+	ret = load_datum(vpninfo, &fdata, cert_path);
 	if (ret)
 		return ret;
 
 	/* Is it PKCS#12? */
 	if (!key_is_p11) {
 		/* PKCS#12 should actually contain certificates *and* private key */
-		ret = load_pkcs12_certificate(vpninfo, &fdata, &pkey,
+		ret = load_pkcs12_certificate(vpninfo, &fdata, password, &pkey,
 					      &supporting_certs, &nr_supporting_certs,
 					      &extra_certs, &nr_extra_certs,
 					      &crl);
@@ -1402,7 +1436,7 @@ static int load_certificate(struct openconnect_info *vpninfo)
 #ifdef HAVE_GNUTLS_SYSTEM_KEYS
 	if (key_is_sys) {
 		vpn_progress(vpninfo, PRG_DEBUG,
-			     _("Using system key %s\n"), vpninfo->sslkey);
+			     _("Using system key %s\n"), key_path);
 
 		err = gnutls_privkey_init(&pkey);
 		if (err) {
@@ -1413,13 +1447,13 @@ static int load_certificate(struct openconnect_info *vpninfo)
 			goto out;
 		}
 
-		gnutls_privkey_set_pin_function(pkey, gnutls_pin_callback, vpninfo);
+		gnutls_privkey_set_pin_function(pkey, pin_callback, vpninfo);
 
-		err = gnutls_privkey_import_url(pkey, vpninfo->sslkey, 0);
+		err = gnutls_privkey_import_url(pkey, key_path, 0);
 		if (err) {
 			vpn_progress(vpninfo, PRG_ERR,
-				     _("Error importing system key %s: %s\n"),
-				     vpninfo->sslkey, gnutls_strerror(err));
+			    _("Error importing system key %s: %s\n"),
+			    key_path, gnutls_strerror(err));
 			ret = -EIO;
 			goto out;
 		}
@@ -1440,7 +1474,7 @@ static int load_certificate(struct openconnect_info *vpninfo)
 			goto out;
 		}
 
-		gnutls_pkcs11_privkey_set_pin_function(p11key, gnutls_pin_callback, vpninfo);
+		gnutls_pkcs11_privkey_set_pin_function(p11key, pin_callback, vpninfo);
 
 		err = gnutls_pkcs11_privkey_import_url(p11key, key_url, 0);
 
@@ -1451,7 +1485,7 @@ static int load_certificate(struct openconnect_info *vpninfo)
 		   can work out what token the *cert* was found in and try that
 		   before we give up... */
 		if (err == GNUTLS_E_REQUESTED_DATA_NOT_AVAILABLE &&
-		    vpninfo->cert == vpninfo->sslkey) {
+		    cert_path == key_path) {
 			gnutls_pkcs11_obj_t crt;
 			P11KitUri *uri;
 			CK_TOKEN_INFO *token;
@@ -1577,14 +1611,14 @@ static int load_certificate(struct openconnect_info *vpninfo)
 	/* OK, not a PKCS#11 key so it must be coming from a file... load the
 	   file into memory, unless it's the same as the cert file and we
 	   already loaded that. */
-	if (!fdata.data || vpninfo->sslkey != vpninfo->cert) {
+	if (!fdata.data || key_path != cert_path) {
 		gnutls_free(fdata.data);
 		fdata.data = NULL;
 
 		vpn_progress(vpninfo, PRG_DEBUG,
-			     _("Using private key file %s\n"), vpninfo->sslkey);
+			     _("Using private key file %s\n"), key_path);
 
-		ret = load_datum(vpninfo, &fdata, vpninfo->sslkey);
+		ret = load_datum(vpninfo, &fdata, key_path);
 		if (ret)
 			goto out;
 	}
@@ -1642,7 +1676,7 @@ static int load_certificate(struct openconnect_info *vpninfo)
 			while (*p == '\n' || *p == '\r')
 				p++;
 			ret = import_openssl_pem(vpninfo, key, type, p,
-						 fdata.size - (p - (char *)fdata.data));
+						 fdata.size - (p - (char *)fdata.data), password);
 			if (ret)
 				goto out;
 		} else {
@@ -1669,7 +1703,7 @@ static int load_certificate(struct openconnect_info *vpninfo)
 		}
 	} else if (strstr((char *)fdata.data, "-----BEGIN ENCRYPTED PRIVATE KEY-----")) {
 		/* Encrypted PKCS#8 */
-		char *pass = vpninfo->cert_password;
+		char *pass = (char *)password;
 
 		while ((err = gnutls_x509_privkey_import_pkcs8(key, &fdata,
 							       GNUTLS_X509_FMT_PEM,
@@ -1681,7 +1715,7 @@ static int load_certificate(struct openconnect_info *vpninfo)
 				ret = -EINVAL;
 				goto out;
 			}
-			vpninfo->cert_password = NULL;
+			password = NULL;
 			if (pass) {
 				vpn_progress(vpninfo, PRG_ERR,
 					     _("Failed to decrypt PKCS#8 certificate file\n"));
@@ -1695,14 +1729,14 @@ static int load_certificate(struct openconnect_info *vpninfo)
 			}
 		}
 		free_pass(&pass);
-		vpninfo->cert_password = NULL;
+		password = NULL;
 	} else if (!gnutls_x509_privkey_import(key, &fdata, GNUTLS_X509_FMT_DER) ||
 		   !gnutls_x509_privkey_import_pkcs8(key, &fdata, GNUTLS_X509_FMT_DER,
 						     NULL, GNUTLS_PKCS_PLAIN)) {
 		/* Unencrypted DER (PKCS#1 or PKCS#8) */
 	} else {
 		/* Last chance: try encrypted PKCS#8 DER. And give up if it's not that */
-		char *pass = vpninfo->cert_password;
+		char *pass = (char *)password;
 
 		while ((err = gnutls_x509_privkey_import_pkcs8(key, &fdata,
 							       GNUTLS_X509_FMT_DER,
@@ -1714,7 +1748,7 @@ static int load_certificate(struct openconnect_info *vpninfo)
 				ret = -EINVAL;
 				goto out;
 			}
-			vpninfo->cert_password = NULL;
+			password = NULL;
 			if (pass) {
 				vpn_progress(vpninfo, PRG_ERR,
 					     _("Failed to decrypt PKCS#8 certificate file\n"));
@@ -1728,7 +1762,7 @@ static int load_certificate(struct openconnect_info *vpninfo)
 			}
 		}
 		free_pass(&pass);
-		vpninfo->cert_password = NULL;
+		password = NULL;
 	}
 
 	/**
@@ -1785,20 +1819,8 @@ static int load_certificate(struct openconnect_info *vpninfo)
 	   a PKCS#12 file we may have a trust chain in 'supporting_certs[]' too. */
 	check_certificate_expiry(vpninfo, cert);
 	get_cert_name(cert, name, sizeof(name));
-	get_cert_md5_fingerprint(vpninfo, cert, vpninfo->local_cert_md5);
 	vpn_progress(vpninfo, PRG_INFO, _("Using client certificate '%s'\n"),
 		     name);
-
-	if (crl) {
-		err = gnutls_certificate_set_x509_crl(vpninfo->https_cred, &crl, 1);
-		if (err) {
-			vpn_progress(vpninfo, PRG_ERR,
-				     _("Setting certificate revocation list failed: %s\n"),
-				     gnutls_strerror(err));
-			ret = -EINVAL;
-			goto out;
-		}
-	}
 
 	/* OpenSSL has problems with certificate chains — if there are
 	   multiple certs with the same name, it doesn't necessarily
@@ -1810,8 +1832,8 @@ static int load_certificate(struct openconnect_info *vpninfo)
 	   since we'll expand the supporting_certs array with more
 	   from the cafile and extra_certs[] array if we can, and
 	   those extra certs must not be freed (twice). */
-	if (!nr_supporting_certs) {
-		supporting_certs = gnutls_malloc(sizeof(*supporting_certs));
+	if (nr_supporting_certs == 0) {
+		supporting_certs = gnutls_malloc(sizeof supporting_certs[0]);
 		if (!supporting_certs) {
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("Failed to allocate memory for certificate\n"));
@@ -1820,8 +1842,8 @@ static int load_certificate(struct openconnect_info *vpninfo)
 		}
 		supporting_certs[0] = cert;
 		nr_supporting_certs = 1;
-
 	}
+	cert = NULL;
 	last_cert = supporting_certs[nr_supporting_certs-1];
 
 	while (1) {
@@ -1834,6 +1856,7 @@ static int load_certificate(struct openconnect_info *vpninfo)
 				break;
 		}
 
+		err = 0;
 		if (i < nr_extra_certs) {
 			/* We found the next cert in the chain in extra_certs[] */
 			issuer = extra_certs[i];
@@ -1868,10 +1891,10 @@ static int load_certificate(struct openconnect_info *vpninfo)
 				}
 			}
 #endif
-			if (err)
-				break;
-
 		}
+
+		if (err)
+			break;
 
 		if (gnutls_x509_crt_check_issuer(issuer, issuer)) {
 			/* Don't actually include the root CA. If they don't already trust it,
@@ -1884,7 +1907,7 @@ static int load_certificate(struct openconnect_info *vpninfo)
 		/* OK, we found a new cert to add to our chain. */
 		clist = supporting_certs;
 		supporting_certs = gnutls_realloc(supporting_certs,
-						  sizeof(cert) * (nr_supporting_certs+1));
+						  sizeof supporting_certs[0] * (nr_supporting_certs+1));
 		if (!supporting_certs) {
 			supporting_certs = clist;
 			vpn_progress(vpninfo, PRG_ERR,
@@ -1898,6 +1921,7 @@ static int load_certificate(struct openconnect_info *vpninfo)
 		nr_supporting_certs++;
 		last_cert = issuer;
 	}
+
 	for (i = 1; i < nr_supporting_certs; i++) {
 		get_cert_name(supporting_certs[i], name, sizeof(name));
 
@@ -1905,44 +1929,31 @@ static int load_certificate(struct openconnect_info *vpninfo)
 			     _("Adding supporting CA '%s'\n"), name);
 	}
 
-	check_tls13(vpninfo, pkey);
-
-	/* OK, now we've checked the cert expiry and warned the user if it's
-	   going to expire soon, and we've built up as much of a trust chain
-	   in supporting_certs[] as we can find, to help the server work around
-	   OpenSSL RT#1942. Set up the GnuTLS credentials with the appropriate
-	   key and certs.
-	*/
-	err = assign_privkey(vpninfo, pkey, supporting_certs,
-		             nr_supporting_certs);
-	if (err) {
-		vpn_progress(vpninfo, PRG_ERR,
-			     _("Setting certificate failed: %s\n"),
-			     gnutls_strerror(err));
-		ret = -EIO;
-		goto out;
-	}
-
-	pkey = NULL; /* we gave it away, and potentially also some
-					of extra_certs[] may have been zeroed. */
+  /* we gave it away, and potentially also some
+		 of extra_certs[] may have been zeroed. */
+  /* pkey = NULL */
+	*key_ = pkey, pkey = NULL;
+	*chain_ = supporting_certs, supporting_certs = NULL;
+	*chain_len_ = nr_supporting_certs, nr_supporting_certs = 0;
+	if (crl_)
+		*crl_ = crl, crl = NULL;
 	ret = 0;
 
  out:
 	gnutls_x509_crl_deinit(crl);
 	gnutls_x509_privkey_deinit(key);
-	if (supporting_certs) {
+	if (nr_supporting_certs > 0) {
 		for (i = 0; i < nr_supporting_certs; i++) {
 			gnutls_x509_crt_deinit(supporting_certs[i]);
 		}
 		gnutls_free(supporting_certs);
-	} else if (cert) {
+	} else {
 		/* Not if supporting_certs. It's supporting_certs[0] then and
 		   was already freed. */
 		gnutls_x509_crt_deinit(cert);
 	}
 	for (i = 0; i < nr_extra_certs; i++) {
-		if (extra_certs[i])
-			gnutls_x509_crt_deinit(extra_certs[i]);
+		gnutls_x509_crt_deinit(extra_certs[i]);
 	}
 	gnutls_free(extra_certs);
 
@@ -1951,10 +1962,63 @@ static int load_certificate(struct openconnect_info *vpninfo)
 	   just to point to something to hash. Don't free it in that case! */
 	free_datum(&fdata);
 	free_datum(&pkey_sig);
-	if (cert_url != vpninfo->cert)
+
+	if (cert_url != cert_path)
 		free(cert_url);
-	if (key_url != vpninfo->sslkey)
+	if (key_url != key_path)
 		free(key_url);
+	return ret;
+}
+
+static int load_certificate(struct openconnect_info *vpninfo)
+{
+	gnutls_privkey_t key = NULL;
+	gnutls_x509_crt_t *chain = NULL;
+	unsigned int chain_len = 0;
+	gnutls_x509_crl_t crl = NULL;
+	unsigned int i;
+	int ret;
+
+	ret = load_keycert(vpninfo, vpninfo->sslkey, vpninfo->cert,
+			vpninfo->cert_password, &key, &chain, &chain_len, &crl);
+	if (ret < 0)
+		goto cleanup;
+
+	ret = assign_privkey(vpninfo, key, chain, chain_len);
+	if (ret < 0) {
+		vpn_progress(vpninfo, PRG_ERR,
+				_("Setting certificate failed: (%d) %s\n"),
+				ret, gnutls_strerror(ret));
+		ret = -EIO;
+		goto cleanup;
+	}
+
+	check_tls13(vpninfo, key);
+
+	key = NULL; /* we gave it away */
+
+	get_cert_md5_fingerprint(vpninfo, chain[0], vpninfo->local_cert_md5);
+
+	if (crl != NULL) {
+		ret = gnutls_certificate_set_x509_crl(vpninfo->https_cred,
+				&crl, 1);
+		if (ret < 0) {
+			vpn_progress(vpninfo, PRG_ERR,
+					_("Setting certificate revocation list failed: (%d) %s\n"),
+					ret, gnutls_strerror(ret));
+			ret = -EINVAL;
+			goto cleanup;
+		}
+	}
+
+	ret = 0;
+
+ cleanup:
+	gnutls_privkey_deinit(key);
+	for (i = 0; i < chain_len; i++)
+		gnutls_x509_crt_deinit(chain[i]);
+	gnutls_free(chain);
+	gnutls_x509_crl_deinit(crl);
 	return ret;
 }
 
@@ -2547,56 +2611,21 @@ int openconnect_local_cert_md5(struct openconnect_info *vpninfo,
 }
 
 #if defined(HAVE_P11KIT) || defined(HAVE_GNUTLS_SYSTEM_KEYS)
-static int gnutls_pin_callback(void *priv, int attempt, const char *uri,
-			       const char *token_label, unsigned int flags,
-			       char *pin, size_t pin_max)
+static int request_pin(struct openconnect_info *vpninfo, char **ppin,
+		const char *token_uri, const char *token_label, unsigned int flags)
 {
-	struct openconnect_info *vpninfo = priv;
-	struct pin_cache **cache = &vpninfo->pin_cache;
-	struct oc_auth_form f;
-	struct oc_form_opt o;
 	char message[1024];
+	struct oc_auth_form f = {0};
+	struct oc_form_opt o = {0};
 	int ret;
 
-	if (!vpninfo || !vpninfo->process_auth_form)
-		return -1;
+	if (vpninfo->process_auth_form == NULL)
+		return GNUTLS_E_INVALID_REQUEST;
 
-	while (*cache) {
-		if (!strcmp(uri, (*cache)->token)) {
-			if ((*cache)->pin) {
-				if (attempt == 0) {
-					snprintf(pin, pin_max, "%s", (*cache)->pin);
-					return 0;
-				}
-				memset((*cache)->pin, 0x5a, strlen((*cache)->pin));
-				free((*cache)->pin);
-				(*cache)->pin = NULL;
-			}
-			break;
-		}
-		cache = &(*cache)->next;
-	}
-	if (!*cache) {
-		*cache = calloc(1, sizeof(struct pin_cache));
-		if (!*cache)
-			return -1;
-
-		(*cache)->token = strdup(uri);
-	}
-
-	if (!attempt && vpninfo->cert_password) {
-		snprintf(pin, pin_max, "%s", vpninfo->cert_password);
-		(*cache)->pin = vpninfo->cert_password;
-		vpninfo->cert_password = NULL;
-		return 0;
-	}
-
-	memset(&f, 0, sizeof(f));
 	f.auth_id = (char *)"pkcs11_pin";
 	f.opts = &o;
 
-	message[sizeof(message)-1] = 0;
-	snprintf(message, sizeof(message) - 1, _("PIN required for %s"), token_label);
+	snprintf(message, sizeof message, _("PIN required for %s"), token_label);
 	f.message = message;
 
 	if (flags & GNUTLS_PIN_WRONG)
@@ -2614,13 +2643,102 @@ static int gnutls_pin_callback(void *priv, int attempt, const char *uri,
 	o._value = NULL;
 
 	ret = process_auth_form(vpninfo, &f);
-	if (ret || !o._value)
-		return -1;
+	if (ret != OC_FORM_RESULT_OK || o._value == NULL)
+		return GNUTLS_E_PKCS11_PIN_ERROR;
 
-	snprintf(pin, pin_max, "%s", o._value);
-	(*cache)->pin = o._value;
+	*ppin = o._value;
 
 	return 0;
+}
+
+int pin_callback(void *user, int attempts, const char *token_uri,
+			       const char *token_label, unsigned int flags,
+			       char *pin, size_t pin_max)
+{
+	struct openconnect_info *vpninfo = user;
+	struct pin_cache *cache;
+	size_t pinlen;
+	int ret;
+
+	if (!vpninfo)
+		return GNUTLS_E_INVALID_REQUEST;
+
+	if (token_uri == NULL || token_uri[0] == 0)
+		token_uri = "(no URI)";
+
+	if (token_label == NULL || token_label[0] == 0)
+		token_label = "(no name)";
+
+	for (cache = vpninfo->pin_cache; cache != NULL; cache = cache->next) {
+		if (strcmp(cache->token, token_uri) == 0)
+			break;
+	}
+
+	/**
+	 * Add entry for token_uri if one does not exist
+	 */
+	if (cache == NULL) {
+		/**
+		 * set myself up for a subsequent commit
+		 */
+		const char *first_pass = vpninfo->cert_password;
+
+		cache = calloc(1, sizeof *cache);
+		if (cache == NULL)
+			return GNUTLS_E_MEMORY_ERROR;
+		*cache =
+			(struct pin_cache) { .pin = first_pass ? strdup(first_pass) : NULL,
+			  .token = strdup(token_uri),
+			  .next = vpninfo->pin_cache };
+		if ((first_pass && cache->pin == NULL)
+		    || cache->token == NULL) {
+			free_pass(&cache->pin);
+			free(cache->token);
+			free(cache);
+			return GNUTLS_E_MEMORY_ERROR;
+		}
+		vpninfo->pin_cache = cache;
+	}
+
+	/**
+	 * Wrong PIN.
+	 */
+	if (attempts > 0)
+		free_pass(&cache->pin);
+
+	/**
+	 * PIN should have length
+	 */
+	if (cache->pin && cache->pin[0] == 0)
+		free_pass(&cache->pin);
+
+	/**
+	 * No PIN in cache, prompt for PIN
+	 */
+	if (cache->pin == NULL) {
+		ret = request_pin(vpninfo, &cache->pin, token_uri,token_label, flags);
+		if (ret < 0)
+			return ret;
+	} else {
+		vpn_progress(vpninfo, PRG_DEBUG,
+		    "Re-using cached PIN for token '%s'\n", token_label);
+	}
+
+	/**
+	 * Submit PIN
+	 */
+	pinlen = cache->pin != NULL ? strlen(cache->pin) : 0;
+	if (pinlen > 0 && pinlen < pin_max) {
+		strncpy(pin, cache->pin, pin_max);
+		return 0;
+	} else {
+		free_pass(&cache->pin);
+		if (pinlen == 0)
+			vpn_progress(vpninfo, PRG_ERR, _("PIN too long\n"));
+		else
+			vpn_progress(vpninfo, PRG_ERR, _("No PIN provided\n"));
+		return GNUTLS_E_PKCS11_PIN_ERROR;
+	}
 }
 #endif /* HAVE_P11KIT || HAVE_GNUTLS_SYSTEM_KEYS */
 
