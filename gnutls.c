@@ -624,9 +624,17 @@ static int assign_privkey(struct openconnect_info *vpninfo,
 			  unsigned int nr_certs)
 {
 	gnutls_pcert_st *pcerts = calloc(nr_certs, sizeof(*pcerts));
-	int i, err;
+	unsigned int i;
+	int err;
 
-	if (!pcerts)
+	/**
+	 * Added check for nr_certs > 0 to allow the caller to
+	 * distinguish between out of memory (signaled by
+	 * GNUTLS_E_MEMORY_ERROR) and when either pkey == NULL or
+	 * nr_certs == 0. In these cases, GNUTLS_E_INSUFFICIENT_CREDENTIALS
+	 * is signaled.
+	 */
+	if (nr_certs > 0 && pcerts == NULL)
 		return GNUTLS_E_MEMORY_ERROR;
 
 	for (i = 0 ; i < nr_certs; i++) {
