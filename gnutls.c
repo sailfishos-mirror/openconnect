@@ -1185,6 +1185,39 @@ static int load_trust(struct openconnect_info *vpninfo)
 	return ret;
 }
 
+static void check_tls13(struct openconnect_info *vpninfo,
+	gnutls_privkey_t key)
+{
+	int pk = gnutls_privkey_get_pk_algorithm(key, NULL);
+
+#if GNUTLS_VERSION_NUMBER >= 0x030600
+	/**
+	 * For hardware RSA keys, we need to check if they can cope with PSS.
+	 * If not, disable TLSv1.3 which would make PSS mandatory.
+	 * https://bugzilla.redhat.com/show_bug.cgi?id=1663058
+	 */
+	if (pk == GNUTLS_PK_RSA) {
+		gnutls_datum_t data = {(void *)TEST_TEXT, sizeof TEST_TEXT-1};
+		gnutls_datum_t signature = {NULL, 0};
+		int gerr;
+
+		gerr = gnutls_privkey_sign_data2(key,
+		    GNUTLS_SIGN_RSA_PSS_RSAE_SHA256, 0, &data, &signature);
+		free_datum(&signature);
+		if (gerr < 0) {
+			vpninfo->no_tls13 = 1;
+			vpn_progress(vpninfo, PRG_INFO,
+			    _("Private key appears not to support RSA-PSS."
+			      " Disabling TLSv1.3\n"));
+		}
+	}
+#endif
+	/* hush not used warnings */
+	(void) pk;
+	(void) vpninfo;
+	(void) key;
+}
+
 static int load_certificate(struct openconnect_info *vpninfo)
 {
 	gnutls_datum_t fdata = {NULL, 0};
@@ -1872,28 +1905,7 @@ static int load_certificate(struct openconnect_info *vpninfo)
 			     _("Adding supporting CA '%s'\n"), name);
 	}
 
-#if GNUTLS_VERSION_NUMBER >= 0x030600
-	if (gnutls_privkey_get_pk_algorithm(pkey, NULL) == GNUTLS_PK_RSA) {
-		/*
-		 * For hardware RSA keys, we need to check if they can cope with PSS.
-		 * If not, disable TLSv1.3 which would make PSS mandatory.
-		 * https://bugzilla.redhat.com/show_bug.cgi?id=1663058
-		 */
-
-		/**
-		 * Change made to simplify factoring out tls13 test routine.
-		 */
-		const gnutls_datum_t text = {(void *)TEST_TEXT, sizeof(TEST_TEXT)-1};
-		err = gnutls_privkey_sign_data2(pkey, GNUTLS_SIGN_RSA_PSS_RSAE_SHA256, 0, &text, &pkey_sig);
-		if (err) {
-			vpn_progress(vpninfo, PRG_INFO,
-				     _("Private key appears not to support RSA-PSS. Disabling TLSv1.3\n"));
-			vpninfo->no_tls13 = 1;
-		} else {
-			free(pkey_sig.data);
-			pkey_sig.data = NULL;
-	}
-#endif
+	check_tls13(vpninfo, pkey);
 
 	/* OK, now we've checked the cert expiry and warned the user if it's
 	   going to expire soon, and we've built up as much of a trust chain
