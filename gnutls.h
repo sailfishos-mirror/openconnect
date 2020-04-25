@@ -25,6 +25,7 @@
 #include "openconnect-internal.h"
 
 int load_tpm1_key(struct openconnect_info *vpninfo, gnutls_datum_t *fdata,
+		  const char *password,
 		  gnutls_privkey_t *pkey, gnutls_datum_t *pkey_sig);
 void release_tpm1_ctx(struct openconnect_info *info);
 
