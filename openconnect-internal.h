@@ -364,6 +364,7 @@ struct esp {
 struct oc_pcsc_ctx;
 struct oc_tpm1_ctx;
 struct oc_tpm2_ctx;
+struct oc_pin_ctx;
 
 struct openconnect_info {
 	const struct vpn_proto *proto;
@@ -454,6 +455,8 @@ struct openconnect_info {
 	char *cert2;
 	char *key2;
 	char *key2_password;
+
+	struct oc_pin_ctx *pin_ctx;
 
 	int token_mode;
 	int token_bypassed;

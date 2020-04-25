@@ -40,9 +40,27 @@
 #endif
 
 #if defined(HAVE_P11KIT) || defined(HAVE_GNUTLS_SYSTEM_KEYS)
-static int pin_callback(void *user, int attempt, const char *token_uri,
-			       const char *token_label, unsigned int flags,
-			       char *pin, size_t pin_max);
+/**
+ * pin callback context
+ *
+ * Password (first_pass) is notably part of the context
+ */
+struct oc_pin_ctx {
+	gnutls_pin_callback_t cb;
+	void *cb_arg;
+
+	struct openconnect_info *vpninfo;
+	char *first_pass;
+	struct oc_pin_ctx *next;
+};
+
+static struct oc_pin_ctx *pinctx_new(
+	struct openconnect_info *vpninfo,
+	const char *password);
+
+static void pinctx_free(struct oc_pin_ctx *ctx);
+
+static void release_pin_ctx(struct openconnect_info *vpninfo);
 #endif /* HAVE_P11KIT || HAVE_GNUTLS_SYSTEM_KEYS */
 
 #include "gnutls.h"
@@ -1244,6 +1262,7 @@ static int load_keycert(struct openconnect_info *vpninfo,
 	gnutls_x509_crl_t crl = NULL;
 	gnutls_x509_crt_t last_cert, cert = NULL;
 	gnutls_x509_crt_t *extra_certs = NULL, *supporting_certs = NULL;
+	struct oc_pin_ctx *pinctx = NULL;
 	unsigned int nr_supporting_certs = 0, nr_extra_certs = 0;
 	int err; /* GnuTLS error */
 	int ret;
@@ -1334,11 +1353,17 @@ static int load_keycert(struct openconnect_info *vpninfo,
 			goto out;
 		}
 
-		gnutls_x509_crt_set_pin_function(cert, pin_callback, vpninfo);
+		err = 0;
+		pinctx = pinctx_new(vpninfo, password);
+		if (pinctx == NULL)
+			err = GNUTLS_E_MEMORY_ERROR;
+		if (err >= 0) {
+			gnutls_x509_crt_set_pin_function(cert, pinctx->cb, pinctx->cb_arg);
 
-		/* Yes, even for *system* URLs the only API GnuTLS offers us is
+			/* Yes, even for *system* URLs the only API GnuTLS offers us is
 		   ...import_pkcs11_url(). */
-		err = gnutls_x509_crt_import_pkcs11_url(cert, cert_url, 0);
+			err = gnutls_x509_crt_import_pkcs11_url(cert, cert_url, 0);
+		}
 		if (err == GNUTLS_E_REQUESTED_DATA_NOT_AVAILABLE)
 			err = gnutls_x509_crt_import_pkcs11_url(cert, cert_url,
 								GNUTLS_PKCS11_OBJ_FLAG_LOGIN);
@@ -1350,6 +1375,9 @@ static int load_keycert(struct openconnect_info *vpninfo,
 			ret = -EIO;
 			goto out;
 		}
+		pinctx->next = vpninfo->pin_ctx;
+		vpninfo->pin_ctx = pinctx;
+		pinctx = NULL;
 		goto got_certs;
 	}
 #endif /* HAVE_P11KIT || HAVE_GNUTLS_SYSTEM_KEYS */
@@ -1436,9 +1464,14 @@ static int load_keycert(struct openconnect_info *vpninfo,
 			goto out;
 		}
 
-		gnutls_privkey_set_pin_function(pkey, pin_callback, vpninfo);
-
-		err = gnutls_privkey_import_url(pkey, key_path, 0);
+		err = 0;
+		pinctx = pinctx_new(vpninfo, password);
+		if (pinctx == NULL)
+			err = GNUTLS_E_MEMORY_ERROR;
+		if (err >= 0) {
+			gnutls_privkey_set_pin_function(pkey, pinctx->cb, pinctx->cb_arg);
+			err = gnutls_privkey_import_url(pkey, key_path, 0);
+		}
 		if (err) {
 			vpn_progress(vpninfo, PRG_ERR,
 			    _("Error importing system key %s: %s\n"),
@@ -1446,6 +1479,9 @@ static int load_keycert(struct openconnect_info *vpninfo,
 			ret = -EIO;
 			goto out;
 		}
+		pinctx->next = vpninfo->pin_ctx;
+		vpninfo->pin_ctx = pinctx;
+		pinctx = NULL;
 		goto match_cert;
 	}
 #endif /* HAVE_GNUTLS_SYSTEM_KEYS */
@@ -1463,9 +1499,14 @@ static int load_keycert(struct openconnect_info *vpninfo,
 			goto out;
 		}
 
-		gnutls_pkcs11_privkey_set_pin_function(p11key, pin_callback, vpninfo);
-
-		err = gnutls_pkcs11_privkey_import_url(p11key, key_url, 0);
+		err = 0;
+		pinctx = pinctx_new(vpninfo, password);
+		if (pinctx == NULL)
+			err = GNUTLS_E_MEMORY_ERROR;
+		if (err >= 0) {
+			gnutls_pkcs11_privkey_set_pin_function(p11key, pinctx->cb, pinctx->cb_arg);
+			err = gnutls_pkcs11_privkey_import_url(p11key, key_url, 0);
+		}
 
 		/* Annoyingly, some tokens don't even admit the *existence* of
 		   the key until they're logged in. And thus a search doesn't
@@ -1593,6 +1634,9 @@ static int load_keycert(struct openconnect_info *vpninfo,
 			ret = -EIO;
 			goto out;
 		}
+		pinctx->next = vpninfo->pin_ctx;
+		vpninfo->pin_ctx = pinctx;
+		pinctx = NULL;
 		goto match_cert;
 	}
 #endif /* HAVE_P11KIT */
@@ -1955,6 +1999,8 @@ static int load_keycert(struct openconnect_info *vpninfo,
 	   just to point to something to hash. Don't free it in that case! */
 	free_datum(&fdata);
 	free_datum(&pkey_sig);
+
+	pinctx_free(pinctx);
 
 	if (cert_url != cert_path)
 		free(cert_url);
@@ -2754,6 +2800,9 @@ void openconnect_close_https(struct openconnect_info *vpninfo, int final)
 #ifdef HAVE_TSS2
 		release_tpm2_ctx(vpninfo);
 #endif
+#if defined(HAVE_P11KIT) || defined(HAVE_GNUTLS_SYSTEM_KEYS)
+		release_pin_ctx(vpninfo);
+#endif /* defined(HAVE_P11KIT) || defined(HAVE_GNUTLS_SYSTEM_KEYS) */
 	}
 }
 
@@ -2870,17 +2919,14 @@ static int request_pin(struct openconnect_info *vpninfo, char **ppin,
 	return 0;
 }
 
-int pin_callback(void *user, int attempts, const char *token_uri,
-			       const char *token_label, unsigned int flags,
-			       char *pin, size_t pin_max)
+static int pin_callback_(struct openconnect_info *vpninfo,
+	char *first_pass, int attempts,
+	const char *token_uri, const char *token_label,
+	unsigned int flags, char *pin, size_t pin_max)
 {
-	struct openconnect_info *vpninfo = user;
 	struct pin_cache *cache;
 	size_t pinlen;
 	int ret;
-
-	if (!vpninfo)
-		return GNUTLS_E_INVALID_REQUEST;
 
 	if (token_uri == NULL || token_uri[0] == 0)
 		token_uri = "(no URI)";
@@ -2897,27 +2943,24 @@ int pin_callback(void *user, int attempts, const char *token_uri,
 	 * Add entry for token_uri if one does not exist
 	 */
 	if (cache == NULL) {
-		/**
-		 * set myself up for a subsequent commit
-		 */
-		const char *first_pass = vpninfo->cert_password;
-
 		cache = calloc(1, sizeof *cache);
 		if (cache == NULL)
 			return GNUTLS_E_MEMORY_ERROR;
 		*cache =
-			(struct pin_cache) { .pin = first_pass ? strdup(first_pass) : NULL,
-			  .token = strdup(token_uri),
-			  .next = vpninfo->pin_cache };
-		if ((first_pass && cache->pin == NULL)
-		    || cache->token == NULL) {
+			(struct pin_cache) { .pin = first_pass,
+					     .token = strdup(token_uri),
+			                     .next = vpninfo->pin_cache };
+		if (cache->token == NULL) {
 			free_pass(&cache->pin);
 			free(cache->token);
 			free(cache);
 			return GNUTLS_E_MEMORY_ERROR;
 		}
 		vpninfo->pin_cache = cache;
+		first_pass = NULL;
 	}
+
+	free_pass(&first_pass);
 
 	/**
 	 * Wrong PIN.
@@ -2957,6 +3000,58 @@ int pin_callback(void *user, int attempts, const char *token_uri,
 		else
 			vpn_progress(vpninfo, PRG_ERR, _("No PIN provided\n"));
 		return GNUTLS_E_PKCS11_PIN_ERROR;
+	}
+}
+
+static int pin_callback(void *user, int attempts,
+	const char *token_uri, const char *token_label,
+	unsigned int flags, char *pin, size_t pin_max)
+{
+	struct oc_pin_ctx *cb = user;
+	int ret;
+
+	if (cb == NULL || cb->vpninfo == NULL)
+		return GNUTLS_E_INVALID_REQUEST;
+	ret = pin_callback_(cb->vpninfo, cb->first_pass, attempts,
+		token_uri, token_label, flags, pin, pin_max);
+	cb->first_pass = NULL;
+	return ret;
+}
+
+struct oc_pin_ctx *
+pinctx_new(struct openconnect_info *vpninfo, const char *password)
+{
+	struct oc_pin_ctx *pinctx;
+	char *first_pass = NULL;
+
+	if ((pinctx = malloc(sizeof *pinctx)) == NULL)
+		return NULL;
+	if (password && (first_pass = strdup(password)) == NULL) {
+		free(pinctx);
+		return NULL;
+	}
+	*pinctx = (struct oc_pin_ctx) { .cb = pin_callback,
+					.cb_arg = pinctx,
+					.vpninfo = vpninfo,
+					.first_pass = first_pass };
+	return pinctx;
+}
+
+void pinctx_free(struct oc_pin_ctx *pinctx)
+{
+	if (pinctx) {
+		free_pass(&pinctx->first_pass);
+		free(pinctx);
+	}
+}
+
+void release_pin_ctx(struct openconnect_info *vpninfo)
+{
+	struct oc_pin_ctx *pinctx;
+
+	while ((pinctx = vpninfo->pin_ctx)) {
+		vpninfo->pin_ctx = pinctx->next;
+		pinctx_free(pinctx);
 	}
 }
 #endif /* HAVE_P11KIT || HAVE_GNUTLS_SYSTEM_KEYS */
