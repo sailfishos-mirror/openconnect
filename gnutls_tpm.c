@@ -87,9 +87,10 @@ static int tpm_sign_fn(gnutls_privkey_t key, void *_vpninfo,
 
 int load_tpm1_key(struct openconnect_info *vpninfo, gnutls_datum_t *fdata,
 		  const char *password,
-		  gnutls_privkey_t *pkey, gnutls_datum_t *pkey_sig)
+		  gnutls_privkey_t *pkey_, gnutls_datum_t *pkey_sig)
 {
 	static const TSS_UUID SRK_UUID = TSS_UUID_SRK;
+	gnutls_privkey_t pkey = NULL;
 	gnutls_datum_t asn1;
 	unsigned int tss_len;
 	char *pass;
@@ -102,14 +103,21 @@ int load_tpm1_key(struct openconnect_info *vpninfo, gnutls_datum_t *fdata,
 		return -EBUSY;
 	}
 
+	vpninfo->tpm1 = calloc(1, sizeof(*vpninfo->tpm1));
+	if (vpninfo->tpm1 == NULL) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Out of memory.\n"));
+		return -ENOMEM;
+	}
+
 	err = gnutls_pem_base64_decode_alloc("TSS KEY BLOB", fdata, &asn1);
 	if (err) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Error decoding TSS key blob: %s\n"),
 			     gnutls_strerror(err));
+		free(vpninfo->tpm1);
 		return -EINVAL;
 	}
-	vpninfo->tpm1 = calloc(1, sizeof(*vpninfo->tpm1));
 	/* Ick. We have to parse the ASN1 OCTET_STRING for ourselves. */
 	if (asn1.size < 2 || asn1.data[0] != 0x04 /* OCTET_STRING */) {
 		vpn_progress(vpninfo, PRG_ERR,
@@ -221,14 +229,21 @@ int load_tpm1_key(struct openconnect_info *vpninfo, gnutls_datum_t *fdata,
 			goto out_srkpol;
 	}
 
-	gnutls_privkey_init(pkey);
+	err = gnutls_privkey_init(&pkey);
 	/* This would be nicer if there was a destructor callback. I could
 	   allocate a data structure with the TPM handles and the vpninfo
 	   pointer, and destroy that properly when the key is destroyed. */
-	gnutls_privkey_import_ext(*pkey, GNUTLS_PK_RSA, vpninfo, tpm_sign_fn, NULL, 0);
+	if (err >= 0)
+		err = gnutls_privkey_import_ext(pkey, GNUTLS_PK_RSA, vpninfo, tpm_sign_fn, NULL, 0);
+	if (err < 0) {
+		vpn_progress(vpninfo, PRG_ERR,
+		    _("Error initialising private key structure: (%d) %s\n"),
+		    err, gnutls_strerror(err));
+		goto out_key;
+	}
 
  retry_sign:
-	err = gnutls_privkey_sign_data(*pkey, GNUTLS_DIG_SHA1, 0, fdata, pkey_sig);
+	err = gnutls_privkey_sign_data(pkey, GNUTLS_DIG_SHA1, 0, fdata, pkey_sig);
 	if (err == GNUTLS_E_INSUFFICIENT_CREDENTIALS) {
 		if (!vpninfo->tpm1->tpm_key_policy) {
 			err = Tspi_Context_CreateObject(vpninfo->tpm1->tpm_context,
@@ -270,11 +285,13 @@ int load_tpm1_key(struct openconnect_info *vpninfo, gnutls_datum_t *fdata,
 	}
 
 	free(asn1.data);
+	*pkey_ = pkey;
 	return 0;
  out_key_policy:
 	Tspi_Context_CloseObject(vpninfo->tpm1->tpm_context, vpninfo->tpm1->tpm_key_policy);
 	vpninfo->tpm1->tpm_key_policy = 0;
  out_key:
+	gnutls_privkey_deinit(pkey);
 	Tspi_Context_CloseObject(vpninfo->tpm1->tpm_context, vpninfo->tpm1->tpm_key);
 	vpninfo->tpm1->tpm_key = 0;
  out_srkpol:
