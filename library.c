@@ -185,6 +185,25 @@ static const struct vpn_proto openconnect_protos[] = {
 		.udp_send_probes = oncp_esp_send_probes,
 		.udp_catch_probe = oncp_esp_catch_probe,
 #endif
+    }, {
+		.name = "jun2pulse",
+		.pretty_name = N_("Pulse Connect Secure with Juniper auth"),
+		.description = N_("Compatible with Pulse Connect Secure SSL VPN (with Juniper auth for backwards-compatibility)"),
+		.flags = OC_PROTO_PROXY,
+		.vpn_close_session = pulse_bye,
+		.tcp_connect = pulse_connect_from_oncp_auth,
+		.tcp_mainloop = pulse_mainloop,
+		.add_http_headers = oncp_common_headers, /* XX: needed for auth */
+		.obtain_cookie = oncp_obtain_cookie,	 /* XX: use Juniper auth (usually works even if oNCP tunnel disabled) */
+		.udp_protocol = "ESP",
+#ifdef HAVE_ESP
+		.udp_setup = esp_setup,
+		.udp_mainloop = esp_mainloop,
+		.udp_close = esp_close,
+		.udp_shutdown = esp_shutdown,
+		.udp_send_probes = oncp_esp_send_probes,
+		.udp_catch_probe = oncp_esp_catch_probe,
+#endif
 	},
 };
 

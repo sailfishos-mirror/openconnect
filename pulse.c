@@ -2497,6 +2497,34 @@ static int handle_esp_config_packet(struct openconnect_info *vpninfo,
 #endif
 }
 
+int pulse_connect_from_oncp_auth(struct openconnect_info *vpninfo)
+{
+	char *dsid, *semicolon;
+
+	/* We only care about the Juniper DSID cookie (which is equivalent
+	 * to the Pulse cookie), and expect it to be present. */
+	if (!vpninfo->cookie)
+		return -EPERM;
+	dsid = strstr(vpninfo->cookie, "DSID=");
+	if (!dsid)
+		return -EPERM;
+
+	dsid += 5;
+	semicolon = strchr(dsid, ';');
+	if (semicolon)
+		*semicolon = 0;
+	memmove(vpninfo->cookie, dsid, semicolon - dsid + 1);
+
+	/* XX: We've already abused csd_preurl to stash the DSSignInUrl cookie */
+	free(vpninfo->urlpath);
+	vpninfo->urlpath = vpninfo->csd_preurl;
+	vpninfo->csd_preurl = NULL;
+
+	/* Pulse requires revalidating the cookie when not obtained
+	 * from its own authentication flow. */
+	return (pulse_authenticate(vpninfo, 1) && pulse_connect(vpninfo));
+}
+
 int pulse_connect(struct openconnect_info *vpninfo)
 {
 	struct oc_text_buf *reqbuf;

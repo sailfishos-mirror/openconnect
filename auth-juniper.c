@@ -650,6 +650,10 @@ int oncp_obtain_cookie(struct openconnect_info *vpninfo)
 		goto out;
 	}
 
+	/* XX: stash initial path */
+	if (vpninfo->urlpath)
+		vpninfo->csd_preurl = strdup(vpninfo->urlpath);
+
 	while (1) {
 		char *form_buf = NULL;
 		int role_select = 0;
