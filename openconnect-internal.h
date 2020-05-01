@@ -201,6 +201,7 @@ struct pkt {
 #define PROTO_F5		4
 #define PROTO_FORTINET		5
 #define PROTO_NULLPPP		6
+#define PROTO_JUN2PULSE		7
 
 /* All supported PPP packet framings/encapsulations */
 #define PPP_ENCAP_RFC1661	1	/* Plain/synchronous/pre-framed PPP (RFC1661) */
@@ -1011,6 +1012,7 @@ int oncp_esp_catch_probe(struct openconnect_info *vpninfo, struct pkt *pkt);
 /* pulse.c */
 int pulse_obtain_cookie(struct openconnect_info *vpninfo);
 void pulse_common_headers(struct openconnect_info *vpninfo, struct oc_text_buf *buf);
+int pulse_connect_from_oncp_auth(struct openconnect_info *vpninfo);
 int pulse_connect(struct openconnect_info *vpninfo);
 int pulse_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable);
 int pulse_bye(struct openconnect_info *vpninfo, const char *reason);

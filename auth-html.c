@@ -93,12 +93,13 @@ int parse_input_node(struct openconnect_info *vpninfo, struct oc_auth_form *form
 			ret = -ENOMEM;
 			goto out;
 		}
-		if (vpninfo->proto->proto == PROTO_NC &&
+		if ((vpninfo->proto->proto == PROTO_NC || vpninfo->proto->proto == PROTO_JUN2PULSE) &&
 		    !strcmp(form->auth_id, "loginForm") &&
 		    !strcmp(opt->name, "VerificationCode") &&
 		    can_gen_tokencode && !can_gen_tokencode(vpninfo, form, opt))
 			opt->type = OC_FORM_OPT_TOKEN;
-	} else if (vpninfo->proto->proto == PROTO_NC && !strcasecmp(type, "submit")) {
+	} else if ((vpninfo->proto->proto == PROTO_NC || vpninfo->proto->proto == PROTO_JUN2PULSE)
+		   && !strcasecmp(type, "submit")) {
 
 		xmlnode_get_prop(node, "name", &opt->name);
 		if (opt->name && submit_button && (!strcmp(opt->name, submit_button) ||
@@ -162,7 +163,7 @@ int parse_select_node(struct openconnect_info *vpninfo, struct oc_auth_form *for
 	xmlnode_get_prop(node, "name", &opt->form.name);
 	opt->form.label = strdup(opt->form.name);
 	opt->form.type = OC_FORM_OPT_SELECT;
-	if ((vpninfo->proto->proto == PROTO_NC && !strcmp(opt->form.name, "realm")) ||
+	if (((vpninfo->proto->proto == PROTO_NC || vpninfo->proto->proto == PROTO_JUN2PULSE) && !strcmp(opt->form.name, "realm")) ||
 	    (vpninfo->proto->proto == PROTO_F5 && !strcmp(opt->form.name, "domain")))
 		form->authgroup_opt = opt;
 
@@ -215,7 +216,7 @@ struct oc_auth_form *parse_form_node(struct openconnect_info *vpninfo,
 		return NULL;
 	}
 
-	if (vpninfo->proto->proto == PROTO_NC) {
+	if (vpninfo->proto->proto == PROTO_NC || vpninfo->proto->proto == PROTO_JUN2PULSE) {
 		/* XX: some forms have 'id', but no 'name' */
 		if (!xmlnode_get_prop(node, "name", &form->auth_id) ||
 		    !xmlnode_get_prop(node, "id", &form->auth_id))
@@ -257,7 +258,7 @@ struct oc_auth_form *parse_form_node(struct openconnect_info *vpninfo,
 			}
 			free(id);
 
-		} else if (vpninfo->proto->proto == PROTO_NC &&
+		} else if ((vpninfo->proto->proto == PROTO_NC || vpninfo->proto->proto == PROTO_JUN2PULSE) &&
 			   !strcasecmp((char *)child->name, "textarea")) {
 
 			/* display the post sign-in message, if any */

@@ -305,7 +305,8 @@ int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 				break;
 
 			if (vpninfo->proto->proto == PROTO_NC ||
-			    vpninfo->proto->proto == PROTO_PULSE) {
+			    vpninfo->proto->proto == PROTO_PULSE ||
+			    vpninfo->proto->proto == PROTO_JUN2PULSE) {
 				uint8_t dontsend;
 
 				/* Pulse/NC can only accept ESP of the same protocol as the one

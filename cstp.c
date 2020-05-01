@@ -1220,7 +1220,10 @@ int cstp_bye(struct openconnect_info *vpninfo, const char *reason)
 	int reason_len;
 	int ret;
 
-	/* already lost connection? */
+	/* XX: already lost connection? We should do what Pulse does, and
+	 * fall back to a new HTTPS request to /+CSCOE+/logout.html,
+	 * with "Cookie: webvpn=" set.
+	 */
 #if defined(OPENCONNECT_OPENSSL)
 	if (!vpninfo->https_ssl)
 		return 0;
