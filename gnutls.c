@@ -1679,7 +1679,7 @@ static int load_keycert(struct openconnect_info *vpninfo,
 			     _("This version of OpenConnect was built without TPM2 support\n"));
 		return -EINVAL;
 #else
-		ret = load_tpm2_key(vpninfo, &fdata, &pkey, &pkey_sig);
+		ret = load_tpm2_key(vpninfo, &fdata, password, &pkey, &pkey_sig);
 		if (ret)
 			goto out;
 

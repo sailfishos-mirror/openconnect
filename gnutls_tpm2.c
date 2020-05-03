@@ -175,6 +175,7 @@ static int decode_data(ASN1_TYPE n, gnutls_datum_t *r)
 }
 
 int load_tpm2_key(struct openconnect_info *vpninfo, gnutls_datum_t *fdata,
+		  const char *password,
 		  gnutls_privkey_t *pkey, gnutls_datum_t *pkey_sig)
 {
 	gnutls_datum_t asn1, pubdata, privdata;
@@ -186,6 +187,12 @@ int load_tpm2_key(struct openconnect_info *vpninfo, gnutls_datum_t *fdata,
 	unsigned int parent;
 	int err, ret = -EINVAL;
 	const asn1_static_node *asn1tab;
+
+	if (vpninfo->tpm2) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("TPM2 is in use.\n"));
+		return -EBUSY;
+	}
 
 	err = gnutls_pem_base64_decode_alloc("TSS2 PRIVATE KEY", fdata, &asn1);
 	if (!err) {
@@ -282,7 +289,8 @@ int load_tpm2_key(struct openconnect_info *vpninfo, gnutls_datum_t *fdata,
 
 	/* Now we've extracted what we need from the ASN.1, invoke the
 	 * actual TPM2 code (whichever implementation we end up with */
-	ret = install_tpm2_key(vpninfo, pkey, pkey_sig, parent, emptyauth,
+	ret = install_tpm2_key(vpninfo, password,
+			       pkey, pkey_sig, parent, emptyauth,
 			       asn1tab == tpmkey_asn1_tab_old, &privdata, &pubdata);
 	if (ret < 0)
 		goto out_tpmkey;

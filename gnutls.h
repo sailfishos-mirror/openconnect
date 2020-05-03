@@ -30,9 +30,12 @@ int load_tpm1_key(struct openconnect_info *vpninfo, gnutls_datum_t *fdata,
 void release_tpm1_ctx(struct openconnect_info *info);
 
 int load_tpm2_key(struct openconnect_info *vpninfo, gnutls_datum_t *fdata,
+		 const char *password,
 		 gnutls_privkey_t *pkey, gnutls_datum_t *pkey_sig);
 void release_tpm2_ctx(struct openconnect_info *info);
-int install_tpm2_key(struct openconnect_info *vpninfo, gnutls_privkey_t *pkey, gnutls_datum_t *pkey_sig,
+int install_tpm2_key(struct openconnect_info *vpninfo,
+		     const char *password,
+		     gnutls_privkey_t *pkey, gnutls_datum_t *pkey_sig,
 		     unsigned int parent, int emptyauth, int legacy,
 		     gnutls_datum_t *privdata, gnutls_datum_t *pubdata);
 

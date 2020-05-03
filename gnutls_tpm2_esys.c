@@ -65,6 +65,7 @@ struct oc_tpm2_ctx {
 	TPM2B_PRIVATE priv;
 	TPM2B_DIGEST userauth;
 	TPM2B_DIGEST ownerauth;
+	char *key_pass;
 	unsigned int need_userauth:1;
 	unsigned int need_ownerauth:1;
 	unsigned int did_ownerauth:1;
@@ -356,12 +357,12 @@ static int auth_tpm2_key(struct openconnect_info *vpninfo, ESYS_CONTEXT *ctx, ES
 {
 	TSS2_RC r;
 
-	if (vpninfo->tpm2->need_userauth || vpninfo->cert_password) {
+	if (vpninfo->tpm2->need_userauth || vpninfo->tpm2->key_pass) {
 		char *pass = NULL;
 
-		if (vpninfo->cert_password) {
-			pass = vpninfo->cert_password;
-			vpninfo->cert_password = NULL;
+		if (vpninfo->tpm2->key_pass) {
+			pass = vpninfo->tpm2->key_pass;
+			vpninfo->tpm2->key_pass = NULL;
 		} else {
 			int err = request_passphrase(vpninfo, "openconnect_tpm2_key",
 						     &pass, _("Enter TPM2 key password:"));
@@ -524,7 +525,9 @@ int tpm2_ec_sign_hash_fn(gnutls_privkey_t key, gnutls_sign_algorithm_t algo,
 	return ret;
 }
 
-int install_tpm2_key(struct openconnect_info *vpninfo, gnutls_privkey_t *pkey, gnutls_datum_t *pkey_sig,
+int install_tpm2_key(struct openconnect_info *vpninfo,
+		     const char *password,
+		     gnutls_privkey_t *pkey, gnutls_datum_t *pkey_sig,
 		     unsigned int parent, int emptyauth, int legacy, gnutls_datum_t *privdata, gnutls_datum_t *pubdata)
 {
 	TSS2_RC r;
@@ -540,6 +543,11 @@ int install_tpm2_key(struct openconnect_info *vpninfo, gnutls_privkey_t *pkey, g
 	vpninfo->tpm2 = calloc(1, sizeof(*vpninfo->tpm2));
 	if (!vpninfo->tpm2)
 		return -ENOMEM;
+
+	if (password && (vpninfo->tpm2->key_pass = strdup(password)) == NULL) {
+		free(vpninfo->tpm2);
+		return -ENOMEM;
+	}
 
 	vpninfo->tpm2->parent = parent;
 
@@ -583,6 +591,7 @@ void release_tpm2_ctx(struct openconnect_info *vpninfo)
 	if (vpninfo->tpm2) {
 		clear_mem(vpninfo->tpm2->ownerauth.buffer, sizeof(vpninfo->tpm2->ownerauth.buffer));
 		clear_mem(vpninfo->tpm2->userauth.buffer, sizeof(vpninfo->tpm2->userauth.buffer));
+		free_pass(&vpninfo->tpm2->key_pass);
 		free(vpninfo->tpm2);
 	}
 	vpninfo->tpm2 = NULL;
