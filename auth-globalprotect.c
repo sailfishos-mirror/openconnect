@@ -604,7 +604,7 @@ out:
  */
 static int gpst_login(struct openconnect_info *vpninfo, int portal, struct login_context *ctx)
 {
-	int result, blind_retry = 0, have_os_version = 0;
+	int result, blind_retry = 0, have_os_version = 0, have_app_version = 0;
 	struct oc_text_buf *request_body = buf_alloc();
 	const char *request_body_type = "application/x-www-form-urlencoded";
 	char *xml_buf = NULL, *orig_path;
@@ -679,14 +679,22 @@ static int gpst_login(struct openconnect_info *vpninfo, int portal, struct login
 			if (!strcmp(opt->option, "os-version")) {
 				have_os_version = 1;
 				append_opt(request_body, opt->option, opt->value);
+			} else if (!strcmp(opt->option, "app-version")) {
+				have_app_version = 1;
+				append_opt(request_body, "clientgpversion", opt->value);
 			} else if (!strcmp(opt->option, "host-id"))
 				append_opt(request_body, opt->option, opt->value);
 		}
 		/* The os-version field is required to be present, even in cases
 		 * where specific values are not required.
+		 * The clientgpversion field is not required to be present in THIS request,
+		 * but it IS required to be present in the /ssl-vpn/getconfig.esp request,
+		 * where is is named app-version, so we include here also for consistency.
 		 */
 		if (!have_os_version)
 			append_opt(request_body, "os-version", vpninfo->platname);
+		if (!have_app_version)
+			append_opt(request_body, "clientgpversion", vpninfo->csd_ticket ? : "5.1.5-8");
 
 		append_form_opts(vpninfo, ctx->form, request_body);
 		if ((result = buf_error(request_body)))
