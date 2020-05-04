@@ -604,10 +604,11 @@ out:
  */
 static int gpst_login(struct openconnect_info *vpninfo, int portal, struct login_context *ctx)
 {
-	int result, blind_retry = 0;
+	int result, blind_retry = 0, have_os_version = 0;
 	struct oc_text_buf *request_body = buf_alloc();
 	const char *request_body_type = "application/x-www-form-urlencoded";
 	char *xml_buf = NULL, *orig_path;
+	struct oc_vpn_option *opt;
 
 	/* Ask the user to fill in the auth form; repeat as necessary */
 	for (;;) {
@@ -658,7 +659,6 @@ static int gpst_login(struct openconnect_info *vpninfo, int portal, struct login
 		buf_append(request_body, "jnlpReady=jnlpReady&ok=Login&direct=yes&clientVer=4100&prot=https:");
 		append_opt(request_body, "ipv6-support", vpninfo->disable_ipv6 ? "no" : "yes");
 		append_opt(request_body, "clientos", gpst_os_name(vpninfo));
-		append_opt(request_body, "os-version", vpninfo->platname);
 		append_opt(request_body, "server", vpninfo->hostname);
 		append_opt(request_body, "computer", vpninfo->localname);
 		if (ctx->portal_userauthcookie)
@@ -672,6 +672,22 @@ static int gpst_login(struct openconnect_info *vpninfo, int portal, struct login
 			append_opt(request_body, "preferred-ipv6", vpninfo->ip_info.addr);
 		if (ctx->form->action)
 			append_opt(request_body, "inputStr", ctx->form->action);
+		/* These fields are sent by official client software and specific values
+		 * might be required in some cases.
+		 */
+		for (opt = vpninfo->id_options; opt; opt = opt->next) {
+			if (!strcmp(opt->option, "os-version")) {
+				have_os_version = 1;
+				append_opt(request_body, opt->option, opt->value);
+			} else if (!strcmp(opt->option, "host-id"))
+				append_opt(request_body, opt->option, opt->value);
+		}
+		/* The os-version field is required to be present, even in cases
+		 * where specific values are not required.
+		 */
+		if (!have_os_version)
+			append_opt(request_body, "os-version", vpninfo->platname);
+
 		append_form_opts(vpninfo, ctx->form, request_body);
 		if ((result = buf_error(request_body)))
 			goto out;
