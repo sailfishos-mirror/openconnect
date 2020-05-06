@@ -102,7 +102,7 @@ for NetworkManager etc.
 %include %SOURCE3
 %prep
 %if 0%{?gitsnapshot}
-%setup -q -n %{name}-%{snapcommit}
+%setup -q -n %{name}-%{shortcommit}
 NOCONFIGURE=x ./autogen.sh
 %else
 %gpg_verify
@@ -149,7 +149,7 @@ make VERBOSE=1 XFAIL_TESTS="auth-nonascii bad_dtls_test" check
 %{_sbindir}/openconnect
 %{_libexecdir}/openconnect/
 %{_mandir}/man8/*
-%{_sysconfdir}/bash_completion.d
+%{_datadir}/bash-completion/completions/openconnect
 %doc TODO COPYING.LGPL
 %doc %{_pkgdocdir}
 
