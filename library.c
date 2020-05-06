@@ -189,6 +189,26 @@ static const struct vpn_proto openconnect_protos[] = {
 		.udp_catch_probe = oncp_esp_catch_probe,
 #endif
 	}, {
+		.name = "f5",
+		.pretty_name = N_("F5 BIG-IP SSL VPN"),
+		.description = N_("Compatible with F5 BIG-IP SSL VPN"),
+		.flags = OC_PROTO_PROXY,
+		.vpn_close_session = f5_bye,
+		.tcp_connect = f5_connect,
+		.tcp_mainloop = ppp_mainloop,
+		.add_http_headers = http_common_headers,
+		.obtain_cookie = f5_obtain_cookie,
+		.secure_cookie = "MRHSession",
+		.udp_protocol = "DTLS",
+#ifdef HAVE_DTLSx /* Not yet... */
+		.udp_setup = esp_setup,
+		.udp_mainloop = esp_mainloop,
+		.udp_close = esp_close,
+		.udp_shutdown = esp_shutdown,
+		.udp_send_probes = oncp_esp_send_probes,
+		.udp_catch_probe = oncp_esp_catch_probe,
+#endif
+	}, {
 		.name = "nullppp",
 		.pretty_name = N_("PPP over TLS"),
 		.description = N_("Unauthenticated RFC1661/RFC1662 PPP over TLS, for testing"),
@@ -197,7 +217,7 @@ static const struct vpn_proto openconnect_protos[] = {
 		.tcp_mainloop = nullppp_mainloop,
 		.add_http_headers = http_common_headers,
 		.obtain_cookie = nullppp_obtain_cookie,
-	}
+	},
 };
 
 #define NR_PROTOS (sizeof(openconnect_protos)/sizeof(*openconnect_protos))
