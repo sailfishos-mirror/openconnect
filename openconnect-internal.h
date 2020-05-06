@@ -159,6 +159,11 @@ struct pkt {
 			uint32_t len;
 			uint32_t ident;
 		} pulse;
+		struct {
+			uint32_t hlen; /* variable-length */
+			uint16_t proto;
+			unsigned char hdr[18];
+		} ppp;
 	};
 	unsigned char data[];
 };
@@ -179,6 +184,11 @@ struct pkt {
 #define DTLS_SLEEPING	3	/* For ESP, sometimes sending probes */
 #define DTLS_CONNECTING	4	/* ESP probe received; must tell server */
 #define DTLS_CONNECTED	5	/* Server informed and should be sending ESP */
+
+/* All supported PPP packet framings/encapsulations */
+#define PPP_ENCAP_RFC1661	1	/* Plain/synchronous/pre-framed PPP (RFC1661) */
+#define PPP_ENCAP_RFC1662_HDLC	2	/* PPP with HDLC-like framing (RFC1662) */
+#define PPP_ENCAP_MAX		PPP_ENCAP_RFC1662_HDLC
 
 #define COMPR_DEFLATE	(1<<0)
 #define COMPR_LZS	(1<<1)
@@ -401,6 +411,8 @@ struct openconnect_info {
 	int hmac_key_len;
 	int hmac_out_len;
 	uint32_t esp_magic;  /* GlobalProtect magic ping address (network-endian) */
+
+	struct oc_ppp *ppp;
 
 	int tncc_fd; /* For Juniper TNCC */
 	const char *csd_xmltag;
@@ -961,6 +973,14 @@ int pulse_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 int pulse_bye(struct openconnect_info *vpninfo, const char *reason);
 int pulse_eap_ttls_send(struct openconnect_info *vpninfo, const void *data, int len);
 int pulse_eap_ttls_recv(struct openconnect_info *vpninfo, void *data, int len);
+
+/* ppp.c */
+struct oc_ppp;
+void buf_append_ppphdlc(struct oc_text_buf *buf, const unsigned char *bytes, int len, uint32_t asyncmap);
+void buf_append_ppp_hdr(struct oc_text_buf *buf, struct oc_ppp *ppp, uint16_t proto, uint8_t code, uint8_t id);
+int ppp_negotiate_config(struct openconnect_info *vpninfo);
+int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable);
+int openconnect_ppp_new(struct openconnect_info *vpninfo, int encap, int want_ipv4, int want_ipv6);
 
 /* auth-globalprotect.c */
 int gpst_obtain_cookie(struct openconnect_info *vpninfo);
