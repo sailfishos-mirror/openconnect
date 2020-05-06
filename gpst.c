@@ -314,7 +314,6 @@ out:
 	return result;
 }
 
-
 #define ESP_HEADER_SIZE (4 /* SPI */ + 4 /* sequence number */)
 #define ESP_FOOTER_SIZE (1 /* pad length */ + 1 /* next header */)
 
