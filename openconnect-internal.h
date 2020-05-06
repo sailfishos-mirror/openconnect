@@ -188,7 +188,9 @@ struct pkt {
 /* All supported PPP packet framings/encapsulations */
 #define PPP_ENCAP_RFC1661	1	/* Plain/synchronous/pre-framed PPP (RFC1661) */
 #define PPP_ENCAP_RFC1662_HDLC	2	/* PPP with HDLC-like framing (RFC1662) */
-#define PPP_ENCAP_MAX		PPP_ENCAP_RFC1662_HDLC
+#define PPP_ENCAP_F5		3	/* F5 BigIP no HDLC */
+#define PPP_ENCAP_F5_HDLC	4	/* F5 BigIP HDLC */
+#define PPP_ENCAP_MAX		PPP_ENCAP_F5_HDLC
 
 #define COMPR_DEFLATE	(1<<0)
 #define COMPR_LZS	(1<<1)
@@ -983,6 +985,11 @@ int pulse_eap_ttls_recv(struct openconnect_info *vpninfo, void *data, int len);
 int nullppp_obtain_cookie(struct openconnect_info *vpninfo);
 int nullppp_connect(struct openconnect_info *vpninfo);
 int nullppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable);
+
+/* f5.c */
+int f5_obtain_cookie(struct openconnect_info *vpninfo);
+int f5_connect(struct openconnect_info *vpninfo);
+int f5_bye(struct openconnect_info *vpninfo, const char *reason);
 
 /* ppp.c */
 struct oc_ppp;
