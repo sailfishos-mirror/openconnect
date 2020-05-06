@@ -2773,3 +2773,42 @@ void destroy_eap_ttls(struct openconnect_info *vpninfo, void *sess)
 {
 	gnutls_deinit(sess);
 }
+
+const rcstring *rcstring_new_len(const char *s, size_t len)
+{
+	struct rcstring_st *rcstr;
+	size_t rcstr_size;
+
+	rcstr_size = offsetof(struct rcstring_st, str.data) + len + 1;
+	if (rcstr_size <= len) return NULL;
+	rcstr = malloc(rcstr_size);
+	if (rcstr == NULL) return NULL;
+	rcstr->refcount = 1;
+	rcstr->str.len = len;
+	memcpy(rcstr->str.data, s, len);
+	rcstr->str.data[len] = 0;
+	return rcstr->str.data;
+}
+
+const rcstring *rcstring_new(const char *s)
+{
+	return rcstring_new_len(s, strlen(s));
+}
+
+void rcstring_release_zero(const rcstring *str, void (*zero_func)(char *, size_t))
+{
+	struct rcstring_st *rcstr;
+
+	if (str == NULL) return;
+	rcstr = RCSTRING(str);
+	if (--rcstr->refcount <= 0) {
+		if (zero_func != NULL)
+			(*zero_func)(rcstr->str.data, rcstr->str.len);
+		free(rcstr);
+	}
+}
+
+void zero_password(char *s, size_t n)
+{
+	clear_mem(s, n);
+}

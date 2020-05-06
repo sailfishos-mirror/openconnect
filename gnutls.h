@@ -72,4 +72,73 @@ char *get_gnutls_cipher(gnutls_session_t session);
 #define gnutls_check_version_numeric gtls_ver
 #endif
 
+/**
+ * rcstring is a simple referenced counted string. This was added to
+ * simplify password passing and to reduce the number of times the
+ * password needs to be copied.
+ */
+
+typedef char rcstring;
+
+struct rcstring_st {
+	int refcount;
+	struct {
+		size_t len;
+		char data[1];
+	} str;
+};
+
+#define RCSTRING(p) \
+	((struct rcstring_st *)((char *)(p) - offsetof(struct rcstring_st, str.    data)))
+
+const rcstring *rcstring_new_len(const char *s, size_t n);
+
+const rcstring *rcstring_new(const char *s);
+
+/**
+ * Acquire a reference to string
+ */
+static inline const char *
+rcstring_acquire(const rcstring *str)
+{
+	if (str == NULL) return NULL;
+	++RCSTRING(str)->refcount;
+	return str;
+}
+/**
+ * Release a reference to the string
+ */
+void rcstring_release_zero(const rcstring *str,
+	void (*zero_func)(char *,size_t));
+
+static inline void
+rcstring_release(const rcstring *str)
+{
+	return rcstring_release_zero(str, NULL);
+}
+/**
+ * Length of string
+ */
+static inline size_t
+rcstring_length(const rcstring *str)
+{
+	if (str == NULL) return 0;
+	return RCSTRING(str)->str.len;
+}
+/**
+ * passwords are zeroed when the refcount <= 0
+ */
+#define password_new(s) rcstring_new(s)
+
+#define password_acquire(s) rcstring_acquire(s)
+
+void zero_password(char *s, size_t n);
+
+static inline void
+password_free(const rcstring **password)
+{
+	rcstring_release_zero(*password, zero_password);
+	*password = NULL;
+}
+
 #endif /* __OPENCONNECT_GNUTLS_H__ */
