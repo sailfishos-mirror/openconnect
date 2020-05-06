@@ -170,6 +170,8 @@ static const char *encap_names[PPP_ENCAP_MAX+1] = {
 	NULL,
 	"RFC1661",
 	"RFC1662 HDLC",
+	"F5",
+	"F5 HDLC",
 };
 
 static const char *lcp_names[] = {
@@ -239,6 +241,11 @@ int openconnect_ppp_new(struct openconnect_info *vpninfo,
 
 	ppp->encap = encap;
 	switch (encap) {
+	case PPP_ENCAP_F5:
+		ppp->encap_len = 4;
+		break;
+
+	case PPP_ENCAP_F5_HDLC:
 	case PPP_ENCAP_RFC1662_HDLC:
 		ppp->encap_len = 0;
 		ppp->hdlc = 1;
@@ -1007,6 +1014,31 @@ int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 
 		/* Deencapsulate from pre-PPP header */
 		switch (ppp->encap) {
+		case PPP_ENCAP_F5:
+			magic = load_be16(eh);
+			payload_len = load_be16(eh + 2);
+			next = eh + 4 + payload_len;
+
+			if (magic != 0xf500) {
+			bad_encap_header:
+				vpn_progress(vpninfo, PRG_ERR,
+					     _("Unexpected pre-PPP packet header for encap %d.\n"),
+					     ppp->encap);
+				dump_buf_hex(vpninfo, PRG_ERR, '<', eh, len);
+				continue;
+			}
+
+			if (len < 4 + payload_len) {
+			incomplete_pkt:
+				vpn_progress(vpninfo, PRG_ERR,
+					     _("Packet is incomplete. Received %d bytes on wire (includes %d encap) but header payload_len is %d\n"),
+					     len, ppp->encap_len, payload_len);
+				dump_buf_hex(vpninfo, PRG_ERR, '<', eh, len);
+				continue;
+			}
+			break;
+
+		case PPP_ENCAP_F5_HDLC:
 		case PPP_ENCAP_RFC1662_HDLC:
 			payload_len = unhdlc_in_place(vpninfo, eh + ppp->encap_len, len - ppp->encap_len, &next);
 			if (payload_len < 0)
@@ -1261,14 +1293,13 @@ int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		}
 
 		/* Encapsulate into pre-PPP header */
-		/* Nothing here until we add protocols that require pre-PPP
-		 * header encapsulation. Such a protocol would store the
-		 * pre-PPP header into the range of memory:
-		 *   eh to (eh + ppp->encap_len)
-		 *
-		 * Commented out so that sanitizer doesn't complain:
-		 *   eh = this->data - this->ppp.hlen - ppp->encap_len;
-		 */
+		eh = this->data - this->ppp.hlen - ppp->encap_len;
+		switch (ppp->encap) {
+		case PPP_ENCAP_F5:
+			store_be16(eh, 0xf500);
+			store_be16(eh + 2, this->len + this->ppp.hlen);
+			break;
+		}
 		this->ppp.hlen += ppp->encap_len;
 
 		if (lcp)
