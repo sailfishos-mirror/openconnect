@@ -338,8 +338,12 @@ int f5_connect(struct openconnect_info *vpninfo)
 	const char *old_addr6 = vpninfo->ip_info.addr6;
 	const char *old_netmask6 = vpninfo->ip_info.netmask6;
 
-	if (!vpninfo->cookies && vpninfo->cookie)
-		http_add_cookie(vpninfo, "MRHSession", vpninfo->cookie, 1);
+	if (!vpninfo->cookies) {
+		/* XX: This will happen if authentication was separate/external */
+		ret = internal_split_cookies(vpninfo, 1, "MRHSession");
+		if (ret)
+			return ret;
+	}
 
 	free(vpninfo->urlpath);
 	vpninfo->urlpath = strdup("vdesk/vpn/index.php3?outform=xml&client_version=2.0");
