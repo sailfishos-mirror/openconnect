@@ -188,7 +188,7 @@ static const struct vpn_proto openconnect_protos[] = {
 		.udp_send_probes = oncp_esp_send_probes,
 		.udp_catch_probe = oncp_esp_catch_probe,
 #endif
-	},
+	}
 };
 
 #define NR_PROTOS (sizeof(openconnect_protos)/sizeof(*openconnect_protos))
@@ -352,6 +352,8 @@ void openconnect_vpninfo_free(struct openconnect_info *vpninfo)
 		closesocket(vpninfo->cmd_fd);
 		closesocket(vpninfo->cmd_fd_write);
 	}
+
+	free(vpninfo->ppp);
 
 #ifdef HAVE_ICONV
 	if (vpninfo->ic_utf8_to_legacy != (iconv_t)-1)
