@@ -140,5 +140,12 @@ password_free(const rcstring **password)
 	rcstring_release_zero(*password, zero_password);
 	*password = NULL;
 }
+/**
+ * ask_password is similar request_passphrase Instead of a
+ * char **, it expects const rcstring **
+ */
+int __attribute__((format(printf, 4, 5)))
+ask_password(struct openconnect_info *, const char *label,
+	const rcstring **password, const char *fmt, ...);
 
 #endif /* __OPENCONNECT_GNUTLS_H__ */

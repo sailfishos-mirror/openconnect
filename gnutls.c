@@ -444,7 +444,7 @@ static int load_datum(struct openconnect_info *vpninfo,
 
 static int load_pkcs12_certificate_(struct openconnect_info *vpninfo,
 				   gnutls_datum_t *datum,
-				   const char *password,
+				   const rcstring *password,
 				   gnutls_x509_privkey_t *key,
 				   gnutls_x509_crt_t **chain,
 				   unsigned int *chain_len,
@@ -453,7 +453,7 @@ static int load_pkcs12_certificate_(struct openconnect_info *vpninfo,
 				   gnutls_x509_crl_t *crl)
 {
 	gnutls_pkcs12_t p12;
-	char *pass;
+	const rcstring *pass;
 	int err;
 
 	err = gnutls_pkcs12_init(&p12);
@@ -470,31 +470,22 @@ static int load_pkcs12_certificate_(struct openconnect_info *vpninfo,
 		return NOT_PKCS12;
 	}
 
-	pass = NULL;
-	if (password && (pass = strdup(password)) == NULL) {
-		err = GNUTLS_E_MEMORY_ERROR;
-		goto error;
-	}
-	/**
-	 * A check of pass == password determines if this is the first
-	 * attempt.
-	 */
-	password = pass;
+	pass = password_acquire(password);
 	while ((err = gnutls_pkcs12_verify_mac(p12, pass)) == GNUTLS_E_MAC_VERIFY_FAILED) {
 		if (!pass) {
 			/* OpenSSL's PKCS12_parse() code will try both NULL and "" automatically,
 			 * but GnuTLS requires two separate attempts. */
 			err = gnutls_pkcs12_verify_mac(p12, "");
 			if (!err) {
-				pass = strdup("");
+				pass = password_new("");
 				break;
 			}
 		} else
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("Failed to decrypt PKCS#12 certificate file\n"));
-		free_pass(&pass);
+		password_free(&pass);
 		password = NULL;
-		err = request_passphrase(vpninfo, "openconnect_pkcs12", &pass,
+		err = ask_password(vpninfo, "openconnect_pkcs12", &pass,
 					 _("Enter PKCS#12 pass phrase:"));
 		if (err) {
 			gnutls_pkcs12_deinit(p12);
@@ -503,7 +494,6 @@ static int load_pkcs12_certificate_(struct openconnect_info *vpninfo,
 	}
 	/* If it wasn't GNUTLS_E_MAC_VERIFY_FAILED, then the problem wasn't just a
 	   bad password. Give up. */
- error:
 	if (err) {
 		int level = PRG_ERR;
 		int ret = -EINVAL;
@@ -518,7 +508,7 @@ static int load_pkcs12_certificate_(struct openconnect_info *vpninfo,
 			ret = NOT_PKCS12;
 		}
 
-		free_pass(&pass);
+		password_free(&pass);
 
 		vpn_progress(vpninfo, level,
 			     _("Failed to process PKCS#12 file: %s\n"),
@@ -527,7 +517,7 @@ static int load_pkcs12_certificate_(struct openconnect_info *vpninfo,
 	}
 	err = gnutls_pkcs12_simple_parse(p12, pass, key, chain, chain_len,
 					 extra_certs, extra_certs_len, crl, 0);
-	free_pass(&pass);
+	password_free(&pass);
 	password = NULL;
 
 	gnutls_pkcs12_deinit(p12);
@@ -542,7 +532,7 @@ static int load_pkcs12_certificate_(struct openconnect_info *vpninfo,
 
 static int load_pkcs12_certificate(struct openconnect_info *vpninfo,
 				   gnutls_datum_t *datum,
-				   const char *password,
+				   const rcstring *password,
 				   gnutls_privkey_t *key,
 				   gnutls_x509_crt_t **chain,
 				   unsigned int *chain_len,
@@ -675,7 +665,7 @@ static int assign_privkey(struct openconnect_info *vpninfo,
 	return err;
 }
 
-static int openssl_hash_password(struct openconnect_info *vpninfo, char *pass,
+static int openssl_hash_password(struct openconnect_info *vpninfo, const char *pass,
 				 gnutls_datum_t *key, gnutls_datum_t *salt)
 {
 	unsigned char md5[16];
@@ -729,7 +719,7 @@ static int openssl_hash_password(struct openconnect_info *vpninfo, char *pass,
 static int import_openssl_pem(struct openconnect_info *vpninfo,
 			      gnutls_x509_privkey_t key,
 			      char type, char *pem_header, size_t pem_size,
-			      const char *password)
+			      const rcstring *password)
 {
 	gnutls_cipher_hd_t handle;
 	gnutls_cipher_algorithm_t cipher;
@@ -738,7 +728,8 @@ static int import_openssl_pem(struct openconnect_info *vpninfo,
 	gnutls_datum_t salt, enc_key;
 	unsigned char *key_data;
 	const char *begin;
-	char *pass, *p;
+	const char *pass;
+	char *p;
 	char *pem_start = pem_header;
 	int ret, err, i;
 
@@ -861,11 +852,8 @@ static int import_openssl_pem(struct openconnect_info *vpninfo,
 	if (!key_data)
 		goto out_enc_key;
 
-	if ((pass = strdup(password)) == NULL) {
-		vpn_progress(vpninfo, PRG_ERR,
-			_("Out of memory.\n"));
-		goto out;
-	}
+	pass = password_acquire(password);
+	password = NULL;
 
 	while (1) {
 		memcpy(key_data, b64_data.data, b64_data.size);
@@ -941,9 +929,9 @@ static int import_openssl_pem(struct openconnect_info *vpninfo,
  fail:
 		if (pass) {
 			vpn_progress(vpninfo, PRG_ERR,  _("Decrypting PEM key failed\n"));
-			free_pass(&pass);
+			password_free(&pass);
 		}
-		err = request_passphrase(vpninfo, "openconnect_pem",
+		err = ask_password(vpninfo, "openconnect_pem",
 					 &pass, _("Enter PEM pass phrase:"));
 		if (err) {
 			ret = -EINVAL;
@@ -952,7 +940,7 @@ static int import_openssl_pem(struct openconnect_info *vpninfo,
 	}
  out:
 	free(key_data);
-	free_pass(&pass);
+	password_free(&pass);
  out_enc_key:
 	free(enc_key.data);
  out_b64:
@@ -1237,7 +1225,8 @@ static void check_tls13(struct openconnect_info *vpninfo,
 }
 
 static int load_keycert(struct openconnect_info *vpninfo,
-		const char *key_path, const char *cert_path, const char *password,
+		const char *key_path, const char *cert_path,
+		const rcstring *password,
 		gnutls_privkey_t *key_,
 		gnutls_x509_crt_t **chain_, unsigned int *chain_len_,
 		gnutls_x509_crl_t *crl_)
@@ -1703,11 +1692,15 @@ static int load_keycert(struct openconnect_info *vpninfo,
 		}
 	} else if (strstr((char *)fdata.data, "-----BEGIN ENCRYPTED PRIVATE KEY-----")) {
 		/* Encrypted PKCS#8 */
-		char *pass = (char *)password;
+		const char *pass = password_acquire(password);
 
 		while ((err = gnutls_x509_privkey_import_pkcs8(key, &fdata,
 							       GNUTLS_X509_FMT_PEM,
 							       pass?:"", 0))) {
+			int pass_is_nonnull = pass != NULL;
+
+			password_free(&pass);
+			password = NULL;
 			if (err != GNUTLS_E_DECRYPTION_FAILED) {
 				vpn_progress(vpninfo, PRG_ERR,
 					     _("Failed to load private key as PKCS#8: %s\n"),
@@ -1715,20 +1708,18 @@ static int load_keycert(struct openconnect_info *vpninfo,
 				ret = -EINVAL;
 				goto out;
 			}
-			password = NULL;
-			if (pass) {
+			if (pass_is_nonnull) {
 				vpn_progress(vpninfo, PRG_ERR,
 					     _("Failed to decrypt PKCS#8 certificate file\n"));
-				free_pass(&pass);
 			}
-			err = request_passphrase(vpninfo, "openconnect_pem",
+			err = ask_password(vpninfo, "openconnect_pem",
 						 &pass, _("Enter PEM pass phrase:"));
 			if (err) {
 				ret = -EINVAL;
 				goto out;
 			}
 		}
-		free_pass(&pass);
+		password_free(&pass);
 		password = NULL;
 	} else if (!gnutls_x509_privkey_import(key, &fdata, GNUTLS_X509_FMT_DER) ||
 		   !gnutls_x509_privkey_import_pkcs8(key, &fdata, GNUTLS_X509_FMT_DER,
@@ -1736,11 +1727,15 @@ static int load_keycert(struct openconnect_info *vpninfo,
 		/* Unencrypted DER (PKCS#1 or PKCS#8) */
 	} else {
 		/* Last chance: try encrypted PKCS#8 DER. And give up if it's not that */
-		char *pass = (char *)password;
+		const char *pass = password_acquire(password);
 
 		while ((err = gnutls_x509_privkey_import_pkcs8(key, &fdata,
 							       GNUTLS_X509_FMT_DER,
 							       pass?:"", 0))) {
+			int pass_is_nonnull = pass != NULL;
+
+			password_free(&pass);
+			password = NULL;
 			if (err != GNUTLS_E_DECRYPTION_FAILED) {
 				vpn_progress(vpninfo, PRG_ERR,
 					     _("Failed to determine type of private key %s\n"),
@@ -1748,20 +1743,18 @@ static int load_keycert(struct openconnect_info *vpninfo,
 				ret = -EINVAL;
 				goto out;
 			}
-			password = NULL;
-			if (pass) {
+			if (pass_is_nonnull) {
 				vpn_progress(vpninfo, PRG_ERR,
 					     _("Failed to decrypt PKCS#8 certificate file\n"));
-				free_pass(&pass);
 			}
-			err = request_passphrase(vpninfo, "openconnect_pem",
+			err = ask_password(vpninfo, "openconnect_pem",
 						 &pass, _("Enter PKCS#8 pass phrase:"));
 			if (err) {
 				ret = -EINVAL;
 				goto out;
 			}
 		}
-		free_pass(&pass);
+		password_free(&pass);
 		password = NULL;
 	}
 
@@ -1974,13 +1967,22 @@ static int load_certificate(struct openconnect_info *vpninfo)
 {
 	gnutls_privkey_t key = NULL;
 	gnutls_x509_crt_t *chain = NULL;
+	const rcstring *password;
 	unsigned int chain_len = 0;
 	gnutls_x509_crl_t crl = NULL;
 	unsigned int i;
 	int ret;
 
+	password = password_new(vpninfo->cert_password);
+	if (vpninfo->cert_password && password == NULL)
+		return -ENOMEM;
+
 	ret = load_keycert(vpninfo, vpninfo->sslkey, vpninfo->cert,
-			vpninfo->cert_password, &key, &chain, &chain_len, &crl);
+			password, &key, &chain, &chain_len, &crl);
+
+	password_free(&password);
+	free_pass(&vpninfo->cert_password);
+
 	if (ret < 0)
 		goto cleanup;
 
@@ -2905,12 +2907,18 @@ const rcstring *rcstring_new_len(const char *s, size_t len)
 	rcstr->str.len = len;
 	memcpy(rcstr->str.data, s, len);
 	rcstr->str.data[len] = 0;
+	/* coverity[leaked_storage] - rcstr is not leaked */
 	return rcstr->str.data;
 }
 
 const rcstring *rcstring_new(const char *s)
 {
 	return rcstring_new_len(s, strlen(s));
+}
+
+void zero_password(char *s, size_t n)
+{
+	clear_mem(s, n);
 }
 
 void rcstring_release_zero(const rcstring *str, void (*zero_func)(char *, size_t))
@@ -2926,7 +2934,22 @@ void rcstring_release_zero(const rcstring *str, void (*zero_func)(char *, size_t
 	}
 }
 
-void zero_password(char *s, size_t n)
+int __attribute__((format(printf, 4, 5)))
+ask_password(struct openconnect_info *vpninfo,
+	const char *label, const rcstring **password, const char *fmt, ...)
 {
-	clear_mem(s, n);
+	const rcstring *str = NULL;
+	char *response = NULL;
+	va_list args;
+	int ret;
+
+	va_start(args, fmt);
+	ret = request_passphrase_v(vpninfo, label, &response, fmt, args);
+	va_end(args);
+	if (ret == 0)
+		str = rcstring_new(response);
+	free_pass(&response);
+	if (str == NULL)
+		ret = -ENOMEM;
+	return ret;
 }

@@ -948,6 +948,8 @@ int connect_https_socket(struct openconnect_info *vpninfo);
 int __attribute__ ((format(printf, 4, 5)))
     request_passphrase(struct openconnect_info *vpninfo, const char *label,
 		       char **response, const char *fmt, ...);
+int request_passphrase_v(struct openconnect_info *vpninfo, const char *label,
+		       char **response, const char *fmt, va_list args);
 int  __attribute__ ((format (printf, 2, 3)))
     openconnect_SSL_printf(struct openconnect_info *vpninfo, const char *fmt, ...);
 int openconnect_print_err_cb(const char *str, size_t len, void *ptr);

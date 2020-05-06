@@ -523,21 +523,18 @@ int  __attribute__ ((format (printf, 2, 3)))
 
 }
 
-int __attribute__ ((format(printf, 4, 5)))
-    request_passphrase(struct openconnect_info *vpninfo, const char *label,
-		       char **response, const char *fmt, ...)
+int request_passphrase_v(struct openconnect_info *vpninfo,
+		       const char *label, char **response,
+		       const char *fmt, va_list args)
 {
 	struct oc_auth_form f;
 	struct oc_form_opt o;
 	char buf[1024];
-	va_list args;
 	int ret;
 
 	buf[1023] = 0;
 	memset(&f, 0, sizeof(f));
-	va_start(args, fmt);
 	vsnprintf(buf, 1023, fmt, args);
-	va_end(args);
 
 	f.auth_id = (char *)label;
 	f.opts = &o;
@@ -555,6 +552,19 @@ int __attribute__ ((format(printf, 4, 5)))
 	}
 
 	return -EIO;
+}
+
+int __attribute__ ((format(printf, 4, 5)))
+    request_passphrase(struct openconnect_info *vpninfo, const char *label,
+		       char **response, const char *fmt, ...)
+{
+	va_list args;
+	int ret;
+
+	va_start(args, fmt);
+	ret = request_passphrase_v(vpninfo, label, response, fmt, args);
+	va_end(args);
+	return ret;
 }
 
 #if defined(__sun__) || defined(__NetBSD__) || defined(__DragonFly__)
