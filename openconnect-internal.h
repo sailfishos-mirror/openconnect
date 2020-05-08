@@ -1131,6 +1131,9 @@ int buf_ensure_space(struct oc_text_buf *buf, int len);
 void  __attribute__ ((format (printf, 2, 3)))
 	buf_append(struct oc_text_buf *buf, const char *fmt, ...);
 void buf_append_bytes(struct oc_text_buf *buf, const void *bytes, int len);
+void buf_append_be16(struct oc_text_buf *buf, uint16_t val);
+void buf_append_be32(struct oc_text_buf *buf, uint32_t val);
+void buf_append_le16(struct oc_text_buf *buf, uint16_t val);
 void buf_append_hex(struct oc_text_buf *buf, const void *str, unsigned len);
 int buf_append_utf16le(struct oc_text_buf *buf, const char *utf8);
 int get_utf8char(const char **utf8);
