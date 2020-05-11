@@ -173,6 +173,7 @@ static const char *encap_names[PPP_ENCAP_MAX+1] = {
 	"F5",
 	"F5 HDLC",
 	"FORTINET",
+	"NX HDLC",
 };
 
 static const char *lcp_names[] = {
@@ -262,6 +263,11 @@ int openconnect_ppp_new(struct openconnect_info *vpninfo,
 
 	case PPP_ENCAP_RFC1662_HDLC:
 		ppp->encap_len = 0;
+		ppp->hdlc = 1;
+		break;
+
+	case PPP_ENCAP_NX_HDLC:
+		ppp->encap_len = 4;
 		ppp->hdlc = 1;
 		break;
 
@@ -1099,7 +1105,22 @@ int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		case PPP_ENCAP_RFC1661:
 			payload_len = len;
 			next = eh + payload_len;
+
+		case PPP_ENCAP_NX_HDLC: {
+			int payload_len_hdr = load_be32(ph);
+			payload_len = unhdlc_in_place(vpninfo, ph + ppp->encap_len, len, &pp);
+			vpn_progress(vpninfo, PRG_INFO, "payload_len_hdr: %x, payload_len: %x, len: %x\n",
+						 payload_len_hdr, payload_len, len);
+			if (payload_len < 0)
+				continue; /* unhdlc_in_place already logged */
+			if (pp != ph + len)
+				vpn_progress(vpninfo, PRG_ERR,
+							 _("Packet contains %ld bytes after payload. Concatenated packets are not handled yet.\n"),
+							 len - (pp - ph));
+			if (vpninfo->dump_http_traffic)
+				dump_buf_hex(vpninfo, PRG_TRACE, '<', pp, payload_len);
 			break;
+		}
 
 		default:
 			vpn_progress(vpninfo, PRG_ERR, _("Invalid PPP encapsulation\n"));
@@ -1353,6 +1374,9 @@ int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			store_be16(eh, this->len + this->ppp.hlen + 6);
 			store_be16(eh + 2, 0x5050);
 			store_be16(eh + 4, this->len + this->ppp.hlen);
+			break;
+		case PPP_ENCAP_NX_HDLC:
+			store_be32(this->data + n - 4, this->len - n);
 			break;
 		}
 		this->ppp.hlen += ppp->encap_len;
