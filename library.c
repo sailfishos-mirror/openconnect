@@ -235,6 +235,17 @@ static const struct vpn_proto openconnect_protos[] = {
 		.udp_catch_probe = oncp_esp_catch_probe,
 #endif
 	}, {
+		.name = "nx",
+		.pretty_name = N_("SonicWall NetExtender"),
+		.description = N_("Compatible with SonicWall NetExtender SSL VPN"),
+		.proto = PROTO_NX,
+		.flags = OC_PROTO_PROXY,
+		.vpn_close_session = nx_bye,
+		.tcp_connect = nx_connect,
+		.tcp_mainloop = ppp_mainloop,
+		.add_http_headers = nx_common_headers,
+		.obtain_cookie = nx_obtain_cookie,
+	}, {
 		.name = "nullppp",
 		.pretty_name = N_("PPP over TLS"),
 		.description = N_("Unauthenticated RFC1661/RFC1662 PPP over TLS, for testing"),
