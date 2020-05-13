@@ -28,6 +28,8 @@
 struct login_context {
 	char *username;				/* Username that has already succeeded in some form */
 	char *alt_secret;			/* Alternative secret (DO NOT FREE) */
+	char *portal_userauthcookie;		/* portal-userauthcookie (from global-protect/getconfig.esp) */
+	char *portal_prelogonuserauthcookie;	/* portal-prelogonuserauthcookie (from global-protect/getconfig.esp) */
 	struct oc_auth_form *form;
 };
 
@@ -392,6 +394,7 @@ err_out:
  */
 static int parse_portal_xml(struct openconnect_info *vpninfo, xmlNode *xml_node, void *cb_data)
 {
+	struct login_context *ctx = cb_data;
 	struct oc_auth_form *form;
 	xmlNode *x, *x2, *x3, *gateways = NULL;
 	struct oc_form_opt_select *opt;
@@ -446,8 +449,11 @@ static int parse_portal_xml(struct openconnect_info *vpninfo, xmlNode *xml_node,
 						}
 					}
 				}
-			} else
+			} else {
 				xmlnode_get_val(x, "portal-name", &portal);
+				xmlnode_get_val(x, "portal-userauthcookie", &ctx->portal_userauthcookie);
+				xmlnode_get_val(x, "portal-prelogonuserauthcookie", &ctx->portal_prelogonuserauthcookie);
+			}
 		}
 	}
 
@@ -609,6 +615,11 @@ static int gpst_login(struct openconnect_info *vpninfo, int portal, struct login
 		append_opt(request_body, "os-version", vpninfo->platname);
 		append_opt(request_body, "server", vpninfo->hostname);
 		append_opt(request_body, "computer", vpninfo->localname);
+		if (ctx->portal_userauthcookie)
+			append_opt(request_body, "portal-userauthcookie", ctx->portal_userauthcookie);
+		if (ctx->portal_prelogonuserauthcookie)
+			append_opt(request_body, "portal-prelogonuserauthcookie", ctx->portal_prelogonuserauthcookie);
+
 		if (vpninfo->ip_info.addr)
 			append_opt(request_body, "preferred-ip", vpninfo->ip_info.addr);
 		if (vpninfo->ip_info.addr6)
@@ -668,7 +679,7 @@ out:
 
 int gpst_obtain_cookie(struct openconnect_info *vpninfo)
 {
-	struct login_context ctx = { .username=NULL, .alt_secret=NULL, .form=NULL };
+	struct login_context ctx = { .username=NULL, .alt_secret=NULL, .portal_userauthcookie=NULL, .portal_prelogonuserauthcookie=NULL, .form=NULL };
 	int result;
 
 	/* An alternate password/secret field may be specified in the "URL path" (or --usergroup).
@@ -699,6 +710,8 @@ int gpst_obtain_cookie(struct openconnect_info *vpninfo)
 	}
 	free(ctx.username);
 	free(ctx.alt_secret);
+	free(ctx.portal_userauthcookie);
+	free(ctx.portal_prelogonuserauthcookie);
 	free_auth_form(ctx.form);
 	return result;
 }
