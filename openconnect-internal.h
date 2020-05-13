@@ -190,7 +190,8 @@ struct pkt {
 #define PPP_ENCAP_RFC1662_HDLC	2	/* PPP with HDLC-like framing (RFC1662) */
 #define PPP_ENCAP_F5		3	/* F5 BigIP no HDLC */
 #define PPP_ENCAP_F5_HDLC	4	/* F5 BigIP HDLC */
-#define PPP_ENCAP_MAX		PPP_ENCAP_F5_HDLC
+#define PPP_ENCAP_FORTINET_HDLC 5	/* Fortinet HDLC */
+#define PPP_ENCAP_MAX		PPP_ENCAP_FORTINET_HDLC
 
 #define COMPR_DEFLATE	(1<<0)
 #define COMPR_LZS	(1<<1)
@@ -990,6 +991,11 @@ int nullppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readabl
 int f5_obtain_cookie(struct openconnect_info *vpninfo);
 int f5_connect(struct openconnect_info *vpninfo);
 int f5_bye(struct openconnect_info *vpninfo, const char *reason);
+
+/* fortinet.c */
+int fortinet_obtain_cookie(struct openconnect_info *vpninfo);
+int fortinet_connect(struct openconnect_info *vpninfo);
+int fortinet_bye(struct openconnect_info *vpninfo, const char *reason);
 
 /* ppp.c */
 struct oc_ppp;
