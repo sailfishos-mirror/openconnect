@@ -172,6 +172,7 @@ static const char *encap_names[PPP_ENCAP_MAX+1] = {
 	"RFC1662 HDLC",
 	"F5",
 	"F5 HDLC",
+	"FORTINET HDLC",
 };
 
 static const char *lcp_names[] = {
@@ -253,6 +254,7 @@ int openconnect_ppp_new(struct openconnect_info *vpninfo,
 		/* fall through */
 
 	case PPP_ENCAP_RFC1662_HDLC:
+	case PPP_ENCAP_FORTINET_HDLC:
 		ppp->encap_len = 0;
 		ppp->hdlc = 1;
 		break;
