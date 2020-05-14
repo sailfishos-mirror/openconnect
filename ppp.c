@@ -1093,6 +1093,12 @@ int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 				goto incomplete_pkt;
 			break;
 
+		case PPP_ENCAP_NX_HDLC:
+			payload_len = load_be32(eh);
+			if (len < 4 + payload_len)
+				goto incomplete_pkt;
+			/* fall through */
+
 		case PPP_ENCAP_F5_HDLC:
 		case PPP_ENCAP_RFC1662_HDLC:
 			payload_len = unhdlc_in_place(vpninfo, eh + ppp->encap_len, len - ppp->encap_len, &next);
@@ -1105,22 +1111,7 @@ int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		case PPP_ENCAP_RFC1661:
 			payload_len = len;
 			next = eh + payload_len;
-
-		case PPP_ENCAP_NX_HDLC: {
-			int payload_len_hdr = load_be32(ph);
-			payload_len = unhdlc_in_place(vpninfo, ph + ppp->encap_len, len, &pp);
-			vpn_progress(vpninfo, PRG_INFO, "payload_len_hdr: %x, payload_len: %x, len: %x\n",
-						 payload_len_hdr, payload_len, len);
-			if (payload_len < 0)
-				continue; /* unhdlc_in_place already logged */
-			if (pp != ph + len)
-				vpn_progress(vpninfo, PRG_ERR,
-							 _("Packet contains %ld bytes after payload. Concatenated packets are not handled yet.\n"),
-							 len - (pp - ph));
-			if (vpninfo->dump_http_traffic)
-				dump_buf_hex(vpninfo, PRG_TRACE, '<', pp, payload_len);
 			break;
-		}
 
 		default:
 			vpn_progress(vpninfo, PRG_ERR, _("Invalid PPP encapsulation\n"));
@@ -1376,7 +1367,8 @@ int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			store_be16(eh + 4, this->len + this->ppp.hlen);
 			break;
 		case PPP_ENCAP_NX_HDLC:
-			store_be32(this->data + n - 4, this->len - n);
+			/* XX: header is simply the number of bytes on the wire (excluding itself) */
+			store_be32(eh, this->len + this->ppp.hlen);
 			break;
 		}
 		this->ppp.hlen += ppp->encap_len;
