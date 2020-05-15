@@ -279,9 +279,9 @@ static int parse_options(struct openconnect_info *vpninfo, char *buf, int len,
 		}
 	}
 
-	if (default_route && ipv4)
+	if (default_route && *ipv4)
 		vpninfo->ip_info.netmask = strdup("0.0.0.0");
-	if (default_route && ipv6)
+	if (default_route && *ipv6)
 		vpninfo->ip_info.netmask6 = strdup("::");
 	if (buf_error(domains) == 0 && domains->pos > 0) {
 		domains->data[domains->pos-1] = '\0';
