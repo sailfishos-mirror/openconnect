@@ -696,16 +696,16 @@ static int handle_state_transition(struct openconnect_info *vpninfo, int *timeou
 }
 
 static inline void add_ppp_header(struct pkt *p, struct oc_ppp *ppp, int proto) {
-	int n = 0;
+	unsigned char *ph = p->data;
 	/* XX: store PPP header, in reverse */
-	p->data[--n] = proto & 0xff;
+	*--ph = proto & 0xff;
 	if (proto > 0xff || !(ppp->out_lcp_opts & BIT_PFCOMP))
-		p->data[--n] = proto >> 8;
+		*--ph = proto >> 8;
 	if (proto == PPP_LCP || !(ppp->out_lcp_opts & BIT_ACCOMP)) {
-		p->data[--n] = 0x03; /* Control */
-		p->data[--n] = 0xff; /* Address */
+		*--ph = 0x03; /* Control */
+		*--ph = 0xff; /* Address */
 	}
-	p->ppp.hlen = -n;
+	p->ppp.hlen = p->data - ph;
 }
 
 int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
