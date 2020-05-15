@@ -115,7 +115,7 @@ static const struct vpn_proto openconnect_protos[] = {
 		.name = "anyconnect",
 		.pretty_name = N_("Cisco AnyConnect or openconnect"),
 		.description = N_("Compatible with Cisco AnyConnect SSL VPN, as well as ocserv"),
-		.flags = OC_PROTO_PROXY | OC_PROTO_CSD | OC_PROTO_AUTH_CERT | OC_PROTO_AUTH_OTP | OC_PROTO_AUTH_STOKEN,
+		.flags = OC_PROTO_PROXY | OC_PROTO_CSD | OC_PROTO_AUTH_CERT | OC_PROTO_AUTH_OTP | OC_PROTO_AUTH_STOKEN | OC_PROTO_AUTH_MULTI_CERT,
 		.vpn_close_session = cstp_bye,
 		.tcp_connect = cstp_connect,
 		.tcp_mainloop = cstp_mainloop,
@@ -395,6 +395,9 @@ void openconnect_vpninfo_free(struct openconnect_info *vpninfo)
 	free(vpninfo->ifname);
 	free(vpninfo->dtls_cipher);
 	free(vpninfo->peer_cert_hash);
+	free(vpninfo->cert2);
+	free(vpninfo->key2);
+	free_pass(&vpninfo->key2_password);
 #if defined(OPENCONNECT_OPENSSL)
 	free(vpninfo->cstp_cipher);
 #if defined(HAVE_BIO_METH_FREE)

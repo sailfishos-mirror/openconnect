@@ -470,13 +470,17 @@ int tpm2_ec_sign_hash_fn(gnutls_privkey_t key, gnutls_sign_algorithm_t algo,
 	return ret;
 }
 
-int install_tpm2_key(struct openconnect_info *vpninfo, gnutls_privkey_t *pkey, gnutls_datum_t *pkey_sig,
+int install_tpm2_key(struct openconnect_info *vpninfo,
+		     const char *password,
+		     gnutls_privkey_t *pkey, gnutls_datum_t *pkey_sig,
 		     unsigned int parent, int emptyauth, int legacy,
 		     gnutls_datum_t *privdata, gnutls_datum_t *pubdata)
 {
 	TPM_RC rc;
 	BYTE *der;
 	INT32 dersize;
+
+	(void) password;
 
 	if (!parent_is_persistent(parent) &&
 	    parent != TPM_RH_OWNER && parent != TPM_RH_NULL &&

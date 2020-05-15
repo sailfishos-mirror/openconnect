@@ -175,17 +175,25 @@ static int decode_data(ASN1_TYPE n, gnutls_datum_t *r)
 }
 
 int load_tpm2_key(struct openconnect_info *vpninfo, gnutls_datum_t *fdata,
-		  gnutls_privkey_t *pkey, gnutls_datum_t *pkey_sig)
+		  const char *password,
+		  gnutls_privkey_t *pkey_, gnutls_datum_t *pkey_sig)
 {
 	gnutls_datum_t asn1, pubdata, privdata;
 	ASN1_TYPE tpmkey_def = ASN1_TYPE_EMPTY, tpmkey = ASN1_TYPE_EMPTY;
 	const char *oid = NULL;
+	gnutls_privkey_t pkey = NULL;
 	char value_buf[16];
 	int value_buflen;
 	int emptyauth = 0;
 	unsigned int parent;
 	int err, ret = -EINVAL;
 	const asn1_static_node *asn1tab;
+
+	if (vpninfo->tpm2) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("TPM2 is in use.\n"));
+		return -EBUSY;
+	}
 
 	err = gnutls_pem_base64_decode_alloc("TSS2 PRIVATE KEY", fdata, &asn1);
 	if (!err) {
@@ -282,34 +290,47 @@ int load_tpm2_key(struct openconnect_info *vpninfo, gnutls_datum_t *fdata,
 
 	/* Now we've extracted what we need from the ASN.1, invoke the
 	 * actual TPM2 code (whichever implementation we end up with */
-	ret = install_tpm2_key(vpninfo, pkey, pkey_sig, parent, emptyauth,
+	ret = install_tpm2_key(vpninfo, password,
+			       &pkey, pkey_sig, parent, emptyauth,
 			       asn1tab == tpmkey_asn1_tab_old, &privdata, &pubdata);
 	if (ret < 0)
 		goto out_tpmkey;
 
-	gnutls_privkey_init(pkey);
-
-	switch(ret) {
-	case GNUTLS_PK_RSA:
+	err = gnutls_privkey_init(&pkey);
+	if (err >= 0) {
+		switch(ret) {
+		case GNUTLS_PK_RSA:
 #if GNUTLS_VERSION_NUMBER >= 0x030600
-		gnutls_privkey_import_ext4(*pkey, vpninfo, NULL, tpm2_rsa_sign_hash_fn, NULL, NULL, rsa_key_info, 0);
+			err = gnutls_privkey_import_ext4(pkey, vpninfo, NULL, tpm2_rsa_sign_hash_fn, NULL, NULL, rsa_key_info, 0);
 #else
-		gnutls_privkey_import_ext(*pkey, GNUTLS_PK_RSA, vpninfo, tpm2_rsa_sign_fn, NULL, 0);
+			err = gnutls_privkey_import_ext(pkey, GNUTLS_PK_RSA, vpninfo, tpm2_rsa_sign_fn, NULL, 0);
 #endif
-		break;
+			break;
 
-	case GNUTLS_PK_ECC:
+		case GNUTLS_PK_ECC:
 #if GNUTLS_VERSION_NUMBER >= 0x030600
-		gnutls_privkey_import_ext4(*pkey, vpninfo, NULL, tpm2_ec_sign_hash_fn, NULL, NULL, ec_key_info, 0);
+			err = gnutls_privkey_import_ext4(pkey, vpninfo, NULL, tpm2_ec_sign_hash_fn, NULL, NULL, ec_key_info, 0);
 #elif GNUTLS_VERSION_NUMBER >= 0x030400
-		gnutls_privkey_import_ext3(*pkey, vpninfo, tpm2_ec_sign_fn, NULL, NULL, ec_key_info, 0);
+			err = gnutls_privkey_import_ext3(pkey, vpninfo, tpm2_ec_sign_fn, NULL, NULL, ec_key_info, 0);
 #else
-		gnutls_privkey_import_ext(*pkey, GNUTLS_PK_EC, vpninfo, tpm2_ec_sign_fn, NULL, 0);
+			err = gnutls_privkey_import_ext(pkey, GNUTLS_PK_EC, vpninfo, tpm2_ec_sign_fn, NULL, 0);
 #endif
-		break;
+			break;
+		}
 	}
+
+	if (err < 0) {
+		vpn_progress(vpninfo, PRG_ERR,
+		    _("Error initialising private key structure: (%d) %s\n"),
+		    err, gnutls_strerror(err));
+		goto out_privkey;
+	}
+
+	*pkey_ = pkey, pkey = NULL;
 	ret = 0;
 
+ out_privkey:
+	gnutls_privkey_deinit(pkey);
  out_tpmkey:
 	asn1_delete_structure(&tpmkey);
 	asn1_delete_structure(&tpmkey_def);

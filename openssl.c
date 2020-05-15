@@ -2139,3 +2139,20 @@ void destroy_eap_ttls(struct openconnect_info *vpninfo, void *ttls)
 	/* Leave the BIO_METH for now. It may get reused and we don't want to
 	 * have to call BIO_get_new_index() more times than is necessary */
 }
+
+int cert_auth_challenge_response(struct openconnect_info *vpninfo,
+	int cert_rq, const char *challenge, char **identity,
+	struct challenge_response *response)
+{
+	/* hush not used warnings */
+	(void) cert_rq;
+	(void) challenge;
+	(void) identity;
+	(void) response;
+
+	vpn_progress(vpninfo, PRG_ERR,
+		_("Multiple certificate-based authentication"
+		    " is not implemented for OpenSSL\n"));
+
+	return -ENOSYS;
+}

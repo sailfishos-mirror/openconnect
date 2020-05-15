@@ -364,6 +364,7 @@ struct esp {
 struct oc_pcsc_ctx;
 struct oc_tpm1_ctx;
 struct oc_tpm2_ctx;
+struct oc_pin_ctx;
 
 struct openconnect_info {
 	const struct vpn_proto *proto;
@@ -450,6 +451,12 @@ struct openconnect_info {
 	time_t last_trojan;
 	int no_http_keepalive;
 	int dump_http_traffic;
+
+	char *cert2;
+	char *key2;
+	char *key2_password;
+
+	struct oc_pin_ctx *pin_ctx;
 
 	int token_mode;
 	int token_bypassed;
@@ -744,6 +751,36 @@ struct openconnect_info {
 	} while(0)
 #define vpn_perror(vpninfo, msg) vpn_progress((vpninfo), PRG_ERR, "%s: %s\n", (msg), strerror(errno))
 
+/* certificate authentication */
+#if !defined(ENABLE_MULTICERT) && defined(OPENCONNECT_GNUTLS)
+#  define ENABLE_MULTICERT 1
+#endif
+
+typedef enum {
+	CERT_AUTH_REQ_CERT1 = (1U<<0),
+#define CERT_AUTH_REQ_CERT1 CERT_AUTH_REQ_CERT1
+	CERT_AUTH_REQ_CERT2 = (1U<<1),
+#define CERT_AUTH_CERT2 CERT_AUTH_REQ_CERT2,
+	CERT_AUTH_DIGEST_SHA256 = (1U<<8),
+#define CERT_AUTH_DIGEST_SHA256 CERT_AUTH_DIGEST_SHA256
+	CERT_AUTH_DIGEST_SHA384 = (1U<<9),
+#define CERT_AUTH_DIGEST_SHA384 CERT_AUTH_DIGEST_SHA384
+	CERT_AUTH_DIGEST_SHA512 = (1U<<10),
+#define CERT_AUTH_DIGEST_SHA512 CERT_AUTH_DIGEST_SHA512
+	CERT_AUTH_DIGEST_UNKNOWN = (1U<<30),
+#define CERT_AUTH_DIGEST_UNKNOWN CERT_AUTH_DIGEST_UNKNOWN
+} cert_auth_t;
+#define CERT_AUTH_DIGEST_MASK (CERT_AUTH_DIGEST_SHA256|CERT_AUTH_DIGEST_SHA384|CERT_AUTH_DIGEST_SHA512)
+
+struct challenge_response {
+	int digest;
+	char *data;
+};
+
+int cert_auth_challenge_response(struct openconnect_info *vpninfo,
+		int cert_rq, const char *challenge, char **identity,
+		struct challenge_response *response);
+
 /****************************************************************************/
 /* Oh Solaris how we hate thee! */
 #ifdef HAVE_SUNOS_BROKEN_TIME
@@ -948,6 +985,8 @@ int connect_https_socket(struct openconnect_info *vpninfo);
 int __attribute__ ((format(printf, 4, 5)))
     request_passphrase(struct openconnect_info *vpninfo, const char *label,
 		       char **response, const char *fmt, ...);
+int request_passphrase_v(struct openconnect_info *vpninfo, const char *label,
+		       char **response, const char *fmt, va_list args);
 int  __attribute__ ((format (printf, 2, 3)))
     openconnect_SSL_printf(struct openconnect_info *vpninfo, const char *fmt, ...);
 int openconnect_print_err_cb(const char *str, size_t len, void *ptr);
