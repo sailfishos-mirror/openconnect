@@ -1370,6 +1370,7 @@ static int pulse_authenticate(struct openconnect_info *vpninfo, int connecting)
 
 	reqbuf = buf_alloc();
 
+ juniper_retry_default:
 	buf_append(reqbuf, "GET /%s HTTP/1.1\r\n", vpninfo->urlpath ?: "");
 	http_common_headers(vpninfo, reqbuf);
 	buf_append(reqbuf, "Content-Type: EAP\r\n");
@@ -1393,6 +1394,20 @@ static int pulse_authenticate(struct openconnect_info *vpninfo, int connecting)
 	ret = process_http_response(vpninfo, 1, NULL, reqbuf);
 	if (ret < 0)
 		goto out;
+
+	if (vpninfo->proto->proto == PROTO_JUN2PULSE && vpninfo->urlpath && ret == 404) {
+		/* XX: Juniper authentication will silently redirect to default urlpath in
+		 * the case of a nonexistent one, but Pulse returns 404 Not Found.
+		 * Retry once with / if it didn't work.
+		 */
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Juniper sign-in path '%s' is incorrect or incompatible with Pulse\n"),
+			     vpninfo->urlpath);
+		free(vpninfo->urlpath);
+		vpninfo->urlpath = NULL;
+		buf_truncate(reqbuf);
+		goto juniper_retry_default;
+	}
 
 	if (ret != 101) {
 		vpn_progress(vpninfo, PRG_ERR,
