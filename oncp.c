@@ -592,7 +592,9 @@ int oncp_connect(struct openconnect_info *vpninfo)
 			             _("This seems to indicate that the server has disabled support for\n"
 			               "Juniper's older oNCP protocol, and only allows connections using\n"
 			               "the newer Junos Pulse protocol. This version of OpenConnect has\n"
-			               "EXPERIMENTAL support for Pulse using --prot=pulse\n"));
+			               "EXPERIMENTAL support for Pulse using:\n"
+				       "  --prot=jun2pulse (Juniper authentication, Pulse tunnel\n"
+				       "  --prot=pulse     (Pulse-native authentication)\n"));
 		ret = -EINVAL;
 		goto out;
 	}
