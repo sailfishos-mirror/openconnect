@@ -93,13 +93,7 @@ int nx_connect(struct openconnect_info *vpninfo)
 	// first byte as an indicator of success and don't need to check for "HTTP"
 	// TODO: actually handle errors as described above
 	vpn_progress(vpninfo, PRG_DEBUG, _("Connection established\n"));
-	vpninfo->ppp = openconnect_ppp_new(PPP_ENCAP_NX_HDLC, ipv4, ipv6);
-	if (!vpninfo->ppp) {
-		ret = -ENOMEM;
-		goto out;
-	}
-
-	ret = 0;
+	ret = openconnect_ppp_new(vpninfo, PPP_ENCAP_NX_HDLC, ipv4, ipv6);
 
 out:
 	if (ret < 0)

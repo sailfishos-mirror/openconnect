@@ -189,12 +189,13 @@ static const char *lcp_names[] = {
 	"Discard-Request",
 };
 
-struct oc_ppp *openconnect_ppp_new(int encap, int want_ipv4, int want_ipv6)
+int openconnect_ppp_new(struct openconnect_info *vpninfo,
+			int encap, int want_ipv4, int want_ipv6)
 {
-	struct oc_ppp *ppp = calloc(sizeof(*ppp), 1);
+	struct oc_ppp *ppp = vpninfo->ppp = calloc(sizeof(*ppp), 1);
 
 	if (!ppp)
-		return NULL;
+		return -ENOMEM;
 
 	ppp->encap = encap;
 	switch (encap) {
@@ -215,7 +216,7 @@ struct oc_ppp *openconnect_ppp_new(int encap, int want_ipv4, int want_ipv6)
 
 	default:
 		free(ppp);
-		return NULL;
+		return -EINVAL;
 	}
 
 	ppp->want_ipv4 = want_ipv4;
@@ -227,10 +228,10 @@ struct oc_ppp *openconnect_ppp_new(int encap, int want_ipv4, int want_ipv6)
 
 	if (openconnect_random(&ppp->out_lcp_magic, sizeof(ppp->out_lcp_magic))) {
 		free(ppp);
-		return NULL;
+		return -EINVAL;
 	}
 
-	return ppp;
+	return 0;
 }
 
 static void print_ppp_state(struct openconnect_info *vpninfo, int level)
