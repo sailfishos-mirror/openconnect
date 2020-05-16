@@ -466,8 +466,15 @@ static int queue_config_request(struct openconnect_info *vpninfo, int proto)
 	switch (proto) {
 	case PPP_LCP:
 		ncp = &ppp->lcp;
-		if (!vpninfo->ip_info.mtu)
-			vpninfo->ip_info.mtu = 1300; /* FIXME */
+		if (!vpninfo->ip_info.mtu) {
+			vpninfo->ip_info.mtu = calculate_mtu(vpninfo, 0 /* not UDP */,
+							     /* 1-byte PPP header with ACCOMP, PFCOMP; 4-bytes HDLC framing and FCS */
+							     ppp->encap_len + 1 + (ppp->hdlc ? 4 : 0),
+							     0, 1); /* no footer or block padding */
+			/* XX: HDLC fudge factor (average overhead on random payload is 1/128, we'll use more like 2%) */
+			if (ppp->hdlc)
+				vpninfo->ip_info.mtu -= vpninfo->ip_info.mtu / 50;
+		}
 
 		if (ppp->out_lcp_opts & BIT_MRU)
 			buf_append_ppp_tlv_be16(buf, LCP_MRU, vpninfo->ip_info.mtu);

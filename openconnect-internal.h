@@ -353,6 +353,7 @@ static inline void init_pkt_queue(struct pkt_q *q)
 	q->tail = &q->head;
 }
 
+#define TLS_OVERHEAD 5 /* packet + header */
 #define DTLS_OVERHEAD (1 /* packet + header */ + 13 /* DTLS header */ + \
 	 20 /* biggest supported MAC (SHA1) */ +  32 /* biggest supported IV (AES-256) */ + \
 	 16 /* max padding */)
@@ -906,6 +907,10 @@ int openconnect_dtls_read(struct openconnect_info *vpninfo, void *buf, size_t le
 int openconnect_dtls_write(struct openconnect_info *vpninfo, void *buf, size_t len);
 char *openconnect_bin2hex(const char *prefix, const uint8_t *data, unsigned len);
 char *openconnect_bin2base64(const char *prefix, const uint8_t *data, unsigned len);
+
+/* mtucalc.c */
+
+int calculate_mtu(struct openconnect_info *vpninfo, int is_udp, int unpadded_overhead, int padded_overhead, int block_size);
 
 /* cstp.c */
 void cstp_common_headers(struct openconnect_info *vpninfo, struct oc_text_buf *buf);
