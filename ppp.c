@@ -189,6 +189,21 @@ static const char *lcp_names[] = {
 	"Discard-Request",
 };
 
+inline static const char *proto_names(uint16_t proto) {
+	static char unknown[7];
+
+	switch (proto) {
+	case PPP_LCP: return "LCP";
+	case PPP_IPCP: return "IPCP";
+	case PPP_IP6CP: return "IP6CP";
+	case PPP_IP: return "IPv4";
+	case PPP_IP6: return "IPv6";
+	default:
+		snprintf(unknown, 7, "0x%04x", proto);
+		return unknown;
+	}
+}
+
 int openconnect_ppp_new(struct openconnect_info *vpninfo,
 			int encap, int want_ipv4, int want_ipv6)
 {
@@ -1006,6 +1021,16 @@ int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 
 	if (this) {
 		unsigned char *eh;
+		const char *lcp = NULL;
+		int id;
+
+		switch (proto) {
+		case PPP_LCP:
+		case PPP_IPCP:
+		case PPP_IP6CP:
+			lcp = lcp_names[this->data[0]];
+			id = this->data[1];
+		}
 
 		/* Add PPP header */
 		add_ppp_header(this, ppp, proto);
@@ -1035,9 +1060,15 @@ int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		}
 		this->ppp.hlen += ppp->encap_len;
 
-		vpn_progress(vpninfo, PRG_TRACE,
-			     _("Sending proto 0x%04x packet (%d bytes total)\n"),
-			     proto, this->len + this->ppp.hlen);
+		if (lcp)
+			vpn_progress(vpninfo, PRG_TRACE,
+				     _("Sending PPP %s %s packet (id %d, %d bytes total)\n"),
+				     proto_names(proto), lcp, id, this->len + this->ppp.hlen);
+		else
+			vpn_progress(vpninfo, PRG_TRACE,
+				     _("Sending PPP %s packet (%d bytes total)\n"),
+				     proto_names(proto), this->len + this->ppp.hlen);
+
 		if (vpninfo->dump_http_traffic)
 			dump_buf_hex(vpninfo, PRG_TRACE, '>', this->data - this->ppp.hlen, this->len + this->ppp.hlen);
 
