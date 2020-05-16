@@ -410,14 +410,8 @@ int f5_connect(struct openconnect_info *vpninfo)
 		goto out;
 	}
 
-	vpninfo->ppp = openconnect_ppp_new(hdlc ? PPP_ENCAP_F5_HDLC : PPP_ENCAP_F5,
-					   ipv4, ipv6);
-	if (!vpninfo->ppp) {
-		ret = -ENOMEM;
-		goto out;
-	}
+	ret = openconnect_ppp_new(vpninfo, hdlc ? PPP_ENCAP_F5_HDLC : PPP_ENCAP_F5, ipv4, ipv6);
 
-	ret = 0; /* success */
  out:
 	free(profile_params);
 	free(sid);

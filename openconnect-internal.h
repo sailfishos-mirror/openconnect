@@ -958,7 +958,7 @@ void buf_append_ppphdlc(struct oc_text_buf *buf, const unsigned char *bytes, int
 void buf_append_ppp_hdr(struct oc_text_buf *buf, struct oc_ppp *ppp, uint16_t proto, uint8_t code, uint8_t id);
 int ppp_negotiate_config(struct openconnect_info *vpninfo);
 int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable);
-struct oc_ppp *openconnect_ppp_new(int encap, int want_ipv4, int want_ipv6);
+int openconnect_ppp_new(struct openconnect_info *vpninfo, int encap, int want_ipv4, int want_ipv6);
 
 /* auth-globalprotect.c */
 int gpst_obtain_cookie(struct openconnect_info *vpninfo);

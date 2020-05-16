@@ -312,13 +312,8 @@ int fortinet_connect(struct openconnect_info *vpninfo)
 		goto out;
 	}
 
-	vpninfo->ppp = openconnect_ppp_new(PPP_ENCAP_FORTINET_HDLC, ipv4, ipv6);
-	if (!vpninfo->ppp) {
-		ret = -ENOMEM;
-		goto out;
-	}
+	ret = openconnect_ppp_new(vpninfo, PPP_ENCAP_FORTINET_HDLC, ipv4, ipv6);
 
-	ret = 0; /* success */
  out:
 	if (ret)
 		openconnect_close_https(vpninfo, 0);
