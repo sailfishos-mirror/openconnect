@@ -96,7 +96,7 @@ static const struct pkt dpd_resp_pkt = {
  * If we don't even have TCP_MAXSEG, then default to sending a legacy MTU of
  * 1406 which is what we always used to do.
  */
-static void calculate_mtu(struct openconnect_info *vpninfo, int *base_mtu, int *mtu)
+static void calculate_dtls_mtu(struct openconnect_info *vpninfo, int *base_mtu, int *mtu)
 {
 	*mtu = vpninfo->reqmtu;
 	*base_mtu = vpninfo->basemtu;
@@ -275,7 +275,7 @@ static int start_cstp_connection(struct openconnect_info *vpninfo)
 	free_split_routes(vpninfo);
 
  retry:
-	calculate_mtu(vpninfo, &base_mtu, &mtu);
+	calculate_dtls_mtu(vpninfo, &base_mtu, &mtu);
 	vpninfo->cstp_basemtu = base_mtu;
 
 	reqbuf = buf_alloc();
