@@ -317,93 +317,6 @@ out:
 
 #define ESP_HEADER_SIZE (4 /* SPI */ + 4 /* sequence number */)
 #define ESP_FOOTER_SIZE (1 /* pad length */ + 1 /* next header */)
-#define UDP_HEADER_SIZE 8
-#define TCP_HEADER_SIZE 20 /* with no options */
-#define IPV4_HEADER_SIZE 20
-#define IPV6_HEADER_SIZE 40
-
-/* Based on cstp.c's calculate_mtu().
- *
- * With HTTPS tunnel, there are 21 bytes of overhead beyond the
- * TCP MSS: 5 bytes for TLS and 16 for GPST.
- */
-static int calculate_mtu(struct openconnect_info *vpninfo, int can_use_esp)
-{
-	int mtu = vpninfo->reqmtu, base_mtu = vpninfo->basemtu;
-	int mss = 0;
-
-#if defined(__linux__) && defined(TCP_INFO)
-	if (!mtu) {
-		struct tcp_info ti;
-		socklen_t ti_size = sizeof(ti);
-
-		if (!getsockopt(vpninfo->ssl_fd, IPPROTO_TCP, TCP_INFO,
-				&ti, &ti_size)) {
-			vpn_progress(vpninfo, PRG_DEBUG,
-				     _("TCP_INFO rcv mss %d, snd mss %d, adv mss %d, pmtu %d\n"),
-				     ti.tcpi_rcv_mss, ti.tcpi_snd_mss, ti.tcpi_advmss, ti.tcpi_pmtu);
-
-			if (!base_mtu) {
-				base_mtu = ti.tcpi_pmtu;
-			}
-
-			/* XXX: GlobalProtect has no mechanism to inform the server about the
-			 * desired MTU, so could just ignore the "incoming" MSS (tcpi_rcv_mss).
-			 */
-			mss = MIN(ti.tcpi_rcv_mss, ti.tcpi_snd_mss);
-		}
-	}
-#endif
-#ifdef TCP_MAXSEG
-	if (!mtu && !mss) {
-		socklen_t mss_size = sizeof(mss);
-		if (!getsockopt(vpninfo->ssl_fd, IPPROTO_TCP, TCP_MAXSEG,
-				&mss, &mss_size)) {
-			vpn_progress(vpninfo, PRG_DEBUG, _("TCP_MAXSEG %d\n"), mss);
-		}
-	}
-#endif
-	if (!base_mtu) {
-		/* Default */
-		base_mtu = 1406;
-	}
-
-	if (base_mtu < 1280)
-		base_mtu = 1280;
-
-#ifdef HAVE_ESP
-	/* If we can use the ESP tunnel then we should pick the optimal MTU for ESP. */
-	if (!mtu && can_use_esp) {
-		/* remove ESP, UDP, IP headers from base (wire) MTU */
-		mtu = ( base_mtu - UDP_HEADER_SIZE - ESP_HEADER_SIZE
-		        - vpninfo->hmac_out_len
-		        - MAX_IV_SIZE);
-		if (vpninfo->peer_addr->sa_family == AF_INET6)
-			mtu -= IPV6_HEADER_SIZE;
-		else
-			mtu -= IPV4_HEADER_SIZE;
-		/* round down to a multiple of blocksize (16 bytes for both AES-128 and AES-256) */
-		mtu -= mtu % 16;
-		/* subtract ESP footer, which is included in the payload before padding to the blocksize */
-		mtu -= ESP_FOOTER_SIZE;
-
-	} else
-#endif
-
-    /* We are definitely using the TLS tunnel, so we should base our MTU on the TCP MSS. */
-	if (!mtu) {
-		if (mss)
-			mtu = mss - 21;
-		else {
-			mtu = base_mtu - TCP_HEADER_SIZE - 21;
-			if (vpninfo->peer_addr->sa_family == AF_INET6)
-				mtu -= IPV6_HEADER_SIZE;
-			else
-				mtu -= IPV4_HEADER_SIZE;
-		}
-	}
-	return mtu;
-}
 
 #ifdef HAVE_ESP
 static int check_hmac_algo(struct openconnect_info *v, const char *s)
@@ -739,7 +652,15 @@ static int gpst_get_config(struct openconnect_info *vpninfo)
 #else
 		no_esp_reason = _("ESP support not available in this build");
 #endif
-		vpninfo->ip_info.mtu = calculate_mtu(vpninfo, !no_esp_reason);
+		if (!no_esp_reason)
+			vpninfo->ip_info.mtu = calculate_mtu(
+				vpninfo, 1,
+				ESP_HEADER_SIZE + vpninfo->hmac_out_len + MAX_IV_SIZE, /* ESP header size */
+				ESP_FOOTER_SIZE, /* ESP footer (contributes to payload before padding) */
+				16 /* blocksize for both AES-128 and AES-256 */ );
+		else
+			vpninfo->ip_info.mtu = calculate_mtu(vpninfo, 0, TLS_OVERHEAD, 0, 1);
+
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("No MTU received. Calculated %d for %s%s\n"), vpninfo->ip_info.mtu,
 			     no_esp_reason ? "SSL tunnel. " : "ESP tunnel", no_esp_reason ? : "");
