@@ -212,6 +212,24 @@ int openconnect_ppp_new(struct openconnect_info *vpninfo,
 	if (!ppp)
 		return -ENOMEM;
 
+	/* Nameservers to request from peer
+	 * (see https://tools.ietf.org/html/rfc1877#section-1) */
+	ppp->solicit_peerns = 0;
+	if (!vpninfo->ip_info.dns[0])
+		ppp->solicit_peerns |= IPCP_DNS0|IPCP_DNS1;
+	if (!vpninfo->ip_info.nbns[0])
+		ppp->solicit_peerns |= IPCP_NBNS0|IPCP_NBNS1;
+
+	/* Outgoing IPv4 address and IPv6 interface identifier (64 LSBs),
+	 * if already configured via another mechanism */
+	if (vpninfo->ip_info.addr)
+		ppp->out_peer_addr.s_addr = inet_addr(vpninfo->ip_info.addr);
+	if (vpninfo->ip_info.addr6) {
+		unsigned char *bytes[16];
+		inet_pton(AF_INET6, vpninfo->ip_info.addr6, bytes);
+		memcpy(&ppp->out_ipv6_int_ident, bytes+8, 8);
+	}
+
 	ppp->encap = encap;
 	switch (encap) {
 	case PPP_ENCAP_F5:
@@ -256,8 +274,8 @@ static void print_ppp_state(struct openconnect_info *vpninfo, int level)
 	vpn_progress(vpninfo, level, _("Current PPP state: %s (encap %s):\n"), ppps_names[ppp->ppp_state], encap_names[ppp->encap]);
 	vpn_progress(vpninfo, level, _("    in: asyncmap=0x%08x, lcp_opts=%d, lcp_magic=0x%08x, peer=%s\n"),
 		     ppp->in_asyncmap, ppp->in_lcp_opts, ntohl(ppp->in_lcp_magic), inet_ntoa(ppp->in_peer_addr));
-	vpn_progress(vpninfo, level, _("   out: asyncmap=0x%08x, lcp_opts=%d, lcp_magic=0x%08x, peer=%s\n"),
-		     ppp->out_asyncmap, ppp->out_lcp_opts, ntohl(ppp->out_lcp_magic), inet_ntoa(ppp->out_peer_addr));
+	vpn_progress(vpninfo, level, _("   out: asyncmap=0x%08x, lcp_opts=%d, lcp_magic=0x%08x, peer=%s, solicit_peerns=%d\n"),
+		     ppp->out_asyncmap, ppp->out_lcp_opts, ntohl(ppp->out_lcp_magic), inet_ntoa(ppp->out_peer_addr), ppp->solicit_peerns);
 }
 
 static int buf_append_ppp_tlv(struct oc_text_buf *buf, int tag, int len, const void *data)
@@ -434,7 +452,7 @@ static int handle_config_request(struct openconnect_info *vpninfo,
 static int queue_config_request(struct openconnect_info *vpninfo, int proto)
 {
 	struct oc_ppp *ppp = vpninfo->ppp;
-	unsigned char ipv6a[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+	const uint32_t zero = 0;
 	int ret, id;
 	struct oc_ncp *ncp;
 	struct oc_text_buf *buf;
@@ -466,18 +484,20 @@ static int queue_config_request(struct openconnect_info *vpninfo, int proto)
 
 	case PPP_IPCP:
 		ncp = &ppp->ipcp;
-		if (vpninfo->ip_info.addr)
-			ppp->out_peer_addr.s_addr = inet_addr(vpninfo->ip_info.addr);
 
-		buf_append_ppp_tlv(buf, IPCP_IPADDR, 4, &ppp->out_peer_addr);
+		/* XX: send zero for IPv4/DNS/NBNS to request via NAK */
+		buf_append_ppp_tlv(buf, IPCP_IPADDR, 4, &ppp->out_peer_addr.s_addr);
+
+		/* XX: See ppp.h for why bitfields work here */
+		for (int b=0; b<4; b++)
+			if (ppp->solicit_peerns & (1<<b))
+				buf_append_ppp_tlv(buf, IPCP_xNS_BASE + b, 4, &zero);
 		break;
 
 	case PPP_IP6CP:
 		ncp = &ppp->ip6cp;
-		if (vpninfo->ip_info.addr6)
-			inet_pton(AF_INET6, vpninfo->ip_info.addr6, &ipv6a);
-		memcpy(&ppp->out_ipv6_int_ident, ipv6a+8, 8); /* last 8 bytes of addr6 */
 
+		/* XX: unclear if any servers care about zeros here */
 		buf_append_ppp_tlv(buf, IP6CP_INT_ID, 8, &ppp->out_ipv6_int_ident);
 		break;
 
@@ -502,12 +522,13 @@ out:
 	return ret;
 }
 
-static int handle_config_reject(struct openconnect_info *vpninfo,
-				 int proto, int id, unsigned char *payload, int len)
+static int handle_config_rejnak(struct openconnect_info *vpninfo,
+				int proto, int id, int code, unsigned char *payload, int len)
 {
 	struct oc_ppp *ppp = vpninfo->ppp;
 	struct oc_ncp *ncp;
 	unsigned char *p;
+	const char *action = (code == CONFREJ) ? "reject" : "nak"; /* XX: bad for translation */
 
 	switch (proto) {
 	case PPP_LCP: ncp = &ppp->lcp; break;
@@ -525,30 +546,84 @@ static int handle_config_reject(struct openconnect_info *vpninfo,
 		switch (PROTO_TAG_LEN(proto, t, l-2)) {
 		case PROTO_TAG_LEN(PPP_LCP, LCP_MRU, 2):
 			vpn_progress(vpninfo, PRG_DEBUG,
-				     _("Server rejected LCP MRU option\n"));
+				     _("Server %sed LCP MRU option\n"), action);
 			ppp->out_lcp_opts &= ~BIT_MRU;
 			break;
 		case PROTO_TAG_LEN(PPP_LCP, LCP_ASYNCMAP, 4):
 			vpn_progress(vpninfo, PRG_DEBUG,
-				     _("Server rejected LCP asyncmap option\n"));
+				     _("Server %sed LCP asyncmap option\n"), action);
 			ppp->out_asyncmap = ASYNCMAP_LCP;
 			ppp->out_lcp_opts &= ~BIT_ASYNCMAP;
 			break;
 		case PROTO_TAG_LEN(PPP_LCP, LCP_MAGIC, 4):
 			vpn_progress(vpninfo, PRG_DEBUG,
-				     _("Server rejected LCP magic option\n"));
+				     _("Server %sed LCP magic option\n"), action);
 			ppp->out_lcp_opts &= ~BIT_MAGIC;
 			break;
 		case PROTO_TAG_LEN(PPP_LCP, LCP_PFCOMP, 0):
 			vpn_progress(vpninfo, PRG_DEBUG,
-				     _("Server rejected LCP PFCOMP option\n"));
+				     _("Server %sed LCP PFCOMP option\n"), action);
 			ppp->out_lcp_opts &= ~BIT_PFCOMP;
 			break;
 		case PROTO_TAG_LEN(PPP_LCP, LCP_ACCOMP, 0):
 			vpn_progress(vpninfo, PRG_DEBUG,
-				     _("Server reject LCP ACCOMP option\n"));
-			ppp->in_lcp_opts &= ~BIT_ACCOMP;
+				     _("Server %sed LCP ACCOMP option\n"), action);
+			ppp->out_lcp_opts &= ~BIT_ACCOMP;
 			break;
+		case PROTO_TAG_LEN(PPP_IPCP, IPCP_IPADDR, 4): {
+			struct in_addr *a = (void *)(p + 2);
+			const char *s = inet_ntoa(*a);
+			if (code == CONFNAK && a->s_addr) {
+				vpn_progress(vpninfo, PRG_DEBUG,
+					     _("Server nak-offered IPv4 address: %s\n"), s);
+				ppp->out_peer_addr = *a;
+				vpninfo->ip_info.addr = strdup(s); /* XX: need free and add_option() */
+			} else {
+				vpn_progress(vpninfo, PRG_DEBUG,
+					     _("Server %sed our IPv4 address or request: %s\n"), action, s);
+				return -EINVAL;
+			}
+			break;
+		}
+		case PROTO_TAG_LEN(PPP_IPCP, IPCP_xNS_BASE + 0, 4):
+		case PROTO_TAG_LEN(PPP_IPCP, IPCP_xNS_BASE + 1, 4):
+		case PROTO_TAG_LEN(PPP_IPCP, IPCP_xNS_BASE + 2, 4):
+		case PROTO_TAG_LEN(PPP_IPCP, IPCP_xNS_BASE + 3, 4): {
+			struct in_addr *a = (void *)(p + 2);
+			const char *s = inet_ntoa(*a);
+			/* XX: see ppp.h for why bitfields work here */
+			if (code == CONFNAK && a->s_addr) {
+				vpn_progress(vpninfo, PRG_DEBUG,
+					     _("Server nak-offered IPCP request for %s[%d] server: %s\n"),
+					     (t&1) ? "DNS" : "NBNS", ((t&2)>>1), s);
+				/* XX: need free and add_option() */
+				if (t & 1)
+					vpninfo->ip_info.dns[(t&2)>>1] = strdup(s);
+				else
+					vpninfo->ip_info.nbns[(t&2)>>1] = strdup(s);
+			} else {
+				vpn_progress(vpninfo, PRG_DEBUG,
+					     _("Server %sed IPCP request for %s[%d] server\n"), action,
+					     (t&1) ? "DNS" : "NBNS", ((t&2)>>1));
+			}
+			/* Stop soliciting */
+			ppp->solicit_peerns &= ~(1<<(t-IPCP_xNS_BASE));
+			break;
+		}
+		case PROTO_TAG_LEN(PPP_IP6CP, IP6CP_INT_ID, 8): {
+			uint64_t *val = (void *)(p + 2);
+			if (code == CONFNAK && val != 0) {
+				vpn_progress(vpninfo, PRG_DEBUG,
+					     _("Server nak-offered IPv6 interface identifier\n"));
+				memcpy(&ppp->out_ipv6_int_ident, val, 8);
+				/* XX: unclear what we should do to make an IPv6 address from this */
+			} else {
+				vpn_progress(vpninfo, PRG_DEBUG,
+					     _("Server %sed our IPv6 interface identifier\n"), action);
+				return -EINVAL;
+			}
+			break;
+		}
 		default:
 			vpn_progress(vpninfo, PRG_DEBUG,
 				     _("Server rejected unknown proto 0x%04x TLV (tag %d, len %d+2)\n"),
@@ -627,10 +702,10 @@ static int handle_config_packet(struct openconnect_info *vpninfo,
 		break;
 
 	case CONFREJ:
-		ret = handle_config_reject(vpninfo, proto, id, p + 4, len - 4);
+	case CONFNAK:
+		ret = handle_config_rejnak(vpninfo, proto, id, code, p + 4, len - 4);
 		break;
 
-	case CONFNAK:
 	case CODEREJ:
 	case PROTREJ:
 	default:

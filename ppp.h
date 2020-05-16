@@ -79,6 +79,13 @@
 #define IPCP_IPCOMP		2
 #define IPCP_IPADDR		3
 
+/* RFC1877: DNS[0]=129, NBNS[0]=130, DNS[1]=131, NBNS[1]=132 */
+#define IPCP_xNS_BASE		129
+#define IPCP_DNS0		1
+#define IPCP_NBNS0		2
+#define IPCP_DNS1		4
+#define IPCP_NBNS1		8
+
 /* RFC5072 */
 #define IP6CP_INT_ID		1
 
@@ -108,13 +115,16 @@ struct oc_ppp {
 	struct in_addr out_peer_addr;
 	uint64_t out_ipv6_int_ident;
 
+	int solicit_peerns;     /* bitfield of DNS/NBNS to request */
+
 	/* Incoming options */
-	int exp_ppp_hdr_size;
 	uint32_t in_asyncmap;
 	int in_lcp_opts;
 	int32_t in_lcp_magic; /* stored in on-the-wire order */
 	struct in_addr in_peer_addr;
 	uint64_t in_ipv6_int_ident;
+
+	int exp_ppp_hdr_size;	/* predicted size of next PPP header */
 };
 
 #endif /* __OPENCONNECT_PPP_H__ */
