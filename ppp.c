@@ -374,7 +374,7 @@ static int handle_config_request(struct openconnect_info *vpninfo,
 		unknown:
 			vpn_progress(vpninfo, PRG_DEBUG,
 				     _("Received unknown proto 0x%04x TLV (tag %d, len %d+2) from server:\n"),
-				     proto, t, l);
+				     proto, t, l-2);
 			dump_buf_hex(vpninfo, PRG_DEBUG, '<', p, (int)p[1]);
 		reject:
 			if (!rejbuf)
@@ -530,13 +530,13 @@ static int handle_config_reject(struct openconnect_info *vpninfo,
 			break;
 		case PROTO_TAG_LEN(PPP_LCP, LCP_ACCOMP, 0):
 			vpn_progress(vpninfo, PRG_DEBUG,
-				     _("Received address and control field compression from server\n"));
-			ppp->in_lcp_opts |= BIT_ACCOMP;
+				     _("Server reject LCP ACCOMP option\n"));
+			ppp->in_lcp_opts &= ~BIT_ACCOMP;
 			break;
 		default:
 			vpn_progress(vpninfo, PRG_DEBUG,
 				     _("Server rejected unknown proto 0x%04x TLV (tag %d, len %d+2)\n"),
-				     proto, t, l);
+				     proto, t, l-2);
 			dump_buf_hex(vpninfo, PRG_DEBUG, '<', p, (int)p[1]);
 			/* XX: Should abort negotiation */
 			return -EINVAL;
