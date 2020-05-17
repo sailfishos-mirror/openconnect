@@ -260,11 +260,6 @@ int openconnect_ppp_new(struct openconnect_info *vpninfo,
 	ppp->out_asyncmap = 0;
 	ppp->out_lcp_opts = BIT_MRU | BIT_ASYNCMAP | BIT_MAGIC | BIT_PFCOMP | BIT_ACCOMP;
 
-	if (openconnect_random(&ppp->out_lcp_magic, sizeof(ppp->out_lcp_magic))) {
-		free(ppp);
-		return -EINVAL;
-	}
-
 	return 0;
 }
 
@@ -480,8 +475,13 @@ static int queue_config_request(struct openconnect_info *vpninfo, int proto)
 		if (ppp->out_lcp_opts & BIT_ASYNCMAP)
 			buf_append_ppp_tlv_be32(buf, LCP_ASYNCMAP, ppp->out_asyncmap);
 
-		if (ppp->out_lcp_opts & BIT_MAGIC)
+		if (ppp->out_lcp_opts & BIT_MAGIC) {
+			if (openconnect_random(&ppp->out_lcp_magic, sizeof(ppp->out_lcp_magic))) {
+				free(ppp);
+				return -EINVAL;
+			}
 			buf_append_ppp_tlv(buf, LCP_MAGIC, 4, &ppp->out_lcp_magic);
+		}
 
 		if (ppp->out_lcp_opts & BIT_PFCOMP)
 			buf_append_ppp_tlv(buf, LCP_PFCOMP, 0, NULL);
@@ -536,7 +536,6 @@ static int handle_config_rejnak(struct openconnect_info *vpninfo,
 	struct oc_ppp *ppp = vpninfo->ppp;
 	struct oc_ncp *ncp;
 	unsigned char *p;
-	const char *action = (code == CONFREJ) ? "reject" : "nak"; /* XX: bad for translation */
 
 	switch (proto) {
 	case PPP_LCP: ncp = &ppp->lcp; break;
@@ -553,29 +552,40 @@ static int handle_config_rejnak(struct openconnect_info *vpninfo,
 		unsigned char t = p[0], l = p[1];
 		switch (PROTO_TAG_LEN(proto, t, l-2)) {
 		case PROTO_TAG_LEN(PPP_LCP, LCP_MRU, 2):
+			/* XX: If this happens, should we try a smaller MRU? */
 			vpn_progress(vpninfo, PRG_DEBUG,
-				     _("Server %sed LCP MRU option\n"), action);
+				     _("Server rejected/nak'ed LCP MRU option\n"));
 			ppp->out_lcp_opts &= ~BIT_MRU;
 			break;
 		case PROTO_TAG_LEN(PPP_LCP, LCP_ASYNCMAP, 4):
+			/* This should never happen */
 			vpn_progress(vpninfo, PRG_DEBUG,
-				     _("Server %sed LCP asyncmap option\n"), action);
+				     _("Server rejected/nak'ed LCP asyncmap option\n"));
 			ppp->out_asyncmap = ASYNCMAP_LCP;
 			ppp->out_lcp_opts &= ~BIT_ASYNCMAP;
 			break;
 		case PROTO_TAG_LEN(PPP_LCP, LCP_MAGIC, 4):
-			vpn_progress(vpninfo, PRG_DEBUG,
-				     _("Server %sed LCP magic option\n"), action);
-			ppp->out_lcp_opts &= ~BIT_MAGIC;
+			if (code == CONFNAK) {
+				/* XX: If this happens, we are will select a new magic number in
+				 * our next CONFREQ, in case it's 1984 and our RS-232 nullmodem is
+				 * looped back. (https://tools.ietf.org/html/rfc1661#section-6.4) */
+			} else {
+				/* This should never happen */
+				vpn_progress(vpninfo, PRG_DEBUG,
+					     _("Server rejected LCP magic option\n"));
+				ppp->out_lcp_opts &= ~BIT_MAGIC;
+			}
 			break;
 		case PROTO_TAG_LEN(PPP_LCP, LCP_PFCOMP, 0):
+			/* This should never happen */
 			vpn_progress(vpninfo, PRG_DEBUG,
-				     _("Server %sed LCP PFCOMP option\n"), action);
+				     _("Server rejected/nak'ed LCP PFCOMP option\n"));
 			ppp->out_lcp_opts &= ~BIT_PFCOMP;
 			break;
 		case PROTO_TAG_LEN(PPP_LCP, LCP_ACCOMP, 0):
+			/* This should never happen */
 			vpn_progress(vpninfo, PRG_DEBUG,
-				     _("Server %sed LCP ACCOMP option\n"), action);
+				     _("Server rejected/nak'ed LCP ACCOMP option\n"));
 			ppp->out_lcp_opts &= ~BIT_ACCOMP;
 			break;
 		case PROTO_TAG_LEN(PPP_IPCP, IPCP_IPADDR, 4): {
@@ -588,7 +598,7 @@ static int handle_config_rejnak(struct openconnect_info *vpninfo,
 				vpninfo->ip_info.addr = strdup(s); /* XX: need free and add_option() */
 			} else {
 				vpn_progress(vpninfo, PRG_DEBUG,
-					     _("Server %sed our IPv4 address or request: %s\n"), action, s);
+					     _("Server rejected/nak'ed our IPv4 address or request: %s\n"), s);
 				return -EINVAL;
 			}
 			break;
@@ -611,7 +621,7 @@ static int handle_config_rejnak(struct openconnect_info *vpninfo,
 					vpninfo->ip_info.nbns[(t&2)>>1] = strdup(s);
 			} else {
 				vpn_progress(vpninfo, PRG_DEBUG,
-					     _("Server %sed IPCP request for %s[%d] server\n"), action,
+					     _("Server rejected/nak'ed IPCP request for %s[%d] server\n"),
 					     (t&1) ? "DNS" : "NBNS", ((t&2)>>1));
 			}
 			/* Stop soliciting */
@@ -620,21 +630,21 @@ static int handle_config_rejnak(struct openconnect_info *vpninfo,
 		}
 		case PROTO_TAG_LEN(PPP_IP6CP, IP6CP_INT_ID, 8): {
 			uint64_t *val = (void *)(p + 2);
-			if (code == CONFNAK && val != 0) {
+			if (code == CONFNAK && *val != 0) {
 				vpn_progress(vpninfo, PRG_DEBUG,
 					     _("Server nak-offered IPv6 interface identifier\n"));
 				memcpy(&ppp->out_ipv6_int_ident, val, 8);
 				/* XX: unclear what we should do to make an IPv6 address from this */
 			} else {
 				vpn_progress(vpninfo, PRG_DEBUG,
-					     _("Server %sed our IPv6 interface identifier\n"), action);
+					     _("Server rejected/nak'ed our IPv6 interface identifier\n"));
 				return -EINVAL;
 			}
 			break;
 		}
 		default:
 			vpn_progress(vpninfo, PRG_DEBUG,
-				     _("Server rejected unknown proto 0x%04x TLV (tag %d, len %d+2)\n"),
+				     _("Server rejected/nak'ed unknown proto 0x%04x TLV (tag %d, len %d+2)\n"),
 				     proto, t, l-2);
 			dump_buf_hex(vpninfo, PRG_DEBUG, '<', p, (int)p[1]);
 			/* XX: Should abort negotiation */
