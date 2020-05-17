@@ -235,6 +235,7 @@ static int parse_options(struct openconnect_info *vpninfo, char *buf, int len,
 		/* XX: This is an objectively stupid way to use XML, a hierarchical data format. */
 		else if (   (!strncmp((char *)xml_node->name, "DNS", 3) && isdigit(xml_node->name[3]))
 			 || (!strncmp((char *)xml_node->name, "DNS6_", 5) && isdigit(xml_node->name[5])) ) {
+			free(s);
 			s = (char *)xmlNodeGetContent(xml_node);
 			if (s && *s) {
 				vpn_progress(vpninfo, PRG_INFO, _("Got IPv%d DNS server %s.\n"),
@@ -242,12 +243,14 @@ static int parse_options(struct openconnect_info *vpninfo, char *buf, int len,
 				if (n_dns < 3) vpninfo->ip_info.dns[n_dns++] = add_option(vpninfo, "DNS", &s);
 			}
 		} else if (!strncmp((char *)xml_node->name, "WINS", 4) && isdigit(xml_node->name[4])) {
+			free(s);
 			s = (char *)xmlNodeGetContent(xml_node);
 			if (s && *s) {
 				vpn_progress(vpninfo, PRG_INFO, _("Got WINS/NBNS server %s.\n"), s);
 				if (n_nbns < 3) vpninfo->ip_info.dns[n_nbns++] = add_option(vpninfo, "WINS", &s);
 			}
 		} else if (!strncmp((char *)xml_node->name, "DNSSuffix", 9) && isdigit(xml_node->name[9])) {
+			free(s);
 			s = (char *)xmlNodeGetContent(xml_node);
 			if (s && *s) {
 				vpn_progress(vpninfo, PRG_INFO, _("Got search domain %s.\n"), s);
@@ -413,6 +416,7 @@ int f5_connect(struct openconnect_info *vpninfo)
 	ret = openconnect_ppp_new(vpninfo, hdlc ? PPP_ENCAP_F5_HDLC : PPP_ENCAP_F5, ipv4, ipv6);
 
  out:
+	free(res_buf);
 	free(profile_params);
 	free(sid);
 	free(ur_z);
