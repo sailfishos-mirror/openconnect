@@ -740,6 +740,16 @@ static int handle_state_transition(struct openconnect_info *vpninfo, int *timeou
 
 	switch (ppp->ppp_state) {
 	case PPPS_DEAD:
+		/* Delay tunnel setup until after PPP negotiation */
+		vpninfo->delay_tunnel = 1;
+
+		/* Prevent race conditions after recovering dead peer connection */
+		vpninfo->ssl_times.last_rx = vpninfo->ssl_times.last_tx = now;
+
+		/* Drop any failed outgoing packet from previous connection;
+		 * we need to reconfigure before we can send data packets. */
+		free(vpninfo->current_ssl_pkt);
+		vpninfo->current_ssl_pkt = NULL;
 		ppp->ppp_state = PPPS_ESTABLISH;
 		/* fall through */
 
@@ -851,8 +861,7 @@ int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 	if (vpninfo->ssl_fd == -1)
 		goto do_reconnect;
 
-	if ((ret = handle_state_transition(vpninfo, timeout) < 0))
-	    return ret;
+	handle_state_transition(vpninfo, timeout);
 
 	/* FIXME: The poll() handling here is fairly simplistic. Actually,
 	   if the SSL connection stalls it could return a WANT_WRITE error
@@ -1128,6 +1137,7 @@ int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 	if ((this = vpninfo->current_ssl_pkt = dequeue_packet(&vpninfo->tcp_control_queue))) {
 		/* XX: We pre-stash the PPP protocol field in the header for control packets */
 		proto = this->ppp.proto;
+		handle_state_transition(vpninfo, timeout);
 	} else if (vpninfo->dtls_state != DTLS_CONNECTED &&
 		   ppp->ppp_state == PPPS_NETWORK &&
 		   (this = vpninfo->current_ssl_pkt = dequeue_packet(&vpninfo->outgoing_queue))) {
