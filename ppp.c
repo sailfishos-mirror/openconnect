@@ -746,9 +746,11 @@ static int handle_state_transition(struct openconnect_info *vpninfo, int *timeou
 	case PPPS_ESTABLISH:
 		if ((ppp->lcp.state & NCP_CONF_ACK_RECEIVED) && (ppp->lcp.state & NCP_CONF_ACK_SENT))
 			ppp->ppp_state = PPPS_OPENED;
-		else if (ka_check_deadline(timeout, now, ppp->lcp.last_req + 3)) {
-			ppp->lcp.last_req = now;
-			queue_config_request(vpninfo, PPP_LCP);
+		else {
+			if (ka_check_deadline(timeout, now, ppp->lcp.last_req + 3)) {
+				ppp->lcp.last_req = now;
+				queue_config_request(vpninfo, PPP_LCP);
+			}
 			break;
 		}
 		/* fall through */
