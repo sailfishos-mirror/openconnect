@@ -212,6 +212,9 @@ int openconnect_ppp_new(struct openconnect_info *vpninfo,
 	if (!ppp)
 		return -ENOMEM;
 
+	/* Delay tunnel setup during PPP negotiation */
+	vpninfo->delay_tunnel = 1;
+
 	/* Nameservers to request from peer
 	 * (see https://tools.ietf.org/html/rfc1877#section-1) */
 	ppp->solicit_peerns = 0;
@@ -761,8 +764,10 @@ static int handle_state_transition(struct openconnect_info *vpninfo, int *timeou
 			}
 		}
 
-		if (network)
+		if (network) {
 			ppp->ppp_state = PPPS_NETWORK;
+			vpninfo->delay_tunnel = 0;
+		}
 		break;
 	case PPPS_NETWORK:
 		break;

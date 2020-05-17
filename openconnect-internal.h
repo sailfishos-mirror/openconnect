@@ -648,6 +648,7 @@ struct openconnect_info {
 #endif
 	int ssl_fd;
 	int dtls_fd;
+	int delay_tunnel;	                /* Delay tunnel setup */
 
 	int dtls_tos_current;
 	int dtls_pass_tos;

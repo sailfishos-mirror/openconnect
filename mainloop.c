@@ -204,29 +204,28 @@ int openconnect_mainloop(struct openconnect_info *vpninfo,
 		else
 			timeout = 1000;
 
-		if (vpninfo->dtls_state > DTLS_DISABLED) {
-			/* Postpone tun device creation after DTLS is connected so
-			 * we have a better knowledge of the link MTU. We also
-			 * force the creation if DTLS enters sleeping mode - i.e.,
-			 * we failed to connect on time. */
-			if (!tun_is_up(vpninfo) && (vpninfo->dtls_state == DTLS_CONNECTED ||
-			    vpninfo->dtls_state == DTLS_SLEEPING)) {
+		if (!tun_is_up(vpninfo)) {
+			if (vpninfo->delay_tunnel)
+				vpn_progress(vpninfo, PRG_DEBUG, _("Delaying tunnel by protocol request.\n"));
+			else if (vpninfo->dtls_state == DTLS_CONNECTING) {
+				/* Postpone tun device creation after DTLS is connected so
+				 * we have a better knowledge of the link MTU. We also
+				 * force the creation if DTLS enters sleeping mode - i.e.,
+				 * we failed to connect on time. */
+				vpn_progress(vpninfo, PRG_DEBUG, _("Delaying tunnel until link MTU determined.\n"));
+			} else {
+				/* No DTLS, or DTLS failed; setup TUN device unconditionally */
 				ret = setup_tun_device(vpninfo);
-				if (ret) {
+				if (ret)
 					break;
-				}
 			}
+		}
 
+		if (vpninfo->dtls_state > DTLS_DISABLED) {
 			ret = vpninfo->proto->udp_mainloop(vpninfo, &timeout, udp_r);
 			if (vpninfo->quit_reason)
 				break;
 			did_work += ret;
-
-		} else if (!tun_is_up(vpninfo)) {
-			/* No DTLS - setup TUN device unconditionally */
-			ret = setup_tun_device(vpninfo);
-			if (ret)
-				break;
 		}
 
 		ret = vpninfo->proto->tcp_mainloop(vpninfo, &timeout, tcp_r);
