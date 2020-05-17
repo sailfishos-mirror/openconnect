@@ -319,7 +319,8 @@ static int get_ip_address(struct openconnect_info *vpninfo, char *header, char *
 		if (!s) return -ENOMEM;
 	}
         /* XX: The server's IP address(es) X-VPN-server-{IP,IPv6} are also
-         * sent, but the utility of these is unclear. */
+         * sent, but the utility of these is unclear. As remarked in oncp.c,
+	 * "this is a tunnel; having a gateway is meaningless." */
 	return 0;
 }
 
