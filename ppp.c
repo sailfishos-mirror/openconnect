@@ -218,10 +218,8 @@ int openconnect_ppp_new(struct openconnect_info *vpninfo,
 	/* Nameservers to request from peer
 	 * (see https://tools.ietf.org/html/rfc1877#section-1) */
 	ppp->solicit_peerns = 0;
-	if (!vpninfo->ip_info.dns[0])
-		ppp->solicit_peerns |= IPCP_DNS0|IPCP_DNS1;
-	if (!vpninfo->ip_info.nbns[0])
-		ppp->solicit_peerns |= IPCP_NBNS0|IPCP_NBNS1;
+	if (!vpninfo->ip_info.dns[0] && !vpninfo->ip_info.nbns[0])
+		ppp->solicit_peerns |= IPCP_DNS0|IPCP_DNS1|IPCP_NBNS0|IPCP_NBNS1;
 
 	/* Outgoing IPv4 address and IPv6 interface identifier (64 LSBs),
 	 * if already configured via another mechanism */
