@@ -1087,7 +1087,9 @@ int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 				     _("PPP packet with unknown protocol 0x%04x. Payload:\n"),
 				     proto);
 			dump_buf_hex(vpninfo, PRG_ERR, '<', pp, payload_len);
-			return 1;
+			if (queue_config_packet(vpninfo, PPP_LCP, ++ppp->lcp.id, PROTREJ, payload_len + (pp - ph), ph))
+				vpn_progress(vpninfo, PRG_ERR,
+					     _("Failed queuing Protocol-Reject for unknown protocol 0x%04x.\n"), proto);
 		}
 
 		if (next_len) {
