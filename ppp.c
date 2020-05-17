@@ -258,7 +258,7 @@ int openconnect_ppp_new(struct openconnect_info *vpninfo,
 	ppp->exp_ppp_hdr_size = 4; /* Address(1), Control(1), Proto(2) */
 
 	ppp->out_asyncmap = 0;
-	ppp->out_lcp_opts = BIT_MRU | BIT_ASYNCMAP | BIT_MAGIC | BIT_PFCOMP | BIT_ACCOMP;
+	ppp->out_lcp_opts = BIT_MRU | BIT_ASYNCMAP | BIT_MAGIC | BIT_PFCOMP | BIT_ACCOMP | BIT_MRU_COAX;
 
 	return 0;
 }
@@ -330,7 +330,7 @@ static int handle_config_request(struct openconnect_info *vpninfo,
 				 int proto, int id, unsigned char *payload, int len)
 {
 	struct oc_ppp *ppp = vpninfo->ppp;
-	struct oc_text_buf *rejbuf = NULL;
+	struct oc_text_buf *rejbuf = NULL, *nakbuf = NULL;
 	int ret;
 	struct oc_ncp *ncp;
 	unsigned char *p;
@@ -345,12 +345,25 @@ static int handle_config_request(struct openconnect_info *vpninfo,
 	for (p = payload ; p+1 < payload+len && p+p[1] <= payload+len; p += p[1]) {
 		unsigned char t = p[0], l = p[1];
 		switch (PROTO_TAG_LEN(proto, t, l-2)) {
-		case PROTO_TAG_LEN(PPP_LCP, LCP_MRU, 2):
-			vpninfo->ip_info.mtu = load_be16(p+2);
-			vpn_progress(vpninfo, PRG_DEBUG,
-				     _("Received MTU %d from server\n"),
-				     vpninfo->ip_info.mtu);
+		case PROTO_TAG_LEN(PPP_LCP, LCP_MRU, 2): {
+			int mru = load_be16(p + 2);
+			if ((ppp->out_lcp_opts & BIT_MRU_COAX) && mru < vpninfo->ip_info.mtu) {
+				/* XX: nak-offer our (larger) MTU to the server, but only try this once */
+				store_be16(p + 2, vpninfo->ip_info.mtu);
+				ppp->out_lcp_opts &= ~BIT_MRU_COAX;
+
+				vpn_progress(vpninfo, PRG_DEBUG,
+					     _("Received MRU %d from server. Nak-offering larger MRU of %d (our MTU)\n"),
+					     mru, vpninfo->ip_info.mtu);
+				goto nak;
+			} else {
+				vpninfo->ip_info.mtu = mru;
+				vpn_progress(vpninfo, PRG_DEBUG,
+					     _("Received MRU %d from server. Setting our MTU to match.\n"),
+					     mru);
+			}
 			break;
+		}
 		case PROTO_TAG_LEN(PPP_LCP, LCP_ASYNCMAP, 4):
 			ppp->in_asyncmap = load_be32(p+2);
 			vpn_progress(vpninfo, PRG_DEBUG,
@@ -413,6 +426,13 @@ static int handle_config_request(struct openconnect_info *vpninfo,
 				return -ENOMEM;
 			buf_append_bytes(rejbuf, p, l);
 			break;
+		nak:
+			if (!nakbuf)
+				nakbuf = buf_alloc();
+			if (!nakbuf)
+				return -ENOMEM;
+			buf_append_bytes(nakbuf, p, l);
+
 		}
 	}
 	ncp->state |= NCP_CONF_REQ_RECEIVED;
@@ -433,7 +453,19 @@ static int handle_config_request(struct openconnect_info *vpninfo,
 		if ((ret = queue_config_packet(vpninfo, proto, id, CONFREJ, rejbuf->pos, rejbuf->data)) >= 0) {
 			ret = 0;
 		}
-	} else {
+	}
+	if (nakbuf) {
+		if (buf_error(nakbuf)) {
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("Error composing ConfNak packet\n"));
+			return buf_free(nakbuf);
+		}
+		vpn_progress(vpninfo, PRG_DEBUG, _("Nak proto 0x%04x/id %d config from server\n"), proto, id);
+		if ((ret = queue_config_packet(vpninfo, proto, id, CONFNAK, nakbuf->pos, nakbuf->data)) >= 0) {
+			ret = 0;
+		}
+	}
+	if (!rejbuf && !nakbuf) {
 		vpn_progress(vpninfo, PRG_DEBUG, _("Ack proto 0x%04x/id %d config from server\n"), proto, id);
 		if ((ret = queue_config_packet(vpninfo, proto, id, CONFACK, len, payload)) >= 0) {
 			ncp->state |= NCP_CONF_ACK_SENT;

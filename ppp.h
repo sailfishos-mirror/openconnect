@@ -73,6 +73,7 @@
 #define BIT_MAGIC	(1 << LCP_MAGIC)
 #define BIT_PFCOMP	(1 << LCP_PFCOMP)
 #define BIT_ACCOMP	(1 << LCP_ACCOMP)
+#define BIT_MRU_COAX    (1 << 9)
 
 /* RFC1332 */
 #define IPCP_IPADDRS		1
