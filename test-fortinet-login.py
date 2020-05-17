@@ -47,7 +47,7 @@ else:
 s = requests.Session()
 s.cert = cert
 s.verify = args.verify
-s.headers['User-Agent'] = 'Open AnyConnect VPN Agent v8.x' # seems to result in a more machine-parseable response format than 'Mozilla/5.0 SV1'
+s.headers['User-Agent'] = 'Mozilla/5.0 SV1'                # non-browser-y values seem to result in more machine-parseable response format
 s.headers['Accept-Encoding'] = 'identity'                  # these servers appear to bork 'Transfer-Encoding: chunked'
 
 print("Initial GET /remote/login to populate cookies...", file=stderr)
