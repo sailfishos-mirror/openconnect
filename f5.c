@@ -443,9 +443,6 @@ int f5_bye(struct openconnect_info *vpninfo, const char *reason)
 	char *res_buf = NULL;
 	int ret;
 
-	/* XX: handle clean PPP termination?
-	   ppp_bye(vpninfo); */
-
 	/* We need to close and reopen the HTTPS connection (to kill
 	 * the f5 tunnel) and submit a new HTTPS request to logout.
 	 */

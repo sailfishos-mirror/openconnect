@@ -243,28 +243,42 @@ int openconnect_mainloop(struct openconnect_info *vpninfo,
 
 		poll_cmd_fd(vpninfo, 0);
 		if (vpninfo->got_cancel_cmd) {
-			if (vpninfo->cancel_type == OC_CMD_CANCEL) {
+			if (vpninfo->delay_close > 0) {
+				vpn_progress(vpninfo, PRG_DEBUG, _("Delaying cancel.\n"));
+				/* XX: don't let this spin forever */
+				if (--vpninfo->delay_close > 0)
+					did_work++;
+			} else if (vpninfo->cancel_type == OC_CMD_CANCEL) {
 				vpninfo->quit_reason = "Aborted by caller";
+				vpninfo->got_cancel_cmd = 0;
 				ret = -EINTR;
+				break;
 			} else {
+				vpninfo->got_cancel_cmd = 0;
 				ret = -ECONNABORTED;
+				break;
 			}
-			vpninfo->got_cancel_cmd = 0;
-			break;
 		}
 
 		if (vpninfo->got_pause_cmd) {
-			/* close all connections and wait for the user to call
-			   openconnect_mainloop() again */
-			openconnect_close_https(vpninfo, 0);
-			if (vpninfo->dtls_state > DTLS_DISABLED) {
-				vpninfo->proto->udp_close(vpninfo);
-				vpninfo->new_dtls_started = 0;
-			}
+			if (vpninfo->delay_close > 0) {
+				vpn_progress(vpninfo, PRG_DEBUG, _("Delaying pause.\n"));
+				 /* XX: don't let this spin forever */
+				if (--vpninfo->delay_close > 0)
+					did_work++;
+			} else {
+				/* close all connections and wait for the user to call
+				   openconnect_mainloop() again */
+				openconnect_close_https(vpninfo, 0);
+				if (vpninfo->dtls_state > DTLS_DISABLED) {
+					vpninfo->proto->udp_close(vpninfo);
+					vpninfo->new_dtls_started = 0;
+				}
 
-			vpninfo->got_pause_cmd = 0;
-			vpn_progress(vpninfo, PRG_INFO, _("Caller paused the connection\n"));
-			return 0;
+				vpninfo->got_pause_cmd = 0;
+				vpn_progress(vpninfo, PRG_INFO, _("Caller paused the connection\n"));
+				return 0;
+			}
 		}
 
 		if (did_work)
