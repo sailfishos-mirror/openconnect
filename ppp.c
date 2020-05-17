@@ -780,9 +780,6 @@ static int handle_state_transition(struct openconnect_info *vpninfo, int *timeou
 
 	switch (ppp->ppp_state) {
 	case PPPS_DEAD:
-		/* Delay tunnel setup until after PPP negotiation */
-		vpninfo->delay_tunnel = 1;
-
 		/* Prevent race conditions after recovering dead peer connection */
 		vpninfo->ssl_times.last_rx = vpninfo->ssl_times.last_tx = now;
 
@@ -831,8 +828,7 @@ static int handle_state_transition(struct openconnect_info *vpninfo, int *timeou
 			break;
 
 		ppp->ppp_state = PPPS_NETWORK;
-		vpninfo->delay_tunnel = 0; /* tunnel can start now */
-		vpninfo->delay_close = 2;  /* need two mainloop iterations on close (send TERMREQ; receive TERMACK) */
+		vpninfo->delay_close = 2;  /* we will need immediate callback (to send TERMREQ) when local side wants to close */
 		/* fall through */
 
 	case PPPS_NETWORK:
@@ -854,9 +850,10 @@ static int handle_state_transition(struct openconnect_info *vpninfo, int *timeou
 				ppp->lcp.state |= NCP_TERM_REQ_SENT;
 				ppp->lcp.last_req = now;
 				(void) queue_config_packet(vpninfo, PPP_LCP, ++ppp->lcp.id, TERMREQ, 0, NULL);
+				vpninfo->delay_close = 1; /* need to wait until we receive TERMACK */
 			}
 			if (!ka_check_deadline(timeout, now, ppp->lcp.last_req + 3))
-				vpninfo->delay_close = 1;
+				vpninfo->delay_close = 1; /* still waiting to receive TERMACK */
 			else
 				(void) queue_config_packet(vpninfo, PPP_LCP, ++ppp->lcp.id, TERMREQ, 0, NULL);
 		}
@@ -866,6 +863,9 @@ static int handle_state_transition(struct openconnect_info *vpninfo, int *timeou
 		vpninfo->quit_reason = "Unexpected state";
 		return -EINVAL;
 	}
+
+	/* Delay tunnel setup until after PPP negotiation */
+	vpninfo->delay_tunnel = (ppp->ppp_state == PPPS_NETWORK ? 0 : 1);
 
 	if (last_state != ppp->ppp_state) {
 		vpn_progress(vpninfo, PRG_DEBUG,
