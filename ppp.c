@@ -734,15 +734,18 @@ static int handle_state_transition(struct openconnect_info *vpninfo, int *timeou
 	switch (ppp->ppp_state) {
 	case PPPS_DEAD:
 		ppp->ppp_state = PPPS_ESTABLISH;
-		break;
+		/* fall through */
+
 	case PPPS_ESTABLISH:
 		if ((ppp->lcp.state & NCP_CONF_ACK_RECEIVED) && (ppp->lcp.state & NCP_CONF_ACK_SENT))
 			ppp->ppp_state = PPPS_OPENED;
 		else if (ka_check_deadline(timeout, now, ppp->lcp.last_req + 3)) {
 			ppp->lcp.last_req = now;
 			queue_config_request(vpninfo, PPP_LCP);
+			break;
 		}
-		break;
+		/* fall through */
+
 	case PPPS_OPENED:
 		network = 1;
 		if (ppp->want_ipv4) {
@@ -765,11 +768,12 @@ static int handle_state_transition(struct openconnect_info *vpninfo, int *timeou
 			}
 		}
 
-		if (network) {
-			ppp->ppp_state = PPPS_NETWORK;
-			/* on close, we will need to send TERMREQ, then receive TERMACK */
-			vpninfo->delay_close = DELAY_CLOSE_IMMEDIATE_CALLBACK;
-		}
+		if (!network)
+			break;
+
+		ppp->ppp_state = PPPS_NETWORK;
+		/* on close, we will need to send TERMREQ, then receive TERMACK */
+		vpninfo->delay_close = DELAY_CLOSE_IMMEDIATE_CALLBACK;
 		break;
 
 	case PPPS_NETWORK:
