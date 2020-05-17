@@ -1084,12 +1084,23 @@ int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 
 		default:
 			vpn_progress(vpninfo, PRG_ERR,
-				     _("PPP packet with unknown protocol 0x%04x. Payload:\n"),
+				     _("Sending Protocol-Reject for unknown protocol 0x%04x. Payload:\n"),
 				     proto);
 			dump_buf_hex(vpninfo, PRG_ERR, '<', pp, payload_len);
-			if (queue_config_packet(vpninfo, PPP_LCP, ++ppp->lcp.id, PROTREJ, payload_len + (pp - ph), ph))
-				vpn_progress(vpninfo, PRG_ERR,
-					     _("Failed queuing Protocol-Reject for unknown protocol 0x%04x.\n"), proto);
+
+			/* The rejected protocol MUST occupy 2 bytes prior to the rejected packet contents.
+			 * (https://tools.ietf.org/html/rfc1661#section-5.7). We can clobber these bytes
+			 * because we are throwing out this packet anyway.
+			 *
+			 * The rejected packet body is fully included, unless it must be truncated to the
+			 * peer's MRU (taking into account the preceding 4 bytes for PPP header, 4 for LCP
+			 * config header, and 2 for rejected proto.
+			 */
+			store_be16(pp - 2, proto);
+			if ((ret = queue_config_packet(vpninfo, PPP_LCP, ++ppp->lcp.id, PROTREJ,
+						       MIN(payload_len + 2, vpninfo->ip_info.mtu - 10),
+						       pp - 2)) < 0)
+				return ret;
 		}
 
 		if (next_len) {
