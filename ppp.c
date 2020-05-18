@@ -212,6 +212,9 @@ int openconnect_ppp_new(struct openconnect_info *vpninfo,
 	if (!ppp)
 		return -ENOMEM;
 
+	/* Delay tunnel setup during PPP negotiation */
+	vpninfo->delay_tunnel_reason = "PPP negotiation";
+
 	/* Nameservers to request from peer
 	 * (see https://tools.ietf.org/html/rfc1877#section-1) */
 	ppp->solicit_peerns = 0;
@@ -695,6 +698,7 @@ static int handle_config_packet(struct openconnect_info *vpninfo,
 				     vpninfo->quit_reason);
 		}
 		ppp->ppp_state = PPPS_TERMINATE;
+		vpninfo->delay_close = NO_DELAY_CLOSE;
 		break;
 
 	case ECHOREP:
@@ -761,20 +765,49 @@ static int handle_state_transition(struct openconnect_info *vpninfo, int *timeou
 			}
 		}
 
-		if (network)
+		if (network) {
 			ppp->ppp_state = PPPS_NETWORK;
+			/* on close, we will need to send TERMREQ, then receive TERMACK */
+			vpninfo->delay_close = DELAY_CLOSE_IMMEDIATE_CALLBACK;
+		}
 		break;
+
 	case PPPS_NETWORK:
-		break;
+		if (vpninfo->got_pause_cmd || vpninfo->got_cancel_cmd)
+			ppp->ppp_state = PPPS_TERMINATE;
+		else
+			break;
+		/* fall through */
+
 	case PPPS_TERMINATE:
-		if (!vpninfo->quit_reason)
-			vpninfo->quit_reason = "Unknown";
-		return -EPIPE;
+		/* XX: If server terminated,  we already ACK'ed it */
+		if (ppp->lcp.state & NCP_TERM_REQ_RECEIVED)
+			return -EPIPE;
+		else if (!(ppp->lcp.state & NCP_TERM_ACK_RECEIVED)) {
+			/* We need to send a TERMREQ and wait for a TERMACK, but not keep retrying if it
+			 * fails. We attempt to send TERMREQ once, then wait for 3 seconds, and
+			 * send once more TERMREQ if that fails. */
+			if (!(ppp->lcp.state & NCP_TERM_REQ_SENT)) {
+				ppp->lcp.state |= NCP_TERM_REQ_SENT;
+				ppp->lcp.last_req = now;
+				(void) queue_config_packet(vpninfo, PPP_LCP, ++ppp->lcp.id, TERMREQ, 0, NULL);
+				vpninfo->delay_close = DELAY_CLOSE_WAIT; /* need to wait until we receive TERMACK */
+			}
+			if (!ka_check_deadline(timeout, now, ppp->lcp.last_req + 3))
+				vpninfo->delay_close = DELAY_CLOSE_WAIT; /* still waiting to receive TERMACK */
+			else
+				(void) queue_config_packet(vpninfo, PPP_LCP, ++ppp->lcp.id, TERMREQ, 0, NULL);
+		}
+		break;
 	case PPPS_AUTHENTICATE: /* XX: should never */
 	default:
 		vpninfo->quit_reason = "Unexpected state";
 		return -EINVAL;
 	}
+
+	/* Delay tunnel setup until after PPP negotiation */
+	if (ppp->ppp_state != PPPS_NETWORK)
+		vpninfo->delay_tunnel_reason = "PPP negotiation";
 
 	if (last_state != ppp->ppp_state) {
 		vpn_progress(vpninfo, PRG_DEBUG,
