@@ -1718,8 +1718,9 @@ int openconnect_open_https(struct openconnect_info *vpninfo)
 			SSL_CTX_set_default_verify_paths(vpninfo->https_ctx);
 
 		if (!strlen(vpninfo->ciphersuite_config)) {
-			strncpy(vpninfo->ciphersuite_config, vpninfo->pfs ? "HIGH:!aNULL:!eNULL:-RSA" : "DEFAULT",
-				sizeof(vpninfo->ciphersuite_config)-1);
+			snprintf(vpninfo->ciphersuite_config, sizeof(vpninfo->ciphersuite_config), "%s%s",
+				 vpninfo->pfs ? "HIGH:!aNULL:!eNULL:-RSA" : "DEFAULT",
+				 vpninfo->allow_insecure_crypto?":+3DES:+RC4":":-3DES:-RC4");
 		}
 
 		if (!SSL_CTX_set_cipher_list(vpninfo->https_ctx, vpninfo->ciphersuite_config)) {
