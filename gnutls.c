@@ -2211,15 +2211,18 @@ int openconnect_open_https(struct openconnect_info *vpninfo)
 		 * - Old server requiring SHA256: https://gitlab.com/openconnect/openconnect/-/issues/21
 		 *
 		 * Likewise, GnuTLS 3.6.0 and onward remove 3DES-CBC from NORMAL,
-		 * but some Cisco servers can't do anything better.
+		 * but some ancient servers can't do anything better. This (and ARCFOUR-128)
+		 * should not be reenabled by default due to serious security flaws, so adding as an
+		 * option, --allow-insecure-crypto. Yay ancient, unpatched servers.
 		 * - GnuTLS commit that removed: 66f2a0a271bcc10e8fb68771f9349a3d3ecf6dda
 		 * - Old server requiring 3DES-CBC: https://gitlab.com/openconnect/openconnect/-/issues/145
 		 */
-		default_prio = "NORMAL:-VERS-SSL3.0:+SHA256:+3DES-CBC:%COMPAT";
+		default_prio = "NORMAL:-VERS-SSL3.0:+SHA256:%COMPAT";
 #endif
 
-		snprintf(vpninfo->ciphersuite_config, sizeof(vpninfo->ciphersuite_config), "%s%s%s",
-		         default_prio, vpninfo->pfs?":-RSA":"", vpninfo->no_tls13?":-VERS-TLS1.3":"");
+		snprintf(vpninfo->ciphersuite_config, sizeof(vpninfo->ciphersuite_config), "%s%s%s%s",
+		         default_prio, vpninfo->pfs?":-RSA":"", vpninfo->no_tls13?":-VERS-TLS1.3":"",
+			 vpninfo->allow_insecure_crypto?":+3DES-CBC:+ARCFOUR-128":":-3DES-CBC:-ARCFOUR-128");
         }
 
 	err = gnutls_priority_set_direct(vpninfo->https_sess,

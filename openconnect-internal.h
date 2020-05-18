@@ -506,6 +506,7 @@ struct openconnect_info {
 
 	unsigned pfs;
 	unsigned no_tls13;
+	unsigned allow_insecure_crypto;        /* Allow 3DES and RC4 (known-insecure, but the best that some ancient servers can do) */
 #if defined(OPENCONNECT_OPENSSL)
 #ifdef HAVE_LIBP11
 	PKCS11_CTX *pkcs11_ctx;

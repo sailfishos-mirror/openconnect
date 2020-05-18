@@ -741,6 +741,11 @@ void openconnect_set_pfs(struct openconnect_info *vpninfo, unsigned val)
 	vpninfo->pfs = val;
 }
 
+void openconnect_set_allow_insecure_crypto(struct openconnect_info *vpninfo, unsigned val)
+{
+	vpninfo->allow_insecure_crypto = val;
+}
+
 void openconnect_set_cancel_fd(struct openconnect_info *vpninfo, int fd)
 {
 	vpninfo->cmd_fd = fd;
