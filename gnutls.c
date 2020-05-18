@@ -2222,7 +2222,7 @@ int openconnect_open_https(struct openconnect_info *vpninfo)
 
 		snprintf(vpninfo->ciphersuite_config, sizeof(vpninfo->ciphersuite_config), "%s%s%s%s",
 		         default_prio, vpninfo->pfs?":-RSA":"", vpninfo->no_tls13?":-VERS-TLS1.3":"",
-			 vpninfo->allow_insecure_crypto?":+3DES-CBC:+ARCFOUR-128":":-3DES-CBC:-ARCFOUR-128");
+			 vpninfo->allow_insecure_crypto?":+3DES-CBC:+ARCFOUR-128:+SHA1:%VERIFY_ALLOW_SIGN_WITH_SHA1":":-3DES-CBC:-ARCFOUR-128");
         }
 
 	err = gnutls_priority_set_direct(vpninfo->https_sess,
