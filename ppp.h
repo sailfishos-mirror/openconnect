@@ -113,8 +113,8 @@ struct oc_ppp {
 	uint32_t out_asyncmap;
 	int out_lcp_opts;
 	int32_t out_lcp_magic; /* stored in on-the-wire order */
-	struct in_addr out_peer_addr;
-	uint64_t out_ipv6_int_ident;
+	struct in_addr out_ipv4_addr;
+	struct in6_addr out_ipv6_addr;
 
 	int solicit_peerns;     /* bitfield of DNS/NBNS to request */
 
@@ -122,8 +122,8 @@ struct oc_ppp {
 	uint32_t in_asyncmap;
 	int in_lcp_opts;
 	int32_t in_lcp_magic; /* stored in on-the-wire order */
-	struct in_addr in_peer_addr;
-	uint64_t in_ipv6_int_ident;
+	struct in_addr in_ipv4_addr;
+	struct in6_addr in_ipv6_addr;
 
 	int exp_ppp_hdr_size;	/* predicted size of next PPP header */
 };

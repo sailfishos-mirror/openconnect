@@ -285,7 +285,7 @@ static int parse_options(struct openconnect_info *vpninfo, char *buf, int len,
 	if (default_route && *ipv4)
 		vpninfo->ip_info.netmask = strdup("0.0.0.0");
 	if (default_route && *ipv6)
-		vpninfo->ip_info.netmask6 = strdup("::");
+		vpninfo->ip_info.netmask6 = strdup("::/0");
 	if (buf_error(domains) == 0 && domains->pos > 0) {
 		domains->data[domains->pos-1] = '\0';
 		vpninfo->ip_info.domain = add_option(vpninfo, "search", &domains->data);
@@ -315,6 +315,7 @@ static int get_ip_address(struct openconnect_info *vpninfo, char *header, char *
 	} else if (!strcasecmp(header, "X-VPN-client-IPv6")) {
 		vpn_progress(vpninfo, PRG_INFO,
 			     _("Got IPv6 address %s\n"), val);
+		/* XX: Should we treat this as a /64 netmask? Or an /128 address? */
 		vpninfo->ip_info.addr6 = s = strdup(val);
 		if (!s) return -ENOMEM;
 	}

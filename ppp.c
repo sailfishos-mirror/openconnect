@@ -221,14 +221,17 @@ int openconnect_ppp_new(struct openconnect_info *vpninfo,
 	if (!vpninfo->ip_info.dns[0] && !vpninfo->ip_info.nbns[0])
 		ppp->solicit_peerns |= IPCP_DNS0|IPCP_DNS1|IPCP_NBNS0|IPCP_NBNS1;
 
-	/* Outgoing IPv4 address and IPv6 interface identifier (64 LSBs),
+	/* Outgoing IPv4 address and IPv6 interface identifier bits,
 	 * if already configured via another mechanism */
 	if (vpninfo->ip_info.addr)
-		ppp->out_peer_addr.s_addr = inet_addr(vpninfo->ip_info.addr);
-	if (vpninfo->ip_info.addr6) {
-		unsigned char *bytes[16];
-		inet_pton(AF_INET6, vpninfo->ip_info.addr6, bytes);
-		memcpy(&ppp->out_ipv6_int_ident, bytes+8, 8);
+		ppp->out_ipv4_addr.s_addr = inet_addr(vpninfo->ip_info.addr);
+	if (vpninfo->ip_info.netmask6) {
+		char *slash = strchr(vpninfo->ip_info.netmask6, '/');
+		if (slash) *slash=0;
+		inet_pton(AF_INET6, vpninfo->ip_info.netmask6, &ppp->out_ipv6_addr);
+		if (slash) *slash='/';
+	} else if (vpninfo->ip_info.addr6) {
+		inet_pton(AF_INET6, vpninfo->ip_info.addr6, &ppp->out_ipv6_addr);
 	}
 
 	ppp->encap = encap;
@@ -266,12 +269,16 @@ int openconnect_ppp_new(struct openconnect_info *vpninfo,
 static void print_ppp_state(struct openconnect_info *vpninfo, int level)
 {
 	struct oc_ppp *ppp = vpninfo->ppp;
+	char buf[40] = {0};
 
 	vpn_progress(vpninfo, level, _("Current PPP state: %s (encap %s):\n"), ppps_names[ppp->ppp_state], encap_names[ppp->encap]);
-	vpn_progress(vpninfo, level, _("    in: asyncmap=0x%08x, lcp_opts=%d, lcp_magic=0x%08x, peer=%s\n"),
-		     ppp->in_asyncmap, ppp->in_lcp_opts, ntohl(ppp->in_lcp_magic), inet_ntoa(ppp->in_peer_addr));
-	vpn_progress(vpninfo, level, _("   out: asyncmap=0x%08x, lcp_opts=%d, lcp_magic=0x%08x, peer=%s, solicit_peerns=%d\n"),
-		     ppp->out_asyncmap, ppp->out_lcp_opts, ntohl(ppp->out_lcp_magic), inet_ntoa(ppp->out_peer_addr), ppp->solicit_peerns);
+	vpn_progress(vpninfo, level, _("    in: asyncmap=0x%08x, lcp_opts=%d, lcp_magic=0x%08x, ipv4=%s, ipv6=%s\n"),
+		     ppp->in_asyncmap, ppp->in_lcp_opts, ntohl(ppp->in_lcp_magic), inet_ntoa(ppp->in_ipv4_addr),
+		     inet_ntop(AF_INET6, &ppp->in_ipv6_addr, buf, sizeof(buf)));
+	inet_ntop(AF_INET6, &ppp->out_ipv6_addr, buf, sizeof(buf));
+	vpn_progress(vpninfo, level, _("   out: asyncmap=0x%08x, lcp_opts=%d, lcp_magic=0x%08x, ipv4=%s, ipv6=%s, solicit_peerns=%d\n"),
+		     ppp->out_asyncmap, ppp->out_lcp_opts, ntohl(ppp->out_lcp_magic), inet_ntoa(ppp->out_ipv4_addr),
+		     inet_ntop(AF_INET6, &ppp->out_ipv6_addr, buf, sizeof(buf)), ppp->solicit_peerns);
 }
 
 static int buf_append_ppp_tlv(struct oc_text_buf *buf, int tag, int len, const void *data)
@@ -402,17 +409,23 @@ static int handle_config_request(struct openconnect_info *vpninfo,
 			}
 			goto unknown;
 		case PROTO_TAG_LEN(PPP_IPCP, IPCP_IPADDR, 4):
-			memcpy(&ppp->in_peer_addr, p+2, 4);
+			memcpy(&ppp->in_ipv4_addr, p+2, 4);
 			vpn_progress(vpninfo, PRG_DEBUG,
 				     _("Received peer IPv4 address %s from server\n"),
-				     inet_ntoa(ppp->in_peer_addr));
+				     inet_ntoa(ppp->in_ipv4_addr));
 			break;
-		case PROTO_TAG_LEN(PPP_IP6CP, IP6CP_INT_ID, 8):
-			memcpy(&ppp->in_ipv6_int_ident, p+2, 8);
+		case PROTO_TAG_LEN(PPP_IP6CP, IP6CP_INT_ID, 8): {
+			char buf[40];
+			unsigned char ipv6_ll[16] = {0xfe, 0x80, 0, 0, 0, 0, 0, 0};
+			memcpy(ipv6_ll + 8, p+2, 8);
+			memcpy(&ppp->in_ipv6_addr, ipv6_ll, 16);
+			if (!inet_ntop(AF_INET6, &ppp->in_ipv6_addr, buf, sizeof(buf)))
+				return -EINVAL;
 			vpn_progress(vpninfo, PRG_DEBUG,
-				     _("Received peer IPv6 interface identifier :%x:%x:%x:%x from server\n"),
-				     load_be16(p+2), load_be16(p+4), load_be16(p+6), load_be16(p+8));
+				     _("Received peer IPv6 link-local address %s from server\n"),
+				     buf);
 			break;
+		}
 		default:
 		unknown:
 			vpn_progress(vpninfo, PRG_DEBUG,
@@ -526,7 +539,7 @@ static int queue_config_request(struct openconnect_info *vpninfo, int proto)
 		ncp = &ppp->ipcp;
 
 		/* XX: send zero for IPv4/DNS/NBNS to request via NAK */
-		buf_append_ppp_tlv(buf, IPCP_IPADDR, 4, &ppp->out_peer_addr.s_addr);
+		buf_append_ppp_tlv(buf, IPCP_IPADDR, 4, &ppp->out_ipv4_addr.s_addr);
 
 		/* XX: See ppp.h for why bitfields work here */
 		for (int b=0; b<4; b++)
@@ -537,8 +550,12 @@ static int queue_config_request(struct openconnect_info *vpninfo, int proto)
 	case PPP_IP6CP:
 		ncp = &ppp->ip6cp;
 
-		/* XX: unclear if any servers care about zeros here */
-		buf_append_ppp_tlv(buf, IP6CP_INT_ID, 8, &ppp->out_ipv6_int_ident);
+		/* Send zero here if we need a link-local IPv6 address, because
+		 * we don't yet have a global IPv6 address. Otherwise, just send
+		 * the interface bits of our global IPv6 address, to avoid getting
+		 * a CONFREQ/CONFNAK/re-CONFREQ round trip */
+		buf_append_ppp_tlv(buf, IP6CP_INT_ID, 8, ppp->out_ipv6_addr.s6_addr + 8);
+
 		break;
 
 	default:
@@ -626,7 +643,7 @@ static int handle_config_rejnak(struct openconnect_info *vpninfo,
 			if (code == CONFNAK && a->s_addr) {
 				vpn_progress(vpninfo, PRG_DEBUG,
 					     _("Server nak-offered IPv4 address: %s\n"), s);
-				ppp->out_peer_addr = *a;
+				ppp->out_ipv4_addr = *a;
 				vpninfo->ip_info.addr = strdup(s); /* XX: need free and add_option() */
 			} else {
 				vpn_progress(vpninfo, PRG_DEBUG,
@@ -663,10 +680,27 @@ static int handle_config_rejnak(struct openconnect_info *vpninfo,
 		case PROTO_TAG_LEN(PPP_IP6CP, IP6CP_INT_ID, 8): {
 			uint64_t *val = (void *)(p + 2);
 			if (code == CONFNAK && *val != 0) {
+				char buf[40];
+				unsigned char ipv6_ll[16] = {0xfe, 0x80, 0, 0, 0, 0, 0, 0};
+				memcpy(ipv6_ll + 8, val, 8);
+				if (!inet_ntop(AF_INET6, ipv6_ll, buf, sizeof(buf)))
+					return -EINVAL;
 				vpn_progress(vpninfo, PRG_DEBUG,
-					     _("Server nak-offered IPv6 interface identifier\n"));
-				memcpy(&ppp->out_ipv6_int_ident, val, 8);
-				/* XX: unclear what we should do to make an IPv6 address from this */
+					     _("Server nak-offered IPv6 link-local address %s\n"), buf);
+
+				/* If we don't already have a valid global IPv6 address, then we are
+				 * supposed to use this one to create a valid link-local IPv6
+				 * address to allow autoconfiguration (https://tools.ietf.org/html/rfc5072)
+				 */
+				if (!vpninfo->ip_info.addr6 && !vpninfo->ip_info.netmask6) {
+					memcpy(&ppp->out_ipv6_addr, ipv6_ll, 16);
+					/* XX: need add-option */
+					if ((asprintf((char **)&vpninfo->ip_info.netmask6, "%s/64", buf)) <= 0)
+						return -ENOMEM;
+					vpn_progress(vpninfo, PRG_INFO,
+						     _("Configured IPv6 link-local address %s.\n"),
+						     vpninfo->ip_info.netmask6);
+				}
 			} else {
 				vpn_progress(vpninfo, PRG_DEBUG,
 					     _("Server rejected/nak'ed our IPv6 interface identifier\n"));
@@ -1052,7 +1086,7 @@ int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		case PPP_IP6:
 			if (ppp->ppp_state != PPPS_NETWORK) {
 				vpn_progress(vpninfo, PRG_ERR,
-					     _("Unexpected IPv%d packet in PPP state %s."),
+					     _("Unexpected IPv%d packet in PPP state %s.\n"),
 					     (proto == PPP_IP6 ? 6 : 4), ppps_names[ppp->ppp_state]);
 				dump_buf_hex(vpninfo, PRG_ERR, '<', pp, payload_len);
 			} else {
