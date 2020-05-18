@@ -2204,10 +2204,18 @@ int openconnect_open_https(struct openconnect_info *vpninfo)
 #ifdef DEFAULT_PRIO
 		default_prio = DEFAULT_PRIO ":%COMPAT";
 #else
-		/* GnuTLS 3.5.19 and onward refuse to negotiate AES-CBC-HMAC-SHA256
-		 * by default but some Cisco servers can't do anything better, so
-		 * explicitly add '+SHA256' to allow it. Yay Cisco. */
-		default_prio = "NORMAL:-VERS-SSL3.0:+SHA256:%COMPAT";
+		/* GnuTLS 3.5.19 and onward remove AES-CBC-HMAC-SHA256 from NORMAL,
+		 * but some Cisco servers can't do anything better, so
+		 * explicitly add '+SHA256' to allow it. Yay Cisco.
+		 * - GnuTLS commit that removed: c433cdf92349afae66c703bdacedf987f423605e
+		 * - Old server requiring SHA256: https://gitlab.com/openconnect/openconnect/-/issues/21
+		 *
+		 * Likewise, GnuTLS 3.6.0 and onward remove 3DES-CBC from NORMAL,
+		 * but some Cisco servers can't do anything better.
+		 * - GnuTLS commit that removed: 66f2a0a271bcc10e8fb68771f9349a3d3ecf6dda
+		 * - Old server requiring 3DES-CBC: https://gitlab.com/openconnect/openconnect/-/issues/145
+		 */
+		default_prio = "NORMAL:-VERS-SSL3.0:+SHA256:+3DES-CBC:%COMPAT";
 #endif
 
 		snprintf(vpninfo->ciphersuite_config, sizeof(vpninfo->ciphersuite_config), "%s%s%s",
