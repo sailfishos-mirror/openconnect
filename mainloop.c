@@ -207,17 +207,11 @@ int openconnect_mainloop(struct openconnect_info *vpninfo,
 			timeout = 1000;
 
 		if (!tun_is_up(vpninfo)) {
-			if (vpninfo->delay_tunnel > 0) {
-				vpn_progress(vpninfo, PRG_DEBUG, _("Delaying tunnel by protocol request.\n"));
+			if (vpninfo->delay_tunnel_reason) {
+				vpn_progress(vpninfo, PRG_INFO, _("Delaying tunnel with reason: %s\n"),
+					     vpninfo->delay_tunnel_reason);
 				/* XX: don't let this spin forever */
-				if (--vpninfo->delay_tunnel > 0)
-					did_work++;
-			} else if (vpninfo->dtls_state == DTLS_CONNECTING) {
-				/* Postpone tun device creation after DTLS is connected so
-				 * we have a better knowledge of the link MTU. We also
-				 * force the creation if DTLS enters sleeping mode - i.e.,
-				 * we failed to connect on time. */
-				vpn_progress(vpninfo, PRG_DEBUG, _("Delaying tunnel until link MTU determined.\n"));
+				vpninfo->delay_tunnel_reason = NULL;
 			} else {
 				/* No DTLS, or DTLS failed; setup TUN device unconditionally */
 				ret = setup_tun_device(vpninfo);
@@ -247,10 +241,13 @@ int openconnect_mainloop(struct openconnect_info *vpninfo,
 		poll_cmd_fd(vpninfo, 0);
 		if (vpninfo->got_cancel_cmd) {
 			if (vpninfo->delay_close > 0) {
-				vpn_progress(vpninfo, PRG_DEBUG, _("Delaying cancel.\n"));
-				/* XX: don't let this spin forever */
-				if (--vpninfo->delay_close > 0)
+				if (vpninfo->delay_close > 1) {
+					vpn_progress(vpninfo, PRG_DEBUG, _("Delaying cancel (until we send again).\n"));
 					did_work++;
+				} else
+					vpn_progress(vpninfo, PRG_DEBUG, _("Delaying cancel (until we receive again).\n"));
+				/* XX: don't let this spin forever */
+				--vpninfo->delay_close;
 			} else if (vpninfo->cancel_type == OC_CMD_CANCEL) {
 				vpninfo->quit_reason = "Aborted by caller";
 				vpninfo->got_cancel_cmd = 0;
@@ -265,10 +262,14 @@ int openconnect_mainloop(struct openconnect_info *vpninfo,
 
 		if (vpninfo->got_pause_cmd) {
 			if (vpninfo->delay_close > 0) {
-				vpn_progress(vpninfo, PRG_DEBUG, _("Delaying pause.\n"));
 				 /* XX: don't let this spin forever */
-				if (--vpninfo->delay_close > 0)
+				if (vpninfo->delay_close > 1) {
+					vpn_progress(vpninfo, PRG_DEBUG, _("Delaying cancel (need to send again).\n"));
 					did_work++;
+				} else
+					vpn_progress(vpninfo, PRG_DEBUG, _("Delaying cancel (need to receive again).\n"));
+				/* XX: don't let this spin forever */
+				--vpninfo->delay_close;
 			} else {
 				/* close all connections and wait for the user to call
 				   openconnect_mainloop() again */
