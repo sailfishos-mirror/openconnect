@@ -1147,7 +1147,7 @@ int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			 */
 			store_be16(pp - 2, proto);
 			if ((ret = queue_config_packet(vpninfo, PPP_LCP, ++ppp->lcp.id, PROTREJ,
-						       MIN(payload_len + 2, vpninfo->ip_info.mtu - 10),
+						       MIN(payload_len + 2, (vpninfo->ip_info.mtu ?: 256) - 10),
 						       pp - 2)) < 0)
 				return ret;
 		}
