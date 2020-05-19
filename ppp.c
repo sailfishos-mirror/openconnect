@@ -192,16 +192,18 @@ static const char *lcp_names[] = {
 };
 
 inline static const char *proto_names(uint16_t proto) {
-	static char unknown[7];
+	static char unknown[21];
 
 	switch (proto) {
 	case PPP_LCP: return "LCP";
 	case PPP_IPCP: return "IPCP";
 	case PPP_IP6CP: return "IP6CP";
+	case PPP_CCP: return "CCP";
 	case PPP_IP: return "IPv4";
 	case PPP_IP6: return "IPv6";
+
 	default:
-		snprintf(unknown, 7, "0x%04x", proto);
+		snprintf(unknown, 21, "unknown proto 0x%04x", proto);
 		return unknown;
 	}
 }
@@ -436,8 +438,8 @@ static int handle_config_request(struct openconnect_info *vpninfo,
 		default:
 		unknown:
 			vpn_progress(vpninfo, PRG_DEBUG,
-				     _("Received unknown proto 0x%04x TLV (tag %d, len %d+2) from server:\n"),
-				     proto, t, l-2);
+				     _("Received unknown %s TLV (tag %d, len %d+2) from server:\n"),
+				     proto_names(proto), t, l-2);
 			dump_buf_hex(vpninfo, PRG_DEBUG, '<', p, (int)p[1]);
 		reject:
 			if (!rejbuf)
@@ -469,7 +471,7 @@ static int handle_config_request(struct openconnect_info *vpninfo,
 				     _("Error composing ConfRej packet\n"));
 			return buf_free(rejbuf);
 		}
-		vpn_progress(vpninfo, PRG_DEBUG, _("Reject proto 0x%04x/id %d config from server\n"), proto, id);
+		vpn_progress(vpninfo, PRG_DEBUG, _("Reject %s/id %d config from server\n"), proto_names(proto), id);
 		if ((ret = queue_config_packet(vpninfo, proto, id, CONFREJ, rejbuf->pos, rejbuf->data)) >= 0) {
 			ret = 0;
 		}
@@ -480,13 +482,13 @@ static int handle_config_request(struct openconnect_info *vpninfo,
 				     _("Error composing ConfNak packet\n"));
 			return buf_free(nakbuf);
 		}
-		vpn_progress(vpninfo, PRG_DEBUG, _("Nak proto 0x%04x/id %d config from server\n"), proto, id);
+		vpn_progress(vpninfo, PRG_DEBUG, _("Nak %s/id %d config from server\n"), proto_names(proto), id);
 		if ((ret = queue_config_packet(vpninfo, proto, id, CONFNAK, nakbuf->pos, nakbuf->data)) >= 0) {
 			ret = 0;
 		}
 	}
 	if (!rejbuf && !nakbuf) {
-		vpn_progress(vpninfo, PRG_DEBUG, _("Ack proto 0x%04x/id %d config from server\n"), proto, id);
+		vpn_progress(vpninfo, PRG_DEBUG, _("Ack %s/id %d config from server\n"), proto_names(proto), id);
 		if ((ret = queue_config_packet(vpninfo, proto, id, CONFACK, len, payload)) >= 0) {
 			ncp->state |= NCP_CONF_ACK_SENT;
 			ret = 0;
@@ -574,8 +576,8 @@ static int queue_config_request(struct openconnect_info *vpninfo, int proto)
 		goto out;
 
 	id = ++ncp->id;
-	vpn_progress(vpninfo, PRG_DEBUG, _("Sending our proto 0x%04x/id %d config request to server\n"),
-		     proto, id);
+	vpn_progress(vpninfo, PRG_DEBUG, _("Sending our %s/id %d config request to server\n"),
+		     proto_names(proto), id);
 	if ((ret = queue_config_packet(vpninfo, proto, id, CONFREQ, buf->pos, buf->data)) >= 0) {
 		ncp->state |= NCP_CONF_REQ_SENT;
 		ret = 0;
@@ -717,8 +719,8 @@ static int handle_config_rejnak(struct openconnect_info *vpninfo,
 		}
 		default:
 			vpn_progress(vpninfo, PRG_DEBUG,
-				     _("Server rejected/nak'ed unknown proto 0x%04x TLV (tag %d, len %d+2)\n"),
-				     proto, t, l-2);
+				     _("Server rejected/nak'ed %s TLV (tag %d, len %d+2)\n"),
+				     proto_names(proto), t, l-2);
 			dump_buf_hex(vpninfo, PRG_DEBUG, '<', p, (int)p[1]);
 			/* XX: Should abort negotiation */
 			return -EINVAL;
@@ -751,7 +753,7 @@ static int handle_config_packet(struct openconnect_info *vpninfo,
 	}
 
         if (code > 0 && code <= 11)
-		vpn_progress(vpninfo, PRG_TRACE, _("Received proto 0x%04x/id %d %s from server\n"), proto, id, lcp_names[code]);
+		vpn_progress(vpninfo, PRG_TRACE, _("Received %s/id %d %s from server\n"), proto_names(proto), id, lcp_names[code]);
 	switch (code) {
 	case CONFREQ:
 		ret = handle_config_request(vpninfo, proto, id, p + 4, len - 4);
@@ -1131,8 +1133,8 @@ int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 
 		default:
 			vpn_progress(vpninfo, PRG_ERR,
-				     _("Sending Protocol-Reject for unknown protocol 0x%04x. Payload:\n"),
-				     proto);
+				     _("Sending Protocol-Reject for %s. Payload:\n"),
+				     proto_names(proto));
 			dump_buf_hex(vpninfo, PRG_ERR, '<', pp, payload_len);
 
 			/* The rejected protocol MUST occupy 2 bytes prior to the rejected packet contents.

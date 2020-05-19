@@ -22,6 +22,7 @@
 #define PPP_LCP		0xc021
 #define PPP_IPCP	0x8021
 #define PPP_IP6CP	0x8057
+#define PPP_CCP		0x80fd /* compression (unwanted) */
 #define PPP_IP		0x21
 #define PPP_IP6		0x57
 
