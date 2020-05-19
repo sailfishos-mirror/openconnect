@@ -974,6 +974,10 @@ int pulse_bye(struct openconnect_info *vpninfo, const char *reason);
 int pulse_eap_ttls_send(struct openconnect_info *vpninfo, const void *data, int len);
 int pulse_eap_ttls_recv(struct openconnect_info *vpninfo, void *data, int len);
 
+/* nullppp.c */
+int nullppp_obtain_cookie(struct openconnect_info *vpninfo);
+int nullppp_connect(struct openconnect_info *vpninfo);
+
 /* ppp.c */
 struct oc_ppp;
 void buf_append_ppphdlc(struct oc_text_buf *buf, const unsigned char *bytes, int len, uint32_t asyncmap);
