@@ -176,10 +176,12 @@ struct pkt {
 #define DTLS_CONNECTING	4	/* ESP probe received; must tell server */
 #define DTLS_CONNECTED	5	/* Server informed and should be sending ESP */
 
-#define PPP_ENCAP_F5		1	/* F5 BigIP no HDLC */
-#define PPP_ENCAP_F5_HDLC	2	/* F5 BigIP HDLC */
-#define PPP_ENCAP_FORTINET_HDLC	3	/* Fortinet HDLC */
-#define PPP_ENCAP_NX_HDLC	4	/* SonicWall NetExtender HDLC */
+#define PPP_ENCAP_RFC1661	1	/* Plain/synchronous/pre-framed PPP (RFC1661) */
+#define PPP_ENCAP_RFC1662_HDLC	2	/* PPP with HDLC-like framing (RFC1662) */
+#define PPP_ENCAP_F5		3	/* F5 BigIP no HDLC */
+#define PPP_ENCAP_F5_HDLC	4	/* F5 BigIP HDLC */
+#define PPP_ENCAP_FORTINET_HDLC	5	/* Fortinet HDLC */
+#define PPP_ENCAP_NX_HDLC	6	/* SonicWall NetExtender HDLC */
 #define PPP_ENCAP_MAX		PPP_ENCAP_NX_HDLC
 
 #define COMPR_DEFLATE	(1<<0)

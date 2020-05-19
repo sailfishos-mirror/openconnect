@@ -168,6 +168,8 @@ static const char *ppps_names[] = {
 
 static const char *encap_names[PPP_ENCAP_MAX+1] = {
 	NULL,
+	"RFC1661",
+	"RFC1662 HDLC",
 	"F5",
 	"F5 HDLC",
 	"FORTINET HDLC",
@@ -242,6 +244,7 @@ int openconnect_ppp_new(struct openconnect_info *vpninfo,
 
 	case PPP_ENCAP_F5_HDLC:
 	case PPP_ENCAP_FORTINET_HDLC:
+	case PPP_ENCAP_RFC1662_HDLC:
 		ppp->encap_len = 0;
 		ppp->hdlc = 1;
 		break;
@@ -249,6 +252,10 @@ int openconnect_ppp_new(struct openconnect_info *vpninfo,
 	case PPP_ENCAP_NX_HDLC:
 		ppp->encap_len = 4;
 		ppp->hdlc = 1;
+		break;
+
+	case PPP_ENCAP_RFC1661:
+		ppp->encap_len = 0;
 		break;
 
 	default:
@@ -989,7 +996,7 @@ int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		if (vpninfo->dump_http_traffic)
 			dump_buf_hex(vpninfo, PRG_DEBUG, '<', eh, len);
 
-		/* check pre-PPP header */
+		/* Deencapsulate from pre-PPP header */
 		switch (ppp->encap) {
 		case PPP_ENCAP_F5:
 			magic = load_be16(eh);
@@ -1022,6 +1029,7 @@ int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 
 		case PPP_ENCAP_F5_HDLC:
 		case PPP_ENCAP_FORTINET_HDLC:
+		case PPP_ENCAP_RFC1662_HDLC:
 			payload_len = unhdlc_in_place(vpninfo, eh + ppp->encap_len, len - ppp->encap_len, &next);
 			if (payload_len < 0)
 				continue; /* unhdlc_in_place already logged */
@@ -1033,6 +1041,11 @@ int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			vpn_progress(vpninfo, PRG_ERR, _("Invalid PPP encapsulation\n"));
 			vpninfo->quit_reason = "Invalid encapsulation";
 			return -EINVAL;
+
+		case PPP_ENCAP_RFC1661:
+			payload_len = len;
+			next = eh + payload_len;
+			break;
 		}
 
 		ph = eh + ppp->encap_len;
@@ -1259,7 +1272,7 @@ int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			vpninfo->current_ssl_pkt = this;
 		}
 
-		/* Add pre-PPP encapsulation header */
+		/* Encapsulate into pre-PPP header */
 		eh = this->data - this->ppp.hlen - ppp->encap_len;
 		switch (ppp->encap) {
 		case PPP_ENCAP_F5:
