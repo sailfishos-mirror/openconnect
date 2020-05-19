@@ -109,7 +109,7 @@ static int unhdlc_in_place(struct openconnect_info *vpninfo, unsigned char *byte
 	if (*inp == 0x7e)
 		inp++;
 	else
-		vpn_progress(vpninfo, PRG_DEBUG,
+		vpn_progress(vpninfo, PRG_TRACE,
 			     _("HDLC initial flag sequence (0x7e) is missing\n"));
 
 	for (; inp < endp; inp++) {
@@ -408,9 +408,10 @@ static int handle_config_request(struct openconnect_info *vpninfo,
 			vpn_progress(vpninfo, PRG_DEBUG,
 				     _("Received deprecated IP-Addresses from server, ignoring\n"));
 			break;
-		case PROTO_TAG_LEN(PPP_IPCP, IPCP_IPCOMP, 2):
+		case PROTO_TAG_LEN(PPP_IPCP, IPCP_IPCOMP, 4):
 			if (load_be16(p+2) == 0x002d) {
-				/* Van Jacobson TCP/IP compression */
+				/* Van Jacobson TCP/IP compression. Includes an
+				 * additional 2 payload bytes (Max-Slot-Id, Comp-Slot-Id) */
 				vpn_progress(vpninfo, PRG_DEBUG,
 					     _("Received Van Jacobson TCP/IP compression from server\n"));
 				/* No. Just no. */
