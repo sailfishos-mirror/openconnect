@@ -237,6 +237,15 @@ static const struct vpn_proto openconnect_protos[] = {
 		.udp_send_probes = oncp_esp_send_probes,
 		.udp_catch_probe = oncp_esp_catch_probe,
 #endif
+	}, {
+		.name = "nullppp",
+		.pretty_name = N_("nullppp"),
+		.description = N_("nullppp"),
+		.flags = OC_PROTO_PROXY,
+		.tcp_connect = nullppp_connect,
+		.tcp_mainloop = ppp_mainloop,
+		.add_http_headers = http_common_headers,
+		.obtain_cookie = nullppp_obtain_cookie,
 	},
 };
 
