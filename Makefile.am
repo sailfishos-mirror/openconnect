@@ -35,10 +35,11 @@ lib_srcs_globalprotect = gpst.c win32-ipicmp.h auth-globalprotect.c
 lib_srcs_oath = oath.c
 lib_srcs_oidc = oidc.c
 lib_srcs_ppp = ppp.c ppp.h
+lib_srcs_nullppp = nullppp.c
 
 library_srcs += $(lib_srcs_juniper) $(lib_srcs_cisco) $(lib_srcs_oath) \
 		$(lib_srcs_globalprotect) $(lib_srcs_pulse) \
-		$(lib_srcs_oidc) $(lib_srcs_ppp)
+		$(lib_srcs_oidc) $(lib_srcs_ppp) $(lib_srcs_nullppp)
 
 
 lib_srcs_gnutls = gnutls.c gnutls_tpm.c gnutls_tpm2.c
