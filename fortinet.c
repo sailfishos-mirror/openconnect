@@ -325,11 +325,6 @@ int fortinet_connect(struct openconnect_info *vpninfo)
 	buf_free(reqbuf);
 	free(res_buf);
 
-	free(vpninfo->cstp_pkt);
-	vpninfo->cstp_pkt = NULL;
-
-	vpninfo->ip_info.mtu = 1400;
-
 	return ret;
 }
 

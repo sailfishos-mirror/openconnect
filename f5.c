@@ -436,11 +436,6 @@ int f5_connect(struct openconnect_info *vpninfo)
 	}
 	buf_free(reqbuf);
 
-	free(vpninfo->cstp_pkt);
-	vpninfo->cstp_pkt = NULL;
-
-	vpninfo->ip_info.mtu = 1400;
-
 	return ret;
 }
 
