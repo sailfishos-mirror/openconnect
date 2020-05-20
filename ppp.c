@@ -504,7 +504,7 @@ static int queue_config_request(struct openconnect_info *vpninfo, int proto)
 {
 	struct oc_ppp *ppp = vpninfo->ppp;
 	const uint32_t zero = 0;
-	int ret, id;
+	int ret, id, b;
 	struct oc_ncp *ncp;
 	struct oc_text_buf *buf;
 
@@ -552,7 +552,7 @@ static int queue_config_request(struct openconnect_info *vpninfo, int proto)
 		buf_append_ppp_tlv(buf, IPCP_IPADDR, 4, &ppp->out_ipv4_addr.s_addr);
 
 		/* XX: See ppp.h for why bitfields work here */
-		for (int b=0; b<4; b++)
+		for (b=0; b<4; b++)
 			if (ppp->solicit_peerns & (1<<b))
 				buf_append_ppp_tlv(buf, IPCP_xNS_BASE + b, 4, &zero);
 		break;
