@@ -239,9 +239,9 @@ static const struct vpn_proto openconnect_protos[] = {
 #endif
 	}, {
 		.name = "nullppp",
-		.pretty_name = N_("nullppp"),
-		.description = N_("nullppp"),
-		.flags = OC_PROTO_PROXY,
+		.pretty_name = N_("PPP over TLS"),
+		.description = N_("Unauthenticated RFC1661/RFC1662 PPP over TLS"),
+		.flags = OC_PROTO_PROXY | OC_PROTO_HIDDEN,
 		.tcp_connect = nullppp_connect,
 		.tcp_mainloop = ppp_mainloop,
 		.add_http_headers = http_common_headers,
