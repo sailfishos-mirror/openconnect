@@ -134,11 +134,20 @@ CentOS6/OpenSSL:
     paths:
       - tests/*.log
 
+Signoff:
+  script:
+  - dnf install -y git
+  # Quoted to work around https://gitlab.com/gitlab-org/gitlab-foss/-/issues/20177
+  - 'echo "Checking for new commits without Signed-off-by: tags as described in http://www.infradead.org/openconnect/contribute.html"'
+  # Last bad commit
+  - 'git log ceab1765db11c15a18a0c605812dbc11afd63e8b.. --grep "(^Signed-off-by)|(^Merge branch)|(^This reverts commit)" --extended-regexp --invert-grep --exit-code'
+  - echo "None (good)"
+
 Fedora/Coverity:
   only:
     refs:
-       - master
-       - coverity
+       - master@openconnect/openconnect
+       - coverity@openconnect/openconnect
   script:
   - dnf update -y
   - dnf install -y git autoconf automake libtool python gettext make
@@ -188,14 +197,14 @@ Fedora/GnuTLS:
     vpnc-script 'pkgconfig(libpskc)' 'pkgconfig(libpcsclite)' tss2-devel
     java-devel-openjdk glibc-langpack-cs iproute iputils nuttcp
     'pkgconfig(tss2-esys)' 'pkgconfig(krb5-gssapi)'
-  - dnf upgrade -y --enablerepo=updates-testing --advisory=FEDORA-2020-02849aa88a --advisory=FEDORA-2020-445867e64b
   - ./autogen.sh
   - ./configure --with-java --disable-dsa-tests --without-gnutls-version-check CFLAGS=-g
   - make tmp-distdir
   - cd openconnect-$(git describe --tags | sed s/^v//)
   - ./configure --with-java --disable-dsa-tests --without-gnutls-version-check CFLAGS=-g
   - make -j4
-  - make VERBOSE=1 -j4 check
+  # Disable rdrand to work around https://bugzilla.redhat.com/1831086
+  - make VERBOSE=1 OPENSSL_ia32cap=~0x4000000000000000 -j4 check
   tags:
   - shared
   except:
@@ -217,14 +226,14 @@ Fedora/GnuTLS/clang:
     vpnc-script 'pkgconfig(libpskc)' 'pkgconfig(libpcsclite)' tss2-devel
     java-devel-openjdk clang glibc-langpack-cs iproute iputils nuttcp
     'pkgconfig(tss2-esys)' 'pkgconfig(krb5-gssapi)'
-  - dnf upgrade -y --enablerepo=updates-testing --advisory=FEDORA-2020-02849aa88a --advisory=FEDORA-2020-445867e64b
   - ./autogen.sh
   - ./configure --with-java --disable-dsa-tests --without-gnutls-version-check CC=clang CFLAGS=-g
   - make tmp-distdir
   - cd openconnect-$(git describe --tags | sed s/^v//)
   - ./configure --with-java --disable-dsa-tests --without-gnutls-version-check CC=clang CFLAGS=-g
   - make -j4
-  - make VERBOSE=1 -j4 check
+  # Disable rdrand to work around https://bugzilla.redhat.com/1831086
+  - make VERBOSE=1 OPENSSL_ia32cap=~0x4000000000000000 -j4 check
   tags:
   - shared
   except:
@@ -246,7 +255,6 @@ Fedora/OpenSSL:
     vpnc-script 'pkgconfig(libpskc)' 'pkgconfig(libpcsclite)'
     java-devel-openjdk glibc-langpack-cs iproute iputils nuttcp
     'pkgconfig(krb5-gssapi)'
-  - dnf upgrade -y --enablerepo=updates-testing --advisory=FEDORA-2020-02849aa88a --advisory=FEDORA-2020-445867e64b
 # Re-enable DSA since we test it
   - update-crypto-policies --set LEGACY
   - ./autogen.sh
@@ -277,7 +285,6 @@ Fedora/OpenSSL/clang:
     vpnc-script 'pkgconfig(libpskc)' 'pkgconfig(libpcsclite)'
     java-devel-openjdk clang glibc-langpack-cs iproute iputils nuttcp
     'pkgconfig(krb5-gssapi)'
-  - dnf upgrade -y --enablerepo=updates-testing --advisory=FEDORA-2020-02849aa88a --advisory=FEDORA-2020-445867e64b
 # Re-enable DSA since we test it
   - update-crypto-policies --set LEGACY
   - ./autogen.sh
@@ -325,7 +332,6 @@ MinGW32/OpenSSL:
   - dnf install -y git autoconf automake libtool python gettext make
     mingw32-gnutls mingw32-openssl mingw32-libxml2 mingw32-zlib
     mingw32-gcc wine.i686 make iproute iputils nuttcp
-  - dnf upgrade -y --enablerepo=updates-testing --advisory=FEDORA-2020-1ab58b829d
   - mount -t binfmt_misc binfmt_misc /proc/sys/fs/binfmt_misc
   - echo ':DOSWin:M::MZ::/usr/bin/wine:' > /proc/sys/fs/binfmt_misc/register
   - ./autogen.sh
@@ -370,7 +376,6 @@ MinGW64/OpenSSL:
   - dnf install -y git autoconf automake libtool python gettext make
     mingw64-gnutls mingw64-openssl mingw64-libxml2 mingw64-zlib
     mingw64-gcc wine.x86_64 make iproute iputils nuttcp
-  - dnf upgrade -y --enablerepo=updates-testing --advisory=FEDORA-2020-1ab58b829d
   - mount -t binfmt_misc binfmt_misc /proc/sys/fs/binfmt_misc
   - echo ':DOSWin:M::MZ::/usr/bin/wine:' > /proc/sys/fs/binfmt_misc/register
   - ./autogen.sh

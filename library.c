@@ -342,7 +342,12 @@ int openconnect_obtain_cookie(struct openconnect_info *vpninfo)
 
 int openconnect_make_cstp_connection(struct openconnect_info *vpninfo)
 {
-	return vpninfo->proto->tcp_connect(vpninfo);
+	int result = vpninfo->proto->tcp_connect(vpninfo);
+
+	/* ssl_times.last_tx should be set to show that a connection has been setup */
+	if (result == 0 && vpninfo->ssl_times.last_tx == 0)
+		vpninfo->ssl_times.last_tx = time(NULL);
+	return result;
 }
 
 int openconnect_set_reported_os(struct openconnect_info *vpninfo,
@@ -732,6 +737,15 @@ void openconnect_clear_cookie(struct openconnect_info *vpninfo)
 {
 	if (vpninfo->cookie)
 		memset(vpninfo->cookie, 0, strlen(vpninfo->cookie));
+}
+
+int openconnect_set_cookie(struct openconnect_info *vpninfo,
+			    const char *cookie)
+{
+	UTF8CHECK(cookie);
+
+	STRDUP(vpninfo->cookie, cookie);
+	return 0;
 }
 
 void openconnect_reset_ssl(struct openconnect_info *vpninfo)

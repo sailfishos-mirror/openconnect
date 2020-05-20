@@ -36,7 +36,7 @@ lib_srcs_nullppp = nullppp.c
 lib_srcs_f5 = f5.c
 lib_srcs_ppp = ppp.c ppp.h
 lib_srcs_fortinet = fortinet.c
-lib_srcs_globalprotect = gpst.c auth-globalprotect.c
+lib_srcs_globalprotect = gpst.c win32-ipicmp.h auth-globalprotect.c
 lib_srcs_oath = oath.c
 lib_srcs_oidc = oidc.c
 
@@ -141,7 +141,7 @@ endif
 
 pkgconfig_DATA = openconnect.pc
 
-EXTRA_DIST = AUTHORS version.sh COPYING.LGPL $(lib_srcs_openssl) $(lib_srcs_gnutls)
+EXTRA_DIST = AUTHORS version.sh COPYING.LGPL openconnect.ico $(lib_srcs_openssl) $(lib_srcs_gnutls)
 EXTRA_DIST += $(shell cd "$(top_srcdir)" && \
 		git ls-tree HEAD -r --name-only -- android/ java/ trojans/ bash/ 2>/dev/null)
 
