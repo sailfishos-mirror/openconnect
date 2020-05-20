@@ -333,9 +333,10 @@ int f5_connect(struct openconnect_info *vpninfo)
 	char *sid = NULL, *ur_z = NULL;
 	int ipv4 = -1, ipv6 = -1, hdlc = -1;
 	char *res_buf = NULL;
-
-	/* XXX: We should do what cstp_connect() does to check that configuration
-	   hasn't changed on a reconnect. */
+	const char *old_addr = vpninfo->ip_info.addr;
+	const char *old_netmask = vpninfo->ip_info.netmask;
+	const char *old_addr6 = vpninfo->ip_info.addr6;
+	const char *old_netmask6 = vpninfo->ip_info.netmask6;
 
 	if (!vpninfo->cookies && vpninfo->cookie)
 		http_add_cookie(vpninfo, "MRHSession", vpninfo->cookie, 1);
@@ -414,6 +415,10 @@ int f5_connect(struct openconnect_info *vpninfo)
 		ret = -EINVAL;
 		goto out;
 	}
+
+	ret = check_address_sanity(vpninfo, old_addr, old_netmask, old_addr6, old_netmask6);
+	if (ret < 0)
+		goto out;
 
 	ret = openconnect_ppp_new(vpninfo, hdlc ? PPP_ENCAP_F5_HDLC : PPP_ENCAP_F5, ipv4, ipv6);
 
