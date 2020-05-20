@@ -190,9 +190,9 @@ static const struct vpn_proto openconnect_protos[] = {
 #endif
 	}, {
 		.name = "nullppp",
-		.pretty_name = N_("nullppp"),
+		.pretty_name = N_("PPP over TLS"),
 		.description = N_("Unauthenticated RFC1661/RFC1662 PPP over TLS, for testing"),
-		.flags = OC_PROTO_PROXY,
+		.flags = OC_PROTO_PROXY | OC_PROTO_HIDDEN,
 		.tcp_connect = nullppp_connect,
 		.tcp_mainloop = ppp_mainloop,
 		.add_http_headers = http_common_headers,
@@ -205,7 +205,7 @@ static const struct vpn_proto openconnect_protos[] = {
 int openconnect_get_supported_protocols(struct oc_vpn_proto **protos)
 {
 	struct oc_vpn_proto *pr;
-	int i;
+	int i, j;
 
         /* The original version of this function included an all-zero
          * sentinel value at the end of the array, so we must continue
@@ -217,13 +217,16 @@ int openconnect_get_supported_protocols(struct oc_vpn_proto **protos)
 	if (!pr)
 		return -ENOMEM;
 
-	for (i = 0; i < NR_PROTOS; i++) {
-		pr[i].name = openconnect_protos[i].name;
-		pr[i].pretty_name = _(openconnect_protos[i].pretty_name);
-		pr[i].description = _(openconnect_protos[i].description);
-		pr[i].flags = openconnect_protos[i].flags;
+	for (i = j = 0; i < NR_PROTOS; i++) {
+		if (!(openconnect_protos[i].flags & OC_PROTO_HIDDEN)) {
+			pr[j].name = openconnect_protos[i].name;
+			pr[j].pretty_name = _(openconnect_protos[i].pretty_name);
+			pr[j].description = _(openconnect_protos[i].description);
+			pr[j].flags = openconnect_protos[i].flags;
+			j++;
+		}
 	}
-	return i;
+	return j;
 }
 
 void openconnect_free_supported_protocols(struct oc_vpn_proto *protos)
