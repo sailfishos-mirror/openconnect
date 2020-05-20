@@ -1136,7 +1136,7 @@ int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("Sending Protocol-Reject for %s. Payload:\n"),
 				     proto_names(proto));
-			dump_buf_hex(vpninfo, PRG_ERR, '<', pp, payload_len);
+			dump_buf_hex(vpninfo, PRG_ERR, '>', pp, payload_len);
 
 			/* The rejected protocol MUST occupy 2 bytes prior to the rejected packet contents.
 			 * (https://tools.ietf.org/html/rfc1661#section-5.7). We can clobber these bytes
