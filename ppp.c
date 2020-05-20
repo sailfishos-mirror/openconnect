@@ -1134,10 +1134,10 @@ int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 						     ppp->exp_ppp_hdr_size, pp - ph);
 					/* Save it for next time */
 					ppp->exp_ppp_hdr_size = pp - ph;
-					/* XX: If PPP header was SMALLER than expected, we could be overwriting data for the
-					 * following concatenated packet, or conceivably moving a huge packet past
-					 * the allocated buffer. */
-					memmove(this->data, pp, payload_len);
+					/* XX: If PPP header was SMALLER than expected, we could
+					 * be moving a huge packet past the allocated buffer. */
+					memmove(this->data, pp, payload_len + next_len);
+					next -= (pp - this->data);
 				}
 
 				this->len = payload_len;
