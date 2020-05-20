@@ -617,7 +617,6 @@ static int handle_config_rejnak(struct openconnect_info *vpninfo,
 			ppp->out_lcp_opts &= ~BIT_MRU;
 			break;
 		case PROTO_TAG_LEN(PPP_LCP, LCP_ASYNCMAP, 4):
-			/* This should never happen */
 			vpn_progress(vpninfo, PRG_DEBUG,
 				     _("Server rejected/nak'ed LCP asyncmap option\n"));
 			ppp->out_asyncmap = ASYNCMAP_LCP;
@@ -629,20 +628,17 @@ static int handle_config_rejnak(struct openconnect_info *vpninfo,
 				 * our next CONFREQ, in case it's 1984 and our RS-232 nullmodem is
 				 * looped back. (https://tools.ietf.org/html/rfc1661#section-6.4) */
 			} else {
-				/* This should never happen */
 				vpn_progress(vpninfo, PRG_DEBUG,
 					     _("Server rejected LCP magic option\n"));
 				ppp->out_lcp_opts &= ~BIT_MAGIC;
 			}
 			break;
 		case PROTO_TAG_LEN(PPP_LCP, LCP_PFCOMP, 0):
-			/* This should never happen */
 			vpn_progress(vpninfo, PRG_DEBUG,
 				     _("Server rejected/nak'ed LCP PFCOMP option\n"));
 			ppp->out_lcp_opts &= ~BIT_PFCOMP;
 			break;
 		case PROTO_TAG_LEN(PPP_LCP, LCP_ACCOMP, 0):
-			/* This should never happen */
 			vpn_progress(vpninfo, PRG_DEBUG,
 				     _("Server rejected/nak'ed LCP ACCOMP option\n"));
 			ppp->out_lcp_opts &= ~BIT_ACCOMP;
@@ -801,9 +797,24 @@ static int handle_config_packet(struct openconnect_info *vpninfo,
 		ret = handle_config_rejnak(vpninfo, proto, id, code, p + 4, len - 4);
 		break;
 
-	case CODEREJ:
 	case PROTREJ:
+		/* Only handle rejection of IPCP or IP6CP */
+		if (proto != PPP_LCP || len < 6)
+			goto unknown;
+
+		proto = load_be16(p + 4);
+		if (proto == PPP_IPCP) ppp->want_ipv4 = 0;
+		else if (proto == PPP_IP6CP) ppp->want_ipv6 = 0;
+		else goto unknown;
+
+		vpn_progress(vpninfo, PRG_DEBUG,
+			     _("Server rejected our request to configure IPv%d\n"),
+			     proto == PPP_IP6CP ? 6 : 4);
+		break;
+
+	case CODEREJ:
 	default:
+	unknown:
 		ret = -EINVAL;
 	}
 
@@ -848,6 +859,11 @@ static int handle_state_transition(struct openconnect_info *vpninfo, int *timeou
 
 	case PPPS_OPENED:
 		network = 1;
+		if (!ppp->want_ipv4 && !ppp->want_ipv6) {
+			vpninfo->quit_reason = "No network protocols configured";
+			return -EINVAL;
+		}
+
 		if (ppp->want_ipv4) {
 			if (!(ppp->ipcp.state & NCP_CONF_ACK_SENT) || !(ppp->ipcp.state & NCP_CONF_ACK_RECEIVED)) {
 				network = 0;
@@ -1091,6 +1107,8 @@ int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		case PPP_LCP:
 		case PPP_IPCP:
 		case PPP_IP6CP:
+			if ((proto == PPP_IPCP && !ppp->want_ipv4) || (proto == PPP_IP6CP && !ppp->want_ipv6))
+				goto reject;
 			if (payload_len < 4)
 				goto short_pkt;
 			if ((ret = handle_config_packet(vpninfo, proto, pp, payload_len)) >= 0)
@@ -1133,6 +1151,7 @@ int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			break;
 
 		default:
+		reject:
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("Sending Protocol-Reject for %s. Payload:\n"),
 				     proto_names(proto));
