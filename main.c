@@ -80,9 +80,11 @@ static void init_token(struct openconnect_info *vpninfo,
 
 static int verbose = PRG_INFO;
 static int timestamp;
+#ifndef _WIN32
 static int background;
 static FILE *pid_fp = NULL;
 static char *pidfile = NULL;
+#endif
 static int do_passphrase_from_fsid;
 static int non_inter;
 static int cookieonly;
@@ -1412,6 +1414,7 @@ static void print_connection_info(struct openconnect_info *vpninfo)
 		     dtls_state);
 }
 
+#ifndef _WIN32
 static FILE *background_self(struct openconnect_info *vpninfo, char *pidfile) {
 	FILE *fp = NULL;
 	int pid;
@@ -1443,6 +1446,7 @@ static FILE *background_self(struct openconnect_info *vpninfo, char *pidfile) {
 		fclose(fp);
 	return fp;
 }
+#endif /* _WIN32 */
 
 static void fully_up_cb(void *_vpninfo) {
 	struct openconnect_info *vpninfo = _vpninfo;
@@ -1605,9 +1609,11 @@ int main(int argc, char **argv)
 		case OPT_CAFILE:
 			openconnect_set_cafile(vpninfo, dup_config_arg());
 			break;
+#ifndef _WIN32
 		case OPT_PIDFILE:
 			pidfile = keep_config_arg();
 			break;
+#endif
 		case OPT_PFS:
 			openconnect_set_pfs(vpninfo, 1);
 			break;
@@ -2026,8 +2032,10 @@ int main(int argc, char **argv)
 		vpn_progress(vpninfo, PRG_INFO, _("User requested reconnect\n"));
 	}
 
+#ifndef _WIN32
 	if (pid_fp)
 		unlink(pidfile);
+#endif
 
 	switch (ret) {
 	case -EPERM:
