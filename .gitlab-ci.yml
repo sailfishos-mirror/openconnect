@@ -59,9 +59,13 @@ CentOS8/GnuTLS:
   script:
   - yum update -y
   - yum install -y epel-release
+  - yum install -y 'dnf-command(config-manager)'
+  - yum config-manager --set-enabled PowerTools # {socket,uid}_wrapper and softhsm
+  - yum module enable -y idm:DL1                # softhsm
   - yum install -y git autoconf automake libtool python36 gettext
     'pkgconfig(openssl)' 'pkgconfig(libxml-2.0)' 'pkgconfig(liblz4)'
     'pkgconfig(gnutls)' 'pkgconfig(liboath)' 'pkgconfig(stoken)' ocserv
+    softhsm 'pkgconfig(uid_wrapper)' 'pkgconfig(socket_wrapper)'
     vpnc-script 'pkgconfig(libpskc)' file make
     java-devel-openjdk iproute iputils nuttcp
   - ./autogen.sh
@@ -83,9 +87,13 @@ CentOS8/OpenSSL:
   script:
   - yum update -y
   - yum install -y epel-release
+  - yum install -y 'dnf-command(config-manager)'
+  - yum config-manager --set-enabled PowerTools # {socket,uid}_wrapper and softhsm
+  - yum module enable -y idm:DL1                # softhsm
   - yum install -y git autoconf automake libtool python36 gettext
     'pkgconfig(openssl)' 'pkgconfig(libxml-2.0)' 'pkgconfig(liblz4)'
     'pkgconfig(gnutls)' 'pkgconfig(liboath)' 'pkgconfig(stoken)' ocserv
+    softhsm 'pkgconfig(uid_wrapper)' 'pkgconfig(socket_wrapper)'
     vpnc-script 'pkgconfig(libpskc)' file make
     java-devel-openjdk iproute iputils nuttcp
   - ./autogen.sh
