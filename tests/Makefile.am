@@ -54,6 +54,10 @@ if HAVE_NETNS
 dist_check_SCRIPTS += dtls-psk sigterm
 endif
 
+if TEST_PPP
+dist_check_SCRIPTS += ppp-over-tls
+endif
+
 if HAVE_CWRAP
 dist_check_SCRIPTS += auth-username-pass auth-certificate auth-nonascii cert-fingerprint id-test obsolete-server-crypto pfs
 

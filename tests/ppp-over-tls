@@ -1,0 +1,98 @@
+#!/bin/sh
+#
+# Copyright © 2020 Daniel Lenski
+#
+# This file is part of openconnect.
+#
+# This is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public License
+# as published by the Free Software Foundation; either version 2.1 of
+# the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>
+
+srcdir=${srcdir:-.}
+top_builddir=${top_builddir:-..}
+
+. `dirname $0`/common.sh
+
+CERT=$certdir/server-cert.pem
+KEY=$certdir/server-key.pem
+
+echo "Testing PPP ... "
+
+echo -n "Connecting to PPP peer (HDLC/RFC1662, IPv4+IPv6, DNS, extraneous VJ and CCP)... "
+launch_simple_pppd $CERT $KEY 10.0.0.1:10.0.0.101 ms-dns 1.1.1.1 ms-dns 8.8.8.8 +ipv6 2>&1
+wait_server $PID
+start=$(date +%s)
+LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT -q --protocol=nullppp $ADDRESS:443 -u test --servercert=d66b507ae074d03b02eafca40d35f87dd81049d3 --cookie "hdlc" >/dev/null 2>&1
+took=$(( $(date +%s) - start ))
+if grep -qF "rcvd [IPCP ConfAck " $LOGFILE && grep -qF "sent [IPCP ConfAck " $LOGFILE && grep -qF "rcvd [IPV6CP ConfAck " $LOGFILE && grep -qF "sent [IPV6CP ConfAck " $LOGFILE; then
+    echo "ok (took $took seconds)"
+else
+    fail $PID "Did not negotiate IPCP and IP6CP successfully."
+fi
+
+cleanup
+
+echo -n "Connecting to PPP peer (HDLC/RFC1662, IPv4+IPv6, DNS, extraneous VJ and CCP, no header compression)... "
+launch_simple_pppd $CERT $KEY 10.0.0.1:10.0.0.101 ms-dns 1.1.1.1 ms-dns 8.8.8.8 +ipv6 nopcomp noaccomp 2>&1
+wait_server $PID
+start=$(date +%s)
+LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT -q --protocol=nullppp $ADDRESS:443 -u test --servercert=d66b507ae074d03b02eafca40d35f87dd81049d3 --cookie "hdlc" >/dev/null 2>&1
+took=$(( $(date +%s) - start ))
+if grep -qF "rcvd [IPCP ConfAck " $LOGFILE && grep -qF "sent [IPCP ConfAck " $LOGFILE && grep -qF "rcvd [IPV6CP ConfAck " $LOGFILE && grep -qF "sent [IPV6CP ConfAck " $LOGFILE; then
+    echo "ok (took $took seconds)"
+else
+    fail $PID "Did not negotiate IPCP and IP6CP successfully."
+fi
+
+cleanup
+
+echo -n "Connecting to PPP peer (sync/no-HDLC, IPv4+IPv6, DNS, extraneous VJ and CCP)... "
+launch_simple_pppd $CERT $KEY sync 10.0.0.1:10.0.0.101 ms-dns 1.1.1.1 ms-dns 8.8.8.8 +ipv6 2>&1
+wait_server $PID
+start=$(date +%s)
+LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT -q --protocol=nullppp $ADDRESS:443 -u test --servercert=d66b507ae074d03b02eafca40d35f87dd81049d3 >/dev/null 2>&1
+took=$(( $(date +%s) - start ))
+if grep -qF "rcvd [IPCP ConfAck " $LOGFILE && grep -qF "sent [IPCP ConfAck " $LOGFILE && grep -qF "rcvd [IPV6CP ConfAck " $LOGFILE && grep -qF "sent [IPV6CP ConfAck " $LOGFILE; then
+    echo "ok (took $took seconds)"
+else
+    fail $PID "Did not negotiate IPCP and IP6CP successfully."
+fi
+
+cleanup
+
+echo -n "Connecting to PPP peer (sync/no-HDLC, IPv4 only)... "
+launch_simple_pppd $CERT $KEY sync novj noccp 10.0.0.1:10.0.0.101 noipv6 2>&1
+wait_server $PID
+start=$(date +%s)
+LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT -q --protocol=nullppp $ADDRESS:443 -u test --servercert=d66b507ae074d03b02eafca40d35f87dd81049d3 >/dev/null 2>&1
+took=$(( $(date +%s) - start ))
+if grep -qF "rcvd [IPCP ConfAck " $LOGFILE && grep -qF "sent [IPCP ConfAck " $LOGFILE; then
+    echo "ok (took $took seconds)"
+else
+    fail $PID "Did not negotiate IPCP successfully."
+fi
+
+echo -n "Connecting to PPP peer (sync/no-HDLC, IPv6 only)... "
+launch_simple_pppd $CERT $KEY sync novj noccp noip +ipv6 2>&1
+wait_server $PID
+start=$(date +%s)
+LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT -q --protocol=nullppp $ADDRESS:443 -u test --servercert=d66b507ae074d03b02eafca40d35f87dd81049d3 >/dev/null 2>&1
+took=$(( $(date +%s) - start ))
+if grep -qF "rcvd [IPV6CP ConfAck " $LOGFILE && grep -qF "sent [IPV6CP ConfAck " $LOGFILE; then
+    echo "ok (took $took seconds)"
+else
+    fail $PID "Did not negotiate IP6CP successfully."
+fi
+
+cleanup
+
+exit 0
