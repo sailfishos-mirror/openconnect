@@ -323,7 +323,7 @@ static int buf_append_ppp_tlv_be32(struct oc_text_buf *buf, int tag, uint32_t va
 static int queue_config_packet(struct openconnect_info *vpninfo,
 				uint16_t proto, int id, int code, int len, const void *payload)
 {
-	struct pkt *p = malloc(sizeof(struct pkt) + 64);
+	struct pkt *p = malloc(sizeof(struct pkt) + len + 4);
 
 	if (!p)
 		return -ENOMEM;
@@ -1056,15 +1056,15 @@ int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 				dump_buf_hex(vpninfo, PRG_TRACE, '<', eh + ppp->encap_len, payload_len);
 			break;
 
-		default:
-			vpn_progress(vpninfo, PRG_ERR, _("Invalid PPP encapsulation\n"));
-			vpninfo->quit_reason = "Invalid encapsulation";
-			return -EINVAL;
-
 		case PPP_ENCAP_RFC1661:
 			payload_len = len;
 			next = eh + payload_len;
 			break;
+
+		default:
+			vpn_progress(vpninfo, PRG_ERR, _("Invalid PPP encapsulation\n"));
+			vpninfo->quit_reason = "Invalid encapsulation";
+			return -EINVAL;
 		}
 
 		ph = eh + ppp->encap_len;
