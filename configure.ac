@@ -644,6 +644,11 @@ AC_ARG_ENABLE([dsa-tests],
 	[], [enable_dsa_tests=yes])
 AM_CONDITIONAL(TEST_DSA, [test "$enable_dsa_tests" = "yes"])
 
+AC_ARG_ENABLE([ppp-tests],
+	AS_HELP_STRING([--enable-ppp-tests], [Enable PPP tests (which require socat and pppd, and must run as root)]),
+	[enable_ppp_tests=yes])
+AM_CONDITIONAL(TEST_PPP, [test "$enable_ppp_tests" = "yes"])
+
 AM_CONDITIONAL(OPENCONNECT_GNUTLS,  [ test "$ssl_library" = "GnuTLS" ])
 AM_CONDITIONAL(OPENCONNECT_OPENSSL, [ test "$ssl_library" = "OpenSSL" ])
 AM_CONDITIONAL(OPENCONNECT_ESP, [ test "$esp" != "" ])
@@ -1157,6 +1162,8 @@ SUMMARY([Java bindings], [$with_java])
 SUMMARY([Build docs], [$build_www])
 SUMMARY([Unit tests], [$have_cwrap])
 SUMMARY([Net namespace tests], [$have_netns])
+SUMMARY([DSA tests], [$enable_dsa_tests])
+SUMMARY([PPP tests], [$enable_ppp_tests])
 SUMMARY([Insecure debugging], [$insecure_debugging])
 SUMMARY([NSIS installer], [$build_nsis])
 
