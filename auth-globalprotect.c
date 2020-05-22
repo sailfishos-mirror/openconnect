@@ -451,8 +451,18 @@ static int parse_portal_xml(struct openconnect_info *vpninfo, xmlNode *xml_node,
 				}
 			} else {
 				xmlnode_get_val(x, "portal-name", &portal);
-				xmlnode_get_val(x, "portal-userauthcookie", &ctx->portal_userauthcookie);
-				xmlnode_get_val(x, "portal-prelogonuserauthcookie", &ctx->portal_prelogonuserauthcookie);
+				if (!xmlnode_get_val(x, "portal-userauthcookie", &ctx->portal_userauthcookie)) {
+					if (!*ctx->portal_userauthcookie || !strcmp(ctx->portal_userauthcookie, "empty")) {
+						free(ctx->portal_userauthcookie);
+						ctx->portal_userauthcookie = NULL;
+					}
+				}
+				if (!xmlnode_get_val(x, "portal-prelogonuserauthcookie", &ctx->portal_prelogonuserauthcookie)) {
+					if (!*ctx->portal_prelogonuserauthcookie || !strcmp(ctx->portal_prelogonuserauthcookie, "empty")) {
+						free(ctx->portal_prelogonuserauthcookie);
+						ctx->portal_prelogonuserauthcookie = NULL;
+					}
+				}
 			}
 		}
 	}
