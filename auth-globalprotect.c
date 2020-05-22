@@ -668,11 +668,13 @@ static int gpst_login(struct openconnect_info *vpninfo, int portal, struct login
 				/* New form is already populated from the challenge */
 				goto got_form;
 			} else if (portal && result == 0) {
-				/* Portal login succeeded; blindly retry same credentials on gateway,
-				 * unless it was a challenge auth form or alt-secret form.
+				/* Portal login succeeded; blindly retry same credentials on gateway if:
+				 *      (a) we received a cookie that should allow automatic retry
+				 *   OR (b) portal form was neither challenge auth nor alt-secret (SAML)
 				 */
 				portal = 0;
-				if (strcmp(ctx->form->auth_id, "_challenge") && !ctx->alt_secret) {
+				if (ctx->portal_userauthcookie || ctx->portal_prelogonuserauthcookie ||
+				    (strcmp(ctx->form->auth_id, "_challenge") && !ctx->alt_secret)) {
 					blind_retry = 1;
 					goto replay_form;
 				}
