@@ -76,6 +76,16 @@ const char *openconnect_get_tls_library_version()
 	return tls_library_version;
 }
 
+int can_enable_insecure_crypto()
+{
+	/* XX: As of GnuTLS 3.6.13, no released version has (yet) removed 3DES/RC4 from default builds,
+	 * but like OpenSSL (removed in 1.1.0) it may happen. */
+	if (gnutls_cipher_get_id("3DES-CBC") == GNUTLS_CIPHER_UNKNOWN &&
+	    gnutls_cipher_get_id("ARCFOUR-128") == GNUTLS_CIPHER_UNKNOWN)
+		return -ENOENT;
+	return 0;
+}
+
 /* Helper functions for reading/writing lines over SSL. */
 static int _openconnect_gnutls_write(gnutls_session_t ses, int fd, struct openconnect_info *vpninfo, char *buf, size_t len)
 {
