@@ -1541,7 +1541,11 @@ int main(int argc, char **argv)
 			openconnect_set_pfs(vpninfo, 1);
 			break;
 		case OPT_ALLOW_INSECURE_CRYPTO:
-			openconnect_set_allow_insecure_crypto(vpninfo, 1);
+			if (openconnect_set_allow_insecure_crypto(vpninfo, 1)) {
+				fprintf(stderr, _("Cannot enable insecure 3DES or RC4 ciphers, because the library\n"
+						  "%s no longer supports them.\n"), openconnect_get_tls_library_version());
+				exit(1);
+			}
 			break;
 		case OPT_SERVERCERT:
 			server_cert = keep_config_arg();

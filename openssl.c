@@ -61,6 +61,73 @@ const char *openconnect_get_tls_library_version()
 	return tls_library_version;
 }
 
+/* XX: Based on my reading of the SSL_METHOD API
+ * (https://github.com/openssl/openssl/blob/5a5530a29abcf5d7ab7194d73b3807d568b06cbd/ssl/ssl_local.h)
+ * and the constants in the ssl3.h header
+ * (https://github.com/openssl/openssl/blob/master/include/openssl/ssl3.h#L45-L50),
+ * as well as the way that the 3DES/RC4 ciphers do or don't get compiled in
+ * (https://github.com/openssl/openssl/blob/master/ssl/s3_lib.c#L166-L182)
+ *
+ * This is the most reasonable way to figure out whether the library can
+ * actually instantiate a cipher. The other would be to iterate through
+ * the ciphers (using m->num_ciphers() and m->get_cipher(num)) and
+ * compare them by name.
+ */
+int can_enable_insecure_crypto()
+{
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
+	const SSL_METHOD *m = SSLv23_client_method();
+	unsigned char ch_SSL3_CK_RSA_DES_192_CBC3_SHA[2] = { 0x00, 0x0a };
+	unsigned char ch_SSL3_CK_RSA_RC4_128_SHA[2] = { 0x00, 0x05 };
+
+	if (!m)
+		return -ENOMEM; /* XX: static, should never happen */
+	if (m->get_cipher_by_char(ch_SSL3_CK_RSA_DES_192_CBC3_SHA) &&
+	    m->get_cipher_by_char(ch_SSL3_CK_RSA_RC4_128_SHA))
+		return 0;
+	return -ENOENT;
+#else
+	method_const SSL_METHOD *ssl_method;
+	SSL_CTX *ctx;
+	SSL *ssl;
+	STACK_OF(SSL_CIPHER) *ciphers;
+	int i, got_3des = 0, got_rc4 = 0;
+
+	ssl_method = TLS_client_method();
+	ctx = SSL_CTX_new(ssl_method);
+	if (!ctx)
+		return -ENOMEM;
+	ssl = SSL_new(ctx);
+	if (!ssl) {
+		SSL_CTX_free(ctx);
+		return -ENOMEM;
+	}
+
+	/* 3DES and RC4 are not in "DEFAULT" even if enabled in build
+	 * https://www.openssl.org/blog/blog/2016/08/24/sweet32/ */
+	if (!SSL_CTX_set_cipher_list(ctx, "ALL"))
+		goto err;
+
+	ciphers = SSL_get1_supported_ciphers(ssl);
+	for (i = 0; i < sk_SSL_CIPHER_num(ciphers); i++) {
+		const SSL_CIPHER *ciph = sk_SSL_CIPHER_value(ciphers, i);
+		const char *name = SSL_CIPHER_get_name(ciph);
+		if (!strcmp(name, "DES-CBC3-SHA"))
+			got_3des=1;
+		else if (!strcmp(name, "RC4-SHA"))
+			got_rc4=1;
+		if (got_3des && got_rc4)
+			break;
+	}
+	sk_SSL_CIPHER_free(ciphers);
+err:
+	SSL_free(ssl);
+	SSL_CTX_free(ctx);
+
+	return (got_3des && got_rc4) ? 0 : -ENOENT;
+#endif
+}
+
 int openconnect_sha1(unsigned char *result, void *data, int len)
 {
 	EVP_MD_CTX *c = EVP_MD_CTX_new();
