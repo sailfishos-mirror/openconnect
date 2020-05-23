@@ -391,6 +391,31 @@ out:
 
 int nx_bye(struct openconnect_info *vpninfo, const char *reason)
 {
-	// TODO: implement
-	return -EINVAL;
+	int ret = 0;
+	char *resp_buf = NULL;
+	struct oc_text_buf *request_body = NULL;
+	/* close tunnel */
+	openconnect_close_https(vpninfo, 0);
+
+	request_body = buf_alloc();
+	if (!request_body) {
+		ret = buf_error(request_body);
+		goto out;
+	}
+	append_opt(request_body, "userLogout", "1");
+	vpninfo->urlpath = strdup("cgi-bin/userLogout");
+	ret = do_https_request(vpninfo, "POST", "application/x-www-form-urlencoded", request_body, &resp_buf, 0);
+	free(vpninfo->urlpath);
+	vpninfo->urlpath = NULL;
+	if (ret < 0)
+		vpn_progress(vpninfo, PRG_ERR, _("Logout failed.\n"));
+	else {
+		ret = 0;
+		vpn_progress(vpninfo, PRG_INFO, _("Logout successful.\n"));
+	}
+
+out:
+	free(resp_buf);
+	buf_free(request_body);
+	return ret;
 }
