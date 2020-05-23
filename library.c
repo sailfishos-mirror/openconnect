@@ -243,6 +243,7 @@ static const struct vpn_proto openconnect_protos[] = {
 		.tcp_mainloop = ppp_tcp_mainloop,
 		.add_http_headers = nx_common_headers,
 		.obtain_cookie = nx_obtain_cookie,
+		.secure_cookie = "swap",
 	}, {
 		.name = "nullppp",
 		.pretty_name = N_("PPP over TLS"),
