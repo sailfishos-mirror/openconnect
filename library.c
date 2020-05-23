@@ -178,7 +178,8 @@ static const struct vpn_proto openconnect_protos[] = {
 		.tcp_mainloop = ppp_mainloop,
 		.add_http_headers = nx_common_headers,
 		.obtain_cookie = nx_obtain_cookie,
-    }, {
+		.secure_cookie = "swap",
+	}, {
 		.name = "pulse",
 		.pretty_name = N_("Pulse Connect Secure"),
 		.description = N_("Compatible with Pulse Connect Secure SSL VPN"),
