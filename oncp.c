@@ -341,6 +341,8 @@ static int process_attr(struct openconnect_info *vpninfo, int group, int attr,
 		vpninfo->esp_lifetime_bytes = load_be32(data);
 		vpn_progress(vpninfo, PRG_DEBUG, _("ESP key lifetime: %u bytes\n"),
 			     vpninfo->esp_lifetime_bytes);
+		/* XX: We do not enforce this lifetime in any way, but rely on the
+		   server to send new keys before the lifetime expires. */
 		break;
 
 	case GRP_ATTR(8, 6):
@@ -349,6 +351,8 @@ static int process_attr(struct openconnect_info *vpninfo, int group, int attr,
 		vpninfo->esp_lifetime_seconds = load_be32(data);
 		vpn_progress(vpninfo, PRG_DEBUG, _("ESP key lifetime: %u seconds\n"),
 			     vpninfo->esp_lifetime_seconds);
+		/* XX: We do not enforce this lifetime in any way, but rely on the
+		   server to send new keys before the lifetime expires. */
 		break;
 
 	case GRP_ATTR(8, 9):
