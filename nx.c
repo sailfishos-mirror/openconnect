@@ -19,16 +19,150 @@
 
 #include <ctype.h>
 #include <errno.h>
+#include <libxml/HTMLparser.h>
+#include <libxml/HTMLtree.h>
 
 #include "openconnect-internal.h"
 
 static char const ipv4_default_route[] = "0.0.0.0/0.0.0.0";
 static char const ipv6_default_route[] = "::/0";
 
+static int store_cookie_if_valid(struct openconnect_info *vpninfo)
+{
+	struct oc_vpn_option *cookie;
+	struct oc_text_buf *buf;
+	int ret = 1;
+
+	for (cookie = vpninfo->cookies; cookie; cookie = cookie->next) {
+		if (strcmp(cookie->option, "swap") == 0) {
+			buf = buf_alloc();
+			buf_append(buf, "swap=%s", cookie->value);
+			if (!buf_error(buf)) {
+				vpninfo->cookie = buf->data;
+				buf->data = NULL;
+				ret = 0;
+			}
+			buf_free(buf);
+		}
+	}
+	return ret;
+}
+
 int nx_obtain_cookie(struct openconnect_info *vpninfo)
 {
-	vpn_progress(vpninfo, PRG_ERR, _("Authentication for Net Extender not implemented yet.\n"));
-	return -EINVAL;
+	int ret;
+	struct oc_text_buf *resp_buf = NULL;
+	xmlDocPtr doc = NULL;
+	xmlNodePtr node;
+	struct oc_auth_form *form = NULL;
+	char *form_id = NULL;
+
+	resp_buf = buf_alloc();
+	if (buf_error(resp_buf)) {
+		ret = buf_error(resp_buf);
+		goto out;
+	}
+	vpninfo->urlpath = strdup("cgi-bin/welcome");
+	while (1) {
+		char *form_buf = NULL;
+		struct oc_text_buf *url;
+
+		// TODO: error checking, refactor to get headers (error-msg is in header)
+		if (resp_buf && resp_buf->pos)
+			ret = do_https_request(vpninfo, "POST", "application/x-www-form-urlencoded", resp_buf,
+					       &form_buf, 0);
+
+		else
+			ret = do_https_request(vpninfo, "GET", NULL, NULL, &form_buf, 0);
+
+		if (ret < 0)
+			break;
+
+		url = buf_alloc();
+		buf_append(url, "https://%s", vpninfo->hostname);
+		if (vpninfo->port != 443)
+			buf_append(url, ":%d", vpninfo->port);
+		buf_append(url, "/");
+		if (vpninfo->urlpath)
+			buf_append(url, "%s", vpninfo->urlpath);
+
+		if (buf_error(url)) {
+			free(form_buf);
+			ret = buf_free(url);
+			break;
+		}
+		if (!store_cookie_if_valid(vpninfo)) {
+			buf_free(url);
+			free(form_buf);
+			ret = 0;
+			break;
+		}
+		doc = htmlReadMemory(form_buf, ret, url->data, NULL,
+				     HTML_PARSE_RECOVER | HTML_PARSE_NOERROR | HTML_PARSE_NOWARNING | HTML_PARSE_NONET);
+		buf_free(url);
+		free(form_buf);
+		if (!doc) {
+			vpn_progress(vpninfo, PRG_ERR, _("Failed to parse HTML document\n"));
+			ret = -EINVAL;
+			break;
+		}
+
+		buf_truncate(resp_buf);
+
+		node = find_form_node(doc);
+		if (!node) {
+			vpn_progress(vpninfo, PRG_ERR, _("Failed to find or parse web form in login page\n"));
+			ret = -EINVAL;
+			break;
+		}
+		free(form_id);
+		form_id = (char *)xmlGetProp(node, (unsigned char *)"name");
+		if (!form_id) {
+			vpn_progress(vpninfo, PRG_ERR, _("Encountered form with no ID\n"));
+			goto dump_form;
+		} else if (!strcmp(form_id, "Login")) {
+			form = parse_form_node(vpninfo, node, "loginButton", NULL);
+
+			if (!form) {
+				ret = -EINVAL;
+				break;
+			}
+		} else {
+			vpn_progress(vpninfo, PRG_ERR, _("Unknown form ID '%s'\n"), form_id);
+		dump_form:
+			vpn_progress(vpninfo, PRG_ERR, _("Dumping unknown HTML form:\n"));
+			htmlNodeDumpFileFormat(stderr, node->doc, node, NULL, 1);
+			ret = -EINVAL;
+			break;
+		}
+
+		do {
+			ret = process_auth_form(vpninfo, form);
+		} while (ret == OC_FORM_RESULT_NEWGROUP);
+		if (ret)
+			goto out;
+
+		append_form_opts(vpninfo, form, resp_buf);
+		ret = buf_error(resp_buf);
+		if (ret)
+			break;
+
+		vpninfo->redirect_url = form->action;
+		form->action = NULL;
+		free_auth_form(form);
+		form = NULL;
+		handle_redirect(vpninfo);
+	}
+out:
+	if (doc)
+		xmlFreeDoc(doc);
+	free(form_id);
+	if (form)
+		free_auth_form(form);
+	buf_free(resp_buf);
+	free(vpninfo->urlpath);
+	vpninfo->urlpath = NULL;
+	return ret;
 }
 
 void nx_common_headers(struct openconnect_info *vpninfo, struct oc_text_buf *buf)
@@ -332,7 +466,7 @@ int nx_connect(struct openconnect_info *vpninfo)
 		vpn_progress(vpninfo, PRG_ERR, _("Failed getting NX connection information\n"));
 		return -EINVAL;
 	}
-	auth_token = openconnect_base64_decode(&auth_token_len, vpninfo->cookie);
+	auth_token = openconnect_base64_decode(&auth_token_len, vpninfo->cookie + 5);
 	if (!auth_token) {
 		ret = auth_token_len;
 		goto out;
