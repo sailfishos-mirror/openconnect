@@ -540,6 +540,47 @@ static int gpst_parse_config_xml(struct openconnect_info *vpninfo, xmlNode *xml_
 				vpninfo->ip_info.domain = add_option(vpninfo, "search", &domains->data);
 			}
 			buf_free(domains);
+		} else if (!xmlnode_get_val(xml_node, "include-split-tunneling-domain", &s)) {
+			/* Whitespace separated string (e.g. "    *.domain.com:443\n    *.otherdomain.com\n") */
+			char *start, *end, *colon;
+
+			for (start=s; *start; start=end) {
+				struct oc_split_include *dns = malloc(sizeof(*dns));
+				if (!dns)
+					break;
+
+				/* Find start and end */
+				while (*start && isspace(*start))
+					start++;
+				if (!*start)
+					break;
+
+				end = start;
+				while (*end && !isspace(*end))
+					end++;
+				if (*end)
+					*end++ = '\0';
+
+				/* Remove leading *., or warn if not present */
+				if (!strncmp(start, "*.", 2))
+					start += 2;
+				else
+					vpn_progress(vpninfo, PRG_ERR,
+						     _("WARNING: Handling split tunneling domain '%s' as if it started with '*.'.\n"), start);
+
+				/* Warn if :port present, and remove it */
+				colon = strrchr(start, ':');
+				if (colon) {
+					vpn_progress(vpninfo, PRG_ERR,
+						     _("WARNING: Ignoring port in split tunneling domain '%s'\n"), start);
+					*colon = '\0';
+				}
+
+				start = strdup(start);
+				dns->route = add_option(vpninfo, "split-dns", &start);
+				dns->next = vpninfo->ip_info.split_dns;
+				vpninfo->ip_info.split_dns = dns;
+			}
 		} else if (xmlnode_is_named(xml_node, "access-routes") || xmlnode_is_named(xml_node, "exclude-access-routes")) {
 			for (member = xml_node->children; member; member=member->next) {
 				if (!xmlnode_get_val(member, "member", &s)) {
