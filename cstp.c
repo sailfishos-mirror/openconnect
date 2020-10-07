@@ -211,6 +211,85 @@ static int parse_hex_val(const char *str, unsigned char *storage, unsigned int m
 	return len/2;
 }
 
+/* The Cisco authentication response (see auth.c) includes an <opaque> tag
+ * whose contents we save.
+ *
+ * Bizarrely, it may include a dynamic split include/exclude domains, even
+ * though these are clearly related to the connection phase, rather than the
+ * authentication phase:
+ *
+ *   <opaque is-for="vpn-client">
+ *    <custom-attr>
+ *      <dynamic-split-include-domains><![CDATA[example.com, example.com,example.com,example.com]]></dynamic-split-include-domains>
+ *    </custom-attr>
+ *   </opaque>
+ *
+ * Parse the custom-attr here.
+ */
+
+static int parse_opaque_node(struct openconnect_info *vpninfo, xmlNode *xml_node)
+{
+	int ret = 0;
+	char *s = NULL;
+
+	for (xml_node = xml_node->children; xml_node; xml_node = xml_node->next) {
+		if (xml_node->type != XML_ELEMENT_NODE)
+			continue;
+		if (xmlnode_is_named(xml_node, "custom-attr")) {
+			for (xml_node = xml_node->children; xml_node; xml_node = xml_node->next) {
+				if (xml_node->type != XML_ELEMENT_NODE)
+					continue;
+
+				if (!xmlnode_get_val(xml_node, "dynamic-split-include-domains", &s)) {
+					/* String separated by commas and/or whitespace (e.g. "domain.com, other.com,something.com") */
+					char *start, *end;
+					struct oc_vpn_option *new_option;
+
+					for (start=s; *start; start=end) {
+						struct oc_split_include *dns = malloc(sizeof(*dns));
+						if (!dns)
+							break;
+
+						/* Find start and end */
+						while (*start && (isspace(*start) || *start == ','))
+							start++;
+						if (!*start)
+							break;
+
+						end = start;
+						while (*end && !(isspace(*end) || *end == ','))
+							end++;
+						if (*end)
+							*end++ = '\0';
+
+						new_option = malloc(sizeof(*new_option));
+						if (!new_option) {
+							ret = -ENOMEM;
+							goto out;
+						}
+						new_option->option = strdup("Dynamic-Split-DNS");
+						new_option->value = strdup(start);
+						new_option->next = vpninfo->cstp_options;
+						vpninfo->cstp_options = new_option;
+
+						dns->route = new_option->value;
+						dns->next = vpninfo->ip_info.split_dns;
+						vpninfo->ip_info.split_dns = dns;
+					}
+				} else if (!xmlnode_get_val(xml_node, "dynamic-split-exclude-domains", &s)) {
+					vpn_progress(vpninfo, PRG_ERR,
+						     _("WARNING: Dynamic split exclude domains ignored: %s\n"), s);
+				}
+			}
+			goto out;
+		}
+	}
+
+ out:
+	free(s);
+	return ret;
+}
+
 static int start_cstp_connection(struct openconnect_info *vpninfo)
 {
 	struct oc_text_buf *reqbuf;
@@ -632,6 +711,13 @@ static int start_cstp_connection(struct openconnect_info *vpninfo)
 			return -EPERM;
 		}
 	}
+
+	/* XX: There may have been some connection-relevant information shoehorned into
+	 * the <opaque> node of the authentication response. Parse that now, if we have
+	 * it.
+	 */
+	if (vpninfo->opaque_srvdata)
+		parse_opaque_node(vpninfo, vpninfo->opaque_srvdata);
 
 	free_optlist(old_dtls_opts);
 	free_optlist(old_cstp_opts);
