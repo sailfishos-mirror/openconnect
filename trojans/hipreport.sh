@@ -69,7 +69,7 @@ cat <<EOF
 	<generate-time>$NOW</generate-time>
 	<categories>
 		<entry name="host-info">
-			<client-version>4.0.2-19</client-version>
+			<client-version>5.1.5-8</client-version>
 			<os>Microsoft Windows 10 Pro , 64-bit</os>
 			<os-vendor>Microsoft</os-vendor>
 			<domain>$DOMAIN.internal</domain>
