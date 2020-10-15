@@ -504,6 +504,7 @@ struct openconnect_info {
 
 	unsigned pfs;
 	unsigned no_tls13;
+	unsigned allow_insecure_crypto;        /* Allow 3DES and RC4 (known-insecure, but the best that some ancient servers can do) */
 #if defined(OPENCONNECT_OPENSSL)
 #ifdef HAVE_LIBP11
 	PKCS11_CTX *pkcs11_ctx;
@@ -1004,6 +1005,7 @@ int encrypt_esp_packet(struct openconnect_info *vpninfo, struct pkt *pkt, int cr
 
 /* {gnutls,openssl}.c */
 const char *openconnect_get_tls_library_version();
+int can_enable_insecure_crypto();
 int ssl_nonblock_read(struct openconnect_info *vpninfo, void *buf, int maxlen);
 int ssl_nonblock_write(struct openconnect_info *vpninfo, void *buf, int buflen);
 int openconnect_open_https(struct openconnect_info *vpninfo);
@@ -1056,7 +1058,7 @@ int do_gen_hotp_code(struct openconnect_info *vpninfo,
 		     struct oc_auth_form *form,
 		     struct oc_form_opt *opt);
 
-int set_oidc_token(struct openconnect_info *vpninfo, 
+int set_oidc_token(struct openconnect_info *vpninfo,
 		     const char *token_str);
 
 /* stoken.c */

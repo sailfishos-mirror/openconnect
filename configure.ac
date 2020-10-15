@@ -691,7 +691,7 @@ PKG_CHECK_MODULES(LIBXML2, libxml-2.0)
 
 PKG_CHECK_MODULES(ZLIB, zlib, [AC_SUBST(ZLIB_PC, [zlib])],
 		  [oldLIBS="$LIBS"
-		  LIBS="$LIBS -lz" 
+		  LIBS="$LIBS -lz"
 		  AC_MSG_CHECKING([for zlib without pkg-config])
 		  AC_LINK_IFELSE([AC_LANG_PROGRAM([
 		   #include <zlib.h>],[
@@ -1058,7 +1058,8 @@ AC_SUBST([CONFIG_STATUS_DEPENDENCIES],
 	   $(top_srcdir)/openconnect.8.in \
 	   $(top_srcdir)/tests/softhsm2.conf.in \
 	   $(top_srcdir)/tests/configs/test-user-cert.config.in \
-	   $(top_srcdir)/tests/configs/test-user-pass.config.in'])
+	   $(top_srcdir)/tests/configs/test-user-pass.config.in \
+	   $(top_srcdir)/tests/configs/test-obsolete-server-crypto.config.in'])
 
 RAWLINGUAS=`sed -e "/^#/d" -e "s/#.*//" "${srcdir}/po/LINGUAS"`
 # Remove newlines
@@ -1090,7 +1091,8 @@ AC_CONFIG_FILES(Makefile openconnect.pc po/Makefile www/Makefile \
 		libopenconnect.map openconnect.8 www/styles/Makefile \
 		www/inc/Makefile www/images/Makefile tests/Makefile \
 		tests/softhsm2.conf tests/configs/test-user-cert.config \
-		tests/configs/test-user-pass.config)
+		tests/configs/test-user-pass.config \
+		tests/configs/test-obsolete-server-crypto.config)
 AC_OUTPUT
 
 AC_DEFUN([SUMMARY],
