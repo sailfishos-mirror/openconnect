@@ -665,6 +665,8 @@ struct openconnect_info {
 	char *version_string;
 
 	const char *quit_reason;
+	const char *delay_tunnel_reason;        /* Delay tunnel setup */
+	int delay_close;	                /* Delay close of mainloop (2 for immediate callback, 1 for wait) */
 
 	int verbose;
 	void *cbdata;
