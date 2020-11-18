@@ -64,8 +64,8 @@
 #define NCP_CONF_ACK_SENT	8
 #define NCP_TERM_REQ_SENT	16
 #define NCP_TERM_REQ_RECEIVED	32
-#define NCP_TERM_ACK_SENT	16
-#define NCP_TERM_ACK_RECEIVED	32
+#define NCP_TERM_ACK_SENT	64
+#define NCP_TERM_ACK_RECEIVED	128
 
 struct oc_ncp {
 	int state;
