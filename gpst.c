@@ -596,6 +596,12 @@ static int gpst_parse_config_xml(struct openconnect_info *vpninfo, xmlNode *xml_
 #else
 			vpn_progress(vpninfo, PRG_DEBUG, _("Ignoring ESP keys since ESP support not available in this build\n"));
 #endif
+		} else if (xmlnode_is_named(xml_node, "exclude-split-tunneling-application")
+			   || xmlnode_is_named(xml_node, "exclude-video-redirect")
+			   || xmlnode_is_named(xml_node, "include-split-tunneling-domain")
+			   || xmlnode_is_named(xml_node, "exclude-split-tunneling-domain")) {
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("WARNING: GlobalProtect config tag <%s> is currently ignored\n"), xml_node->name);
 		} else if (xmlnode_is_named(xml_node, "need-tunnel")
 			   || xmlnode_is_named(xml_node, "bw-c2s")
 			   || xmlnode_is_named(xml_node, "bw-s2c")
