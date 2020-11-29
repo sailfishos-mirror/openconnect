@@ -542,12 +542,10 @@ static int gpst_parse_config_xml(struct openconnect_info *vpninfo, xmlNode *xml_
 			buf_free(domains);
 		} else if (!xmlnode_get_val(xml_node, "include-split-tunneling-domain", &s)) {
 			/* Whitespace separated string (e.g. "    *.domain.com:443\n    *.otherdomain.com\n") */
-			char *start, *end, *colon;
+			char *start, *end, *colon, *save_start;
 
 			for (start=s; *start; start=end) {
-				struct oc_split_include *dns = malloc(sizeof(*dns));
-				if (!dns)
-					break;
+				struct oc_split_include *dns;
 
 				/* Find start and end */
 				while (*start && isspace(*start))
@@ -576,8 +574,12 @@ static int gpst_parse_config_xml(struct openconnect_info *vpninfo, xmlNode *xml_
 					*colon = '\0';
 				}
 
-				start = strdup(start);
+				dns = malloc(sizeof(*dns));
+				if (!dns)
+					break;
+				save_start = start;
 				dns->route = add_option(vpninfo, "split-dns", &start);
+				start = save_start;
 				dns->next = vpninfo->ip_info.split_dns;
 				vpninfo->ip_info.split_dns = dns;
 			}
