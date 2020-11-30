@@ -688,7 +688,7 @@ static void print_supported_protocols_usage(void)
         if (n>=0) {
 		printf("\n%s:\n", _("Set VPN protocol"));
 		for (p=protos; n; p++, n--)
-			printf("      --protocol=%-16s %s%s\n",
+			printf("      --protocol=%-17s %s%s\n",
 				   p->name, p->description, p==protos ? _(" (default)") : "");
 		openconnect_free_supported_protocols(protos);
 	}
@@ -816,114 +816,114 @@ static void usage(void)
 	printf(_("Usage:  openconnect [options] <server>\n"));
 	printf(_("Open client for multiple VPN protocols, version %s\n\n"), openconnect_version_str);
 	print_build_opts();
-	printf("      --config=CONFIGFILE         %s\n", _("Read options from config file"));
-	printf("  -V, --version                   %s\n", _("Report version number"));
-	printf("  -h, --help                      %s\n", _("Display help text"));
+	printf("      --config=CONFIGFILE          %s\n", _("Read options from config file"));
+	printf("  -V, --version                    %s\n", _("Report version number"));
+	printf("  -h, --help                       %s\n", _("Display help text"));
 
 	print_supported_protocols_usage();
 
 	printf("\n%s:\n", _("Authentication"));
-	printf("  -u, --user=NAME                 %s\n", _("Set login username"));
-	printf("      --no-passwd                 %s\n", _("Disable password/SecurID authentication"));
-	printf("      --non-inter                 %s\n", _("Do not expect user input; exit if it is required"));
-	printf("      --passwd-on-stdin           %s\n", _("Read password from standard input"));
-	printf("      --authgroup=GROUP           %s\n", _("Choose authentication login selection"));
-	printf("  -F, --form-entry=FORM:OPT=VALUE %s\n", _("Provide authentication form responses"));
-	printf("  -c, --certificate=CERT          %s\n", _("Use SSL client certificate CERT"));
-	printf("  -k, --sslkey=KEY                %s\n", _("Use SSL private key file KEY"));
-	printf("  -e, --cert-expire-warning=DAYS  %s\n", _("Warn when certificate lifetime < DAYS"));
-	printf("  -g, --usergroup=GROUP           %s\n", _("Set login usergroup"));
-	printf("  -p, --key-password=PASS         %s\n", _("Set key passphrase or TPM SRK PIN"));
-	printf("      --key-password-from-fsid    %s\n", _("Key passphrase is fsid of file system"));
-	printf("      --token-mode=MODE           %s\n", _("Software token type: rsa, totp, hotp or oidc"));
-	printf("      --token-secret=STRING       %s\n", _("Software token secret or oidc token"));
+	printf("  -u, --user=NAME                  %s\n", _("Set login username"));
+	printf("      --no-passwd                  %s\n", _("Disable password/SecurID authentication"));
+	printf("      --non-inter                  %s\n", _("Do not expect user input; exit if it is required"));
+	printf("      --passwd-on-stdin            %s\n", _("Read password from standard input"));
+	printf("      --authgroup=GROUP            %s\n", _("Choose authentication login selection"));
+	printf("  -F, --form-entry=FORM:OPT=VALUE  %s\n", _("Provide authentication form responses"));
+	printf("  -c, --certificate=CERT           %s\n", _("Use SSL client certificate CERT"));
+	printf("  -k, --sslkey=KEY                 %s\n", _("Use SSL private key file KEY"));
+	printf("  -e, --cert-expire-warning=DAYS   %s\n", _("Warn when certificate lifetime < DAYS"));
+	printf("  -g, --usergroup=GROUP            %s\n", _("Set login usergroup"));
+	printf("  -p, --key-password=PASS          %s\n", _("Set key passphrase or TPM SRK PIN"));
+	printf("      --key-password-from-fsid     %s\n", _("Key passphrase is fsid of file system"));
+	printf("      --token-mode=MODE            %s\n", _("Software token type: rsa, totp, hotp or oidc"));
+	printf("      --token-secret=STRING        %s\n", _("Software token secret or oidc token"));
 #ifndef HAVE_LIBSTOKEN
-	printf("                                  %s\n", _("(NOTE: libstoken (RSA SecurID) disabled in this build)"));
+	printf("                                   %s\n", _("(NOTE: libstoken (RSA SecurID) disabled in this build)"));
 #endif
 #ifndef HAVE_LIBPCSCLITE
-	printf("                                  %s\n", _("(NOTE: Yubikey OATH disabled in this build)"));
+	printf("                                   %s\n", _("(NOTE: Yubikey OATH disabled in this build)"));
 #endif
 
 	printf("\n%s:\n", _("Server validation"));
-	printf("      --servercert=FINGERPRINT    %s\n", _("Server's certificate SHA1 fingerprint"));
-	printf("      --no-system-trust           %s\n", _("Disable default system certificate authorities"));
-	printf("      --cafile=FILE               %s\n", _("Cert file for server verification"));
+	printf("      --servercert=FINGERPRINT     %s\n", _("Server's certificate SHA1 fingerprint"));
+	printf("      --no-system-trust            %s\n", _("Disable default system certificate authorities"));
+	printf("      --cafile=FILE                %s\n", _("Cert file for server verification"));
 
 	printf("\n%s:\n", _("Internet connectivity"));
-	printf("  -P, --proxy=URL                 %s\n", _("Set proxy server"));
-	printf("      --proxy-auth=METHODS        %s\n", _("Set proxy authentication methods"));
-	printf("      --no-proxy                  %s\n", _("Disable proxy"));
-	printf("      --libproxy                  %s\n", _("Use libproxy to automatically configure proxy"));
+	printf("  -P, --proxy=URL                  %s\n", _("Set proxy server"));
+	printf("      --proxy-auth=METHODS         %s\n", _("Set proxy authentication methods"));
+	printf("      --no-proxy                   %s\n", _("Disable proxy"));
+	printf("      --libproxy                   %s\n", _("Use libproxy to automatically configure proxy"));
 #ifndef LIBPROXY_HDR
-	printf("                                  %s\n", _("(NOTE: libproxy disabled in this build)"));
+	printf("                                   %s\n", _("(NOTE: libproxy disabled in this build)"));
 #endif
-	printf("      --reconnect-timeout         %s\n", _("Connection retry timeout in seconds"));
-	printf("      --resolve=HOST:IP           %s\n", _("Use IP when connecting to HOST"));
-	printf("      --passtos                   %s\n", _("Copy TOS / TCLASS field into DTLS and ESP packets"));
-	printf("      --udp-local-port=PORT       %s\n", _("Set local port for UDP (DTLS and ESP) datagrams"));
+	printf("      --reconnect-timeout=INTERVAL %s\n", _("Connection retry timeout in seconds"));
+	printf("      --resolve=HOST:IP            %s\n", _("Use IP when connecting to HOST"));
+	printf("      --passtos                    %s\n", _("Copy TOS / TCLASS field into DTLS and ESP packets"));
+	printf("      --udp-local-port=PORT        %s\n", _("Set local port for UDP (DTLS and ESP) datagrams"));
 
 	printf("\n%s:\n", _("Authentication (two-phase)"));
-	printf("  -C, --cookie=COOKIE             %s\n", _("Use authentication cookie COOKIE"));
-	printf("      --cookie-on-stdin           %s\n", _("Read cookie from standard input"));
-	printf("      --authenticate              %s\n", _("Authenticate only and print login info"));
-	printf("      --cookieonly                %s\n", _("Fetch and print cookie only; don't connect"));
-	printf("      --printcookie               %s\n", _("Print cookie before connecting"));
+	printf("  -C, --cookie=COOKIE              %s\n", _("Use authentication cookie COOKIE"));
+	printf("      --cookie-on-stdin            %s\n", _("Read cookie from standard input"));
+	printf("      --authenticate               %s\n", _("Authenticate only and print login info"));
+	printf("      --cookieonly                 %s\n", _("Fetch and print cookie only; don't connect"));
+	printf("      --printcookie                %s\n", _("Print cookie before connecting"));
 
 #ifndef _WIN32
 	printf("\n%s:\n", _("Process control"));
-	printf("  -b, --background                %s\n", _("Continue in background after startup"));
-	printf("      --pid-file=PIDFILE          %s\n", _("Write the daemon's PID to this file"));
-	printf("  -U, --setuid=USER               %s\n", _("Drop privileges after connecting"));
+	printf("  -b, --background                 %s\n", _("Continue in background after startup"));
+	printf("      --pid-file=PIDFILE           %s\n", _("Write the daemon's PID to this file"));
+	printf("  -U, --setuid=USER                %s\n", _("Drop privileges after connecting"));
 #endif
 
 	printf("\n%s:\n", _("Logging (two-phase)"));
 #ifndef _WIN32
-	printf("  -l, --syslog                    %s\n", _("Use syslog for progress messages"));
+	printf("  -l, --syslog                     %s\n", _("Use syslog for progress messages"));
 #endif
-	printf("  -v, --verbose                   %s\n", _("More output"));
-	printf("  -q, --quiet                     %s\n", _("Less output"));
-	printf("      --dump-http-traffic         %s\n", _("Dump HTTP authentication traffic (implies --verbose)"));
-	printf("      --timestamp                 %s\n", _("Prepend timestamp to progress messages"));
+	printf("  -v, --verbose                    %s\n", _("More output"));
+	printf("  -q, --quiet                      %s\n", _("Less output"));
+	printf("      --dump-http-traffic          %s\n", _("Dump HTTP authentication traffic (implies --verbose)"));
+	printf("      --timestamp                  %s\n", _("Prepend timestamp to progress messages"));
 
 	printf("\n%s:\n", _("VPN configuration script"));
-	printf("  -i, --interface=IFNAME          %s\n", _("Use IFNAME for tunnel interface"));
-	printf("  -s, --script=SCRIPT             %s\n", _("Shell command line for using a vpnc-compatible config script"));
-	printf("                                  %s: \"%s\"\n", _("default"), default_vpncscript);
+	printf("  -i, --interface=IFNAME           %s\n", _("Use IFNAME for tunnel interface"));
+	printf("  -s, --script=SCRIPT              %s\n", _("Shell command line for using a vpnc-compatible config script"));
+	printf("                                   %s: \"%s\"\n", _("default"), default_vpncscript);
 #ifndef _WIN32
-	printf("  -S, --script-tun                %s\n", _("Pass traffic to 'script' program, not tun"));
+	printf("  -S, --script-tun                 %s\n", _("Pass traffic to 'script' program, not tun"));
 #endif
 
 	printf("\n%s:\n", _("Tunnel control"));
-	printf("      --disable-ipv6              %s\n", _("Do not ask for IPv6 connectivity"));
-	printf("  -x, --xmlconfig=CONFIG          %s\n", _("XML config file"));
-	printf("  -m, --mtu=MTU                   %s\n", _("Request MTU from server (legacy servers only)"));
-	printf("      --base-mtu=MTU              %s\n", _("Indicate path MTU to/from server"));
-	printf("  -d, --deflate                   %s\n", _("Enable stateful compression (default is stateless only)"));
-	printf("  -D, --no-deflate                %s\n", _("Disable all compression"));
-	printf("      --force-dpd=INTERVAL        %s\n", _("Set minimum Dead Peer Detection interval (in seconds)"));
-	printf("      --pfs                       %s\n", _("Require perfect forward secrecy"));
-	printf("      --no-udp                    %s\n", _("Disable UDP (DTLS and ESP) and only use TCP (TLS)"));
-	printf("      --dtls-ciphers=LIST         %s\n", _("OpenSSL ciphers to support for DTLS"));
-	printf("  -Q, --queue-len=LEN             %s\n", _("Set packet queue limit to LEN pkts"));
+	printf("      --disable-ipv6               %s\n", _("Do not ask for IPv6 connectivity"));
+	printf("  -x, --xmlconfig=CONFIG           %s\n", _("XML config file"));
+	printf("  -m, --mtu=MTU                    %s\n", _("Request MTU from server (legacy servers only)"));
+	printf("      --base-mtu=MTU               %s\n", _("Indicate path MTU to/from server"));
+	printf("  -d, --deflate                    %s\n", _("Enable stateful compression (default is stateless only)"));
+	printf("  -D, --no-deflate                 %s\n", _("Disable all compression"));
+	printf("      --force-dpd=INTERVAL         %s\n", _("Set minimum Dead Peer Detection interval (in seconds)"));
+	printf("      --pfs                        %s\n", _("Require perfect forward secrecy"));
+	printf("      --no-udp                     %s\n", _("Disable UDP (DTLS and ESP) and only use TCP (TLS)"));
+	printf("      --dtls-ciphers=LIST          %s\n", _("OpenSSL ciphers to support for DTLS"));
+	printf("  -Q, --queue-len=LEN              %s\n", _("Set packet queue limit to LEN pkts"));
 
 	printf("\n%s:\n", _("Local system information"));
-	printf("      --useragent=STRING          %s\n", _("HTTP header User-Agent: field"));
-	printf("      --local-hostname=STRING     %s\n", _("Local hostname to advertise to server"));
-	printf("      --os=STRING                 %s\n", _("OS type (linux,linux-64,win,...) to report"));
-	printf("      --version-string=STRING     %s\n", _("reported version string during authentication"));
-	printf("                                  (%s %s)\n", _("default:"), openconnect_version_str);
+	printf("      --useragent=STRING           %s\n", _("HTTP header User-Agent: field"));
+	printf("      --local-hostname=STRING      %s\n", _("Local hostname to advertise to server"));
+	printf("      --os=STRING                  %s\n", _("OS type (linux,linux-64,win,...) to report"));
+	printf("      --version-string=STRING      %s\n", _("reported version string during authentication"));
+	printf("                                   (%s %s)\n", _("default:"), openconnect_version_str);
 
 #ifndef _WIN32
 	printf("\n%s:\n", _("Trojan binary execution (CSD, TNCC/Host Checker, HIP)"));
-	printf("      --trojan-user=USER          %s\n", _("Drop privileges during trojan execution"));
-	printf("      --trojan-wrapper=SCRIPT     %s\n", _("Run SCRIPT instead of trojan binary"));
-	printf("      --force-trojan=INTERVAL     %s\n", _("Set minimum interval for rerunning trojan (in seconds)"));
+	printf("      --trojan-user=USER           %s\n", _("Drop privileges during trojan execution"));
+	printf("      --trojan-wrapper=SCRIPT      %s\n", _("Run SCRIPT instead of trojan binary"));
+	printf("      --force-trojan=INTERVAL      %s\n", _("Set minimum interval for rerunning trojan (in seconds)"));
 #endif
 
 	printf("\n%s:\n", _("Server bugs"));
-	printf("      --no-http-keepalive         %s\n", _("Disable HTTP connection re-use"));
-	printf("      --no-xmlpost                %s\n", _("Do not attempt XML POST authentication"));
-	printf("      --allow-insecure-crypto     %s\n", _("Allow use of the ancient, insecure 3DES and RC4 ciphers"));
+	printf("      --no-http-keepalive          %s\n", _("Disable HTTP connection re-use"));
+	printf("      --no-xmlpost                 %s\n", _("Do not attempt XML POST authentication"));
+	printf("      --allow-insecure-crypto      %s\n", _("Allow use of the ancient, insecure 3DES and RC4 ciphers"));
 
 	printf("\n");
 

@@ -63,7 +63,7 @@ openconnect \- Multi-protocol VPN client, for Cisco AnyConnect VPNs and others
 .OP \-\-protocol proto
 .OP \-\-token\-mode mode
 .OP \-\-token\-secret {secret\fR[\fI,counter\fR]|@\fIfile\fR}
-.OP \-\-reconnect\-timeout
+.OP \-\-reconnect\-timeout interval
 .OP \-\-resolve host:ip
 .OP \-\-servercert sha1
 .OP \-\-useragent string
@@ -543,10 +543,11 @@ If this option is omitted, and \-\-token\-mode is
 .B ~/.stokenrc
 by the "stoken import" command.
 .TP
-.B \-\-reconnect\-timeout
-Keep reconnect attempts until so much seconds are elapsed. The default
-timeout is 300 seconds, which means that openconnect can recover
-VPN connection after a temporary network down time of 300 seconds.
+.B \-\-reconnect\-timeout=INTERVAL
+Continue reconnection attempts until the specific interval (in seconds)
+has elapsed. The default timeout is 300 seconds, which means that openconnect
+will attempt to recover a VPN connection after a temporary network outage
+lasting up to 300 seconds.
 .TP
 .B \-\-resolve=HOST:IP
 Automatically resolve the hostname
