@@ -74,7 +74,7 @@ static const struct pkt dpd_pkt = {
 	{ .gpst.hdr = { 0x1a, 0x2b, 0x3c, 0x4d } }
 };
 
-/* We behave like CSTP — create a linked list in vpninfo->cstp_options
+/* We behave like CSTP — create a linked list in vpninfo->proto_options
  * with the strings containing the information we got from the server,
  * and oc_ip_info contains const copies of those pointers.
  *
@@ -93,8 +93,8 @@ static const char *add_option(struct openconnect_info *vpninfo, const char *opt,
 	}
 	new->value = *val;
 	*val = NULL;
-	new->next = vpninfo->cstp_options;
-	vpninfo->cstp_options = new;
+	new->next = vpninfo->proto_options;
+	vpninfo->proto_options = new;
 
 	return new->value;
 }
@@ -472,7 +472,7 @@ static int gpst_parse_config_xml(struct openconnect_info *vpninfo, xmlNode *xml_
 	vpninfo->esp_magic = inet_addr(vpninfo->ip_info.gateway_addr);
 	vpninfo->esp_replay_protect = 1;
 	vpninfo->ssl_times.rekey_method = REKEY_NONE;
-	vpninfo->cstp_options = NULL;
+	vpninfo->proto_options = NULL;
 
 	for (ii = 0; ii < 3; ii++)
 		vpninfo->ip_info.dns[ii] = vpninfo->ip_info.nbns[ii] = NULL;
@@ -568,7 +568,7 @@ static int gpst_parse_config_xml(struct openconnect_info *vpninfo, xmlNode *xml_
 			}
 		} else if (xmlnode_is_named(xml_node, "ipsec")) {
 #ifdef HAVE_ESP
-			if (vpninfo->dtls_state != DTLS_DISABLED) {
+			if (vpninfo->udp_state != UDP_DISABLED) {
 				int c = (vpninfo->current_esp_in ^= 1);
 				struct esp *ei = &vpninfo->esp_in[c], *eo = &vpninfo->esp_out;
 				vpninfo->old_esp_maxseq = vpninfo->esp_in[c^1].seq + 32;
@@ -589,7 +589,7 @@ static int gpst_parse_config_xml(struct openconnect_info *vpninfo, xmlNode *xml_
 					vpn_progress(vpninfo, PRG_ERR, "Failed to setup ESP keys.\n");
 				else {
 					/* prevent race condition between esp_mainloop() and gpst_mainloop() timers */
-					vpninfo->dtls_times.last_rekey = time(&vpninfo->new_dtls_started);
+					vpninfo->udp_times.last_rekey = time(&vpninfo->new_udp_started);
 					vpninfo->delay_tunnel_reason = "awaiting GPST ESP connection";
 				}
 			}
@@ -664,13 +664,13 @@ static int gpst_get_config(struct openconnect_info *vpninfo)
 	char *orig_path;
 	int result;
 	struct oc_text_buf *request_body = buf_alloc();
-	struct oc_vpn_option *old_cstp_opts = vpninfo->cstp_options;
+	struct oc_vpn_option *old_cstp_opts = vpninfo->proto_options;
 	const char *old_addr = vpninfo->ip_info.addr, *old_netmask = vpninfo->ip_info.netmask;
 	const char *old_addr6 = vpninfo->ip_info.addr6, *old_netmask6 = vpninfo->ip_info.netmask6;
 	const char *request_body_type = "application/x-www-form-urlencoded";
 	const char *method = "POST";
 	char *xml_buf=NULL;
-	vpninfo->cstp_options = NULL;
+	vpninfo->proto_options = NULL;
 
 	/* submit getconfig request */
 	buf_append(request_body, "client-type=1&protocol-version=p1&app-version=5.1.5-8");
@@ -704,9 +704,9 @@ static int gpst_get_config(struct openconnect_info *vpninfo)
 		/* FIXME: GP gateway config always seems to be <mtu>0</mtu> */
 		char *no_esp_reason = NULL;
 #ifdef HAVE_ESP
-		if (vpninfo->dtls_state == DTLS_DISABLED)
+		if (vpninfo->udp_state == UDP_DISABLED)
 			no_esp_reason = _("ESP disabled");
-		else if (vpninfo->dtls_state == DTLS_NOSECRET)
+		else if (vpninfo->udp_state == UDP_NOSECRET)
 			no_esp_reason = _("No ESP keys received");
 #else
 		no_esp_reason = _("ESP support not available in this build");
@@ -745,7 +745,7 @@ static int gpst_connect(struct openconnect_info *vpninfo)
 	 * ESP keys, because the ESP keys become invalid as soon as the HTTPS tunnel
 	 * is connected! >:-(
 	 */
-	if (vpninfo->dtls_state != DTLS_DISABLED && vpninfo->dtls_state != DTLS_NOSECRET)
+	if (vpninfo->udp_state != UDP_DISABLED && vpninfo->udp_state != UDP_NOSECRET)
 		return 0;
 
 	/* Connect to SSL VPN tunnel */
@@ -932,7 +932,7 @@ static int run_hip_script(struct openconnect_info *vpninfo)
 	pid_t child;
 #endif
 
-	if (!vpninfo->csd_wrapper) {
+	if (!vpninfo->trojan_wrapper) {
 		/* Only warn once */
 		if (!vpninfo->last_trojan) {
 			vpn_progress(vpninfo, PRG_ERR,
@@ -990,12 +990,12 @@ static int run_hip_script(struct openconnect_info *vpninfo)
 		if (!WIFEXITED(status)) {
 			vpn_progress(vpninfo, PRG_ERR,
 						 _("HIP script '%s' exited abnormally\n"),
-						 vpninfo->csd_wrapper);
+						 vpninfo->trojan_wrapper);
 			ret = -EINVAL;
 		} else if (WEXITSTATUS(status) != 0) {
 			vpn_progress(vpninfo, PRG_ERR,
 						 _("HIP script '%s' returned non-zero status: %d\n"),
-						 vpninfo->csd_wrapper, WEXITSTATUS(status));
+						 vpninfo->trojan_wrapper, WEXITSTATUS(status));
 			ret = -EINVAL;
 		} else {
 			vpn_progress(vpninfo, PRG_INFO,
@@ -1020,10 +1020,10 @@ static int run_hip_script(struct openconnect_info *vpninfo)
 		/* The duplicated fd does not have O_CLOEXEC */
 		dup2(pipefd[1], 1);
 
-		if (set_csd_user(vpninfo) < 0)
+		if (set_trojan_user(vpninfo) < 0)
 			exit(1);
 
-		hip_argv[i++] = openconnect_utf8_to_legacy(vpninfo, vpninfo->csd_wrapper);
+		hip_argv[i++] = openconnect_utf8_to_legacy(vpninfo, vpninfo->trojan_wrapper);
 		hip_argv[i++] = "--cookie";
 		hip_argv[i++] = vpninfo->cookie;
 		if (vpninfo->ip_info.addr) {
@@ -1112,31 +1112,31 @@ int gpst_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 	/* Starting the HTTPS tunnel kills ESP, so we avoid starting
 	 * it if the ESP tunnel is connected or connecting.
 	 */
-	switch (vpninfo->dtls_state) {
-	case DTLS_CONNECTING:
+	switch (vpninfo->udp_state) {
+	case UDP_CONNECTING:
 		openconnect_close_https(vpninfo, 0); /* don't keep stale HTTPS socket */
 		vpn_progress(vpninfo, PRG_INFO,
 			     _("ESP tunnel connected; exiting HTTPS mainloop.\n"));
-		vpninfo->dtls_state = DTLS_CONNECTED;
+		vpninfo->udp_state = UDP_CONNECTED;
 		/* Now that we are connected, let's ensure timeout is less than
 		 * or equal to DTLS DPD/keepalive else we might over sleep, eg
 		 * if timeout is set to DTLS attempt period from ESP mainloop,
 		 * and falsely detect dead peer. */
-		if (vpninfo->dtls_times.dpd)
-			if (*timeout > vpninfo->dtls_times.dpd * 1000)
-				*timeout = vpninfo->dtls_times.dpd * 1000;
+		if (vpninfo->udp_times.dpd)
+			if (*timeout > vpninfo->udp_times.dpd * 1000)
+				*timeout = vpninfo->udp_times.dpd * 1000;
 		/* fall through */
-	case DTLS_CONNECTED:
+	case UDP_CONNECTED:
 		/* Rekey or check-and-resubmit HIP if needed */
 		if (keepalive_action(&vpninfo->ssl_times, timeout) == KA_REKEY)
 			goto do_rekey;
 		else if (trojan_check_deadline(vpninfo, timeout))
 			goto do_recheck_hip;
 		return 0;
-	case DTLS_SECRET:
-	case DTLS_SLEEPING:
+	case UDP_SECRET:
+	case UDP_SLEEPING:
 		/* Allow 5 seconds after configuration for ESP to start */
-		if (!ka_check_deadline(timeout, time(NULL), vpninfo->new_dtls_started + 5)) {
+		if (!ka_check_deadline(timeout, time(NULL), vpninfo->new_udp_started + 5)) {
 			vpninfo->delay_tunnel_reason = "awaiting GPST ESP connection";
 			return 0;
 		}
@@ -1145,15 +1145,15 @@ int gpst_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		vpn_progress(vpninfo, PRG_ERR,
 				     _("Failed to connect ESP tunnel; using HTTPS instead.\n"));
 		/* XX: gpst_connect does nothing if ESP is enabled and has secrets */
-		vpninfo->dtls_state = DTLS_NOSECRET;
+		vpninfo->udp_state = UDP_NOSECRET;
 		if (gpst_connect(vpninfo)) {
 			vpninfo->quit_reason = "GPST connect failed";
 			return 1;
 		}
 		break;
-	case DTLS_NOSECRET:
+	case UDP_NOSECRET:
 		/* HTTPS tunnel already started, or getconfig.esp did not provide any ESP keys */
-	case DTLS_DISABLED:
+	case UDP_DISABLED:
 		/* ESP is disabled */
 		;
 	}
@@ -1168,15 +1168,15 @@ int gpst_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		int receive_mtu = MAX(16384, vpninfo->ip_info.mtu);
 		int len, payload_len;
 
-		if (!vpninfo->cstp_pkt) {
-			vpninfo->cstp_pkt = malloc(sizeof(struct pkt) + receive_mtu);
-			if (!vpninfo->cstp_pkt) {
+		if (!vpninfo->ssl_pkt) {
+			vpninfo->ssl_pkt = malloc(sizeof(struct pkt) + receive_mtu);
+			if (!vpninfo->ssl_pkt) {
 				vpn_progress(vpninfo, PRG_ERR, _("Allocation failed\n"));
 				break;
 			}
 		}
 
-		len = ssl_nonblock_read(vpninfo, vpninfo->cstp_pkt->gpst.hdr, receive_mtu + 16);
+		len = ssl_nonblock_read(vpninfo, vpninfo->ssl_pkt->gpst.hdr, receive_mtu + 16);
 		if (!len)
 			break;
 		if (len < 0) {
@@ -1190,11 +1190,11 @@ int gpst_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		}
 
 		/* check packet header */
-		magic = load_be32(vpninfo->cstp_pkt->gpst.hdr);
-		ethertype = load_be16(vpninfo->cstp_pkt->gpst.hdr + 4);
-		payload_len = load_be16(vpninfo->cstp_pkt->gpst.hdr + 6);
-		one = load_le32(vpninfo->cstp_pkt->gpst.hdr + 8);
-		zero = load_le32(vpninfo->cstp_pkt->gpst.hdr + 12);
+		magic = load_be32(vpninfo->ssl_pkt->gpst.hdr);
+		ethertype = load_be16(vpninfo->ssl_pkt->gpst.hdr + 4);
+		payload_len = load_be16(vpninfo->ssl_pkt->gpst.hdr + 6);
+		one = load_le32(vpninfo->ssl_pkt->gpst.hdr + 8);
+		zero = load_le32(vpninfo->ssl_pkt->gpst.hdr + 12);
 
 		if (magic != 0x1a2b3c4d)
 			goto unknown_pkt;
@@ -1203,7 +1203,7 @@ int gpst_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("Unexpected packet length. SSL_read returned %d (includes 16 header bytes) but header payload_len is %d\n"),
 			             len, payload_len);
-			dump_buf_hex(vpninfo, PRG_ERR, '<', vpninfo->cstp_pkt->gpst.hdr, 16);
+			dump_buf_hex(vpninfo, PRG_ERR, '<', vpninfo->ssl_pkt->gpst.hdr, 16);
 			continue;
 		}
 
@@ -1216,7 +1216,7 @@ int gpst_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			if (one != 0 || zero != 0) {
 				vpn_progress(vpninfo, PRG_DEBUG,
 					     _("Expected 0000000000000000 as last 8 bytes of DPD/keepalive packet header, but got:\n"));
-				dump_buf_hex(vpninfo, PRG_DEBUG, '<', vpninfo->cstp_pkt->gpst.hdr + 8, 8);
+				dump_buf_hex(vpninfo, PRG_DEBUG, '<', vpninfo->ssl_pkt->gpst.hdr + 8, 8);
 			}
 			continue;
 		case 0x0800:
@@ -1228,12 +1228,12 @@ int gpst_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			if (one != 1 || zero != 0) {
 				vpn_progress(vpninfo, PRG_DEBUG,
 					     _("Expected 0100000000000000 as last 8 bytes of data packet header, but got:\n"));
-				dump_buf_hex(vpninfo, PRG_DEBUG, '<', vpninfo->cstp_pkt->gpst.hdr + 8, 8);
+				dump_buf_hex(vpninfo, PRG_DEBUG, '<', vpninfo->ssl_pkt->gpst.hdr + 8, 8);
 			}
 
-			vpninfo->cstp_pkt->len = payload_len;
-			queue_packet(&vpninfo->incoming_queue, vpninfo->cstp_pkt);
-			vpninfo->cstp_pkt = NULL;
+			vpninfo->ssl_pkt->len = payload_len;
+			queue_packet(&vpninfo->incoming_queue, vpninfo->ssl_pkt);
+			vpninfo->ssl_pkt = NULL;
 			work_done = 1;
 			continue;
 		}
@@ -1241,7 +1241,7 @@ int gpst_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 	unknown_pkt:
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Unknown packet. Header dump follows:\n"));
-		dump_buf_hex(vpninfo, PRG_ERR, '<', vpninfo->cstp_pkt->gpst.hdr, 16);
+		dump_buf_hex(vpninfo, PRG_ERR, '<', vpninfo->ssl_pkt->gpst.hdr, 16);
 		vpninfo->quit_reason = "Unknown packet received";
 		return 1;
 	}
@@ -1325,13 +1325,13 @@ int gpst_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			return ret;
 		}
 		if (vpninfo->proto->udp_setup)
-			vpninfo->proto->udp_setup(vpninfo, vpninfo->dtls_attempt_period);
+			vpninfo->proto->udp_setup(vpninfo, vpninfo->udp_attempt_period);
 		return 1;
 
 	case KA_KEEPALIVE:
 		/* No need to send an explicit keepalive
 		   if we have real data to send */
-		if (vpninfo->dtls_state != DTLS_CONNECTED &&
+		if (vpninfo->udp_state != UDP_CONNECTED &&
 		    vpninfo->outgoing_queue.head)
 			break;
 		/* fall through */
@@ -1344,7 +1344,7 @@ int gpst_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 
 
 	/* Service outgoing packet queue */
-	while (vpninfo->dtls_state != DTLS_CONNECTED &&
+	while (vpninfo->udp_state != UDP_CONNECTED &&
 	       (vpninfo->current_ssl_pkt = dequeue_packet(&vpninfo->outgoing_queue))) {
 		struct pkt *this = vpninfo->current_ssl_pkt;
 
@@ -1410,21 +1410,21 @@ int gpst_esp_send_probes(struct openconnect_info *vpninfo)
 	if (!pkt)
 		return -ENOMEM;
 
-	if (vpninfo->dtls_fd == -1) {
+	if (vpninfo->udp_fd == -1) {
 		int fd = udp_connect(vpninfo);
 		if (fd < 0) {
 			free(pkt);
 			return fd;
 		}
 		/* We are not connected until we get an ESP packet back */
-		vpninfo->dtls_state = DTLS_SLEEPING;
-		vpninfo->dtls_fd = fd;
-		monitor_fd_new(vpninfo, dtls);
-		monitor_read_fd(vpninfo, dtls);
-		monitor_except_fd(vpninfo, dtls);
+		vpninfo->udp_state = UDP_SLEEPING;
+		vpninfo->udp_fd = fd;
+		monitor_fd_new(vpninfo, udp);
+		monitor_read_fd(vpninfo, udp);
+		monitor_except_fd(vpninfo, udp);
 	}
 
-	for (seq=1; seq <= (vpninfo->dtls_state==DTLS_CONNECTED ? 1 : 3); seq++) {
+	for (seq=1; seq <= (vpninfo->udp_state==UDP_CONNECTED ? 1 : 3); seq++) {
 		memset(pkt, 0, sizeof(*pkt) + sizeof(*iph) + ICMP_MINLEN + sizeof(magic_ping_payload));
 		pkt->len = sizeof(struct ip) + ICMP_MINLEN + sizeof(magic_ping_payload);
 
@@ -1449,13 +1449,13 @@ int gpst_esp_send_probes(struct openconnect_info *vpninfo)
 
 		pktlen = construct_esp_packet(vpninfo, pkt, IPPROTO_IPIP);
 		if (pktlen < 0 ||
-		    send(vpninfo->dtls_fd, (void *)&pkt->esp, pktlen, 0) < 0)
+		    send(vpninfo->udp_fd, (void *)&pkt->esp, pktlen, 0) < 0)
 			vpn_progress(vpninfo, PRG_DEBUG, _("Failed to send ESP probe\n"));
 	}
 
 	free(pkt);
 
-	vpninfo->dtls_times.last_tx = time(&vpninfo->new_dtls_started);
+	vpninfo->udp_times.last_tx = time(&vpninfo->new_udp_started);
 
 	return 0;
 }

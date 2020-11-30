@@ -74,18 +74,18 @@ int print_esp_keys(struct openconnect_info *vpninfo, const char *name, struct es
 	return 0;
 }
 
-int esp_setup(struct openconnect_info *vpninfo, int dtls_attempt_period)
+int esp_setup(struct openconnect_info *vpninfo, int udp_attempt_period)
 {
-	if (vpninfo->dtls_state == DTLS_DISABLED ||
-	    vpninfo->dtls_state == DTLS_NOSECRET)
+	if (vpninfo->udp_state == UDP_DISABLED ||
+	    vpninfo->udp_state == UDP_NOSECRET)
 		return -EINVAL;
 
 	if (vpninfo->esp_ssl_fallback)
-		vpninfo->dtls_times.dpd = vpninfo->esp_ssl_fallback;
+		vpninfo->udp_times.dpd = vpninfo->esp_ssl_fallback;
 	else
-		vpninfo->dtls_times.dpd = dtls_attempt_period;
+		vpninfo->udp_times.dpd = udp_attempt_period;
 
-	vpninfo->dtls_attempt_period = dtls_attempt_period;
+	vpninfo->udp_attempt_period = udp_attempt_period;
 
 	print_esp_keys(vpninfo, _("incoming"), &vpninfo->esp_in[vpninfo->current_esp_in]);
 	print_esp_keys(vpninfo, _("outgoing"), &vpninfo->esp_out);
@@ -141,15 +141,15 @@ int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 	   reserve some extra space to handle that */
 	int receive_mtu = MAX(2048, vpninfo->ip_info.mtu + 256);
 
-	if (vpninfo->dtls_state == DTLS_SLEEPING) {
-		if (ka_check_deadline(timeout, time(NULL), vpninfo->new_dtls_started + vpninfo->dtls_attempt_period)
-		    || vpninfo->dtls_need_reconnect) {
+	if (vpninfo->udp_state == UDP_SLEEPING) {
+		if (ka_check_deadline(timeout, time(NULL), vpninfo->new_udp_started + vpninfo->udp_attempt_period)
+		    || vpninfo->udp_need_reconnect) {
 			vpn_progress(vpninfo, PRG_DEBUG, _("Send ESP probes\n"));
 			if (vpninfo->proto->udp_send_probes)
 				vpninfo->proto->udp_send_probes(vpninfo);
 		}
 	}
-	if (vpninfo->dtls_fd == -1)
+	if (vpninfo->udp_fd == -1)
 		return 0;
 
 	while (readable) {
@@ -157,15 +157,15 @@ int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		int i;
 		struct pkt *pkt;
 
-		if (!vpninfo->dtls_pkt) {
-			vpninfo->dtls_pkt = malloc(sizeof(struct pkt) + len);
-			if (!vpninfo->dtls_pkt) {
+		if (!vpninfo->udp_pkt) {
+			vpninfo->udp_pkt = malloc(sizeof(struct pkt) + len);
+			if (!vpninfo->udp_pkt) {
 				vpn_progress(vpninfo, PRG_ERR, _("Allocation failed\n"));
 				break;
 			}
 		}
-		pkt = vpninfo->dtls_pkt;
-		len = recv(vpninfo->dtls_fd, (void *)&pkt->esp, len + sizeof(pkt->esp), 0);
+		pkt = vpninfo->udp_pkt;
+		len = recv(vpninfo->udp_fd, (void *)&pkt->esp, len + sizeof(pkt->esp), 0);
 		if (len <= 0)
 			break;
 
@@ -227,14 +227,14 @@ int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 				     _("Invalid padding bytes in ESP\n"));
 			continue; /* We can here, though */
 		}
-		vpninfo->dtls_times.last_rx = time(NULL);
+		vpninfo->udp_times.last_rx = time(NULL);
 
 		if (vpninfo->proto->udp_catch_probe) {
 			if (vpninfo->proto->udp_catch_probe(vpninfo, pkt)) {
-				if (vpninfo->dtls_state == DTLS_SLEEPING) {
+				if (vpninfo->udp_state == UDP_SLEEPING) {
 					vpn_progress(vpninfo, PRG_INFO,
 						     _("ESP session established with server\n"));
-					vpninfo->dtls_state = DTLS_CONNECTING;
+					vpninfo->udp_state = UDP_CONNECTING;
 				}
 				continue;
 			}
@@ -261,14 +261,14 @@ int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			queue_packet(&vpninfo->incoming_queue, newpkt);
 		} else {
 			queue_packet(&vpninfo->incoming_queue, pkt);
-			vpninfo->dtls_pkt = NULL;
+			vpninfo->udp_pkt = NULL;
 		}
 	}
 
-	if (vpninfo->dtls_state != DTLS_CONNECTED)
+	if (vpninfo->udp_state != UDP_CONNECTED)
 		return 0;
 
-	switch (keepalive_action(&vpninfo->dtls_times, timeout)) {
+	switch (keepalive_action(&vpninfo->udp_times, timeout)) {
 	case KA_REKEY:
 		vpn_progress(vpninfo, PRG_ERR, _("Rekey not implemented for ESP\n"));
 		break;
@@ -311,7 +311,7 @@ int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 
 				/* Pulse/NC can only accept ESP of the same protocol as the one
 				 * you connected to it with. The other has to go over IF-T/TLS. */
-				if (vpninfo->dtls_addr->sa_family == AF_INET6)
+				if (vpninfo->udp_addr->sa_family == AF_INET6)
 					dontsend = 0x40;
 				else
 					dontsend = 0x60;
@@ -320,7 +320,7 @@ int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 					store_be32(&this->pulse.vendor, 0xa4c);
 					store_be32(&this->pulse.type, 4);
 					store_be32(&this->pulse.len, this->len + 16);
-					queue_packet(&vpninfo->oncp_control_queue, this);
+					queue_packet(&vpninfo->outgoing_ssl_queue, this);
 					work_done = 1;
 					continue;
 				}
@@ -330,7 +330,7 @@ int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			   IP header fields (version and TOS) are garbled afterward.
 			   If TOS optname is set, we want to copy the TOS/TCLASS header
 			   to the outer UDP packet */
-			if (vpninfo->dtls_tos_optname)
+			if (vpninfo->udp_tos_optname)
 				udp_tos_update(vpninfo, this);
 
 			len = construct_esp_packet(vpninfo, this, 0);
@@ -342,7 +342,7 @@ int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			}
 		}
 
-		ret = send(vpninfo->dtls_fd, (void *)&this->esp, len, 0);
+		ret = send(vpninfo->udp_fd, (void *)&this->esp, len, 0);
 		if (ret < 0) {
 			/* Not that this is likely to happen with UDP, but... */
 			if (errno == ENOBUFS || errno == EAGAIN || errno == EWOULDBLOCK) {
@@ -352,7 +352,7 @@ int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 				vpn_progress(vpninfo, PRG_DEBUG,
 					     _("Requeueing failed ESP send: %s\n"),
 					     strerror(err));
-				monitor_write_fd(vpninfo, dtls);
+				monitor_write_fd(vpninfo, udp);
 				return work_done;
 			} else {
 				/* A real error in sending. Fall back to TCP? */
@@ -361,13 +361,13 @@ int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 					strerror(errno));
 			}
 		} else {
-			vpninfo->dtls_times.last_tx = time(NULL);
+			vpninfo->udp_times.last_tx = time(NULL);
 
 			vpn_progress(vpninfo, PRG_TRACE, _("Sent ESP packet of %d bytes\n"),
 				     len);
 		}
 		if (this == vpninfo->deflate_pkt) {
-			unmonitor_write_fd(vpninfo, dtls);
+			unmonitor_write_fd(vpninfo, udp);
 			vpninfo->deflate_pkt = NULL;
 		}
 		free(this);
@@ -381,15 +381,15 @@ void esp_close(struct openconnect_info *vpninfo)
 {
 	/* We close and reopen the socket in case we roamed and our
 	   local IP address has changed. */
-	if (vpninfo->dtls_fd != -1) {
-		closesocket(vpninfo->dtls_fd);
-		unmonitor_read_fd(vpninfo, dtls);
-		unmonitor_write_fd(vpninfo, dtls);
-		unmonitor_except_fd(vpninfo, dtls);
-		vpninfo->dtls_fd = -1;
+	if (vpninfo->udp_fd != -1) {
+		closesocket(vpninfo->udp_fd);
+		unmonitor_read_fd(vpninfo, udp);
+		unmonitor_write_fd(vpninfo, udp);
+		unmonitor_except_fd(vpninfo, udp);
+		vpninfo->udp_fd = -1;
 	}
-	if (vpninfo->dtls_state > DTLS_DISABLED)
-		vpninfo->dtls_state = DTLS_SLEEPING;
+	if (vpninfo->udp_state > UDP_DISABLED)
+		vpninfo->udp_state = UDP_SLEEPING;
 	if (vpninfo->deflate_pkt) {
 		free(vpninfo->deflate_pkt);
 		vpninfo->deflate_pkt = NULL;
@@ -403,8 +403,8 @@ void esp_shutdown(struct openconnect_info *vpninfo)
 	destroy_esp_ciphers(&vpninfo->esp_out);
 	if (vpninfo->proto->udp_close)
 		vpninfo->proto->udp_close(vpninfo);
-	if (vpninfo->dtls_state != DTLS_DISABLED)
-		vpninfo->dtls_state = DTLS_NOSECRET;
+	if (vpninfo->udp_state != UDP_DISABLED)
+		vpninfo->udp_state = UDP_NOSECRET;
 }
 
 int openconnect_setup_esp_keys(struct openconnect_info *vpninfo, int new_keys)
@@ -412,9 +412,9 @@ int openconnect_setup_esp_keys(struct openconnect_info *vpninfo, int new_keys)
 	struct esp *esp_in;
 	int ret;
 
-	if (vpninfo->dtls_state == DTLS_DISABLED)
+	if (vpninfo->udp_state == UDP_DISABLED)
 		return -EOPNOTSUPP;
-	if (!vpninfo->dtls_addr)
+	if (!vpninfo->udp_addr)
 		return -EINVAL;
 
 	if (vpninfo->esp_hmac == HMAC_SHA256)
@@ -455,8 +455,8 @@ int openconnect_setup_esp_keys(struct openconnect_info *vpninfo, int new_keys)
 	if (ret)
 		return ret;
 
-	if (vpninfo->dtls_state == DTLS_NOSECRET)
-		vpninfo->dtls_state = DTLS_SECRET;
+	if (vpninfo->udp_state == UDP_NOSECRET)
+		vpninfo->udp_state = UDP_SECRET;
 
 	return 0;
 }

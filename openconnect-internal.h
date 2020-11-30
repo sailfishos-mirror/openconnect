@@ -164,12 +164,12 @@ struct pkt {
 #define KA_KEEPALIVE	3
 #define KA_REKEY	4
 
-#define DTLS_NOSECRET	0	/* Random secret has not been generated yet */
-#define DTLS_SECRET	1	/* Secret is present, ready to attempt DTLS */
-#define DTLS_DISABLED	2	/* DTLS was disabled on the *client* side */
-#define DTLS_SLEEPING	3	/* For ESP, sometimes sending probes */
-#define DTLS_CONNECTING	4	/* ESP probe received; must tell server */
-#define DTLS_CONNECTED	5	/* Server informed and should be sending ESP */
+#define UDP_NOSECRET	0	/* Random secret has not been generated yet */
+#define UDP_SECRET	1	/* Secret is present, ready to attempt DTLS */
+#define UDP_DISABLED	2	/* DTLS was disabled on the *client* side */
+#define UDP_SLEEPING	3	/* For ESP, sometimes sending probes */
+#define UDP_CONNECTING	4	/* ESP probe received; must tell server */
+#define UDP_CONNECTED	5	/* Server informed and should be sending ESP */
 
 #define COMPR_DEFLATE	(1<<0)
 #define COMPR_LZS	(1<<1)
@@ -283,7 +283,7 @@ struct vpn_proto {
 	/* Add headers common to each HTTP request */
 	void (*add_http_headers)(struct openconnect_info *vpninfo, struct oc_text_buf *buf);
 
-	/* Set up the UDP (DTLS) connection. Doesn't actually *start* it. */
+	/* Set up the UDP (DTLS or ESP) connection. Doesn't actually *start* it. */
 	int (*udp_setup)(struct openconnect_info *vpninfo, int attempt_period);
 
 	/* This will actually complete the UDP connection setup/handshake on the wire,
@@ -404,7 +404,7 @@ struct openconnect_info {
 	char *csd_waiturl;
 	char *csd_preurl;
 
-	char *csd_scriptname;
+	char *trojan_scriptname;
 	xmlNode *opaque_srvdata;
 
 	char *profile_url;
@@ -444,7 +444,7 @@ struct openconnect_info {
 	int xmlpost;
 	char *dtls_ciphers;
 	char *dtls12_ciphers;
-	char *csd_wrapper;
+	char *trojan_wrapper;
 	int trojan_interval;
 	time_t last_trojan;
 	int no_http_keepalive;
@@ -497,11 +497,11 @@ struct openconnect_info {
 
 	char *cookie; /* Pointer to within cookies list */
 	struct oc_vpn_option *cookies;
-	struct oc_vpn_option *cstp_options;
-	struct oc_vpn_option *dtls_options;
+	struct oc_vpn_option *proto_options;
+	struct oc_vpn_option *udp_options; /* Options specific to UDP tunnel */
 
 	struct oc_vpn_option *script_env;
-	struct oc_vpn_option *csd_env;
+	struct oc_vpn_option *trojan_env;
 
 	unsigned pfs;
 	unsigned no_tls13;
@@ -548,11 +548,10 @@ struct openconnect_info {
 	struct pkt *deflate_pkt;		/* For compressing outbound packets into */
 	struct pkt *pending_deflated_pkt;	/* The original packet associated with above */
 	struct pkt *current_ssl_pkt;		/* Partially sent SSL packet */
-	struct pkt_q oncp_control_queue;		/* Control packets to be sent on oNCP next */
 	int oncp_rec_size;			/* For packetising incoming oNCP stream */
 	/* Packet buffers for receiving into */
-	struct pkt *cstp_pkt;
-	struct pkt *dtls_pkt;
+	struct pkt *ssl_pkt;
+	struct pkt *udp_pkt;
 	struct pkt *tun_pkt;
 	int pkt_trailer; /* How many bytes after payload for encryption (ESP HMAC) */
 
@@ -564,8 +563,8 @@ struct openconnect_info {
 	int disable_ipv6;
 	int reconnect_timeout;
 	int reconnect_interval;
-	int dtls_attempt_period;
-	time_t new_dtls_started;
+	int udp_attempt_period;
+	time_t new_udp_started;
 #if defined(OPENCONNECT_OPENSSL)
 	SSL_CTX *dtls_ctx;
 	SSL *dtls_ssl;
@@ -576,12 +575,12 @@ struct openconnect_info {
 	   have fewer ifdefs and accessor macros for it. */
 	gnutls_session_t dtls_ssl;
 #endif
-	char *cstp_cipher; /* library-dependent description of TLS cipher */
+	char *tls_cipher; /* library-dependent description of TLS cipher */
 	char *dtls_cipher_desc; /* library-dependent description of DTLS cipher, cached for openconnect_get_dtls_cipher() */
 
-	int dtls_state;
-	int dtls_need_reconnect;
-	struct keepalive_info dtls_times;
+	int udp_state;
+	int udp_need_reconnect;
+	struct keepalive_info udp_times;
 	unsigned char dtls_session_id[32];
 	unsigned char dtls_secret[TLS_MASTER_KEY_SIZE];
 	unsigned char dtls_app_id[32];
@@ -594,7 +593,7 @@ struct openconnect_info {
 
 	char *vpnc_script;
 #ifndef _WIN32
-	int uid_csd_given;
+	int uid_trojan_given;
 	uid_t uid_csd;
 	gid_t gid_csd;
 	uid_t uid;
@@ -609,12 +608,12 @@ struct openconnect_info {
 	const char *banner;
 
 	struct oc_ip_info ip_info;
-	int cstp_basemtu; /* Returned by server */
+	int ssl_basemtu; /* Returned by server */
 	int idle_timeout; /* Returned by server */
 
 #ifdef _WIN32
-	long dtls_monitored, ssl_monitored, cmd_monitored, tun_monitored;
-	HANDLE dtls_event, ssl_event, cmd_event;
+	long udp_monitored, ssl_monitored, cmd_monitored, tun_monitored;
+	HANDLE udp_event, ssl_event, cmd_event;
 #else
 	int _select_nfds;
 	fd_set _select_rfds;
@@ -634,11 +633,11 @@ struct openconnect_info {
 	int tun_fd;
 #endif
 	int ssl_fd;
-	int dtls_fd;
+	int udp_fd;
 
-	int dtls_tos_current;
-	int dtls_pass_tos;
-	int dtls_tos_proto, dtls_tos_optname;
+	int udp_tos_current;
+	int udp_pass_tos;
+	int udp_tos_proto, udp_tos_optname;
 
 	int cmd_fd;
 	int cmd_fd_write;
@@ -648,19 +647,20 @@ struct openconnect_info {
 
 	struct pkt_q incoming_queue;
 	struct pkt_q outgoing_queue;
+	struct pkt_q outgoing_ssl_queue;	/* Queue for packets which must always be sent via SSL, not UDP (e.g. control packets) */
 	int max_qlen;
 	struct oc_stats stats;
 	openconnect_stats_vfn stats_handler;
 
 	socklen_t peer_addrlen;
 	struct sockaddr *peer_addr;
-	struct sockaddr *dtls_addr;
+	struct sockaddr *udp_addr;
 
-	int dtls_local_port;
+	int udp_local_port;
 
 	int req_compr; /* What we requested */
-	int cstp_compr; /* Accepted for CSTP */
-	int dtls_compr; /* Accepted for DTLS */
+	int ssl_compr; /* Accepted for SSL */
+	int udp_compr; /* Accepted for DTLS */
 
 	int is_dyndns; /* Attempt to redo DNS lookup on each CSTP reconnect */
 	char *useragent;
@@ -876,7 +876,7 @@ int os_write_tun(struct openconnect_info *vpninfo, struct pkt *pkt);
 intptr_t os_setup_tun(struct openconnect_info *vpninfo);
 
 /* {gnutls,openssl}-dtls.c */
-int start_dtls_handshake(struct openconnect_info *vpninfo, int dtls_fd);
+int start_dtls_handshake(struct openconnect_info *vpninfo, int udp_fd);
 int dtls_try_handshake(struct openconnect_info *vpninfo);
 unsigned dtls_set_mtu(struct openconnect_info *vpninfo, unsigned mtu);
 void dtls_ssl_free(struct openconnect_info *vpninfo);
@@ -885,7 +885,7 @@ void *establish_eap_ttls(struct openconnect_info *vpninfo);
 void destroy_eap_ttls(struct openconnect_info *vpninfo, void *sess);
 
 /* dtls.c */
-int dtls_setup(struct openconnect_info *vpninfo, int dtls_attempt_period);
+int dtls_setup(struct openconnect_info *vpninfo, int udp_attempt_period);
 int udp_tos_update(struct openconnect_info *vpninfo, struct pkt *pkt);
 int dtls_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable);
 void dtls_close(struct openconnect_info *vpninfo);
@@ -994,7 +994,7 @@ int load_pkcs11_certificate(struct openconnect_info *vpninfo);
 /* esp.c */
 int verify_packet_seqno(struct openconnect_info *vpninfo,
 			struct esp *esp, uint32_t seq);
-int esp_setup(struct openconnect_info *vpninfo, int dtls_attempt_period);
+int esp_setup(struct openconnect_info *vpninfo, int udp_attempt_period);
 int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable);
 void esp_close(struct openconnect_info *vpninfo);
 void esp_shutdown(struct openconnect_info *vpninfo);
@@ -1015,7 +1015,7 @@ int ssl_nonblock_read(struct openconnect_info *vpninfo, void *buf, int maxlen);
 int ssl_nonblock_write(struct openconnect_info *vpninfo, void *buf, int buflen);
 int openconnect_open_https(struct openconnect_info *vpninfo);
 void openconnect_close_https(struct openconnect_info *vpninfo, int final);
-int cstp_handshake(struct openconnect_info *vpninfo, unsigned init);
+int tls_handshake(struct openconnect_info *vpninfo, unsigned init);
 int get_cert_md5_fingerprint(struct openconnect_info *vpninfo, void *cert,
 			     char *buf);
 int openconnect_sha1(unsigned char *result, void *data, int len);
@@ -1088,7 +1088,7 @@ void release_pcsc_ctx(struct openconnect_info *info);
 
 /* auth.c */
 int cstp_obtain_cookie(struct openconnect_info *vpninfo);
-int set_csd_user(struct openconnect_info *vpninfo);
+int set_trojan_user(struct openconnect_info *vpninfo);
 
 /* auth-common.c */
 int xmlnode_is_named(xmlNode *xml_node, const char *name);

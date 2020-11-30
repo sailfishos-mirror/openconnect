@@ -235,7 +235,7 @@ static int valid_ift_auth_eap_exj1(unsigned char *bytes, int len)
 	return 1;
 }
 
-/* We behave like CSTP — create a linked list in vpninfo->cstp_options
+/* We behave like CSTP — create a linked list in vpninfo->proto_options
  * with the strings containing the information we got from the server,
  * and oc_ip_info contains const copies of those pointers. */
 
@@ -260,8 +260,8 @@ static const char *add_option(struct openconnect_info *vpninfo, const char *opt,
 		free(new);
 		return NULL;
 	}
-	new->next = vpninfo->cstp_options;
-	vpninfo->cstp_options = new;
+	new->next = vpninfo->proto_options;
+	vpninfo->proto_options = new;
 
 	return new->value;
 }
@@ -2566,7 +2566,7 @@ int pulse_connect(struct openconnect_info *vpninfo)
 		case 0x21202400:
 			ret = handle_esp_config_packet(vpninfo, bytes, ret);
 			if (ret) {
-				vpninfo->dtls_state = DTLS_DISABLED;
+				vpninfo->udp_state = UDP_DISABLED;
 				continue;
 			}
 
@@ -2602,8 +2602,8 @@ int pulse_connect(struct openconnect_info *vpninfo)
 	monitor_read_fd(vpninfo, ssl);
 	monitor_except_fd(vpninfo, ssl);
 
-	free(vpninfo->cstp_pkt);
-	vpninfo->cstp_pkt = NULL;
+	free(vpninfo->ssl_pkt);
+	vpninfo->ssl_pkt = NULL;
 
 	return ret;
 }
@@ -2628,11 +2628,11 @@ int pulse_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		   negotiated MTU. We reserve some extra space to
 		   handle that */
 		int receive_mtu = MAX(16384, vpninfo->deflate_pkt_size ? : vpninfo->ip_info.mtu);
-		struct pkt *pkt = vpninfo->cstp_pkt;
+		struct pkt *pkt = vpninfo->ssl_pkt;
 		int len, payload_len;
 
 		if (!pkt) {
-			pkt = vpninfo->cstp_pkt = malloc(sizeof(struct pkt) + receive_mtu);
+			pkt = vpninfo->ssl_pkt = malloc(sizeof(struct pkt) + receive_mtu);
 			if (!pkt) {
 				vpn_progress(vpninfo, PRG_ERR, _("Allocation failed\n"));
 				break;
@@ -2681,10 +2681,10 @@ int pulse_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			vpn_progress(vpninfo, PRG_TRACE,
 				     _("Received data packet of %d bytes\n"),
 				     payload_len);
-			dump_buf_hex(vpninfo, PRG_TRACE, '<', (void *)&vpninfo->cstp_pkt->pulse.vendor, len);
-			vpninfo->cstp_pkt->len = payload_len;
+			dump_buf_hex(vpninfo, PRG_TRACE, '<', (void *)&vpninfo->ssl_pkt->pulse.vendor, len);
+			vpninfo->ssl_pkt->len = payload_len;
 			queue_packet(&vpninfo->incoming_queue, pkt);
-			vpninfo->cstp_pkt = pkt = NULL;
+			vpninfo->ssl_pkt = pkt = NULL;
 			work_done = 1;
 			continue;
 		case 1:
@@ -2696,7 +2696,7 @@ int pulse_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			    load_be16(pkt->data + 0x28) != 0x40)
 				goto unknown_pkt;
 
-			dump_buf_hex(vpninfo, PRG_ERR, '<', (void *)&vpninfo->cstp_pkt->pulse.vendor, len);
+			dump_buf_hex(vpninfo, PRG_ERR, '<', (void *)&vpninfo->ssl_pkt->pulse.vendor, len);
 
 			ret = handle_esp_config_packet(vpninfo, (void *)&pkt->pulse.vendor, len);
 			if (ret) {
@@ -2705,9 +2705,9 @@ int pulse_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 				vpninfo->proto->udp_close(vpninfo);
 				continue;
 			}
-			vpninfo->cstp_pkt = NULL;
+			vpninfo->ssl_pkt = NULL;
 			pkt->len = load_be32(&pkt->pulse.len) - 16;
-			queue_packet(&vpninfo->oncp_control_queue, pkt);
+			queue_packet(&vpninfo->outgoing_ssl_queue, pkt);
 
 			print_esp_keys(vpninfo, _("new incoming"), &vpninfo->esp_in[vpninfo->current_esp_in]);
 			print_esp_keys(vpninfo, _("new outgoing"), &vpninfo->esp_out);
@@ -2718,7 +2718,7 @@ int pulse_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			 * now, abuse this to deal with the race condition in ESP setup — it looks
 			 * like the server doesn't process the ESP config until after we've sent
 			 * the probes, in some cases. */
-			if (vpninfo->dtls_state == DTLS_SLEEPING)
+			if (vpninfo->udp_state == UDP_SLEEPING)
 				vpninfo->proto->udp_send_probes(vpninfo);
 			break;
 
@@ -2726,7 +2726,7 @@ int pulse_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		unknown_pkt:
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("Unknown Pulse packet\n"));
-			dump_buf_hex(vpninfo, PRG_TRACE, '<', (void *)&vpninfo->cstp_pkt->pulse.vendor, len);
+			dump_buf_hex(vpninfo, PRG_TRACE, '<', (void *)&vpninfo->ssl_pkt->pulse.vendor, len);
 			continue;
 		}
 	}
@@ -2763,7 +2763,7 @@ int pulse_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 				vpninfo->quit_reason = "Pulse reconnect failed";
 				return ret;
 			}
-			vpninfo->dtls_need_reconnect = 1;
+			vpninfo->udp_need_reconnect = 1;
 			return 1;
 		} else if (!ret) {
 #if 0 /* Not for Pulse yet */
@@ -2820,7 +2820,7 @@ int pulse_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		if (vpninfo->ssl_times.rekey_method == REKEY_TUNNEL)
 			goto do_reconnect;
 		else if (vpninfo->ssl_times.rekey_method == REKEY_SSL) {
-			ret = cstp_handshake(vpninfo, 0);
+			ret = tls_handshake(vpninfo, 0);
 			if (ret) {
 				/* if we failed rehandshake try establishing a new-tunnel instead of failing */
 				vpn_progress(vpninfo, PRG_ERR, _("Rehandshake failed; attempting new-tunnel\n"));
@@ -2847,9 +2847,9 @@ int pulse_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 	do_dtls_reconnect:
 		/* succeeded, let's rekey DTLS, if it is not rekeying
 		 * itself. */
-		if (vpninfo->dtls_state > DTLS_SLEEPING &&
-		    vpninfo->dtls_times.rekey_method == REKEY_NONE) {
-			vpninfo->dtls_need_reconnect = 1;
+		if (vpninfo->udp_state > UDP_SLEEPING &&
+		    vpninfo->udp_times.rekey_method == REKEY_NONE) {
+			vpninfo->udp_need_reconnect = 1;
 		}
 
 		return 1;
@@ -2863,7 +2863,7 @@ int pulse_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 	case KA_KEEPALIVE:
 		/* No need to send an explicit keepalive
 		   if we have real data to send */
-		if (vpninfo->dtls_state != DTLS_CONNECTED &&
+		if (vpninfo->udp_state != UDP_CONNECTED &&
 		    vpninfo->outgoing_queue.head)
 			break;
 
@@ -2876,15 +2876,15 @@ int pulse_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		;
 	}
 #endif
-	if (vpninfo->dtls_state == DTLS_CONNECTING) {
+	if (vpninfo->udp_state == UDP_CONNECTING) {
 		/* We don't currently do anything to make the server start sending
 		 * data packets in ESP instead of over IF-T/TLS. Just go straight
 		 * to CONNECTED mode. */
-		vpninfo->dtls_state = DTLS_CONNECTED;
+		vpninfo->udp_state = UDP_CONNECTED;
 		work_done = 1;
 	}
 
-	vpninfo->current_ssl_pkt = dequeue_packet(&vpninfo->oncp_control_queue);
+	vpninfo->current_ssl_pkt = dequeue_packet(&vpninfo->outgoing_ssl_queue);
 	if (vpninfo->current_ssl_pkt) {
 		/* Anything on the control queue will have the rest of its
 		   header filled in already. */
@@ -2893,7 +2893,7 @@ int pulse_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 	}
 
 	/* Service outgoing packet queue, if no DTLS */
-	while (vpninfo->dtls_state != DTLS_CONNECTED &&
+	while (vpninfo->udp_state != UDP_CONNECTED &&
 	       (vpninfo->current_ssl_pkt = dequeue_packet(&vpninfo->outgoing_queue))) {
 		struct pkt *this = vpninfo->current_ssl_pkt;
 

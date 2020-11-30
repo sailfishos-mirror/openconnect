@@ -80,7 +80,7 @@ int tun_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			work_done = 1;
 
 			if (queue_packet(&vpninfo->outgoing_queue, out_pkt) +
-			    vpninfo->oncp_control_queue.count >= vpninfo->max_qlen) {
+			    vpninfo->outgoing_ssl_queue.count >= vpninfo->max_qlen) {
 				out_pkt = NULL;
 				unmonitor_read_fd(vpninfo, tun);
 				break;
@@ -88,7 +88,7 @@ int tun_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			out_pkt = NULL;
 		}
 		vpninfo->tun_pkt = out_pkt;
-	} else if (vpninfo->outgoing_queue.count + vpninfo->oncp_control_queue.count < vpninfo->max_qlen) {
+	} else if (vpninfo->outgoing_queue.count + vpninfo->outgoing_ssl_queue.count < vpninfo->max_qlen) {
 		monitor_read_fd(vpninfo, tun);
 	}
 
@@ -220,7 +220,7 @@ int openconnect_mainloop(struct openconnect_info *vpninfo,
 			}
 		}
 
-		if (vpninfo->dtls_state > DTLS_DISABLED) {
+		if (vpninfo->udp_state > UDP_DISABLED) {
 			ret = vpninfo->proto->udp_mainloop(vpninfo, &timeout, udp_r);
 			if (vpninfo->quit_reason)
 				break;
@@ -274,9 +274,9 @@ int openconnect_mainloop(struct openconnect_info *vpninfo,
 				/* close all connections and wait for the user to call
 				   openconnect_mainloop() again */
 				openconnect_close_https(vpninfo, 0);
-				if (vpninfo->dtls_state > DTLS_DISABLED) {
+				if (vpninfo->udp_state > UDP_DISABLED) {
 					vpninfo->proto->udp_close(vpninfo);
-					vpninfo->new_dtls_started = 0;
+					vpninfo->new_udp_started = 0;
 				}
 
 				vpninfo->got_pause_cmd = 0;
@@ -292,9 +292,9 @@ int openconnect_mainloop(struct openconnect_info *vpninfo,
 			     _("No work to do; sleeping for %d ms...\n"), timeout);
 
 #ifdef _WIN32
-		if (vpninfo->dtls_monitored) {
-			WSAEventSelect(vpninfo->dtls_fd, vpninfo->dtls_event, vpninfo->dtls_monitored);
-			events[nr_events++] = vpninfo->dtls_event;
+		if (vpninfo->udp_monitored) {
+			WSAEventSelect(vpninfo->udp_fd, vpninfo->udp_event, vpninfo->udp_monitored);
+			events[nr_events++] = vpninfo->udp_event;
 		}
 		if (vpninfo->ssl_monitored) {
 			WSAEventSelect(vpninfo->ssl_fd, vpninfo->ssl_event, vpninfo->ssl_monitored);
@@ -331,8 +331,8 @@ int openconnect_mainloop(struct openconnect_info *vpninfo,
 
 		if (vpninfo->tun_fd >= 0)
 			tun_r = FD_ISSET(vpninfo->tun_fd, &rfds);
-		if (vpninfo->dtls_fd >= 0)
-			udp_r = FD_ISSET(vpninfo->dtls_fd, &rfds);
+		if (vpninfo->udp_fd >= 0)
+			udp_r = FD_ISSET(vpninfo->udp_fd, &rfds);
 		if (vpninfo->ssl_fd >= 0)
 			tcp_r = FD_ISSET(vpninfo->ssl_fd, &rfds);
 #endif

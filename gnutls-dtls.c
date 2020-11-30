@@ -359,7 +359,7 @@ static int check_client_hello_random(gnutls_session_t ttls_sess, unsigned int ty
 	return 0;
 }
 
-int start_dtls_handshake(struct openconnect_info *vpninfo, int dtls_fd)
+int start_dtls_handshake(struct openconnect_info *vpninfo, int udp_fd)
 {
 	gnutls_session_t dtls_ssl;
 	int err, ret;
@@ -373,7 +373,7 @@ int start_dtls_handshake(struct openconnect_info *vpninfo, int dtls_fd)
 	}
 	gnutls_session_set_ptr(dtls_ssl, (void *) vpninfo);
 	gnutls_transport_set_ptr(dtls_ssl,
-				 (gnutls_transport_ptr_t)(intptr_t)dtls_fd);
+				 (gnutls_transport_ptr_t)(intptr_t)udp_fd);
 
 	if (!strcmp(vpninfo->dtls_cipher, "PSK-NEGOTIATE"))
 		ret = start_dtls_psk_handshake(vpninfo, dtls_ssl);
@@ -382,7 +382,7 @@ int start_dtls_handshake(struct openconnect_info *vpninfo, int dtls_fd)
 
 	if (ret) {
 		if (ret != -EAGAIN)
-			vpninfo->dtls_attempt_period = 0;
+			vpninfo->udp_attempt_period = 0;
 		gnutls_deinit(dtls_ssl);
 		return ret;
 	}
@@ -406,7 +406,7 @@ int dtls_try_handshake(struct openconnect_info *vpninfo)
 		if (!strcmp(vpninfo->dtls_cipher, "PSK-NEGOTIATE")) {
 			/* For PSK-NEGOTIATE, we have to determine the tunnel MTU
 			 * for ourselves based on the base MTU */
-			int data_mtu = vpninfo->cstp_basemtu;
+			int data_mtu = vpninfo->ssl_basemtu;
 			if (vpninfo->peer_addr->sa_family == IPPROTO_IPV6)
 				data_mtu -= 40; /* IPv6 header */
 			else
@@ -415,7 +415,7 @@ int dtls_try_handshake(struct openconnect_info *vpninfo)
 			if (data_mtu < 0) {
 				vpn_progress(vpninfo, PRG_ERR,
 					     _("Peer MTU %d too small to allow DTLS\n"),
-					     vpninfo->cstp_basemtu);
+					     vpninfo->ssl_basemtu);
 				goto nodtls;
 			}
 			/* Reduce it by one because that's the payload header *inside*
@@ -436,8 +436,8 @@ int dtls_try_handshake(struct openconnect_info *vpninfo)
 					     _("DTLS session resume failed; possible MITM attack. Disabling DTLS.\n"));
 			nodtls:
 				dtls_close(vpninfo);
-				vpninfo->dtls_attempt_period = 0;
-				vpninfo->dtls_state = DTLS_DISABLED;
+				vpninfo->udp_attempt_period = 0;
+				vpninfo->udp_state = UDP_DISABLED;
 				return -EIO;
 			}
 
@@ -452,7 +452,7 @@ int dtls_try_handshake(struct openconnect_info *vpninfo)
 			}
 		}
 
-		vpninfo->dtls_state = DTLS_CONNECTED;
+		vpninfo->udp_state = UDP_CONNECTED;
 		str = get_gnutls_cipher(vpninfo->dtls_ssl);
 		if (str) {
 			const char *c;
@@ -467,8 +467,8 @@ int dtls_try_handshake(struct openconnect_info *vpninfo)
 			}
 		}
 
-		vpninfo->dtls_times.last_rekey = vpninfo->dtls_times.last_rx = 
-			vpninfo->dtls_times.last_tx = time(NULL);
+		vpninfo->udp_times.last_rekey = vpninfo->udp_times.last_rx = 
+			vpninfo->udp_times.last_tx = time(NULL);
 
 		dtls_detect_mtu(vpninfo);
 		/* XXX: For OpenSSL we explicitly prevent retransmits here. */
@@ -476,7 +476,7 @@ int dtls_try_handshake(struct openconnect_info *vpninfo)
 	}
 
 	if (err == GNUTLS_E_AGAIN || err == GNUTLS_E_INTERRUPTED) {
-		if (time(NULL) < vpninfo->new_dtls_started + 12)
+		if (time(NULL) < vpninfo->new_udp_started + 12)
 			return 0;
 		vpn_progress(vpninfo, PRG_DEBUG, _("DTLS handshake timed out\n"));
 	}
@@ -489,8 +489,8 @@ int dtls_try_handshake(struct openconnect_info *vpninfo)
  error:
 	dtls_close(vpninfo);
 
-	vpninfo->dtls_state = DTLS_SLEEPING;
-	time(&vpninfo->new_dtls_started);
+	vpninfo->udp_state = UDP_SLEEPING;
+	time(&vpninfo->new_udp_started);
 	return -EINVAL;
 }
 

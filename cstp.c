@@ -253,10 +253,10 @@ static int start_cstp_connection(struct openconnect_info *vpninfo)
 	int i;
 	int dtls_secret_set = 0;
 	int retried = 0, sessid_found = 0;
-	struct oc_vpn_option **next_dtls_option = &vpninfo->dtls_options;
-	struct oc_vpn_option **next_cstp_option = &vpninfo->cstp_options;
-	struct oc_vpn_option *old_cstp_opts = vpninfo->cstp_options;
-	struct oc_vpn_option *old_dtls_opts = vpninfo->dtls_options;
+	struct oc_vpn_option **next_dtls_option = &vpninfo->udp_options;
+	struct oc_vpn_option **next_cstp_option = &vpninfo->proto_options;
+	struct oc_vpn_option *old_cstp_opts = vpninfo->proto_options;
+	struct oc_vpn_option *old_dtls_opts = vpninfo->udp_options;
 	const char *old_addr = vpninfo->ip_info.addr;
 	const char *old_netmask = vpninfo->ip_info.netmask;
 	const char *old_addr6 = vpninfo->ip_info.addr6;
@@ -266,7 +266,7 @@ static int start_cstp_connection(struct openconnect_info *vpninfo)
 	/* Clear old options which will be overwritten */
 	vpninfo->ip_info.addr = vpninfo->ip_info.netmask = NULL;
 	vpninfo->ip_info.addr6 = vpninfo->ip_info.netmask6 = NULL;
-	vpninfo->cstp_options = vpninfo->dtls_options = NULL;
+	vpninfo->proto_options = vpninfo->udp_options = NULL;
 	vpninfo->ip_info.domain = vpninfo->ip_info.proxy_pac = NULL;
 	vpninfo->banner = NULL;
 
@@ -276,7 +276,7 @@ static int start_cstp_connection(struct openconnect_info *vpninfo)
 
  retry:
 	calculate_mtu(vpninfo, &base_mtu, &mtu);
-	vpninfo->cstp_basemtu = base_mtu;
+	vpninfo->ssl_basemtu = base_mtu;
 
 	reqbuf = buf_alloc();
 	buf_append(reqbuf, "CONNECT /CSCOSSLC/tunnel HTTP/1.1\r\n");
@@ -310,7 +310,7 @@ static int start_cstp_connection(struct openconnect_info *vpninfo)
 			buf_append(reqbuf, "X-CSTP-Address: %s\r\n", old_addr6);
 	}
 #ifdef HAVE_DTLS
-	if (vpninfo->dtls_state != DTLS_DISABLED) {
+	if (vpninfo->udp_state != UDP_DISABLED) {
 		/* The X-DTLS-Master-Secret is only used for the legacy protocol negotation
 		 * which required the client to send explicitly the secret. In the PSK-NEGOTIATE
 		 * method, the master secret is implicitly agreed on */
@@ -414,7 +414,7 @@ static int start_cstp_connection(struct openconnect_info *vpninfo)
 	vpn_progress(vpninfo, PRG_INFO, _("Got CONNECT response: %s\n"), buf);
 
 	/* We may have advertised it, but we only do it if the server agrees */
-	vpninfo->cstp_compr = vpninfo->dtls_compr = 0;
+	vpninfo->ssl_compr = vpninfo->udp_compr = 0;
 	mtu = 0;
 
 	while ((i = vpninfo->ssl_gets(vpninfo, buf, sizeof(buf)))) {
@@ -478,14 +478,14 @@ static int start_cstp_connection(struct openconnect_info *vpninfo)
 					vpn_progress(vpninfo, PRG_ERR,
 					     _("X-DTLS-Session-ID not 64 characters; is: \"%s\"\n"),
 					     	colon);
-					vpninfo->dtls_attempt_period = 0;
+					vpninfo->udp_attempt_period = 0;
 					return -EINVAL;
 				}
 
 				sessid_found = 1;
 
-				if (dtls_sessid_changed && vpninfo->dtls_state > DTLS_SLEEPING)
-					vpninfo->dtls_need_reconnect = 1;
+				if (dtls_sessid_changed && vpninfo->udp_state > UDP_SLEEPING)
+					vpninfo->udp_need_reconnect = 1;
 			} else if (!strcmp(buf + i, "App-ID")) {
 				int dtls_appid_changed = 0;
 				int vsize;
@@ -495,20 +495,20 @@ static int start_cstp_connection(struct openconnect_info *vpninfo)
 					vpn_progress(vpninfo, PRG_ERR,
 					     _("X-DTLS-Session-ID is invalid; is: \"%s\"\n"),
 					     	colon);
-					vpninfo->dtls_attempt_period = 0;
+					vpninfo->udp_attempt_period = 0;
 					return -EINVAL;
 				}
 
 				vpninfo->dtls_app_id_size = vsize;
 				sessid_found = 1;
 
-				if (dtls_appid_changed && vpninfo->dtls_state > DTLS_SLEEPING)
-					vpninfo->dtls_need_reconnect = 1;
+				if (dtls_appid_changed && vpninfo->udp_state > UDP_SLEEPING)
+					vpninfo->udp_need_reconnect = 1;
 			} else if (!strcmp(buf + i, "Content-Encoding")) {
 				if (!strcmp(colon, "lzs"))
-					vpninfo->dtls_compr = COMPR_LZS;
+					vpninfo->udp_compr = COMPR_LZS;
 				else if (!strcmp(colon, "oc-lz4"))
-					vpninfo->dtls_compr = COMPR_LZ4;
+					vpninfo->udp_compr = COMPR_LZ4;
 				else {
 					vpn_progress(vpninfo, PRG_ERR,
 						     _("Unknown DTLS-Content-Encoding %s\n"),
@@ -546,11 +546,11 @@ static int start_cstp_connection(struct openconnect_info *vpninfo)
 				vpninfo->ssl_times.rekey_method = REKEY_NONE;
 		} else if (!strcmp(buf + 7, "Content-Encoding")) {
 			if (!strcmp(colon, "deflate"))
-				vpninfo->cstp_compr = COMPR_DEFLATE;
+				vpninfo->ssl_compr = COMPR_DEFLATE;
 			else if (!strcmp(colon, "lzs"))
-				vpninfo->cstp_compr = COMPR_LZS;
+				vpninfo->ssl_compr = COMPR_LZS;
 			else if (!strcmp(colon, "oc-lz4"))
-				vpninfo->cstp_compr = COMPR_LZ4;
+				vpninfo->ssl_compr = COMPR_LZ4;
 			else {
 				vpn_progress(vpninfo, PRG_ERR,
 					     _("Unknown CSTP-Content-Encoding %s\n"),
@@ -558,7 +558,7 @@ static int start_cstp_connection(struct openconnect_info *vpninfo)
 				return -EINVAL;
 			}
 		} else if (!strcmp(buf + 7, "Base-MTU")) {
-			vpninfo->cstp_basemtu = atol(colon);
+			vpninfo->ssl_basemtu = atol(colon);
 		} else if (!strcmp(buf + 7, "MTU")) {
 			int cstpmtu = atol(colon);
 			if (cstpmtu > mtu)
@@ -662,7 +662,7 @@ static int start_cstp_connection(struct openconnect_info *vpninfo)
 	monitor_except_fd(vpninfo, ssl);
 
 	if (!sessid_found)
-		vpninfo->dtls_attempt_period = 0;
+		vpninfo->udp_attempt_period = 0;
 
 	if (vpninfo->ssl_times.rekey <= 0)
 		vpninfo->ssl_times.rekey_method = REKEY_NONE;
@@ -682,11 +682,11 @@ int cstp_connect(struct openconnect_info *vpninfo)
 	/* This needs to be done before openconnect_setup_dtls() because it's
 	   sent with the CSTP CONNECT handshake. Even if we don't end up doing
 	   DTLS. */
-	if (vpninfo->dtls_state == DTLS_NOSECRET) {
+	if (vpninfo->udp_state == UDP_NOSECRET) {
 		if (openconnect_random(vpninfo->dtls_secret, sizeof(vpninfo->dtls_secret)))
 			return -EINVAL;
 		/* The application will later call openconnect_setup_dtls() */
-		vpninfo->dtls_state = DTLS_SECRET;
+		vpninfo->udp_state = UDP_SECRET;
 	}
 
 	ret = openconnect_open_https(vpninfo);
@@ -700,7 +700,7 @@ int cstp_connect(struct openconnect_info *vpninfo)
 	/* Allow for the theoretical possibility of having *different*
 	 * compression type for CSTP and DTLS. Although all we've seen
 	 * in practice is that one is enabled and the other isn't. */
-	compr_type = vpninfo->cstp_compr | vpninfo->dtls_compr;
+	compr_type = vpninfo->ssl_compr | vpninfo->udp_compr;
 
 	/* This will definitely be smaller than zlib's */
 	if (compr_type & (COMPR_LZS|COMPR_LZ4))
@@ -752,7 +752,7 @@ int cstp_connect(struct openconnect_info *vpninfo)
 
 static int cstp_reconnect(struct openconnect_info *vpninfo)
 {
-	if (vpninfo->cstp_compr == COMPR_DEFLATE) {
+	if (vpninfo->ssl_compr == COMPR_DEFLATE) {
 		/* Requeue the original packet that was deflated */
 		if (vpninfo->current_ssl_pkt == vpninfo->deflate_pkt) {
 			vpninfo->current_ssl_pkt = NULL;
@@ -865,7 +865,7 @@ int compress_packet(struct openconnect_info *vpninfo, int compr_type, struct pkt
 			vpn_progress(vpninfo, PRG_ERR, _("deflate failed %d\n"), ret);
 			/* Things are going to go horribly wrong if we try to do any
 			   more compression. Give up entirely. */
-			vpninfo->cstp_compr = 0;
+			vpninfo->ssl_compr = 0;
 			return -EIO;
 		}
 
@@ -932,15 +932,15 @@ int cstp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		int receive_mtu = MAX(16384, vpninfo->deflate_pkt_size ? : vpninfo->ip_info.mtu);
 		int len, payload_len;
 
-		if (!vpninfo->cstp_pkt) {
-			vpninfo->cstp_pkt = malloc(sizeof(struct pkt) + receive_mtu);
-			if (!vpninfo->cstp_pkt) {
+		if (!vpninfo->ssl_pkt) {
+			vpninfo->ssl_pkt = malloc(sizeof(struct pkt) + receive_mtu);
+			if (!vpninfo->ssl_pkt) {
 				vpn_progress(vpninfo, PRG_ERR, _("Allocation failed\n"));
 				break;
 			}
 		}
 
-		len = ssl_nonblock_read(vpninfo, vpninfo->cstp_pkt->cstp.hdr, receive_mtu + 8);
+		len = ssl_nonblock_read(vpninfo, vpninfo->ssl_pkt->cstp.hdr, receive_mtu + 8);
 		if (!len)
 			break;
 		if (len < 0)
@@ -951,26 +951,26 @@ int cstp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			return 1;
 		}
 
-		if (vpninfo->cstp_pkt->cstp.hdr[0] != 'S' || vpninfo->cstp_pkt->cstp.hdr[1] != 'T' ||
-		    vpninfo->cstp_pkt->cstp.hdr[2] != 'F' || vpninfo->cstp_pkt->cstp.hdr[3] != 1 ||
-		    vpninfo->cstp_pkt->cstp.hdr[7])
+		if (vpninfo->ssl_pkt->cstp.hdr[0] != 'S' || vpninfo->ssl_pkt->cstp.hdr[1] != 'T' ||
+		    vpninfo->ssl_pkt->cstp.hdr[2] != 'F' || vpninfo->ssl_pkt->cstp.hdr[3] != 1 ||
+		    vpninfo->ssl_pkt->cstp.hdr[7])
 			goto unknown_pkt;
 
-		payload_len = load_be16(vpninfo->cstp_pkt->cstp.hdr + 4);
+		payload_len = load_be16(vpninfo->ssl_pkt->cstp.hdr + 4);
 		if (len != 8 + payload_len) {
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("Unexpected packet length. SSL_read returned %d but packet is\n"),
 				     len);
 			vpn_progress(vpninfo, PRG_ERR,
 				     "%02x %02x %02x %02x %02x %02x %02x %02x\n",
-				     vpninfo->cstp_pkt->cstp.hdr[0], vpninfo->cstp_pkt->cstp.hdr[1],
-				     vpninfo->cstp_pkt->cstp.hdr[2], vpninfo->cstp_pkt->cstp.hdr[3],
-				     vpninfo->cstp_pkt->cstp.hdr[4], vpninfo->cstp_pkt->cstp.hdr[5],
-				     vpninfo->cstp_pkt->cstp.hdr[6], vpninfo->cstp_pkt->cstp.hdr[7]);
+				     vpninfo->ssl_pkt->cstp.hdr[0], vpninfo->ssl_pkt->cstp.hdr[1],
+				     vpninfo->ssl_pkt->cstp.hdr[2], vpninfo->ssl_pkt->cstp.hdr[3],
+				     vpninfo->ssl_pkt->cstp.hdr[4], vpninfo->ssl_pkt->cstp.hdr[5],
+				     vpninfo->ssl_pkt->cstp.hdr[6], vpninfo->ssl_pkt->cstp.hdr[7]);
 			continue;
 		}
 		vpninfo->ssl_times.last_rx = time(NULL);
-		switch (vpninfo->cstp_pkt->cstp.hdr[6]) {
+		switch (vpninfo->ssl_pkt->cstp.hdr[6]) {
 		case AC_PKT_DPD_OUT:
 			vpn_progress(vpninfo, PRG_DEBUG,
 				     _("Got CSTP DPD request\n"));
@@ -991,9 +991,9 @@ int cstp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			vpn_progress(vpninfo, PRG_TRACE,
 				     _("Received uncompressed data packet of %d bytes\n"),
 				     payload_len);
-			vpninfo->cstp_pkt->len = payload_len;
-			queue_packet(&vpninfo->incoming_queue, vpninfo->cstp_pkt);
-			vpninfo->cstp_pkt = NULL;
+			vpninfo->ssl_pkt->len = payload_len;
+			queue_packet(&vpninfo->incoming_queue, vpninfo->ssl_pkt);
+			vpninfo->ssl_pkt = NULL;
 			work_done = 1;
 			continue;
 
@@ -1001,13 +1001,13 @@ int cstp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			int i;
 			if (payload_len >= 2) {
 				for (i = 1; i < payload_len; i++) {
-					if (!isprint(vpninfo->cstp_pkt->data[i]))
-						vpninfo->cstp_pkt->data[i] = '.';
+					if (!isprint(vpninfo->ssl_pkt->data[i]))
+						vpninfo->ssl_pkt->data[i] = '.';
 				}
-				vpninfo->cstp_pkt->data[payload_len] = 0;
+				vpninfo->ssl_pkt->data[payload_len] = 0;
 				vpn_progress(vpninfo, PRG_ERR,
 					     _("Received server disconnect: %02x '%s'\n"),
-					     vpninfo->cstp_pkt->data[0], vpninfo->cstp_pkt->data + 1);
+					     vpninfo->ssl_pkt->data[0], vpninfo->ssl_pkt->data + 1);
 			} else {
 				vpn_progress(vpninfo, PRG_ERR, _("Received server disconnect\n"));
 			}
@@ -1015,13 +1015,13 @@ int cstp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			return -EPIPE;
 		}
 		case AC_PKT_COMPRESSED:
-			if (!vpninfo->cstp_compr) {
+			if (!vpninfo->ssl_compr) {
 				vpn_progress(vpninfo, PRG_ERR,
 					     _("Compressed packet received in !deflate mode\n"));
 				goto unknown_pkt;
 			}
-			decompress_and_queue_packet(vpninfo, vpninfo->cstp_compr,
-						    vpninfo->cstp_pkt->data, payload_len);
+			decompress_and_queue_packet(vpninfo, vpninfo->ssl_compr,
+						    vpninfo->ssl_pkt->data, payload_len);
 			work_done = 1;
 			continue;
 
@@ -1034,10 +1034,10 @@ int cstp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 	unknown_pkt:
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Unknown packet %02x %02x %02x %02x %02x %02x %02x %02x\n"),
-			     vpninfo->cstp_pkt->cstp.hdr[0], vpninfo->cstp_pkt->cstp.hdr[1],
-			     vpninfo->cstp_pkt->cstp.hdr[2], vpninfo->cstp_pkt->cstp.hdr[3],
-			     vpninfo->cstp_pkt->cstp.hdr[4], vpninfo->cstp_pkt->cstp.hdr[5],
-			     vpninfo->cstp_pkt->cstp.hdr[6], vpninfo->cstp_pkt->cstp.hdr[7]);
+			     vpninfo->ssl_pkt->cstp.hdr[0], vpninfo->ssl_pkt->cstp.hdr[1],
+			     vpninfo->ssl_pkt->cstp.hdr[2], vpninfo->ssl_pkt->cstp.hdr[3],
+			     vpninfo->ssl_pkt->cstp.hdr[4], vpninfo->ssl_pkt->cstp.hdr[5],
+			     vpninfo->ssl_pkt->cstp.hdr[6], vpninfo->ssl_pkt->cstp.hdr[7]);
 		vpninfo->quit_reason = "Unknown packet received";
 		return 1;
 	}
@@ -1108,7 +1108,7 @@ int cstp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		if (vpninfo->ssl_times.rekey_method == REKEY_TUNNEL)
 			goto do_reconnect;
 		else if (vpninfo->ssl_times.rekey_method == REKEY_SSL) {
-			ret = cstp_handshake(vpninfo, 0);
+			ret = tls_handshake(vpninfo, 0);
 			if (ret) {
 				/* if we failed rehandshake try establishing a new-tunnel instead of failing */
 				vpn_progress(vpninfo, PRG_ERR, _("Rehandshake failed; attempting new-tunnel\n"));
@@ -1134,9 +1134,9 @@ int cstp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 	do_dtls_reconnect:
 		/* succeeded, let's rekey DTLS, if it is not rekeying
 		 * itself. */
-		if (vpninfo->dtls_state > DTLS_SLEEPING &&
-		    vpninfo->dtls_times.rekey_method == REKEY_NONE) {
-			vpninfo->dtls_need_reconnect = 1;
+		if (vpninfo->udp_state > UDP_SLEEPING &&
+		    vpninfo->udp_times.rekey_method == REKEY_NONE) {
+			vpninfo->udp_need_reconnect = 1;
 		}
 
 		return 1;
@@ -1150,7 +1150,7 @@ int cstp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 	case KA_KEEPALIVE:
 		/* No need to send an explicit keepalive
 		   if we have real data to send */
-		if (vpninfo->dtls_state != DTLS_CONNECTED &&
+		if (vpninfo->udp_state != UDP_CONNECTED &&
 		    vpninfo->outgoing_queue.head)
 			break;
 
@@ -1164,12 +1164,12 @@ int cstp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 	}
 
 	/* Service outgoing packet queue, if no DTLS */
-	while (vpninfo->dtls_state != DTLS_CONNECTED &&
+	while (vpninfo->udp_state != UDP_CONNECTED &&
 	       (vpninfo->current_ssl_pkt = dequeue_packet(&vpninfo->outgoing_queue))) {
 		struct pkt *this = vpninfo->current_ssl_pkt;
 
-		if (vpninfo->cstp_compr) {
-			ret = compress_packet(vpninfo, vpninfo->cstp_compr, this);
+		if (vpninfo->ssl_compr) {
+			ret = compress_packet(vpninfo, vpninfo->ssl_compr, this);
 			if (ret < 0)
 				goto uncompr;
 

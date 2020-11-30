@@ -71,10 +71,10 @@ struct openconnect_info *openconnect_vpninfo_new(const char *useragent,
 #endif
 	init_pkt_queue(&vpninfo->incoming_queue);
 	init_pkt_queue(&vpninfo->outgoing_queue);
-	init_pkt_queue(&vpninfo->oncp_control_queue);
-	vpninfo->dtls_tos_current = 0;
-	vpninfo->dtls_pass_tos = 0;
-	vpninfo->ssl_fd = vpninfo->dtls_fd = -1;
+	init_pkt_queue(&vpninfo->outgoing_ssl_queue);
+	vpninfo->udp_tos_current = 0;
+	vpninfo->udp_pass_tos = 0;
+	vpninfo->ssl_fd = vpninfo->udp_fd = -1;
 	vpninfo->cmd_fd = vpninfo->cmd_fd_write = -1;
 	vpninfo->tncc_fd = -1;
 	vpninfo->cert_expire_warning = 60 * 86400;
@@ -238,7 +238,7 @@ int openconnect_set_protocol(struct openconnect_info *vpninfo, const char *proto
 			continue;
 		vpninfo->proto = p;
 		if (!p->udp_setup)
-			vpninfo->dtls_state = DTLS_DISABLED;
+			vpninfo->udp_state = UDP_DISABLED;
 
 		return 0;
 	}
@@ -249,7 +249,7 @@ int openconnect_set_protocol(struct openconnect_info *vpninfo, const char *proto
 
 void openconnect_set_pass_tos(struct openconnect_info *vpninfo, int enable)
 {
-	vpninfo->dtls_pass_tos = enable;
+	vpninfo->udp_pass_tos = enable;
 }
 
 void openconnect_set_loglevel(struct openconnect_info *vpninfo, int level)
@@ -365,16 +365,16 @@ void openconnect_vpninfo_free(struct openconnect_info *vpninfo)
 		CloseHandle(vpninfo->cmd_event);
 	if (vpninfo->ssl_event)
 		CloseHandle(vpninfo->ssl_event);
-	if (vpninfo->dtls_event)
-		CloseHandle(vpninfo->dtls_event);
+	if (vpninfo->udp_event)
+		CloseHandle(vpninfo->udp_event);
 #endif
 	free(vpninfo->peer_addr);
 	free(vpninfo->ip_info.gateway_addr);
-	free_optlist(vpninfo->csd_env);
+	free_optlist(vpninfo->trojan_env);
 	free_optlist(vpninfo->script_env);
 	free_optlist(vpninfo->cookies);
-	free_optlist(vpninfo->cstp_options);
-	free_optlist(vpninfo->dtls_options);
+	free_optlist(vpninfo->proto_options);
+	free_optlist(vpninfo->udp_options);
 	free_split_routes(vpninfo);
 	free(vpninfo->hostname);
 	free(vpninfo->unique_hostname);
@@ -392,7 +392,7 @@ void openconnect_vpninfo_free(struct openconnect_info *vpninfo)
 	free(vpninfo->dtls_cipher);
 	free(vpninfo->peer_cert_hash);
 #if defined(OPENCONNECT_OPENSSL)
-	free(vpninfo->cstp_cipher);
+	free(vpninfo->tls_cipher);
 #if defined(HAVE_BIO_METH_FREE)
 	if (vpninfo->ttls_bio_meth)
 		BIO_meth_free(vpninfo->ttls_bio_meth);
@@ -401,16 +401,16 @@ void openconnect_vpninfo_free(struct openconnect_info *vpninfo)
 	free(vpninfo->dtls_cipher_desc);
 #endif
 #elif defined(OPENCONNECT_GNUTLS)
-	gnutls_free(vpninfo->cstp_cipher);
+	gnutls_free(vpninfo->tls_cipher);
 #ifdef HAVE_DTLS
 	gnutls_free(vpninfo->dtls_cipher_desc);
 #endif
 #endif
-	free(vpninfo->dtls_addr);
+	free(vpninfo->udp_addr);
 
-	if (vpninfo->csd_scriptname) {
-		unlink(vpninfo->csd_scriptname);
-		free(vpninfo->csd_scriptname);
+	if (vpninfo->trojan_scriptname) {
+		unlink(vpninfo->trojan_scriptname);
+		free(vpninfo->trojan_scriptname);
 	}
 	free(vpninfo->mobile_platform_version);
 	free(vpninfo->mobile_device_type);
@@ -488,8 +488,8 @@ void openconnect_vpninfo_free(struct openconnect_info *vpninfo)
 
 	free(vpninfo->deflate_pkt);
 	free(vpninfo->tun_pkt);
-	free(vpninfo->dtls_pkt);
-	free(vpninfo->cstp_pkt);
+	free(vpninfo->udp_pkt);
+	free(vpninfo->ssl_pkt);
 	free(vpninfo->bearer_token);
 	free(vpninfo);
 }
@@ -584,9 +584,9 @@ void openconnect_set_dpd(struct openconnect_info *vpninfo, int min_seconds)
 {
 	/* Make sure (ka->dpd / 2), our computed midway point, isn't 0 */
 	if (!min_seconds || min_seconds >= 2)
-		vpninfo->dtls_times.dpd = vpninfo->ssl_times.dpd = min_seconds;
+		vpninfo->udp_times.dpd = vpninfo->ssl_times.dpd = min_seconds;
 	else if (min_seconds == 1)
-		vpninfo->dtls_times.dpd = vpninfo->ssl_times.dpd = 2;
+		vpninfo->udp_times.dpd = vpninfo->ssl_times.dpd = 2;
 }
 
 void openconnect_set_trojan_interval(struct openconnect_info *vpninfo, int seconds)
@@ -601,15 +601,15 @@ int openconnect_get_idle_timeout(struct openconnect_info *vpninfo)
 
 int openconnect_get_ip_info(struct openconnect_info *vpninfo,
 			    const struct oc_ip_info **info,
-			    const struct oc_vpn_option **cstp_options,
-			    const struct oc_vpn_option **dtls_options)
+			    const struct oc_vpn_option **proto_options,
+			    const struct oc_vpn_option **udp_options)
 {
 	if (info)
 		*info = &vpninfo->ip_info;
-	if (cstp_options)
-		*cstp_options = vpninfo->cstp_options;
-	if (dtls_options)
-		*dtls_options = vpninfo->dtls_options;
+	if (proto_options)
+		*proto_options = vpninfo->proto_options;
+	if (udp_options)
+		*udp_options = vpninfo->udp_options;
 	return 0;
 }
 
@@ -618,9 +618,9 @@ int openconnect_setup_csd(struct openconnect_info *vpninfo, uid_t uid,
 {
 #ifndef _WIN32
 	vpninfo->uid_csd = uid;
-	vpninfo->uid_csd_given = silent ? 2 : 1;
+	vpninfo->uid_trojan_given = silent ? 2 : 1;
 #endif
-	STRDUP(vpninfo->csd_wrapper, wrapper);
+	STRDUP(vpninfo->trojan_wrapper, wrapper);
 
 	return 0;
 }
@@ -683,7 +683,7 @@ void openconnect_reset_ssl(struct openconnect_info *vpninfo)
 
 	free(vpninfo->peer_addr);
 	vpninfo->peer_addr = NULL;
-	vpninfo->dtls_tos_optname = 0;
+	vpninfo->udp_tos_optname = 0;
 	free(vpninfo->ip_info.gateway_addr);
 	vpninfo->ip_info.gateway_addr = NULL;
 
@@ -1034,23 +1034,23 @@ static const char *compr_name_map[] = {
 
 const char *openconnect_get_cstp_compression(struct openconnect_info * vpninfo)
 {
-	if (vpninfo->cstp_compr <= 0 || vpninfo->cstp_compr > COMPR_MAX)
+	if (vpninfo->ssl_compr <= 0 || vpninfo->ssl_compr > COMPR_MAX)
 		return NULL;
 
-	return compr_name_map[vpninfo->cstp_compr];
+	return compr_name_map[vpninfo->ssl_compr];
 }
 
 const char *openconnect_get_dtls_compression(struct openconnect_info * vpninfo)
 {
-	if (vpninfo->dtls_compr <= 0 || vpninfo->dtls_compr > COMPR_MAX)
+	if (vpninfo->udp_compr <= 0 || vpninfo->udp_compr > COMPR_MAX)
 		return NULL;
 
-	return compr_name_map[vpninfo->dtls_compr];
+	return compr_name_map[vpninfo->udp_compr];
 }
 
 const char *openconnect_get_dtls_cipher(struct openconnect_info *vpninfo)
 {
-	if (vpninfo->dtls_state != DTLS_CONNECTED || !vpninfo->dtls_ssl) {
+	if (vpninfo->udp_state != UDP_CONNECTED || !vpninfo->dtls_ssl) {
 #if defined(OPENCONNECT_GNUTLS)
 		gnutls_free(vpninfo->dtls_cipher_desc);
 #else
@@ -1079,11 +1079,11 @@ int openconnect_set_csd_environ(struct openconnect_info *vpninfo,
 	struct oc_vpn_option *p;
 
 	if (!name) {
-		free_optlist(vpninfo->csd_env);
-		vpninfo->csd_env = NULL;
+		free_optlist(vpninfo->trojan_env);
+		vpninfo->trojan_env = NULL;
 		return 0;
 	}
-	for (p = vpninfo->csd_env; p; p = p->next) {
+	for (p = vpninfo->trojan_env; p; p = p->next) {
 		if (!strcmp(name, p->option)) {
 			char *valdup = strdup(value);
 			if (!valdup)
@@ -1107,8 +1107,8 @@ int openconnect_set_csd_environ(struct openconnect_info *vpninfo,
 		free(p);
 		return -ENOMEM;
 	}
-	p->next = vpninfo->csd_env;
-	vpninfo->csd_env = p;
+	p->next = vpninfo->trojan_env;
+	vpninfo->trojan_env = p;
 	return 0;
 }
 
@@ -1178,7 +1178,7 @@ int openconnect_check_peer_cert_hash(struct openconnect_info *vpninfo,
 
 const char *openconnect_get_cstp_cipher(struct openconnect_info *vpninfo)
 {
-	return vpninfo->cstp_cipher;
+	return vpninfo->tls_cipher;
 }
 
 const char *openconnect_get_peer_cert_hash(struct openconnect_info *vpninfo)

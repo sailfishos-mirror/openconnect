@@ -115,7 +115,7 @@ static const char authpkt_tail[] = { 0xbb, 0x01, 0x00, 0x00, 0x00, 0x00 };
 
 #define GRP_ATTR(g, a) (((g) << 16) | (a))
 
-/* We behave like CSTP — create a linked list in vpninfo->cstp_options
+/* We behave like CSTP — create a linked list in vpninfo->proto_options
  * with the strings containing the information we got from the server,
  * and oc_ip_info contains const copies of those pointers. */
 
@@ -140,8 +140,8 @@ static const char *add_option(struct openconnect_info *vpninfo, const char *opt,
 		free(new);
 		return NULL;
 	}
-	new->next = vpninfo->cstp_options;
-	vpninfo->cstp_options = new;
+	new->next = vpninfo->proto_options;
+	vpninfo->proto_options = new;
 
 	return new->value;
 }
@@ -323,7 +323,7 @@ static int process_attr(struct openconnect_info *vpninfo, int group, int attr,
 		if (attrlen != 1)
 			goto badlen;
 		vpninfo->esp_compr = data[0];
-		vpninfo->dtls_compr = data[0] ? COMPR_LZO : 0;
+		vpninfo->udp_compr = data[0] ? COMPR_LZO : 0;
 		vpn_progress(vpninfo, PRG_DEBUG, _("ESP compression: %d\n"), data[0]);
 		break;
 
@@ -461,7 +461,7 @@ static int queue_esp_control(struct openconnect_info *vpninfo, int enable)
 
 	memcpy(new, &esp_enable_pkt, sizeof(*new) + 13);
 	new->data[12] = enable;
-	queue_packet(&vpninfo->oncp_control_queue, new);
+	queue_packet(&vpninfo->outgoing_ssl_queue, new);
 	return 0;
 }
 
@@ -802,8 +802,8 @@ int oncp_connect(struct openconnect_info *vpninfo)
 	buf_free(reqbuf);
 
 	vpninfo->oncp_rec_size = 0;
-	free(vpninfo->cstp_pkt);
-	vpninfo->cstp_pkt = NULL;
+	free(vpninfo->ssl_pkt);
+	vpninfo->ssl_pkt = NULL;
 
 	return ret;
 }
@@ -813,12 +813,12 @@ static int oncp_receive_espkeys(struct openconnect_info *vpninfo, int len)
 #ifdef HAVE_ESP
 	int ret;
 
-	ret = parse_conf_pkt(vpninfo, vpninfo->cstp_pkt->oncp.kmp, len + 20, 301);
+	ret = parse_conf_pkt(vpninfo, vpninfo->ssl_pkt->oncp.kmp, len + 20, 301);
 	if (!ret)
 		ret = openconnect_setup_esp_keys(vpninfo, 1);
 	if (!ret) {
 		struct esp *esp = &vpninfo->esp_in[vpninfo->current_esp_in];
-		unsigned char *p = vpninfo->cstp_pkt->oncp.kmp;
+		unsigned char *p = vpninfo->ssl_pkt->oncp.kmp;
 
 		memcpy(p, esp_kmp_hdr, sizeof(esp_kmp_hdr));
 		p += sizeof(esp_kmp_hdr);
@@ -829,12 +829,12 @@ static int oncp_receive_espkeys(struct openconnect_info *vpninfo, int len)
 		memcpy(p, esp->enc_key, vpninfo->enc_key_len);
 		memcpy(p+vpninfo->enc_key_len, esp->hmac_key, 0x40 - vpninfo->enc_key_len);
 		p += 0x40;
-		vpninfo->cstp_pkt->len = p - vpninfo->cstp_pkt->data;
-		store_le16(vpninfo->cstp_pkt->oncp.rec,
-			   (p - vpninfo->cstp_pkt->oncp.kmp));
+		vpninfo->ssl_pkt->len = p - vpninfo->ssl_pkt->data;
+		store_le16(vpninfo->ssl_pkt->oncp.rec,
+			   (p - vpninfo->ssl_pkt->oncp.kmp));
 
-		queue_packet(&vpninfo->oncp_control_queue, vpninfo->cstp_pkt);
-		vpninfo->cstp_pkt = NULL;
+		queue_packet(&vpninfo->outgoing_ssl_queue, vpninfo->ssl_pkt);
+		vpninfo->ssl_pkt = NULL;
 
 		print_esp_keys(vpninfo, _("new incoming"), esp);
 		print_esp_keys(vpninfo, _("new outgoing"), &vpninfo->esp_out);
@@ -924,13 +924,13 @@ int oncp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		int receive_mtu = MAX(16384, vpninfo->ip_info.mtu);
 
 		len = receive_mtu + vpninfo->pkt_trailer;
-		if (!vpninfo->cstp_pkt) {
-			vpninfo->cstp_pkt = malloc(sizeof(struct pkt) + len);
-			if (!vpninfo->cstp_pkt) {
+		if (!vpninfo->ssl_pkt) {
+			vpninfo->ssl_pkt = malloc(sizeof(struct pkt) + len);
+			if (!vpninfo->ssl_pkt) {
 				vpn_progress(vpninfo, PRG_ERR, _("Allocation failed\n"));
 				break;
 			}
-			vpninfo->cstp_pkt->len = 0;
+			vpninfo->ssl_pkt->len = 0;
 		}
 
 		/*
@@ -960,11 +960,11 @@ int oncp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		 * for the Network Connect protocol.
 		 */
 
-		/* Until we pass it up the stack, we use cstp_pkt->len to show
+		/* Until we pass it up the stack, we use ssl_pkt->len to show
 		 * the amount of data received *including* the KMP header. */
 		len = oncp_record_read(vpninfo,
-				       vpninfo->cstp_pkt->oncp.kmp + vpninfo->cstp_pkt->len,
-				       receive_mtu + 20 - vpninfo->cstp_pkt->len);
+				       vpninfo->ssl_pkt->oncp.kmp + vpninfo->ssl_pkt->len,
+				       receive_mtu + 20 - vpninfo->ssl_pkt->len);
 		if (!len)
 			break;
 		else if (len < 0) {
@@ -972,34 +972,34 @@ int oncp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 				return len;
 			goto do_reconnect;
 		}
-		vpninfo->cstp_pkt->len += len;
+		vpninfo->ssl_pkt->len += len;
 		vpninfo->ssl_times.last_rx = time(NULL);
-		if (vpninfo->cstp_pkt->len < 20)
+		if (vpninfo->ssl_pkt->len < 20)
 			continue;
 
 	next_kmp:
 		/* Now we have a KMP header. It might already have been there */
-		kmp = load_be16(vpninfo->cstp_pkt->oncp.kmp + 6);
-		kmplen = load_be16(vpninfo->cstp_pkt->oncp.kmp + 18);
-		if (len == vpninfo->cstp_pkt->len)
+		kmp = load_be16(vpninfo->ssl_pkt->oncp.kmp + 6);
+		kmplen = load_be16(vpninfo->ssl_pkt->oncp.kmp + 18);
+		if (len == vpninfo->ssl_pkt->len)
 			vpn_progress(vpninfo, PRG_DEBUG, _("Incoming KMP message %d of size %d (got %d)\n"),
-				     kmp, kmplen, vpninfo->cstp_pkt->len - 20);
+				     kmp, kmplen, vpninfo->ssl_pkt->len - 20);
 		else
 			vpn_progress(vpninfo, PRG_DEBUG, _("Continuing to process KMP message %d now size %d (got %d)\n"),
-				     kmp, kmplen, vpninfo->cstp_pkt->len - 20);
+				     kmp, kmplen, vpninfo->ssl_pkt->len - 20);
 
 		switch (kmp) {
 		case 300:
 		next_ip:
 			/* Need at least 6 bytes of payload to check the IP packet length */
-			if (vpninfo->cstp_pkt->len < 26)
+			if (vpninfo->ssl_pkt->len < 26)
 				continue;
-			switch(vpninfo->cstp_pkt->data[0] >> 4) {
+			switch(vpninfo->ssl_pkt->data[0] >> 4) {
 			case 4:
-				iplen = load_be16(vpninfo->cstp_pkt->data + 2);
+				iplen = load_be16(vpninfo->ssl_pkt->data + 2);
 				break;
 			case 6:
-				iplen = load_be16(vpninfo->cstp_pkt->data + 4) + 40;
+				iplen = load_be16(vpninfo->ssl_pkt->data + 4) + 40;
 				break;
 			default:
 			badiplen:
@@ -1011,7 +1011,7 @@ int oncp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			if (!iplen || iplen > receive_mtu || iplen > kmplen)
 				goto badiplen;
 
-			if (iplen > vpninfo->cstp_pkt->len - 20)
+			if (iplen > vpninfo->ssl_pkt->len - 20)
 				continue;
 
 			work_done = 1;
@@ -1022,32 +1022,32 @@ int oncp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			/* If there's nothing after the IP packet, and it's the last (or
 			 * only) packet in this KMP300 so we don't need to keep the KMP
 			 * header either, then just queue it. */
-			if (iplen == kmplen && iplen == vpninfo->cstp_pkt->len - 20) {
-				vpninfo->cstp_pkt->len = iplen;
-				queue_packet(&vpninfo->incoming_queue, vpninfo->cstp_pkt);
-				vpninfo->cstp_pkt = NULL;
+			if (iplen == kmplen && iplen == vpninfo->ssl_pkt->len - 20) {
+				vpninfo->ssl_pkt->len = iplen;
+				queue_packet(&vpninfo->incoming_queue, vpninfo->ssl_pkt);
+				vpninfo->ssl_pkt = NULL;
 				continue;
 			}
 
 			/* OK, we have a whole packet, and we have stuff after it */
-			queue_new_packet(&vpninfo->incoming_queue, vpninfo->cstp_pkt->data, iplen);
+			queue_new_packet(&vpninfo->incoming_queue, vpninfo->ssl_pkt->data, iplen);
 			kmplen -= iplen;
 			if (kmplen) {
 				/* Still data packets to come in this KMP300 */
-				store_be16(vpninfo->cstp_pkt->oncp.kmp + 18, kmplen);
-				vpninfo->cstp_pkt->len -= iplen;
-				if (vpninfo->cstp_pkt->len > 20)
-					memmove(vpninfo->cstp_pkt->data,
-						vpninfo->cstp_pkt->data + iplen,
-						vpninfo->cstp_pkt->len - 20);
+				store_be16(vpninfo->ssl_pkt->oncp.kmp + 18, kmplen);
+				vpninfo->ssl_pkt->len -= iplen;
+				if (vpninfo->ssl_pkt->len > 20)
+					memmove(vpninfo->ssl_pkt->data,
+						vpninfo->ssl_pkt->data + iplen,
+						vpninfo->ssl_pkt->len - 20);
 				goto next_ip;
 			}
 			/* We have depleted the KMP300, and there are more bytes from
 			 * the next KMP message in the buffer. Move it up and process it */
-			memmove(vpninfo->cstp_pkt->oncp.kmp,
-				vpninfo->cstp_pkt->data + iplen,
-				vpninfo->cstp_pkt->len - iplen - 20);
-			vpninfo->cstp_pkt->len -= (iplen + 20);
+			memmove(vpninfo->ssl_pkt->oncp.kmp,
+				vpninfo->ssl_pkt->data + iplen,
+				vpninfo->ssl_pkt->len - iplen - 20);
+			vpninfo->ssl_pkt->len -= (iplen + 20);
 			goto next_kmp;
 
 		case 302:
@@ -1055,9 +1055,9 @@ int oncp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			if (kmplen > receive_mtu)
 				goto unknown_pkt;
 			/* Probably never happens. We need it in its own record.
-			 * If I fix oncp_receive_espkeys() not to reuse cstp_pkt
+			 * If I fix oncp_receive_espkeys() not to reuse ssl_pkt
 			 * we can stop doing this. */
-			if (vpninfo->cstp_pkt->len != kmplen + 20)
+			if (vpninfo->ssl_pkt->len != kmplen + 20)
 				goto unknown_pkt;
 
 			ret = oncp_receive_espkeys(vpninfo, kmplen);
@@ -1073,12 +1073,12 @@ int oncp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		unknown_pkt:
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("Unknown KMP message %d of size %d:\n"), kmp, kmplen);
-			dump_buf_hex(vpninfo, PRG_ERR, '<', vpninfo->cstp_pkt->oncp.kmp,
-				     vpninfo->cstp_pkt->len);
-			if (kmplen + 20 != vpninfo->cstp_pkt->len)
+			dump_buf_hex(vpninfo, PRG_ERR, '<', vpninfo->ssl_pkt->oncp.kmp,
+				     vpninfo->ssl_pkt->len);
+			if (kmplen + 20 != vpninfo->ssl_pkt->len)
 				vpn_progress(vpninfo, PRG_DEBUG,
 					     _(".... + %d more bytes unreceived\n"),
-					     kmplen + 20 - vpninfo->cstp_pkt->len);
+					     kmplen + 20 - vpninfo->ssl_pkt->len);
 			vpninfo->quit_reason = "Unknown packet received";
 			return 1;
 		}
@@ -1114,7 +1114,7 @@ int oncp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 				vpninfo->quit_reason = "oNCP reconnect failed";
 				return ret;
 			}
-			vpninfo->dtls_need_reconnect = 1;
+			vpninfo->udp_need_reconnect = 1;
 			return 1;
 		} else if (!ret) {
 #if 0 /* Not for Juniper yet */
@@ -1155,7 +1155,7 @@ int oncp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			   *sent* over the TCP channel. */
 			vpn_progress(vpninfo, PRG_TRACE,
 				     _("Sent ESP enable control packet\n"));
-			vpninfo->dtls_state = DTLS_CONNECTED;
+			vpninfo->udp_state = UDP_CONNECTED;
 			work_done = 1;
 		} else {
 			free(vpninfo->current_ssl_pkt);
@@ -1179,7 +1179,7 @@ int oncp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		if (vpninfo->ssl_times.rekey_method == REKEY_TUNNEL)
 			goto do_reconnect;
 		else if (vpninfo->ssl_times.rekey_method == REKEY_SSL) {
-			ret = cstp_handshake(vpninfo, 0);
+			ret = tls_handshake(vpninfo, 0);
 			if (ret) {
 				/* if we failed rehandshake try establishing a new-tunnel instead of failing */
 				vpn_progress(vpninfo, PRG_ERR, _("Rehandshake failed; attempting new-tunnel\n"));
@@ -1205,9 +1205,9 @@ int oncp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 	do_dtls_reconnect:
 		/* succeeded, let's rekey DTLS, if it is not rekeying
 		 * itself. */
-		if (vpninfo->dtls_state > DTLS_SLEEPING &&
-		    vpninfo->dtls_times.rekey_method == REKEY_NONE) {
-			vpninfo->dtls_need_reconnect = 1;
+		if (vpninfo->udp_state > UDP_SLEEPING &&
+		    vpninfo->udp_times.rekey_method == REKEY_NONE) {
+			vpninfo->udp_need_reconnect = 1;
 		}
 
 		return 1;
@@ -1221,7 +1221,7 @@ int oncp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 	case KA_KEEPALIVE:
 		/* No need to send an explicit keepalive
 		   if we have real data to send */
-		if (vpninfo->dtls_state != DTLS_CONNECTED && vpninfo->outgoing_queue)
+		if (vpninfo->udp_state != UDP_CONNECTED && vpninfo->outgoing_queue)
 			break;
 
 		vpn_progress(vpninfo, PRG_DEBUG, _("Send CSTP Keepalive\n"));
@@ -1237,17 +1237,17 @@ int oncp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 	 * via ESP once the enable message has been *sent* over the
 	 * TCP channel. Assign it directly to current_ssl_pkt so that
 	 * we can use it in-place and match against it above. */
-	if (vpninfo->dtls_state == DTLS_CONNECTING) {
+	if (vpninfo->udp_state == UDP_CONNECTING) {
 		vpninfo->current_ssl_pkt = (struct pkt *)&esp_enable_pkt;
 		goto handle_outgoing;
 	}
 
-	vpninfo->current_ssl_pkt = dequeue_packet(&vpninfo->oncp_control_queue);
+	vpninfo->current_ssl_pkt = dequeue_packet(&vpninfo->outgoing_ssl_queue);
 	if (vpninfo->current_ssl_pkt)
 		goto handle_outgoing;
 
 	/* Service outgoing packet queue, if no DTLS */
-	while (vpninfo->dtls_state != DTLS_CONNECTED &&
+	while (vpninfo->udp_state != UDP_CONNECTED &&
 	       (vpninfo->current_ssl_pkt = dequeue_packet(&vpninfo->outgoing_queue))) {
 		struct pkt *this = vpninfo->current_ssl_pkt;
 
@@ -1298,7 +1298,7 @@ int oncp_bye(struct openconnect_info *vpninfo, const char *reason)
 void oncp_esp_close(struct openconnect_info *vpninfo)
 {
 	/* Tell server to stop sending on ESP channel */
-	if (vpninfo->dtls_state >= DTLS_CONNECTING)
+	if (vpninfo->udp_state >= UDP_CONNECTING)
 		queue_esp_control(vpninfo, 0);
 	esp_close(vpninfo);
 }
@@ -1308,35 +1308,35 @@ int oncp_esp_send_probes(struct openconnect_info *vpninfo)
 	struct pkt *pkt;
 	int pktlen, seq;
 
-	if (vpninfo->dtls_fd == -1) {
+	if (vpninfo->udp_fd == -1) {
 		int fd = udp_connect(vpninfo);
 		if (fd < 0)
 			return fd;
 
 		/* We are not connected until we get an ESP packet back */
-		vpninfo->dtls_state = DTLS_SLEEPING;
-		vpninfo->dtls_fd = fd;
-		monitor_fd_new(vpninfo, dtls);
-		monitor_read_fd(vpninfo, dtls);
-		monitor_except_fd(vpninfo, dtls);
+		vpninfo->udp_state = UDP_SLEEPING;
+		vpninfo->udp_fd = fd;
+		monitor_fd_new(vpninfo, udp);
+		monitor_read_fd(vpninfo, udp);
+		monitor_except_fd(vpninfo, udp);
 	}
 
 	pkt = malloc(sizeof(*pkt) + 1 + vpninfo->pkt_trailer);
 	if (!pkt)
 		return -ENOMEM;
 
-	for (seq=1; seq <= (vpninfo->dtls_state==DTLS_CONNECTED ? 1 : 2); seq++) {
+	for (seq=1; seq <= (vpninfo->udp_state==UDP_CONNECTED ? 1 : 2); seq++) {
 		pkt->len = 1;
 		pkt->data[0] = 0;
 		pktlen = construct_esp_packet(vpninfo, pkt,
-					      vpninfo->dtls_addr->sa_family == AF_INET6 ? IPPROTO_IPV6 : IPPROTO_IPIP);
+					      vpninfo->udp_addr->sa_family == AF_INET6 ? IPPROTO_IPV6 : IPPROTO_IPIP);
 		if (pktlen < 0 ||
-		    send(vpninfo->dtls_fd, (void *)&pkt->esp, pktlen, 0) < 0)
+		    send(vpninfo->udp_fd, (void *)&pkt->esp, pktlen, 0) < 0)
 			vpn_progress(vpninfo, PRG_DEBUG, _("Failed to send ESP probe\n"));
 	}
 	free(pkt);
 
-	vpninfo->dtls_times.last_tx = time(&vpninfo->new_dtls_started);
+	vpninfo->udp_times.last_tx = time(&vpninfo->new_udp_started);
 
 	return 0;
 };

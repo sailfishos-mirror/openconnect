@@ -1391,23 +1391,23 @@ static int autocomplete(int argc, char **argv)
 static void print_connection_info(struct openconnect_info *vpninfo)
 {
 	const struct oc_ip_info *ip_info;
-	const char *ssl_compr, *udp_compr, *dtls_state;
+	const char *ssl_compr, *udp_compr, *udp_state;
 
 	openconnect_get_ip_info(vpninfo, &ip_info, NULL, NULL);
 
-	switch (vpninfo->dtls_state) {
-	case DTLS_NOSECRET:
-		dtls_state = _("unsuccessful");
+	switch (vpninfo->udp_state) {
+	case UDP_NOSECRET:
+		udp_state = _("unsuccessful");
 		break;
-	case DTLS_SLEEPING:
-	case DTLS_SECRET:
-		dtls_state = _("in progress");
+	case UDP_SLEEPING:
+	case UDP_SECRET:
+		udp_state = _("in progress");
 		break;
-	case DTLS_DISABLED:
-		dtls_state = _("disabled");
+	case UDP_DISABLED:
+		udp_state = _("disabled");
 		break;
 	default:
-		dtls_state = _("connected");
+		udp_state = _("connected");
 	}
 
 	ssl_compr = openconnect_get_cstp_compression(vpninfo);
@@ -1419,7 +1419,7 @@ static void print_connection_info(struct openconnect_info *vpninfo)
 		     ip_info->netmask6 ? : "",
 		     ssl_compr ? " + " : "", ssl_compr ? : "",
 		     vpninfo->proto->udp_protocol ? : "UDP", udp_compr ? " + " : "", udp_compr ? : "",
-		     dtls_state);
+		     udp_state);
 }
 
 #ifndef _WIN32
@@ -1575,10 +1575,10 @@ int main(int argc, char **argv)
 			break;
 		case OPT_CSD_USER:
 			get_uids(config_arg, &vpninfo->uid_csd, &vpninfo->gid_csd);
-			vpninfo->uid_csd_given = 1;
+			vpninfo->uid_trojan_given = 1;
 			break;
 		case OPT_CSD_WRAPPER:
-			vpninfo->csd_wrapper = keep_config_arg();
+			vpninfo->trojan_wrapper = keep_config_arg();
 			break;
 #endif /* !_WIN32 */
 		case 'F':
@@ -1665,7 +1665,7 @@ int main(int argc, char **argv)
 			gai->value = gai->option + (ip - config_arg) + 1;
 			break;
 		case OPT_NO_DTLS:
-			vpninfo->dtls_state = DTLS_DISABLED;
+			vpninfo->udp_state = UDP_DISABLED;
 			break;
 		case OPT_COOKIEONLY:
 			cookieonly = 1;
@@ -1843,7 +1843,7 @@ int main(int argc, char **argv)
 			openconnect_set_trojan_interval(vpninfo, atoi(config_arg));
 			break;
 		case OPT_DTLS_LOCAL_PORT:
-			vpninfo->dtls_local_port = atoi(config_arg);
+			vpninfo->udp_local_port = atoi(config_arg);
 			break;
 		case OPT_TOKEN_MODE:
 			if (strcasecmp(config_arg, "rsa") == 0) {
@@ -1984,9 +1984,9 @@ int main(int argc, char **argv)
 	free(urlpath);
 
 	if (!vpninfo->cookie && openconnect_obtain_cookie(vpninfo)) {
-		if (vpninfo->csd_scriptname) {
-			unlink(vpninfo->csd_scriptname);
-			vpninfo->csd_scriptname = NULL;
+		if (vpninfo->trojan_scriptname) {
+			unlink(vpninfo->trojan_scriptname);
+			vpninfo->trojan_scriptname = NULL;
 		}
 		fprintf(stderr, _("Failed to complete authentication\n"));
 		exit(1);
@@ -2018,12 +2018,12 @@ int main(int argc, char **argv)
 
 	vpninfo->vpnc_script = vpnc_script;
 
-	if (vpninfo->dtls_state != DTLS_DISABLED &&
+	if (vpninfo->udp_state != UDP_DISABLED &&
 	    openconnect_setup_dtls(vpninfo, 60)) {
 		/* Disable DTLS if we cannot set it up, otherwise
 		 * reconnects end up in infinite loop trying to connect
 		 * to non existing DTLS */
-		vpninfo->dtls_state = DTLS_DISABLED;
+		vpninfo->udp_state = UDP_DISABLED;
 		fprintf(stderr, _("Set up UDP failed; using SSL instead\n"));
 	}
 

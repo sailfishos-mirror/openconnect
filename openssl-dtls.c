@@ -322,7 +322,7 @@ static const SSL_CIPHER *SSL_CIPHER_find(SSL *ssl, const unsigned char *ptr)
 }
 #endif
 
-int start_dtls_handshake(struct openconnect_info *vpninfo, int dtls_fd)
+int start_dtls_handshake(struct openconnect_info *vpninfo, int udp_fd)
 {
 	method_const SSL_METHOD *dtls_method;
 	SSL_SESSION *dtls_session;
@@ -365,7 +365,7 @@ int start_dtls_handshake(struct openconnect_info *vpninfo, int dtls_fd)
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("Initialise DTLSv1 CTX failed\n"));
 			openconnect_report_ssl_errors(vpninfo);
-			vpninfo->dtls_attempt_period = 0;
+			vpninfo->udp_attempt_period = 0;
 			return -EINVAL;
 		}
 #ifdef HAVE_SSL_CTX_PROTOVER
@@ -377,7 +377,7 @@ int start_dtls_handshake(struct openconnect_info *vpninfo, int dtls_fd)
 			openconnect_report_ssl_errors(vpninfo);
 			SSL_CTX_free(vpninfo->dtls_ctx);
 			vpninfo->dtls_ctx = NULL;
-			vpninfo->dtls_attempt_period = 0;
+			vpninfo->udp_attempt_period = 0;
 			return -EINVAL;
 		}
 #else /* !HAVE_SSL_CTX_PROTOVER */
@@ -399,7 +399,7 @@ int start_dtls_handshake(struct openconnect_info *vpninfo, int dtls_fd)
 				openconnect_report_ssl_errors(vpninfo);
 				SSL_CTX_free(vpninfo->dtls_ctx);
 				vpninfo->dtls_ctx = NULL;
-				vpninfo->dtls_attempt_period = 0;
+				vpninfo->udp_attempt_period = 0;
 				return -EINVAL;
 			}
 			/* For SSL_CTX_set_cipher_list() */
@@ -453,7 +453,7 @@ int start_dtls_handshake(struct openconnect_info *vpninfo, int dtls_fd)
 				     _("Set DTLS cipher list failed\n"));
 			SSL_CTX_free(vpninfo->dtls_ctx);
 			vpninfo->dtls_ctx = NULL;
-			vpninfo->dtls_attempt_period = 0;
+			vpninfo->udp_attempt_period = 0;
 			return -EINVAL;
 		}
 	}
@@ -481,7 +481,7 @@ int start_dtls_handshake(struct openconnect_info *vpninfo, int dtls_fd)
 			SSL_CTX_free(vpninfo->dtls_ctx);
 			SSL_free(dtls_ssl);
 			vpninfo->dtls_ctx = NULL;
-			vpninfo->dtls_attempt_period = 0;
+			vpninfo->udp_attempt_period = 0;
 			return -EINVAL;
 		}
 
@@ -491,7 +491,7 @@ int start_dtls_handshake(struct openconnect_info *vpninfo, int dtls_fd)
 			SSL_CTX_free(vpninfo->dtls_ctx);
 			SSL_free(dtls_ssl);
 			vpninfo->dtls_ctx = NULL;
-			vpninfo->dtls_attempt_period = 0;
+			vpninfo->udp_attempt_period = 0;
 			return -EINVAL;
 		}
 
@@ -505,7 +505,7 @@ int start_dtls_handshake(struct openconnect_info *vpninfo, int dtls_fd)
 			SSL_CTX_free(vpninfo->dtls_ctx);
 			SSL_free(dtls_ssl);
 			vpninfo->dtls_ctx = NULL;
-			vpninfo->dtls_attempt_period = 0;
+			vpninfo->udp_attempt_period = 0;
 			SSL_SESSION_free(dtls_session);
 			return -EINVAL;
 		}
@@ -524,7 +524,7 @@ int start_dtls_handshake(struct openconnect_info *vpninfo, int dtls_fd)
 			SSL_CTX_free(vpninfo->dtls_ctx);
 			SSL_free(dtls_ssl);
 			vpninfo->dtls_ctx = NULL;
-			vpninfo->dtls_attempt_period = 0;
+			vpninfo->udp_attempt_period = 0;
 			return -EINVAL;
 		}
 	
@@ -534,7 +534,7 @@ int start_dtls_handshake(struct openconnect_info *vpninfo, int dtls_fd)
 			SSL_CTX_free(vpninfo->dtls_ctx);
 			SSL_free(dtls_ssl);
 			vpninfo->dtls_ctx = NULL;
-			vpninfo->dtls_attempt_period = 0;
+			vpninfo->udp_attempt_period = 0;
 			SSL_SESSION_free(dtls_session);
 			return -EINVAL;
 		}
@@ -543,7 +543,7 @@ int start_dtls_handshake(struct openconnect_info *vpninfo, int dtls_fd)
 	}
 
 
-	dtls_bio = BIO_new_socket(dtls_fd, BIO_NOCLOSE);
+	dtls_bio = BIO_new_socket(udp_fd, BIO_NOCLOSE);
 	/* Set non-blocking */
 	BIO_set_nbio(dtls_bio, 1);
 	SSL_set_bio(dtls_ssl, dtls_bio, dtls_bio);
@@ -563,7 +563,7 @@ int dtls_try_handshake(struct openconnect_info *vpninfo)
 		if (!strcmp(vpninfo->dtls_cipher, "PSK-NEGOTIATE")) {
 			/* For PSK-NEGOTIATE, we have to determine the tunnel MTU
 			 * for ourselves based on the base MTU */
-			int data_mtu = vpninfo->cstp_basemtu;
+			int data_mtu = vpninfo->ssl_basemtu;
 			if (vpninfo->peer_addr->sa_family == AF_INET6)
 				data_mtu -= 40; /* IPv6 header */
 			else
@@ -572,7 +572,7 @@ int dtls_try_handshake(struct openconnect_info *vpninfo)
 			if (data_mtu < 0) {
 				vpn_progress(vpninfo, PRG_ERR,
 					     _("Peer MTU %d too small to allow DTLS\n"),
-					     vpninfo->cstp_basemtu);
+					     vpninfo->ssl_basemtu);
 				goto nodtls;
 			}
 			/* Reduce it by one because that's the payload header *inside*
@@ -596,12 +596,12 @@ int dtls_try_handshake(struct openconnect_info *vpninfo)
 			dtls_close(vpninfo);
 			SSL_CTX_free(vpninfo->dtls_ctx);
 			vpninfo->dtls_ctx = NULL;
-			vpninfo->dtls_attempt_period = 0;
-			vpninfo->dtls_state = DTLS_DISABLED;
+			vpninfo->udp_attempt_period = 0;
+			vpninfo->udp_state = UDP_DISABLED;
 			return -EIO;
 		}
 
-		vpninfo->dtls_state = DTLS_CONNECTED;
+		vpninfo->udp_state = UDP_CONNECTED;
 		vpn_progress(vpninfo, PRG_INFO,
 			     _("Established DTLS connection (using OpenSSL). Ciphersuite %s-%s.\n"),
 			     SSL_get_version(vpninfo->dtls_ssl), SSL_get_cipher(vpninfo->dtls_ssl));
@@ -612,8 +612,8 @@ int dtls_try_handshake(struct openconnect_info *vpninfo)
 				     _("DTLS connection compression using %s.\n"), c);
 		}
 
-		vpninfo->dtls_times.last_rekey = vpninfo->dtls_times.last_rx = 
-			vpninfo->dtls_times.last_tx = time(NULL);
+		vpninfo->udp_times.last_rekey = vpninfo->udp_times.last_rx = 
+			vpninfo->udp_times.last_tx = time(NULL);
 
 		/* From about 8.4.1(11) onwards, the ASA seems to get
 		   very unhappy if we resend ChangeCipherSpec messages
@@ -684,7 +684,7 @@ int dtls_try_handshake(struct openconnect_info *vpninfo)
 	ret = SSL_get_error(vpninfo->dtls_ssl, ret);
 	if (ret == SSL_ERROR_WANT_WRITE || ret == SSL_ERROR_WANT_READ) {
 		static int badossl_bitched = 0;
-		if (time(NULL) < vpninfo->new_dtls_started + 12)
+		if (time(NULL) < vpninfo->new_udp_started + 12)
 			return 0;
 		if (((OPENSSL_VERSION_NUMBER >= 0x100000b0L && OPENSSL_VERSION_NUMBER <= 0x100000c0L) || \
 		     (OPENSSL_VERSION_NUMBER >= 0x10001040L && OPENSSL_VERSION_NUMBER <= 0x10001060L) || \
@@ -703,8 +703,8 @@ int dtls_try_handshake(struct openconnect_info *vpninfo)
 
 	dtls_close(vpninfo);
 
-	vpninfo->dtls_state = DTLS_SLEEPING;
-	time(&vpninfo->new_dtls_started);
+	vpninfo->udp_state = UDP_SLEEPING;
+	time(&vpninfo->new_udp_started);
 	return -EINVAL;
 }
 

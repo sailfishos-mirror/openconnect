@@ -443,7 +443,7 @@ static int parse_auth_node(struct openconnect_info *vpninfo, xmlNode *xml_node,
 			ret = parse_form(vpninfo, form, xml_node);
 			if (ret < 0)
 				goto out;
-		} else if (!vpninfo->csd_scriptname && xmlnode_is_named(xml_node, "csd")) {
+		} else if (!vpninfo->trojan_scriptname && xmlnode_is_named(xml_node, "csd")) {
 			xmlnode_get_prop(xml_node, "token", &vpninfo->csd_token);
 			xmlnode_get_prop(xml_node, "ticket", &vpninfo->csd_ticket);
 		} else if (xmlnode_is_named(xml_node, "authentication-complete")) {
@@ -457,7 +457,7 @@ static int parse_auth_node(struct openconnect_info *vpninfo, xmlNode *xml_node,
 		   nodes; one with token/ticket and one with the URLs. Process them both
 		   the same and rely on the fact that xmlnode_get_prop() will not *clear*
 		   the variable if no such property is found. */
-		if (!vpninfo->csd_scriptname && xmlnode_is_named(xml_node, csd_tag_name(vpninfo))) {
+		if (!vpninfo->trojan_scriptname && xmlnode_is_named(xml_node, csd_tag_name(vpninfo))) {
 			/* ignore the CSD trojan binary on mobile platforms */
 			if (csd_use_stub(vpninfo))
 				xmlnode_get_prop(xml_node, "stuburl", &vpninfo->csd_stuburl);
@@ -474,7 +474,7 @@ out:
 static int parse_host_scan_node(struct openconnect_info *vpninfo, xmlNode *xml_node)
 {
 	/* ignore this whole section if the CSD trojan has already run */
-	if (vpninfo->csd_scriptname)
+	if (vpninfo->trojan_scriptname)
 		return 0;
 
 	for (xml_node = xml_node->children; xml_node; xml_node = xml_node->next) {
@@ -1015,7 +1015,7 @@ static int fetch_config(struct openconnect_info *vpninfo)
 	return result;
 }
 
-int set_csd_user(struct openconnect_info *vpninfo)
+int set_trojan_user(struct openconnect_info *vpninfo)
 {
 #if defined(_WIN32) || defined(__native_client__)
 	vpn_progress(vpninfo, PRG_ERR,
@@ -1024,7 +1024,7 @@ int set_csd_user(struct openconnect_info *vpninfo)
 #else
 	setsid();
 
-	if (vpninfo->uid_csd_given && vpninfo->uid_csd != getuid()) {
+	if (vpninfo->uid_trojan_given && vpninfo->uid_csd != getuid()) {
 		struct passwd *pw;
 		int e;
 
@@ -1078,14 +1078,14 @@ static int run_csd_script(struct openconnect_info *vpninfo, char *buf, int bufle
 	int fd, ret;
 	pid_t child;
 
-	if (!vpninfo->csd_wrapper && !buflen) {
+	if (!vpninfo->trojan_wrapper && !buflen) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Error: Server asked us to run CSD hostscan.\n"
 			       "You need to provide a suitable --csd-wrapper argument.\n"));
 		return -EINVAL;
 	}
 
-	if (!vpninfo->uid_csd_given && !vpninfo->csd_wrapper) {
+	if (!vpninfo->uid_trojan_given && !vpninfo->trojan_wrapper) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Error: Server asked us to download and run a 'Cisco Secure Desktop' trojan.\n"
 			       "This facility is disabled by default for security reasons, so you may wish to enable it.\n"));
@@ -1098,9 +1098,9 @@ static int run_csd_script(struct openconnect_info *vpninfo, char *buf, int bufle
 		const char *tmpdir = NULL;
 
 		/* If the caller wanted $TMPDIR set for the CSD script, that
-		   means for us too; look through the csd_env for a TMPDIR
+		   means for us too; look through the trojan_env for a TMPDIR
 		   override. */
-		for (opt = vpninfo->csd_env; opt; opt = opt->next) {
+		for (opt = vpninfo->trojan_env; opt; opt = opt->next) {
 			if (!strcmp(opt->option, "TMPDIR")) {
 				tmpdir = opt->value;
 				break;
@@ -1155,13 +1155,13 @@ static int run_csd_script(struct openconnect_info *vpninfo, char *buf, int bufle
 		if (!WIFEXITED(status)) {
 			vpn_progress(vpninfo, PRG_ERR,
 			             _("CSD script '%s' exited abnormally\n"),
-			             vpninfo->csd_wrapper ?: fname);
+			             vpninfo->trojan_wrapper ?: fname);
 			ret = -EINVAL;
 		} else {
 			if (WEXITSTATUS(status) != 0) {
 				vpn_progress(vpninfo, PRG_ERR,
 					     _("CSD script '%s' returned non-zero status: %d\n"),
-					     vpninfo->csd_wrapper ?: fname, WEXITSTATUS(status));
+					     vpninfo->trojan_wrapper ?: fname, WEXITSTATUS(status));
 				/* Some scripts do exit non-zero, and it's never mattered.
 				 * Don't abort for now. */
 				vpn_progress(vpninfo, PRG_ERR,
@@ -1176,7 +1176,7 @@ static int run_csd_script(struct openconnect_info *vpninfo, char *buf, int bufle
 			free(vpninfo->urlpath);
 			vpninfo->urlpath = strdup(vpninfo->csd_waiturl +
 			                          (vpninfo->csd_waiturl[0] == '/' ? 1 : 0));
-			vpninfo->csd_scriptname = strdup(fname);
+			vpninfo->trojan_scriptname = strdup(fname);
 			http_add_cookie(vpninfo, "sdesktop", vpninfo->csd_token, 1);
 			ret = 0;
 		}
@@ -1194,9 +1194,9 @@ static int run_csd_script(struct openconnect_info *vpninfo, char *buf, int bufle
                 char *csd_argv[32];
                 int i = 0;
 
-                if (set_csd_user(vpninfo) < 0)
+                if (set_trojan_user(vpninfo) < 0)
                         exit(1);
-                if (getuid() == 0 && !vpninfo->csd_wrapper) {
+                if (getuid() == 0 && !vpninfo->trojan_wrapper) {
                         fprintf(stderr, _("Warning: you are running insecure "
                                           "CSD code with root privileges\n"
                                           "\t Use command line option \"--csd-user\"\n"));
@@ -1217,9 +1217,9 @@ static int run_csd_script(struct openconnect_info *vpninfo, char *buf, int bufle
 			}
 		}
                 dup2(2, 1);
-                if (vpninfo->csd_wrapper)
+                if (vpninfo->trojan_wrapper)
                         csd_argv[i++] = openconnect_utf8_to_legacy(vpninfo,
-                                                                   vpninfo->csd_wrapper);
+                                                                   vpninfo->trojan_wrapper);
                 csd_argv[i++] = fname;
                 csd_argv[i++] = (char *)"-ticket";
                 if (asprintf(&csd_argv[i++], "\"%s\"", vpninfo->csd_ticket) == -1)
@@ -1252,13 +1252,13 @@ static int run_csd_script(struct openconnect_info *vpninfo, char *buf, int bufle
                 if (setenv("CSD_HOSTNAME", openconnect_get_hostname(vpninfo), 1))
                         goto out;
 
-                apply_script_env(vpninfo->csd_env);
+                apply_script_env(vpninfo->trojan_env);
 
                 execv(csd_argv[0], csd_argv);
 
         out:
                 vpn_progress(vpninfo, PRG_ERR,
-                             _("Failed to exec CSD script %s\n"), vpninfo->csd_wrapper ?: fname);
+                             _("Failed to exec CSD script %s\n"), vpninfo->trojan_wrapper ?: fname);
                 exit(1);
 	}
 
@@ -1442,7 +1442,7 @@ newgroup:
 
 			buflen = do_https_request(vpninfo, "GET", NULL, NULL, &form_buf, 0);
 			if (buflen <= 0) {
-				if (vpninfo->csd_wrapper) {
+				if (vpninfo->trojan_wrapper) {
 					vpn_progress(vpninfo, PRG_ERR,
 					             _("Couldn't fetch CSD stub. Proceeding anyway with CSD wrapper script.\n"));
 					buflen = 0;
@@ -1573,10 +1573,10 @@ out:
 	free(form_buf);
 	free_auth_form(form);
 
-	if (vpninfo->csd_scriptname) {
-		unlink(vpninfo->csd_scriptname);
-		free(vpninfo->csd_scriptname);
-		vpninfo->csd_scriptname = NULL;
+	if (vpninfo->trojan_scriptname) {
+		unlink(vpninfo->trojan_scriptname);
+		free(vpninfo->trojan_scriptname);
+		vpninfo->trojan_scriptname = NULL;
 	}
 
 	return result;

@@ -134,7 +134,7 @@ static int openconnect_gnutls_write(struct openconnect_info *vpninfo, char *buf,
 
 int openconnect_dtls_write(struct openconnect_info *vpninfo, void *buf, size_t len)
 {
-	return _openconnect_gnutls_write(vpninfo->dtls_ssl, vpninfo->dtls_fd, vpninfo, buf, len);
+	return _openconnect_gnutls_write(vpninfo->dtls_ssl, vpninfo->udp_fd, vpninfo, buf, len);
 }
 
 static int _openconnect_gnutls_read(gnutls_session_t ses, int fd, struct openconnect_info *vpninfo, char *buf, size_t len, unsigned ms)
@@ -187,7 +187,7 @@ static int _openconnect_gnutls_read(gnutls_session_t ses, int fd, struct opencon
 			done = 0;
 			goto cleanup;
 		} else if (done == GNUTLS_E_REHANDSHAKE) {
-			int ret = cstp_handshake(vpninfo, 0);
+			int ret = tls_handshake(vpninfo, 0);
 			if (ret) {
 				done = ret;
 				goto cleanup;
@@ -218,7 +218,7 @@ static int openconnect_gnutls_read(struct openconnect_info *vpninfo, char *buf, 
 
 int openconnect_dtls_read(struct openconnect_info *vpninfo, void *buf, size_t len, unsigned ms)
 {
-	return _openconnect_gnutls_read(vpninfo->dtls_ssl, vpninfo->dtls_fd, vpninfo, buf, len, ms);
+	return _openconnect_gnutls_read(vpninfo->dtls_ssl, vpninfo->udp_fd, vpninfo, buf, len, ms);
 }
 
 static int openconnect_gnutls_gets(struct openconnect_info *vpninfo, char *buf, size_t len)
@@ -271,7 +271,7 @@ static int openconnect_gnutls_gets(struct openconnect_info *vpninfo, char *buf, 
 				break;
 			}
 		} else if (ret == GNUTLS_E_REHANDSHAKE) {
-			ret = cstp_handshake(vpninfo, 0);
+			ret = tls_handshake(vpninfo, 0);
 			if (ret)
 				return ret;
 		} else {
@@ -2101,8 +2101,8 @@ int openconnect_open_https(struct openconnect_info *vpninfo)
 
 	free(vpninfo->peer_cert_hash);
 	vpninfo->peer_cert_hash = NULL;
-	gnutls_free(vpninfo->cstp_cipher);
-	vpninfo->cstp_cipher = NULL;
+	gnutls_free(vpninfo->tls_cipher);
+	vpninfo->tls_cipher = NULL;
 
 	ssl_sock = connect_https_socket(vpninfo);
 	if (ssl_sock < 0)
@@ -2282,7 +2282,7 @@ int openconnect_open_https(struct openconnect_info *vpninfo)
 				     GNUTLS_DEFAULT_HANDSHAKE_TIMEOUT);
 #endif
 
-	err = cstp_handshake(vpninfo, 1);
+	err = tls_handshake(vpninfo, 1);
 	if (err)
 		return err;
 
@@ -2295,7 +2295,7 @@ int openconnect_open_https(struct openconnect_info *vpninfo)
 	return 0;
 }
 
-int cstp_handshake(struct openconnect_info *vpninfo, unsigned init)
+int tls_handshake(struct openconnect_info *vpninfo, unsigned init)
 {
 	int err;
 	int ssl_sock = -1;
@@ -2343,15 +2343,15 @@ int cstp_handshake(struct openconnect_info *vpninfo, unsigned init)
 		}
 	}
 
-	gnutls_free(vpninfo->cstp_cipher);
-	vpninfo->cstp_cipher = get_gnutls_cipher(vpninfo->https_sess);
+	gnutls_free(vpninfo->tls_cipher);
+	vpninfo->tls_cipher = get_gnutls_cipher(vpninfo->https_sess);
 
 	if (init) {
 		vpn_progress(vpninfo, PRG_INFO, _("Connected to HTTPS on %s with ciphersuite %s\n"),
-			     vpninfo->hostname, vpninfo->cstp_cipher);
+			     vpninfo->hostname, vpninfo->tls_cipher);
 	} else {
 		vpn_progress(vpninfo, PRG_INFO, _("Renegotiated SSL on %s with ciphersuite %s\n"),
-			     vpninfo->hostname, vpninfo->cstp_cipher);
+			     vpninfo->hostname, vpninfo->tls_cipher);
 	}
 
 	return 0;

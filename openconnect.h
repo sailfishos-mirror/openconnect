@@ -539,8 +539,8 @@ int openconnect_get_idle_timeout(struct openconnect_info *);
    this function from another thread. */
 int openconnect_get_ip_info(struct openconnect_info *,
 			    const struct oc_ip_info **info,
-			    const struct oc_vpn_option **cstp_options,
-			    const struct oc_vpn_option **dtls_options);
+			    const struct oc_vpn_option **proto_options,
+			    const struct oc_vpn_option **udp_options);
 
 int openconnect_get_port(struct openconnect_info *);
 const char *openconnect_get_cookie(struct openconnect_info *);
@@ -599,7 +599,7 @@ int openconnect_setup_tun_fd(struct openconnect_info *vpninfo, intptr_t tun_fd);
 int openconnect_setup_tun_fd(struct openconnect_info *vpninfo, int tun_fd);
 #endif
 /* Optional call to enable DTLS on the connection. */
-int openconnect_setup_dtls(struct openconnect_info *vpninfo, int dtls_attempt_period);
+int openconnect_setup_dtls(struct openconnect_info *vpninfo, int udp_attempt_period);
 
 /* Start the main loop; exits if OC_CMD_CANCEL is received on cmd_fd or
    the remote site aborts. */

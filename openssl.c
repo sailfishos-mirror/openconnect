@@ -186,7 +186,7 @@ static int openconnect_openssl_write(struct openconnect_info *vpninfo, char *buf
 
 int openconnect_dtls_write(struct openconnect_info *vpninfo, void *buf, size_t len)
 {
-	return _openconnect_openssl_write(vpninfo->dtls_ssl, vpninfo->dtls_fd, vpninfo, buf, len);
+	return _openconnect_openssl_write(vpninfo->dtls_ssl, vpninfo->udp_fd, vpninfo, buf, len);
 }
 
 /* set ms to zero for no timeout */
@@ -239,7 +239,7 @@ static int openconnect_openssl_read(struct openconnect_info *vpninfo, char *buf,
 
 int openconnect_dtls_read(struct openconnect_info *vpninfo, void *buf, size_t len, unsigned ms)
 {
-	return _openconnect_openssl_read(vpninfo->dtls_ssl, vpninfo->dtls_fd, vpninfo, buf, len, ms);
+	return _openconnect_openssl_read(vpninfo->dtls_ssl, vpninfo->udp_fd, vpninfo, buf, len, ms);
 }
 
 static int openconnect_openssl_gets(struct openconnect_info *vpninfo, char *buf, size_t len)
@@ -1661,8 +1661,8 @@ int openconnect_open_https(struct openconnect_info *vpninfo)
 	}
 	free(vpninfo->peer_cert_hash);
 	vpninfo->peer_cert_hash = NULL;
-	free(vpninfo->cstp_cipher);
-	vpninfo->cstp_cipher = NULL;
+	free(vpninfo->tls_cipher);
+	vpninfo->tls_cipher = NULL;
 
 	ssl_sock = connect_https_socket(vpninfo);
 	if (ssl_sock < 0)
@@ -1871,7 +1871,7 @@ int openconnect_open_https(struct openconnect_info *vpninfo)
 		}
 	}
 
-	if (asprintf(&vpninfo->cstp_cipher, "%s-%s",
+	if (asprintf(&vpninfo->tls_cipher, "%s-%s",
 		     SSL_get_version(https_ssl), SSL_get_cipher_name(https_ssl)) < 0) {
 		SSL_free(https_ssl);
 		closesocket(ssl_sock);
@@ -1887,12 +1887,12 @@ int openconnect_open_https(struct openconnect_info *vpninfo)
 
 
 	vpn_progress(vpninfo, PRG_INFO, _("Connected to HTTPS on %s with ciphersuite %s\n"),
-		     vpninfo->hostname, vpninfo->cstp_cipher);
+		     vpninfo->hostname, vpninfo->tls_cipher);
 
 	return 0;
 }
 
-int cstp_handshake(struct openconnect_info *vpninfo, unsigned init)
+int tls_handshake(struct openconnect_info *vpninfo, unsigned init)
 {
 	return -EOPNOTSUPP;
 }

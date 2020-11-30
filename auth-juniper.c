@@ -452,10 +452,10 @@ static int tncc_preauth(struct openconnect_info *vpninfo)
 				goto out;
 		}
 
-		execl(vpninfo->csd_wrapper, vpninfo->csd_wrapper, vpninfo->hostname, NULL);
+		execl(vpninfo->trojan_wrapper, vpninfo->trojan_wrapper, vpninfo->hostname, NULL);
 	out:
 		fprintf(stderr, _("Failed to exec TNCC script %s: %s\n"),
-			vpninfo->csd_wrapper, strerror(errno));
+			vpninfo->trojan_wrapper, strerror(errno));
 		exit(1);
 	}
 	waitpid(pid, NULL, 0);
@@ -660,7 +660,7 @@ int oncp_obtain_cookie(struct openconnect_info *vpninfo)
 	xmlNodePtr node;
 	struct oc_auth_form *form = NULL;
 	char *form_id = NULL;
-	int try_tncc = !!vpninfo->csd_wrapper;
+	int try_tncc = !!vpninfo->trojan_wrapper;
 
 	resp_buf = buf_alloc();
 	if (buf_error(resp_buf)) {

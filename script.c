@@ -186,7 +186,7 @@ static void setenv_cstp_opts(struct openconnect_info *vpninfo)
 	int bufofs = 0;
 	struct oc_vpn_option *opt;
 
-	for (opt = vpninfo->cstp_options; opt; opt = opt->next)
+	for (opt = vpninfo->proto_options; opt; opt = opt->next)
 		buflen += 2 + strlen(opt->option) + strlen(opt->value);
 
 	env_buf = malloc(buflen + 1);
@@ -195,7 +195,7 @@ static void setenv_cstp_opts(struct openconnect_info *vpninfo)
 
 	env_buf[buflen] = 0;
 
-	for (opt = vpninfo->cstp_options; opt; opt = opt->next)
+	for (opt = vpninfo->proto_options; opt; opt = opt->next)
 		bufofs += snprintf(env_buf + bufofs, buflen - bufofs,
 				   "%s=%s\n", opt->option, opt->value);
 

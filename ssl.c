@@ -1001,24 +1001,24 @@ ssize_t openconnect_read_file(struct openconnect_info *vpninfo, const char *fnam
 
 int udp_sockaddr(struct openconnect_info *vpninfo, int port)
 {
-	free(vpninfo->dtls_addr);
-	vpninfo->dtls_addr = malloc(vpninfo->peer_addrlen);
-	if (!vpninfo->dtls_addr)
+	free(vpninfo->udp_addr);
+	vpninfo->udp_addr = malloc(vpninfo->peer_addrlen);
+	if (!vpninfo->udp_addr)
 		return -ENOMEM;
 
-	memcpy(vpninfo->dtls_addr, vpninfo->peer_addr, vpninfo->peer_addrlen);
+	memcpy(vpninfo->udp_addr, vpninfo->peer_addr, vpninfo->peer_addrlen);
 
 	if (vpninfo->peer_addr->sa_family == AF_INET) {
-		struct sockaddr_in *sin = (void *)vpninfo->dtls_addr;
+		struct sockaddr_in *sin = (void *)vpninfo->udp_addr;
 		sin->sin_port = htons(port);
-		vpninfo->dtls_tos_proto = IPPROTO_IP;
-		vpninfo->dtls_tos_optname = IP_TOS;
+		vpninfo->udp_tos_proto = IPPROTO_IP;
+		vpninfo->udp_tos_optname = IP_TOS;
 	} else if (vpninfo->peer_addr->sa_family == AF_INET6) {
-		struct sockaddr_in6 *sin = (void *)vpninfo->dtls_addr;
+		struct sockaddr_in6 *sin = (void *)vpninfo->udp_addr;
 		sin->sin6_port = htons(port);
 #if defined(IPV6_TCLASS)
-		vpninfo->dtls_tos_proto = IPPROTO_IPV6;
-		vpninfo->dtls_tos_optname = IPV6_TCLASS;
+		vpninfo->udp_tos_proto = IPPROTO_IPV6;
+		vpninfo->udp_tos_optname = IPV6_TCLASS;
 #endif
 	} else {
 		vpn_progress(vpninfo, PRG_ERR,
@@ -1029,8 +1029,8 @@ int udp_sockaddr(struct openconnect_info *vpninfo, int port)
 
 	/* in case DTLS TOS copy is disabled, reset the optname value */
 	/* so that the copy won't be applied in dtls.c / dtls_mainloop() */
-	if (!vpninfo->dtls_pass_tos)
-		vpninfo->dtls_tos_optname = 0;
+	if (!vpninfo->udp_pass_tos)
+		vpninfo->udp_tos_optname = 0;
 
 	return 0;
 }
@@ -1052,7 +1052,7 @@ int udp_connect(struct openconnect_info *vpninfo)
 		vpn_perror(vpninfo, "Set UDP socket send buffer");
 	}
 
-	if (vpninfo->dtls_local_port) {
+	if (vpninfo->udp_local_port) {
 		union {
 			struct sockaddr_in in;
 			struct sockaddr_in6 in6;
@@ -1065,18 +1065,18 @@ int udp_connect(struct openconnect_info *vpninfo)
 			dtls_bind_addrlen = sizeof(*addr);
 			addr->sin_family = AF_INET;
 			addr->sin_addr.s_addr = INADDR_ANY;
-			addr->sin_port = htons(vpninfo->dtls_local_port);
+			addr->sin_port = htons(vpninfo->udp_local_port);
 		} else if (vpninfo->peer_addr->sa_family == AF_INET6) {
 			struct sockaddr_in6 *addr = &dtls_bind_addr.in6;
 			dtls_bind_addrlen = sizeof(*addr);
 			addr->sin6_family = AF_INET6;
 			addr->sin6_addr = in6addr_any;
-			addr->sin6_port = htons(vpninfo->dtls_local_port);
+			addr->sin6_port = htons(vpninfo->udp_local_port);
 		} else {
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("Unknown protocol family %d. Cannot use UDP transport\n"),
 				     vpninfo->peer_addr->sa_family);
-			vpninfo->dtls_attempt_period = 0;
+			vpninfo->udp_attempt_period = 0;
 			closesocket(fd);
 			return -EINVAL;
 		}
@@ -1088,7 +1088,7 @@ int udp_connect(struct openconnect_info *vpninfo)
 		}
 	}
 
-	if (connect(fd, vpninfo->dtls_addr, vpninfo->peer_addrlen)) {
+	if (connect(fd, vpninfo->udp_addr, vpninfo->peer_addrlen)) {
 		vpn_perror(vpninfo, _("Connect UDP socket\n"));
 		closesocket(fd);
 		return -EINVAL;
@@ -1116,8 +1116,8 @@ int ssl_reconnect(struct openconnect_info *vpninfo)
 	timeout = vpninfo->reconnect_timeout;
 	interval = vpninfo->reconnect_interval;
 
-	free(vpninfo->dtls_pkt);
-	vpninfo->dtls_pkt = NULL;
+	free(vpninfo->udp_pkt);
+	vpninfo->udp_pkt = NULL;
 	free(vpninfo->tun_pkt);
 	vpninfo->tun_pkt = NULL;
 
