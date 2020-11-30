@@ -207,7 +207,7 @@ public final class LibTest {
 	private static void describeProtocol(LibOpenConnect.VPNProto vp) {
 		ArrayList<String> flags = new ArrayList<String>();
 		if ((vp.flags & LibOpenConnect.OC_PROTO_PROXY) != 0) flags.add("proxy");
-		if ((vp.flags & LibOpenConnect.OC_PROTO_CSD) != 0) flags.add("CSD");
+		if ((vp.flags & LibOpenConnect.OC_PROTO_CSD) != 0) flags.add("trojan");
 		if ((vp.flags & LibOpenConnect.OC_PROTO_AUTH_CERT) != 0) flags.add("auth-cert");
 		if ((vp.flags & LibOpenConnect.OC_PROTO_AUTH_OTP) != 0) flags.add("auth-otp");
 		if ((vp.flags & LibOpenConnect.OC_PROTO_AUTH_OTP) != 0) flags.add("auth-stoken");
@@ -252,12 +252,12 @@ public final class LibTest {
 		lib.setLogLevel(lib.PRG_DEBUG);
 		lib.setVersionString("2.2.0133");
 		//lib.setTokenMode(LibOpenConnect.OC_TOKEN_MODE_STOKEN, null);
-		String csd_wrapper = "./csd-" + lib.getProtocol() + ".sh";
-		if (new File(csd_wrapper).exists()) {
-			System.out.println("Using CSD wrapper script " + csd_wrapper);
-			lib.setCSDWrapper(csd_wrapper, null, null);
+		String trojanWrapper = "./trojan-" + lib.getProtocol() + ".sh";
+		if (new File(trojanWrapper).exists()) {
+			System.out.println("Using Trojan wrapper script " + trojanWrapper);
+			lib.setCSDWrapper(trojanWrapper, null, null);
 		} else {
-			System.out.println("Skipping CSD wrapper (script " + csd_wrapper + " doesn't exist)");
+			System.out.println("Skipping Trojan wrapper (script " + trojanWrapper + " doesn't exist)");
 		}
 		lib.parseURL(server_name);
 		lib.setSystemTrust(true);
@@ -282,7 +282,7 @@ public final class LibTest {
 		printIPInfo(lib.getIPInfo());
 
 		if (lib.setupDTLS(60) != 0)
-			die("Error setting up DTLS");
+			die("Error setting up UDP");
 
 		lib.mainloop(300, LibOpenConnect.RECONNECT_INTERVAL_MIN);
 	}
