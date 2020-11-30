@@ -33,7 +33,7 @@ trojan.</p>
 <h2>TNCC support in OpenConnect</h2>
 
 <p>OpenConnect supports running the Java binary, or emulating its
-behaviour, by passing the <tt>--csd-wrapper=SCRIPT</tt> argument
+behaviour, by passing the <tt>--trojan-wrapper=SCRIPT</tt> argument
 with a shell script.</p>
 
 <p>The OpenConnect distribution includes <i>two</i> alternative
@@ -45,7 +45,7 @@ the <tt>trojans/</tt> subdirectory:</p>
   with a little assistance. Running this wrapper requires you to build <tt>tncc-preload.so</tt> from
   <a href="https://github.com/russdill/ncsvc-socks-wrapper">russdill/ncsvs-socks-wrapper on GitHub</a>.
   Because of the security dangers of executing a server-provided trojan binary, this script should ideally be executed
-  with the permissions of a low-privilege user (e.g. <tt>--csd-user=nobody</tt>).</li>
+  with the permissions of a low-privilege user (e.g. <tt>--trojan-user=nobody</tt>).</li>
 
   <li><p><tt>tncc-emulate.py</tt>: This Python 3.x script does <b>not</b> actually run the <tt>tncc.jar</tt> binary.
   Instead, it <i>emulates</i> the behaviour of the <tt>tncc.jar</tt> binary, rather than actually
@@ -59,7 +59,7 @@ the <tt>trojans/</tt> subdirectory:</p>
 
 <p>With either of these sripts, it may also be necessary to pass a Mozilla-compatible user agent string:</p>
 <pre>
-  ./openconnect --protocol=nc --useragent 'Mozilla/5.0 (Linux) Firefox' --csd-wrapper=trojans/tncc-wrapper.py vpn.example.com
+  ./openconnect --protocol=nc --useragent 'Mozilla/5.0 (Linux) Firefox' --trojan-wrapper=trojans/tncc-wrapper.py vpn.example.com
 </pre>
 
 <INCLUDE file="inc/footer.tmpl" />

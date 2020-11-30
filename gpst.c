@@ -942,7 +942,7 @@ static int run_hip_script(struct openconnect_info *vpninfo)
 #if defined(_WIN32) || defined(__native_client__)
 				     _("However, running the HIP report submission script on this platform is not yet implemented.")
 #else
-				     _("You need to provide a --csd-wrapper argument with the HIP report submission script.")
+				     _("You need to provide a --trojan-wrapper argument with the HIP report submission script.")
 #endif
 				);
 			/* XXX: Many GlobalProtect VPNs work fine despite allegedly requiring HIP report submission */

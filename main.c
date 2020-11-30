@@ -158,8 +158,8 @@ enum {
 	OPT_CONFIGFILE,
 	OPT_COOKIEONLY,
 	OPT_COOKIE_ON_STDIN,
-	OPT_CSD_USER,
-	OPT_CSD_WRAPPER,
+	OPT_TROJAN_USER,
+	OPT_TROJAN_WRAPPER,
 	OPT_CIPHERSUITES,
 	OPT_DISABLE_IPV6,
 	OPT_DTLS_CIPHERS,
@@ -172,7 +172,7 @@ enum {
 	OPT_KEY_PASSWORD_FROM_FSID,
 	OPT_LIBPROXY,
 	OPT_NO_CERT_CHECK,
-	OPT_NO_DTLS,
+	OPT_NO_UDP,
 	OPT_NO_HTTP_KEEPALIVE,
 	OPT_NO_SYSTEM_TRUST,
 	OPT_NO_PASSWD,
@@ -186,7 +186,7 @@ enum {
 	OPT_RESOLVE,
 	OPT_USERAGENT,
 	OPT_NON_INTER,
-	OPT_DTLS_LOCAL_PORT,
+	OPT_UDP_LOCAL_PORT,
 	OPT_TOKEN_MODE,
 	OPT_TOKEN_SECRET,
 	OPT_OS,
@@ -218,8 +218,8 @@ static const struct option long_options[] = {
 	OPTION("setuid", 1, 'U'),
 	OPTION("script-tun", 0, 'S'),
 	OPTION("syslog", 0, 'l'),
-	OPTION("csd-user", 1, OPT_CSD_USER),
-	OPTION("csd-wrapper", 1, OPT_CSD_WRAPPER),
+	OPTION("trojan-user", 1, OPT_TROJAN_USER), OPTION("csd-user", 1, OPT_TROJAN_USER),
+	OPTION("trojan-wrapper", 1, OPT_TROJAN_WRAPPER), OPTION("csd-wrapper", 1, OPT_TROJAN_WRAPPER),
 #endif
 	OPTION("pfs", 0, OPT_PFS),
 	OPTION("allow-insecure-crypto", 0, OPT_ALLOW_INSECURE_CRYPTO),
@@ -248,7 +248,7 @@ static const struct option long_options[] = {
 	OPTION("version", 0, 'V'),
 	OPTION("cafile", 1, OPT_CAFILE),
 	OPTION("config", 1, OPT_CONFIGFILE),
-	OPTION("no-dtls", 0, OPT_NO_DTLS),
+	OPTION("no-udp", 0, OPT_NO_UDP), OPTION("no-dtls", 0, OPT_NO_UDP),
 	OPTION("authenticate", 0, OPT_AUTHENTICATE),
 	OPTION("cookieonly", 0, OPT_COOKIEONLY),
 	OPTION("printcookie", 0, OPT_PRINTCOOKIE),
@@ -276,7 +276,7 @@ static const struct option long_options[] = {
 	OPTION("force-dpd", 1, OPT_FORCE_DPD),
 	OPTION("force-trojan", 1, OPT_FORCE_TROJAN),
 	OPTION("non-inter", 0, OPT_NON_INTER),
-	OPTION("dtls-local-port", 1, OPT_DTLS_LOCAL_PORT),
+	OPTION("udp-local-port", 1, OPT_UDP_LOCAL_PORT), OPTION("dtls-local-port", 1, OPT_UDP_LOCAL_PORT),
 	OPTION("token-mode", 1, OPT_TOKEN_MODE),
 	OPTION("token-secret", 1, OPT_TOKEN_SECRET),
 	OPTION("os", 1, OPT_OS),
@@ -860,7 +860,7 @@ static void usage(void)
 	printf("      --reconnect-timeout         %s\n", _("Connection retry timeout in seconds"));
 	printf("      --resolve=HOST:IP           %s\n", _("Use IP when connecting to HOST"));
 	printf("      --passtos                   %s\n", _("Copy TOS / TCLASS field into DTLS and ESP packets"));
-	printf("      --dtls-local-port=PORT      %s\n", _("Set local port for DTLS and ESP datagrams"));
+	printf("      --udp-local-port=PORT       %s\n", _("Set local port for UDP (DTLS and ESP) datagrams"));
 
 	printf("\n%s:\n", _("Authentication (two-phase)"));
 	printf("  -C, --cookie=COOKIE             %s\n", _("Use authentication cookie COOKIE"));
@@ -902,7 +902,7 @@ static void usage(void)
 	printf("  -D, --no-deflate                %s\n", _("Disable all compression"));
 	printf("      --force-dpd=INTERVAL        %s\n", _("Set minimum Dead Peer Detection interval (in seconds)"));
 	printf("      --pfs                       %s\n", _("Require perfect forward secrecy"));
-	printf("      --no-dtls                   %s\n", _("Disable DTLS and ESP"));
+	printf("      --no-udp                    %s\n", _("Disable UDP (DTLS and ESP) and only use TCP (TLS)"));
 	printf("      --dtls-ciphers=LIST         %s\n", _("OpenSSL ciphers to support for DTLS"));
 	printf("  -Q, --queue-len=LEN             %s\n", _("Set packet queue limit to LEN pkts"));
 
@@ -914,9 +914,9 @@ static void usage(void)
 	printf("                                  (%s %s)\n", _("default:"), openconnect_version_str);
 
 #ifndef _WIN32
-	printf("\n%s:\n", _("Trojan binary (CSD) execution"));
-	printf("      --csd-user=USER             %s\n", _("Drop privileges during trojan execution"));
-	printf("      --csd-wrapper=SCRIPT        %s\n", _("Run SCRIPT instead of trojan binary"));
+	printf("\n%s:\n", _("Trojan binary execution (CSD, TNCC/Host Checker, HIP)"));
+	printf("      --trojan-user=USER          %s\n", _("Drop privileges during trojan execution"));
+	printf("      --trojan-wrapper=SCRIPT     %s\n", _("Run SCRIPT instead of trojan binary"));
 	printf("      --force-trojan=INTERVAL     %s\n", _("Set minimum interval for rerunning trojan (in seconds)"));
 #endif
 
@@ -1271,7 +1271,7 @@ static int autocomplete(int argc, char **argv)
 				break;
 
 			case 's': /* --script */
-			case OPT_CSD_WRAPPER: /* --csd-wrapper */
+			case OPT_TROJAN_WRAPPER: /* --trojan-wrapper */
 				autocomplete_special("EXECUTABLE", comp_opt, prefixlen, NULL);
 				break;
 
@@ -1279,7 +1279,7 @@ static int autocomplete(int argc, char **argv)
 				autocomplete_special("HOSTNAME", comp_opt, prefixlen, NULL);
 				break;
 
-			case OPT_CSD_USER: /* --csd-user */
+			case OPT_TROJAN_USER: /* --trojan-user */
 			case 'U': /* --setuid */
 				autocomplete_special("USERNAME", comp_opt, prefixlen, NULL);
 				break;
@@ -1365,7 +1365,7 @@ static int autocomplete(int argc, char **argv)
 			case OPT_VERSION: /* --version-string */
 			case OPT_FORCE_DPD: /* --force-dpd */
 			case OPT_FORCE_TROJAN: /* --force-trojan */
-			case OPT_DTLS_LOCAL_PORT: /* --dtls-local-port */
+			case OPT_UDP_LOCAL_PORT: /* --udp-local-port */
 			case 'F': /* --form-entry */
 			case OPT_GNUTLS_DEBUG: /* --gnutls-debug */
 			case OPT_CIPHERSUITES: /* --gnutls-priority */
@@ -1573,11 +1573,11 @@ int main(int argc, char **argv)
 		case 'U':
 			get_uids(config_arg, &vpninfo->uid, &vpninfo->gid);
 			break;
-		case OPT_CSD_USER:
+		case OPT_TROJAN_USER:
 			get_uids(config_arg, &vpninfo->uid_csd, &vpninfo->gid_csd);
 			vpninfo->uid_trojan_given = 1;
 			break;
-		case OPT_CSD_WRAPPER:
+		case OPT_TROJAN_WRAPPER:
 			vpninfo->trojan_wrapper = keep_config_arg();
 			break;
 #endif /* !_WIN32 */
@@ -1664,7 +1664,7 @@ int main(int argc, char **argv)
 			gai->option[ip - config_arg] = 0;
 			gai->value = gai->option + (ip - config_arg) + 1;
 			break;
-		case OPT_NO_DTLS:
+		case OPT_NO_UDP:
 			vpninfo->udp_state = UDP_DISABLED;
 			break;
 		case OPT_COOKIEONLY:
@@ -1842,7 +1842,7 @@ int main(int argc, char **argv)
 		case OPT_FORCE_TROJAN:
 			openconnect_set_trojan_interval(vpninfo, atoi(config_arg));
 			break;
-		case OPT_DTLS_LOCAL_PORT:
+		case OPT_UDP_LOCAL_PORT:
 			vpninfo->udp_local_port = atoi(config_arg);
 			break;
 		case OPT_TOKEN_MODE:

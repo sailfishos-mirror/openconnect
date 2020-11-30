@@ -1081,7 +1081,7 @@ static int run_csd_script(struct openconnect_info *vpninfo, char *buf, int bufle
 	if (!vpninfo->trojan_wrapper && !buflen) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Error: Server asked us to run CSD hostscan.\n"
-			       "You need to provide a suitable --csd-wrapper argument.\n"));
+			       "You need to provide a suitable --trojan-wrapper argument.\n"));
 		return -EINVAL;
 	}
 
@@ -1199,7 +1199,7 @@ static int run_csd_script(struct openconnect_info *vpninfo, char *buf, int bufle
                 if (getuid() == 0 && !vpninfo->trojan_wrapper) {
                         fprintf(stderr, _("Warning: you are running insecure "
                                           "CSD code with root privileges\n"
-                                          "\t Use command line option \"--csd-user\"\n"));
+                                          "\t Use command line option \"--trojan-user\"\n"));
                 }
                 /*
 		 * Spurious stdout output from the CSD trojan will break both

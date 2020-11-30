@@ -25,7 +25,7 @@ openconnect \- Multi-protocol VPN client, for Cisco AnyConnect VPNs and others
 .OP \-\-timestamp
 .OP \-\-passtos
 .OP \-U,\-\-setuid user
-.OP \-\-csd\-user user
+.OP \-\-trojan\-user user
 .OP \-m,\-\-mtu mtu
 .OP \-\-base\-mtu mtu
 .OP \-p,\-\-key\-password pass
@@ -50,11 +50,11 @@ openconnect \- Multi-protocol VPN client, for Cisco AnyConnect VPNs and others
 .OP \-\-disable\-ipv6
 .OP \-\-dtls\-ciphers list
 .OP \-\-dtls12\-ciphers list
-.OP \-\-dtls\-local\-port port
+.OP \-\-udp\-local\-port port
 .OP \-\-dump\-http\-traffic
 .OP \-\-no\-system\-trust
 .OP \-\-pfs
-.OP \-\-no\-dtls
+.OP \-\-no\-udp
 .OP \-\-no\-http\-keepalive
 .OP \-\-no\-passwd
 .OP \-\-no\-xmlpost
@@ -99,7 +99,7 @@ and data packets can be passed over the resulting connection. When
 possible, a UDP tunnel is also configured: AnyConnect uses DTLS, while
 Juniper and GlobalProtect use UDP-encapsulated ESP. The UDP tunnel
 may be disabled with
-.BR \-\-no\-dtls ,
+.BR \-\-no\-udp ,
 but is preferred when correctly supported by the server and network
 for performance reasons. (TCP performs poorly and unreliably over
 TCP-based tunnels; see
@@ -178,7 +178,7 @@ compression can be disabled by setting the mode to
 .B \-\-force\-dpd=INTERVAL
 Use
 .I INTERVAL
-as minimum Dead Peer Detection interval (in seconds) for CSTP and DTLS, forcing use of DPD even when the server doesn't request it.
+as minimum Dead Peer Detection interval (in seconds) for all protocols that support it, forcing use of DPD even when the server doesn't request it.
 .TP
 .B \-g,\-\-usergroup=GROUP
 Use
@@ -232,7 +232,7 @@ Use syslog for progress messages
 Prepend a timestamp to each progress message
 .TP
 .B \-\-passtos
-Copy TOS / TCLASS of payload packet into DTLS and ESP packets. This is
+Copy TOS / TCLASS of payload packet into UDP packets (DTLS and ESP). This is
 not set by default because it may leak information about the payload
 (for example, by differentiating voice/video traffic).
 .TP
@@ -240,10 +240,10 @@ not set by default because it may leak information about the payload
 Drop privileges after connecting, to become user
 .I USER
 .TP
-.B \-\-csd\-user=USER
+.B \-\-trojan\-user=USER
 Drop privileges during execution of trojan binary or script (CSD, TNCC, or HIP).
 .TP
-.B \-\-csd\-wrapper=SCRIPT
+.B \-\-trojan\-wrapper=SCRIPT
 Run
 .I SCRIPT
 instead of the trojan binary or script.
@@ -404,10 +404,10 @@ Set OpenSSL ciphers to support for DTLS
 .B \-\-dtls12\-ciphers=LIST
 Set OpenSSL ciphers for Cisco's DTLS v1.2
 .TP
-.B \-\-dtls\-local\-port=PORT
+.B \-\-udp\-local\-port=PORT
 Use
 .I PORT
-as the local port for DTLS and UDP datagrams
+as the local port for UDP datagrams (DTLS and ESP)
 .TP
 .B \-\-dump\-http\-traffic
 Enable verbose output of all HTTP requests and the bodies of all responses
@@ -426,8 +426,13 @@ suite may need to be manually enabled by the administrator using the
 setting.
 
 .TP
-.B \-\-no\-dtls
-Disable DTLS and ESP
+.B \-\-no\-udp
+Disable UDP (DTLS and ESP) and use only TCP (TLS). This should never be required;
+OpenConnect should automatically detect network environments where UDP is blocked
+or misrouted, and gracefully fall back to TLS. If it makes a difference, please report
+this information to the
+.B openconnect\-devel@lists.infradead.org
+mailing list.
 .TP
 .B \-\-no\-http\-keepalive
 Version 8.2.2.5 of the Cisco ASA software has a bug where it will forget
@@ -590,10 +595,12 @@ OS type to report to gateway.  Recognized values are:
 .BR mac\-intel ,
 .BR android ,
 .BR apple\-ios .
-Reporting a different OS type may affect the dynamic access policy (DAP)
-applied to the VPN session.  If the gateway requires CSD, it will also cause
-the corresponding CSD trojan binary to be downloaded, so you may need to use
-.B \-\-csd\-wrapper
+Reporting a different OS type may affect policies applied by the gateway to
+the VPN session, for example dynamic access policy (DAP) on Cisco AnyConnect
+VPNs.  If the gateway requires execution of a Trojan (such as CSD), it will
+also cause the corresponding Trojan binary to be downloaded, so you may need
+to use
+.B \-\-trojan\-wrapper
 if this code is not executable on the local machine.
 .SH SIGNALS
 In the data phase of the connection, the following signals are handled:

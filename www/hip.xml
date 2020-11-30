@@ -50,7 +50,7 @@ complete. However, two things can go wrong:</p>
 
 <h2>HIP support in OpenConnect</h2>
 
-<p>OpenConnect supports HIP report generation and submission by passing the <tt>--csd-wrapper=SCRIPT</tt> argument with a shell script to generate a HIP report in the format expected by the
+<p>OpenConnect supports HIP report generation and submission by passing the <tt>--trojan-wrapper=SCRIPT</tt> argument with a shell script to generate a HIP report in the format expected by the
 server. This shell script must output the HIP report to standard output and exit successfully (status code 0). The HIP script is called with the following command-line arguments:</p>
 
 <pre>
