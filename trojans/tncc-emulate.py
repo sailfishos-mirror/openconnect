@@ -629,15 +629,15 @@ class tncc_server:
             if n:
                 key, val = n.strip().split('=', 1)
                 args[key] = val
-        if cmd == 'start':
-            cookie = self.tncc.get_cookie(args['Cookie'], args['DSSIGNIN'])
+        if cmd in ('start', 'setcookie'):
+            cookie = self.tncc.get_cookie(
+                args['Cookie'],
+                args['DSSIGNIN'] if cmd=='start' else self.tncc.find_cookie('DSSIGNIN')
+            )
             resp = ['200', '3', cookie.value]
             if self.tncc.interval is not None:
                 resp.append(str(self.tncc.interval))
             self.sock.send(('\n'.join(resp) + '\n\n').encode('ascii'))
-        elif cmd == 'setcookie':
-            self.tncc.get_cookie(args['Cookie'],
-                                 self.tncc.find_cookie('DSSIGNIN'))
         else:
             logging.warning('Unknown command %r', cmd)
 
