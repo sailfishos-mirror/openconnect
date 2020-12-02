@@ -315,7 +315,11 @@ static int tncc_preauth(struct openconnect_info *vpninfo)
 				goto out;
 		}
 
-		execl(vpninfo->csd_wrapper, vpninfo->csd_wrapper, vpninfo->hostname, NULL);
+		/* XX: openconnect_get_hostname actually returns IP address. IP is needed here because
+		 * because the tunnel will be blocked while the script waits for its reply,
+		 * so DNS may not be available.
+		 */
+		execl(vpninfo->csd_wrapper, vpninfo->csd_wrapper, openconnect_get_hostname(vpninfo), NULL);
 	out:
 		fprintf(stderr, _("Failed to exec TNCC script %s: %s\n"),
 			vpninfo->csd_wrapper, strerror(errno));
