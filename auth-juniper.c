@@ -169,10 +169,16 @@ int oncp_send_tncc_command(struct openconnect_info *vpninfo, int start)
 	if (len > 0) {
 		int interval = atoi(recvbuf);
 		if (interval != 0) {
-			vpninfo->trojan_interval = interval;
-			vpn_progress(vpninfo, PRG_DEBUG,
-				     _("Got reauth interval from TNCC: %d seconds\n"),
-				     interval);
+			if (vpninfo->trojan_interval != 0 && interval < vpninfo->trojan_interval) {
+				vpninfo->trojan_interval = interval;
+				vpn_progress(vpninfo, PRG_DEBUG,
+					     _("Got reauth interval from TNCC: %d seconds\n"),
+					     interval);
+			} else {
+				vpn_progress(vpninfo, PRG_INFO,
+					     _("Ignoring reauth interval from TNCC (%d seconds), because interval is already set to %d seconds\n"),
+					     interval, vpninfo->trojan_interval);
+			}
 		}
 	}
 
