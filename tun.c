@@ -263,9 +263,6 @@ intptr_t os_setup_tun(struct openconnect_info *vpninfo)
 	if (!vpninfo->ifname)
 		vpninfo->ifname = strdup(ifr.ifr_name);
 
-	/* Ancient vpnc-scripts might not get this right */
-	set_tun_mtu(vpninfo);
-
 	return tun_fd;
 }
 #else /* BSD et al, including OS X */
@@ -439,9 +436,6 @@ intptr_t os_setup_tun(struct openconnect_info *vpninfo)
 		return -EIO;
 	}
 #endif
-
-	/* Ancient vpnc-scripts might not get this right */
-	set_tun_mtu(vpninfo);
 
 	return tun_fd;
 }
