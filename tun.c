@@ -195,7 +195,7 @@ static void ifreq_set_ifname(struct openconnect_info *vpninfo, struct ifreq *ifr
 		free(ifname);
 }
 
-static int set_tun_mtu(struct openconnect_info *vpninfo)
+int set_tun_mtu(struct openconnect_info *vpninfo)
 {
 	struct ifreq ifr;
 	int net_fd;

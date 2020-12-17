@@ -887,6 +887,7 @@ void os_shutdown_tun(struct openconnect_info *vpninfo);
 int os_read_tun(struct openconnect_info *vpninfo, struct pkt *pkt);
 int os_write_tun(struct openconnect_info *vpninfo, struct pkt *pkt);
 intptr_t os_setup_tun(struct openconnect_info *vpninfo);
+int set_tun_mtu(struct openconnect_info *vpninfo);
 
 /* {gnutls,openssl}-dtls.c */
 int start_dtls_handshake(struct openconnect_info *vpninfo, int dtls_fd);
