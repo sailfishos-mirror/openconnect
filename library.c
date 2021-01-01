@@ -542,6 +542,18 @@ int install_vpn_opts(struct openconnect_info *vpninfo, struct oc_vpn_option *opt
 	return 0;
 }
 
+static void free_certinfo(struct cert_info *certinfo)
+{
+	/* These are const in openconnect itself, but for consistency of
+	   the library API we do take ownership of the strings we're given,
+	   and thus we have to free them too. */
+	if (certinfo->cert != certinfo->key)
+		free((void *)certinfo->key);
+	free((void *)certinfo->cert);
+
+	free_pass(&certinfo->password);
+}
+
 void openconnect_vpninfo_free(struct openconnect_info *vpninfo)
 {
 	openconnect_close_https(vpninfo, 1);
@@ -592,7 +604,6 @@ void openconnect_vpninfo_free(struct openconnect_info *vpninfo)
 	free(vpninfo->proxy);
 	free(vpninfo->proxy_user);
 	free_pass(&vpninfo->proxy_pass);
-	free_pass(&vpninfo->certinfo[0].password);
 	free(vpninfo->vpnc_script);
 	free(vpninfo->cafile);
 	free(vpninfo->ifname);
@@ -635,12 +646,9 @@ void openconnect_vpninfo_free(struct openconnect_info *vpninfo)
 	free(vpninfo->profile_url);
 	free(vpninfo->profile_sha1);
 
-	/* These are const in openconnect itself, but for consistency of
-	   the library API we do take ownership of the strings we're given,
-	   and thus we have to free them too. */
-	if (vpninfo->certinfo[0].cert != vpninfo->certinfo[0].key)
-		free((void *)vpninfo->certinfo[0].key);
-	free((void *)vpninfo->certinfo[0].cert);
+	free_certinfo(&vpninfo->certinfo[0]);
+	free_certinfo(&vpninfo->certinfo[1]);
+
 	if (vpninfo->peer_cert) {
 #if defined(OPENCONNECT_OPENSSL)
 		X509_free(vpninfo->peer_cert);
