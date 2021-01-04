@@ -237,7 +237,7 @@ struct pkt {
 #define DTLS_CONNECTED	5	/* Transport connected but not yet enabled */
 #define DTLS_ESTABLISHED 6	/* Data path fully established */
 
-/* Not to be confused with OC_PROTO_xxx flags which are library-visible */
+/* Not to be confused with MULTICERT_PROTO_xxx flags which are library-visible */
 #define PROTO_ANYCONNECT	0
 #define PROTO_NC		1
 #define PROTO_GPST		2
@@ -1132,6 +1132,47 @@ OPENCONNECT_CMD_SOCKET dumb_socketpair(OPENCONNECT_CMD_SOCKET socks[2], int make
     } while (0)
 
 /****************************************************************************/
+
+/* multiple certificate authentication */
+typedef enum {
+	MULTICERT_SIGNHASH_UNKNOWN = 0,
+#define MULTICERT_SIGNHASH_NONE MULTICERT_SIGNHASH_NONE
+	MULTICERT_SIGNHASH_SHA256 = 1,
+#define MULTICERT_SIGNHASH_SHA256 MULTICERT_SIGNHASH_SHA256
+	MULTICERT_SIGNHASH_SHA384 = 2,
+#define MULTICERT_SIGNHASH_SHA384 MULTICERT_SIGNHASH_SHA384
+	MULTICERT_SIGNHASH_SHA512 = 3,
+#define MULTICERT_SIGNHASH_SHA512 MULTICERT_SIGNHASH_SHA512
+	MULTICERT_SIGNHASH_MAX = MULTICERT_SIGNHASH_SHA512
+} multicert_signhash_algorithm_t;
+
+#define MULTICERT_SIGNHASH_FLAG(v)	((v)?(1<<((v)-1)):0)
+
+typedef enum {
+	MULTICERT_CERT_FORMAT_UNKNOWN = 0,
+#define MULTICERT_CERT_FORMAT_UNKNOWN MULTICERT_CERT_FORMAT_UNKNOWN
+	MULTICERT_CERT_FORMAT_PKCS7 = 1,
+#define MULTICERT_CERT_FORMAT_PKCS7 MULTICERT_CERT_FORMAT_PKCS7
+	MULTICERT_CERT_FORMAT_MAX = MULTICERT_CERT_FORMAT_PKCS7
+} multicert_cert_format_t;
+
+struct multicert_client_cert
+{
+	multicert_cert_format_t format;
+	struct oc_text_buf *data;
+};
+
+struct multicert_client_signature
+{
+	multicert_signhash_algorithm_t algorithm;
+	struct oc_text_buf *data;
+};
+
+/* multicert.c */
+const char *multicert_signhash_get_name(int id);
+multicert_signhash_algorithm_t multicert_signhash_get_id(const char *name);
+const char *multicert_cert_format_get_name(int id);
+multicert_cert_format_t multicert_cert_format_get_id(const char *name);
 
 /* iconv.c */
 #ifdef HAVE_ICONV
