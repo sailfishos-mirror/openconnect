@@ -1432,6 +1432,11 @@ int openconnect_hash_yubikey_password(struct openconnect_info *vpninfo,
 				      const char *password, int pwlen,
 				      const void *ident, int id_len);
 int hotp_hmac(struct openconnect_info *vpninfo, const void *challenge);
+int multicert_compute_response(struct openconnect_info *vpninfo,
+			       unsigned int digests,
+			       const unsigned char *chdata, size_t chdata_len,
+			       struct multicert_client_cert *ccert,
+			       struct multicert_client_signature *csignature);
 #if defined(OPENCONNECT_OPENSSL)
 #define openconnect_https_connected(_v) ((_v)->https_ssl)
 #elif defined (OPENCONNECT_GNUTLS)

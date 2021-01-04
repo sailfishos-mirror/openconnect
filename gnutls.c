@@ -2797,3 +2797,12 @@ void destroy_eap_ttls(struct openconnect_info *vpninfo, void *sess)
 {
 	gnutls_deinit(sess);
 }
+
+int multicert_compute_response(struct openconnect_info *vpninfo,
+			       unsigned int digests,
+			       const unsigned char *chdata, size_t chdata_len,
+			       struct multicert_client_cert *ccert,
+			       struct multicert_client_signature *csignature)
+{
+	return -ENOSYS;
+}

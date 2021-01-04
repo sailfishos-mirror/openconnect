@@ -2241,3 +2241,12 @@ void destroy_eap_ttls(struct openconnect_info *vpninfo, void *ttls)
 	/* Leave the BIO_METH for now. It may get reused and we don't want to
 	 * have to call BIO_get_new_index() more times than is necessary */
 }
+
+int multicert_compute_response(struct openconnect_info *vpninfo,
+			       unsigned int digests,
+			       const unsigned char *chdata, size_t chdata_len,
+			       struct multicert_client_cert *ccert,
+			       struct multicert_client_signature *csignature)
+{
+	return -ENOSYS;
+}
