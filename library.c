@@ -1575,7 +1575,7 @@ retry:
 
 		if (opt->type == OC_FORM_OPT_SSO && vpninfo->open_webview) {
 		    vpninfo->sso_cookie_value = NULL;
-		    vpninfo->open_webview(vpninfo, vpninfo->sso_login, NULL);
+		    vpninfo->open_webview(vpninfo, vpninfo->sso_login, vpninfo->cbdata);
 		    opt->_value = vpninfo->sso_cookie_value;
 		    vpninfo->sso_cookie_value = NULL;
 		}
