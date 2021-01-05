@@ -1542,7 +1542,7 @@ void nuke_opt_values(struct oc_form_opt *opt)
 
 int process_auth_form(struct openconnect_info *vpninfo, struct oc_auth_form *form)
 {
-	int ret;
+	int ret, do_sso = 0;
 	struct oc_form_opt_select *grp = form->authgroup_opt;
 	struct oc_choice *auth_choice;
 	struct oc_form_opt *opt;
@@ -1573,11 +1573,9 @@ retry:
 		int second_auth = opt->flags & OC_FORM_OPT_SECOND_AUTH;
 		opt->flags &= ~OC_FORM_OPT_IGNORE;
 
-		if (opt->type == OC_FORM_OPT_SSO && vpninfo->open_webview) {
-		    vpninfo->sso_cookie_value = NULL;
-		    vpninfo->open_webview(vpninfo, vpninfo->sso_login, vpninfo->cbdata);
-		    opt->_value = vpninfo->sso_cookie_value;
-		    vpninfo->sso_cookie_value = NULL;
+		if (opt->type == OC_FORM_OPT_SSO_TOKEN) {
+			do_sso = 1;
+			continue;
 		}
 
 		if (!auth_choice ||
@@ -1611,6 +1609,31 @@ retry:
 
 	if (ret == OC_FORM_RESULT_CANCELLED || ret < 0)
 		nuke_opt_values(form->opts);
+
+	if (do_sso) {
+		if (vpninfo->open_webview) {
+			free(vpninfo->sso_cookie_value);
+			free(vpninfo->sso_username);
+			vpninfo->sso_cookie_value = NULL;
+			vpninfo->sso_username = NULL;
+			ret = vpninfo->open_webview(vpninfo, vpninfo->sso_login, vpninfo->cbdata);
+			for (opt = form->opts; opt; opt = opt->next) {
+				if (opt->type == OC_FORM_OPT_SSO_TOKEN) {
+					free(opt->_value);
+					opt->_value = vpninfo->sso_cookie_value;
+				} else if (opt->type == OC_FORM_OPT_SSO_USER) {
+					free(opt->_value);
+					opt->_value = vpninfo->sso_username;
+				}
+			}
+			vpninfo->sso_username = NULL;
+			vpninfo->sso_cookie_value = NULL;
+		} else {
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("No SSO handler\n")); /* XX: print more debugging info */
+			ret = -EINVAL;
+		}
+	}
 
 	return ret;
 }
