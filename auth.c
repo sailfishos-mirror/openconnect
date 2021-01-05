@@ -228,7 +228,7 @@ static int parse_form(struct openconnect_info *vpninfo, struct oc_auth_form *for
 		} else if (!strcmp(input_type, "text")) {
 			opt->type = OC_FORM_OPT_TEXT;
 		} else if (!strcmp(input_type, "sso")) {
-			opt->type = OC_FORM_OPT_SSO;
+			opt->type = OC_FORM_OPT_SSO_TOKEN;
 		} else if (!strcmp(input_type, "password")) {
 			if (!cstp_can_gen_tokencode(vpninfo, form, opt))
 				opt->type = OC_FORM_OPT_TOKEN;

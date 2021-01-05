@@ -171,6 +171,7 @@ static const struct vpn_proto openconnect_protos[] = {
 		.tcp_mainloop = gpst_mainloop,
 		.add_http_headers = gpst_common_headers,
 		.obtain_cookie = gpst_obtain_cookie,
+		.sso_detect_done = gpst_sso_detect_done,
 		.udp_protocol = "ESP",
 #ifdef HAVE_ESP
 		.udp_setup = esp_setup,

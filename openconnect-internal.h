@@ -1326,6 +1326,7 @@ int gpst_setup(struct openconnect_info *vpninfo);
 int gpst_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable);
 int gpst_esp_send_probes(struct openconnect_info *vpninfo);
 int gpst_esp_catch_probe(struct openconnect_info *vpninfo, struct pkt *pkt);
+int gpst_sso_detect_done(struct openconnect_info *vpninfo, const struct oc_webview_result *result);
 
 /* lzs.c */
 int lzs_decompress(unsigned char *dst, int dstlen, const unsigned char *src, int srclen);

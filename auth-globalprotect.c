@@ -79,17 +79,24 @@ static int parse_prelogin_xml(struct openconnect_info *vpninfo, xmlNode *xml_nod
 	struct oc_auth_form *form = NULL;
 	struct oc_form_opt *opt, *opt2;
 	char *prompt = NULL, *username_label = NULL, *password_label = NULL;
-	char *saml_method = NULL, *saml_path = NULL;
+	char *s = NULL, *saml_method = NULL, *saml_path = NULL;
 	int result = 0;
 
 	if (!xmlnode_is_named(xml_node, "prelogin-response"))
 		goto out;
 
 	for (xml_node = xml_node->children; xml_node; xml_node = xml_node->next) {
-		char *s = NULL;
-		if (!xmlnode_get_val(xml_node, "saml-request", &s)) {
+		xmlnode_get_val(xml_node, "saml-request", &s);
+		xmlnode_get_val(xml_node, "saml-auth-method", &saml_method);
+		xmlnode_get_val(xml_node, "authentication-message", &prompt);
+		xmlnode_get_val(xml_node, "username-label", &username_label);
+		xmlnode_get_val(xml_node, "password-label", &password_label);
+		/* XX: should we save the certificate username from <ccusername/> ? */
+	}
+
+	if (saml_method && s) {
+		if (!strcmp(saml_method, "REDIRECT")) {
 			int len;
-			free(saml_path);
 			saml_path = openconnect_base64_decode(&len, s);
 			if (len < 0) {
 				vpn_progress(vpninfo, PRG_ERR, "Could not decode SAML request as base64: %s\n", s);
@@ -104,39 +111,27 @@ static int parse_prelogin_xml(struct openconnect_info *vpninfo, xmlNode *xml_nod
 				goto out;
 			}
 			saml_path[len] = '\0';
+			vpninfo->sso_login = saml_path;
+		} else if (!strcmp(saml_method, "POST")) {
+			const char *prefix = "data:text/html;base64,";
+			saml_path = s;
+			realloc_inplace(saml_path, strlen(saml_path)+strlen(prefix)+1);
+			if (!saml_path) {
+				result = -ENOMEM;
+				goto out;
+			}
+			memmove(saml_path + strlen(prefix), saml_path, strlen(saml_path) + 1);
+			memcpy(saml_path, prefix, strlen(prefix));
+			vpninfo->sso_login = saml_path;
 		} else {
-			xmlnode_get_val(xml_node, "saml-auth-method", &saml_method);
-			xmlnode_get_val(xml_node, "authentication-message", &prompt);
-			xmlnode_get_val(xml_node, "username-label", &username_label);
-			xmlnode_get_val(xml_node, "password-label", &password_label);
-			/* XX: should we save the certificate username from <ccusername/> ? */
-		}
-	}
-
-	/* XX: Alt-secret form field must be specified for SAML, because we can't autodetect it */
-	if (saml_method || saml_path) {
-		if (ctx->portal_userauthcookie)
-			vpn_progress(vpninfo, PRG_DEBUG, _("SAML authentication required; using portal-userauthcookie to continue SAML.\n"));
-		else if (ctx->portal_prelogonuserauthcookie)
-			vpn_progress(vpninfo, PRG_DEBUG, _("SAML authentication required; using portal-prelogonuserauthcookie to continue SAML.\n"));
-		else if (ctx->alt_secret)
-			vpn_progress(vpninfo, PRG_DEBUG, _("Destination form field %s was specified; assuming SAML %s authentication is complete.\n"),
-			             ctx->alt_secret, saml_method);
-		else {
-			if (saml_method && !strcmp(saml_method, "REDIRECT"))
-				vpn_progress(vpninfo, PRG_ERR,
-				             _("SAML %s authentication is required via %s\n"),
-				             saml_method, saml_path);
-			else
-				vpn_progress(vpninfo, PRG_ERR,
-				             _("SAML %s authentication is required via external script.\n"),
-				             saml_method);
-			vpn_progress(vpninfo, PRG_ERR,
-			             _("When SAML authentication is complete, specify destination form field by appending :field_name to login URL.\n"));
-			/* XX: EINVAL will lead to "failure to parse response", with unnecessary/confusing extra logging output */
-			result = -EPERM;
+			vpn_progress(vpninfo, PRG_ERR, "Unknown SAML method %s\n", saml_method);
+			result = -EINVAL;
 			goto out;
 		}
+
+		vpn_progress(vpninfo, PRG_INFO,
+			     _("SAML %s authentication is required via %s\n"),
+			     saml_method, saml_path);
 	}
 
 	/* Replace old form */
@@ -159,7 +154,7 @@ static int parse_prelogin_xml(struct openconnect_info *vpninfo, xmlNode *xml_nod
 	if (asprintf(&opt->label, "%s: ", username_label ? : _("Username")) == 0)
 		goto nomem;
 	if (!ctx->username)
-		opt->type = OC_FORM_OPT_TEXT;
+		opt->type = saml_path ? OC_FORM_OPT_SSO_USER : OC_FORM_OPT_TEXT;
 	else {
 		opt->type = OC_FORM_OPT_HIDDEN;
 		opt->_value = ctx->username;
@@ -182,16 +177,18 @@ static int parse_prelogin_xml(struct openconnect_info *vpninfo, xmlNode *xml_nod
 	 * password in the first form means we should treat the first
 	 * form's password as a token field.
 	 */
-	if (!can_gen_tokencode(vpninfo, form, opt2) && !ctx->alt_secret
-	    && password_label && strcmp(password_label, "Password"))
+	if (saml_path)
+		opt2->type = OC_FORM_OPT_SSO_TOKEN;
+	else if (!can_gen_tokencode(vpninfo, form, opt2) && !ctx->alt_secret
+	         && password_label && strcmp(password_label, "Password"))
 		opt2->type = OC_FORM_OPT_TOKEN;
 	else
 		opt2->type = OC_FORM_OPT_PASSWORD;
 
 	vpn_progress(vpninfo, PRG_TRACE, "Prelogin form %s: \"%s\" %s(%s)=%s, \"%s\" %s(%s)\n",
 	             form->auth_id,
-	             opt->label, opt->name, opt->type == OC_FORM_OPT_TEXT ? "TEXT" : "HIDDEN", opt->_value,
-	             opt2->label, opt2->name, opt2->type == OC_FORM_OPT_PASSWORD ? "PASSWORD" : "TOKEN");
+	             opt->label, opt->name, opt->type == OC_FORM_OPT_SSO_USER ? "SSO" : opt->type == OC_FORM_OPT_TEXT ? "TEXT" : "HIDDEN", opt->_value,
+	             opt2->label, opt2->name, opt2->type == OC_FORM_OPT_SSO_TOKEN ? "SSO" : opt2->type == OC_FORM_OPT_PASSWORD ? "PASSWORD" : "TOKEN");
 
 out:
 	free(prompt);
