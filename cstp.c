@@ -1248,3 +1248,28 @@ void cstp_common_headers(struct openconnect_info *vpninfo, struct oc_text_buf *b
 
 	append_mobile_headers(vpninfo, buf);
 }
+
+int cstp_sso_detect_done(struct openconnect_info *vpninfo,
+			 const struct oc_webview_result *result)
+{
+	int i;
+
+	/* If we're not at the final URI, tell the webview to keep going */
+	if (strcmp(result->uri, vpninfo->sso_login_final))
+		return -EAGAIN;
+
+	for (i=0; result->cookies[i] != NULL; i+=2) {
+		const char *cname = result->cookies[i], *cval = result->cookies[i+1];
+		if (!strcmp(vpninfo->sso_token_cookie, cname)) {
+			vpninfo->sso_cookie_value = strdup(cval);
+			break;
+		} else if (!strcmp(vpninfo->sso_error_cookie, cname)) {
+			/* XX: or should we combine both the error cookie name and its value? */
+			vpninfo->quit_reason = strdup(cval);
+			return -EINVAL;
+		}
+	}
+
+	/* Tell the webview to terminate */
+	return 0;
+}

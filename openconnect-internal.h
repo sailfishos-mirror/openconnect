@@ -798,6 +798,9 @@ struct vpn_proto {
 	/* This does the full authentication, calling back as appropriate */
 	int (*obtain_cookie)(struct openconnect_info *vpninfo);
 
+	/* This checks if SSO authentication is complete */
+	int (*sso_detect_done)(struct openconnect_info *vpninfo, const struct oc_webview_result *result);
+
 	/* Establish the TCP connection (and obtain configuration) */
 	int (*tcp_connect)(struct openconnect_info *vpninfo);
 
@@ -1232,6 +1235,7 @@ int cstp_bye(struct openconnect_info *vpninfo, const char *reason);
 int decompress_and_queue_packet(struct openconnect_info *vpninfo, int compr_type,
 				unsigned char *buf, int len);
 int compress_packet(struct openconnect_info *vpninfo, int compr_type, struct pkt *this);
+int cstp_sso_detect_done(struct openconnect_info *vpninfo, const struct oc_webview_result *result);
 
 /* auth-html.c */
 xmlNodePtr htmlnode_next(xmlNodePtr top, xmlNodePtr node);

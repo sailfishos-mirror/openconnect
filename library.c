@@ -130,6 +130,7 @@ static const struct vpn_proto openconnect_protos[] = {
 		.tcp_mainloop = cstp_mainloop,
 		.add_http_headers = cstp_common_headers,
 		.obtain_cookie = cstp_obtain_cookie,
+		.sso_detect_done = cstp_sso_detect_done,
 		.secure_cookie = "webvpn",
 		.udp_protocol = "DTLS",
 #ifdef HAVE_DTLS
@@ -1624,21 +1625,11 @@ void openconnect_set_webview_callback(struct openconnect_info *vpninfo,
 int openconnect_webview_load_changed(struct openconnect_info *vpninfo,
 				      const struct oc_webview_result *result)
 {
-    int i;
+	if (!vpninfo || !result)
+		return -EINVAL;
 
-    // If we're not at the final URI, tell the webview to keep going
-    if (strcmp(result->uri, vpninfo->sso_login_final)) {
-        return 1;
-    }
+	if (vpninfo->proto->sso_detect_done)
+		return (vpninfo->proto->sso_detect_done)(vpninfo, result);
 
-    for (i=0; result->cookies[i] != NULL; i+=2) {
-        if (!strcmp(vpninfo->sso_token_cookie, result->cookies[i]))
-        {
-            vpninfo->sso_cookie_value = strdup(result->cookies[i+1]);
-            break;
-        }
-    }
-
-    // Tell the webview to terminate
-    return 0;
+	return -EOPNOTSUPP;
 }
