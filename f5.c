@@ -220,17 +220,17 @@ static int parse_options(struct openconnect_info *vpninfo, char *buf, int len,
 			*hdlc = xmlnode_bool_or_int_value(vpninfo, xml_node);
 		else if (xmlnode_is_named(xml_node, "idle_session_timeout")) {
 			int sec = vpninfo->idle_timeout = xmlnode_bool_or_int_value(vpninfo, xml_node);
-			vpn_progress(vpninfo, PRG_INFO, _("Idle timeout is %d minutes.\n"), sec/60);
+			vpn_progress(vpninfo, PRG_INFO, _("Idle timeout is %d minutes\n"), sec/60);
 		} else if (xmlnode_is_named(xml_node, "tunnel_port_dtls")) {
 			int port = xmlnode_bool_or_int_value(vpninfo, xml_node);
 			udp_sockaddr(vpninfo, port);
-			vpn_progress(vpninfo, PRG_INFO, _("DTLS port is %d.\n"), port);
+			vpn_progress(vpninfo, PRG_INFO, _("DTLS port is %d\n"), port);
 		} else if (xmlnode_is_named(xml_node, "UseDefaultGateway0")) {
 			default_route = xmlnode_bool_or_int_value(vpninfo, xml_node);
-			vpn_progress(vpninfo, PRG_INFO, _("Got UseDefaultGateway0 value of %d.\n"), default_route);
+			vpn_progress(vpninfo, PRG_INFO, _("Got UseDefaultGateway0 value of %d\n"), default_route);
 		} else if (xmlnode_is_named(xml_node, "SplitTunneling0")) {
 			int st = xmlnode_bool_or_int_value(vpninfo, xml_node);
-			vpn_progress(vpninfo, PRG_INFO, _("Got SplitTunneling0 value of %d.\n"), st);
+			vpn_progress(vpninfo, PRG_INFO, _("Got SplitTunneling0 value of %d\n"), st);
                 }
 		/* XX: This is an objectively stupid way to use XML, a hierarchical data format. */
 		else if (   (!strncmp((char *)xml_node->name, "DNS", 3) && isdigit(xml_node->name[3]))
@@ -238,7 +238,7 @@ static int parse_options(struct openconnect_info *vpninfo, char *buf, int len,
 			free(s);
 			s = (char *)xmlNodeGetContent(xml_node);
 			if (s && *s) {
-				vpn_progress(vpninfo, PRG_INFO, _("Got IPv%d DNS server %s.\n"),
+				vpn_progress(vpninfo, PRG_INFO, _("Got IPv%d DNS server %s\n"),
 					     xml_node->name[4]=='_' ? 6 : 4, s);
 				if (n_dns < 3) vpninfo->ip_info.dns[n_dns++] = add_option(vpninfo, "DNS", &s);
 			}
@@ -246,14 +246,14 @@ static int parse_options(struct openconnect_info *vpninfo, char *buf, int len,
 			free(s);
 			s = (char *)xmlNodeGetContent(xml_node);
 			if (s && *s) {
-				vpn_progress(vpninfo, PRG_INFO, _("Got WINS/NBNS server %s.\n"), s);
+				vpn_progress(vpninfo, PRG_INFO, _("Got WINS/NBNS server %s\n"), s);
 				if (n_nbns < 3) vpninfo->ip_info.dns[n_nbns++] = add_option(vpninfo, "WINS", &s);
 			}
 		} else if (!strncmp((char *)xml_node->name, "DNSSuffix", 9) && isdigit(xml_node->name[9])) {
 			free(s);
 			s = (char *)xmlNodeGetContent(xml_node);
 			if (s && *s) {
-				vpn_progress(vpninfo, PRG_INFO, _("Got search domain %s.\n"), s);
+				vpn_progress(vpninfo, PRG_INFO, _("Got search domain %s\n"), s);
 				buf_append(domains, "%s ", s);
 			}
 		} else if (   (!strncmp((char *)xml_node->name, "LAN", 3) && isdigit((char)xml_node->name[3]))
@@ -275,7 +275,7 @@ static int parse_options(struct openconnect_info *vpninfo, char *buf, int len,
 					inc->route = word;
 					inc->next = vpninfo->ip_info.split_includes;
 					vpninfo->ip_info.split_includes = inc;
-					vpn_progress(vpninfo, PRG_INFO, _("Got IPv%d route %s.\n"),
+					vpn_progress(vpninfo, PRG_INFO, _("Got IPv%d route %s\n"),
 						     xml_node->name[4]=='_' ? 6 : 4, word);
 				}
 			}

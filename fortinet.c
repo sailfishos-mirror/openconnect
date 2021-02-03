@@ -165,11 +165,11 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 					vpninfo->ip_info.addr = add_option(vpninfo, "ipaddr", &s);
 				} else if (xmlnode_is_named(x, "dns")) {
 					if (!xmlnode_get_prop(x, "domain", &s) && s && *s) {
-						vpn_progress(vpninfo, PRG_INFO, _("Got search domain %s.\n"), s);
+						vpn_progress(vpninfo, PRG_INFO, _("Got search domain %s\n"), s);
 						buf_append(domains, "%s ", s);
 					}
 					if (!xmlnode_get_prop(x, "ip", &s) && s && *s) {
-						vpn_progress(vpninfo, PRG_INFO, _("Got IPv%d DNS server %s.\n"), 4, s);
+						vpn_progress(vpninfo, PRG_INFO, _("Got IPv%d DNS server %s\n"), 4, s);
 						if (n_dns < 3) vpninfo->ip_info.dns[n_dns++] = add_option(vpninfo, "DNS", &s);
 					}
 				} else if (xmlnode_is_named(x, "split-tunnel-info")) {
@@ -182,7 +182,7 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 							    !xmlnode_get_prop(x2, "mask", &s2) &&
 							    s && s2 && *s && *s2) {
 								snprintf(route, 32, "%s/%s", s, s2);
-								vpn_progress(vpninfo, PRG_INFO, _("Got IPv%d route %s.\n"), 4, route);
+								vpn_progress(vpninfo, PRG_INFO, _("Got IPv%d route %s\n"), 4, route);
 								inc->route = add_option(vpninfo, "split-include", &route);
 								inc->next = vpninfo->ip_info.split_includes;
 							}
