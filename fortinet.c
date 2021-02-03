@@ -33,6 +33,17 @@
 
 #define XCAST(x) ((const xmlChar *)(x))
 
+void fortinet_common_headers(struct openconnect_info *vpninfo,
+			 struct oc_text_buf *buf)
+{
+	char *orig_ua = vpninfo->useragent;
+
+	/* XX: This is what openfortivpn uses */
+	vpninfo->useragent = (char *)"Mozilla/5.0 SV1";
+	http_common_headers(vpninfo, buf);
+	vpninfo->useragent = orig_ua;
+}
+
 int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 {
 	return -EINVAL;
@@ -297,7 +308,7 @@ int fortinet_connect(struct openconnect_info *vpninfo)
 		goto out;
 	reqbuf = buf_alloc();
 	buf_append(reqbuf, "GET /remote/sslvpn-tunnel HTTP/1.1\r\n");
-	http_common_headers(vpninfo, reqbuf);
+	fortinet_common_headers(vpninfo, reqbuf);
 	buf_append(reqbuf, "\r\n");
 
 	if (buf_error(reqbuf)) {
