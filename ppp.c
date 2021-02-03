@@ -531,10 +531,8 @@ static int queue_config_request(struct openconnect_info *vpninfo, int proto)
 			buf_append_ppp_tlv_be32(buf, LCP_ASYNCMAP, ppp->out_asyncmap);
 
 		if (ppp->out_lcp_opts & BIT_MAGIC) {
-			if (openconnect_random(&ppp->out_lcp_magic, sizeof(ppp->out_lcp_magic))) {
-				free(ppp);
+			if (openconnect_random(&ppp->out_lcp_magic, sizeof(ppp->out_lcp_magic)))
 				return -EINVAL;
-			}
 			buf_append_ppp_tlv(buf, LCP_MAGIC, 4, &ppp->out_lcp_magic);
 		}
 
@@ -831,7 +829,7 @@ static int handle_state_transition(struct openconnect_info *vpninfo, int *timeou
 {
 	struct oc_ppp *ppp = vpninfo->ppp;
 	time_t now = time(NULL);
-	int last_state = ppp->ppp_state, network;
+	int last_state = ppp->ppp_state, network, ret = 0;
 
 	switch (ppp->ppp_state) {
 	case PPPS_DEAD:
@@ -851,7 +849,8 @@ static int handle_state_transition(struct openconnect_info *vpninfo, int *timeou
 		else {
 			if (ka_check_deadline(timeout, now, ppp->lcp.last_req + 3)) {
 				ppp->lcp.last_req = now;
-				queue_config_request(vpninfo, PPP_LCP);
+				if ((ret = queue_config_request(vpninfo, PPP_LCP)) < 0)
+					goto out;
 			}
 			break;
 		}
@@ -869,7 +868,8 @@ static int handle_state_transition(struct openconnect_info *vpninfo, int *timeou
 				network = 0;
 				if (ka_check_deadline(timeout, now, ppp->ipcp.last_req + 3)) {
 					ppp->ipcp.last_req = now;
-					queue_config_request(vpninfo, PPP_IPCP);
+					if ((ret = queue_config_request(vpninfo, PPP_IPCP)) < 0)
+						goto out;
 				}
 			}
 		}
@@ -879,7 +879,8 @@ static int handle_state_transition(struct openconnect_info *vpninfo, int *timeou
 				network = 0;
 				if (ka_check_deadline(timeout, now, ppp->ip6cp.last_req + 3)) {
 					ppp->ip6cp.last_req = now;
-					queue_config_request(vpninfo, PPP_IP6CP);
+					if ((ret = queue_config_request(vpninfo, PPP_IP6CP)) < 0)
+						goto out;
 				}
 			}
 		}
@@ -936,7 +937,8 @@ static int handle_state_transition(struct openconnect_info *vpninfo, int *timeou
 		print_ppp_state(vpninfo, PRG_TRACE);
 		return 1;
 	}
-	return 0;
+ out:
+	return ret;
 }
 
 static inline void add_ppp_header(struct pkt *p, struct oc_ppp *ppp, int proto) {
@@ -1113,9 +1115,10 @@ int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 				goto reject;
 			if (payload_len < 4)
 				goto short_pkt;
-			if ((ret = handle_config_packet(vpninfo, proto, pp, payload_len)) >= 0)
-				if ((ret = handle_state_transition(vpninfo, timeout)) < 0)
-					return ret;
+			if ((ret = handle_config_packet(vpninfo, proto, pp, payload_len)) < 0)
+				return ret;
+			else if ((ret = handle_state_transition(vpninfo, timeout)) < 0)
+				return ret;
 			break;
 
 		case PPP_IP:

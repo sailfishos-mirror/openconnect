@@ -157,14 +157,14 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 			int sec = vpninfo->idle_timeout = atoi(s);
 			vpn_progress(vpninfo, PRG_INFO, _("Idle timeout is %d minutes.\n"), sec/60);
 		} else if (xmlnode_is_named(xml_node, "fos")) {
-			char platform[80] = {0}, *p = platform, *e = platform + 80;
+			char platform[80], *p = platform, *e = platform + 80;
 			if (!xmlnode_get_prop(xml_node, "platform", &s)) {
 			    p+=snprintf(p, e-p, "%s", s);
 			    if (!xmlnode_get_prop(xml_node, "major", &s))  p+=snprintf(p, e-p, " v%s", s);
 			    if (!xmlnode_get_prop(xml_node, "minor", &s))  p+=snprintf(p, e-p, ".%s", s);
 			    if (!xmlnode_get_prop(xml_node, "patch", &s))  p+=snprintf(p, e-p, ".%s", s);
 			    if (!xmlnode_get_prop(xml_node, "build", &s))  p+=snprintf(p, e-p, " build %s", s);
-			    if (!xmlnode_get_prop(xml_node, "branch", &s)) p+=snprintf(p, e-p, " branch %s", s);
+			    if (!xmlnode_get_prop(xml_node, "branch", &s))    snprintf(p, e-p, " branch %s", s);
 			    vpn_progress(vpninfo, PRG_INFO,
 					 _("Reported platform is %s\n"), platform);
 			}
@@ -186,12 +186,17 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 				} else if (xmlnode_is_named(x, "split-tunnel-info")) {
 					for (x2 = x->children; x2; x2=x2->next) {
 						if (xmlnode_is_named(x2, "addr")) {
-							struct oc_split_include *inc = malloc(sizeof(*inc));
-							char *route = malloc(32);
-							if (route && inc &&
-							    !xmlnode_get_prop(x2, "ip", &s) &&
+							if (!xmlnode_get_prop(x2, "ip", &s) &&
 							    !xmlnode_get_prop(x2, "mask", &s2) &&
 							    s && s2 && *s && *s2) {
+								struct oc_split_include *inc = malloc(sizeof(*inc));
+								char *route = malloc(32);
+								if (!route || !inc) {
+									free(route);
+									free(inc);
+									ret = -ENOMEM;
+									goto out;
+								}
 								snprintf(route, 32, "%s/%s", s, s2);
 								vpn_progress(vpninfo, PRG_INFO, _("Got IPv%d route %s\n"), 4, route);
 								inc->route = add_option(vpninfo, "split-include", &route);
@@ -222,6 +227,7 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 			     _("Response was:%s\n"), buf);
 		ret = -EINVAL;
 	}
+ out:
  	xmlFreeDoc(xml_doc);
 	free(s);
 	free(s2);

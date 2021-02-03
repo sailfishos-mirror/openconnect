@@ -147,7 +147,7 @@ static int parse_connection_info_line(struct openconnect_info *vpninfo, char con
 
 	*cfg_value = strndup(value, value_len);
 	*cfg_key = strndup(key, key_len);
-	if (!*cfg_key || !*cfg_value) {
+	if (!cfg_key || !cfg_value) {
 		free(cfg_key);
 		free(cfg_value);
 		return -ENOMEM;
