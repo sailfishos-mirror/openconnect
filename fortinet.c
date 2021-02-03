@@ -268,9 +268,13 @@ int fortinet_connect(struct openconnect_info *vpninfo)
 	free(vpninfo->urlpath);
 	vpninfo->urlpath = strdup("remote/index");
 	ret = do_https_request(vpninfo, "GET", NULL, NULL, &res_buf, 0);
-	if (ret < 0)
+	/* XXX: 401/403 is apparently normal and can be ignored (further
+	 * evidence that this is vestigial, or at least not necessary for
+	 * reconnect.
+	 */
+	if (ret < 0 && ret != -EPERM)
 		goto out;
-	/* We don't care what it returned as long as it was successful */
+	/* We don't care what it returned */
 	free(res_buf);
 	res_buf = NULL;
 
