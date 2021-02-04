@@ -238,6 +238,9 @@ int openconnect_ppp_new(struct openconnect_info *vpninfo,
 		inet_pton(AF_INET6, vpninfo->ip_info.addr6, &ppp->out_ipv6_addr);
 	}
 
+	ppp->out_asyncmap = 0;
+	ppp->out_lcp_opts = BIT_MRU | BIT_MAGIC | BIT_PFCOMP | BIT_ACCOMP | BIT_MRU_COAX;
+
 	ppp->encap = encap;
 	switch (encap) {
 	case PPP_ENCAP_F5:
@@ -245,6 +248,8 @@ int openconnect_ppp_new(struct openconnect_info *vpninfo,
 		break;
 
 	case PPP_ENCAP_FORTINET:
+		/* XX: Fortinet server rejects asyncmap and header compression. Don't blame me. */
+		ppp->out_lcp_opts &= ~(BIT_PFCOMP | BIT_ACCOMP);
 		ppp->encap_len = 6;
 		ppp->check_http_response = 1;
 		break;
@@ -269,12 +274,10 @@ int openconnect_ppp_new(struct openconnect_info *vpninfo,
 		return -EINVAL;
 	}
 
+	if (ppp->hdlc) ppp->out_lcp_opts |= BIT_ASYNCMAP;
 	ppp->want_ipv4 = want_ipv4;
 	ppp->want_ipv6 = want_ipv6;
 	ppp->exp_ppp_hdr_size = 4; /* Address(1), Control(1), Proto(2) */
-
-	ppp->out_asyncmap = 0;
-	ppp->out_lcp_opts = BIT_MRU | BIT_ASYNCMAP | BIT_MAGIC | BIT_PFCOMP | BIT_ACCOMP | BIT_MRU_COAX;
 
 	return 0;
 }
