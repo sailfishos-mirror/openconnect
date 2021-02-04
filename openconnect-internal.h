@@ -190,8 +190,8 @@ struct pkt {
 #define PPP_ENCAP_RFC1662_HDLC	2	/* PPP with HDLC-like framing (RFC1662) */
 #define PPP_ENCAP_F5		3	/* F5 BigIP no HDLC */
 #define PPP_ENCAP_F5_HDLC	4	/* F5 BigIP HDLC */
-#define PPP_ENCAP_FORTINET_HDLC 5	/* Fortinet HDLC */
-#define PPP_ENCAP_MAX		PPP_ENCAP_FORTINET_HDLC
+#define PPP_ENCAP_FORTINET	5	/* Fortinet no HDLC */
+#define PPP_ENCAP_MAX		PPP_ENCAP_FORTINET
 
 #define COMPR_DEFLATE	(1<<0)
 #define COMPR_LZS	(1<<1)
