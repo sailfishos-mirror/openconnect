@@ -294,8 +294,12 @@ int fortinet_connect(struct openconnect_info *vpninfo)
 	free(vpninfo->urlpath);
 	vpninfo->urlpath = strdup("remote/fortisslvpn_xml");
 	ret = do_https_request(vpninfo, "GET", NULL, NULL, &res_buf, 0);
-	if (ret < 0)
+	if (ret < 0) {
+		if (ret == -EPERM)
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("Server doesn't support XML config format, only ancient HTML. Not currently implemented.\n"));
 		goto out;
+	}
 
 	ret = parse_fortinet_xml_config(vpninfo, res_buf, ret, &ipv4, &ipv6);
 	if (ret)
