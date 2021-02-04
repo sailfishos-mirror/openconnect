@@ -331,17 +331,13 @@ int fortinet_connect(struct openconnect_info *vpninfo)
 	if (ret < 0)
 		goto out;
 
-	ret = process_http_response(vpninfo, 1, NULL, reqbuf);
-	if (ret < 0)
-		goto out;
-
-	if (ret != 201 && ret != 200) {
-		vpn_progress(vpninfo, PRG_ERR,
-			     _("Unexpected %d result from server\n"),
-			     ret);
-		ret = -EINVAL;
-		goto out;
-	}
+	/* XX: If this connection request succeeds, no HTTP response appears.
+	 * We just start sending our encapsulated PPP configuration packets.
+	 * However, if the request FAILS, it WILL send an HTTP response.
+	 * We handle that in the PPP mainloop.
+	 *
+	 * Don't blame me. I didn't design this.
+	 */
 
 	ret = openconnect_ppp_new(vpninfo, PPP_ENCAP_FORTINET_HDLC, ipv4, ipv6);
 
