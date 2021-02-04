@@ -339,7 +339,7 @@ int fortinet_connect(struct openconnect_info *vpninfo)
 	 * Don't blame me. I didn't design this.
 	 */
 
-	ret = openconnect_ppp_new(vpninfo, PPP_ENCAP_FORTINET_HDLC, ipv4, ipv6);
+	ret = openconnect_ppp_new(vpninfo, PPP_ENCAP_FORTINET, ipv4, ipv6);
 
  out:
 	if (ret)
