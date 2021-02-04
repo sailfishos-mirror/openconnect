@@ -172,7 +172,7 @@ static const char *encap_names[PPP_ENCAP_MAX+1] = {
 	"RFC1662 HDLC",
 	"F5",
 	"F5 HDLC",
-	"FORTINET HDLC",
+	"FORTINET",
 };
 
 static const char *lcp_names[] = {
@@ -248,9 +248,10 @@ int openconnect_ppp_new(struct openconnect_info *vpninfo,
 		ppp->encap_len = 4;
 		break;
 
-	case PPP_ENCAP_FORTINET_HDLC:
+	case PPP_ENCAP_FORTINET:
+		ppp->encap_len = 6;
 		ppp->check_http_response = 1;
-		/* fall through */
+		break;
 
 	case PPP_ENCAP_F5_HDLC:
 		/* XX: F5 server cancels our IP address allocation if we PPP-terminate */
@@ -1081,6 +1082,17 @@ int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			}
 			break;
 
+		case PPP_ENCAP_FORTINET:
+			payload_len = load_be16(eh + 4);
+			magic = load_be16(eh + 2);
+			next = eh + 6 + payload_len;
+
+			if (magic != 0x5050 || (load_be16(eh) != payload_len + 6))
+				goto bad_encap_header;
+			if (len < 6 + payload_len)
+				goto incomplete_pkt;
+			break;
+
 		case PPP_ENCAP_F5_HDLC:
 		case PPP_ENCAP_RFC1662_HDLC:
 			payload_len = unhdlc_in_place(vpninfo, eh + ppp->encap_len, len - ppp->encap_len, &next);
@@ -1341,6 +1353,12 @@ int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		case PPP_ENCAP_F5:
 			store_be16(eh, 0xf500);
 			store_be16(eh + 2, this->len + this->ppp.hlen);
+			break;
+		case PPP_ENCAP_FORTINET:
+			/* XX: header contains both TOTAL bytes-on-wire, and (bytes-on-wire excluding this header)  */
+			store_be16(eh, this->len + this->ppp.hlen + 6);
+			store_be16(eh + 2, 0x5050);
+			store_be16(eh + 4, this->len + this->ppp.hlen);
 			break;
 		}
 		this->ppp.hlen += ppp->encap_len;
