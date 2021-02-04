@@ -101,12 +101,12 @@ static const char *add_option(struct openconnect_info *vpninfo, const char *opt,
   <fos platform="FG100E" major="5" minor="06" patch="6" build="1630" branch="1630"/>
   <client-config save-password="off" keep-alive="on" auto-connect="off"/>
   <ipv4>
+    <dns ip="1.1.1.1"/>
+    <dns ip="8.8.8.8" domain="foo.com"/>
     <assigned-addr ipv4="172.16.1.1"/>
     <split-tunnel-info>
       <addr ip="10.11.10.10" mask="255.255.255.255"/>
       <addr ip="10.11.1.0" mask="255.255.255.0"/>
-      <dns ip="1.1.1.1"/>
-      <dns ip="8.8.8.8" domain="foo.com"/>
     </split-tunnel-info>
   </ipv4>
   <idle-timeout val="3600"/>
@@ -220,7 +220,6 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 	buf_free(domains);
 
 	if (*ipv4 < 1 && *ipv6 < 1) {
-	err:
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Failed to find VPN options\n"));
 		vpn_progress(vpninfo, PRG_DEBUG,
