@@ -248,13 +248,16 @@ int openconnect_ppp_new(struct openconnect_info *vpninfo,
 		ppp->encap_len = 4;
 		break;
 
+	case PPP_ENCAP_FORTINET_HDLC:
+		ppp->check_http_response = 1;
+		/* fall through */
+
 	case PPP_ENCAP_F5_HDLC:
 		/* XX: F5 server cancels our IP address allocation if we PPP-terminate */
 		ppp->no_terminate_on_pause = 1;
 		/* fall through */
 
 	case PPP_ENCAP_RFC1662_HDLC:
-	case PPP_ENCAP_FORTINET_HDLC:
 		ppp->encap_len = 0;
 		ppp->hdlc = 1;
 		break;
@@ -1018,6 +1021,23 @@ int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			break;
 		if (len < 0)
 			goto do_reconnect;
+
+		/* XX: Some protocols require us to check for an HTTP response in place
+		 * of the first packet
+		 */
+		if (ppp->check_http_response) {
+			ppp->check_http_response = 0;
+			if (!memcmp(eh, "HTTP/", 5)) {
+				const char *sol = (const char *)eh;
+				const char *eol = memchr(sol, '\r', len) ?: memchr(sol, '\n', len);
+				if (eol)
+					len = eol - sol;
+				vpn_progress(vpninfo, PRG_ERR,
+					     _("Got unexpected HTTP response: %.*s\n"), len, sol);
+				vpninfo->quit_reason = "Received HTTP response (not a PPP packet)";
+				return -EINVAL;
+			}
+		}
 
 	next_pkt:
 		/* At this point:
