@@ -104,6 +104,7 @@ struct oc_ppp {
 	int hdlc;
 	int want_ipv4;
 	int want_ipv6;
+	int check_http_response;
 
 	int ppp_state;
 	struct oc_ncp lcp;
