@@ -1,23 +1,21 @@
 #!/usr/bin/python3
 
 from __future__ import print_function
-from sys import stderr, version_info, platform
+from sys import stderr, version_info
+import requests
+import argparse
+import getpass
+from shlex import quote
 if (version_info >= (3, 0)):
     from urllib.parse import urlparse, urlencode
     raw_input = input
     import http.client as httplib
 else:
     from urlparse import urlparse
-    from urllib import urlencode
     import httplib
-import sys
-import requests
-import argparse
-import getpass
-from shlex import quote
 
 p = argparse.ArgumentParser()
-p.add_argument('-v','--verbose', default=0, action='count')
+p.add_argument('-v', '--verbose', default=0, action='count')
 p.add_argument('endpoint', help='Fortinet server (or complete URL, e.g. https://forti.vpn.com/remote/login)')
 p.add_argument('extra', nargs='*', help='Extra field to pass to include in the login query string (e.g. "foo=bar")')
 g = p.add_argument_group('Login credentials')
