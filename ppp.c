@@ -670,19 +670,21 @@ static int handle_config_rejnak(struct openconnect_info *vpninfo,
 			struct in_addr *a = (void *)(p + 2);
 			const char *s = inet_ntoa(*a);
 			/* XX: see ppp.h for why bitfields work here */
+			int is_dns = t&1;
+			int entry = (t&2)>>1;
 			if (code == CONFNAK && a->s_addr) {
 				vpn_progress(vpninfo, PRG_DEBUG,
 					     _("Server nak-offered IPCP request for %s[%d] server: %s\n"),
-					     (t&1) ? "DNS" : "NBNS", ((t&2)>>1), s);
+					     is_dns ? "DNS" : "NBNS", entry, s);
 				/* XX: need free and add_option() */
-				if (t & 1)
-					vpninfo->ip_info.dns[(t&2)>>1] = strdup(s);
+				if (is_dns)
+					vpninfo->ip_info.dns[entry] = strdup(s);
 				else
-					vpninfo->ip_info.nbns[(t&2)>>1] = strdup(s);
+					vpninfo->ip_info.nbns[entry] = strdup(s);
 			} else {
 				vpn_progress(vpninfo, PRG_DEBUG,
 					     _("Server rejected/nak'ed IPCP request for %s[%d] server\n"),
-					     (t&1) ? "DNS" : "NBNS", ((t&2)>>1));
+					     is_dns ? "DNS" : "NBNS", entry);
 			}
 			/* Stop soliciting */
 			ppp->solicit_peerns &= ~(1<<(t-IPCP_xNS_BASE));
