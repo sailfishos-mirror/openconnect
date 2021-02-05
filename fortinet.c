@@ -63,24 +63,6 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 	return -EINVAL;
 }
 
-static int xmlnode_bool_or_int_value(struct openconnect_info *vpninfo, xmlNode *node)
-{
-	int ret = -1;
-	char *content = (char *)xmlNodeGetContent(node);
-	if (!content)
-		return -1;
-
-	if (isdigit(content[0]))
-		ret = atoi(content);
-	if (!strcasecmp(content, "yes") || !strcasecmp(content, "on"))
-		ret = 1;
-	if (!strcasecmp(content, "no") || !strcasecmp(content, "off"))
-		ret = 0;
-
-	free(content);
-	return ret;
-}
-
 /* We behave like CSTP — create a linked list in vpninfo->cstp_options
  * with the strings containing the information we got from the server,
  * and oc_ip_info contains const copies of those pointers.
