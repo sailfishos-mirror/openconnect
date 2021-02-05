@@ -170,7 +170,7 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 
 	for (xml_node = xml_node->children; xml_node; xml_node=xml_node->next) {
 		if (xmlnode_is_named(xml_node, "auth-timeout") && !xmlnode_get_prop(xml_node, "val", &s))
-			vpn_progress(vpninfo, PRG_INFO, _("Session will expire after %d minutes.\n"), atoi(s)/60);
+			vpninfo->auth_expiration = time(NULL) + atol(s);
 		else if (xmlnode_is_named(xml_node, "idle-timeout") && !xmlnode_get_prop(xml_node, "val", &s)) {
 			int sec = vpninfo->idle_timeout = atoi(s);
 			vpn_progress(vpninfo, PRG_INFO, _("Idle timeout is %d minutes.\n"), sec/60);
