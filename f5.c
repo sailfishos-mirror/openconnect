@@ -408,10 +408,6 @@ int f5_connect(struct openconnect_info *vpninfo)
 	if (ret < 0)
 		goto out;
 
-	ret = check_address_sanity(vpninfo, old_addr, old_netmask, old_addr6, old_netmask6);
-	if (ret < 0)
-		goto out;
-
 	if (ret != 201 && ret != 200) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Unexpected %d result from server\n"),
@@ -419,6 +415,10 @@ int f5_connect(struct openconnect_info *vpninfo)
 		ret = -EINVAL;
 		goto out;
 	}
+
+	ret = check_address_sanity(vpninfo, old_addr, old_netmask, old_addr6, old_netmask6);
+	if (ret < 0)
+		goto out;
 
 	ret = openconnect_ppp_new(vpninfo, hdlc ? PPP_ENCAP_F5_HDLC : PPP_ENCAP_F5, ipv4, ipv6);
 
