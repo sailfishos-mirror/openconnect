@@ -42,6 +42,20 @@ void fortinet_common_headers(struct openconnect_info *vpninfo,
 	vpninfo->useragent = (char *)"Mozilla/5.0 SV1";
 	http_common_headers(vpninfo, buf);
 	vpninfo->useragent = orig_ua;
+
+	/* XXX: Openfortivpn additionally sends the following
+	 * headers, even with GET requests, which should not be
+	 * necessary:
+
+	   buf_append(buf,
+		      "Accept: *" "/" "*\r\n"
+		      "Accept-Encoding: gzip, deflate, br\r\n"
+		      "Pragma: no-cache\r\n"
+		      "Cache-Control: no-store, no-cache, must-revalidate\r\n"
+		      "If-Modified-Since: Sat, 1 Jan 2000 00:00:00 GMT\r\n"
+		      "Content-Type: application/x-www-form-urlencoded\r\n"
+		      "Content-Length: 0\r\n");
+	*/
 }
 
 int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
@@ -149,6 +163,10 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 	free_split_routes(vpninfo);
 
 	domains = buf_alloc();
+
+	if (!xmlnode_get_prop(xml_node, "dtls", &s) && atoi(s))
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("WARNING: Fortinet server enables DTLS, but OpenConnect does not implement it yet.\n"));
 
 	for (xml_node = xml_node->children; xml_node; xml_node=xml_node->next) {
 		if (xmlnode_is_named(xml_node, "auth-timeout") && !xmlnode_get_prop(xml_node, "val", &s))
@@ -290,8 +308,9 @@ int fortinet_connect(struct openconnect_info *vpninfo)
 	/* We don't care what it returned as long as it was successful */
 	free(res_buf);
 	res_buf = NULL;
-
 	free(vpninfo->urlpath);
+
+	/* Now fetch the connection options in XML format */
 	vpninfo->urlpath = strdup("remote/fortisslvpn_xml");
 	ret = do_https_request(vpninfo, "GET", NULL, NULL, &res_buf, 0);
 	if (ret < 0) {
@@ -310,7 +329,11 @@ int fortinet_connect(struct openconnect_info *vpninfo)
 	if (ipv6 == -1)
 		ipv6 = 0;
 
-	/* Now fetch the connection options */
+	/* XX: Openfortivpn closes and reopens the HTTPS connection here, and
+	 * also sends 'Host: sslvpn' (rather than the true hostname). Neither
+	 * appears to be necessary, and either might prevent connecting to
+	 * a vhost-based Fortinet server.
+	 */
 	ret = openconnect_open_https(vpninfo);
 	if (ret)
 		goto out;
