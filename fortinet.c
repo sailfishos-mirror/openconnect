@@ -114,7 +114,7 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 {
 	xmlNode *xml_node, *x, *x2;
 	xmlDocPtr xml_doc;
-	int ret = 0, ii, n_dns = 0 /*, n_nbns = 0, default_route = 0 */;
+	int ret = 0, ii, n_dns = 0, default_route = 1;
 	char *s = NULL, *s2 = NULL;
 	struct oc_text_buf *domains = NULL;
 
@@ -191,6 +191,7 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 							    s && s2 && *s && *s2) {
 								struct oc_split_include *inc = malloc(sizeof(*inc));
 								char *route = malloc(32);
+								default_route = 0;
 								if (!route || !inc) {
 									free(route);
 									free(inc);
@@ -212,10 +213,10 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 		}
 	}
 
-	/* if (default_route && *ipv4) */
-	/* 	vpninfo->ip_info.netmask = strdup("0.0.0.0"); */
-	/* if (default_route && *ipv6) */
-	/*       vpninfo->ip_info.netmask6 = strdup("::/0"); */
+	if (default_route && *ipv4)
+		vpninfo->ip_info.netmask = strdup("0.0.0.0");
+	if (default_route && *ipv6)
+		vpninfo->ip_info.netmask6 = strdup("::/0");
 	if (buf_error(domains) == 0 && domains->pos > 0) {
 		domains->data[domains->pos-1] = '\0';
 		vpninfo->ip_info.domain = add_option(vpninfo, "search", &domains->data);
