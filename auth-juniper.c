@@ -453,7 +453,7 @@ int oncp_obtain_cookie(struct openconnect_info *vpninfo)
 	while (1) {
 		char *form_buf = NULL;
 		int role_select = 0;
-		struct oc_text_buf *url;
+	        char *url;
 
 		if (resp_buf && resp_buf->pos)
 			ret = do_https_request(vpninfo, "POST",
@@ -466,30 +466,22 @@ int oncp_obtain_cookie(struct openconnect_info *vpninfo)
 		if (ret < 0)
 			break;
 
-		url = buf_alloc();
-		buf_append(url, "https://%s", vpninfo->hostname);
-		if (vpninfo->port != 443)
-			buf_append(url, ":%d", vpninfo->port);
-		buf_append(url, "/");
-		if (vpninfo->urlpath)
-			buf_append(url, "%s", vpninfo->urlpath);
-
-		if (buf_error(url)) {
-			free(form_buf);
-			ret = buf_free(url);
-			break;
-		}
-
 		if (!check_cookie_success(vpninfo)) {
-			buf_free(url);
 			free(form_buf);
 			ret = 0;
 			break;
 		}
 
-		doc = htmlReadMemory(form_buf, ret, url->data, NULL,
+		url = internal_get_url(vpninfo);
+		if (!url) {
+			free(form_buf);
+			ret = -ENOMEM;
+			break;
+		}
+
+		doc = htmlReadMemory(form_buf, ret, url, NULL,
 				     HTML_PARSE_RECOVER|HTML_PARSE_NOERROR|HTML_PARSE_NOWARNING|HTML_PARSE_NONET);
-		buf_free(url);
+		free(url);
 		free(form_buf);
 		if (!doc) {
 			vpn_progress(vpninfo, PRG_ERR,
