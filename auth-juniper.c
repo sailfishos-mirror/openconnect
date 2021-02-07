@@ -52,20 +52,6 @@ void oncp_common_headers(struct openconnect_info *vpninfo, struct oc_text_buf *b
 //	buf_append(buf, "Accept-Encoding: gzip\r\n");
 }
 
-
-static xmlNodePtr htmlnode_next(xmlNodePtr top, xmlNodePtr node)
-{
-	if (node->children)
-		return node->children;
-
-	while (!node->next) {
-		node = node->parent;
-		if (!node || node == top)
-			return NULL;
-	}
-	return node->next;
-}
-
 static int oncp_can_gen_tokencode(struct openconnect_info *vpninfo,
 				  struct oc_auth_form *form,
 				  struct oc_form_opt *opt)
@@ -94,205 +80,6 @@ static int oncp_can_gen_tokencode(struct openconnect_info *vpninfo,
 
  okay:
 	return can_gen_tokencode(vpninfo, form, opt);
-}
-
-
-static int parse_input_node(struct openconnect_info *vpninfo, struct oc_auth_form *form,
-			    xmlNodePtr node, const char *submit_button)
-{
-	char *type = (char *)xmlGetProp(node, (unsigned char *)"type");
-	struct oc_form_opt **p = &form->opts;
-	struct oc_form_opt *opt;
-	int ret = 0;
-
-	if (!type)
-		return -EINVAL;
-
-	opt = calloc(1, sizeof(*opt));
-	if (!opt) {
-		ret = -ENOMEM;
-		goto out;
-	}
-
-	if (!strcasecmp(type, "hidden")) {
-		opt->type = OC_FORM_OPT_HIDDEN;
-		xmlnode_get_prop(node, "name", &opt->name);
-		xmlnode_get_prop(node, "value", &opt->_value);
-		/* XXX: Handle tz_offset / tz */
-	} else if (!strcasecmp(type, "password")) {
-		opt->type = OC_FORM_OPT_PASSWORD;
-		xmlnode_get_prop(node, "name", &opt->name);
-		if (asprintf(&opt->label, "%s:", opt->name) == -1) {
-			ret = -ENOMEM;
-			goto out;
-		}
-		if (!oncp_can_gen_tokencode(vpninfo, form, opt))
-			opt->type = OC_FORM_OPT_TOKEN;
-	} else if (!strcasecmp(type, "text") ||
-		   !strcasecmp(type, "username")) {
-		opt->type = OC_FORM_OPT_TEXT;
-		xmlnode_get_prop(node, "name", &opt->name);
-		if (asprintf(&opt->label, "%s:", opt->name) == -1) {
-			ret = -ENOMEM;
-			goto out;
-		}
-	} else if (!strcasecmp(type, "submit")) {
-		xmlnode_get_prop(node, "name", &opt->name);
-		if (opt->name && submit_button && (!strcmp(opt->name, submit_button) ||
-						   !strcmp(opt->name, "sn-postauth-proceed") ||
-						   !strcmp(opt->name, "sn-preauth-proceed") ||
-						   !strcmp(opt->name, "secidactionEnter"))) {
-			/* Use this as the 'Submit' action for the form, by
-			   implicitly adding it as a hidden option. */
-			xmlnode_get_prop(node, "value", &opt->_value);
-			opt->type = OC_FORM_OPT_HIDDEN;
-		} else {
-			vpn_progress(vpninfo, PRG_DEBUG,
-				     _("Ignoring unknown form submit item '%s'\n"),
-				     opt->name);
-			ret = -EINVAL;
-			goto out;
-		}
-	} else if (!strcasecmp(type, "checkbox")) {
-		opt->type = OC_FORM_OPT_HIDDEN;
-		xmlnode_get_prop(node, "name", &opt->name);
-		xmlnode_get_prop(node, "value", &opt->_value);
-	} else {
-		vpn_progress(vpninfo, PRG_DEBUG,
-			     _("Ignoring unknown form input type '%s'\n"),
-			     type);
-		ret = -EINVAL;
-		goto out;
-	}
-
-	/* Append to the existing list */
-	while (*p) {
-		if (!strcmp((*p)->name, opt->name)) {
-			vpn_progress(vpninfo, PRG_DEBUG,
-				     _("Discarding duplicate option '%s'\n"),
-				     opt->name);
-			free_opt(opt);
-			goto out;
-		}
-		p = &(*p)->next;
-	}
-	*p = opt;
- out:
-	if (ret)
-		free_opt(opt);
-	free(type);
-	return ret;
-}
-
-static int parse_select_node(struct openconnect_info *vpninfo, struct oc_auth_form *form,
-		     xmlNodePtr node)
-{
-	xmlNodePtr child;
-	struct oc_form_opt_select *opt;
-	struct oc_choice *choice;
-
-	opt = calloc(1, sizeof(*opt));
-	if (!opt)
-		return -ENOMEM;
-
-	xmlnode_get_prop(node, "name", &opt->form.name);
-	opt->form.label = strdup(opt->form.name);
-	opt->form.type = OC_FORM_OPT_SELECT;
-	if (!strcmp(opt->form.name, "realm"))
-		form->authgroup_opt = opt;
-
-	for (child = node->children; child; child = child->next) {
-		struct oc_choice **new_choices;
-		if (!child->name || strcasecmp((const char *)child->name, "option"))
-			continue;
-
-		choice = calloc(1, sizeof(*choice));
-		if (!choice) {
-			free_opt((void *)opt);
-			return -ENOMEM;
-		}
-
-		xmlnode_get_prop(node, "name", &choice->name);
-		choice->label = (char *)xmlNodeGetContent(child);
-		choice->name = strdup(choice->label);
-		new_choices = realloc(opt->choices, sizeof(opt->choices[0]) * (opt->nr_choices+1));
-		if (!new_choices) {
-			free_opt((void *)opt);
-			free(choice);
-			return -ENOMEM;
-		}
-		opt->choices = new_choices;
-		opt->choices[opt->nr_choices++] = choice;
-	}
-
-	/* Prepend to the existing list */
-	opt->form.next = form->opts;
-	form->opts = &opt->form;
-	return 0;
-}
-
-static struct oc_auth_form *parse_form_node(struct openconnect_info *vpninfo,
-					    xmlNodePtr node, const char *submit_button)
-{
-	struct oc_auth_form *form = calloc(1, sizeof(*form));
-	xmlNodePtr child;
-
-	if (!form)
-		return NULL;
-
-	xmlnode_get_prop(node, "method", &form->method);
-	xmlnode_get_prop(node, "action", &form->action);
-	if (!form->method || strcasecmp(form->method, "POST") ||
-	    !form->action || !form->action[0]) {
-		vpn_progress(vpninfo, PRG_ERR,
-			     _("Cannot handle form method='%s', action='%s'\n"),
-			     form->method, form->action);
-		free(form);
-		return NULL;
-	}
-	xmlnode_get_prop(node, "name", &form->auth_id);
-	form->banner = strdup(form->auth_id);
-
-	for (child = htmlnode_next(node, node); child && child != node; child = htmlnode_next(node, child)) {
-		if (!child->name)
-			continue;
-
-		if (!strcasecmp((char *)child->name, "input"))
-			parse_input_node(vpninfo, form, child, submit_button);
-		else if (!strcasecmp((char *)child->name, "select")) {
-			parse_select_node(vpninfo, form, child);
-			/* Skip its children */
-			while (child->children)
-				child = child->last;
-		} else if (!strcasecmp((char *)child->name, "textarea")) {
-			/* display the post sign-in message, if any */
-			char *fieldname = (char *)xmlGetProp(child, (unsigned char *)"name");
-			if (fieldname && (!strcasecmp(fieldname, "sn-postauth-text") ||
-					  !strcasecmp(fieldname, "sn-preauth-text"))) {
-				char *postauth_msg = (char *)xmlNodeGetContent(child);
-				if (postauth_msg) {
-					free(form->banner);
-					form->banner = postauth_msg;
-				}
-			} else {
-				vpn_progress(vpninfo, PRG_ERR,
-					     _("Unknown textarea field: '%s'\n"), fieldname);
-			}
-			free(fieldname);
-		}
-	}
-	return form;
-}
-
-static xmlNodePtr find_form_node(xmlDocPtr doc)
-{
-	xmlNodePtr root, node;
-
-	for (root = node = xmlDocGetRootElement(doc); node; node = htmlnode_next(root, node)) {
-		if (node->name && !strcasecmp((char *)node->name, "form"))
-			return node;
-	}
-	return NULL;
 }
 
 int oncp_send_tncc_command(struct openconnect_info *vpninfo, int start)
@@ -733,12 +520,12 @@ int oncp_obtain_cookie(struct openconnect_info *vpninfo)
 				     _("Encountered form with no ID\n"));
 			goto dump_form;
 		} else if (!strcmp(form_id, "frmLogin")) {
-			form = parse_form_node(vpninfo, node, "btnSubmit");
+			form = parse_form_node(vpninfo, node, "btnSubmit", oncp_can_gen_tokencode);
 		} else if (!strcmp(form_id, "frmDefender") ||
 			   !strcmp(form_id, "frmNextToken")) {
-			form = parse_form_node(vpninfo, node, "btnAction");
+			form = parse_form_node(vpninfo, node, "btnAction", oncp_can_gen_tokencode);
 		} else if (!strcmp(form_id, "frmConfirmation")) {
-			form = parse_form_node(vpninfo, node, "btnContinue");
+			form = parse_form_node(vpninfo, node, "btnContinue", oncp_can_gen_tokencode);
 			if (!form) {
 				ret = -EINVAL;
 				break;
@@ -749,7 +536,7 @@ int oncp_obtain_cookie(struct openconnect_info *vpninfo)
 			form = parse_roles_form_node(node);
 			role_select = 1;
 		} else if (!strcmp(form_id, "frmTotpToken")) {
-			form = parse_form_node(vpninfo, node, "totpactionEnter");
+			form = parse_form_node(vpninfo, node, "totpactionEnter", oncp_can_gen_tokencode);
 		} else {
 			char *form_action = (char *)xmlGetProp(node, (unsigned char *)"action");
 			if (form_action && strstr(form_action, "remediate.cgi")) {

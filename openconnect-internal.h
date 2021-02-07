@@ -922,6 +922,18 @@ int decompress_and_queue_packet(struct openconnect_info *vpninfo, int compr_type
 				unsigned char *buf, int len);
 int compress_packet(struct openconnect_info *vpninfo, int compr_type, struct pkt *this);
 
+/* html-auth.c */
+xmlNodePtr htmlnode_next(xmlNodePtr top, xmlNodePtr node);
+xmlNodePtr find_form_node(xmlDocPtr doc);
+int parse_input_node(struct openconnect_info *vpninfo, struct oc_auth_form *form,
+		     xmlNodePtr node, const char *submit_button,
+		     int (*can_gen_tokencode)(struct openconnect_info *vpninfo, struct oc_auth_form *form, struct oc_form_opt *opt));
+int parse_select_node(struct openconnect_info *vpninfo, struct oc_auth_form *form,
+		      xmlNodePtr node);
+struct oc_auth_form *parse_form_node(struct openconnect_info *vpninfo,
+				     xmlNodePtr node, const char *submit_button,
+				     int (*can_gen_tokencode)(struct openconnect_info *vpninfo, struct oc_auth_form *form, struct oc_form_opt *opt));
+
 /* auth-juniper.c */
 int oncp_obtain_cookie(struct openconnect_info *vpninfo);
 int oncp_send_tncc_command(struct openconnect_info *vpninfo, int first);
