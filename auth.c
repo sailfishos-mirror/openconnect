@@ -789,23 +789,16 @@ static int xmlpost_initial_req(struct openconnect_info *vpninfo,
 {
 	xmlNodePtr root, node;
 	xmlDocPtr doc = xmlpost_new_query(vpninfo, "init", &root);
-	struct oc_text_buf *url_buf;
+	char *url;
 
 	if (!doc)
 		return -ENOMEM;
 
-	url_buf = buf_alloc();
-	buf_append(url_buf, "https://%s", vpninfo->hostname);
-	if (vpninfo->port != 443)
-		buf_append(url_buf, ":%d", vpninfo->port);
-	/* Do we *need* to omit the trailing / here when no path? */
-	if (vpninfo->urlpath)
-		buf_append(url_buf, "/%s", vpninfo->urlpath);
-
-	if (buf_error(url_buf))
+	url = internal_get_url(vpninfo);
+	if (!url)
 		goto bad;
 
-	node = xmlNewTextChild(root, NULL, XCAST("group-access"), XCAST(url_buf->data));
+	node = xmlNewTextChild(root, NULL, XCAST("group-access"), XCAST(url));
 	if (!node)
 		goto bad;
 	if (cert_fail) {
@@ -818,11 +811,10 @@ static int xmlpost_initial_req(struct openconnect_info *vpninfo,
 		if (!node)
 			goto bad;
 	}
-	buf_free(url_buf);
+	free(url);
 	return xmlpost_complete(doc, request_body);
 
 bad:
-	buf_free(url_buf);
 	xmlpost_complete(doc, NULL);
 	return -ENOMEM;
 }

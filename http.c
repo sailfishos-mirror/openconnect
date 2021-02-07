@@ -811,6 +811,15 @@ int internal_parse_url(const char *url, char **res_proto, char **res_host,
 	return 0;
 }
 
+char *internal_get_url(struct openconnect_info *vpninfo)
+{
+	char *url;
+	if (asprintf(&url, "https://%s%s%s", vpninfo->hostname, vpninfo->urlpath ? "/" : "", vpninfo->urlpath) < 0)
+		return NULL;
+	else
+		return url;
+}
+
 void openconnect_clear_cookies(struct openconnect_info *vpninfo)
 {
 	struct oc_vpn_option *opt, *next;
