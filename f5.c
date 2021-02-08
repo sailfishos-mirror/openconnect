@@ -389,22 +389,21 @@ static int parse_options(struct openconnect_info *vpninfo, char *buf, int len,
 }
 
 static int get_ip_address(struct openconnect_info *vpninfo, char *header, char *val) {
-	char *s;
+	char *s = strdup(val);
 	if (!strcasecmp(header, "X-VPN-client-IP")) {
 		vpn_progress(vpninfo, PRG_INFO,
 			     _("Got legacy IP address %s\n"), val);
-		vpninfo->ip_info.addr = s = strdup(val);
-		if (!s) return -ENOMEM;
+		vpninfo->ip_info.addr = add_option(vpninfo, "ipaddr", &s);
 	} else if (!strcasecmp(header, "X-VPN-client-IPv6")) {
 		vpn_progress(vpninfo, PRG_INFO,
 			     _("Got IPv6 address %s\n"), val);
 		/* XX: Should we treat this as a /64 netmask? Or an /128 address? */
-		vpninfo->ip_info.addr6 = s = strdup(val);
-		if (!s) return -ENOMEM;
+		vpninfo->ip_info.addr6 = add_option(vpninfo, "ipaddr6", &s);
 	}
         /* XX: The server's IP address(es) X-VPN-server-{IP,IPv6} are also
          * sent, but the utility of these is unclear. As remarked in oncp.c,
 	 * "this is a tunnel; having a gateway is meaningless." */
+	free(s);
 	return 0;
 }
 
@@ -417,6 +416,7 @@ int f5_connect(struct openconnect_info *vpninfo)
 	char *sid = NULL, *ur_z = NULL;
 	int ipv4 = -1, ipv6 = -1, hdlc = -1;
 	char *res_buf = NULL;
+	struct oc_vpn_option *old_cstp_opts = vpninfo->cstp_options;
 	const char *old_addr = vpninfo->ip_info.addr;
 	const char *old_netmask = vpninfo->ip_info.netmask;
 	const char *old_addr6 = vpninfo->ip_info.addr6;
@@ -523,6 +523,7 @@ int f5_connect(struct openconnect_info *vpninfo)
 	ret = openconnect_ppp_new(vpninfo, hdlc ? PPP_ENCAP_F5_HDLC : PPP_ENCAP_F5, ipv4, ipv6);
 
  out:
+	free_optlist(old_cstp_opts);
 	free(res_buf);
 	free(profile_params);
 	free(sid);
