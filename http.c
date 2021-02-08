@@ -1205,6 +1205,8 @@ int do_https_request(struct openconnect_info *vpninfo, const char *method,
 			     result);
 		if (result == 401 || result == 403)
 			result = -EPERM;
+		else if (result == 405) /* Fortinet invalid username/password "Method Not Allowed" */
+			result = -EACCES;
 		else if (result == 512) /* GlobalProtect invalid username/password */
 			result = -EACCES;
 		else
