@@ -26,9 +26,6 @@
 
 xmlNodePtr htmlnode_next(xmlNodePtr top, xmlNodePtr node)
 {
-	if (node->children)
-		return node->children;
-
 	while (!node->next) {
 		node = node->parent;
 		if (!node || node == top)
@@ -37,11 +34,19 @@ xmlNodePtr htmlnode_next(xmlNodePtr top, xmlNodePtr node)
 	return node->next;
 }
 
+xmlNodePtr htmlnode_dive(xmlNodePtr top, xmlNodePtr node)
+{
+	if (node->children)
+		return node->children;
+	return htmlnode_next(top, node);
+}
+
+
 xmlNodePtr find_form_node(xmlDocPtr doc)
 {
 	xmlNodePtr root, node;
 
-	for (root = node = xmlDocGetRootElement(doc); node; node = htmlnode_next(root, node)) {
+	for (root = node = xmlDocGetRootElement(doc); node; node = htmlnode_dive(root, node)) {
 		if (node->name && !strcasecmp((char *)node->name, "form"))
 			return node;
 	}
@@ -207,7 +212,7 @@ struct oc_auth_form *parse_form_node(struct openconnect_info *vpninfo,
 	xmlnode_get_prop(node, "name", &form->auth_id);
 	form->banner = strdup(form->auth_id);
 
-	for (child = htmlnode_next(node, node); child && child != node; child = htmlnode_next(node, child)) {
+	for (child = htmlnode_dive(node, node); child && child != node; child = htmlnode_dive(node, child)) {
 		if (!child->name)
 			continue;
 

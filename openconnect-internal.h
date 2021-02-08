@@ -924,6 +924,7 @@ int compress_packet(struct openconnect_info *vpninfo, int compr_type, struct pkt
 
 /* html-auth.c */
 xmlNodePtr htmlnode_next(xmlNodePtr top, xmlNodePtr node);
+xmlNodePtr htmlnode_dive(xmlNodePtr top, xmlNodePtr node);
 xmlNodePtr find_form_node(xmlDocPtr doc);
 int parse_input_node(struct openconnect_info *vpninfo, struct oc_auth_form *form,
 		     xmlNodePtr node, const char *submit_button,
