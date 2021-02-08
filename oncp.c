@@ -36,42 +36,6 @@
 
 #include "openconnect-internal.h"
 
-static int parse_cookie(struct openconnect_info *vpninfo)
-{
-	char *p = vpninfo->cookie;
-
-	/* We currenly expect the "cookie" to be contain multiple cookies:
-	 * DSSignInUrl=/; DSID=xxx; DSFirstAccess=xxx; DSLastAccess=xxx
-	 * Process those into vpninfo->cookies unless we already had them
-	 * (in which case they'll may be newer. */
-	while (p && *p) {
-		char *semicolon = strchr(p, ';');
-		char *equals;
-
-		if (semicolon)
-			*semicolon = 0;
-
-		equals = strchr(p, '=');
-		if (!equals) {
-			vpn_progress(vpninfo, PRG_ERR, _("Invalid cookie '%s'\n"), p);
-			return -EINVAL;
-		}
-		*equals = 0;
-		http_add_cookie(vpninfo, p, equals+1, 0);
-		*equals = '=';
-
-		p = semicolon;
-		if (p) {
-			*p = ';';
-			p++;
-			while (*p && isspace((int)(unsigned char)*p))
-				p++;
-		}
-	}
-
-	return 0;
-}
-
 static void buf_append_tlv(struct oc_text_buf *buf, uint16_t val, uint32_t len, void *data)
 {
 	unsigned char b[6];
@@ -529,7 +493,8 @@ int oncp_connect(struct openconnect_info *vpninfo)
 	const char *old_addr = vpninfo->ip_info.addr, *old_netmask = vpninfo->ip_info.netmask;
 
 	if (!vpninfo->cookies) {
-		ret = parse_cookie(vpninfo);
+		/* XX: This will happen if authentication was separate/external */
+		ret = internal_split_cookies(vpninfo, 0, "DSID");
 		if (ret)
 			return ret;
 	}
