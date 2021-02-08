@@ -57,10 +57,11 @@ int parse_input_node(struct openconnect_info *vpninfo, struct oc_auth_form *form
 		     xmlNodePtr node, const char *submit_button,
 		     int (*can_gen_tokencode)(struct openconnect_info *vpninfo, struct oc_auth_form *form, struct oc_form_opt *opt))
 {
-	char *type = (char *)xmlGetProp(node, (unsigned char *)"type");
+	char *type = (char *)xmlGetProp(node, (unsigned char *)"type"), *style = (char *)xmlGetProp(node, (unsigned char *)"style");
 	struct oc_form_opt **p = &form->opts;
 	struct oc_form_opt *opt;
 	int ret = 0;
+	int nodisplay = style && !strcmp(style, "display: none;"); /* XX: Fortinet-specific */
 
 	if (!type)
 		return -EINVAL;
@@ -71,7 +72,7 @@ int parse_input_node(struct openconnect_info *vpninfo, struct oc_auth_form *form
 		goto out;
 	}
 
-	if (!strcasecmp(type, "hidden")) {
+	if (nodisplay || !strcasecmp(type, "hidden")) {
 		opt->type = OC_FORM_OPT_HIDDEN;
 		xmlnode_get_prop(node, "name", &opt->name);
 		xmlnode_get_prop(node, "value", &opt->_value);
@@ -142,6 +143,7 @@ int parse_input_node(struct openconnect_info *vpninfo, struct oc_auth_form *form
 	if (ret)
 		free_opt(opt);
 	free(type);
+	free(style);
 	return ret;
 }
 

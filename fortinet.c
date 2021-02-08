@@ -29,9 +29,10 @@
 #include <stdarg.h>
 #include <sys/types.h>
 
-#include "openconnect-internal.h"
+#include <libxml/HTMLparser.h>
+#include <libxml/HTMLtree.h>
 
-#define XCAST(x) ((const xmlChar *)(x))
+#include "openconnect-internal.h"
 
 void fortinet_common_headers(struct openconnect_info *vpninfo,
 			 struct oc_text_buf *buf)
@@ -60,7 +61,142 @@ void fortinet_common_headers(struct openconnect_info *vpninfo,
 
 int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 {
-	return -EINVAL;
+	int ret;
+	struct oc_text_buf *resp_buf = NULL;
+	xmlDocPtr doc = NULL;
+	xmlNodePtr node;
+	struct oc_auth_form *form = NULL;
+	struct oc_vpn_option *cookie;
+	char *form_name = NULL;
+
+	resp_buf = buf_alloc();
+	if (buf_error(resp_buf)) {
+		ret = buf_error(resp_buf);
+		goto out;
+	}
+
+	/* XX: Fortinet HTML forms *seem* like they should be about as easy to follow
+	 * as Juniper HTML forms, but some redirects use Javascript EXCLUSIVELY (no
+	 * 'Location' header).
+	 *
+	 * Also, a failed login returns the misleading HTTP status "405 Method Not Allowed",
+	 * rather than 403/401.
+	 */
+	while (1) {
+		char *form_buf = NULL;
+	        char *url;
+
+		if (resp_buf && resp_buf->pos)
+			ret = do_https_request(vpninfo, "POST",
+					       "application/x-www-form-urlencoded",
+					       resp_buf, &form_buf, 1);
+		else
+			ret = do_https_request(vpninfo, "GET", NULL, NULL,
+					       &form_buf, 1);
+
+		/* XX: special-cased, because most Fortinet servers return a Javascript-only redirect from
+		 * a status 405 page, after a failed login.
+		 */
+		if (ret == -EACCES) {
+			free(form_buf);
+			buf_truncate(resp_buf);
+			goto try_remote_login;
+		}
+
+		for (cookie = vpninfo->cookies; cookie; cookie = cookie->next) {
+			if (!strcmp(cookie->option, "SVPNCOOKIE")) {
+				vpninfo->cookie = strdup(cookie->value);
+				free(form_buf);
+				ret = 0;
+				goto out;
+			}
+		}
+
+		url = internal_get_url(vpninfo);
+		if (!url) {
+			free(form_buf);
+			ret = -ENOMEM;
+			break;
+		}
+
+		doc = htmlReadMemory(form_buf, ret, url, NULL,
+				     HTML_PARSE_RECOVER|HTML_PARSE_NOERROR|HTML_PARSE_NOWARNING|HTML_PARSE_NONET);
+		free(url);
+		free(form_buf);
+		if (!doc) {
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("Failed to parse HTML document\n"));
+			ret = -EINVAL;
+			break;
+		}
+
+		buf_truncate(resp_buf);
+
+		node = find_form_node(doc);
+		if (!node) {
+			/* XX: special-cased, because most Fortinet servers return a Javascript-only redirect from 'GET /' */
+			if (!vpninfo->urlpath) {
+			try_remote_login:
+				vpninfo->urlpath = strdup("remote/login");
+				continue;
+			}
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("Failed to find or parse web form in login page\n"));
+			ret = -EINVAL;
+			break;
+		}
+		free(form_name);
+		form_name = (char *)xmlGetProp(node, (unsigned char *)"name");
+		if (form_name && !strcmp(form_name, "f")) {
+			form = parse_form_node(vpninfo, node, NULL, NULL);
+		} else {
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("Unknown form name '%s'\n"),
+				     form_name);
+
+			fprintf(stderr, _("Dumping unknown HTML form:\n"));
+			htmlNodeDumpFileFormat(stderr, node->doc, node, NULL, 1);
+			ret = -EINVAL;
+			break;
+		}
+
+		if (!form) {
+			ret = -EINVAL;
+			break;
+		}
+
+		/* XX: Fortinet servers put extra <input type='hidden'> fields after the </form>.
+		 * Sometimes they're even after the </body>. Great job, Fortinet.
+		 */
+		for (node = htmlnode_next(NULL, node); node; node = htmlnode_dive(NULL, node))
+			if (node->name && !strcasecmp((char *)node->name, "input"))
+				parse_input_node(vpninfo, form, node, NULL, NULL);
+
+		ret = process_auth_form(vpninfo, form);
+		if (ret)
+			break;
+
+		append_form_opts(vpninfo, form, resp_buf);
+		ret = buf_error(resp_buf);
+		if (ret)
+			break;
+
+		vpninfo->redirect_url = form->action;
+		form->action = NULL;
+		free_auth_form(form);
+		form = NULL;
+		handle_redirect(vpninfo);
+		xmlFreeDoc(doc);
+		doc = NULL;
+	}
+ out:
+	if (doc)
+		xmlFreeDoc(doc);
+	free(form_name);
+	if (form)
+		free_auth_form(form);
+	buf_free(resp_buf);
+	return ret;
 }
 
 /* We behave like CSTP — create a linked list in vpninfo->cstp_options
