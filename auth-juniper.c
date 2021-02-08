@@ -414,8 +414,8 @@ static struct oc_auth_form *parse_roles_form_node(xmlNodePtr node)
 	xmlNodePtr child;
 
 	// Set form->action here as a redirect url with keys and ids.
-	for (child = htmlnode_next(node, node); child && child != node;
-	     child = htmlnode_next(node, child)) {
+	for (child = htmlnode_dive(node, node); child && child != node;
+	     child = htmlnode_dive(node, child)) {
 		if (child->name && !strcasecmp((char *)child->name, "table")) {
 			char *table_id = (char *)xmlGetProp(child, (unsigned char *)"id");
 
