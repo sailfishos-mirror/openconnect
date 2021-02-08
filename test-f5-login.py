@@ -52,8 +52,8 @@ s.verify = args.verify
 print("Initial GET / to populate LastMRH_Session and MRHSession cookies...", file=stderr)
 res = s.get(endpoint.geturl(), allow_redirects=False)
 assert any(c.value for c in s.cookies if c.name=='MRHSession') and any(c.value for c in s.cookies if c.name=='LastMRH_Session')
-print("GET /my.policy to update MRHSession cookie...", file=stderr)
-res = s.get(endpoint._replace(path='/my.policy').geturl(), allow_redirects=False, headers={'Referer': res.url})
+#print("GET /my.policy to update MRHSession cookie...", file=stderr)
+#res = s.get(endpoint._replace(path='/my.policy').geturl(), allow_redirects=False, headers={'Referer': res.url})
 #print("GET /vdesk/timeoutagent-i.php to update TIN cookie (probably unnecessary).")
 #res = s.get(endpoint._replace(path='/vdesk/timeoutagent-i.php').geturl(), allow_redirects=False)
 
