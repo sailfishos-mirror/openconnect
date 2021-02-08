@@ -501,13 +501,16 @@ static int queue_config_request(struct openconnect_info *vpninfo, int proto)
 	case PPP_LCP:
 		ncp = &ppp->lcp;
 		if (!vpninfo->ip_info.mtu) {
-			vpninfo->ip_info.mtu = calculate_mtu(vpninfo, 0 /* not UDP */,
-							     /* 1-byte PPP header with ACCOMP, PFCOMP; 4-bytes HDLC framing and FCS */
-							     ppp->encap_len + 1 + (ppp->hdlc ? 4 : 0),
-							     0, 1); /* no footer or block padding */
-			/* XX: HDLC fudge factor (average overhead on random payload is 1/128, we'll use more like 2%) */
+			int overhead = TLS_OVERHEAD + ppp->encap_len        /* TLS and encapsulation overhead */
+				+ (ppp->hdlc ? 4 : 0)                       /* HDLC framing and FCS */
+				+ (ppp->out_lcp_opts & BIT_ACCOMP ? 0 : 2)  /* PPP header AC fields */
+				+ (ppp->out_lcp_opts & BIT_PFCOMP ? 1 : 2); /* PPP header protocol field */
+			vpninfo->ip_info.mtu = calculate_mtu(vpninfo, 0 /* not UDP */, overhead, 0 /* no footer */, 1 /* no block padding */);
+			/* XX: HDLC fudge factor (average overhead on random payload is 1/128, we'll use 4x that) */
 			if (ppp->hdlc)
-				vpninfo->ip_info.mtu -= vpninfo->ip_info.mtu / 50;
+				vpninfo->ip_info.mtu -= vpninfo->ip_info.mtu >> 5;
+			vpn_progress(vpninfo, PRG_INFO,
+				     _("Requesting calculated MTU of %d\n"), vpninfo->ip_info.mtu);
 		}
 
 		if (ppp->out_lcp_opts & BIT_MRU)
