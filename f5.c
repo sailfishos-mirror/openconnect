@@ -417,6 +417,7 @@ int f5_connect(struct openconnect_info *vpninfo)
 	char *sid = NULL, *ur_z = NULL;
 	int ipv4 = -1, ipv6 = -1, hdlc = -1;
 	char *res_buf = NULL;
+	struct oc_vpn_option *old_cstp_opts = vpninfo->cstp_options;
 	const char *old_addr = vpninfo->ip_info.addr;
 	const char *old_netmask = vpninfo->ip_info.netmask;
 	const char *old_addr6 = vpninfo->ip_info.addr6;
@@ -519,6 +520,7 @@ int f5_connect(struct openconnect_info *vpninfo)
 	ret = openconnect_ppp_new(vpninfo, hdlc ? PPP_ENCAP_F5_HDLC : PPP_ENCAP_F5, ipv4, ipv6);
 
  out:
+	free_optlist(old_cstp_opts);
 	free(res_buf);
 	free(profile_params);
 	free(sid);
