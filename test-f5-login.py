@@ -14,6 +14,7 @@ import sys
 import requests
 import argparse
 import getpass
+from datetime import datetime
 from shlex import quote
 
 p = argparse.ArgumentParser()
@@ -65,8 +66,17 @@ data=dict(username=args.username, password=args.password,
           **extra)
 print("POST /my.policy to submit login credentials...", file=stderr)
 res = s.post(endpoint._replace(path='/my.policy').geturl(), data=data, headers={'Referer': res.url})
-
 res.raise_for_status()
+
+st_cookie = next((c for c in s.cookies if c.name=='F5_ST'), None)
+if not st_cookie:
+    print("No F5_ST cookie in response (ended at %s) -- bad credentials?" % res.url, file=stderr)
+else:
+    # Parse "session timeout" cookie (https://support.f5.com/csp/article/K15387) which looks like '1z1z1z1612808487z604800'
+    fields = st_cookie.value.split('z')
+    authat, expat = datetime.fromtimestamp(int(fields[3])), datetime.fromtimestamp(int(fields[3])+int(fields[4]))
+    print("F5_ST cookie %r valid from %s - %s" % (st_cookie.value, authat, expat), file=stderr)
+
 
 # Build openconnect --cookie argument from the result:
 url = urlparse(res.url)
