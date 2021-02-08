@@ -326,7 +326,7 @@ static int queue_config_packet(struct openconnect_info *vpninfo,
 	return 0;
 }
 
-#define PROTO_TAG_LEN(p, t, l) (((p) << 16) | ((t) << 8) | (l))
+#define PROTO_TAG_LEN(p, t, l) ((((uint32_t)(p)) << 16) | ((t) << 8) | (l))
 
 static int handle_config_request(struct openconnect_info *vpninfo,
 				 int proto, int id, unsigned char *payload, int len)
@@ -1229,7 +1229,13 @@ int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		proto = (this->len && (this->data[0] & 0xf0) == 0x60) ? PPP_IP6 : PPP_IP;
 	}
 
-	if (this) {
+	/* XX: Need 'this = vpninfo->current_ssl_pkt' here, otherwise sanitizer complains about
+	 * handle_state_transition() potentially freeing vpninfo->current_ssl_pkt.
+	 *
+	 * That only occurs in the PPPS_DEAD branch, which is unreachable after the first
+	 * invocation, but how to convince it of that?
+	 */
+	if ((this = vpninfo->current_ssl_pkt)) {
 		unsigned char *eh;
 		const char *lcp = NULL;
 		int id;
@@ -1257,11 +1263,13 @@ int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		}
 
 		/* Encapsulate into pre-PPP header */
-		eh = this->data - this->ppp.hlen - ppp->encap_len;
 		/* Nothing here until we add protocols that require pre-PPP
 		 * header encapsulation. Such a protocol would store the
 		 * pre-PPP header into the range of memory:
 		 *   eh to (eh + ppp->encap_len)
+		 *
+		 * Commented out so that sanitizer doesn't complain:
+		 *   eh = this->data - this->ppp.hlen - ppp->encap_len;
 		 */
 		this->ppp.hlen += ppp->encap_len;
 
