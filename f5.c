@@ -45,24 +45,9 @@ int f5_obtain_cookie(struct openconnect_info *vpninfo)
 	if ((ret = buf_error(resp_buf)))
 		goto out;
 
-	/* XX: Is this initial GET / (to populate LastMRH_Session and MRHSession
-	 * cookies) actually necessary?
+	/* XX: This initial 'GET /' seems to be necessary to populate LastMRH_Session and
+	 * MRHSession cookies, without which the subsequent 'POST' will fail.
 	 */
-	ret = do_https_request(vpninfo, "GET", NULL, NULL, &form_buf, 1);
-	free(form_buf);
-	form_buf = NULL;
-	if (ret < 0)
-		return ret;
-
-	/* XX: Is this second GET /my.policy (to update MRHSession cookie)
-	 * also necessary?
-	 */
-	free(vpninfo->urlpath);
-	if (!(vpninfo->urlpath = strdup("my.policy"))) {
-	nomem:
-		ret = -ENOMEM;
-		goto out;
-	}
 	ret = do_https_request(vpninfo, "GET", NULL, NULL, &form_buf, 1);
 	free(form_buf);
 	form_buf = NULL;
@@ -71,8 +56,11 @@ int f5_obtain_cookie(struct openconnect_info *vpninfo)
 
 	/* XX: build static form (username and password) */
 	form = calloc(1, sizeof(*form));
-	if (!form)
-		goto nomem;
+	if (!form) {
+	nomem:
+		ret = -ENOMEM;
+		goto out;
+	}
 	opt = form->opts = calloc(1, sizeof(*opt));
 	if (!opt)
 		goto nomem;
@@ -492,10 +480,6 @@ int f5_connect(struct openconnect_info *vpninfo)
 		ipv6 = 0;
 
 	/* Now establish the actual connection */
-	ret = openconnect_open_https(vpninfo);
-	if (ret)
-		goto out;
-
 	reqbuf = buf_alloc();
 	buf_append(reqbuf, "GET /myvpn?sess=%s&hdlc_framing=%s&ipv4=%s&ipv6=%s&Z=%s&hostname=",
 		   sid, hdlc?"yes":"no", ipv4?"yes":"no", ipv6?"yes":"no", ur_z);
