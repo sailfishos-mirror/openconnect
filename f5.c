@@ -35,7 +35,102 @@
 
 int f5_obtain_cookie(struct openconnect_info *vpninfo)
 {
-	return -EINVAL;
+	int ret;
+	struct oc_text_buf *resp_buf = NULL;
+	char *form_buf = NULL;
+	struct oc_auth_form *form = NULL;
+	struct oc_form_opt *opt, *opt2;
+
+	resp_buf = buf_alloc();
+	if ((ret = buf_error(resp_buf)))
+		goto out;
+
+	/* XX: Is this initial GET / (to populate LastMRH_Session and MRHSession
+	 * cookies) actually necessary?
+	 */
+	ret = do_https_request(vpninfo, "GET", NULL, NULL, &form_buf, 1);
+	free(form_buf);
+	form_buf = NULL;
+	if (ret < 0)
+		return ret;
+
+	/* XX: Is this second GET /my.policy (to update MRHSession cookie)
+	 * also necessary?
+	 */
+	free(vpninfo->urlpath);
+	if (!(vpninfo->urlpath = strdup("my.policy"))) {
+	nomem:
+		ret = -ENOMEM;
+		goto out;
+	}
+	ret = do_https_request(vpninfo, "GET", NULL, NULL, &form_buf, 1);
+	free(form_buf);
+	form_buf = NULL;
+	if (ret < 0)
+		return ret;
+
+	/* XX: build static form (username and password) */
+	form = calloc(1, sizeof(*form));
+	if (!form)
+		goto nomem;
+	opt = form->opts = calloc(1, sizeof(*opt));
+	if (!opt)
+		goto nomem;
+	opt->label = strdup("Username: ");
+	opt->name = strdup("username");
+	opt->type = OC_FORM_OPT_TEXT;
+
+	opt2 = opt->next = calloc(1, sizeof(*opt2));
+	if (!opt2)
+		goto nomem;
+	opt2->label = strdup("Password: ");
+	opt2->name = strdup("password");
+	opt2->type = OC_FORM_OPT_PASSWORD;
+
+	/* XX: submit form repeatedly until success? */
+	for (;;) {
+		ret = process_auth_form(vpninfo, form);
+		if (ret == OC_FORM_RESULT_CANCELLED || ret < 0)
+			goto out;
+
+		buf_truncate(resp_buf);
+		append_form_opts(vpninfo, form, resp_buf);
+		if ((ret = buf_error(resp_buf)))
+		        goto out;
+		do_https_request(vpninfo, "POST", "application/x-www-form-urlencoded",
+				 resp_buf, &form_buf, 0);
+
+		/* XX: if this worked, we should have a response size of zero, and F5_ST
+		 * and MRHSession cookies in the response.
+		 */
+		if (!form_buf || *form_buf == '\0') {
+			struct oc_vpn_option *cookie;
+			const char *session=NULL, *f5_st=NULL;
+			for (cookie = vpninfo->cookies; cookie; cookie = cookie->next) {
+				if (!strcmp(cookie->option, "MRHSession"))
+					session = cookie->value;
+				else if (!strcmp(cookie->option, "F5_ST"))
+					f5_st = cookie->value;
+			}
+
+			if (session && f5_st) {
+				free(vpninfo->cookie);
+				if (asprintf(&vpninfo->cookie, "MRHSession=%s; F5_ST=%s",
+					     session, f5_st) <= 0)
+					goto nomem;
+				ret = 0;
+				goto out;
+			}
+		}
+		if (!form->message)
+			form->message = strdup(_("Authentication failed. Please retry."));
+		nuke_opt_values(form->opts);
+	}
+
+ out:
+	if (form) free_auth_form(form);
+	if (resp_buf) buf_free(resp_buf);
+	return ret;
 }
 
 /*
@@ -329,6 +424,7 @@ int f5_connect(struct openconnect_info *vpninfo)
 {
 	int ret;
 	struct oc_text_buf *reqbuf = NULL;
+	struct oc_vpn_option *cookie;
 	char *profile_params = NULL;
 	char *sid = NULL, *ur_z = NULL;
 	int ipv4 = -1, ipv6 = -1, hdlc = -1;
@@ -343,6 +439,18 @@ int f5_connect(struct openconnect_info *vpninfo)
 		ret = internal_split_cookies(vpninfo, 1, "MRHSession");
 		if (ret)
 			return ret;
+	}
+
+	/* XX: parse "session timeout" cookie to get auth expiration */
+	for (cookie = vpninfo->cookies; cookie; cookie = cookie->next) {
+		if (!strcmp(cookie->option, "F5_ST")) {
+			int junk, start, dur;
+			char c = 0;
+			if (sscanf(cookie->value, "%dz%dz%dz%dz%d%c", &junk, &junk, &junk, &start, &dur, &c) >= 5
+			    && (c == 0 || c == 'z'))
+				vpninfo->auth_expiration = start + dur;
+			break;
+		}
 	}
 
 	free(vpninfo->urlpath);
