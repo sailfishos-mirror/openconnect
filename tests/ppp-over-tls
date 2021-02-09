@@ -23,7 +23,6 @@ top_builddir=${top_builddir:-..}
 . `dirname $0`/common.sh
 
 FINGERPRINT="--servercert=d66b507ae074d03b02eafca40d35f87dd81049d3"
-CLIPID=$SOCKDIR/oc-pid.$$.tmp
 CERT=$certdir/server-cert.pem
 KEY=$certdir/server-key.pem
 
@@ -40,6 +39,7 @@ IPV4_SUCCESS_1="rcvd [IPCP ConfAck "
 IPV4_SUCCESS_2="sent [IPCP ConfAck "
 IPV6_SUCCESS_1="rcvd [IPV6CP ConfAck "
 IPV6_SUCCESS_2="sent [IPV6CP ConfAck "
+TIMEOUT_3S_IDLE="idle 3"
 
 echo "Testing PPP ... "
 
@@ -47,8 +47,7 @@ echo -n "Connecting to PPP peer (HDLC/RFC1662, IPv4+IPv6, DNS, extraneous VJ and
 launch_simple_pppd $CERT $KEY $HDLC_YES $IPV4_YES $OFFER_DNS $IPV6_YES 2>&1
 wait_server "$PID"
 start=$(date +%s)
-LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT -q --protocol=nullppp $ADDRESS:443 -u test $FINGERPRINT --cookie "hdlc" -b --pid-file=$CLIPID >/dev/null 2>&1
-kill $(cat $CLIPID) > /dev/null 2>&1
+LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT -q --protocol=nullppp $ADDRESS:443 -u test $FINGERPRINT --cookie "hdlc,term" -Ss '' >/dev/null 2>&1
 took=$(( $(date +%s) - start ))
 if grep -qF "$IPV4_SUCCESS_1" $LOGFILE && grep -qF "$IPV4_SUCCESS_2" $LOGFILE && grep -qF "$IPV6_SUCCESS_1" $LOGFILE && grep -qF "$IPV6_SUCCESS_2" $LOGFILE; then
     echo "ok (took $took seconds)"
@@ -63,8 +62,7 @@ echo -n "Connecting to PPP peer (HDLC/RFC1662, IPv4+IPv6, DNS, extraneous VJ and
 launch_simple_pppd $CERT $KEY $HDLC_YES $IPV4_YES $OFFER_DNS $IPV6_YES $NO_HDR_COMP 2>&1
 wait_server "$PID"
 start=$(date +%s)
-LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT -q --protocol=nullppp $ADDRESS:443 -u test $FINGERPRINT --cookie "hdlc" -b --pid-file=$CLIPID >/dev/null 2>&1
-kill $(cat $CLIPID) > /dev/null 2>&1
+LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT -q --protocol=nullppp $ADDRESS:443 -u test $FINGERPRINT --cookie "hdlc,term" -Ss '' >/dev/null 2>&1
 took=$(( $(date +%s) - start ))
 if grep -qF "$IPV4_SUCCESS_1" $LOGFILE && grep -qF "$IPV4_SUCCESS_2" $LOGFILE && grep -qF "$IPV6_SUCCESS_1" $LOGFILE && grep -qF "$IPV6_SUCCESS_2" $LOGFILE; then
     echo "ok (took $took seconds)"
@@ -79,8 +77,7 @@ echo -n "Connecting to PPP peer (sync/no-HDLC, IPv4+IPv6, DNS, extraneous VJ and
 launch_simple_pppd $CERT $KEY $HDLC_NO $IPV4_YES $OFFER_DNS $IPV6_YES 2>&1
 wait_server "$PID"
 start=$(date +%s)
-LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT -q --protocol=nullppp $ADDRESS:443 -u test $FINGERPRINT -b --pid-file=$CLIPID >/dev/null 2>&1
-kill $(cat $CLIPID) > /dev/null 2>&1
+LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT -q --protocol=nullppp $ADDRESS:443 -u test $FINGERPRINT --cookie "term" -Ss '' >/dev/null 2>&1
 took=$(( $(date +%s) - start ))
 if grep -qF "$IPV4_SUCCESS_1" $LOGFILE && grep -qF "$IPV4_SUCCESS_2" $LOGFILE && grep -qF "$IPV6_SUCCESS_1" $LOGFILE && grep -qF "$IPV6_SUCCESS_2" $LOGFILE; then
     echo "ok (took $took seconds)"
@@ -95,8 +92,7 @@ echo -n "Connecting to PPP peer (HDLC/RFC1662, IPv4 only)... "
 launch_simple_pppd $CERT $KEY $HDLC_YES $NO_JUNK_COMP $IPV4_YES $IPV6_NO 2>&1
 wait_server "$PID"
 start=$(date +%s)
-LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT -q --protocol=nullppp $ADDRESS:443 -u test $FINGERPRINT --cookie "hdlc" -b --pid-file=$CLIPID >/dev/null 2>&1
-kill $(cat $CLIPID) > /dev/null 2>&2
+LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT -q --protocol=nullppp $ADDRESS:443 -u test $FINGERPRINT --cookie "hdlc,term" -Ss '' >/dev/null 2>&1
 took=$(( $(date +%s) - start ))
 if grep -qF "$IPV4_SUCCESS_1" $LOGFILE && grep -qF "$IPV4_SUCCESS_2" $LOGFILE; then
     echo "ok (took $took seconds)"
@@ -107,12 +103,11 @@ fi
 
 cleanup
 
-echo -n "Connecting to PPP peer (HDLC/RFC1662, IPv6 only)... "
-launch_simple_pppd $CERT $KEY $HDLC_YES $NO_JUNK_COMP $IPV4_NO $IPV6_YES 2>&1
+echo -n "Connecting to PPP peer (HDLC/RFC1662, IPv6 only, 3s idle timeout)... "
+launch_simple_pppd $CERT $KEY $HDLC_YES $NO_JUNK_COMP $IPV4_NO $IPV6_YES $TIMEOUT_3S_IDLE 2>&1
 wait_server "$PID"
 start=$(date +%s)
-LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT -q --protocol=nullppp $ADDRESS:443 -u test $FINGERPRINT --cookie "hdlc" -b --pid-file=$CLIPID >/dev/null 2>&1
-kill $(cat $CLIPID) > /dev/null 2>&2
+LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT -q --protocol=nullppp $ADDRESS:443 -u test $FINGERPRINT --cookie "hdlc" -Ss '' >/dev/null 2>&1
 took=$(( $(date +%s) - start ))
 if grep -qF "$IPV6_SUCCESS_1" $LOGFILE && grep -qF "$IPV6_SUCCESS_2" $LOGFILE; then
     echo "ok (took $took seconds)"

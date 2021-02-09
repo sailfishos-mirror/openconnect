@@ -95,7 +95,7 @@ wait_server() {
 
 cleanup() {
 	ret=0
-	kill $PID
+	kill $PID 2>/dev/null
 	if test $? != 0;then
 		ret=1
 	fi
