@@ -22,75 +22,103 @@ top_builddir=${top_builddir:-..}
 
 . `dirname $0`/common.sh
 
+FINGERPRINT="--servercert=d66b507ae074d03b02eafca40d35f87dd81049d3"
+CLIPID=$SOCKDIR/oc-pid.$$.tmp
 CERT=$certdir/server-cert.pem
 KEY=$certdir/server-key.pem
+
+IPV4_NO="noip"
+IPV4_YES="169.254.1.1:169.254.128.128"
+IPV6_NO="noipv6"
+IPV6_YES="+ipv6"
+OFFER_DNS="ms-dns 1.1.1.1 ms-dns 8.8.8.8"
+NO_HDR_COMP="nopcomp noaccomp"
+NO_JUNK_COMP="novj noccp"
+HDLC_YES=""
+HDLC_NO="sync"
+IPV4_SUCCESS_1="rcvd [IPCP ConfAck "
+IPV4_SUCCESS_2="sent [IPCP ConfAck "
+IPV6_SUCCESS_1="rcvd [IPV6CP ConfAck "
+IPV6_SUCCESS_2="sent [IPV6CP ConfAck "
 
 echo "Testing PPP ... "
 
 echo -n "Connecting to PPP peer (HDLC/RFC1662, IPv4+IPv6, DNS, extraneous VJ and CCP)... "
-launch_simple_pppd $CERT $KEY 10.0.0.1:10.0.0.101 ms-dns 1.1.1.1 ms-dns 8.8.8.8 +ipv6 2>&1
-wait_server $PID
+launch_simple_pppd $CERT $KEY $HDLC_YES $IPV4_YES $OFFER_DNS $IPV6_YES 2>&1
+wait_server "$PID"
 start=$(date +%s)
-LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT -q --protocol=nullppp $ADDRESS:443 -u test --servercert=d66b507ae074d03b02eafca40d35f87dd81049d3 --cookie "hdlc" >/dev/null 2>&1
+LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT -q --protocol=nullppp $ADDRESS:443 -u test $FINGERPRINT --cookie "hdlc" -b --pid-file=$CLIPID >/dev/null 2>&1
+kill $(cat $CLIPID) > /dev/null 2>&1
 took=$(( $(date +%s) - start ))
-if grep -qF "rcvd [IPCP ConfAck " $LOGFILE && grep -qF "sent [IPCP ConfAck " $LOGFILE && grep -qF "rcvd [IPV6CP ConfAck " $LOGFILE && grep -qF "sent [IPV6CP ConfAck " $LOGFILE; then
+if grep -qF "$IPV4_SUCCESS_1" $LOGFILE && grep -qF "$IPV4_SUCCESS_2" $LOGFILE && grep -qF "$IPV6_SUCCESS_1" $LOGFILE && grep -qF "$IPV6_SUCCESS_2" $LOGFILE; then
     echo "ok (took $took seconds)"
 else
-    fail $PID "Did not negotiate IPCP and IP6CP successfully."
+    fail "$PID" "Did not negotiate IPCP and IP6CP successfully."
+    cat $LOGFILE
 fi
 
 cleanup
 
 echo -n "Connecting to PPP peer (HDLC/RFC1662, IPv4+IPv6, DNS, extraneous VJ and CCP, no header compression)... "
-launch_simple_pppd $CERT $KEY 10.0.0.1:10.0.0.101 ms-dns 1.1.1.1 ms-dns 8.8.8.8 +ipv6 nopcomp noaccomp 2>&1
-wait_server $PID
+launch_simple_pppd $CERT $KEY $HDLC_YES $IPV4_YES $OFFER_DNS $IPV6_YES $NO_HDR_COMP 2>&1
+wait_server "$PID"
 start=$(date +%s)
-LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT -q --protocol=nullppp $ADDRESS:443 -u test --servercert=d66b507ae074d03b02eafca40d35f87dd81049d3 --cookie "hdlc" >/dev/null 2>&1
+LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT -q --protocol=nullppp $ADDRESS:443 -u test $FINGERPRINT --cookie "hdlc" -b --pid-file=$CLIPID >/dev/null 2>&1
+kill $(cat $CLIPID) > /dev/null 2>&1
 took=$(( $(date +%s) - start ))
-if grep -qF "rcvd [IPCP ConfAck " $LOGFILE && grep -qF "sent [IPCP ConfAck " $LOGFILE && grep -qF "rcvd [IPV6CP ConfAck " $LOGFILE && grep -qF "sent [IPV6CP ConfAck " $LOGFILE; then
+if grep -qF "$IPV4_SUCCESS_1" $LOGFILE && grep -qF "$IPV4_SUCCESS_2" $LOGFILE && grep -qF "$IPV6_SUCCESS_1" $LOGFILE && grep -qF "$IPV6_SUCCESS_2" $LOGFILE; then
     echo "ok (took $took seconds)"
 else
-    fail $PID "Did not negotiate IPCP and IP6CP successfully."
+    fail "$PID" "Did not negotiate IPCP and IP6CP successfully."
+    cat $LOGFILE
 fi
 
 cleanup
 
 echo -n "Connecting to PPP peer (sync/no-HDLC, IPv4+IPv6, DNS, extraneous VJ and CCP)... "
-launch_simple_pppd $CERT $KEY sync 10.0.0.1:10.0.0.101 ms-dns 1.1.1.1 ms-dns 8.8.8.8 +ipv6 2>&1
-wait_server $PID
+launch_simple_pppd $CERT $KEY $HDLC_NO $IPV4_YES $OFFER_DNS $IPV6_YES 2>&1
+wait_server "$PID"
 start=$(date +%s)
-LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT -q --protocol=nullppp $ADDRESS:443 -u test --servercert=d66b507ae074d03b02eafca40d35f87dd81049d3 >/dev/null 2>&1
+LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT -q --protocol=nullppp $ADDRESS:443 -u test $FINGERPRINT -b --pid-file=$CLIPID >/dev/null 2>&1
+kill $(cat $CLIPID) > /dev/null 2>&1
 took=$(( $(date +%s) - start ))
-if grep -qF "rcvd [IPCP ConfAck " $LOGFILE && grep -qF "sent [IPCP ConfAck " $LOGFILE && grep -qF "rcvd [IPV6CP ConfAck " $LOGFILE && grep -qF "sent [IPV6CP ConfAck " $LOGFILE; then
+if grep -qF "$IPV4_SUCCESS_1" $LOGFILE && grep -qF "$IPV4_SUCCESS_2" $LOGFILE && grep -qF "$IPV6_SUCCESS_1" $LOGFILE && grep -qF "$IPV6_SUCCESS_2" $LOGFILE; then
     echo "ok (took $took seconds)"
 else
-    fail $PID "Did not negotiate IPCP and IP6CP successfully."
+    fail "$PID" "Did not negotiate IPCP and IP6CP successfully."
+    cat $LOGFILE
 fi
 
 cleanup
 
-echo -n "Connecting to PPP peer (sync/no-HDLC, IPv4 only)... "
-launch_simple_pppd $CERT $KEY sync novj noccp 10.0.0.1:10.0.0.101 noipv6 2>&1
-wait_server $PID
+echo -n "Connecting to PPP peer (HDLC/RFC1662, IPv4 only)... "
+launch_simple_pppd $CERT $KEY $HDLC_YES $NO_JUNK_COMP $IPV4_YES $IPV6_NO 2>&1
+wait_server "$PID"
 start=$(date +%s)
-LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT -q --protocol=nullppp $ADDRESS:443 -u test --servercert=d66b507ae074d03b02eafca40d35f87dd81049d3 >/dev/null 2>&1
+LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT -q --protocol=nullppp $ADDRESS:443 -u test $FINGERPRINT --cookie "hdlc" -b --pid-file=$CLIPID >/dev/null 2>&1
+kill $(cat $CLIPID) > /dev/null 2>&2
 took=$(( $(date +%s) - start ))
-if grep -qF "rcvd [IPCP ConfAck " $LOGFILE && grep -qF "sent [IPCP ConfAck " $LOGFILE; then
+if grep -qF "$IPV4_SUCCESS_1" $LOGFILE && grep -qF "$IPV4_SUCCESS_2" $LOGFILE; then
     echo "ok (took $took seconds)"
 else
-    fail $PID "Did not negotiate IPCP successfully."
+    fail "$PID" "Did not negotiate IPCP successfully."
+    cat $LOGFILE
 fi
 
-echo -n "Connecting to PPP peer (sync/no-HDLC, IPv6 only)... "
-launch_simple_pppd $CERT $KEY sync novj noccp noip +ipv6 2>&1
-wait_server $PID
+cleanup
+
+echo -n "Connecting to PPP peer (HDLC/RFC1662, IPv6 only)... "
+launch_simple_pppd $CERT $KEY $HDLC_YES $NO_JUNK_COMP $IPV4_NO $IPV6_YES 2>&1
+wait_server "$PID"
 start=$(date +%s)
-LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT -q --protocol=nullppp $ADDRESS:443 -u test --servercert=d66b507ae074d03b02eafca40d35f87dd81049d3 >/dev/null 2>&1
+LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT -q --protocol=nullppp $ADDRESS:443 -u test $FINGERPRINT --cookie "hdlc" -b --pid-file=$CLIPID >/dev/null 2>&1
+kill $(cat $CLIPID) > /dev/null 2>&2
 took=$(( $(date +%s) - start ))
-if grep -qF "rcvd [IPV6CP ConfAck " $LOGFILE && grep -qF "sent [IPV6CP ConfAck " $LOGFILE; then
+if grep -qF "$IPV6_SUCCESS_1" $LOGFILE && grep -qF "$IPV6_SUCCESS_2" $LOGFILE; then
     echo "ok (took $took seconds)"
 else
-    fail $PID "Did not negotiate IP6CP successfully."
+    fail "$PID" "Did not negotiate IP6CP successfully."
+    cat $LOGFILE
 fi
 
 cleanup
