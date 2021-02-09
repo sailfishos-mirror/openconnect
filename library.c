@@ -194,7 +194,7 @@ static const struct vpn_proto openconnect_protos[] = {
 		.description = N_("Unauthenticated RFC1661/RFC1662 PPP over TLS, for testing"),
 		.flags = OC_PROTO_PROXY | OC_PROTO_HIDDEN,
 		.tcp_connect = nullppp_connect,
-		.tcp_mainloop = ppp_mainloop,
+		.tcp_mainloop = nullppp_mainloop,
 		.add_http_headers = http_common_headers,
 		.obtain_cookie = nullppp_obtain_cookie,
 	}

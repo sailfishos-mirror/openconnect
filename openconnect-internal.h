@@ -980,6 +980,7 @@ int pulse_eap_ttls_recv(struct openconnect_info *vpninfo, void *data, int len);
 /* nullppp.c */
 int nullppp_obtain_cookie(struct openconnect_info *vpninfo);
 int nullppp_connect(struct openconnect_info *vpninfo);
+int nullppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable);
 
 /* ppp.c */
 struct oc_ppp;
