@@ -453,22 +453,16 @@ static int handle_config_request(struct openconnect_info *vpninfo,
 	}
 
 	if (rejbuf) {
-		if (buf_error(rejbuf)) {
-			vpn_progress(vpninfo, PRG_ERR,
-				     _("Error composing ConfRej packet\n"));
-			return buf_free(rejbuf);
-		}
+		if ((ret = buf_error(rejbuf)))
+			goto out;
 		vpn_progress(vpninfo, PRG_DEBUG, _("Reject %s/id %d config from server\n"), proto_names(proto), id);
 		if ((ret = queue_config_packet(vpninfo, proto, id, CONFREJ, rejbuf->pos, rejbuf->data)) >= 0) {
 			ret = 0;
 		}
 	}
 	if (nakbuf) {
-		if (buf_error(nakbuf)) {
-			vpn_progress(vpninfo, PRG_ERR,
-				     _("Error composing ConfNak packet\n"));
-			return buf_free(nakbuf);
-		}
+		if ((ret = buf_error(nakbuf)))
+			goto out;
 		vpn_progress(vpninfo, PRG_DEBUG, _("Nak %s/id %d config from server\n"), proto_names(proto), id);
 		if ((ret = queue_config_packet(vpninfo, proto, id, CONFNAK, nakbuf->pos, nakbuf->data)) >= 0) {
 			ret = 0;
@@ -482,7 +476,9 @@ static int handle_config_request(struct openconnect_info *vpninfo,
 		}
 	}
 
+ out:
 	buf_free(rejbuf);
+	buf_free(nakbuf);
 	return ret;
 }
 
