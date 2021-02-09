@@ -30,6 +30,7 @@
 #include <sys/types.h>
 
 #include "openconnect-internal.h"
+#include "ppp.h"
 
 int nullppp_obtain_cookie(struct openconnect_info *vpninfo)
 {
@@ -43,7 +44,7 @@ int nullppp_connect(struct openconnect_info *vpninfo)
 	int ret;
 	int ipv4, ipv6, hdlc;
 
-	/* XX: cookie hack. Use -C hdlc,noipv4,noipv6 on the
+	/* XX: cookie hack. Use -C hdlc,noipv4,noipv6,term on the
 	 * command line to set options. */
 	hdlc = strstr(vpninfo->cookie, "hdlc") ? 1 : 0;
 	ipv4 = strstr(vpninfo->cookie, "noipv4") ? 0 : 1;
@@ -68,4 +69,16 @@ int nullppp_connect(struct openconnect_info *vpninfo)
 	}
 
 	return ret;
+}
+
+int nullppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
+{
+	if (vpninfo->ppp->ppp_state >= PPPS_NETWORK &&
+	    strstr(vpninfo->cookie, "term")) {
+		vpninfo->got_cancel_cmd = 1;
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Terminating because nullppp has reached network state.\n"));
+	}
+
+	return ppp_mainloop(vpninfo, timeout, readable);
 }
