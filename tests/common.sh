@@ -82,7 +82,8 @@ launch_simple_pppd() {
        # It would be preferable to invoke `pppd notty` directly using socat, but it seemingly cannot handle
        # being wrapped by libsocket_wrapper.so.
        # pppd's option parsing is notably brittle: it must have the actual PTY device node, not a symlink
-       $SUDO $PPPD $(readlink "$SOCKDIR/pppd.$$.pty") noauth local debug nodetach logfile "$LOGFILE" $* 2>&1 &
+       $SUDO $PPPD $(readlink "$SOCKDIR/pppd.$$.pty") noauth local debug nodetach nodefaultroute logfile "$LOGFILE" $* 2>&1 &
+       PID="$PID $!"
 
        # XX: Caller needs to use PID, rather than $!
 }
@@ -104,7 +105,7 @@ cleanup() {
 }
 
 fail() {
-	PID=$1
+	PID="$1"
 	shift;
 	echo "Failure: $1" >&2
 	kill $PID
