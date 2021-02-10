@@ -112,8 +112,8 @@ static int unhdlc_in_place(struct openconnect_info *vpninfo, unsigned char *byte
 		vpn_progress(vpninfo, PRG_TRACE,
 			     _("HDLC initial flag sequence (0x7e) is missing\n"));
 
-	for (; inp < endp; inp++) {
-		unsigned char c = *inp;
+	while (inp < endp) {
+		unsigned char c = *inp++;
 		if (c == 0x7e)
 			goto done;
 		else if (escape) {
@@ -142,7 +142,7 @@ static int unhdlc_in_place(struct openconnect_info *vpninfo, unsigned char *byte
 	outp -= 2; /* FCS */
 
 	if (next)
-		*next = inp+1; /* Pointing at the byte AFTER final 0x7e */
+		*next = inp; /* Pointing at the byte AFTER final 0x7e */
 
 	if (fcs != PPPGOODFCS16) {
 		vpn_progress(vpninfo, PRG_INFO,
@@ -151,8 +151,8 @@ static int unhdlc_in_place(struct openconnect_info *vpninfo, unsigned char *byte
 		return -EINVAL;
 	} else {
 		vpn_progress(vpninfo, PRG_TRACE,
-			     _("Un-HDLC'ed packet (%d bytes -> %ld), FCS=0x%04x\n"),
-			     len, outp - bytes, fcs);
+			     _("Un-HDLC'ed packet (%ld bytes -> %ld), FCS=0x%04x\n"),
+			     inp - bytes, outp - bytes, fcs);
 		return outp - bytes;
 	}
 }
