@@ -914,8 +914,7 @@ static int handle_state_transition(struct openconnect_info *vpninfo, int *timeou
 	}
 
 	/* Delay tunnel setup until after PPP negotiation */
-	if (ppp->ppp_state != PPPS_NETWORK)
-		vpninfo->delay_tunnel_reason = "PPP negotiation";
+	vpninfo->delay_tunnel_reason = (ppp->ppp_state < PPPS_NETWORK) ? "PPP negotiation" : NULL;
 
 	if (last_state != ppp->ppp_state) {
 		vpn_progress(vpninfo, PRG_DEBUG,
