@@ -395,27 +395,7 @@ int fortinet_connect(struct openconnect_info *vpninfo)
 
 	reqbuf = buf_alloc();
 
-	/* Request VPN allocation
-	 *
-	 * XXX: Should this be done on every reconnect, or should it have
-	 * been part of fortinet_obtain_cookie(). For the moment while
-	 * we're letting the auth happen externally for now, let's do it
-	 * here...
-	 */
-	free(vpninfo->urlpath);
-	vpninfo->urlpath = strdup("remote/index");
-	ret = do_https_request(vpninfo, "GET", NULL, NULL, &res_buf, 0);
-	/* XXX: 401/403 is apparently normal and can be ignored (further
-	 * evidence that this is vestigial, or at least not necessary for
-	 * reconnect.
-	 */
-	if (ret < 0 && ret != -EPERM)
-		goto out;
-	/* We don't care what it returned */
-	free(res_buf);
-	res_buf = NULL;
-
-	/* XXX: Why was auth_request_vpn_allocation() doing this anyway?
+	/* XXX: Why do Forticlient and Openfortivpn do this anyway?
 	 * It's fetching the legacy non-XML configuration, isn't it?
 	 * Do we *actually* have to do this, before fetching the XML config?
 	 */
@@ -435,7 +415,7 @@ int fortinet_connect(struct openconnect_info *vpninfo)
 	if (ret < 0) {
 		if (ret == -EPERM)
 			vpn_progress(vpninfo, PRG_ERR,
-				     _("Server doesn't support XML config format, only ancient HTML. Not currently implemented.\n"));
+				     _("Server doesn't support XML config format. Ancient HTML format is not currently implemented.\n"));
 		goto out;
 	}
 
