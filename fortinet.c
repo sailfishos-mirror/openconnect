@@ -491,6 +491,23 @@ int fortinet_connect(struct openconnect_info *vpninfo)
 	if (ipv6 == -1)
 		ipv6 = 0;
 
+	/* To use the DTLS tunnel instead, we should do a DTLS 1.0 handshake
+	 * to the appropriate IP:port, and then send the packet...
+	 *
+	 * "${BE16_LEN_OF_THIS_PACKET}GFtype\x00clthello\x00SVPNCOOKIE\x00${SVPNCOOKIE}\x00dns0\x0010.0.2.3\x00"
+	 *
+	 * to which the server will respond either 'ok' or 'fail'...
+	 *
+	 * "${BE16_LEN_OF_THIS_PACKET}GFtype\x00svrhello\x00handshake\x00ok\x00"
+	 *
+	 * After that, the IP-over-PPP-over-DTLS packet framing is identical to
+	 * the IP-over-PPP-over-TLS framing. (See evidence at
+	 * https://github.com/adrienverge/openfortivpn/issues/473#issuecomment-776456040)
+	 *
+	 * Starting the TLS tunnel appears to invalidate the DTLS tunnel option, and
+	 * presumably vice versa.
+	 */
+
 	/* XX: Openfortivpn closes and reopens the HTTPS connection here, and
 	 * also sends 'Host: sslvpn' (rather than the true hostname). Neither
 	 * appears to be necessary, and either might prevent connecting to
