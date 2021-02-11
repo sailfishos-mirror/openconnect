@@ -481,6 +481,17 @@ int f5_connect(struct openconnect_info *vpninfo)
 		ipv6 = 0;
 
 	/* Now establish the actual connection */
+	/* To use the DTLS tunnel instead, we should do a DTLS 1.0 handshake
+	 * to the appropriate IP:port, and then send the same request
+	 * ("GET /myvpn/blah") via "HTTP-over-DTLS".
+	 *
+	 * After that, the IP-over-PPP-over-DTLS packet framing presumably proceeds
+	 * identically to the IP-over-PPP-over-TLS framing.
+	 *
+	 * Unsure if/how both TLS+DTLS tunnels can run simultaneously, given that
+	 * they need to do separate PPP negotiations. (Probably they can't.)
+	 */
+
 	reqbuf = buf_alloc();
 	buf_append(reqbuf, "GET /myvpn?sess=%s&hdlc_framing=%s&ipv4=%s&ipv6=%s&Z=%s&hostname=",
 		   sid, hdlc?"yes":"no", ipv4?"yes":"no", ipv6?"yes":"no", ur_z);
