@@ -104,7 +104,7 @@ char *openconnect_bin2base64(const char *prefix, const uint8_t *data, unsigned l
 	return p;
 }
 
-static int connect_dtls_socket(struct openconnect_info *vpninfo)
+int dtls_connect_socket(struct openconnect_info *vpninfo)
 {
 	int dtls_fd, ret;
 
@@ -180,7 +180,7 @@ static int dtls_reconnect(struct openconnect_info *vpninfo)
 		return -EINVAL;
 
 	vpninfo->dtls_state = DTLS_SLEEPING;
-	return connect_dtls_socket(vpninfo);
+	return dtls_connect_socket(vpninfo);
 }
 
 int dtls_setup(struct openconnect_info *vpninfo)
@@ -231,7 +231,7 @@ int dtls_setup(struct openconnect_info *vpninfo)
 		vpninfo->dtls_attempt_period = 0;
 		return -EINVAL;
 	}
-	if (connect_dtls_socket(vpninfo))
+	if (dtls_connect_socket(vpninfo))
 		return -EINVAL;
 
 	vpn_progress(vpninfo, PRG_DEBUG,
@@ -295,7 +295,7 @@ int dtls_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 
 		if (when <= 0) {
 			vpn_progress(vpninfo, PRG_DEBUG, _("Attempt new DTLS connection\n"));
-			if (connect_dtls_socket(vpninfo) < 0)
+			if (dtls_connect_socket(vpninfo) < 0)
 				*timeout = 1000;
 		} else if ((when * 1000) < *timeout) {
 			*timeout = when * 1000;
@@ -393,7 +393,7 @@ int dtls_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			ret = dtls_try_handshake(vpninfo);
 			if (ret) {
 				vpn_progress(vpninfo, PRG_ERR, _("DTLS Rehandshake failed; reconnecting.\n"));
-				return connect_dtls_socket(vpninfo);
+				return dtls_connect_socket(vpninfo);
 			}
 		}
 

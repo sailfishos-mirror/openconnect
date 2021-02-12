@@ -918,6 +918,7 @@ void destroy_eap_ttls(struct openconnect_info *vpninfo, void *sess);
 
 /* dtls.c */
 int dtls_setup(struct openconnect_info *vpninfo);
+int dtls_connect_socket(struct openconnect_info *vpninfo);
 int udp_tos_update(struct openconnect_info *vpninfo, struct pkt *pkt);
 int dtls_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable);
 void dtls_close(struct openconnect_info *vpninfo);

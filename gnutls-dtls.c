@@ -375,10 +375,15 @@ int start_dtls_handshake(struct openconnect_info *vpninfo, int dtls_fd)
 	gnutls_transport_set_ptr(dtls_ssl,
 				 (gnutls_transport_ptr_t)(intptr_t)dtls_fd);
 
-	if (!strcmp(vpninfo->dtls_cipher, "PSK-NEGOTIATE"))
+	if (!strcmp(vpninfo->dtls_cipher, "PSK-NEGOTIATE")) {
+		/* For OpenConnect/ocserv protocol */
 		ret = start_dtls_psk_handshake(vpninfo, dtls_ssl);
-	else
+	} else if (vpninfo->dtls_cipher) {
+		/* Resumption of a nonexistent session (Cisco AnyConnect) */
 		ret = start_dtls_resume_handshake(vpninfo, dtls_ssl);
+	} else {
+		/* "anonymous" DTLS; nothing special needed */
+	}
 
 	if (ret) {
 		if (ret != -EAGAIN)
