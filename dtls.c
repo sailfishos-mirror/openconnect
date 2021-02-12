@@ -113,7 +113,7 @@ static int connect_dtls_socket(struct openconnect_info *vpninfo, int *timeout)
 		return -EINVAL;
 	}
 
-	if (!vpninfo->dtls_cipher) {
+	if (vpninfo->proto->proto == PROTO_ANYCONNECT && !vpninfo->dtls_cipher) {
 		/* We probably didn't offer it any ciphers it liked */
 		vpn_progress(vpninfo, PRG_ERR, _("Server offered no DTLS cipher option\n"));
 		vpninfo->dtls_attempt_period = 0;
@@ -618,6 +618,9 @@ void dtls_detect_mtu(struct openconnect_info *vpninfo)
 	int mtu;
 	int prev_mtu = vpninfo->ip_info.mtu;
 	unsigned char *buf;
+
+	if (vpninfo->proto->proto != PROTO_ANYCONNECT)
+		return;
 
 	if (vpninfo->ip_info.mtu < 1 + sizeof(uint32_t))
 		return;

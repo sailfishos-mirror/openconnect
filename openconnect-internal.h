@@ -632,8 +632,17 @@ struct openconnect_info {
 
 	uint32_t ift_seq;
 
-	int cisco_dtls12; /* If Cisco server sent X-DTLS12-CipherSuite header, rather than X-DTLS-CipherSuite */
-	char *dtls_cipher; /* Value of aforementioned header (PSK-NEGOTIATE, or an OpenSSL cipher name) */
+	int dtls12; /* For PPP protocols with anonymous DTLS, this being zero indicates that
+		     * the server *cannot* handle DTLSv1.2 and we mustn't even try to negotiate
+		     * it (e.g. F5 BIG-IP v15 and lower). If it's 1, we can try anything;
+		     * even DTLSv1.3.
+		     *
+		     * For AnyConnect, it means the Cisco server sent the X-DTLS12-CipherSuite
+		     * header, rather than X-DTLS-CipherSuite which indicates their DTLSv0.9.
+		     */
+
+	char *dtls_cipher; /* Only set for AnyConnect. Defines the session to be "resumed"
+			    * ("PSK-NEGOTIATE", or an OpenSSL cipher name). */
 
 	char *vpnc_script;
 #ifndef _WIN32

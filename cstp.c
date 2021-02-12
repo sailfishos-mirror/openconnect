@@ -517,7 +517,7 @@ static int start_cstp_connection(struct openconnect_info *vpninfo)
 				}
 			} else if (!strcmp(buf + i, "CipherSuite")) {
 				/* Remember if it came from a 'X-DTLS12-CipherSuite:' header */
-				vpninfo->cisco_dtls12 = (i == 9);
+				vpninfo->dtls12 = (i == 9);
 				vpninfo->dtls_cipher = strdup(colon);
 			} else if (!strcmp(buf + i, "Port")) {
 				int dtls_port = atol(colon);
