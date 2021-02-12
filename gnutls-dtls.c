@@ -277,7 +277,7 @@ static int start_dtls_resume_handshake(struct openconnect_info *vpninfo, gnutls_
 	int cipher;
 
 	for (cipher = 0; cipher < sizeof(gnutls_dtls_ciphers)/sizeof(gnutls_dtls_ciphers[0]); cipher++) {
-		if (gnutls_dtls_ciphers[cipher].cisco_dtls12 != vpninfo->cisco_dtls12 ||
+		if (gnutls_dtls_ciphers[cipher].cisco_dtls12 != vpninfo->dtls12 ||
 		    gnutls_check_version(gnutls_dtls_ciphers[cipher].min_gnutls_version) == NULL)
 			continue;
 		if (!strcmp(vpninfo->dtls_cipher, gnutls_dtls_ciphers[cipher].name))
@@ -315,6 +315,44 @@ static int start_dtls_resume_handshake(struct openconnect_info *vpninfo, gnutls_
 	}
 
 	return 0;
+}
+
+static int start_dtls_anon_handshake(struct openconnect_info *vpninfo, gnutls_session_t dtls_ssl)
+{
+	char *prio = vpninfo->ciphersuite_config;
+	int ret;
+
+	/*
+	 * Use the same cred store as for the HTTPS session. That has
+	 * our own verify_peer() callback installed, and will validate
+	 * just like we do for the HTTPS service.
+	 *
+	 * There is also perhaps a case to be made for *only* accepting
+	 * precisely the same cert that we get from the HTTPS service,
+	 * but we tried that for EAP-TTLS in the Pulse protocol and the
+	 * theory was disproven, so we ended up doing this there too.
+         */
+	gnutls_credentials_set(dtls_ssl, GNUTLS_CRD_CERTIFICATE, vpninfo->https_cred);
+
+	/* The F5 BIG-IP server before v16, will crap itself if we
+	 * even *try* to do DTLSv1.2 */
+	if (!vpninfo->dtls12 &&
+	    asprintf(&prio, "%s:-VERS-DTLS1.2:+VERS-DTLS1.0",
+		     vpninfo->ciphersuite_config) < 0)
+		return -ENOMEM;
+
+	ret = gnutls_priority_set_direct(dtls_ssl, prio ? : vpninfo->ciphersuite_config,
+					 NULL);
+	if (ret) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Failed to set DTLS priority: '%s': %s\n"),
+			     prio, gnutls_strerror(ret));
+	}
+
+	if (prio != vpninfo->ciphersuite_config)
+		free(prio);
+
+	return ret;
 }
 
 /*
@@ -375,10 +413,16 @@ int start_dtls_handshake(struct openconnect_info *vpninfo, int dtls_fd)
 	gnutls_transport_set_ptr(dtls_ssl,
 				 (gnutls_transport_ptr_t)(intptr_t)dtls_fd);
 
-	if (!strcmp(vpninfo->dtls_cipher, "PSK-NEGOTIATE"))
+	if (!vpninfo->dtls_cipher) {
+		/* Anonymous DTLS (PPP protocols) */
+		ret = start_dtls_anon_handshake(vpninfo, dtls_ssl);
+	} else if (!strcmp(vpninfo->dtls_cipher, "PSK-NEGOTIATE")) {
+		/* For OpenConnect/ocserv protocol */
 		ret = start_dtls_psk_handshake(vpninfo, dtls_ssl);
-	else
+	} else {
+		/* Nonexistent session resume hack (Cisco AnyConnect) */
 		ret = start_dtls_resume_handshake(vpninfo, dtls_ssl);
+	}
 
 	if (ret) {
 		if (ret != -EAGAIN)
@@ -403,8 +447,23 @@ int dtls_try_handshake(struct openconnect_info *vpninfo, int *timeout)
 	char *str;
 
 	if (!err) {
-		if (!strcmp(vpninfo->dtls_cipher, "PSK-NEGOTIATE")) {
-			/* For PSK-NEGOTIATE, we have to determine the tunnel MTU
+		if (!vpninfo->dtls_cipher) {
+			/* Anonymous DTLS (PPP protocols) will set vpninfo->ip_info.mtu
+			 * in PPP negotiation.
+			 *
+			 * XX: Needs forthcoming overhaul to detect MTU correctly and offer
+			 * reasonable MRU values during PPP negotiation.
+			 */
+			int data_mtu = vpninfo->cstp_basemtu = 1500;
+			if (vpninfo->peer_addr->sa_family == IPPROTO_IPV6)
+				data_mtu -= 40; /* IPv6 header */
+			else
+				data_mtu -= 20; /* Legacy IP header */
+			data_mtu -= 8; /* UDP header */
+			dtls_set_mtu(vpninfo, data_mtu);
+		} else if (!strcmp(vpninfo->dtls_cipher, "PSK-NEGOTIATE")) {
+			/* For PSK-NEGOTIATE (OpenConnect/ocserv protocol)
+			 * we have to determine the tunnel MTU
 			 * for ourselves based on the base MTU */
 			int data_mtu = vpninfo->cstp_basemtu;
 			if (vpninfo->peer_addr->sa_family == IPPROTO_IPV6)
@@ -428,6 +487,7 @@ int dtls_try_handshake(struct openconnect_info *vpninfo, int *timeout)
 				vpninfo->ip_info.mtu = data_mtu;
 			}
 		} else {
+			/* Nonexistent session resume hack (Cisco AnyConnect) */
 			if (!gnutls_session_is_resumed(vpninfo->dtls_ssl)) {
 				/* Someone attempting to hijack the DTLS session?
 				 * A real server would never allow a full session
