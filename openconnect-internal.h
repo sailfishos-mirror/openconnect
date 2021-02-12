@@ -324,7 +324,7 @@ struct vpn_proto {
 	void (*add_http_headers)(struct openconnect_info *vpninfo, struct oc_text_buf *buf);
 
 	/* Set up the UDP (DTLS) connection. Doesn't actually *start* it. */
-	int (*udp_setup)(struct openconnect_info *vpninfo, int attempt_period);
+	int (*udp_setup)(struct openconnect_info *vpninfo);
 
 	/* This will actually complete the UDP connection setup/handshake on the wire,
 	   as well as transporting packets */
@@ -956,7 +956,7 @@ void *establish_eap_ttls(struct openconnect_info *vpninfo);
 void destroy_eap_ttls(struct openconnect_info *vpninfo, void *sess);
 
 /* dtls.c */
-int dtls_setup(struct openconnect_info *vpninfo, int dtls_attempt_period);
+int dtls_setup(struct openconnect_info *vpninfo);
 int udp_tos_update(struct openconnect_info *vpninfo, struct pkt *pkt);
 int dtls_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable);
 void dtls_close(struct openconnect_info *vpninfo);
@@ -1106,7 +1106,7 @@ int load_pkcs11_certificate(struct openconnect_info *vpninfo);
 /* esp.c */
 int verify_packet_seqno(struct openconnect_info *vpninfo,
 			struct esp *esp, uint32_t seq);
-int esp_setup(struct openconnect_info *vpninfo, int dtls_attempt_period);
+int esp_setup(struct openconnect_info *vpninfo);
 int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable);
 void esp_close(struct openconnect_info *vpninfo);
 void esp_shutdown(struct openconnect_info *vpninfo);

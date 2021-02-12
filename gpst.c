@@ -1282,7 +1282,7 @@ int gpst_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			return ret;
 		}
 		if (vpninfo->proto->udp_setup)
-			vpninfo->proto->udp_setup(vpninfo, vpninfo->dtls_attempt_period);
+			vpninfo->proto->udp_setup(vpninfo);
 		return 1;
 
 	case KA_KEEPALIVE:

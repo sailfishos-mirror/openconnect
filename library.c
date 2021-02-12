@@ -320,8 +320,9 @@ int openconnect_setup_dtls(struct openconnect_info *vpninfo,
 			   int attempt_period)
 
 {
+	vpninfo->dtls_attempt_period = attempt_period;
 	if (vpninfo->proto->udp_setup)
-		return vpninfo->proto->udp_setup(vpninfo, attempt_period);
+		return vpninfo->proto->udp_setup(vpninfo);
 
 	vpn_progress(vpninfo, PRG_ERR,
 		     _("Built against SSL library with no Cisco DTLS support\n"));

@@ -183,7 +183,7 @@ static int dtls_reconnect(struct openconnect_info *vpninfo)
 	return connect_dtls_socket(vpninfo);
 }
 
-int dtls_setup(struct openconnect_info *vpninfo, int dtls_attempt_period)
+int dtls_setup(struct openconnect_info *vpninfo)
 {
 	struct oc_vpn_option *dtls_opt = vpninfo->dtls_options;
 	int dtls_port = 0;
@@ -191,8 +191,7 @@ int dtls_setup(struct openconnect_info *vpninfo, int dtls_attempt_period)
 	if (vpninfo->dtls_state == DTLS_DISABLED)
 		return -EINVAL;
 
-	vpninfo->dtls_attempt_period = dtls_attempt_period;
-	if (!dtls_attempt_period)
+	if (!vpninfo->dtls_attempt_period)
 		return 0;
 
 	while (dtls_opt) {
