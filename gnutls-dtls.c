@@ -467,7 +467,7 @@ int dtls_try_handshake(struct openconnect_info *vpninfo)
 			}
 		}
 
-		vpninfo->dtls_times.last_rekey = vpninfo->dtls_times.last_rx = 
+		vpninfo->dtls_times.last_rekey = vpninfo->dtls_times.last_rx =
 			vpninfo->dtls_times.last_tx = time(NULL);
 
 		dtls_detect_mtu(vpninfo);

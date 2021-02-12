@@ -74,7 +74,7 @@ int print_esp_keys(struct openconnect_info *vpninfo, const char *name, struct es
 	return 0;
 }
 
-int esp_setup(struct openconnect_info *vpninfo, int dtls_attempt_period)
+int esp_setup(struct openconnect_info *vpninfo)
 {
 	if (vpninfo->dtls_state == DTLS_DISABLED ||
 	    vpninfo->dtls_state == DTLS_NOSECRET)
@@ -83,9 +83,7 @@ int esp_setup(struct openconnect_info *vpninfo, int dtls_attempt_period)
 	if (vpninfo->esp_ssl_fallback)
 		vpninfo->dtls_times.dpd = vpninfo->esp_ssl_fallback;
 	else
-		vpninfo->dtls_times.dpd = dtls_attempt_period;
-
-	vpninfo->dtls_attempt_period = dtls_attempt_period;
+		vpninfo->dtls_times.dpd = vpninfo->dtls_attempt_period;
 
 	print_esp_keys(vpninfo, _("incoming"), &vpninfo->esp_in[vpninfo->current_esp_in]);
 	print_esp_keys(vpninfo, _("outgoing"), &vpninfo->esp_out);
