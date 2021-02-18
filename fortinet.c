@@ -59,6 +59,34 @@ void fortinet_common_headers(struct openconnect_info *vpninfo,
 	*/
 }
 
+/* XX: consolidate with gpst.c version (differs only in '&' vs ',' as separator for input) */
+static int filter_opts(struct oc_text_buf *buf, const char *query, const char *incexc, int include)
+{
+	const char query_sep = ',';
+	const char *f, *endf, *eq;
+	const char *found, *comma;
+
+	for (f = query; *f; f=(*endf) ? endf+1 : endf) {
+		endf = strchr(f, query_sep) ? : f+strlen(f);
+		eq = strchr(f, '=');
+		if (!eq || eq > endf)
+			eq = endf;
+
+		for (found = incexc; *found; found=(*comma) ? comma+1 : comma) {
+			comma = strchr(found, ',') ? : found+strlen(found);
+			if (!strncmp(found, f, MAX(comma-found, eq-f)))
+				break;
+		}
+
+		if ((include && *found) || (!include && !*found)) {
+			if (buf->pos && buf->data[buf->pos-1] != '?' && buf->data[buf->pos-1] != '&')
+				buf_append(buf, "&");
+			buf_append_bytes(buf, f, (int)(endf-f));
+		}
+	}
+	return buf_error(buf);
+}
+
 int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 {
 	int ret;
@@ -118,7 +146,16 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 		buf_truncate(resp_buf);
 		append_form_opts(vpninfo, form, resp_buf);
 		append_opt(resp_buf, "realm", vpninfo->authgroup ?: "");
-		buf_append(resp_buf, "&ajax=1&just_logged_in=1");
+
+		if (!form->action) {
+			/* "normal" form (fields 'username', 'credential') */
+			buf_append(resp_buf, "&ajax=1&just_logged_in=1");
+		} else {
+			/* 2FA form (fields 'username', 'code', and a bunch of values
+			 * from the previous response which we mindlessly parrot back)
+			 */
+			buf_append(resp_buf, "&code2=&%s", form->action);
+		}
 
 		if ((ret = buf_error(resp_buf)))
 		        goto out;
@@ -142,13 +179,42 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 
 			/* XX: We didn't get SVPNCOOKIE. 2FA? */
 			if (!strncmp(form_buf, "ret=", 4) && strstr(form_buf, ",tokeninfo=")) {
-				vpn_progress(vpninfo, PRG_ERR,
-					     _("Got 2FA form response. Not yet implemented.\n"));
-				ret = -EINVAL;
-				goto out;
+				const char *prompt;
+				struct oc_text_buf *action_buf = buf_alloc();
+
+				/* Hide 'username' field */
+				opt->type = OC_FORM_OPT_HIDDEN;
+				free(opt2->label);
+				free(opt2->_value);
+
+				/* Change 'credential' field to 'code'. */
+				opt2->_value = NULL;
+				opt2->name = strdup("code");
+				opt2->label = strdup("Code: ");
+				if (!can_gen_tokencode(vpninfo, form, opt2))
+					opt2->type = OC_FORM_OPT_TOKEN;
+				else
+					opt2->type = OC_FORM_OPT_PASSWORD;
+
+				/* Save a bunch of values to parrot back */
+				filter_opts(action_buf, form_buf, "reqid,polid,grp,portal,peer,magic", 1);
+				if ((ret = buf_error(action_buf)))
+					goto out;
+				free(form->action);
+				form->action = action_buf->data;
+				action_buf->data = NULL;
+				buf_free(action_buf);
+
+				if ((prompt = strstr(form_buf, ",chal_msg="))) {
+					char *end = strchr(prompt, ',');
+					if (end)
+						*end = '\0';
+					prompt += 10;
+					free(form->message);
+					form->message = strdup(prompt);
+				}
 			}
 		}
-		free(form_buf);
 	}
 
  out:
