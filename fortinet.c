@@ -29,8 +29,8 @@
 #include <stdarg.h>
 #include <sys/types.h>
 
-#include <libxml/HTMLparser.h>
-#include <libxml/HTMLtree.h>
+#include <libxml/parser.h>
+#include <libxml/tree.h>
 
 #include "openconnect-internal.h"
 
@@ -63,11 +63,9 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 {
 	int ret;
 	struct oc_text_buf *resp_buf = NULL;
-	xmlDocPtr doc = NULL;
-	xmlNodePtr node;
 	struct oc_auth_form *form = NULL;
-	struct oc_vpn_option *cookie;
-	char *form_name = NULL;
+	struct oc_form_opt *opt, *opt2;
+	char *form_buf = NULL;
 
 	resp_buf = buf_alloc();
 	if (buf_error(resp_buf)) {
@@ -75,124 +73,86 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 		goto out;
 	}
 
+	ret = do_https_request(vpninfo, "GET", NULL, NULL, &form_buf, 1);
+	free(form_buf);
+	form_buf = NULL;
+	if (ret < 0)
+		goto out;
+
 	/* XX: Fortinet HTML forms *seem* like they should be about as easy to follow
 	 * as Juniper HTML forms, but some redirects use Javascript EXCLUSIVELY (no
-	 * 'Location' header).
+	 * 'Location' header). Also, a failed login returns the misleading HTTP status
+	 * "405 Method Not Allowed", rather than 403/401.
 	 *
-	 * Also, a failed login returns the misleading HTTP status "405 Method Not Allowed",
-	 * rather than 403/401.
+	 * So we just build a static form (username and password).
 	 */
-	while (1) {
-		char *form_buf = NULL;
-	        char *url;
+	form = calloc(1, sizeof(*form));
+	if (!form) {
+	nomem:
+		ret = -ENOMEM;
+		goto out;
+	}
+	opt = form->opts = calloc(1, sizeof(*opt));
+	if (!opt)
+		goto nomem;
+	opt->label = strdup("Username: ");
+	opt->name = strdup("username");
+	opt->type = OC_FORM_OPT_TEXT;
 
-		if (resp_buf && resp_buf->pos)
-			ret = do_https_request(vpninfo, "POST",
-					       "application/x-www-form-urlencoded",
-					       resp_buf, &form_buf, 1);
-		else
-			ret = do_https_request(vpninfo, "GET", NULL, NULL,
-					       &form_buf, 1);
+	opt2 = opt->next = calloc(1, sizeof(*opt2));
+	if (!opt2)
+		goto nomem;
+	opt2->label = strdup("Password: ");
+	opt2->name = strdup("credential");
+	opt2->type = OC_FORM_OPT_PASSWORD;
 
-		/* XX: special-cased, because most Fortinet servers return a Javascript-only redirect from
-		 * a status 405 page, after a failed login.
-		 */
-		if (ret == -EACCES) {
-			free(form_buf);
-			buf_truncate(resp_buf);
-			goto try_remote_login;
-		}
+	free(vpninfo->urlpath);
+	vpninfo->urlpath = strdup("remote/logincheck");
 
-		for (cookie = vpninfo->cookies; cookie; cookie = cookie->next) {
-			if (!strcmp(cookie->option, "SVPNCOOKIE")) {
-				vpninfo->cookie = strdup(cookie->value);
-				free(form_buf);
-				ret = 0;
+	/* XX: submit form repeatedly until success? */
+	for (;;) {
+		ret = process_auth_form(vpninfo, form);
+		if (ret == OC_FORM_RESULT_CANCELLED || ret < 0)
+			goto out;
+
+		buf_truncate(resp_buf);
+		append_form_opts(vpninfo, form, resp_buf);
+		append_opt(resp_buf, "realm", vpninfo->authgroup ?: "");
+		buf_append(resp_buf, "&ajax=1&just_logged_in=1");
+
+		if ((ret = buf_error(resp_buf)))
+		        goto out;
+		ret = do_https_request(vpninfo, "POST", "application/x-www-form-urlencoded",
+				       resp_buf, &form_buf, 0);
+
+		/* XX: if this worked, we should have 200 status */
+		if (ret >= 0) {
+			/* If we got SVPNCOOKIE, then we're done. */
+			struct oc_vpn_option *cookie;
+			for (cookie = vpninfo->cookies; cookie; cookie = cookie->next) {
+				if (!strcmp(cookie->option, "SVPNCOOKIE")) {
+					free(vpninfo->cookie);
+					vpninfo->cookie = strdup(cookie->value);
+					if (!vpninfo->cookie)
+						goto nomem;
+					ret = 0;
+					goto out;
+				}
+			}
+
+			/* XX: We didn't get SVPNCOOKIE. 2FA? */
+			if (!strncmp(form_buf, "ret=", 4) && strstr(form_buf, ",tokeninfo=")) {
+				vpn_progress(vpninfo, PRG_ERR,
+					     _("Got 2FA form response. Not yet implemented.\n"));
+				ret = -EINVAL;
 				goto out;
 			}
 		}
-
-		url = internal_get_url(vpninfo);
-		if (!url) {
-			free(form_buf);
-			ret = -ENOMEM;
-			break;
-		}
-
-		doc = htmlReadMemory(form_buf, ret, url, NULL,
-				     HTML_PARSE_RECOVER|HTML_PARSE_NOERROR|HTML_PARSE_NOWARNING|HTML_PARSE_NONET);
-		free(url);
 		free(form_buf);
-		if (!doc) {
-			vpn_progress(vpninfo, PRG_ERR,
-				     _("Failed to parse HTML document\n"));
-			ret = -EINVAL;
-			break;
-		}
-
-		buf_truncate(resp_buf);
-
-		node = find_form_node(doc);
-		if (!node) {
-			/* XX: special-cased, because most Fortinet servers return a Javascript-only redirect from 'GET /' */
-			if (!vpninfo->urlpath) {
-			try_remote_login:
-				vpninfo->urlpath = strdup("remote/login");
-				continue;
-			}
-			vpn_progress(vpninfo, PRG_ERR,
-				     _("Failed to find or parse web form in login page\n"));
-			ret = -EINVAL;
-			break;
-		}
-		free(form_name);
-		form_name = (char *)xmlGetProp(node, (unsigned char *)"name");
-		if (form_name && !strcmp(form_name, "f")) {
-			form = parse_form_node(vpninfo, node, NULL, NULL);
-		} else {
-			vpn_progress(vpninfo, PRG_ERR,
-				     _("Unknown form name '%s'\n"),
-				     form_name);
-
-			fprintf(stderr, _("Dumping unknown HTML form:\n"));
-			htmlNodeDumpFileFormat(stderr, node->doc, node, NULL, 1);
-			ret = -EINVAL;
-			break;
-		}
-
-		if (!form) {
-			ret = -EINVAL;
-			break;
-		}
-
-		/* XX: Fortinet servers put extra <input type='hidden'> fields after the </form>.
-		 * Sometimes they're even after the </body>. Great job, Fortinet.
-		 */
-		for (node = htmlnode_next(NULL, node); node; node = htmlnode_dive(NULL, node))
-			if (node->name && !strcasecmp((char *)node->name, "input"))
-				parse_input_node(vpninfo, form, node, NULL, NULL);
-
-		ret = process_auth_form(vpninfo, form);
-		if (ret)
-			break;
-
-		append_form_opts(vpninfo, form, resp_buf);
-		ret = buf_error(resp_buf);
-		if (ret)
-			break;
-
-		vpninfo->redirect_url = form->action;
-		form->action = NULL;
-		free_auth_form(form);
-		form = NULL;
-		handle_redirect(vpninfo);
-		xmlFreeDoc(doc);
-		doc = NULL;
 	}
+
  out:
-	if (doc)
-		xmlFreeDoc(doc);
-	free(form_name);
+	free(form_buf);
 	if (form)
 		free_auth_form(form);
 	buf_free(resp_buf);
