@@ -261,6 +261,7 @@ static const char *add_option(struct openconnect_info *vpninfo, const char *opt,
   <ipv4>
     <dns ip="1.1.1.1"/>
     <dns ip="8.8.8.8" domain="foo.com"/>
+    <split-dns domains='mydomain1.local,mydomain2.local' dnsserver1='10.10.10.10' dnsserver2='10.10.10.11' />
     <assigned-addr ipv4="172.16.1.1"/>
     <split-tunnel-info>
       <addr ip="10.11.10.10" mask="255.255.255.255"/>
@@ -344,6 +345,18 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 					if (!xmlnode_get_prop(x, "ip", &s) && s && *s) {
 						vpn_progress(vpninfo, PRG_INFO, _("Got IPv%d DNS server %s\n"), 4, s);
 						if (n_dns < 3) vpninfo->ip_info.dns[n_dns++] = add_option(vpninfo, "DNS", &s);
+					}
+				} else if (xmlnode_is_named(x, "split-dns")) {
+					int ii;
+					if (!xmlnode_get_prop(x, "domains", &s) && s && *s)
+						vpn_progress(vpninfo, PRG_ERR, _("WARNING: Got split-DNS domains %s (not yet implemented)\n"), s);
+					for (ii=1; ii<10; ii++) {
+						char propname[] = "dnsserver0";
+						propname[9] = '0' + ii;
+						if (!xmlnode_get_prop(x, propname, &s) && s && *s)
+							vpn_progress(vpninfo, PRG_ERR, _("WARNING: Got split-DNS server %s (not yet implemented)\n"), s);
+						else
+							break;
 					}
 				} else if (xmlnode_is_named(x, "split-tunnel-info")) {
 					for (x2 = x->children; x2; x2=x2->next) {
