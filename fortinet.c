@@ -93,7 +93,7 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 	struct oc_text_buf *resp_buf = NULL;
 	struct oc_auth_form *form = NULL;
 	struct oc_form_opt *opt, *opt2;
-	char *form_buf = NULL;
+	char *form_buf = NULL, *realm = NULL;
 
 	resp_buf = buf_alloc();
 	if (buf_error(resp_buf)) {
@@ -106,6 +106,21 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 	form_buf = NULL;
 	if (ret < 0)
 		goto out;
+
+	/* XX: Fortinet's initial 'GET /' normally redirects to /remote/login.
+	 * If a valid, non-default "realm" is specified (~= usergroup or authgroup),
+	 * it will appear as a query parameter of the resulting URL, and we need to
+	 * capture and save it. That is, for example:
+	 *   'GET /MyRealmName' will redirect to '/remote/login?realm=MyRealmName'
+	 */
+	for (realm = strchr(vpninfo->urlpath, '?'); realm && *++realm; realm=strchr(realm, '&')) {
+		if (!strncmp(realm, "realm=", 6)) {
+			const char *end = strchr(realm+1, '&');
+			realm = end ? strndup(realm+6, end-realm) : strdup(realm+6);
+			vpn_progress(vpninfo, PRG_INFO, _("Got login realm '%s'\n"), realm);
+			break;
+		}
+	}
 
 	/* XX: Fortinet HTML forms *seem* like they should be about as easy to follow
 	 * as Juniper HTML forms, but some redirects use Javascript EXCLUSIVELY (no
@@ -145,7 +160,7 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 
 		buf_truncate(resp_buf);
 		append_form_opts(vpninfo, form, resp_buf);
-		append_opt(resp_buf, "realm", vpninfo->authgroup ?: "");
+		buf_append(resp_buf, "&realm=%s", realm ?: ""); /* XX: already URL-escaped */
 
 		if (!form->action) {
 			/* "normal" form (fields 'username', 'credential') */
@@ -218,6 +233,7 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 	}
 
  out:
+	free(realm);
 	free(form_buf);
 	if (form)
 		free_auth_form(form);
