@@ -141,6 +141,7 @@ AC_CHECK_FUNC(getline, [AC_DEFINE(HAVE_GETLINE, 1, [Have getline() function])],
     [symver_getline="openconnect__getline;"])
 AC_CHECK_FUNC(strcasestr, [AC_DEFINE(HAVE_STRCASESTR, 1, [Have strcasestr() function])], [])
 AC_CHECK_FUNC(strndup, [AC_DEFINE(HAVE_STRNDUP, 1, [Have strndup() function])], [])
+AC_CHECK_FUNC(strchrnul, [AC_DEFINE(HAVE_STRCHRNUL, 1, [Have strchrnul() function])], [])
 AC_CHECK_FUNC(asprintf, [AC_DEFINE(HAVE_ASPRINTF, 1, [Have asprintf() function])],
     [symver_asprintf="openconnect__asprintf;"])
 AC_CHECK_FUNC(vasprintf, [AC_DEFINE(HAVE_VASPRINTF, 1, [Have vasprintf() function])],

@@ -788,6 +788,11 @@ char *openconnect__strcasestr(const char *haystack, const char *needle);
 #define strndup openconnect__strndup
 char *openconnect__strndup(const char *s, size_t n);
 #endif
+#ifndef HAVE_STRCHRNUL
+#undef strchrnul
+#define strchrnul openconnect__strchrnul
+const char *openconnect__strchrnul(const char *s, int c);
+#endif
 
 #ifndef HAVE_INET_ATON
 #define inet_aton openconnect__inet_aton
