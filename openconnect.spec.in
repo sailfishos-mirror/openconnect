@@ -36,11 +36,11 @@ Release:	0%{?dist}
 Summary:	Open client for Cisco AnyConnect VPN, Juniper Network Connect/Pulse, PAN GlobalProtect
 
 License:	LGPLv2
-URL:		http://www.infradead.org/openconnect.html
+URL:		https://openconnect.gitlab.io/openconnect
 %if 0%{?gitsnapshot}
 Source0:        https://github.com/openconnect/%{name}/archive/%{snapcommit}/%{name}-%{shortcommit}.tar.gz
 %else
-Source0:        ftp://ftp.infradead.org/pub/%{name}/%{name}-%{version}.tar.gz
+Source0:        https://gitlab.com/openconnect/%{name}/archive/-/v%{version}/%{name}-%{version}.tar.gz
 %endif
 Source2:	gpgkey-BE07D9FD54809AB2C4B0FF5F63762CDA67E2F359.asc
 Source3:	macros.gpg

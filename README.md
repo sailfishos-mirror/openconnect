@@ -12,17 +12,17 @@ you can find it on Gitlab at [https://gitlab.com/openconnect/vpnc-script](https:
 
 ## Licence
 
-OpenConnect is released under the [GNU Lesser Public License, version 2.1](https://www.infradead.org/openconnect/licence.html).
+OpenConnect is released under the [GNU Lesser Public License, version 2.1](https://openconnect.gitlab.io/openconnect/licence.html).
 
 ## Documentation
 
-Documentation for OpenConnect is built from the `www/` directory in this repository, and lives in rendered form at [https://www.infradead.org/openconnect](https://www.infradead.org/openconnect).
+Documentation for OpenConnect is built from the `www/` directory in this repository, and lives in rendered form at [https://openconnect.gitlab.io/openconnect](https://openconnect.gitlab.io/openconnect).
 
 Commonly-sought documentation:
 
-* [Manual](https://www.infradead.org/openconnect/manual.html)
-* [Getting Started / Building](https://www.infradead.org/openconnect/building.html) (includes build instructions)
-* [Contribute](https://www.infradead.org/openconnect/contribute.html)
-* [Mailing list / Help](https://www.infradead.org/openconnect/mail.html)
-* [GUIs / Front Ends](https://www.infradead.org/openconnect/gui.html)
-* [VPN Server / ocserv](http://www.infradead.org/ocserv/)
+* [Manual](https://openconnect.gitlab.io/openconnect/manual.html)
+* [Getting Started / Building](https://openconnect.gitlab.io/openconnect/building.html) (includes build instructions)
+* [Contribute](https://openconnect.gitlab.io/openconnect/contribute.html)
+* [Mailing list / Help](https://openconnect.gitlab.io/openconnect/mail.html)
+* [GUIs / Front Ends](https://openconnect.gitlab.io/openconnect/gui.html)
+* [VPN Server / ocserv](http://ocserv.gitlab.io/www)

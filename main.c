@@ -607,7 +607,7 @@ static char *convert_to_utf8(char *legacy, int free_it)
 static void helpmessage(void)
 {
 	printf(_("For assistance with OpenConnect, please see the web page at\n"
-		 "  http://www.infradead.org/openconnect/mail.html\n"));
+		 "  https://openconnect.gitlab.io/openconnect/mail.html\n"));
 }
 
 static void print_build_opts(void)
@@ -2105,7 +2105,7 @@ int main(int argc, char **argv)
 		vpn_progress(vpninfo, PRG_INFO,
 			     _("No --script argument provided; DNS and routing are not configured\n"));
 		vpn_progress(vpninfo, PRG_INFO,
-			     _("See http://www.infradead.org/openconnect/vpnc-script.html\n"));
+			     _("See https://openconnect.gitlab.io/openconnect/vpnc-script.html\n"));
 	}
 
 

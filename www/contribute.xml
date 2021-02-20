@@ -3,7 +3,7 @@
 
 	<VAR match="VAR_SEL_CONTRIBUTE" replace="selected" />
 	<PARSE file="menu1.xml" />
-	
+
 	<INCLUDE file="inc/content.tmpl" />
 
 <h1>Contributing to OpenConnect</h1>
@@ -67,7 +67,7 @@ languages other than English. All contributions will be gratefully received.</p>
 Translations can be contributed by joining the GNOME team as described on their
 <a href="https://wiki.gnome.org/TranslationProject">TranslationProject</a>
 wiki page, or simply by editing one of the language files in the <tt><a
-href="http://git.infradead.org/users/dwmw2/openconnect.git/tree/HEAD:/po">po/</a></tt>
+href="http://gitlab.com/openconnect/openconnect/tree/HEAD/po">po/</a></tt>
 directory and sending the resulting patch (or file) to the <a
 href="mail.html">mailing list</a>.</p>
 
@@ -88,7 +88,7 @@ bout it.</p>
 
 <p>Any improvements to the documentation are most welcome. In particular:</p>
 <ul>
-  <li><b>Update web site to be <a href="https://search.google.com/test/mobile-friendly?url=www.infradead.org%2Fopenconnect/">mobile-friendly</a></b><br/>
+  <li><b>Update web site to be <a href="https://search.google.com/test/mobile-friendly?url=openconnect.gitlab.io%2Fopenconnect">mobile-friendly</a></b><br/>
   The current template is definitely showing its age, and could very much do with an overhaul.</li>
 </ul>
 
@@ -132,7 +132,7 @@ perhaps even Google Summer of Code projects.</p>
 
 <h2>Other enhancements</h2>
 
-One of the main other improvements that would be welcome, is implementing a full WebView in the graphical clients. Currently for protocols like Juniper, OpenConnect screen-scrapes the HTML pages used for login, and attempts to make sense of them. This is The main thing that would be 
+One of the main other improvements that would be welcome, is implementing a full WebView in the graphical clients. Currently for protocols like Juniper, OpenConnect screen-scrapes the HTML pages used for login, and attempts to make sense of them. This is The main thing that would be
 Other items on the TODO list include:
 
 <ul>

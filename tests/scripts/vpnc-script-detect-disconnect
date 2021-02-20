@@ -1,7 +1,7 @@
 #!/bin/sh -x
 
 # Fake script just for unit tests. Do not use.
-# For a real one, see http://www.infradead.org/openconnect/vpnc-script.html
+# For a real one, see https://openconnect.gitlab.io/openconnect/vpnc-script.html
 
 if [ "$reason" = "connect" ]; then
     ip link set dev "$TUNDEV" up mtu "$INTERNAL_IP4_MTU"

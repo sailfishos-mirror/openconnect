@@ -20,7 +20,7 @@
  * AnyConnect VPN protocol.
  *
  * This is designed to exercise the code paths in
- * http://git.infradead.org/users/dwmw2/openconnect.git/blob/HEAD:/dtls.c
+ * http://gitlab.com/openconnect/openconnect/blob/HEAD/dtls.c
  * which have frequently been affected by regressions in DTLS1_BAD_VER
  * support.
  *

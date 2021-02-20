@@ -4,7 +4,7 @@ variables:
   CENTOS7_BUILD: openconnect-cli-centos7
   CENTOS8_BUILD: openconnect-cli-centos8
   FEDORA_BUILD: openconnect-cli-fedora
-  UBUNTU_BUILD: openconnect-cli-ubuntu 
+  UBUNTU_BUILD: openconnect-cli-ubuntu
 
 image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$FEDORA_BUILD
 
@@ -108,7 +108,7 @@ CentOS6/OpenSSL:
 Signoff:
   script:
   # Quoted to work around https://gitlab.com/gitlab-org/gitlab-foss/-/issues/20177
-  - 'echo "Checking for new commits without Signed-off-by: tags as described in http://www.infradead.org/openconnect/contribute.html"'
+  - 'echo "Checking for new commits without Signed-off-by: tags as described in https://openconnect.gitlab.io/openconnect/contribute.html"'
   # Last bad commit
   - 'git log ceab1765db11c15a18a0c605812dbc11afd63e8b.. --grep "(^Signed-off-by)|(^Merge branch)|(^This reverts commit)" --extended-regexp --invert-grep --exit-code'
   - echo "None (good)"
@@ -191,7 +191,7 @@ asan/GnuTLS/Fedora:
   image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$FEDORA_BUILD
   script:
   - ./autogen.sh
-  - CC=clang CFLAGS="-fsanitize=address -fno-optimize-sibling-calls -fno-omit-frame-pointer -g -O1" 
+  - CC=clang CFLAGS="-fsanitize=address -fno-optimize-sibling-calls -fno-omit-frame-pointer -g -O1"
     ./configure --with-java --disable-dsa-tests --without-gnutls-version-check --without-asan-broken-tests
   - make -j4
   - make VERBOSE=1 -j4 check
@@ -212,7 +212,7 @@ asan/OpenSSL/Fedora:
   image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$FEDORA_BUILD
   script:
   - ./autogen.sh
-  - CC=clang CFLAGS="-fsanitize=address -fno-optimize-sibling-calls -fno-omit-frame-pointer -g -O1" 
+  - CC=clang CFLAGS="-fsanitize=address -fno-optimize-sibling-calls -fno-omit-frame-pointer -g -O1"
     ./configure --without-gnutls --with-openssl --without-openssl-version-check --disable-dsa-tests --without-asan-broken-tests
   - make -j4
 # OpenSSL 1.1.0 disables 3DES and RC4 by default (https://www.openssl.org/blog/blog/2016/08/24/sweet32/)

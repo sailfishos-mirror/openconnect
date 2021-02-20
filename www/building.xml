@@ -5,7 +5,7 @@
 	<VAR match="VAR_SEL_BUILDING" replace="selected" />
 	<PARSE file="menu1.xml" />
 	<PARSE file="menu2-started.xml" />
-	
+
 	<INCLUDE file="inc/content.tmpl" />
 
     	<h1>Building OpenConnect</h1>
@@ -90,20 +90,7 @@ it still doesn't build, please send the full output in a plain-text mail to the
 
 <p>It depends on the following programs and libraries being available:</p>
 <ul>
-  <li><a href="/ocserv">ocserv</a></li>
-  <li><a href="https://cwrap.org/socket_wrapper.html">socket_wrapper</a></li>
-  <li><a href="https://cwrap.org/uid_wrapper.html">uid_wrapper</a></li>
-</ul>
-
-
-
-<h2>Test suite</h2>
-
-<p>The included test suite can be run as <tt>make check</tt>.</p>
-
-<p>It depends on the following programs and libraries being available:</p>
-<ul>
-  <li><a href="/ocserv">ocserv</a></li>
+  <li><a href="https://ocserv.gitlab.io/www">ocserv</a></li>
   <li><a href="https://cwrap.org/socket_wrapper.html">socket_wrapper</a></li>
   <li><a href="https://cwrap.org/uid_wrapper.html">uid_wrapper</a></li>
 </ul>
@@ -122,4 +109,3 @@ Note that for IPv6 support, the Solaris tun/tap driver from 16th Nov 2009 or new
 
 	<INCLUDE file="inc/footer.tmpl" />
 </PAGE>
-

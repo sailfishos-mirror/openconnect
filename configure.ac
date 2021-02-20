@@ -89,7 +89,7 @@ if test "$with_vpnc_script" = "yes" || test "$with_vpnc_script" = ""; then
       if ! test -x "$with_vpnc_script"; then
 	 AC_MSG_ERROR([${with_vpnc_script} does not seem to be executable.]
  [OpenConnect will not function correctly without a vpnc-script.]
- [See http://www.infradead.org/openconnect/vpnc-script.html for more details.]
+ [See https://openconnect.gitlab.io/openconnect/vpnc-script.html for more details.]
  []
  [If you are building a distribution package, please ensure that your]
  [packaging is correct, and that a vpnc-script will be installed when the]
@@ -108,7 +108,7 @@ if test "$with_vpnc_script" = "yes" || test "$with_vpnc_script" = ""; then
 elif test "$with_vpnc_script" = "no"; then
    AC_ERROR([You cannot disable vpnc-script.]
    [OpenConnect will not function correctly without it.]
-   [See http://www.infradead.org/openconnect/vpnc-script.html])
+   [See https://openconnect.gitlab.io/openconnect/vpnc-script.html])
 elif test "$have_win" = "yes"; then
    # Oh Windows how we hate thee. If user specifies a vpnc-script and it contains
    # backslashes, double them all up to survive escaping.
@@ -691,7 +691,7 @@ PKG_CHECK_MODULES(LIBXML2, libxml-2.0)
 
 PKG_CHECK_MODULES(ZLIB, zlib, [AC_SUBST(ZLIB_PC, [zlib])],
 		  [oldLIBS="$LIBS"
-		  LIBS="$LIBS -lz" 
+		  LIBS="$LIBS -lz"
 		  AC_MSG_CHECKING([for zlib without pkg-config])
 		  AC_LINK_IFELSE([AC_LANG_PROGRAM([
 		   #include <zlib.h>],[
