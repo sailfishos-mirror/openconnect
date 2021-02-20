@@ -324,7 +324,7 @@ service are unlikely to work correctly. The script is expected to be
 compatible with the
 .B vpnc\-script
 which is shipped with the "vpnc" VPN client. See
-.I http://www.infradead.org/openconnect/vpnc-script.html
+.I https://openconnect.gitlab.io/openconnect/vpnc-script.html
 for more information. This version of OpenConnect is configured to
 use \fB@DEFAULT_VPNCSCRIPT@\fR by default.
 
@@ -461,7 +461,7 @@ compatibility issues with the code which falls back to the old method
 automatically. It causes OpenConnect to behave more like older
 versions (4.08 and below) did. If you find that you need to use this
 option, then you have found a bug in OpenConnect. Please see
-http://www.infradead.org/openconnect/mail.html and report this to the
+https://openconnect.gitlab.io/openconnect/mail.html and report this to the
 developers.
 .TP
 .B \-\-allow\-insecure\-crypto
@@ -628,7 +628,7 @@ is known to run, it depends on a suitable
 to configure the network. The standard
 .B vpnc\-script
 shipped with vpnc 0.5.3 is not capable of setting up IPv6 routes; the one from
-.B git://git.infradead.org/users/dwmw2/vpnc\-scripts.git
+.B https://gitlab.com/openconnect/vpnc\-scripts
 will be required.
 .SH SEE ALSO
 .BR ocserv (8)
