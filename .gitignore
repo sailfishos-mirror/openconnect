@@ -1,6 +1,11 @@
 *~
+*.orig
+*.rej
 .#*
+\#*#
 version.c
+/config.h.in
+/config.h
 .*.o.dep
 .*.h.dep
 *.o
@@ -60,3 +65,5 @@ Makefile
 test-driver
 tests/*.log
 tests/*.trs
+tests/**/*.config                   # built from .config.in
+!tests/configs/test-dtls-psk.config # except for this one
