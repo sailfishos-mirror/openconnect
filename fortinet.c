@@ -67,13 +67,13 @@ static int filter_opts(struct oc_text_buf *buf, const char *query, const char *i
 	const char *found, *comma;
 
 	for (f = query; *f; f=(*endf) ? endf+1 : endf) {
-		endf = strchr(f, query_sep) ? : f+strlen(f);
+		endf = strchrnul(f, query_sep);
 		eq = strchr(f, '=');
 		if (!eq || eq > endf)
 			eq = endf;
 
 		for (found = incexc; *found; found=(*comma) ? comma+1 : comma) {
-			comma = strchr(found, ',') ? : found+strlen(found);
+			comma = strchrnul(found, ',');
 			if (!strncmp(found, f, MAX(comma-found, eq-f)))
 				break;
 		}
@@ -115,8 +115,8 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 	 */
 	for (realm = strchr(vpninfo->urlpath, '?'); realm && *++realm; realm=strchr(realm, '&')) {
 		if (!strncmp(realm, "realm=", 6)) {
-			const char *end = strchr(realm+1, '&');
-			realm = end ? strndup(realm+6, end-realm) : strdup(realm+6);
+			const char *end = strchrnul(realm+1, '&');
+			realm = strndup(realm+6, end-realm);
 			vpn_progress(vpninfo, PRG_INFO, _("Got login realm '%s'\n"), realm);
 			break;
 		}
@@ -221,12 +221,10 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 				buf_free(action_buf);
 
 				if ((prompt = strstr(form_buf, ",chal_msg="))) {
-					char *end = strchr(prompt, ',');
-					if (end)
-						*end = '\0';
+					char *end = strchrnul(prompt, ',');
 					prompt += 10;
 					free(form->message);
-					form->message = strdup(prompt);
+					form->message = strndup(prompt, end-prompt);
 				}
 			}
 		}
