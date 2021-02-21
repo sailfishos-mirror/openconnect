@@ -1067,6 +1067,19 @@ AM_CONDITIONAL(BUILD_WWW, [test "${build_www}" = "yes"])
 PKG_CHECK_MODULES([CWRAP], [uid_wrapper, socket_wrapper], have_cwrap=yes, have_cwrap=no)
 AM_CONDITIONAL(HAVE_CWRAP, test "x$have_cwrap" != xno)
 
+have_python36_flask=no
+if test -n "${ac_cv_path_PYTHON}"; then
+    AC_MSG_CHECKING([for Python 3.6+ with Flask module])
+    python3 -c 'import sys; assert sys.version_info >= (3,6); import flask' 2>/dev/null
+    if test $? -ne 0 ; then
+        AC_MSG_RESULT(not found)
+    else
+        have_python36_flask=yes
+        AC_MSG_RESULT(found)
+    fi
+    AM_CONDITIONAL(HAVE_PYTHON36_FLASK, test "$have_python36_flask" = yes)
+fi
+
 if test "$enable_ppp_tests" = "yes"; then
     AC_PATH_PROGS(SOCAT, [socat], [], $PATH:/bin:/usr/bin)
     AC_PATH_PROGS(PPPD, [pppd], [], $PATH:/bin:/usr/bin:/sbin:/usr/sbin/)

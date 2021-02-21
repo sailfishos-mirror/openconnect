@@ -46,7 +46,7 @@ EXTRA_DIST = certs/ca.pem certs/ca-key.pem certs/user-cert.pem $(USER_KEYS) $(US
 	configs/user-cert.prm configs/server-cert.prm \
 	softhsm2.conf.in softhsm ns.sh configs/test-dtls-psk.config \
 	scripts/vpnc-script scripts/vpnc-script-detect-disconnect \
-	suppressions.lsan
+	suppressions.lsan fake-fortinet-server.py
 
 dist_check_SCRIPTS = autocompletion
 
@@ -60,6 +60,10 @@ endif
 
 if HAVE_CWRAP
 dist_check_SCRIPTS += auth-username-pass auth-certificate auth-nonascii cert-fingerprint id-test obsolete-server-crypto pfs
+
+if HAVE_PYTHON36_FLASK
+dist_check_SCRIPTS += auth-fortinet
+endif
 
 if TEST_PKCS11
 dist_check_SCRIPTS += auth-pkcs11
