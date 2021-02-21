@@ -61,6 +61,10 @@ endif
 if HAVE_CWRAP
 dist_check_SCRIPTS += auth-username-pass auth-certificate auth-nonascii cert-fingerprint id-test obsolete-server-crypto pfs
 
+if HAVE_PYTHON3_FLASK
+dist_check_SCRIPTS += auth-fortinet
+endif
+
 if TEST_PKCS11
 dist_check_SCRIPTS += auth-pkcs11
 
