@@ -63,6 +63,7 @@ dist_check_SCRIPTS += auth-username-pass auth-certificate auth-nonascii cert-fin
 
 if HAVE_PYTHON3_FLASK
 dist_check_SCRIPTS += auth-fortinet
+dist_check_SCRIPTS += auth-f5
 endif
 
 if TEST_PKCS11
