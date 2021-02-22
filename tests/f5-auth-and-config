@@ -41,6 +41,13 @@ echo -n "Authenticating with username/password... "
 
 echo ok
 
+echo -n "Authenticating with username/password, then proceeding to tunnel stage... "
+echo "test" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT --protocol=f5 -q $ADDRESS:443 -u test $FINGERPRINT >/dev/null 2>&1
+test $? = 2 || # what OpenConnect returns when server rejects cookie upon tunnel connection, as the fake server does
+    fail $PID "Something went wrong in fake F5 server (other than the expected rejection of cookie)"
+
+echo ok
+
 cleanup
 
 exit 0
