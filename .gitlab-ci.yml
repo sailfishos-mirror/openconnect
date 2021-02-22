@@ -51,7 +51,7 @@ CentOS8/GnuTLS:
   image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$CENTOS8_BUILD
   script:
   - ./autogen.sh
-  - ./configure --with-java --without-gnutls-version-check --disable-dsa-tests CFLAGS=-g
+  - ./configure --with-java --without-gnutls-version-check --disable-dsa-tests --enable-ppp-tests CFLAGS=-g
   - make -j4
 # UTF-8 support is not available
   - make VERBOSE=1 XFAIL_TESTS="auth-nonascii" -j4 check
@@ -70,7 +70,7 @@ CentOS8/OpenSSL:
   image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$CENTOS8_BUILD
   script:
   - ./autogen.sh
-  - ./configure --without-gnutls --with-openssl --with-java --without-openssl-version-check --disable-dsa-tests CFLAGS=-g
+  - ./configure --without-gnutls --with-openssl --with-java --without-openssl-version-check --disable-dsa-tests --enable-ppp-tests CFLAGS=-g
   - make -j4
 # UTF-8 support is not available
 # OpenSSL 1.1.0 disables 3DES and RC4 by default (https://www.openssl.org/blog/blog/2016/08/24/sweet32/)
@@ -90,7 +90,7 @@ CentOS6/OpenSSL:
   image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$CENTOS6_BUILD
   script:
   - ./autogen.sh
-  - ./configure --with-java --without-openssl-version-check --enable-dtls-xfail CFLAGS=-g
+  - ./configure --with-java --without-openssl-version-check --enable-dtls-xfail --enable-ppp-tests CFLAGS=-g
   - make -j4
 # UTF-8 support is not available
   - make VERBOSE=1 XFAIL_TESTS="bad_dtls_test auth-nonascii" -j4 check
