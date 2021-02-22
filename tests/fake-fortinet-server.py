@@ -152,6 +152,49 @@ def complete_non_2fa():
     return resp
 
 
+# Respond to 'GET /fortisslvpn with a placeholder stub (since OpenConnect doesn't even try to parse this)
+@app.route('/remote/fortisslvpn')
+@require_SVPNCOOKIE
+def html_config():
+    return 'VPN config in HTML format'
+
+
+# Respond to 'GET /fortisslvpn_xml with a fake config
+@app.route('/remote/fortisslvpn_xml')
+@require_SVPNCOOKIE
+def xml_config():
+    return ('''
+            <?xml version="1.0" encoding="utf-8"?>
+            <sslvpn-tunnel ver="2" dtls="1" patch="1">
+              <dtls-config heartbeat-interval="10" heartbeat-fail-count="10" heartbeat-idle-timeout="10" client-hello-timeout="10"/>
+              <tunnel-method value="ppp"/>
+              <tunnel-method value="tun"/>
+              <fos platform="FakeFortigate" major="1" minor="2" patch="3" build="4567" branch="4567"/>
+              <ipv4>
+                <dns ip="1.1.1.1"/>
+                <dns ip="8.8.8.8" domain="foo.com"/>
+                <split-dns domains='mydomain1.local,mydomain2.local' dnsserver1='10.10.10.10' dnsserver2='10.10.10.11' />
+                <assigned-addr ipv4="10.11.1.123"/>
+                <split-tunnel-info>
+                  <addr ip="10.11.10.10" mask="255.255.255.255"/>
+                  <addr ip="10.11.1.0" mask="255.255.255.0"/>
+                </split-tunnel-info>
+              </ipv4>
+              <idle-timeout val="3600"/>
+              <auth-timeout val="18000"/>
+            </sslvpn-tunnel>''',
+            {'content-type': 'application/xml'})
+
+
+# Respond to faux-CONNECT 'GET /remote/sslvpn-tunnel' with 403 Forbidden
+# (what the real Fortinet server sends when it doesn't like the parameters,
+# intended to trigger "cookie rejected" error in OpenConnect)
+@app.route('/remote/sslvpn-tunnel')
+@require_SVPNCOOKIE
+def tunnel():
+    abort(403)
+
+
 # Respond to 'GET /remote/logout' by clearing session and SVPNCOOKIE
 @app.route('/remote/logout')
 @require_SVPNCOOKIE

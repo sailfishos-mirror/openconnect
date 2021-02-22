@@ -1021,16 +1021,20 @@ int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		 * of the first packet
 		 */
 		if (ppp->check_http_response) {
+			const char *eol;
 			ppp->check_http_response = 0;
 			if (!memcmp(eh, "HTTP/", 5)) {
 				const char *sol = (const char *)eh;
 				const char *eol = memchr(sol, '\r', len) ?: memchr(sol, '\n', len);
+				const char *sp1 = memchr(sol, ' ', len);
+				const char *sp2 = memchr(sp1+1, ' ', len - (sp1-sol) + 1);
+				int status = sp1 && sp2 ? atoi(sp1+1) : -1;
 				if (eol)
 					len = eol - sol;
 				vpn_progress(vpninfo, PRG_ERR,
 					     _("Got unexpected HTTP response: %.*s\n"), len, sol);
 				vpninfo->quit_reason = "Received HTTP response (not a PPP packet)";
-				return -EINVAL;
+				return (status >= 400 && status <= 499) ? -EPERM : -EINVAL;
 			}
 		}
 

@@ -105,6 +105,91 @@ def post_policy():
     return resp
 
 
+# Respond to 'GET /vdesk/vpn/index.php3?outform=xml&client_version=2.0 with an XML config
+# [Save VPN resource name in the session for verification of client state later]
+@app.route('/vdesk/vpn/index.php3')
+@require_MRHSession
+def profile_params():
+    print(request.args)
+    assert request.args.get('outform') == 'xml' and request.args.get('client_version') == '2.0'
+    vpn_name = 'demo%d_vpn_resource' % random.randint(1, 100)
+    session.update(step='GET-profile-params', resourcename='/Common/'+vpn_name)
+    # print(session)
+
+    return (f'''
+            <?xml version="1.0" encoding="utf-8"?>
+            <favorites type="VPN" limited="YES">
+              <favorite id="/Common/{vpn_name}">
+                <caption>{vpn_name}</caption>
+                <name>/Common/{vpn_name}</name>
+                <params>resourcename=/Common/{vpn_name}</params>
+              </favorite>
+            </favorites>''',
+            {'content-type': 'application/xml'})
+
+# Respond to 'GET /vdesk/vpn/connect.php3?outform=xml&client_version=2.0&resourcename=RESOURCENAME
+# with an ugliest-XML-you've-ever-seen config.
+# [Save random HDLC flag and ur_Z for verification later.]
+@app.route('/vdesk/vpn/connect.php3')
+@require_MRHSession
+@check_form_against_session('resourcename', use_query=True)
+def options():
+    assert request.args.get('outform') == 'xml' and request.args.get('client_version') == '2.0'
+    session.update(hdlc_framing=['no','yes'][random.randint(0, 1)],
+                   Z=session['resourcename'] + str(random.randint(1, 100)),
+                   ipv4='yes', ipv6=['no','yes'][random.randint(0, 1)],
+                   sess=request.cookies['MRHSession'] + str(random.randint(1, 100)))
+
+    return (f'''
+            <?xml version="1.0" encoding="UTF-8" ?><favorite>
+            <object ID="ur_Host" CLASSID="CLSID:CC85ACDF-B277-486F-8C70-2C9B2ED2A4E7"
+             CODEBASE="https://{app.config['HOST']}:{app.config['PORT']}/vdesk/terminal/urxshost.cab"
+             WIDTH="320" HEIGHT="240">
+                <ur_Z>{session['Z']}</ur_Z>
+                <Session_ID>{session['sess']}</Session_ID>
+                <ur_name>{session['resourcename']}</ur_name>
+                <host0>{app.config['HOST']}</host0>
+                <port0>{app.config['PORT']}</port0>
+                <tunnel_host0>{app.config['HOST']}</tunnel_host0>
+                <tunnel_port0>{app.config['PORT']}</tunnel_port0>
+                <tunnel_protocol0>https</tunnel_protocol0>
+                <idle_session_timeout>900</idle_session_timeout>
+                <IPV4_0>{int(session['ipv4']=='yes')}</IPV4_0>
+                <IPV6_0>{int(session['ipv6']=='yes')}</IPV6_0>
+                <tunnel_dtls>1</tunnel_dtls>
+                <tunnel_port_dtls>{app.config['PORT']}</tunnel_port_dtls>
+
+                <DNS0>1.1.1.1</DNS0>
+                <DNS1>8.8.8.8</DNS1>
+                <DNS6_0>2606:4700:4700::1111</DNS6_0>
+                <DNS6_1>2001:4860:4860::8888</DNS6_1>
+                <WINS0></WINS0>
+                <DNSSuffix0>foo.com</DNSSuffix0>
+                <SplitTunneling0>2</SplitTunneling0>
+                <LAN0>10.11.10.10/32 10.11.1.0/24</LAN0>
+                <LAN6_0>::/1 8000::/1</LAN6_0>
+
+                <DNS_SPLIT0>*</DNS_SPLIT0>
+
+                <hdlc_framing>{session['hdlc_framing']}</hdlc_framing>
+            </object>
+            </favorite>''',
+            {'content-type': 'application/xml'})
+
+
+# Respond to faux-CONNECT 'GET /myvpn' with 504 Gateway Timeout
+# (what the real F5 server responds with when it doesn't like the parameters, intended
+# to trigger "cookie rejected" error in OpenConnect)
+@app.route('/myvpn')
+@check_form_against_session('sess', 'hdlc_framing', 'ipv4', 'ipv6', 'Z', use_query=True)
+def tunnel():
+    try:
+        base64.urlsafe_b64decode(request.args.get('hostname') or None)
+    except (ValueError, TypeError):
+        raise AssertionError('Hostname is not a base64 string')
+    abort(504)
+
+
 # Respond to 'GET /remote/logout' by clearing session and MRHSession
 @app.route('/remote/logout')
 @require_MRHSession
