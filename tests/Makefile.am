@@ -64,6 +64,13 @@ dist_check_SCRIPTS += auth-username-pass auth-certificate auth-nonascii cert-fin
 if HAVE_PYTHON3_FLASK
 dist_check_SCRIPTS += fortinet-auth-and-config
 dist_check_SCRIPTS += f5-auth-and-config
+
+f5-auth-and-config: fake-f5-server.py
+	touch $@
+
+fortinet-auth-and-config: fake-fortinet-server.py
+	touch $@
+
 endif
 
 if TEST_PKCS11

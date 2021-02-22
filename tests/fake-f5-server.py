@@ -43,6 +43,7 @@ from flask import Flask, request, abort, redirect, url_for, make_response, sessi
 host, port, *cert_and_maybe_keyfile = sys.argv[1:]
 
 context = ssl.SSLContext()
+context.options ^= ssl.OP_CIPHER_SERVER_PREFERENCE
 context.load_cert_chain(*cert_and_maybe_keyfile)
 
 app = Flask(__name__)

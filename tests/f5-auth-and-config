@@ -31,12 +31,12 @@ KEY=$certdir/server-key.pem
 echo "Testing F5 auth against fake server ... "
 
 OCSERV=./fake-f5-server.py
-launch_simple_sr_server $ADDRESS 443 $CERT $KEY > /dev/null 2>&1
+launch_simple_sr_server $ADDRESS 443 $CERT $KEY 2>&1
 PID=$!
 wait_server $PID 1
 
 echo -n "Authenticating with username/password... "
-( echo "test" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT --protocol=f5 -q $ADDRESS:443 -u test $FINGERPRINT --cookieonly >/dev/null 2>&1) ||
+( echo "test" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT --protocol=f5 -q $ADDRESS:443 -u test $FINGERPRINT --cookieonly --allow-insecure-crypto 2>&1) ||
     fail $PID "Could not receive cookie from fake F5 server"
 
 echo ok
