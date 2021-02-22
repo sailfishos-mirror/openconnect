@@ -160,6 +160,14 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 		if (ret == OC_FORM_RESULT_CANCELLED || ret < 0)
 			goto out;
 
+		/* generate token code if specified */
+		ret = do_gen_tokencode(vpninfo, form);
+		if (ret) {
+			vpn_progress(vpninfo, PRG_ERR, _("Failed to generate OTP tokencode; disabling token\n"));
+			vpninfo->token_bypassed = 1;
+			goto out;
+		}
+
 		buf_truncate(resp_buf);
 		append_form_opts(vpninfo, form, resp_buf);
 		buf_append(resp_buf, "&realm=%s", realm ?: ""); /* XX: already URL-escaped */
