@@ -113,12 +113,14 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 	 * capture and save it. That is, for example:
 	 *   'GET /MyRealmName' will redirect to '/remote/login?realm=MyRealmName'
 	 */
-	for (realm = strchr(vpninfo->urlpath, '?'); realm && *++realm; realm=strchr(realm, '&')) {
-		if (!strncmp(realm, "realm=", 6)) {
-			const char *end = strchrnul(realm+1, '&');
-			realm = strndup(realm+6, end-realm);
-			vpn_progress(vpninfo, PRG_INFO, _("Got login realm '%s'\n"), realm);
-			break;
+	if (vpninfo->urlpath) {
+		for (realm = strchr(vpninfo->urlpath, '?'); realm && *++realm; realm=strchr(realm, '&')) {
+			if (!strncmp(realm, "realm=", 6)) {
+				const char *end = strchrnul(realm+1, '&');
+				realm = strndup(realm+6, end-realm);
+				vpn_progress(vpninfo, PRG_INFO, _("Got login realm '%s'\n"), realm);
+				break;
+			}
 		}
 	}
 

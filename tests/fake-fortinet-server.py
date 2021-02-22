@@ -80,14 +80,18 @@ def check_form_against_session(*fields):
 
 ########################################
 
-# Respond to initial 'GET /' or 'GET /<realm>' with a redirect to '/remote/login?realm=<realm>'
+# Respond to initial 'GET /' with a login form
+# Respond to initial 'GET /<realm>' with a redirect to '/remote/login?realm=<realm>'
 # [Save want_2fa query parameter in the session for use later]
 @app.route('/')
 @app.route('/<realm>')
 def realm(realm=None):
-    session.update(step='initial-GET', want_2fa='want_2fa' in request.args)
+    session.update(step='GET-realm', want_2fa='want_2fa' in request.args)
     # print(session)
-    return redirect(url_for('login', realm=realm or None))
+    if realm:
+        return redirect(url_for('login', realm=realm))
+    else:
+        return login()
 
 
 # Respond to 'GET /remote/login?realm=<realm>' with a placeholder stub (since OpenConnect doesn't even try to parse the form)
