@@ -62,8 +62,8 @@ if HAVE_CWRAP
 dist_check_SCRIPTS += auth-username-pass auth-certificate auth-nonascii cert-fingerprint id-test obsolete-server-crypto pfs
 
 if HAVE_PYTHON36_FLASK
-dist_check_SCRIPTS += auth-fortinet
-dist_check_SCRIPTS += auth-f5
+dist_check_SCRIPTS += fortinet-auth-and-config
+dist_check_SCRIPTS += f5-auth-and-config
 endif
 
 if TEST_PKCS11
