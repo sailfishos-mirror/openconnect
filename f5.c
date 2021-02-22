@@ -510,7 +510,7 @@ int f5_connect(struct openconnect_info *vpninfo)
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Unexpected %d result from server\n"),
 			     ret);
-		ret = -EINVAL;
+		ret = (ret == 504) ? -EPERM : -EINVAL;
 		goto out;
 	}
 
