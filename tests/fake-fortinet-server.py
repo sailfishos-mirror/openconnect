@@ -108,11 +108,11 @@ def login():
 def logincheck():
     want_2fa = session.get('want_2fa')
 
-    if (want_2fa and 'code' in request.form):
+    if (want_2fa and request.form.get('code')):
         return complete_2fa()
-    elif (want_2fa and 'credential' in request.form):
+    elif (want_2fa and request.form.get('username') and request.form.get('credential')):
         return send_2fa_challenge()
-    elif ('credential' in request.form):
+    elif (request.form.get('username') and request.form.get('credential')):
         return complete_non_2fa()
     abort(405)
 
