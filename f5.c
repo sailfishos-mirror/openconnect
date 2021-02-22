@@ -55,6 +55,7 @@ int f5_obtain_cookie(struct openconnect_info *vpninfo)
 		return ret;
 
 	/* XX: build static form (username and password) */
+	/* TODO: parse out 'domain' form field from /my.policy as authgroup */
 	form = calloc(1, sizeof(*form));
 	if (!form) {
 	nomem:
@@ -83,6 +84,9 @@ int f5_obtain_cookie(struct openconnect_info *vpninfo)
 
 		buf_truncate(resp_buf);
 		append_form_opts(vpninfo, form, resp_buf);
+		if (vpninfo->authgroup)
+			append_opt(resp_buf, "domain", vpninfo->authgroup);
+
 		if ((ret = buf_error(resp_buf)))
 		        goto out;
 		do_https_request(vpninfo, "POST", "application/x-www-form-urlencoded",
