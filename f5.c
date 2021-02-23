@@ -36,21 +36,21 @@
 int f5_obtain_cookie(struct openconnect_info *vpninfo)
 {
 	int ret;
-	struct oc_text_buf *resp_buf = NULL;
-	char *form_buf = NULL;
+	struct oc_text_buf *req_buf = NULL;
+	char *resp_buf = NULL;
 	struct oc_auth_form *form = NULL;
 	struct oc_form_opt *opt, *opt2;
 
-	resp_buf = buf_alloc();
-	if ((ret = buf_error(resp_buf)))
+	req_buf = buf_alloc();
+	if ((ret = buf_error(req_buf)))
 		goto out;
 
 	/* XX: This initial 'GET /' seems to be necessary to populate LastMRH_Session and
 	 * MRHSession cookies, without which the subsequent 'POST' will fail.
 	 */
-	ret = do_https_request(vpninfo, "GET", NULL, NULL, &form_buf, 1);
-	free(form_buf);
-	form_buf = NULL;
+	ret = do_https_request(vpninfo, "GET", NULL, NULL, &resp_buf, 1);
+	free(resp_buf);
+	resp_buf = NULL;
 	if (ret < 0)
 		return ret;
 
@@ -82,20 +82,20 @@ int f5_obtain_cookie(struct openconnect_info *vpninfo)
 		if (ret == OC_FORM_RESULT_CANCELLED || ret < 0)
 			goto out;
 
-		buf_truncate(resp_buf);
-		append_form_opts(vpninfo, form, resp_buf);
+		buf_truncate(req_buf);
+		append_form_opts(vpninfo, form, req_buf);
 		if (vpninfo->authgroup)
-			append_opt(resp_buf, "domain", vpninfo->authgroup);
+			append_opt(req_buf, "domain", vpninfo->authgroup);
 
-		if ((ret = buf_error(resp_buf)))
+		if ((ret = buf_error(req_buf)))
 		        goto out;
 		do_https_request(vpninfo, "POST", "application/x-www-form-urlencoded",
-				 resp_buf, &form_buf, 0);
+				 req_buf, &resp_buf, 0);
 
 		/* XX: if this worked, we should have a response size of zero, and F5_ST
 		 * and MRHSession cookies in the response.
 		 */
-		if (!form_buf || *form_buf == '\0') {
+		if (!resp_buf || *resp_buf == '\0') {
 			struct oc_vpn_option *cookie;
 			const char *session=NULL, *f5_st=NULL;
 			for (cookie = vpninfo->cookies; cookie; cookie = cookie->next) {
@@ -121,7 +121,7 @@ int f5_obtain_cookie(struct openconnect_info *vpninfo)
 
  out:
 	if (form) free_auth_form(form);
-	if (resp_buf) buf_free(resp_buf);
+	if (req_buf) buf_free(req_buf);
 	return ret;
 }
 

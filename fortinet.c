@@ -90,20 +90,20 @@ static int filter_opts(struct oc_text_buf *buf, const char *query, const char *i
 int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 {
 	int ret;
-	struct oc_text_buf *resp_buf = NULL;
+	struct oc_text_buf *req_buf = NULL;
 	struct oc_auth_form *form = NULL;
 	struct oc_form_opt *opt, *opt2;
-	char *form_buf = NULL, *realm = NULL;
+	char *resp_buf = NULL, *realm = NULL;
 
-	resp_buf = buf_alloc();
-	if (buf_error(resp_buf)) {
-		ret = buf_error(resp_buf);
+	req_buf = buf_alloc();
+	if (buf_error(req_buf)) {
+		ret = buf_error(req_buf);
 		goto out;
 	}
 
-	ret = do_https_request(vpninfo, "GET", NULL, NULL, &form_buf, 1);
-	free(form_buf);
-	form_buf = NULL;
+	ret = do_https_request(vpninfo, "GET", NULL, NULL, &resp_buf, 1);
+	free(resp_buf);
+	resp_buf = NULL;
 	if (ret < 0)
 		goto out;
 
@@ -168,24 +168,24 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 			goto out;
 		}
 
-		buf_truncate(resp_buf);
-		append_form_opts(vpninfo, form, resp_buf);
-		buf_append(resp_buf, "&realm=%s", realm ?: ""); /* XX: already URL-escaped */
+		buf_truncate(req_buf);
+		append_form_opts(vpninfo, form, req_buf);
+		buf_append(req_buf, "&realm=%s", realm ?: ""); /* XX: already URL-escaped */
 
 		if (!form->action) {
 			/* "normal" form (fields 'username', 'credential') */
-			buf_append(resp_buf, "&ajax=1&just_logged_in=1");
+			buf_append(req_buf, "&ajax=1&just_logged_in=1");
 		} else {
 			/* 2FA form (fields 'username', 'code', and a bunch of values
 			 * from the previous response which we mindlessly parrot back)
 			 */
-			buf_append(resp_buf, "&code2=&%s", form->action);
+			buf_append(req_buf, "&code2=&%s", form->action);
 		}
 
-		if ((ret = buf_error(resp_buf)))
+		if ((ret = buf_error(req_buf)))
 		        goto out;
 		ret = do_https_request(vpninfo, "POST", "application/x-www-form-urlencoded",
-				       resp_buf, &form_buf, 0);
+				       req_buf, &resp_buf, 0);
 
 		/* XX: if this worked, we should have 200 status */
 		if (ret >= 0) {
@@ -203,7 +203,7 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 			}
 
 			/* XX: We didn't get SVPNCOOKIE. 2FA? */
-			if (!strncmp(form_buf, "ret=", 4) && strstr(form_buf, ",tokeninfo=")) {
+			if (!strncmp(resp_buf, "ret=", 4) && strstr(resp_buf, ",tokeninfo=")) {
 				const char *prompt;
 				struct oc_text_buf *action_buf = buf_alloc();
 
@@ -222,7 +222,7 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 					opt2->type = OC_FORM_OPT_PASSWORD;
 
 				/* Save a bunch of values to parrot back */
-				filter_opts(action_buf, form_buf, "reqid,polid,grp,portal,peer,magic", 1);
+				filter_opts(action_buf, resp_buf, "reqid,polid,grp,portal,peer,magic", 1);
 				if ((ret = buf_error(action_buf)))
 					goto out;
 				free(form->action);
@@ -230,7 +230,7 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 				action_buf->data = NULL;
 				buf_free(action_buf);
 
-				if ((prompt = strstr(form_buf, ",chal_msg="))) {
+				if ((prompt = strstr(resp_buf, ",chal_msg="))) {
 					char *end = strchrnul(prompt, ',');
 					prompt += 10;
 					free(form->message);
@@ -242,10 +242,10 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 
  out:
 	free(realm);
-	free(form_buf);
+	free(resp_buf);
 	if (form)
 		free_auth_form(form);
-	buf_free(resp_buf);
+	buf_free(req_buf);
 	return ret;
 }
 
