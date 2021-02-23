@@ -170,9 +170,8 @@ int parse_select_node(struct openconnect_info *vpninfo, struct oc_auth_form *for
 			return -ENOMEM;
 		}
 
-		xmlnode_get_prop(node, "name", &choice->name);
+		xmlnode_get_prop(child, "value", &choice->name);
 		choice->label = (char *)xmlNodeGetContent(child);
-		choice->name = strdup(choice->label);
 		new_choices = realloc(opt->choices, sizeof(opt->choices[0]) * (opt->nr_choices+1));
 		if (!new_choices) {
 			free_opt((void *)opt);
