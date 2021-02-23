@@ -85,24 +85,36 @@ def root():
     return redirect(url_for('get_policy'))
 
 
-# Respond to 'GET /my.policy with a placeholder stub (since OpenConnect doesn't even try to parse the form)
+# Respond to 'GET /my.policy with a login form
 @app.route('/my.policy')
 def get_policy():
     session.update(step='GET-login-form')
-    return 'login page'
+    return '''
+<html><body><form id="auth_form" method="post">
+<input type="text" name="username"/>
+<input type="password" name="password"/>
+</form></body></html>'''
 
 
-# Respond to 'POST /my.policy with an empty response containing MRHSession and F5_ST
+# Respond to 'POST /my.policy with a redirect response containing MRHSession and F5_ST
 # cookies (OpenConnect uses the combination of the two to detect successful authentication)
 @app.route('/my.policy', methods=['POST'])
 def post_policy():
     session.update(step='POST-login', username=request.form.get('username'), credential=request.form.get('password'))
     # print(session)
 
-    resp = make_response('')
+    resp = redirect(url_for('webtop'))
     resp.set_cookie('MRHSession', cookify(dict(session)))
     resp.set_cookie('F5_ST', '1z1z1z%dz%d' % (time.time(), 3600))
     return resp
+
+
+@app.route('/vdesk/webtop.eui')
+def webtop():
+    session.update(step='POST-login-webtop')
+    # print(session)
+
+    return 'some junk HTML webtop'
 
 
 # Respond to 'GET /vdesk/vpn/index.php3?outform=xml&client_version=2.0 with an XML config

@@ -29,97 +29,166 @@
 #include <stdarg.h>
 #include <sys/types.h>
 
+#include <libxml/HTMLparser.h>
+#include <libxml/HTMLtree.h>
+
 #include "openconnect-internal.h"
 
 #define XCAST(x) ((const xmlChar *)(x))
 
+static int check_cookie_success(struct openconnect_info *vpninfo)
+{
+	struct oc_vpn_option *cookie;
+	const char *session = NULL, *f5_st = NULL;
+
+	/* XX: if login succeeded worked, we should have a response size of zero, and F5_ST
+	 * and MRHSession cookies in the response.
+	 */
+	for (cookie = vpninfo->cookies; cookie; cookie = cookie->next) {
+		if (!strcmp(cookie->option, "MRHSession"))
+			session = cookie->value;
+		else if (!strcmp(cookie->option, "F5_ST"))
+			f5_st = cookie->value;
+	}
+	if (session && f5_st) {
+		free(vpninfo->cookie);
+		if (asprintf(&vpninfo->cookie, "MRHSession=%s; F5_ST=%s", session, f5_st) <= 0)
+			return -ENOMEM;
+		return 0;
+	}
+	return -ENOENT;
+}
+
 int f5_obtain_cookie(struct openconnect_info *vpninfo)
 {
 	int ret;
+	xmlDocPtr doc = NULL;
+	xmlNode *node;
 	struct oc_text_buf *req_buf = NULL;
-	char *resp_buf = NULL;
 	struct oc_auth_form *form = NULL;
-	struct oc_form_opt *opt, *opt2;
+	char *form_id = NULL;
 
 	req_buf = buf_alloc();
 	if ((ret = buf_error(req_buf)))
 		goto out;
 
-	/* XX: This initial 'GET /' seems to be necessary to populate LastMRH_Session and
-	 * MRHSession cookies, without which the subsequent 'POST' will fail.
-	 */
-	ret = do_https_request(vpninfo, "GET", NULL, NULL, &resp_buf, 1);
-	free(resp_buf);
-	resp_buf = NULL;
-	if (ret < 0)
-		return ret;
+	while (1) {
+		char *resp_buf = NULL;
+		char *url;
 
-	/* XX: build static form (username and password) */
-	/* TODO: parse out 'domain' form field from /my.policy as authgroup */
-	form = calloc(1, sizeof(*form));
-	if (!form) {
-	nomem:
-		ret = -ENOMEM;
-		goto out;
-	}
-	opt = form->opts = calloc(1, sizeof(*opt));
-	if (!opt)
-		goto nomem;
-	opt->label = strdup("Username: ");
-	opt->name = strdup("username");
-	opt->type = OC_FORM_OPT_TEXT;
+		if (req_buf && req_buf->pos)
+			ret = do_https_request(vpninfo, "POST",
+					       "application/x-www-form-urlencoded",
+					       req_buf, &resp_buf, 2);
+		else
+			ret = do_https_request(vpninfo, "GET", NULL, NULL,
+					       &resp_buf, 2);
 
-	opt2 = opt->next = calloc(1, sizeof(*opt2));
-	if (!opt2)
-		goto nomem;
-	opt2->label = strdup("Password: ");
-	opt2->name = strdup("password");
-	opt2->type = OC_FORM_OPT_PASSWORD;
+		if (ret < 0)
+			break;
 
-	/* XX: submit form repeatedly until success? */
-	for (;;) {
-		ret = process_auth_form(vpninfo, form);
-		if (ret == OC_FORM_RESULT_CANCELLED || ret < 0)
-			goto out;
+		if (!check_cookie_success(vpninfo)) {
+			free(resp_buf);
+			ret = 0;
+			break;
+		}
+
+		url = internal_get_url(vpninfo);
+		if (!url) {
+			free(resp_buf);
+		nomem:
+			ret = -ENOMEM;
+			break;
+		}
+
+		doc = htmlReadMemory(resp_buf, ret, url, NULL,
+				     HTML_PARSE_RECOVER|HTML_PARSE_NOERROR|HTML_PARSE_NOWARNING|HTML_PARSE_NONET);
+		free(url);
+		free(resp_buf);
+		if (!doc) {
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("Failed to parse HTML document\n"));
+			ret = -EINVAL;
+			break;
+		}
 
 		buf_truncate(req_buf);
-		append_form_opts(vpninfo, form, req_buf);
-		if (vpninfo->authgroup)
-			append_opt(req_buf, "domain", vpninfo->authgroup);
 
-		if ((ret = buf_error(req_buf)))
-		        goto out;
-		do_https_request(vpninfo, "POST", "application/x-www-form-urlencoded",
-				 req_buf, &resp_buf, 0);
+		node = find_form_node(doc);
+		if (!node) {
+			/* XX: some F5 VPNs simply do not have a static HTML form to parse */
+			struct oc_form_opt *opt, *opt2;
 
-		/* XX: if this worked, we should have a response size of zero, and F5_ST
-		 * and MRHSession cookies in the response.
-		 */
-		if (!resp_buf || *resp_buf == '\0') {
-			struct oc_vpn_option *cookie;
-			const char *session=NULL, *f5_st=NULL;
-			for (cookie = vpninfo->cookies; cookie; cookie = cookie->next) {
-				if (!strcmp(cookie->option, "MRHSession"))
-					session = cookie->value;
-				else if (!strcmp(cookie->option, "F5_ST"))
-					f5_st = cookie->value;
-			}
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("WARNING: no HTML login form found; assuming username and password fields\n"));
 
-			if (session && f5_st) {
-				free(vpninfo->cookie);
-				if (asprintf(&vpninfo->cookie, "MRHSession=%s; F5_ST=%s",
-					     session, f5_st) <= 0)
-					goto nomem;
-				ret = 0;
-				goto out;
+			form = calloc(1, sizeof(*form));
+			if (!form)
+				goto nomem;
+			opt = form->opts = calloc(1, sizeof(*opt));
+			if (!opt)
+				goto nomem;
+			opt->label = strdup("username:");
+			opt->name = strdup("username");
+			opt->type = OC_FORM_OPT_TEXT;
+
+			opt2 = opt->next = calloc(1, sizeof(*opt2));
+			if (!opt2)
+				goto nomem;
+			opt2->label = strdup("password:");
+			opt2->name = strdup("password");
+			opt2->type = OC_FORM_OPT_PASSWORD;
+
+		} else {
+			if (!xmlnode_get_prop(node, "id", &form_id) && !strcmp(form_id, "auth_form"))
+				form = parse_form_node(vpninfo, node, NULL, FORM_FLAVOR_F5, NULL);
+			else {
+				vpn_progress(vpninfo, PRG_ERR, _("Unknown form ID '%s' (expected 'auth_form')\n"),
+					     form_id);
+
+				fprintf(stderr, _("Dumping unknown HTML form:\n"));
+				htmlNodeDumpFileFormat(stderr, node->doc, node, NULL, 1);
+				ret = -EINVAL;
+				break;
 			}
 		}
-		if (!form->message)
-			form->message = strdup(_("Authentication failed. Please retry."));
-		nuke_opt_values(form->opts);
+
+		if (!form) {
+			ret = -EINVAL;
+			break;
+		}
+
+		/* XX: do_gen_tokencode would go here, if we knew of any
+		 * token-based 2FA options for F5.
+		 */
+
+		do {
+			ret = process_auth_form(vpninfo, form);
+		} while (ret == OC_FORM_RESULT_NEWGROUP);
+		if (ret)
+			goto out;
+
+		append_form_opts(vpninfo, form, req_buf);
+		if ((ret = buf_error(req_buf)))
+			goto out;
+
+		if (form->action) {
+			vpninfo->redirect_url = form->action;
+			form->action = NULL;
+		}
+		free_auth_form(form);
+		form = NULL;
+		if (vpninfo->redirect_url)
+			handle_redirect(vpninfo);
+
+		xmlFreeDoc(doc);
+		doc = NULL;
 	}
 
  out:
+	if (doc)
+		xmlFreeDoc(doc);
+	free(form_id);
 	if (form) free_auth_form(form);
 	if (req_buf) buf_free(req_buf);
 	return ret;

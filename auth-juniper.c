@@ -512,12 +512,12 @@ int oncp_obtain_cookie(struct openconnect_info *vpninfo)
 				     _("Encountered form with no ID\n"));
 			goto dump_form;
 		} else if (!strcmp(form_id, "frmLogin")) {
-			form = parse_form_node(vpninfo, node, "btnSubmit", oncp_can_gen_tokencode);
+			form = parse_form_node(vpninfo, node, "btnSubmit", FORM_FLAVOR_JUNIPER, oncp_can_gen_tokencode);
 		} else if (!strcmp(form_id, "frmDefender") ||
 			   !strcmp(form_id, "frmNextToken")) {
-			form = parse_form_node(vpninfo, node, "btnAction", oncp_can_gen_tokencode);
+			form = parse_form_node(vpninfo, node, "btnAction", FORM_FLAVOR_JUNIPER, oncp_can_gen_tokencode);
 		} else if (!strcmp(form_id, "frmConfirmation")) {
-			form = parse_form_node(vpninfo, node, "btnContinue", oncp_can_gen_tokencode);
+			form = parse_form_node(vpninfo, node, "btnContinue", FORM_FLAVOR_JUNIPER, oncp_can_gen_tokencode);
 			if (!form) {
 				ret = -EINVAL;
 				break;
@@ -528,7 +528,7 @@ int oncp_obtain_cookie(struct openconnect_info *vpninfo)
 			form = parse_roles_form_node(node);
 			role_select = 1;
 		} else if (!strcmp(form_id, "frmTotpToken")) {
-			form = parse_form_node(vpninfo, node, "totpactionEnter", oncp_can_gen_tokencode);
+			form = parse_form_node(vpninfo, node, "totpactionEnter", FORM_FLAVOR_JUNIPER, oncp_can_gen_tokencode);
 		} else {
 			char *form_action = (char *)xmlGetProp(node, (unsigned char *)"action");
 			if (form_action && strstr(form_action, "remediate.cgi")) {
@@ -578,12 +578,15 @@ int oncp_obtain_cookie(struct openconnect_info *vpninfo)
 		if (ret)
 			break;
 
-		vpninfo->redirect_url = form->action;
-		form->action = NULL;
+		if (form->action) {
+			vpninfo->redirect_url = form->action;
+			form->action = NULL;
+		}
 	do_redirect:
 		free_auth_form(form);
 		form = NULL;
-		handle_redirect(vpninfo);
+		if (vpninfo->redirect_url)
+			handle_redirect(vpninfo);
 
 	tncc_done:
 		xmlFreeDoc(doc);
