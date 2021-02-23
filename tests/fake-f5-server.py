@@ -78,9 +78,11 @@ def check_form_against_session(*fields, use_query=False):
 ########################################
 
 # Respond to initial 'GET /' with a redirect to '/my.policy'
+# [Save list of domains/authgroups in the session for use later]
 @app.route('/')
 def root():
-    session.update(step='initial-GET')
+    domains = request.args.get('domains')
+    session.update(step='initial-GET', domains=domains and domains.split(','))
     # print(session)
     return redirect(url_for('get_policy'))
 
@@ -89,18 +91,29 @@ def root():
 @app.route('/my.policy')
 def get_policy():
     session.update(step='GET-login-form')
+    domains = session.get('domains')
+    sel = ''
+    if domains:
+        sel = '<select name="domain">%s</select>' % ''.join(
+            '<option value="%d">%s</option>' % nv for nv in enumerate(domains))
+
     return '''
 <html><body><form id="auth_form" method="post">
 <input type="text" name="username"/>
 <input type="password" name="password"/>
-</form></body></html>'''
+%s</form></body></html>''' % sel
 
 
 # Respond to 'POST /my.policy with a redirect response containing MRHSession and F5_ST
 # cookies (OpenConnect uses the combination of the two to detect successful authentication)
 @app.route('/my.policy', methods=['POST'])
 def post_policy():
-    session.update(step='POST-login', username=request.form.get('username'), credential=request.form.get('password'))
+    domains = session.get('domains')
+    if domains:
+        assert 0 <= int(request.form.get('domain',-1)) < len(domains)
+    session.update(step='POST-login', username=request.form.get('username'),
+                   credential=request.form.get('password'),
+                   domain=request.form.get('domain'))
     # print(session)
 
     resp = redirect(url_for('webtop'))
