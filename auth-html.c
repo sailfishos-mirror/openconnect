@@ -54,7 +54,7 @@ xmlNodePtr find_form_node(xmlDocPtr doc)
 }
 
 int parse_input_node(struct openconnect_info *vpninfo, struct oc_auth_form *form,
-		     xmlNodePtr node, const char *submit_button,
+		     xmlNodePtr node, const char *submit_button, int flavor,
 		     int (*can_gen_tokencode)(struct openconnect_info *vpninfo, struct oc_auth_form *form, struct oc_form_opt *opt))
 {
 	char *type = (char *)xmlGetProp(node, (unsigned char *)"type"), *style = (char *)xmlGetProp(node, (unsigned char *)"style");
@@ -93,14 +93,15 @@ int parse_input_node(struct openconnect_info *vpninfo, struct oc_auth_form *form
 			ret = -ENOMEM;
 			goto out;
 		}
-		if (!strcmp(form->auth_id, "loginForm") &&
+		if (flavor == FORM_FLAVOR_JUNIPER &&
+		    !strcmp(form->auth_id, "loginForm") &&
 		    !strcmp(opt->name, "VerificationCode") &&
 		    can_gen_tokencode && !can_gen_tokencode(vpninfo, form, opt))
 			opt->type = OC_FORM_OPT_TOKEN;
-	} else if (!strcasecmp(type, "submit")) {
+	} else if (flavor == FORM_FLAVOR_JUNIPER && !strcasecmp(type, "submit")) {
+
 		xmlnode_get_prop(node, "name", &opt->name);
 		if (opt->name && submit_button && (!strcmp(opt->name, submit_button) ||
-						   /* XX: Juniper-specific */
 						   !strcmp(opt->name, "sn-postauth-proceed") ||
 						   !strcmp(opt->name, "sn-preauth-proceed") ||
 						   !strcmp(opt->name, "secidactionEnter"))) {
@@ -148,7 +149,7 @@ int parse_input_node(struct openconnect_info *vpninfo, struct oc_auth_form *form
 }
 
 int parse_select_node(struct openconnect_info *vpninfo, struct oc_auth_form *form,
-		      xmlNodePtr node)
+		      xmlNodePtr node, int flavor)
 {
 	xmlNodePtr child;
 	struct oc_form_opt_select *opt;
@@ -161,7 +162,8 @@ int parse_select_node(struct openconnect_info *vpninfo, struct oc_auth_form *for
 	xmlnode_get_prop(node, "name", &opt->form.name);
 	opt->form.label = strdup(opt->form.name);
 	opt->form.type = OC_FORM_OPT_SELECT;
-	if (!strcmp(opt->form.name, "realm")) /* XX: Juniper-specific */
+	if ((flavor == FORM_FLAVOR_JUNIPER && !strcmp(opt->form.name, "realm")) ||
+	    (flavor == FORM_FLAVOR_F5 && !strcmp(opt->form.name, "domain")))
 		form->authgroup_opt = opt;
 
 	for (child = node->children; child; child = child->next) {
@@ -194,7 +196,7 @@ int parse_select_node(struct openconnect_info *vpninfo, struct oc_auth_form *for
 }
 
 struct oc_auth_form *parse_form_node(struct openconnect_info *vpninfo,
-				      xmlNodePtr node, const char *submit_button,
+				      xmlNodePtr node, const char *submit_button, int flavor,
 				      int (*can_gen_tokencode)(struct openconnect_info *vpninfo, struct oc_auth_form *form, struct oc_form_opt *opt))
 {
 	struct oc_auth_form *form = calloc(1, sizeof(*form));
@@ -205,29 +207,53 @@ struct oc_auth_form *parse_form_node(struct openconnect_info *vpninfo,
 
 	xmlnode_get_prop(node, "method", &form->method);
 	xmlnode_get_prop(node, "action", &form->action);
-	if (!form->method || strcasecmp(form->method, "POST") ||
-	    !form->action || !form->action[0]) {
+	if (!form->method || strcasecmp(form->method, "POST")) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Cannot handle form method='%s', action='%s'\n"),
 			     form->method, form->action);
 		free(form);
 		return NULL;
 	}
-	xmlnode_get_prop(node, "name", &form->auth_id);
-	form->banner = strdup(form->auth_id);
+
+	if (flavor == FORM_FLAVOR_JUNIPER) {
+		xmlnode_get_prop(node, "name", &form->auth_id);
+		form->banner = strdup(form->auth_id);
+	} else if (flavor == FORM_FLAVOR_F5)
+		xmlnode_get_prop(node, "id", &form->auth_id);
 
 	for (child = htmlnode_dive(node, node); child && child != node; child = htmlnode_dive(node, child)) {
 		if (!child->name)
 			continue;
 
 		if (!strcasecmp((char *)child->name, "input"))
-			parse_input_node(vpninfo, form, child, submit_button, can_gen_tokencode);
+			parse_input_node(vpninfo, form, child, submit_button, flavor, can_gen_tokencode);
 		else if (!strcasecmp((char *)child->name, "select")) {
-			parse_select_node(vpninfo, form, child);
+			parse_select_node(vpninfo, form, child, flavor);
 			/* Skip its children */
 			while (child->children)
 				child = child->last;
-		} else if (!strcasecmp((char *)child->name, "textarea")) {
+		} else if (flavor == FORM_FLAVOR_F5
+			   && !strcasecmp((char *)child->name, "td")) {
+
+			char *id = (char *)xmlGetProp(child, (unsigned char *)"id");
+			if (id && !strcmp(id, "credentials_table_header")) {
+				char *msg = (char *)xmlNodeGetContent(child);
+				if (msg) {
+					free(form->banner);
+					form->banner = msg;
+				}
+			} else if (id && !strcmp(id, "credentials_table_postheader")) {
+				char *msg = (char *)xmlNodeGetContent(child);
+				if (msg) {
+					free(form->message);
+					form->message = msg;
+				}
+			}
+			free(id);
+
+		} else if (flavor == FORM_FLAVOR_JUNIPER &&
+			   !strcasecmp((char *)child->name, "textarea")) {
+
 			/* display the post sign-in message, if any */
 			char *fieldname = (char *)xmlGetProp(child, (unsigned char *)"name");
 			if (fieldname && (!strcasecmp(fieldname, "sn-postauth-text") || /* XX: Juniper-specific */

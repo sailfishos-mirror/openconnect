@@ -185,6 +185,11 @@ struct pkt {
 #define DTLS_CONNECTING	4	/* ESP probe received; must tell server */
 #define DTLS_CONNECTED	5	/* Server informed and should be sending ESP */
 
+/* Flavors of HTML forms to screen-scrape */
+#define FORM_FLAVOR_JUNIPER	1
+#define FORM_FLAVOR_F5		2
+#define FORM_FLAVOR_FORTINET	3
+
 /* All supported PPP packet framings/encapsulations */
 #define PPP_ENCAP_RFC1661	1	/* Plain/synchronous/pre-framed PPP (RFC1661) */
 #define PPP_ENCAP_RFC1662_HDLC	2	/* PPP with HDLC-like framing (RFC1662) */
@@ -950,12 +955,12 @@ xmlNodePtr htmlnode_next(xmlNodePtr top, xmlNodePtr node);
 xmlNodePtr htmlnode_dive(xmlNodePtr top, xmlNodePtr node);
 xmlNodePtr find_form_node(xmlDocPtr doc);
 int parse_input_node(struct openconnect_info *vpninfo, struct oc_auth_form *form,
-		     xmlNodePtr node, const char *submit_button,
+		     xmlNodePtr node, const char *submit_button, int flavor,
 		     int (*can_gen_tokencode)(struct openconnect_info *vpninfo, struct oc_auth_form *form, struct oc_form_opt *opt));
 int parse_select_node(struct openconnect_info *vpninfo, struct oc_auth_form *form,
-		      xmlNodePtr node);
+		      xmlNodePtr node, int flavor);
 struct oc_auth_form *parse_form_node(struct openconnect_info *vpninfo,
-				     xmlNodePtr node, const char *submit_button,
+				     xmlNodePtr node, const char *submit_button, int flavor,
 				     int (*can_gen_tokencode)(struct openconnect_info *vpninfo, struct oc_auth_form *form, struct oc_form_opt *opt));
 
 /* auth-juniper.c */

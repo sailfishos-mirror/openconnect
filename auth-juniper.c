@@ -516,14 +516,14 @@ int oncp_obtain_cookie(struct openconnect_info *vpninfo)
 				     _("Encountered form with no 'name' or 'id'\n"));
 			goto dump_form;
 		} else if (form_name && !strcmp(form_name, "frmLogin")) {
-			form = parse_form_node(vpninfo, node, "btnSubmit", oncp_can_gen_tokencode);
+			form = parse_form_node(vpninfo, node, "btnSubmit", FORM_FLAVOR_JUNIPER, oncp_can_gen_tokencode);
 		} else if (form_id && !strcmp(form_id, "loginForm")) {
-			form = parse_form_node(vpninfo, node, "submitButton", oncp_can_gen_tokencode);
+			form = parse_form_node(vpninfo, node, "submitButton", FORM_FLAVOR_JUNIPER, oncp_can_gen_tokencode);
 		} else if ((form_name && !strcmp(form_name, "frmDefender")) ||
 			   (form_name && !strcmp(form_name, "frmNextToken"))) {
-			form = parse_form_node(vpninfo, node, "btnAction", oncp_can_gen_tokencode);
+			form = parse_form_node(vpninfo, node, "btnAction", FORM_FLAVOR_JUNIPER, oncp_can_gen_tokencode);
 		} else if (form_name && !strcmp(form_name, "frmConfirmation")) {
-			form = parse_form_node(vpninfo, node, "btnContinue", oncp_can_gen_tokencode);
+			form = parse_form_node(vpninfo, node, "btnContinue", FORM_FLAVOR_JUNIPER, oncp_can_gen_tokencode);
 			if (!form) {
 				ret = -EINVAL;
 				break;
@@ -534,10 +534,10 @@ int oncp_obtain_cookie(struct openconnect_info *vpninfo)
 			form = parse_roles_form_node(node);
 			role_select = 1;
 		} else if (form_name && !strcmp(form_name, "frmTotpToken")) {
-			form = parse_form_node(vpninfo, node, "totpactionEnter", oncp_can_gen_tokencode);
+			form = parse_form_node(vpninfo, node, "totpactionEnter", FORM_FLAVOR_JUNIPER, oncp_can_gen_tokencode);
 		} else if ((form_name && !strcmp(form_name, "hiddenform")) ||
 			   (form_id && !strcmp(form_id, "formSAMLSSO"))) {
-			form = parse_form_node(vpninfo, node, "submit", oncp_can_gen_tokencode);
+			form = parse_form_node(vpninfo, node, "submit", FORM_FLAVOR_JUNIPER, oncp_can_gen_tokencode);
 		} else {
 			char *form_action = (char *)xmlGetProp(node, (unsigned char *)"action");
 			if (form_action && strstr(form_action, "remediate.cgi")) {
