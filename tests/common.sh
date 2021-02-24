@@ -72,18 +72,36 @@ launch_simple_pppd() {
        CERT="$1"
        KEY="$2"
        shift 2
+       # The 'raw,echo=0' option is obsolete (http://www.dest-unreach.org/socat/doc/CHANGES), but its
+       # replacement 'rawer' isn't available until v1.7.3.0, which is newer than what we have available
+       # on our CentOS 6 CI image.
        LD_PRELOAD=libsocket_wrapper.so socat \
-		 PTY,rawer,b9600,link="$SOCKDIR/pppd.$$.pty" \
+		 PTY,raw,echo=0,b9600,link="$SOCKDIR/pppd.$$.pty" \
 		 OPENSSL-LISTEN:443,verify=0,cert="$CERT",key="$KEY" 2>&1 &
        PID=$!
 
-       sleep 3 # Wait for socat to create the PTY link
+       # Wait for socat to create the PTY link
+       for ii in `seq 15`; do
+	   PTY=`readlink "$SOCKDIR/pppd.$$.pty"`
+	   test -n "$PTY" && break
+	   sleep 1
+       done
 
        # It would be preferable to invoke `pppd notty` directly using socat, but it seemingly cannot handle
        # being wrapped by libsocket_wrapper.so.
        # pppd's option parsing is notably brittle: it must have the actual PTY device node, not a symlink
-       $SUDO $PPPD $(readlink "$SOCKDIR/pppd.$$.pty") noauth local debug nodetach nodefaultroute logfile "$LOGFILE" $* 2>&1 &
+       $SUDO $PPPD "$PTY" noauth lock local debug nodetach nodefaultroute logfile "$LOGFILE" $* 2>&1 &
        PID="$PID $!"
+
+       # Wait for pppd to create the "UUCP-style lockfile" indicating that it has started
+       # (https://refspecs.linuxfoundation.org/FHS_3.0/fhs/ch05s09.html)
+       for ii in `seq 15`; do
+	   case "$PTY" in
+	       /dev/pts/*) test -e "/var/lock/LCK..pts_`basename $PTY`" && break ;;
+	       *) test -e "/var/lock/LCK..`basename $PTY`" && break ;;
+	   esac
+	   sleep 1
+       done
 
        # XX: Caller needs to use PID, rather than $!
 }
