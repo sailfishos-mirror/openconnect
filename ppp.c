@@ -413,6 +413,14 @@ static int handle_config_request(struct openconnect_info *vpninfo,
 		case PROTO_TAG_LEN(PPP_IP6CP, IP6CP_INT_ID, 8): {
 			char buf[40];
 			unsigned char ipv6_ll[16] = {0xfe, 0x80, 0, 0, 0, 0, 0, 0};
+
+			/* XX: The server has allegedly sent us its link-local IPv6 address.
+			 * However, on the only server I have access to which supports IPv6,
+			 * this is just a random/garbage value, and `ping6 -I $TUNDEV $THIS_LL_ADDRESS`
+			 * returns an "unreachable" result from the server's actual LL address,
+			 * which is not sent over PPP configuration. This is probably just an
+			 * ignorable vestige of before the days of IPv6 address autoconfiguration.
+			 */
 			memcpy(ipv6_ll + 8, p+2, 8);
 			memcpy(&ppp->in_ipv6_addr, ipv6_ll, 16);
 			if (!inet_ntop(AF_INET6, &ppp->in_ipv6_addr, buf, sizeof(buf)))
