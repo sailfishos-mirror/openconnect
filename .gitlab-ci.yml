@@ -96,7 +96,9 @@ CentOS6/OpenSSL:
   image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$CENTOS6_BUILD
   script:
   - ./autogen.sh
-  - ./configure --with-java --without-openssl-version-check --enable-dtls-xfail --enable-ppp-tests CFLAGS=-g
+# We should --enable-ppp-tests here, but they just aren't working. For reasons that are not
+# clear, OpenConnect fails to handshake a TLS connection to socat 1.7.2 (from CentOS 6 EPEL).
+  - ./configure --with-java --without-openssl-version-check --enable-dtls-xfail CFLAGS=-g
   - make -j4
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
