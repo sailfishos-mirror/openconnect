@@ -72,39 +72,34 @@ launch_simple_sr_server() {
 launch_simple_pppd() {
        CERT="$1"
        KEY="$2"
-       shift 2
-       # The 'raw,echo=0' option is obsolete (http://www.dest-unreach.org/socat/doc/CHANGES), but its
-       # replacement 'rawer' isn't available until v1.7.3.0, which is newer than what we have available
-       # on our CentOS 6 CI image.
+       shift 2 # remaining arguments (now in $*) are for pppd
+
+       # 1) The 'raw,echo=0' option is obsolete (http://www.dest-unreach.org/socat/doc/CHANGES), but its
+       #    replacement 'rawer' isn't available until v1.7.3.0, which is newer than what we have available
+       #    on our CentOS 6 CI image.
+       # 2) pppd complains vigorously about being started with libsocket_wrapper.so, and does not need it
+       #    anyway since its direct communication is only with the pty.
+       # 3) The pppd process should be started first, and the TLS listener second. If this is run the other
+       #    way around, the client's initial TLS packets may go to a black hole before pppd starts up
+       #    and begins receiving them.
+       # 4) These pppd options should always be present for our test usage:
+       #      - nauth (self-explanatory)
+       #      - local (no modem control lines)
+       #      - nodefaultroute (don't touch routing)
+       #      - debug and logfile (log all control packets to a file so test can analyze them)
+       # 5) The pppd option 'sync' can be used to avoid "HDLC" (more precisely, "asynchronous HDLC-like
+       #    framing").
+       #
+       #    However, pppd+socat has problems framing its I/O correctly in this case, occasionally
+       #    misinterpreting incoming packets as concatenated to one another, or sending outgoing packets
+       #    in a single TLS record. This effectively means that the peers may drop/miss some of
+       #    the config packets exchanged, causing retries and leading to a longer negotiation period.
+       #    [use `socat -x` for a hex log of I/O to/from the connected sockets]
+
        LD_PRELOAD=libsocket_wrapper.so socat \
-		 PTY,raw,echo=0,b9600,link="$SOCKDIR/pppd.$$.pty" \
+		 SYSTEM:"LD_PRELOAD= $SUDO $PPPD noauth local debug nodefaultroute logfile '$LOGFILE' $*",pty,raw,echo=0 \
 		 OPENSSL-LISTEN:443,verify=0,cert="$CERT",key="$KEY" 2>&1 &
        PID=$!
-
-       # Wait for socat to create the PTY link
-       for ii in `seq 15`; do
-	   PTY=`readlink "$SOCKDIR/pppd.$$.pty"`
-	   test -n "$PTY" && break
-	   sleep 1
-       done
-
-       # It would be preferable to invoke `pppd notty` directly using socat, but it seemingly cannot handle
-       # being wrapped by libsocket_wrapper.so.
-       # pppd's option parsing is notably brittle: it must have the actual PTY device node, not a symlink
-       $SUDO $PPPD "$PTY" noauth lock local debug nodetach nodefaultroute logfile "$LOGFILE" $* 2>&1 &
-       PID="$PID $!"
-
-       # Wait for pppd to create the "UUCP-style lockfile" indicating that it has started
-       # (https://refspecs.linuxfoundation.org/FHS_3.0/fhs/ch05s09.html)
-       for ii in `seq 15`; do
-	   case "$PTY" in
-	       /dev/pts/*) test -e "/var/lock/LCK..pts_`basename $PTY`" && break ;;
-	       *) test -e "/var/lock/LCK..`basename $PTY`" && break ;;
-	   esac
-	   sleep 1
-       done
-
-       # XX: Caller needs to use PID, rather than $!
 }
 
 wait_server() {

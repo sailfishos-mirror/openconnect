@@ -27,7 +27,7 @@ CERT=$certdir/server-cert.pem
 KEY=$certdir/server-key.pem
 
 IPV4_NO="noip"
-IPV4_YES="169.254.1.1:169.254.128.128"
+IPV4_YES="'169.254.1.1:169.254.128.128'" # needs single-quotes to escape for socat
 IPV6_NO="noipv6"
 IPV6_YES="+ipv6"
 OFFER_DNS="ms-dns 1.1.1.1 ms-dns 8.8.8.8"
