@@ -26,6 +26,10 @@ FINGERPRINT="--servercert=d66b507ae074d03b02eafca40d35f87dd81049d3"
 CERT=$certdir/server-cert.pem
 KEY=$certdir/server-key.pem
 
+# pppd is very poorly designed for mocking and testing in isolation, and running as non-root.
+# See launch_simple_pppd() in common.sh for a number of caveats about using it for these
+# purposes.
+
 IPV4_NO="noip"
 IPV4_YES="'169.254.1.1:169.254.128.128'" # needs single-quotes to escape for socat
 IPV6_NO="noipv6"

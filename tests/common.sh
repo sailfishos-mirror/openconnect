@@ -74,11 +74,15 @@ launch_simple_pppd() {
        KEY="$2"
        shift 2 # remaining arguments (now in $*) are for pppd
 
+       # In addition to its arcane option naming, pppd is very poorly designed for mocking and testing
+       # in isolation, and running as non-root. We use socat(1) to connect it to a TLS socat. There
+       # are a number of caveats in about this process.
+       #
        # 1) The 'raw,echo=0' option is obsolete (http://www.dest-unreach.org/socat/doc/CHANGES), but its
        #    replacement 'rawer' isn't available until v1.7.3.0, which is newer than what we have available
        #    on our CentOS 6 CI image.
        # 2) pppd complains vigorously about being started with libsocket_wrapper.so, and does not need it
-       #    anyway since its direct communication is only with the pty.
+       #    anyway since its direct I/O is only with the pty.
        # 3) The pppd process should be started first, and the TLS listener second. If this is run the other
        #    way around, the client's initial TLS packets may go to a black hole before pppd starts up
        #    and begins receiving them.
@@ -87,7 +91,10 @@ launch_simple_pppd() {
        #      - local (no modem control lines)
        #      - nodefaultroute (don't touch routing)
        #      - debug and logfile (log all control packets to a file so test can analyze them)
-       # 5) The pppd option 'sync' can be used to avoid "HDLC" (more precisely, "asynchronous HDLC-like
+       # 5) The scripts normally installed in /etc/ppp (e.g. ip-up, ipv6-up) should NOT be present for
+       #    our test usage, since they require true root and probably cannot be run in our containerized
+       #    CI environments. CI should move these scripts out of the way before running tests with pppd.
+       # 6) The pppd option 'sync' can be used to avoid "HDLC" (more precisely, "asynchronous HDLC-like
        #    framing").
        #
        #    However, pppd+socat has problems framing its I/O correctly in this case, occasionally
