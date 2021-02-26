@@ -33,6 +33,8 @@ CentOS7/OpenSSL:
   - ./autogen.sh
   - ./configure --without-gnutls --with-openssl --with-java --without-openssl-version-check --enable-dtls-xfail --disable-dsa-tests --enable-ppp-tests CFLAGS=-g
   - make -j4
+# we don't want pppd to invoke any actual connection scripts
+  - mv /etc/ppp /etc/ppp.DISABLED
 # auth-nonascii: UTF-8 support is not available
 # dtls-psk: communication with ocserv fails for undetermined reasons marking as xfail until issue is identified
   - make VERBOSE=1 XFAIL_TESTS="auth-nonascii dtls-psk" -j4 check
@@ -53,6 +55,8 @@ CentOS8/GnuTLS:
   - ./autogen.sh
   - ./configure --with-java --without-gnutls-version-check --disable-dsa-tests --enable-ppp-tests CFLAGS=-g
   - make -j4
+# we don't want pppd to invoke any actual connection scripts
+  - mv /etc/ppp /etc/ppp.DISABLED
 # UTF-8 support is not available
   - make VERBOSE=1 XFAIL_TESTS="auth-nonascii" -j4 check
   tags:
@@ -72,6 +76,8 @@ CentOS8/OpenSSL:
   - ./autogen.sh
   - ./configure --without-gnutls --with-openssl --with-java --without-openssl-version-check --disable-dsa-tests --enable-ppp-tests CFLAGS=-g
   - make -j4
+# we don't want pppd to invoke any actual connection scripts
+  - mv /etc/ppp /etc/ppp.DISABLED
 # UTF-8 support is not available
 # OpenSSL 1.1.0 disables 3DES and RC4 by default (https://www.openssl.org/blog/blog/2016/08/24/sweet32/)
   - make VERBOSE=1 XFAIL_TESTS="auth-nonascii obsolete-server-crypto" -j4 check
@@ -92,6 +98,8 @@ CentOS6/OpenSSL:
   - ./autogen.sh
   - ./configure --with-java --without-openssl-version-check --enable-dtls-xfail --enable-ppp-tests CFLAGS=-g
   - make -j4
+# we don't want pppd to invoke any actual connection scripts
+  - mv /etc/ppp /etc/ppp.DISABLED
 # UTF-8 support is not available
   - make VERBOSE=1 XFAIL_TESTS="bad_dtls_test auth-nonascii" -j4 check
   tags:
@@ -238,6 +246,8 @@ Fedora/GnuTLS:
   - cd openconnect-$(git describe --tags | sed s/^v//)
   - ./configure --with-java --disable-dsa-tests --without-gnutls-version-check --enable-ppp-tests CFLAGS=-g
   - make -j4
+# we don't want pppd to invoke any actual connection scripts
+  - mv /etc/ppp /etc/ppp.DISABLED
   # Disable rdrand to work around https://bugzilla.redhat.com/1831086
   - make VERBOSE=1 OPENSSL_ia32cap=~0x4000000000000000 -j4 check
   tags:
@@ -259,6 +269,8 @@ Fedora/GnuTLS/clang:
   - cd openconnect-$(git describe --tags | sed s/^v//)
   - ./configure --with-java --disable-dsa-tests --without-gnutls-version-check CC=clang --enable-ppp-tests CFLAGS=-g
   - make -j4
+# we don't want pppd to invoke any actual connection scripts
+  - mv /etc/ppp /etc/ppp.DISABLED
   # Disable rdrand to work around https://bugzilla.redhat.com/1831086
   - make VERBOSE=1 OPENSSL_ia32cap=~0x4000000000000000 -j4 check
   tags:
@@ -282,6 +294,8 @@ Fedora/OpenSSL:
   - cd openconnect-$(git describe --tags | sed s/^v//)
   - ./configure --without-gnutls --with-openssl --without-openssl-version-check --disable-dsa-tests --enable-ppp-tests CFLAGS=-g
   - make -j4
+# we don't want pppd to invoke any actual connection scripts
+  - mv /etc/ppp /etc/ppp.DISABLED
 # OpenSSL 1.1.0 disables 3DES and RC4 by default (https://www.openssl.org/blog/blog/2016/08/24/sweet32/)
   - make VERBOSE=1 XFAIL_TESTS="obsolete-server-crypto" -j4 check
   tags:
@@ -305,6 +319,8 @@ Fedora/OpenSSL/clang:
   - cd openconnect-$(git describe --tags | sed s/^v//)
   - ./configure CC=clang --without-gnutls --with-openssl --without-openssl-version-check --disable-dsa-tests --enable-ppp-tests CFLAGS=-g
   - make -j4
+# we don't want pppd to invoke any actual connection scripts
+  - mv /etc/ppp /etc/ppp.DISABLED
 # OpenSSL 1.1.0 disables 3DES and RC4 by default (https://www.openssl.org/blog/blog/2016/08/24/sweet32/)
   - make VERBOSE=1 XFAIL_TESTS="obsolete-server-crypto" -j4 check
   tags:
@@ -324,6 +340,8 @@ Ubuntu18.04/GnuTLS:
   - ./autogen.sh
   - ./configure --with-java --enable-ppp-tests CFLAGS=-g
   - make -j4
+# we don't want pppd to invoke any actual connection scripts
+  - mv /etc/ppp /etc/ppp.DISABLED
 # UTF-8 support is not available
   - make VERBOSE=1 XFAIL_TESTS="auth-nonascii" -j4 check
   tags:
@@ -342,6 +360,8 @@ Ubuntu18.04/OpenSSL:
   - ./autogen.sh
   - ./configure --without-gnutls --with-openssl --with-java --without-openssl-version-check --disable-dsa-tests --enable-ppp-tests CFLAGS=-g
   - make -j4
+# we don't want pppd to invoke any actual connection scripts
+  - mv /etc/ppp /etc/ppp.DISABLED
 # UTF-8 support is not available
 # OpenSSL 1.1.0 disables 3DES and RC4 by default (https://www.openssl.org/blog/blog/2016/08/24/sweet32/)
   - make VERBOSE=1 XFAIL_TESTS="auth-nonascii obsolete-server-crypto" -j4 check
