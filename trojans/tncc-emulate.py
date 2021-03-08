@@ -676,8 +676,8 @@ if __name__ == "__main__":
             ssl.SSLSocket = fingerprint_checking_SSLSocket(fingerprint)
 
     certs = []
-    if asn1crypto:
-        if 'TNCC_CERTS' in os.environ:
+    if 'TNCC_CERTS' in os.environ:
+        if asn1crypto:
             now = datetime.datetime.utcnow()
             for f in os.environ['TNCC_CERTS'].split(','):
                 cert = x509cert(f.strip())
@@ -686,8 +686,8 @@ if __name__ == "__main__":
                 if now > cert.not_after:
                     logging.warning('WARNING: %s is expired', f)
                 certs.append(cert)
-    else:
-        raise Exception('TNCC_CERTS environment variable set, but asn1crypto module is not available')
+        else:
+            raise Exception('TNCC_CERTS environment variable set, but asn1crypto module is not available')
 
     # \HKEY_CURRENT_USER\Software\Juniper Networks\Device Id
     device_id = os.environ.get('TNCC_DEVICE_ID')
