@@ -556,7 +556,7 @@ class tncc(object):
                             if dn_name == 'IssuerDN':
                                 assert val in cert.issuer[name]
                             else:
-                                logging.warn('Unknown DN type %s', str(dn_name))
+                                logging.warning('Unknown DN type %s', str(dn_name))
                                 raise Exception()
                         except:
                             fail = True
@@ -567,7 +567,7 @@ class tncc(object):
                     certs[cert_id] = cert
                     break
             if cert_id not in certs:
-                logging.warn('Could not find certificate for %s', str(req_dns))
+                logging.warning('Could not find certificate for %s', str(req_dns))
 
         inner = b''
         if certs:
@@ -617,7 +617,7 @@ class tncc_server(object):
             cookie = self.tncc.get_cookie(args['Cookie'],
                                           self.tncc.find_cookie('DSSIGNIN'))
         else:
-            logging.warn('Unknown command %r' % cmd)
+            logging.warning('Unknown command %r' % cmd)
 
 def fingerprint_checking_SSLSocket(_fingerprint):
     class SSLSocket(ssl.SSLSocket):
@@ -648,7 +648,7 @@ if __name__ == "__main__":
     else:
         mac_addrs = []
         if netifaces is None:
-            logging.warn("No netifaces module; mac_addrs will be empty.")
+            logging.warning("No netifaces module; mac_addrs will be empty.")
         else:
             for iface in netifaces.interfaces():
                 try:
@@ -662,9 +662,9 @@ if __name__ == "__main__":
 
     fingerprint = os.environ.get('TNCC_SHA256')
     if not fingerprint:
-        logging.warn("TNCC_SHA256 not set, will not validate server certificate")
+        logging.warning("TNCC_SHA256 not set, will not validate server certificate")
     elif not asn1crypto:
-        logging.warn("asn1crypto module not available, will not validate server certificate")
+        logging.warning("asn1crypto module not available, will not validate server certificate")
     else:
         # For Python <3.7, we monkey-patch ssl.SSLSocket directly, because ssl.SSLContext.sslsocket_class
         # isn't available until Python 3.7. For Python 3.7+, we set ssl.SSLContext.sslsocket_class
@@ -682,9 +682,9 @@ if __name__ == "__main__":
             for f in os.environ['TNCC_CERTS'].split(','):
                 cert = x509cert(f.strip())
                 if now < cert.not_before:
-                    logging.warn('WARNING: %s is not yet valid', f)
+                    logging.warning('WARNING: %s is not yet valid', f)
                 if now > cert.not_after:
-                    logging.warn('WARNING: %s is expired', f)
+                    logging.warning('WARNING: %s is expired', f)
                 certs.append(cert)
     else:
         raise Exception('TNCC_CERTS environment variable set, but asn1crypto module is not available')
