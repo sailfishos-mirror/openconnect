@@ -596,7 +596,7 @@ class tncc_server(object):
         self.tncc = t
 
     def process_cmd(self):
-        buf = sock.recv(1024).decode('ascii')
+        buf = self.sock.recv(1024).decode('ascii')
         if not len(buf):
             sys.exit(0)
         cmd, buf = buf.split('\n', 1)
@@ -612,7 +612,7 @@ class tncc_server(object):
             resp = ['200', '3', cookie.value]
             if self.tncc.interval is not None:
                 resp.append(str(self.tncc.interval))
-            sock.send(('\n'.join(resp) + '\n\n').encode('ascii'))
+            self.sock.send(('\n'.join(resp) + '\n\n').encode('ascii'))
         elif cmd == 'setcookie':
             cookie = self.tncc.get_cookie(args['Cookie'],
                                           self.tncc.find_cookie('DSSIGNIN'))
