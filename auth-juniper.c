@@ -135,6 +135,10 @@ static int parse_input_node(struct openconnect_info *vpninfo, struct oc_auth_for
 			ret = -ENOMEM;
 			goto out;
 		}
+		if (!strcmp(form->auth_id, "loginForm") &&
+		    !strcmp(opt->name, "VerificationCode") &&
+		    !can_gen_tokencode(vpninfo, form, opt))
+			opt->type = OC_FORM_OPT_TOKEN;
 	} else if (!strcasecmp(type, "username") || !strcasecmp(type, "email")) {
 		opt->type = OC_FORM_OPT_TEXT;
 		xmlnode_get_prop(node, "name", &opt->name);
@@ -777,6 +781,13 @@ int oncp_obtain_cookie(struct openconnect_info *vpninfo)
 			role_select = 1;
 		} else if (form_name && !strcmp(form_name, "frmTotpToken")) {
 			form = parse_form_node(vpninfo, node, "totpactionEnter");
+			if (!form) {
+				ret = -EINVAL;
+				break;
+			}
+		} else if ((form_name && !strcmp(form_name, "hiddenform")) ||
+			   (form_id && !strcmp(form_id, "formSAMLSSO"))) {
+			form = parse_form_node(vpninfo, node, "submit");
 			if (!form) {
 				ret = -EINVAL;
 				break;
