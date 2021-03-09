@@ -248,8 +248,7 @@ static struct oc_auth_form *parse_form_node(struct openconnect_info *vpninfo,
 
 	xmlnode_get_prop(node, "method", &form->method);
 	xmlnode_get_prop(node, "action", &form->action);
-	if (!form->method || strcasecmp(form->method, "POST") ||
-	    !form->action || !form->action[0]) {
+	if (!form->method || strcasecmp(form->method, "POST")) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Cannot handle form method='%s', action='%s'\n"),
 			     form->method, form->action);
@@ -826,12 +825,15 @@ int oncp_obtain_cookie(struct openconnect_info *vpninfo)
 		if (ret)
 			break;
 
-		vpninfo->redirect_url = form->action;
-		form->action = NULL;
+		if (form->action) {
+			vpninfo->redirect_url = form->action;
+			form->action = NULL;
+		}
 	do_redirect:
 		free_auth_form(form);
 		form = NULL;
-		handle_redirect(vpninfo);
+		if (vpninfo->redirect_url)
+			handle_redirect(vpninfo);
 
 	tncc_done:
 		xmlFreeDoc(doc);
