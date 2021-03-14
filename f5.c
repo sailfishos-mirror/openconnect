@@ -87,7 +87,7 @@ static int check_cookie_success(struct openconnect_info *vpninfo)
 
 int f5_obtain_cookie(struct openconnect_info *vpninfo)
 {
-	int ret;
+	int ret, form_order=0;
 	xmlDocPtr doc = NULL;
 	xmlNode *node;
 	struct oc_text_buf *req_buf = NULL;
@@ -98,7 +98,7 @@ int f5_obtain_cookie(struct openconnect_info *vpninfo)
 	if ((ret = buf_error(req_buf)))
 		goto out;
 
-	while (1) {
+	while (++form_order) {
 		char *resp_buf = NULL;
 		char *url;
 
@@ -141,16 +141,15 @@ int f5_obtain_cookie(struct openconnect_info *vpninfo)
 		buf_truncate(req_buf);
 
 		node = find_form_node(doc);
-		if (!node) {
+		if (!node && form_order==1) {
 			/* XX: some F5 VPNs simply do not have a static HTML form to parse */
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("WARNING: no HTML login form found; assuming username and password fields\n"));
 			if ((form = plain_auth_form()) == NULL)
 				goto nomem;
 		} else {
-			if (!xmlnode_get_prop(node, "id", &form_id) && !strcmp(form_id, "auth_form"))
-				form = parse_form_node(vpninfo, node, NULL, FORM_FLAVOR_F5, NULL);
-			else {
+			form = parse_form_node(vpninfo, node, NULL, FORM_FLAVOR_F5, NULL);
+			if (form_order==1 && (xmlnode_get_prop(node, "id", &form_id) || strcmp(form_id, "auth_form"))) {
 				vpn_progress(vpninfo, PRG_ERR, _("Unknown form ID '%s' (expected 'auth_form')\n"),
 					     form_id);
 
