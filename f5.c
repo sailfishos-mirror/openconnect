@@ -36,6 +36,32 @@
 
 #define XCAST(x) ((const xmlChar *)(x))
 
+static struct oc_auth_form *plain_auth_form() {
+	struct oc_auth_form *form;
+	struct oc_form_opt *opt, *opt2;
+
+	form = calloc(1, sizeof(*form));
+	if (!form) {
+	nomem:
+		free_auth_form(form);
+		return NULL;
+	}
+	opt = form->opts = calloc(1, sizeof(*opt));
+	if (!opt)
+		goto nomem;
+	opt->label = strdup("username:");
+	opt->name = strdup("username");
+	opt->type = OC_FORM_OPT_TEXT;
+
+	opt2 = opt->next = calloc(1, sizeof(*opt2));
+	if (!opt2)
+		goto nomem;
+	opt2->label = strdup("password:");
+	opt2->name = strdup("password");
+	opt2->type = OC_FORM_OPT_PASSWORD;
+	return form;
+}
+
 static int check_cookie_success(struct openconnect_info *vpninfo)
 {
 	struct oc_vpn_option *cookie;
@@ -117,28 +143,10 @@ int f5_obtain_cookie(struct openconnect_info *vpninfo)
 		node = find_form_node(doc);
 		if (!node) {
 			/* XX: some F5 VPNs simply do not have a static HTML form to parse */
-			struct oc_form_opt *opt, *opt2;
-
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("WARNING: no HTML login form found; assuming username and password fields\n"));
-
-			form = calloc(1, sizeof(*form));
-			if (!form)
+			if ((form = plain_auth_form()) == NULL)
 				goto nomem;
-			opt = form->opts = calloc(1, sizeof(*opt));
-			if (!opt)
-				goto nomem;
-			opt->label = strdup("username:");
-			opt->name = strdup("username");
-			opt->type = OC_FORM_OPT_TEXT;
-
-			opt2 = opt->next = calloc(1, sizeof(*opt2));
-			if (!opt2)
-				goto nomem;
-			opt2->label = strdup("password:");
-			opt2->name = strdup("password");
-			opt2->type = OC_FORM_OPT_PASSWORD;
-
 		} else {
 			if (!xmlnode_get_prop(node, "id", &form_id) && !strcmp(form_id, "auth_form"))
 				form = parse_form_node(vpninfo, node, NULL, FORM_FLAVOR_F5, NULL);
