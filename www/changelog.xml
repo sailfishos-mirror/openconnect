@@ -30,6 +30,7 @@
        <li>Improve GlobalProtect login argument decoding (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/143">!143</a>)</li>)
        <li>Add detection of authentication expiration date, intended to allow front-ends to cache and reuse authentication cookies/sessions (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/156">!156</a>)</li>
        <li>Small bug fixes and clarification of many logging messages.</li>
+       <li>Restore compatibility with newer Cisco servers, by no longer sending them the <tt>X-AnyConnect-Platform</tt> header (<a href="https://gitlab.com/openconnect/openconnect/-/issues/101">#101</a>, <a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/175">!175</a>)</li>
      </ul><br/>
   </li>
   <li><b><a href="ftp://ftp.infradead.org/pub/openconnect/openconnect-8.10.tar.gz">OpenConnect v8.10</a></b>
