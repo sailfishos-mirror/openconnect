@@ -565,8 +565,10 @@ int oncp_connect(struct openconnect_info *vpninfo)
 	   treating this as an HTTP connection and to start treating
 	   it as an oNCP connection.
 	   */
-	buf_append(reqbuf, "Connection: close\r\n");
+	ret = vpninfo->no_http_keepalive;
+	vpninfo->no_http_keepalive = 1;
 	oncp_common_headers(vpninfo, reqbuf);
+	vpninfo->no_http_keepalive = ret;
 	buf_append(reqbuf, "Content-Length: 256\r\n");
 	buf_append(reqbuf, "\r\n");
 

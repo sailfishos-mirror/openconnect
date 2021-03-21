@@ -1564,6 +1564,7 @@ void http_common_headers(struct openconnect_info *vpninfo, struct oc_text_buf *b
 	else
 		buf_append(buf, "Host: %s:%d\r\n", vpninfo->hostname, vpninfo->port);
 	buf_append(buf, "User-Agent: %s\r\n", vpninfo->useragent);
+	buf_append(buf, "Connection: %s\r\n", vpninfo->no_http_keepalive ? "close" : "keep-alive");
 
 	if (vpninfo->cookies) {
 		buf_append(buf, "Cookie: ");
