@@ -4,7 +4,7 @@ variables:
   CENTOS7_BUILD: openconnect-cli-centos7
   CENTOS8_BUILD: openconnect-cli-centos8
   FEDORA_BUILD: openconnect-cli-fedora
-  UBUNTU_BUILD: openconnect-cli-ubuntu 
+  UBUNTU_BUILD: openconnect-cli-ubuntu
 
 image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$FEDORA_BUILD
 
@@ -191,7 +191,7 @@ asan/GnuTLS/Fedora:
   image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$FEDORA_BUILD
   script:
   - ./autogen.sh
-  - CC=clang CFLAGS="-fsanitize=address -fno-optimize-sibling-calls -fno-omit-frame-pointer -g -O1" 
+  - CC=clang CFLAGS="-fsanitize=address -fno-optimize-sibling-calls -fno-omit-frame-pointer -g -O1"
     ./configure --with-java --disable-dsa-tests --without-gnutls-version-check --without-asan-broken-tests
   - make -j4
   - make VERBOSE=1 -j4 check
@@ -212,7 +212,7 @@ asan/OpenSSL/Fedora:
   image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$FEDORA_BUILD
   script:
   - ./autogen.sh
-  - CC=clang CFLAGS="-fsanitize=address -fno-optimize-sibling-calls -fno-omit-frame-pointer -g -O1" 
+  - CC=clang CFLAGS="-fsanitize=address -fno-optimize-sibling-calls -fno-omit-frame-pointer -g -O1"
     ./configure --without-gnutls --with-openssl --without-openssl-version-check --disable-dsa-tests --without-asan-broken-tests
   - make -j4
 # OpenSSL 1.1.0 disables 3DES and RC4 by default (https://www.openssl.org/blog/blog/2016/08/24/sweet32/)
@@ -367,6 +367,12 @@ MinGW32/GnuTLS:
 # These tests seem to fail due to wine failing to start; setting as XFAIL
 # since these never run before this patch set.
   - make VERBOSE=1 -j4 check XFAIL_TESTS="sigterm dtls-psk"
+# Build NSIS installer
+  - SYSROOT=/usr/i686-w64-mingw32/sys-root
+  - make -C www update && mv public docs
+  - ln -bs .libs/openconnect.exe .libs/libopenconnect-5.dll $SYSROOT/mingw/{bin,lib}/*.dll .
+  - PATH="$PATH:$PWD" nsiswrapper --name OpenConnect --outfile openconnect-installer.exe $PWD/openconnect.exe > openconnect.nsi
+  - makensis openconnect.nsi
   tags:
   - shared
   except:
@@ -374,9 +380,11 @@ MinGW32/GnuTLS:
   - schedules
   artifacts:
     expire_in: 1 week
-    when: on_failure
+    when: always
     paths:
       - tests/*.log
+      - openconnect.nsi
+      - openconnect-installer.exe
 
 MinGW32/OpenSSL:
   script:
@@ -388,6 +396,12 @@ MinGW32/OpenSSL:
 # These tests seem to fail due to wine failing to start; setting as XFAIL
 # since these never run before this patch set.
   - make VERBOSE=1 -j4 check XFAIL_TESTS="sigterm dtls-psk"
+# Build NSIS installer
+  - SYSROOT=/usr/i686-w64-mingw32/sys-root
+  - make -C www update && mv public docs
+  - ln -bs .libs/openconnect.exe .libs/libopenconnect-5.dll $SYSROOT/mingw/{bin,lib}/*.dll .
+  - PATH="$PATH:$PWD" nsiswrapper --name OpenConnect --outfile openconnect-installer.exe $PWD/openconnect.exe > openconnect.nsi
+  - makensis openconnect.nsi
   tags:
   - shared
   except:
@@ -395,9 +409,11 @@ MinGW32/OpenSSL:
   - schedules
   artifacts:
     expire_in: 1 week
-    when: on_failure
+    when: always
     paths:
       - tests/*.log
+      - openconnect.nsi
+      - openconnect-installer.exe
 
 MinGW64/GnuTLS:
   script:
