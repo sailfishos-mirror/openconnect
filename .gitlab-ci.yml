@@ -369,10 +369,16 @@ MinGW32/GnuTLS:
   - make VERBOSE=1 -j4 check XFAIL_TESTS="sigterm dtls-psk"
 # Build NSIS installer
   - SYSROOT=/usr/i686-w64-mingw32/sys-root
+  - VERSION=$(cut -f2 -d\" version.c)
+  - PROD_VERSION=$(echo "$VERSION" | perl -ne 'm|v(\d+)\.(\d+)(?:\-(\d+)-g.+)|; print "$1.$2." . ($3 or "0") . ".0"') # only X.Y.Z.W is allowed
   - make -C www update && mv public docs
   - ln -bs .libs/openconnect.exe .libs/libopenconnect-5.dll $SYSROOT/mingw/{bin,lib}/*.dll .
-  - PATH="$PATH:$PWD" nsiswrapper --name OpenConnect --outfile openconnect-installer.exe $PWD/openconnect.exe > openconnect.nsi
-  - makensis openconnect.nsi
+  - PATH="$PATH:$PWD" nsiswrapper --name OpenConnect --outfile openconnect-installer.exe $PWD/openconnect.exe $PWD/docs > openconnect.nsi
+  - >
+    makensis -X"SetCompressor /FINAL lzma" -X'VIAddVersionKey ProductName "OpenConnect"'
+    -X"VIProductVersion \"$PROD_VERSION\"" -X"VIAddVersionKey ProductVersion \"$VERSION\""
+    -X'VIAddVersionKey Comments "OpenConnect multi-protocol VPN client for Windows (command-line version) built with GnuTLS. For more information, visit https://openconnect.gitlab.io/openconnect"'
+    openconnect.nsi
   tags:
   - shared
   except:
@@ -398,10 +404,16 @@ MinGW32/OpenSSL:
   - make VERBOSE=1 -j4 check XFAIL_TESTS="sigterm dtls-psk"
 # Build NSIS installer
   - SYSROOT=/usr/i686-w64-mingw32/sys-root
+  - VERSION=$(cut -f2 -d\" version.c)
+  - PROD_VERSION=$(echo "$VERSION" | perl -ne 'm|v(\d+)\.(\d+)(?:\-(\d+)-g.+)|; print "$1.$2." . ($3 or "0") . ".0"') # only X.Y.Z.W is allowed
   - make -C www update && mv public docs
   - ln -bs .libs/openconnect.exe .libs/libopenconnect-5.dll $SYSROOT/mingw/{bin,lib}/*.dll .
-  - PATH="$PATH:$PWD" nsiswrapper --name OpenConnect --outfile openconnect-installer.exe $PWD/openconnect.exe > openconnect.nsi
-  - makensis openconnect.nsi
+  - PATH="$PATH:$PWD" nsiswrapper --name OpenConnect --outfile openconnect-installer.exe $PWD/openconnect.exe $PWD/docs > openconnect.nsi
+  - >
+    makensis -X"SetCompressor /FINAL lzma" -X'VIAddVersionKey ProductName "OpenConnect"'
+    -X"VIProductVersion \"$PROD_VERSION\"" -X"VIAddVersionKey ProductVersion \"$VERSION\""
+    -X'VIAddVersionKey Comments "OpenConnect multi-protocol VPN client for Windows (command-line version) built with OpenSSL. For more information, visit https://openconnect.gitlab.io/openconnect"'
+    openconnect.nsi
   tags:
   - shared
   except:
