@@ -372,8 +372,9 @@ MinGW32/GnuTLS:
   - VERSION=$(cut -f2 -d\" version.c)
   - PROD_VERSION=$(echo "$VERSION" | perl -ne 'm|v(\d+)\.(\d+)(?:\-(\d+)-g.+)|; print "$1.$2." . ($3 or "0") . ".0"') # only X.Y.Z.W is allowed
   - make -C www update && mv public docs
+  - curl "https://gitlab.com/openconnect/vpnc-scripts/raw/master/vpnc-script-win.js" > vpnc-script-win.js
   - ln -bs .libs/openconnect.exe .libs/libopenconnect-5.dll $SYSROOT/mingw/{bin,lib}/*.dll .
-  - PATH="$PATH:$PWD" nsiswrapper --name OpenConnect --outfile openconnect-installer.exe $PWD/openconnect.exe $PWD/docs > openconnect.nsi
+  - PATH="$PATH:$PWD" nsiswrapper --name OpenConnect --outfile openconnect-installer.exe $PWD/openconnect.exe $PWD/docs $PWD/vpnc-script-win.js > openconnect.nsi
   - >
     makensis -X"SetCompressor /FINAL lzma" -X'VIAddVersionKey ProductName "OpenConnect"'
     -X"VIProductVersion \"$PROD_VERSION\"" -X"VIAddVersionKey ProductVersion \"$VERSION\""
@@ -407,8 +408,9 @@ MinGW32/OpenSSL:
   - VERSION=$(cut -f2 -d\" version.c)
   - PROD_VERSION=$(echo "$VERSION" | perl -ne 'm|v(\d+)\.(\d+)(?:\-(\d+)-g.+)|; print "$1.$2." . ($3 or "0") . ".0"') # only X.Y.Z.W is allowed
   - make -C www update && mv public docs
+  - curl "https://gitlab.com/openconnect/vpnc-scripts/raw/master/vpnc-script-win.js" > vpnc-script-win.js
   - ln -bs .libs/openconnect.exe .libs/libopenconnect-5.dll $SYSROOT/mingw/{bin,lib}/*.dll .
-  - PATH="$PATH:$PWD" nsiswrapper --name OpenConnect --outfile openconnect-installer.exe $PWD/openconnect.exe $PWD/docs > openconnect.nsi
+  - PATH="$PATH:$PWD" nsiswrapper --name OpenConnect --outfile openconnect-installer.exe $PWD/openconnect.exe $PWD/docs $PWD/vpnc-script-win.js > openconnect.nsi
   - >
     makensis -X"SetCompressor /FINAL lzma" -X'VIAddVersionKey ProductName "OpenConnect"'
     -X"VIProductVersion \"$PROD_VERSION\"" -X"VIAddVersionKey ProductVersion \"$VERSION\""
