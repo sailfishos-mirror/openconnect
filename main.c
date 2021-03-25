@@ -1557,6 +1557,13 @@ int main(int argc, char **argv)
 	bindtextdomain("openconnect", LOCALEDIR);
 #endif
 
+#ifdef _WIN32
+	/* Disable stdout buffering on Windows.
+	 * https://gitlab.com/openconnect/openconnect/-/issues/229#note_537286029
+	 */
+	setvbuf(stdout, NULL, _IONBF, 0);
+#endif
+
 	if (!setlocale(LC_ALL, ""))
 		fprintf(stderr,
 			_("WARNING: Cannot set locale: %s\n"), strerror(errno));
