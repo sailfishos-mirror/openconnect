@@ -1084,8 +1084,7 @@ AC_SUBST([CONFIG_STATUS_DEPENDENCIES],
 	   $(top_srcdir)/openconnect.8.in \
 	   $(top_srcdir)/tests/softhsm2.conf.in \
 	   $(top_srcdir)/tests/configs/test-user-cert.config.in \
-	   $(top_srcdir)/tests/configs/test-user-pass.config.in \
-	   $(top_srcdir)/tests/configs/test-obsolete-server-crypto.config.in'])
+	   $(top_srcdir)/tests/configs/test-user-pass.config.in'])
 
 RAWLINGUAS=`sed -e "/^#/d" -e "s/#.*//" "${srcdir}/po/LINGUAS"`
 # Remove newlines
@@ -1117,8 +1116,7 @@ AC_CONFIG_FILES(Makefile openconnect.pc po/Makefile www/Makefile \
 		libopenconnect.map openconnect.8 www/styles/Makefile \
 		www/inc/Makefile www/images/Makefile tests/Makefile \
 		tests/softhsm2.conf tests/configs/test-user-cert.config \
-		tests/configs/test-user-pass.config \
-		tests/configs/test-obsolete-server-crypto.config)
+		tests/configs/test-user-pass.config)
 AC_OUTPUT
 
 AC_DEFUN([SUMMARY],
