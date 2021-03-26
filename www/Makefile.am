@@ -13,10 +13,6 @@ ALL_PAGES = $(FTR_PAGES) $(START_PAGES) $(INDEX_PAGES) $(TOPLEVEL_PAGES) $(PROTO
 
 html_DATA = $(ALL_PAGES)
 
-update: $(ALL_PAGES)
-	mkdir -p $(top_builddir)/public
-	rsync -av ./ --exclude inc/ --exclude html.py --exclude 'Makefi*' --exclude '*~' --exclude '.git*' --exclude '*.inc' --exclude '*.xml' $(top_builddir)/public/
-
 .xml.html:
 	$(PYTHON) $(CONV) -d $(srcdir) $< > $@ || (rm $@; exit 1)
 
