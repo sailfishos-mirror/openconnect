@@ -15,7 +15,7 @@ html_DATA = $(ALL_PAGES)
 
 update: $(ALL_PAGES)
 	mkdir -p $(top_builddir)/public
-	rsync -av ./ --exclude ocserv-git/ --exclude html.py --exclude 'Makefi*' --exclude '*~' --exclude '.git*' --exclude '*.xml' $(top_builddir)/public/
+	rsync -av ./ --exclude inc/ --exclude html.py --exclude 'Makefi*' --exclude '*~' --exclude '.git*' --exclude '*.inc' --exclude '*.xml' $(top_builddir)/public/
 
 .xml.html:
 	$(PYTHON) $(CONV) -d $(srcdir) $< > $@ || (rm $@; exit 1)
