@@ -2099,7 +2099,6 @@ static int verify_peer(gnutls_session_t session)
 
 int openconnect_open_https(struct openconnect_info *vpninfo)
 {
-	const char *default_prio;
 	int ssl_sock = -1;
 	int err;
 
@@ -2244,9 +2243,10 @@ int openconnect_open_https(struct openconnect_info *vpninfo)
 	* 28065ce3896b1b0f87972d0bce9b17641ebb69b9
 	*/
 
-        if (!strlen(vpninfo->ciphersuite_config)) {
+        if (!vpninfo->ciphersuite_config) {
+		struct oc_text_buf *buf = buf_alloc();
 #ifdef DEFAULT_PRIO
-		default_prio = DEFAULT_PRIO ":%COMPAT";
+		buf_append(buf, "%s", DEFAULT_PRIO ":%COMPAT");
 #else
 		/* GnuTLS 3.5.19 and onward remove AES-CBC-HMAC-SHA256 from NORMAL,
 		 * but some Cisco servers can't do anything better, so
@@ -2261,13 +2261,30 @@ int openconnect_open_https(struct openconnect_info *vpninfo)
 		 * - GnuTLS commit that removed: 66f2a0a271bcc10e8fb68771f9349a3d3ecf6dda
 		 * - Old server requiring 3DES-CBC: https://gitlab.com/openconnect/openconnect/-/issues/145
 		 */
-		default_prio = "NORMAL:-VERS-SSL3.0:+SHA256:%COMPAT";
+		buf_append(buf, "NORMAL:-VERS-SSL3.0:+SHA256:%%COMPAT");
 #endif
 
-		snprintf(vpninfo->ciphersuite_config, sizeof(vpninfo->ciphersuite_config), "%s%s%s%s%s",
-		         default_prio, vpninfo->pfs?":-RSA":"", vpninfo->no_tls13?":-VERS-TLS1.3":"",
-			 vpninfo->allow_insecure_crypto?":+3DES-CBC:+ARCFOUR-128:+SHA1":":-3DES-CBC:-ARCFOUR-128",
-			 vpninfo->allow_insecure_crypto && gnutls_check_version_numeric(3,6,0) ? ":%VERIFY_ALLOW_SIGN_WITH_SHA1" : "");
+		if (vpninfo->pfs)
+			buf_append(buf, ":-RSA");
+
+		if (vpninfo->no_tls13)
+			buf_append(buf, ":-VERS-TLS1.3");
+
+		if (vpninfo->allow_insecure_crypto) {
+			buf_append(buf, ":+3DES-CBC:+ARCFOUR-128:+SHA1");
+			if (gnutls_check_version_numeric(3,6,0))
+				buf_append(buf, ":%%VERIFY_ALLOW_SIGN_WITH_SHA1");
+		} else
+			buf_append(buf, ":-3DES-CBC:-ARCFOUR-128");
+
+		if (buf_error(buf)) {
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("Failed to construct GnuTLS priority string\n"));
+			return buf_free(buf);
+		}
+		vpninfo->ciphersuite_config = buf->data;
+		buf->data = NULL;
+		buf_free(buf);
         }
 
 	err = gnutls_priority_set_direct(vpninfo->https_sess,

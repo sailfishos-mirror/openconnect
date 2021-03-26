@@ -391,6 +391,7 @@ void openconnect_vpninfo_free(struct openconnect_info *vpninfo)
 	free(vpninfo->ifname);
 	free(vpninfo->dtls_cipher);
 	free(vpninfo->peer_cert_hash);
+	free(vpninfo->ciphersuite_config);
 #if defined(OPENCONNECT_OPENSSL)
 	free(vpninfo->cstp_cipher);
 #if defined(HAVE_BIO_METH_FREE)

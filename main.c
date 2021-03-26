@@ -1976,7 +1976,7 @@ int main(int argc, char **argv)
 #endif
 				  );
 
-			strncpy(vpninfo->ciphersuite_config, config_arg, sizeof(vpninfo->ciphersuite_config) - 1);
+			vpninfo->ciphersuite_config = keep_config_arg();
 			break;
 		default:
 			usage();

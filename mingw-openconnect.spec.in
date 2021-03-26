@@ -50,6 +50,7 @@ BuildRequires:  mingw64-lz4
 BuildRequires:  mingw64-stoken
 BuildRequires:  wine-core(x86-64)
 
+BuildRequires:  mingw32-nsis
 
 BuildRequires:  pkgconfig automake autoconf libtool
 BuildRequires:  gettext-devel

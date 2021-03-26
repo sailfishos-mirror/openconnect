@@ -1751,10 +1751,27 @@ int openconnect_open_https(struct openconnect_info *vpninfo)
 		if (!vpninfo->no_system_trust)
 			SSL_CTX_set_default_verify_paths(vpninfo->https_ctx);
 
-		if (!strlen(vpninfo->ciphersuite_config)) {
-			snprintf(vpninfo->ciphersuite_config, sizeof(vpninfo->ciphersuite_config), "%s%s",
-				 vpninfo->pfs ? "HIGH:!aNULL:!eNULL:-RSA" : "DEFAULT",
-				 vpninfo->allow_insecure_crypto?":+3DES:+RC4":":-3DES:-RC4");
+		if (!vpninfo->ciphersuite_config) {
+			struct oc_text_buf *buf = buf_alloc();
+			if (vpninfo->pfs)
+				buf_append(buf, "HIGH:!aNULL:!eNULL:-RSA");
+			else
+				buf_append(buf, "DEFAULT");
+
+			if (vpninfo->allow_insecure_crypto)
+				buf_append(buf, ":+3DES:+RC4");
+			else
+				buf_append(buf, ":-3DES:-RC4");
+
+			if (buf_error(buf)) {
+				vpn_progress(vpninfo, PRG_ERR,
+					     _("Failed to construct OpenSSL cipher list\n"));
+				return buf_free(buf);
+			}
+
+			vpninfo->ciphersuite_config = buf->data;
+			buf->data = NULL;
+			buf_free(buf);
 		}
 
 		if (!SSL_CTX_set_cipher_list(vpninfo->https_ctx, vpninfo->ciphersuite_config)) {

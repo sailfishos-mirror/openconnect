@@ -484,20 +484,3 @@ static-analyzer/OpenSSL/Fedora:
     when: on_failure
     paths:
       - scan-build-src/*
-
-# generate static website
-pages:
-  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$FEDORA_BUILD
-  stage: deploy
-  script:
-    - ./autogen.sh
-    - ./configure
-    - make -C www update
-  dependencies: []
-  artifacts:
-    paths:
-      - public
-  only:
-    - master
-  only:
-    - master@openconnect/openconnect
