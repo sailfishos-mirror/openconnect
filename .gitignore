@@ -60,3 +60,11 @@ Makefile
 test-driver
 tests/*.log
 tests/*.trs
+
+# Leftovers from constructing the Windows installer
+file-list.txt
+*.nsi
+*.nsh
+/openconnect-installer*.exe
+/tap-windows*.exe
+/vpnc-script-win.js

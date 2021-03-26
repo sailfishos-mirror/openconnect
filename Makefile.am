@@ -254,7 +254,7 @@ if BUILD_NSIS
 #
 # The Makefile snippet in each generated file adds the full DLL
 # pathname to $(DLLS), adds the .d file itself to the dependencies of
-# dll-list.txt, and then includes more .d files for each other DLL
+# file-list.txt, and then includes more .d files for each other DLL
 # that this DLL links to.
 #
 # Because we use -include, we just skip any DLLs we can't find, which
@@ -263,29 +263,41 @@ if BUILD_NSIS
 # The result, after manually -including the top-level .openconnect.exe.d,
 # is that we have a full transitive list of required non-system DLLs
 # in the $(DLLS) variable. Which will contain duplicates, hence the
-# use of $(sort) when writing it out to dll-list.txt.
+# use of $(sort) when writing it out to file-list.txt.
 .%.d: .libs/% Makefile
 	( echo "DLLS += $<" ; \
-	  echo "dll-list.txt: $@" ; \
+	  echo "file-list.txt: $@" ; \
 	mingw-objdump -p "$<" | sed -n '/DLL Name:/{s%^.*DLL Name: %-include .%;s/$$/.d/;p}' | tr A-Z a-z ) > $@
 
 .%.d: $(bindir)/% Makefile
 	( echo "DLLS += $<" ; \
-	  echo "dll-list.txt: $@" ; \
+	  echo "file-list.txt: $@" ; \
 	mingw-objdump -p "$<" | sed -n '/DLL Name:/{s%^.*DLL Name: %-include .%;s/$$/.d/;p}' | tr A-Z a-z ) > $@
 
 -include .openconnect.exe.d
 
-dll-list.txt: Makefile
+file-list.txt: Makefile tap-windows-9.21.2.exe vpnc-script-win.js
 	for dll in $(sort $(DLLS)); do echo "$${dll}"; done > $@
+	echo "$$PWD/tap-windows-9.21.2.exe" >> $@
+	echo "$$PWD/vpnc-script-win.js" >> $@
+
+# OpenVPN TAP driver for Windows Vista/2003 and newer
+# (see https://community.openvpn.net/openvpn/wiki/GettingTapWindows)
+tap-windows-9.21.2.exe:
+	curl https://build.openvpn.net/downloads/releases/tap-windows-9.21.2.exe -o $@
+	echo "db9d441c209fb28b7c07286a74fe000738304dac $@" | sha1sum -c
+
+# Latest vpnc-script-win.js
+vpnc-script-win.js:
+	curl https://gitlab.com/openconnect/vpnc-scripts/raw/master/vpnc-script-win.js -o $@
 
 # Rather than trying to get clever in NSIS and iterate over lists,
 # just emit raw snippets to be included separately in the install
 # and uninstall sections.
-instfiles.nsh: dll-list.txt
+instfiles.nsh: file-list.txt
 	sed 's%\(.*\)%File "\1"%' $< | tee $@
 
-uninstfiles.nsh: dll-list.txt
+uninstfiles.nsh: file-list.txt
 	sed 's%.*/\(.*\)%Delete /rebootok "$$INSTDIR\\\\\1"%' $< > $@
 
 # Theoretically makensis can define symbols with the -D command line
@@ -306,7 +318,7 @@ openconnect.nsi: version.c
 	  echo "VIAddVersionKey Comments \"OpenConnect multi-protocol VPN client for Windows (command-line version, built with $$TLS_LIBRARY). For more information, visit http://www.infradead.org/openconnect/\""; \
 	  echo "!include $(srcdir)/openconnect.nsi.in" ) > $@
 
-openconnect-installer.exe: openconnect.nsi instfiles.nsh uninstfiles.nsh $(srcdir)/openconnect.nsi.in openconnect$(EXEEXT) libopenconnect.la html-recursive
+openconnect-installer.exe: openconnect.nsi instfiles.nsh uninstfiles.nsh $(srcdir)/openconnect.nsi.in openconnect$(EXEEXT) libopenconnect.la html-recursive tap-windows-9.21.2.exe vpnc-script-win.js
 	$(MAKENSIS) $<
 
 endif
