@@ -20,6 +20,7 @@
 # This test uses LD_PRELOAD
 PRELOAD=1
 SERV="${SERV:-../src/ocserv}"
+OCCTL_SOCKET=./occtl-comp-$$.socket
 srcdir=${srcdir:-.}
 top_builddir=${top_builddir:-..}
 
