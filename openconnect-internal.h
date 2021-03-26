@@ -541,7 +541,7 @@ struct openconnect_info {
 	struct oc_tpm2_ctx *tpm2;
 #endif
 #endif /* OPENCONNECT_GNUTLS */
-	char ciphersuite_config[256];
+	char *ciphersuite_config;
 	struct oc_text_buf *ttls_pushbuf;
 	uint8_t ttls_eap_ident;
 	unsigned char *ttls_recvbuf;
