@@ -367,7 +367,6 @@ MinGW32/GnuTLS:
 # These tests seem to fail due to wine failing to start; setting as XFAIL
 # since these never run before this patch set.
   - make VERBOSE=1 -j4 check XFAIL_TESTS="sigterm dtls-psk"
-  - ./make-windows-installer.sh
   tags:
   - shared
   except:
@@ -378,8 +377,7 @@ MinGW32/GnuTLS:
     when: always
     paths:
       - tests/*.log
-      - nsis/openconnect.nsi
-      - nsis/openconnect-installer.exe
+      - openconnect-installer.exe
 
 MinGW32/OpenSSL:
   script:
@@ -391,7 +389,6 @@ MinGW32/OpenSSL:
 # These tests seem to fail due to wine failing to start; setting as XFAIL
 # since these never run before this patch set.
   - make VERBOSE=1 -j4 check XFAIL_TESTS="sigterm dtls-psk"
-  - ./make-windows-installer.sh
   tags:
   - shared
   except:
@@ -402,8 +399,7 @@ MinGW32/OpenSSL:
     when: always
     paths:
       - tests/*.log
-      - nsis/openconnect.nsi
-      - nsis/openconnect-installer.exe
+      - openconnect-installer.exe
 
 MinGW64/GnuTLS:
   script:
@@ -423,9 +419,10 @@ MinGW64/GnuTLS:
   - schedules
   artifacts:
     expire_in: 1 week
-    when: on_failure
+    when: always
     paths:
       - tests/*.log
+      - openconnect-installer.exe
 
 MinGW64/OpenSSL:
   script:
@@ -445,9 +442,10 @@ MinGW64/OpenSSL:
   - schedules
   artifacts:
     expire_in: 1 week
-    when: on_failure
+    when: always
     paths:
       - tests/*.log
+      - openconnect-installer.exe
 
 static-analyzer/GnuTLS/Fedora:
   image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:buildenv-fedora
@@ -463,9 +461,10 @@ static-analyzer/GnuTLS/Fedora:
   - schedules
   artifacts:
     expire_in: 1 week
-    when: on_failure
+    when: always
     paths:
-      - scan-build-src/*
+      - tests/*.log
+      - openconnect-installer.exe
 
 static-analyzer/OpenSSL/Fedora:
   image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:buildenv-fedora
