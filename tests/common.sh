@@ -38,6 +38,7 @@ export SOCKET_WRAPPER_DIR=$SOCKDIR
 export SOCKET_WRAPPER_DEFAULT_IFACE=2
 ADDRESS=127.0.0.$SOCKET_WRAPPER_DEFAULT_IFACE
 OPENCONNECT="${OPENCONNECT:-${top_builddir}/openconnect}"${EXEEXT}
+OCCTL_SOCKET="${OCCTL_SOCKET:-./occtl-comp-$$.socket}"
 
 certdir="${srcdir}/certs"
 confdir="${srcdir}/configs"
