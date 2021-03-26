@@ -49,11 +49,29 @@ Section "OpenConnect"
 
   SetOutPath "$INSTDIR"
   !include instfiles.nsh
+
+  ClearErrors
+  FileOpen $0 "$INSTDIR\Online Documentation.url" w
+  IfErrors done
+    FileWrite $0 "[InternetShortcut]$\n"
+    FileWrite $0 "URL=https://www.infradead.org/openconnect$\n"
+    FileWrite $0 "IconIndex=0$\n"
+    FileWrite $0 "IconFile=$INSTDIR\openconnect.exe$\n"
+    FileClose $0
+  done:
 SectionEnd
 
-Section -prerequisites
-  SectionIn RO
+Section "Start Menu Shortcuts"
+  CreateDirectory "$SMPROGRAMS\OpenConnect"
+  CreateShortCut "$SMPROGRAMS\OpenConnect\Uninstall OpenConnect.lnk" "$INSTDIR\Uninstall OpenConnect.exe" "" "$INSTDIR\Uninstall OpenConnect.exe" 0
+  CreateShortCut "$SMPROGRAMS\OpenConnect\openconnect.exe.lnk" "$INSTDIR\.\openconnect.exe" "" "$INSTDIR\.\openconnect.exe" 0
+SectionEnd
 
+Section "Desktop Icons"
+  CreateShortCut "$DESKTOP\openconnect.exe.lnk" "$INSTDIR\.\openconnect.exe" "" "$INSTDIR\.\openconnect.exe" 0
+SectionEnd
+
+Section "TAP-Windows driver"
   MessageBox MB_OK \
     "OpenConnect uses the TAP-Windows driver from OpenVPN to create virtual Ethernet adapters for \
      VPN connections. If you haven't already installed this driver, you should now install v9.21.2, \
@@ -65,18 +83,7 @@ Section -prerequisites
     DetailPrint "Running TAP-Windows driver setup..."
     ExecWait "$INSTDIR\tap-windows-9.21.2.exe"
     DetailPrint "Finished TAP-Windows driver setup"
-    Delete /rebootok "$INSTDIR\tap-windows-9.21.2.exe"
   endTapWindows:
-SectionEnd
-
-Section "Start Menu Shortcuts"
-  CreateDirectory "$SMPROGRAMS\OpenConnect"
-  CreateShortCut "$SMPROGRAMS\OpenConnect\Uninstall OpenConnect.lnk" "$INSTDIR\Uninstall OpenConnect.exe" "" "$INSTDIR\Uninstall OpenConnect.exe" 0
-  CreateShortCut "$SMPROGRAMS\OpenConnect\openconnect.exe.lnk" "$INSTDIR\.\openconnect.exe" "" "$INSTDIR\.\openconnect.exe" 0
-SectionEnd
-
-Section "Desktop Icons"
-  CreateShortCut "$DESKTOP\openconnect.exe.lnk" "$INSTDIR\.\openconnect.exe" "" "$INSTDIR\.\openconnect.exe" 0
 SectionEnd
 
 Section "Uninstall"

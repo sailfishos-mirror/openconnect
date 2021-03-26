@@ -31,6 +31,7 @@
        <li>Add detection of authentication expiration date, intended to allow front-ends to cache and reuse authentication cookies/sessions (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/156">!156</a>)</li>
        <li>Small bug fixes and clarification of many logging messages.</li>
        <li>Support more Juniper login forms, including some SSO forms (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/171">!171</a>)</li>
+       <li>Automatically build Windows installers for OpenConnect command-line interface (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/176">!176</a>)</li>
      </ul><br/>
   </li>
   <li><b><a href="ftp://ftp.infradead.org/pub/openconnect/openconnect-8.10.tar.gz">OpenConnect v8.10</a></b>
