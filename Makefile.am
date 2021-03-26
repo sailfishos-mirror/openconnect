@@ -305,7 +305,7 @@ uninstfiles.nsh: file-list.txt
 # get it to work and life's too short.
 openconnect.nsi: version.c
 	VERSION=$$(cut -f2 -d\" version.c); \
-	PROD_VERSION=$$(echo "$$VERSION" | perl -ne 'm|v(\d+)\.(\d+)(?:\-(\d+)-g.+)|; print "$$1.$$2." . ($$3 or "0") . ".0"'); \
+	PROD_VERSION=$$(echo "$$VERSION" | perl -ne 'm|v(\d+)\.(\d+)(?:\.git\.\|\-)?(\d+)?(?:-g.+\|.*)|; print "$$1.$$2." . ($$3 or "0") . ".0"'); \
 	if egrep -q '^#define OPENCONNECT_GNUTLS' config.h; then \
 	    TLS_LIBRARY=GnuTLS; \
 	elif egrep -q '^#define OPENCONNECT_OPENSSL' config.h; then \

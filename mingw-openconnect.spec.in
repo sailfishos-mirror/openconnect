@@ -68,13 +68,25 @@ Requires:       pkgconfig
 %description -n mingw32-openconnect
 The OpenConnect multiprotocol VPN client library, cross-compiled for MinGW.
 
-# Win32
+%package -n mingw32-openconnect-installer
+Summary:        OpenConnect VPN client application installer
+
+%description -n mingw32-openconnect-installer
+The OpenConnect multiprotocol VPN client installer for 32-bit Windows.
+
+# Win64
 %package -n mingw64-openconnect
 Summary:        OpenConnect VPN client library
 Requires:       pkgconfig
 
 %description -n mingw64-openconnect
 The OpenConnect multiprotocol VPN client library, cross-compiled for MinGW.
+
+%package -n mingw64-openconnect-installer
+Summary:        OpenConnect VPN client application installer
+
+%description -n mingw64-openconnect-installer
+The OpenConnect multiprotocol VPN client installer for 64-bit Windows.
 
 %include %SOURCE3
 
@@ -98,6 +110,9 @@ fi
 
 %install
 %mingw_make install DESTDIR=$RPM_BUILD_ROOT
+
+install -m 0644 build_win32/openconnect-installer.exe $RPM_BUILD_ROOT/%{mingw32_bindir}/openconnect-installer-%{version}-%{release}.exe
+install -m 0644 build_win64/openconnect-installer.exe $RPM_BUILD_ROOT/%{mingw64_bindir}/openconnect-installer-%{version}-%{release}.exe
 
 rm -f $RPM_BUILD_ROOT/%{mingw32_libdir}/libopenconnect.la
 rm -rf $RPM_BUILD_ROOT/%{mingw32_libexecdir}/openconnect
@@ -124,6 +139,9 @@ rm -rf $RPM_BUILD_ROOT/%{mingw64_datadir}/bash-completion
 %{mingw32_libdir}/libopenconnect*.dll.a
 %{mingw32_libdir}/pkgconfig/openconnect.pc
 
+%files -n mingw32-openconnect-installer
+%{mingw32_bindir}/openconnect-installer-*.exe
+
 #Win64
 %files -n mingw64-openconnect -f mingw64-openconnect.lang
 %license COPYING.LGPL
@@ -132,6 +150,9 @@ rm -rf $RPM_BUILD_ROOT/%{mingw64_datadir}/bash-completion
 %{mingw64_includedir}/openconnect.h
 %{mingw64_libdir}/libopenconnect*.dll.a
 %{mingw64_libdir}/pkgconfig/openconnect.pc
+
+%files -n mingw64-openconnect-installer
+%{mingw64_bindir}/openconnect-installer-*.exe
 
 %changelog
 * Mon Apr 27 2020 David Woodhouse <dwmw2@infradead.org> - %{version}-%{release}
