@@ -58,6 +58,7 @@ case $host_os in
     system_pcsc_libs="-lwinscard"
     system_pcsc_cflags=
     AC_CHECK_TOOL([WINDRES], [windres], [])
+    AC_CHECK_TOOL([MAKENSIS], [makensis], [])
     ;;
  *darwin*)
     system_pcsc_libs="-Wl,-framework -Wl,PCSC"
@@ -71,6 +72,11 @@ case $host_os in
     ;;
 esac
 AM_CONDITIONAL(OPENCONNECT_WIN32,  [ test "$have_win" = "yes" ])
+build_nsis=no
+if test "${MAKENSIS}" != ""; then
+   build_nsis=yes
+fi
+AM_CONDITIONAL(BUILD_NSIS, [ test "$build_nsis" = "yes" ])
 
 AC_ARG_WITH([vpnc-script],
 	[AS_HELP_STRING([--with-vpnc-script],
@@ -1142,6 +1148,7 @@ SUMMARY([Build docs], [$build_www])
 SUMMARY([Unit tests], [$have_cwrap])
 SUMMARY([Net namespace tests], [$have_netns])
 SUMMARY([Insecure debugging], [$insecure_debugging])
+SUMMARY([NSIS installer], [$build_nsis])
 
 if test "$ssl_library" = "OpenSSL"; then
     AC_MSG_WARN([[
