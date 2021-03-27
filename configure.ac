@@ -59,6 +59,12 @@ case $host_os in
     system_pcsc_cflags=
     AC_CHECK_TOOL([WINDRES], [windres], [])
     AC_CHECK_TOOL([MAKENSIS], [makensis], [])
+
+    # MINGW_HAS_SECURE_API may only work on newer MinGW:
+    # https://stackoverflow.com/a/51977723
+    AC_DEFINE(MINGW_HAS_SECURE_API, 1, [Try to make getenv_s and _putenv_s available])
+    AC_CHECK_DECL(_putenv_s, [AC_DEFINE(HAVE_PUTENV_S_DECL, 1, [MinGW declares _putenv_s])], [], [#include <sec_api/stdlib_s.h>])
+    AC_CHECK_DECL(getenv_s, [AC_DEFINE(HAVE_GETENV_S_DECL, 1, [MinGW declares getenv_s])], [], [#include <sec_api/stdlib_s.h>])
     ;;
  *darwin*)
     system_pcsc_libs="-Wl,-framework -Wl,PCSC"
