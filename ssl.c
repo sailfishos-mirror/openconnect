@@ -595,7 +595,7 @@ int openconnect_passphrase_from_fsid(struct openconnect_info *vpninfo)
 			     _("Could not obtain file system ID for passphrase\n"));
 		return -EOPNOTSUPP;
 	}
-	func = (GVIBH)GetProcAddress(kernlib, "GetVolumeInformationByHandleW");
+	func = (void *)GetProcAddress(kernlib, "GetVolumeInformationByHandleW");
 	FreeLibrary(kernlib);
 	if (!func)
 		goto notsupp;
