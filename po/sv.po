@@ -4923,8 +4923,8 @@ msgstr "Filen %s är tom\n"
 
 #: ssl.c:975
 #, c-format
-msgid "File %s has suspicious size %zd\n"
-msgstr "Filen %s har misstänkt storlek %zd\n"
+msgid "File %s has suspicious size %<PRId64>\n"
+msgstr "Filen %s har misstänkt storlek %<PRId64>\n"
 
 #: ssl.c:984
 #, c-format

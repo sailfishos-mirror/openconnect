@@ -4985,8 +4985,8 @@ msgstr "Plik %s jest pusty\n"
 
 #: ssl.c:975
 #, c-format
-msgid "File %s has suspicious size %zd\n"
-msgstr "Plik %s ma podejrzany rozmiar %zd\n"
+msgid "File %s has suspicious size %<PRId64>\n"
+msgstr "Plik %s ma podejrzany rozmiar %<PRId64>\n"
 
 #: ssl.c:984
 #, c-format

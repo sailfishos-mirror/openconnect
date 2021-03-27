@@ -5034,8 +5034,8 @@ msgstr "Файл %s є порожнім\n"
 
 #: ssl.c:975
 #, c-format
-msgid "File %s has suspicious size %zd\n"
-msgstr "Розмір файла %s є підозріливим — %zd\n"
+msgid "File %s has suspicious size %<PRId64>\n"
+msgstr "Розмір файла %s є підозріливим — %<PRId64>\n"
 
 #: ssl.c:984
 #, c-format

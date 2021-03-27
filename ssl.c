@@ -20,6 +20,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <inttypes.h>
 #include <fcntl.h>
 #include <string.h>
 #include <stdio.h>
@@ -969,8 +970,8 @@ ssize_t openconnect_read_file(struct openconnect_info *vpninfo, const char *fnam
 		return -ENOENT;
 	}
 	if (st.st_size >= INT_MAX || st.st_size < 0) {
-		vpn_progress(vpninfo, PRG_INFO, _("File %s has suspicious size %zd\n"),
-			     vpninfo->xmlconfig, (ssize_t)st.st_size);
+		vpn_progress(vpninfo, PRG_INFO, _("File %s has suspicious size %" PRId64 "\n"),
+			     vpninfo->xmlconfig, (int64_t)st.st_size);
 		close(fd);
 		return -EIO;
 	}
