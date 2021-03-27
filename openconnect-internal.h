@@ -29,6 +29,14 @@
 #define SECURITY_WIN32 1
 #endif
 #include <security.h>
+
+#ifndef _Out_cap_c_
+#define _Out_cap_c_(sz)
+#endif
+#ifndef _Ret_bytecount_
+#define _Ret_bytecount_(sz)
+#endif
+#include "wintun.h"
 #else
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -657,6 +665,11 @@ struct openconnect_info {
 	int ip6_fd;
 #endif
 #ifdef _WIN32
+	HMODULE wintun;
+	wchar_t *ifname_w;
+	WINTUN_ADAPTER_HANDLE wintun_adapter;
+	WINTUN_SESSION_HANDLE wintun_session;
+
 	HANDLE tun_fh;
 	OVERLAPPED tun_rd_overlap, tun_wr_overlap;
 	int tun_idx, tun_rd_pending;
@@ -913,6 +926,20 @@ void os_shutdown_tun(struct openconnect_info *vpninfo);
 int os_read_tun(struct openconnect_info *vpninfo, struct pkt *pkt);
 int os_write_tun(struct openconnect_info *vpninfo, struct pkt *pkt);
 intptr_t os_setup_tun(struct openconnect_info *vpninfo);
+
+#ifdef _WIN32
+#define OPEN_TUN_SOFTFAIL 0
+#define OPEN_TUN_HARDFAIL -1
+
+/* wintun.c */
+void os_shutdown_wintun(struct openconnect_info *vpninfo);
+int os_read_wintun(struct openconnect_info *vpninfo, struct pkt *pkt);
+int os_write_wintun(struct openconnect_info *vpninfo, struct pkt *pkt);
+intptr_t os_setup_wintun(struct openconnect_info *vpninfo);
+int setup_wintun_fd(struct openconnect_info *vpninfo, intptr_t tun_fd);
+intptr_t open_wintun(struct openconnect_info *vpninfo, char *guid, wchar_t *wname);
+int create_wintun(struct openconnect_info *vpninfo);
+#endif
 
 /* {gnutls,openssl}-dtls.c */
 int start_dtls_handshake(struct openconnect_info *vpninfo, int dtls_fd);

@@ -421,6 +421,7 @@ void openconnect_vpninfo_free(struct openconnect_info *vpninfo)
 		CloseHandle(vpninfo->ssl_event);
 	if (vpninfo->dtls_event)
 		CloseHandle(vpninfo->dtls_event);
+	free(vpninfo->ifname_w);
 #endif
 	free(vpninfo->peer_addr);
 	free(vpninfo->ip_info.gateway_addr);
