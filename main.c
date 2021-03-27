@@ -35,6 +35,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <inttypes.h>
 #include <sys/types.h>
 #include <getopt.h>
 #include <time.h>
@@ -1450,7 +1451,7 @@ static void print_connection_stats(void *_vpninfo, const struct oc_stats *stats)
 
 	print_connection_info(vpninfo);
 	vpn_progress(vpninfo, PRG_INFO,
-		     _("RX: %ld packets (%ld B); TX: %ld packets (%ld B)\n"),
+		     _("RX: %"PRId64" packets (%"PRId64" B); TX: %"PRId64" packets (%"PRId64" B)\n"),
 		       stats->rx_pkts, stats->rx_bytes, stats->tx_pkts, stats->tx_bytes);
 
 	if (vpninfo->ssl_fd != -1)
@@ -1460,14 +1461,14 @@ static void print_connection_stats(void *_vpninfo, const struct oc_stats *stats)
 		     vpninfo->proto->udp_protocol ? : "UDP", openconnect_get_dtls_cipher(vpninfo));
 	if (vpninfo->ssl_times.last_rekey && vpninfo->ssl_times.rekey)
 		vpn_progress(vpninfo, PRG_INFO, _("Next SSL rekey in %ld seconds\n"),
-			     time(NULL) - vpninfo->ssl_times.last_rekey + vpninfo->ssl_times.rekey);
+			     (long)(time(NULL) - vpninfo->ssl_times.last_rekey + vpninfo->ssl_times.rekey));
 	if (vpninfo->dtls_times.last_rekey && vpninfo->dtls_times.rekey)
 		vpn_progress(vpninfo, PRG_INFO, _("Next %s rekey in %ld seconds\n"),
 			     vpninfo->proto->udp_protocol ? : "UDP",
-			     time(NULL) - vpninfo->ssl_times.last_rekey + vpninfo->ssl_times.rekey);
+			     (long)(time(NULL) - vpninfo->ssl_times.last_rekey + vpninfo->ssl_times.rekey));
 	if (vpninfo->trojan_interval && vpninfo->last_trojan)
 		vpn_progress(vpninfo, PRG_INFO, _("Next Trojan invocation in %ld seconds\n"),
-			     time(NULL) - vpninfo->last_trojan + vpninfo->trojan_interval);
+			     (long)(time(NULL) - vpninfo->last_trojan + vpninfo->trojan_interval));
 
 	/* XX: restore loglevel */
 	openconnect_set_loglevel(vpninfo, saved_loglevel);
