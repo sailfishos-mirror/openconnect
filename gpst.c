@@ -288,7 +288,7 @@ bad_xml:
 		vpn_progress(vpninfo, PRG_ERR,
 					 _("Failed to parse server response\n"));
 		vpn_progress(vpninfo, PRG_DEBUG,
-					 _("Response was:%s\n"), response);
+					 _("Response was: %s\n"), response);
 	}
 
 out:
@@ -298,6 +298,7 @@ out:
 			vpn_progress(vpninfo, PRG_DEBUG, "%s\n", err);
 			result = -EEXIST;
 		} else if (!strcmp(err, "Invalid authentication cookie")           /* equivalent to custom HTTP status 512 */
+			   || !strcmp(err, "Portal name not found")                /* cookie is bogus */
 		           || !strcmp(err, "Valid client certificate is required") /* equivalent to custom HTTP status 513 */
 		           || !strcmp(err, "Allow Automatic Restoration of SSL VPN is disabled")) {
 			/* Any of these errors indicates that retrying won't help us reconnect (EPERM signals this to mainloop.) */
@@ -725,8 +726,14 @@ static int gpst_get_config(struct openconnect_info *vpninfo)
 	/* parse getconfig result */
 	if (result >= 0)
 		result = gpst_xml_or_error(vpninfo, xml_buf, gpst_parse_config_xml, NULL, NULL);
-	if (result)
+	if (result) {
+		/* XX: if our "cookie" is bogus (doesn't include at least 'user', 'authcookie',
+		 * and 'portal' fields) the server will respond like this.
+		 */
+		if (result == -EINVAL && !strcmp(xml_buf, "errors getting SSL/VPN config"))
+			result = -EPERM;
 		goto out;
+	}
 
 	if (!vpninfo->ip_info.mtu) {
 		/* FIXME: GP gateway config always seems to be <mtu>0</mtu> */
@@ -818,7 +825,8 @@ static int gpst_connect(struct openconnect_info *vpninfo)
 		}
 		vpn_progress(vpninfo, PRG_ERR,
 		             _("Got inappropriate HTTP GET-tunnel response: %.*s\n"), ret, buf);
-		ret = -EINVAL;
+		/* XX: this is what GP servers return when they don't like the cookie */
+		ret = !strncmp(buf, "HTTP/1.1 502 ", 13) ? -EPERM : -EINVAL;
 	}
 
 	if (ret < 0)
