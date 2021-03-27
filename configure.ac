@@ -27,6 +27,11 @@ symver_asprintf=
 symver_vasprintf=
 symver_win32_strerror=
 
+# Autoconf is stupid and if the first time it needs to find the C compiler
+# is conditional (as it is here for some of the MinGW checks), it forgets
+# to ever look for one in the other code paths. Do it explicitly here.
+AC_PROG_CC
+
 case $host_os in
  *linux* | *gnu* | *nacl*)
     AC_MSG_NOTICE([Applying feature macros for GNU build])
