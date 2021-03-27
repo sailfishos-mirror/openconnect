@@ -29,18 +29,22 @@ struct openconnect_info {
 	char *ifname;
 };
 
+#define OPEN_TUN_SOFTFAIL 0
+#define OPEN_TUN_HARDFAIL -1
+
 #define __LIST_TAPS__
 
 #include "../tun-win32.c"
 
-static intptr_t print_tun(struct openconnect_info *vpninfo, char *guid, wchar_t *wname)
+static intptr_t print_tun(struct openconnect_info *vpninfo, int type, char *guid, wchar_t *wname)
 {
-	printf("Found tun device '%S'\n", wname);
+	printf("Found %s device '%S' guid %s\n",
+	       type ? "Wintun" : "Tap", wname, guid);
 	return 0;
 }
 
 int main(void)
 {
-	search_taps(NULL, print_tun, 1);
+	search_taps(NULL, print_tun);
 	return 0;
 }
