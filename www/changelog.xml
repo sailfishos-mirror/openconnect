@@ -33,6 +33,8 @@
        <li>Support more Juniper login forms, including some SSO forms (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/171">!171</a>)</li>
        <li>Automatically build Windows installers for OpenConnect command-line interface (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/176">!176</a>)</li>
        <li>Restore compatibility with newer Cisco servers, by no longer sending them the <tt>X-AnyConnect-Platform</tt> header (<a href="https://gitlab.com/openconnect/openconnect/-/issues/101">#101</a>, <a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/175">!175</a>)</li>
+       <li>Add support for PPP-based protocols, currently over TLS only (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/165">!165</a>).</li>
+       <li>Add support for two PPP-based protocols, F5 with <tt>--protocol=f5</tt> and Fortinet with <tt>--protocol=fortinet</tt> (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/169">!169</a>).</li>
      </ul><br/>
   </li>
   <li><b><a href="ftp://ftp.infradead.org/pub/openconnect/openconnect-8.10.tar.gz">OpenConnect v8.10</a></b>
