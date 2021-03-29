@@ -31,6 +31,7 @@ symver_win32_strerror=
 # is conditional (as it is here for some of the MinGW checks), it forgets
 # to ever look for one in the other code paths. Do it explicitly here.
 AC_PROG_CC
+AC_PROG_CC_C99
 
 case $host_os in
  *linux* | *gnu* | *nacl*)
@@ -181,7 +182,6 @@ AS_COMPILER_FLAGS(WFLAGS,
          -Wno-sign-compare
          -Wno-unused-parameter
          -Werror=pointer-to-int-cast
-         -Wdeclaration-after-statement
          -Werror-implicit-function-declaration
          -Wformat-nonliteral
          -Wformat-security
