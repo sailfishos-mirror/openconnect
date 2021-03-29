@@ -278,27 +278,36 @@ if BUILD_NSIS
 
 file-list.txt: Makefile tap-windows-9.21.2.exe vpnc-script-win.js
 	for dll in $(sort $(DLLS)); do echo "$${dll}"; done > $@
-	echo "$$PWD/tap-windows-9.21.2.exe" >> $@
-	echo "$$PWD/vpnc-script-win.js" >> $@
 
 # OpenVPN TAP driver for Windows Vista/2003 and newer
 # (see https://community.openvpn.net/openvpn/wiki/GettingTapWindows)
-tap-windows-9.21.2.exe:
+TAPDRIVER = tap-windows-9.21.2.exe
+TAPSHA256 = 645bee92ba4e9f32ddfdd9f8519dc1b9f9ff0b0a8e87e342f08d39da77e499a9
+
+$(TAPDRIVER):
 	curl https://build.openvpn.net/downloads/releases/tap-windows-9.21.2.exe -o $@
-	echo "db9d441c209fb28b7c07286a74fe000738304dac $@" | sha1sum -c
+
+# Validate file and also let make find it in VPATH
+file-list-$(TAPDRIVER).txt: $(TAPDRIVER)
+	echo $(TAPSHA256) $< | sha256sum -c
+	echo $< > $@
 
 # Latest vpnc-script-win.js
 vpnc-script-win.js:
 	curl https://gitlab.com/openconnect/vpnc-scripts/raw/master/vpnc-script-win.js -o $@
 
+# Let make find the file in VPATH
+file-list-%.txt: %
+	echo $< > $@
+
 # Rather than trying to get clever in NSIS and iterate over lists,
 # just emit raw snippets to be included separately in the install
 # and uninstall sections.
-instfiles.nsh: file-list.txt
-	sed 's%\(.*\)%File "\1"%' $< | tee $@
+instfiles.nsh: file-list.txt file-list-vpnc-script-win.js.txt file-list-tap-windows-9.21.2.exe.txt
+	sed 's%\(.*\)%File "\1"%' $^ | tee $@
 
-uninstfiles.nsh: file-list.txt
-	sed 's%.*/\(.*\)%Delete /rebootok "$$INSTDIR\\\\\1"%' $< > $@
+uninstfiles.nsh: file-list.txt file-list-vpnc-script-win.js.txt file-list-tap-windows-9.21.2.exe.txt
+	sed 's%.*/\(.*\)%Delete /rebootok "$$INSTDIR\\\\\1"%' $^ > $@
 
 # Theoretically makensis can define symbols with the -D command line
 # option and much of this could just be done that way, but I couldn't
