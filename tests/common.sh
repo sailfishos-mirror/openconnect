@@ -30,6 +30,8 @@ if test "${DISABLE_ASAN_BROKEN_TESTS}" = 1 && test "${PRELOAD}" = 1;then
 fi
 
 OCSERV=/usr/sbin/ocserv
+PPPD=/usr/sbin/pppd
+test $(id -u) -eq 0 && SUDO= || SUDO=sudo
 
 top_builddir=${top_builddir:-..}
 SOCKDIR="./sockwrap.$$.tmp"
@@ -38,6 +40,7 @@ export SOCKET_WRAPPER_DIR=$SOCKDIR
 export SOCKET_WRAPPER_DEFAULT_IFACE=2
 ADDRESS=127.0.0.$SOCKET_WRAPPER_DEFAULT_IFACE
 OPENCONNECT="${OPENCONNECT:-${top_builddir}/openconnect}"${EXEEXT}
+LOGFILE="$SOCKDIR/log.$$.tmp"
 OCCTL_SOCKET="${OCCTL_SOCKET:-./occtl-comp-$$.socket}"
 
 certdir="${srcdir}/certs"
@@ -66,6 +69,46 @@ launch_simple_sr_server() {
        LD_PRELOAD=libsocket_wrapper.so:libuid_wrapper.so UID_WRAPPER=1 UID_WRAPPER_ROOT=1 $OCSERV $* &
 }
 
+launch_simple_pppd() {
+       CERT="$1"
+       KEY="$2"
+       shift 2 # remaining arguments (now in $*) are for pppd
+
+       # In addition to its arcane option naming, pppd is very poorly designed for mocking and testing
+       # in isolation, and running as non-root. We use socat(1) to connect it to a TLS socat. There
+       # are a number of caveats in about this process.
+       #
+       # 1) The 'raw,echo=0' option is obsolete (http://www.dest-unreach.org/socat/doc/CHANGES), but its
+       #    replacement 'rawer' isn't available until v1.7.3.0, which is newer than what we have available
+       #    on our CentOS 6 CI image.
+       # 2) pppd complains vigorously about being started with libsocket_wrapper.so, and does not need it
+       #    anyway since its direct I/O is only with the pty.
+       # 3) The pppd process should be started first, and the TLS listener second. If this is run the other
+       #    way around, the client's initial TLS packets may go to a black hole before pppd starts up
+       #    and begins receiving them.
+       # 4) These pppd options should always be present for our test usage:
+       #      - nauth (self-explanatory)
+       #      - local (no modem control lines)
+       #      - nodefaultroute (don't touch routing)
+       #      - debug and logfile (log all control packets to a file so test can analyze them)
+       # 5) The scripts normally installed in /etc/ppp (e.g. ip-up, ipv6-up) should NOT be present for
+       #    our test usage, since they require true root and probably cannot be run in our containerized
+       #    CI environments. CI should move these scripts out of the way before running tests with pppd.
+       # 6) The pppd option 'sync' can be used to avoid "HDLC" (more precisely, "asynchronous HDLC-like
+       #    framing").
+       #
+       #    However, pppd+socat has problems framing its I/O correctly in this case, occasionally
+       #    misinterpreting incoming packets as concatenated to one another, or sending outgoing packets
+       #    in a single TLS record. This effectively means that the peers may drop/miss some of
+       #    the config packets exchanged, causing retries and leading to a longer negotiation period.
+       #    [use `socat -x` for a hex log of I/O to/from the connected sockets]
+
+       LD_PRELOAD=libsocket_wrapper.so socat \
+		 SYSTEM:"LD_PRELOAD= $SUDO $PPPD noauth local debug nodefaultroute logfile '$LOGFILE' $*",pty,raw,echo=0 \
+		 OPENSSL-LISTEN:443,verify=0,cert="$CERT",key="$KEY" 2>&1 &
+       PID=$!
+}
+
 wait_server() {
 	trap "kill $1" 1 15 2
 	sleep 5
@@ -73,7 +116,7 @@ wait_server() {
 
 cleanup() {
 	ret=0
-	kill $PID
+	kill $PID 2>/dev/null
 	if test $? != 0;then
 		ret=1
 	fi
@@ -83,7 +126,7 @@ cleanup() {
 }
 
 fail() {
-	PID=$1
+	PID="$1"
 	shift;
 	echo "Failure: $1" >&2
 	kill $PID

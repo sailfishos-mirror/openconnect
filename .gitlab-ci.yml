@@ -12,7 +12,7 @@ CentOS7/GnuTLS:
   image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$CENTOS7_BUILD
   script:
   - ./autogen.sh
-  - ./configure --with-java CFLAGS=-g
+  - ./configure --with-java --enable-ppp-tests CFLAGS=-g
   - make -j4
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
   - make VERBOSE=1 XFAIL_TESTS="auth-nonascii" -j4 check
@@ -31,8 +31,10 @@ CentOS7/OpenSSL:
   image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$CENTOS7_BUILD
   script:
   - ./autogen.sh
-  - ./configure --without-gnutls --with-openssl --with-java --without-openssl-version-check --enable-dtls-xfail --disable-dsa-tests CFLAGS=-g
+  - ./configure --without-gnutls --with-openssl --with-java --without-openssl-version-check --enable-dtls-xfail --disable-dsa-tests --enable-ppp-tests CFLAGS=-g
   - make -j4
+# we don't want pppd to invoke any actual connection scripts
+  - mv /etc/ppp /etc/ppp.DISABLED
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
 # dtls-psk: communication with ocserv fails for undetermined reasons marking as xfail until issue is identified
   - make VERBOSE=1 XFAIL_TESTS="auth-nonascii dtls-psk" -j4 check
@@ -51,8 +53,10 @@ CentOS8/GnuTLS:
   image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$CENTOS8_BUILD
   script:
   - ./autogen.sh
-  - ./configure --with-java --without-gnutls-version-check --disable-dsa-tests CFLAGS=-g
+  - ./configure --with-java --without-gnutls-version-check --disable-dsa-tests --enable-ppp-tests CFLAGS=-g
   - make -j4
+# we don't want pppd to invoke any actual connection scripts
+  - mv /etc/ppp /etc/ppp.DISABLED
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
   - make VERBOSE=1 XFAIL_TESTS="auth-nonascii" -j4 check
   tags:
@@ -70,8 +74,10 @@ CentOS8/OpenSSL:
   image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$CENTOS8_BUILD
   script:
   - ./autogen.sh
-  - ./configure --without-gnutls --with-openssl --with-java --without-openssl-version-check --disable-dsa-tests CFLAGS=-g
+  - ./configure --without-gnutls --with-openssl --with-java --without-openssl-version-check --disable-dsa-tests --enable-ppp-tests CFLAGS=-g
   - make -j4
+# we don't want pppd to invoke any actual connection scripts
+  - mv /etc/ppp /etc/ppp.DISABLED
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
 # obsolete-server-crypto: OpenSSL 1.1.0 disables 3DES and RC4 by default (https://www.openssl.org/blog/blog/2016/08/24/sweet32/)
   - make VERBOSE=1 XFAIL_TESTS="auth-nonascii obsolete-server-crypto" -j4 check
@@ -90,8 +96,12 @@ CentOS6/OpenSSL:
   image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$CENTOS6_BUILD
   script:
   - ./autogen.sh
+# We should --enable-ppp-tests here, but they just aren't working. For reasons that are not
+# clear, OpenConnect fails to handshake a TLS connection to socat 1.7.2 (from CentOS 6 EPEL).
   - ./configure --with-java --without-openssl-version-check --enable-dtls-xfail CFLAGS=-g
   - make -j4
+# we don't want pppd to invoke any actual connection scripts
+  - mv /etc/ppp /etc/ppp.DISABLED
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
   - make VERBOSE=1 XFAIL_TESTS="bad_dtls_test auth-nonascii" -j4 check
   tags:
@@ -233,11 +243,13 @@ asan/OpenSSL/Fedora:
 Fedora/GnuTLS:
   script:
   - ./autogen.sh
-  - ./configure --with-java --disable-dsa-tests --without-gnutls-version-check CFLAGS=-g
+  - ./configure --with-java --disable-dsa-tests --without-gnutls-version-check --enable-ppp-tests CFLAGS=-g
   - make tmp-distdir
   - cd openconnect-$(git describe --tags | sed s/^v//)
-  - ./configure --with-java --disable-dsa-tests --without-gnutls-version-check CFLAGS=-g
+  - ./configure --with-java --disable-dsa-tests --without-gnutls-version-check --enable-ppp-tests CFLAGS=-g
   - make -j4
+# we don't want pppd to invoke any actual connection scripts
+  - mv /etc/ppp /etc/ppp.DISABLED
 # auth-pkcs11: Disable rdrand to work around https://bugzilla.redhat.com/1831086
   - make VERBOSE=1 OPENSSL_ia32cap=~0x4000000000000000 -j4 check
   tags:
@@ -254,11 +266,13 @@ Fedora/GnuTLS:
 Fedora/GnuTLS/clang:
   script:
   - ./autogen.sh
-  - ./configure --with-java --disable-dsa-tests --without-gnutls-version-check CC=clang CFLAGS=-g
+  - ./configure --with-java --disable-dsa-tests --without-gnutls-version-check CC=clang --enable-ppp-tests CFLAGS=-g
   - make tmp-distdir
   - cd openconnect-$(git describe --tags | sed s/^v//)
-  - ./configure --with-java --disable-dsa-tests --without-gnutls-version-check CC=clang CFLAGS=-g
+  - ./configure --with-java --disable-dsa-tests --without-gnutls-version-check CC=clang --enable-ppp-tests CFLAGS=-g
   - make -j4
+# we don't want pppd to invoke any actual connection scripts
+  - mv /etc/ppp /etc/ppp.DISABLED
 # auth-pkcs11: Disable rdrand to work around https://bugzilla.redhat.com/1831086
   - make VERBOSE=1 OPENSSL_ia32cap=~0x4000000000000000 -j4 check
   tags:
@@ -277,11 +291,13 @@ Fedora/OpenSSL:
 # Re-enable DSA since we test it
   - update-crypto-policies --set LEGACY
   - ./autogen.sh
-  - ./configure --without-gnutls --with-openssl --without-openssl-version-check --disable-dsa-tests CFLAGS=-g
+  - ./configure --without-gnutls --with-openssl --without-openssl-version-check --disable-dsa-tests --enable-ppp-tests CFLAGS=-g
   - make tmp-distdir
   - cd openconnect-$(git describe --tags | sed s/^v//)
-  - ./configure --without-gnutls --with-openssl --without-openssl-version-check --disable-dsa-tests CFLAGS=-g
+  - ./configure --without-gnutls --with-openssl --without-openssl-version-check --disable-dsa-tests --enable-ppp-tests CFLAGS=-g
   - make -j4
+# we don't want pppd to invoke any actual connection scripts
+  - mv /etc/ppp /etc/ppp.DISABLED
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
 # obsolete-server-crypto: OpenSSL 1.1.0 disables 3DES and RC4 by default (https://www.openssl.org/blog/blog/2016/08/24/sweet32/)
   - make VERBOSE=1 XFAIL_TESTS="obsolete-server-crypto" -j4 check
@@ -301,12 +317,13 @@ Fedora/OpenSSL/clang:
 # Re-enable DSA since we test it
   - update-crypto-policies --set LEGACY
   - ./autogen.sh
-  - ./configure CC=clang --without-gnutls --with-openssl --without-openssl-version-check --disable-dsa-tests CFLAGS=-g
+  - ./configure CC=clang --without-gnutls --with-openssl --without-openssl-version-check --disable-dsa-tests --enable-ppp-tests CFLAGS=-g
   - make tmp-distdir
   - cd openconnect-$(git describe --tags | sed s/^v//)
-  - ./configure CC=clang --without-gnutls --with-openssl --without-openssl-version-check --disable-dsa-tests CFLAGS=-g
+  - ./configure CC=clang --without-gnutls --with-openssl --without-openssl-version-check --disable-dsa-tests --enable-ppp-tests CFLAGS=-g
   - make -j4
-# auth-nonascii: UTF-8 support is not available in distro's ocserv package
+# we don't want pppd to invoke any actual connection scripts
+  - mv /etc/ppp /etc/ppp.DISABLED
 # obsolete-server-crypto: OpenSSL 1.1.0 disables 3DES and RC4 by default (https://www.openssl.org/blog/blog/2016/08/24/sweet32/)
   - make VERBOSE=1 XFAIL_TESTS="obsolete-server-crypto" -j4 check
   tags:
@@ -324,10 +341,15 @@ Ubuntu18.04/GnuTLS:
   image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$UBUNTU_BUILD
   script:
   - ./autogen.sh
-  - ./configure --with-java CFLAGS=-g
+  - ./configure --with-java --enable-ppp-tests CFLAGS=-g
   - make -j4
+# we don't want pppd to invoke any actual connection scripts
+  - mv /etc/ppp /etc/ppp.DISABLED
+# For reasons that are unclear, but probably also unimportant, IPv6 is disabled by default on this CI
+# image (verified in https://gitlab.com/openconnect/openconnect/-/jobs/1135199323#L335), and this will
+# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
+  - sysctl net.ipv6.conf.all.disable_ipv6=0
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
-# obsolete-server-crypto: OpenSSL 1.1.0 disables 3DES and RC4 by default (https://www.openssl.org/blog/blog/2016/08/24/sweet32/)
   - make VERBOSE=1 XFAIL_TESTS="auth-nonascii" -j4 check
   tags:
   - shared
@@ -336,7 +358,6 @@ Ubuntu18.04/GnuTLS:
   - schedules
   artifacts:
     expire_in: 1 week
-    when: on_failure
     paths:
       - tests/*.log
 
@@ -344,8 +365,14 @@ Ubuntu18.04/OpenSSL:
   image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$UBUNTU_BUILD
   script:
   - ./autogen.sh
-  - ./configure --without-gnutls --with-openssl --with-java --without-openssl-version-check --disable-dsa-tests CFLAGS=-g
+  - ./configure --without-gnutls --with-openssl --with-java --without-openssl-version-check --disable-dsa-tests --enable-ppp-tests CFLAGS=-g
   - make -j4
+# we don't want pppd to invoke any actual connection scripts
+  - mv /etc/ppp /etc/ppp.DISABLED
+# For reasons that are unclear, but probably also unimportant, IPv6 is disabled by default on this CI
+# image (verified in https://gitlab.com/openconnect/openconnect/-/jobs/1135199323#L335), and this will
+# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
+  - sysctl net.ipv6.conf.all.disable_ipv6=0
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
 # obsolete-server-crypto: OpenSSL 1.1.0 disables 3DES and RC4 by default (https://www.openssl.org/blog/blog/2016/08/24/sweet32/)
   - make VERBOSE=1 XFAIL_TESTS="auth-nonascii obsolete-server-crypto" -j4 check

@@ -670,6 +670,10 @@ AC_ARG_ENABLE([dsa-tests],
 	[], [enable_dsa_tests=yes])
 AM_CONDITIONAL(TEST_DSA, [test "$enable_dsa_tests" = "yes"])
 
+AC_ARG_ENABLE([ppp-tests],
+	AS_HELP_STRING([--enable-ppp-tests], [Enable PPP tests (which require socat and pppd, and must run as root)]),
+	[enable_ppp_tests=yes])
+
 AM_CONDITIONAL(OPENCONNECT_GNUTLS,  [ test "$ssl_library" = "GnuTLS" ])
 AM_CONDITIONAL(OPENCONNECT_OPENSSL, [ test "$ssl_library" = "OpenSSL" ])
 AM_CONDITIONAL(OPENCONNECT_ESP, [ test "$esp" != "" ])
@@ -1089,6 +1093,16 @@ AM_CONDITIONAL(BUILD_WWW, [test "${build_www}" = "yes"])
 PKG_CHECK_MODULES([CWRAP], [uid_wrapper, socket_wrapper], have_cwrap=yes, have_cwrap=no)
 AM_CONDITIONAL(HAVE_CWRAP, test "x$have_cwrap" != xno)
 
+if test "$enable_ppp_tests" = "yes"; then
+    AC_PATH_PROGS(SOCAT, [socat], [], $PATH:/bin:/usr/bin)
+    AC_PATH_PROGS(PPPD, [pppd], [], $PATH:/bin:/usr/bin:/sbin:/usr/sbin/)
+    if test -z "${ac_cv_path_SOCAT}" -o -z "${ac_cv_path_PPPD}"; then
+       AC_MSG_WARN([socat and/or pppd not found; disabling PPP tests])
+       enable_ppp_tests=no
+    fi
+fi
+AM_CONDITIONAL(TEST_PPP, [test "$enable_ppp_tests" = "yes"])
+
 have_netns=no
 AC_PATH_PROG(NUTTCP, nuttcp)
 if test -n "$ac_cv_path_NUTTCP"; then
@@ -1183,6 +1197,8 @@ SUMMARY([Java bindings], [$with_java])
 SUMMARY([Build docs], [$build_www])
 SUMMARY([Unit tests], [$have_cwrap])
 SUMMARY([Net namespace tests], [$have_netns])
+SUMMARY([DSA tests], [$enable_dsa_tests])
+SUMMARY([PPP tests], [$enable_ppp_tests])
 SUMMARY([Insecure debugging], [$insecure_debugging])
 SUMMARY([NSIS installer], [$build_nsis])
 
