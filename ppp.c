@@ -152,7 +152,7 @@ static int unhdlc_in_place(struct openconnect_info *vpninfo, unsigned char *byte
 	} else {
 		vpn_progress(vpninfo, PRG_TRACE,
 			     _("Un-HDLC'ed packet (%ld bytes -> %ld), FCS=0x%04x\n"),
-			     inp - bytes, outp - bytes, fcs);
+			     (long)(inp - bytes), (long)(outp - bytes), fcs);
 		return outp - bytes;
 	}
 }
@@ -268,11 +268,11 @@ static void print_ppp_state(struct openconnect_info *vpninfo, int level)
 
 	vpn_progress(vpninfo, level, _("Current PPP state: %s (encap %s):\n"), ppps_names[ppp->ppp_state], encap_names[ppp->encap]);
 	vpn_progress(vpninfo, level, _("    in: asyncmap=0x%08x, lcp_opts=%d, lcp_magic=0x%08x, ipv4=%s, ipv6=%s\n"),
-		     ppp->in_asyncmap, ppp->in_lcp_opts, ntohl(ppp->in_lcp_magic), inet_ntoa(ppp->in_ipv4_addr),
+		     ppp->in_asyncmap, ppp->in_lcp_opts, (unsigned)ntohl(ppp->in_lcp_magic), inet_ntoa(ppp->in_ipv4_addr),
 		     inet_ntop(AF_INET6, &ppp->in_ipv6_addr, buf, sizeof(buf)));
 	inet_ntop(AF_INET6, &ppp->out_ipv6_addr, buf, sizeof(buf));
 	vpn_progress(vpninfo, level, _("   out: asyncmap=0x%08x, lcp_opts=%d, lcp_magic=0x%08x, ipv4=%s, ipv6=%s, solicit_peerns=%d\n"),
-		     ppp->out_asyncmap, ppp->out_lcp_opts, ntohl(ppp->out_lcp_magic), inet_ntoa(ppp->out_ipv4_addr),
+		     ppp->out_asyncmap, ppp->out_lcp_opts, (unsigned)ntohl(ppp->out_lcp_magic), inet_ntoa(ppp->out_ipv4_addr),
 		     inet_ntop(AF_INET6, &ppp->out_ipv6_addr, buf, sizeof(buf)), ppp->solicit_peerns);
 }
 
@@ -376,7 +376,7 @@ static int handle_config_request(struct openconnect_info *vpninfo,
 			memcpy(&ppp->in_lcp_magic, p+2, 4);
 			vpn_progress(vpninfo, PRG_DEBUG,
 				     _("Received magic number of 0x%08x from server\n"),
-				     ntohl(ppp->in_lcp_magic));
+				     (unsigned)ntohl(ppp->in_lcp_magic));
 			break;
 		case PROTO_TAG_LEN(PPP_LCP, LCP_PFCOMP, 0):
 			vpn_progress(vpninfo, PRG_DEBUG,
@@ -456,7 +456,7 @@ static int handle_config_request(struct openconnect_info *vpninfo,
 
 	if (p != payload+len) {
 		vpn_progress(vpninfo, PRG_DEBUG,
-			     _("Received %ld extra bytes at end of Config-Request:\n"), payload + len - p);
+			     _("Received %ld extra bytes at end of Config-Request:\n"), (long)(payload + len - p));
 		dump_buf_hex(vpninfo, PRG_DEBUG, '<', p, payload + len - p);
 	}
 
@@ -718,7 +718,7 @@ static int handle_config_rejnak(struct openconnect_info *vpninfo,
 	}
 	if (p != payload+len) {
 		vpn_progress(vpninfo, PRG_DEBUG,
-			     _("Received %ld extra bytes at end of Config-Reject:\n"), payload + len - p);
+			     _("Received %ld extra bytes at end of Config-Reject:\n"), (long)(payload + len - p));
 		dump_buf_hex(vpninfo, PRG_DEBUG, '<', p, payload + len - p);
 	}
 
@@ -950,7 +950,7 @@ static inline void add_ppp_header(struct pkt *p, struct oc_ppp *ppp, int proto) 
 
 int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 {
-	int ret, magic, rsv_hdr_size;
+	int ret, rsv_hdr_size;
 	int work_done = 0;
 	struct pkt *this;
 	struct oc_ppp *ppp = vpninfo->ppp;
@@ -1099,7 +1099,7 @@ int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 				if (pp != this->data) {
 					vpn_progress(vpninfo, PRG_TRACE,
 						     _("Expected %d PPP header bytes but got %ld, shifting payload.\n"),
-						     ppp->exp_ppp_hdr_size, pp - ph);
+						     ppp->exp_ppp_hdr_size, (long)(pp - ph));
 					/* Save it for next time */
 					ppp->exp_ppp_hdr_size = pp - ph;
 					/* XX: If PPP header was SMALLER than expected, we could
@@ -1242,7 +1242,6 @@ int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 	 * invocation, but how to convince it of that?
 	 */
 	if ((this = vpninfo->current_ssl_pkt)) {
-		unsigned char *eh;
 		const char *lcp = NULL;
 		int id;
 
