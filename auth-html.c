@@ -216,10 +216,16 @@ struct oc_auth_form *parse_form_node(struct openconnect_info *vpninfo,
 	}
 
 	if (flavor == FORM_FLAVOR_JUNIPER) {
-		xmlnode_get_prop(node, "name", &form->auth_id);
-		form->banner = strdup(form->auth_id);
+		/* XX: some forms have 'id', but no 'name' */
+		if (!xmlnode_get_prop(node, "name", &form->auth_id) ||
+		    !xmlnode_get_prop(node, "id", &form->auth_id))
+			form->banner = strdup(form->auth_id);
 	} else if (flavor == FORM_FLAVOR_F5)
 		xmlnode_get_prop(node, "id", &form->auth_id);
+
+	/* XX: fallback auth_id (since other functions expect it to exist) */
+	if (!form->auth_id)
+		form->auth_id = strdup("unknown");
 
 	for (child = htmlnode_dive(node, node); child && child != node; child = htmlnode_dive(node, child)) {
 		if (!child->name)
