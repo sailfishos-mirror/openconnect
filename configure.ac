@@ -648,6 +648,10 @@ AC_ARG_ENABLE([ppp-tests],
 	AS_HELP_STRING([--enable-ppp-tests], [Enable PPP tests (which require socat and pppd, and must run as root)]),
 	[enable_ppp_tests=yes])
 
+AC_ARG_ENABLE([flask-tests],
+	AS_HELP_STRING([--disable-flask-tests], [Disable Flask-based tests (which require Python 3.6+ and the Flask module)]),
+        [], [enable_flask_tests=yes])
+
 AM_CONDITIONAL(OPENCONNECT_GNUTLS,  [ test "$ssl_library" = "GnuTLS" ])
 AM_CONDITIONAL(OPENCONNECT_OPENSSL, [ test "$ssl_library" = "OpenSSL" ])
 AM_CONDITIONAL(OPENCONNECT_ESP, [ test "$esp" != "" ])
@@ -1068,7 +1072,7 @@ PKG_CHECK_MODULES([CWRAP], [uid_wrapper, socket_wrapper], have_cwrap=yes, have_c
 AM_CONDITIONAL(HAVE_CWRAP, test "x$have_cwrap" != xno)
 
 have_python36_flask=no
-if test -n "${ac_cv_path_PYTHON}"; then
+if test "$enable_flask_tests" = "yes" -a -n "${ac_cv_path_PYTHON}"; then
     AC_MSG_CHECKING([for Python 3.6+ with Flask module])
     python3 -c 'import sys; assert sys.version_info >= (3,6); import flask' 2>/dev/null
     if test $? -ne 0 ; then
@@ -1077,8 +1081,8 @@ if test -n "${ac_cv_path_PYTHON}"; then
         have_python36_flask=yes
         AC_MSG_RESULT(found)
     fi
-    AM_CONDITIONAL(HAVE_PYTHON36_FLASK, test "$have_python36_flask" = yes)
 fi
+AM_CONDITIONAL(HAVE_PYTHON36_FLASK, test "$have_python36_flask" = yes)
 
 if test "$enable_ppp_tests" = "yes"; then
     AC_PATH_PROGS(SOCAT, [socat], [], $PATH:/bin:/usr/bin)
@@ -1186,6 +1190,7 @@ SUMMARY([Unit tests], [$have_cwrap])
 SUMMARY([Net namespace tests], [$have_netns])
 SUMMARY([DSA tests], [$enable_dsa_tests])
 SUMMARY([PPP tests], [$enable_ppp_tests])
+SUMMARY([Flask tests], [$have_python36_flask])
 SUMMARY([Insecure debugging], [$insecure_debugging])
 SUMMARY([NSIS installer], [$build_nsis])
 
