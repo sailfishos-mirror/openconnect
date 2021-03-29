@@ -202,6 +202,14 @@ char *openconnect__strndup(const char *s, size_t n)
 }
 #endif
 
+#ifndef HAVE_STRCHRNUL
+const char *openconnect__strchrnul(const char *s, int c)
+{
+	while (*s && *s++ != c);
+	return s;
+}
+#endif
+
 #ifndef HAVE_INET_ATON
 /* XX: unlike "real" inet_aton(), inet_pton() only accepts dotted-decimal notation, not
  * looser/rarer formats like 32-bit decimal values. For example, inet_aton() accepts both

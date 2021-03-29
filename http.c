@@ -395,6 +395,47 @@ int http_add_cookie(struct openconnect_info *vpninfo, const char *option,
 	return 0;
 }
 
+/* Some protocols use an "authentication cookie" which needs
+ * to be split into multiple HTTP cookies. (For example, oNCP
+ * 'DSSignInUrl=/; DSID=xxx; DSFirstAccess=xxx; DSLastAccess=xxx')
+ * Process those into vpninfo->cookies.
+ */
+int internal_split_cookies(struct openconnect_info *vpninfo, int replace, const char *def_cookie)
+{
+	char *p = vpninfo->cookie;
+
+	while (p && *p) {
+		char *semicolon = strchr(p, ';');
+		char *equals;
+
+		if (semicolon)
+			*semicolon = 0;
+
+		equals = strchr(p, '=');
+		if (equals) {
+			*equals = 0;
+			http_add_cookie(vpninfo, p, equals+1, replace);
+			*equals = '=';
+		} else if (def_cookie) {
+			/* XX: assume this represents a single cookie's value */
+			http_add_cookie(vpninfo, def_cookie, p, replace);
+		} else {
+			vpn_progress(vpninfo, PRG_ERR, _("Invalid cookie '%s'\n"), p);
+			return -EINVAL;
+		}
+
+		p = semicolon;
+		if (p) {
+			*p = ';';
+			p++;
+			while (*p && isspace((int)(unsigned char)*p))
+				p++;
+		}
+	}
+
+	return 0;
+}
+
 /* Read one HTTP header line into hdrbuf, potentially allowing for
  * continuation lines. Will never leave a character in 'nextchar' when
  * an empty line (signifying end of headers) is received. Will only
@@ -809,6 +850,15 @@ int internal_parse_url(const char *url, char **res_proto, char **res_host,
 		*res_path = (orig_path && *orig_path) ? strdup(orig_path) : NULL;
 
 	return 0;
+}
+
+char *internal_get_url(struct openconnect_info *vpninfo)
+{
+	char *url;
+	if (asprintf(&url, "https://%s%s%s", vpninfo->hostname, vpninfo->urlpath ? "/" : "", vpninfo->urlpath) < 0)
+		return NULL;
+	else
+		return url;
 }
 
 void openconnect_clear_cookies(struct openconnect_info *vpninfo)

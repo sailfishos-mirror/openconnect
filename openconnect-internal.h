@@ -351,6 +351,7 @@ static inline void init_pkt_queue(struct pkt_q *q)
 	q->tail = &q->head;
 }
 
+#define TLS_OVERHEAD 5 /* packet + header */
 #define DTLS_OVERHEAD (1 /* packet + header */ + 13 /* DTLS header */ + \
 	 20 /* biggest supported MAC (SHA1) */ +  32 /* biggest supported IV (AES-256) */ + \
 	 16 /* max padding */)
@@ -787,6 +788,11 @@ char *openconnect__strcasestr(const char *haystack, const char *needle);
 #define strndup openconnect__strndup
 char *openconnect__strndup(const char *s, size_t n);
 #endif
+#ifndef HAVE_STRCHRNUL
+#undef strchrnul
+#define strchrnul openconnect__strchrnul
+const char *openconnect__strchrnul(const char *s, int c);
+#endif
 
 #ifndef HAVE_INET_ATON
 #define inet_aton openconnect__inet_aton
@@ -910,6 +916,10 @@ int openconnect_dtls_write(struct openconnect_info *vpninfo, void *buf, size_t l
 char *openconnect_bin2hex(const char *prefix, const uint8_t *data, unsigned len);
 char *openconnect_bin2base64(const char *prefix, const uint8_t *data, unsigned len);
 
+/* mtucalc.c */
+
+int calculate_mtu(struct openconnect_info *vpninfo, int is_udp, int unpadded_overhead, int padded_overhead, int block_size);
+
 /* cstp.c */
 int check_address_sanity(struct openconnect_info *vpninfo, const char *old_addr, const char *old_netmask, const char *old_addr6, const char *old_netmask6);
 void cstp_common_headers(struct openconnect_info *vpninfo, struct oc_text_buf *buf);
@@ -919,6 +929,19 @@ int cstp_bye(struct openconnect_info *vpninfo, const char *reason);
 int decompress_and_queue_packet(struct openconnect_info *vpninfo, int compr_type,
 				unsigned char *buf, int len);
 int compress_packet(struct openconnect_info *vpninfo, int compr_type, struct pkt *this);
+
+/* html-auth.c */
+xmlNodePtr htmlnode_next(xmlNodePtr top, xmlNodePtr node);
+xmlNodePtr htmlnode_dive(xmlNodePtr top, xmlNodePtr node);
+xmlNodePtr find_form_node(xmlDocPtr doc);
+int parse_input_node(struct openconnect_info *vpninfo, struct oc_auth_form *form,
+		     xmlNodePtr node, const char *submit_button,
+		     int (*can_gen_tokencode)(struct openconnect_info *vpninfo, struct oc_auth_form *form, struct oc_form_opt *opt));
+int parse_select_node(struct openconnect_info *vpninfo, struct oc_auth_form *form,
+		      xmlNodePtr node);
+struct oc_auth_form *parse_form_node(struct openconnect_info *vpninfo,
+				     xmlNodePtr node, const char *submit_button,
+				     int (*can_gen_tokencode)(struct openconnect_info *vpninfo, struct oc_auth_form *form, struct oc_form_opt *opt));
 
 /* auth-juniper.c */
 int oncp_obtain_cookie(struct openconnect_info *vpninfo);
@@ -1145,11 +1168,13 @@ char *openconnect_create_useragent(const char *base);
 int process_proxy(struct openconnect_info *vpninfo, int ssl_sock);
 int internal_parse_url(const char *url, char **res_proto, char **res_host,
 		       int *res_port, char **res_path, int default_port);
+char *internal_get_url(struct openconnect_info *vpninfo);
 int do_https_request(struct openconnect_info *vpninfo, const char *method,
 		     const char *request_body_type, struct oc_text_buf *request_body,
 		     char **form_buf, int fetch_redirect);
 int http_add_cookie(struct openconnect_info *vpninfo, const char *option,
 		    const char *value, int replace);
+int internal_split_cookies(struct openconnect_info *vpninfo, int replace, const char *def_cookie);
 int process_http_response(struct openconnect_info *vpninfo, int connect,
 			  int (*header_cb)(struct openconnect_info *, char *, char *),
 			  struct oc_text_buf *body);

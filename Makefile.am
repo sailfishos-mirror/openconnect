@@ -30,7 +30,7 @@ openconnect_LDADD = libopenconnect.la $(SSL_LIBS) $(LIBXML2_LIBS) $(LIBPROXY_LIB
 if OPENCONNECT_WIN32
 openconnect_SOURCES += openconnect.rc
 endif
-library_srcs = ssl.c http.c http-auth.c auth-common.c library.c compat.c lzs.c mainloop.c script.c ntlm.c digest.c openconnect-internal.h
+library_srcs = ssl.c http.c http-auth.c auth-common.c auth-html.c library.c compat.c lzs.c mainloop.c script.c ntlm.c digest.c mtucalc.c openconnect-internal.h
 lib_srcs_cisco = auth.c cstp.c
 lib_srcs_juniper = oncp.c lzo.c auth-juniper.c
 lib_srcs_pulse = pulse.c
