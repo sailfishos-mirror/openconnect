@@ -14,7 +14,7 @@ CentOS7/GnuTLS:
   - ./autogen.sh
   - ./configure --with-java CFLAGS=-g
   - make -j4
-# UTF-8 support is not available
+# auth-nonascii: UTF-8 support is not available in distro's ocserv package
   - make VERBOSE=1 XFAIL_TESTS="auth-nonascii" -j4 check
   tags:
   - shared
@@ -33,7 +33,7 @@ CentOS7/OpenSSL:
   - ./autogen.sh
   - ./configure --without-gnutls --with-openssl --with-java --without-openssl-version-check --enable-dtls-xfail --disable-dsa-tests CFLAGS=-g
   - make -j4
-# auth-nonascii: UTF-8 support is not available
+# auth-nonascii: UTF-8 support is not available in distro's ocserv package
 # dtls-psk: communication with ocserv fails for undetermined reasons marking as xfail until issue is identified
   - make VERBOSE=1 XFAIL_TESTS="auth-nonascii dtls-psk" -j4 check
   tags:
@@ -53,7 +53,7 @@ CentOS8/GnuTLS:
   - ./autogen.sh
   - ./configure --with-java --without-gnutls-version-check --disable-dsa-tests CFLAGS=-g
   - make -j4
-# UTF-8 support is not available
+# auth-nonascii: UTF-8 support is not available in distro's ocserv package
   - make VERBOSE=1 XFAIL_TESTS="auth-nonascii" -j4 check
   tags:
   - shared
@@ -72,8 +72,8 @@ CentOS8/OpenSSL:
   - ./autogen.sh
   - ./configure --without-gnutls --with-openssl --with-java --without-openssl-version-check --disable-dsa-tests CFLAGS=-g
   - make -j4
-# UTF-8 support is not available
-# OpenSSL 1.1.0 disables 3DES and RC4 by default (https://www.openssl.org/blog/blog/2016/08/24/sweet32/)
+# auth-nonascii: UTF-8 support is not available in distro's ocserv package
+# obsolete-server-crypto: OpenSSL 1.1.0 disables 3DES and RC4 by default (https://www.openssl.org/blog/blog/2016/08/24/sweet32/)
   - make VERBOSE=1 XFAIL_TESTS="auth-nonascii obsolete-server-crypto" -j4 check
   tags:
   - shared
@@ -92,7 +92,7 @@ CentOS6/OpenSSL:
   - ./autogen.sh
   - ./configure --with-java --without-openssl-version-check --enable-dtls-xfail CFLAGS=-g
   - make -j4
-# UTF-8 support is not available
+# auth-nonascii: UTF-8 support is not available in distro's ocserv package
   - make VERBOSE=1 XFAIL_TESTS="bad_dtls_test auth-nonascii" -j4 check
   tags:
   - shared
@@ -172,7 +172,7 @@ ubsan/OpenSSL/Fedora:
   - export UBCFLAGS="-Wall -Wextra -fsanitize=undefined -fsanitize=bool -fsanitize=alignment -fsanitize=null -fsanitize=bounds-strict -fsanitize=enum -fno-sanitize-recover -g -O2"
   - CFLAGS="$UBCFLAGS" ./configure --without-gnutls --with-openssl --without-openssl-version-check --disable-dsa-tests
   - make -j4
-# OpenSSL 1.1.0 disables 3DES and RC4 by default (https://www.openssl.org/blog/blog/2016/08/24/sweet32/)
+# obsolete-server-crypto: OpenSSL 1.1.0 disables 3DES and RC4 by default (https://www.openssl.org/blog/blog/2016/08/24/sweet32/)
   - make VERBOSE=1 XFAIL_TESTS="obsolete-server-crypto" -j4 check
   tags:
   - shared
@@ -215,7 +215,7 @@ asan/OpenSSL/Fedora:
   - CC=clang CFLAGS="-fsanitize=address -fno-optimize-sibling-calls -fno-omit-frame-pointer -g -O1"
     ./configure --without-gnutls --with-openssl --without-openssl-version-check --disable-dsa-tests --without-asan-broken-tests
   - make -j4
-# OpenSSL 1.1.0 disables 3DES and RC4 by default (https://www.openssl.org/blog/blog/2016/08/24/sweet32/)
+# obsolete-server-crypto: OpenSSL 1.1.0 disables 3DES and RC4 by default (https://www.openssl.org/blog/blog/2016/08/24/sweet32/)
   - make VERBOSE=1 XFAIL_TESTS="obsolete-server-crypto" -j4 check
   tags:
   - shared
@@ -238,7 +238,7 @@ Fedora/GnuTLS:
   - cd openconnect-$(git describe --tags | sed s/^v//)
   - ./configure --with-java --disable-dsa-tests --without-gnutls-version-check CFLAGS=-g
   - make -j4
-  # Disable rdrand to work around https://bugzilla.redhat.com/1831086
+# auth-pkcs11: Disable rdrand to work around https://bugzilla.redhat.com/1831086
   - make VERBOSE=1 OPENSSL_ia32cap=~0x4000000000000000 -j4 check
   tags:
   - shared
@@ -259,7 +259,7 @@ Fedora/GnuTLS/clang:
   - cd openconnect-$(git describe --tags | sed s/^v//)
   - ./configure --with-java --disable-dsa-tests --without-gnutls-version-check CC=clang CFLAGS=-g
   - make -j4
-  # Disable rdrand to work around https://bugzilla.redhat.com/1831086
+# auth-pkcs11: Disable rdrand to work around https://bugzilla.redhat.com/1831086
   - make VERBOSE=1 OPENSSL_ia32cap=~0x4000000000000000 -j4 check
   tags:
   - shared
@@ -282,7 +282,8 @@ Fedora/OpenSSL:
   - cd openconnect-$(git describe --tags | sed s/^v//)
   - ./configure --without-gnutls --with-openssl --without-openssl-version-check --disable-dsa-tests CFLAGS=-g
   - make -j4
-# OpenSSL 1.1.0 disables 3DES and RC4 by default (https://www.openssl.org/blog/blog/2016/08/24/sweet32/)
+# auth-nonascii: UTF-8 support is not available in distro's ocserv package
+# obsolete-server-crypto: OpenSSL 1.1.0 disables 3DES and RC4 by default (https://www.openssl.org/blog/blog/2016/08/24/sweet32/)
   - make VERBOSE=1 XFAIL_TESTS="obsolete-server-crypto" -j4 check
   tags:
   - shared
@@ -305,7 +306,8 @@ Fedora/OpenSSL/clang:
   - cd openconnect-$(git describe --tags | sed s/^v//)
   - ./configure CC=clang --without-gnutls --with-openssl --without-openssl-version-check --disable-dsa-tests CFLAGS=-g
   - make -j4
-# OpenSSL 1.1.0 disables 3DES and RC4 by default (https://www.openssl.org/blog/blog/2016/08/24/sweet32/)
+# auth-nonascii: UTF-8 support is not available in distro's ocserv package
+# obsolete-server-crypto: OpenSSL 1.1.0 disables 3DES and RC4 by default (https://www.openssl.org/blog/blog/2016/08/24/sweet32/)
   - make VERBOSE=1 XFAIL_TESTS="obsolete-server-crypto" -j4 check
   tags:
   - shared
@@ -324,7 +326,8 @@ Ubuntu18.04/GnuTLS:
   - ./autogen.sh
   - ./configure --with-java CFLAGS=-g
   - make -j4
-# UTF-8 support is not available
+# auth-nonascii: UTF-8 support is not available in distro's ocserv package
+# obsolete-server-crypto: OpenSSL 1.1.0 disables 3DES and RC4 by default (https://www.openssl.org/blog/blog/2016/08/24/sweet32/)
   - make VERBOSE=1 XFAIL_TESTS="auth-nonascii" -j4 check
   tags:
   - shared
@@ -343,8 +346,8 @@ Ubuntu18.04/OpenSSL:
   - ./autogen.sh
   - ./configure --without-gnutls --with-openssl --with-java --without-openssl-version-check --disable-dsa-tests CFLAGS=-g
   - make -j4
-# UTF-8 support is not available
-# OpenSSL 1.1.0 disables 3DES and RC4 by default (https://www.openssl.org/blog/blog/2016/08/24/sweet32/)
+# auth-nonascii: UTF-8 support is not available in distro's ocserv package
+# obsolete-server-crypto: OpenSSL 1.1.0 disables 3DES and RC4 by default (https://www.openssl.org/blog/blog/2016/08/24/sweet32/)
   - make VERBOSE=1 XFAIL_TESTS="auth-nonascii obsolete-server-crypto" -j4 check
   tags:
   - shared
