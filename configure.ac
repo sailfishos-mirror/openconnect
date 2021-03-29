@@ -66,6 +66,22 @@ case $host_os in
     AC_CHECK_TOOL([WINDRES], [windres], [])
     AC_CHECK_TOOL([MAKENSIS], [makensis], [])
 
+    case $host_cpu in
+	x86_64|amd64)
+		wintun_arch=amd64
+		;;
+	*86)
+		wintun_arch=x86
+		;;
+	aarch64|arm64)
+		wintun_arch=arm64
+		;;
+	arm*)
+		wintun_arch=arm
+		;;
+    esac
+    AC_SUBST(WINTUN_ARCH, "$wintun_arch")
+
     # MINGW_HAS_SECURE_API may only work on newer MinGW:
     # https://stackoverflow.com/a/51977723
     AC_DEFINE(MINGW_HAS_SECURE_API, 1, [Try to make getenv_s and _putenv_s available])
@@ -86,9 +102,19 @@ esac
 AM_CONDITIONAL(OPENCONNECT_WIN32,  [ test "$have_win" = "yes" ])
 build_nsis=no
 if test "${MAKENSIS}" != ""; then
-   build_nsis=yes
+   AC_CHECK_PROG(have_curl, curl, yes)
+   if test "${have_curl}" = "yes"; then
+      build_nsis=yes
+      if test "${wintun_arch}" != ""; then
+	 AC_CHECK_PROG(have_unzip, unzip, yes)
+	 if test "${have_unzip}" != "yes"; then
+	    wintun_arch=
+	 fi
+      fi
+   fi
 fi
 AM_CONDITIONAL(BUILD_NSIS, [ test "$build_nsis" = "yes" ])
+AM_CONDITIONAL(OPENCONNECT_WINTUN, [ test "${wintun_arch}" != "" ])
 
 AC_ARG_WITH([vpnc-script],
 	[AS_HELP_STRING([--with-vpnc-script],

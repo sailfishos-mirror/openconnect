@@ -276,6 +276,10 @@ if BUILD_NSIS
 
 -include .openconnect.exe.d
 
+if OPENCONNECT_WINTUN
+-include .wintun.dll.d
+endif
+
 file-list.txt: Makefile tap-windows-9.21.2.exe vpnc-script-win.js
 	for dll in $(sort $(DLLS)); do echo "$${dll}"; done > $@
 
@@ -291,6 +295,16 @@ $(TAPDRIVER):
 file-list-$(TAPDRIVER).txt: $(TAPDRIVER)
 	echo $(TAPSHA256) $< | sha256sum -c
 	echo $< > $@
+
+WINTUNDRIVER = wintun-0.10.2.zip
+WINTUNSHA256 = fcd9f62f1bd5a550fcb9c21fbb5d6a556214753ccbbd1a3ebad4d318ec9dcbef
+
+$(WINTUNDRIVER):
+	curl https://www.wintun.net/builds/$(WINTUNDRIVER) -o $@
+
+.libs/wintun.dll: $(WINTUNDRIVER)
+	echo $(WINTUNSHA256) $< | sha256sum -c
+	unzip -DD -o -j -d .libs $< wintun/bin/$(WINTUN_ARCH)/wintun.dll
 
 # Latest vpnc-script-win.js
 vpnc-script-win.js:
