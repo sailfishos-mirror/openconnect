@@ -173,7 +173,7 @@ static const struct vpn_proto openconnect_protos[] = {
 		.name = "pulse",
 		.pretty_name = N_("Pulse Connect Secure"),
 		.description = N_("Compatible with Pulse Connect Secure SSL VPN"),
-		.flags = OC_PROTO_PROXY,
+		.flags = OC_PROTO_PROXY | OC_PROTO_AUTH_CERT | OC_PROTO_AUTH_OTP | OC_PROTO_AUTH_STOKEN,
 		.vpn_close_session = pulse_bye,
 		.tcp_connect = pulse_connect,
 		.tcp_mainloop = pulse_mainloop,
@@ -181,6 +181,46 @@ static const struct vpn_proto openconnect_protos[] = {
 		.obtain_cookie = pulse_obtain_cookie,
 		.udp_protocol = "ESP",
 #ifdef HAVE_ESP
+		.udp_setup = esp_setup,
+		.udp_mainloop = esp_mainloop,
+		.udp_close = esp_close,
+		.udp_shutdown = esp_shutdown,
+		.udp_send_probes = oncp_esp_send_probes,
+		.udp_catch_probe = oncp_esp_catch_probe,
+#endif
+	}, {
+		.name = "f5",
+		.pretty_name = N_("F5 BIG-IP SSL VPN"),
+		.description = N_("Compatible with F5 BIG-IP SSL VPN"),
+		.flags = OC_PROTO_PROXY | OC_PROTO_AUTH_CERT,
+		.vpn_close_session = f5_bye,
+		.tcp_connect = f5_connect,
+		.tcp_mainloop = ppp_mainloop,
+		.add_http_headers = http_common_headers,
+		.obtain_cookie = f5_obtain_cookie,
+		.secure_cookie = "MRHSession",
+		.udp_protocol = "DTLS",
+#ifdef HAVE_DTLSx /* Not yet... */
+		.udp_setup = esp_setup,
+		.udp_mainloop = esp_mainloop,
+		.udp_close = esp_close,
+		.udp_shutdown = esp_shutdown,
+		.udp_send_probes = oncp_esp_send_probes,
+		.udp_catch_probe = oncp_esp_catch_probe,
+#endif
+	}, {
+		.name = "fortinet",
+		.pretty_name = N_("Fortinet SSL VPN"),
+		.description = N_("Compatible with FortiGate SSL VPN"),
+		.flags = OC_PROTO_PROXY | OC_PROTO_AUTH_CERT | OC_PROTO_AUTH_OTP | OC_PROTO_AUTH_STOKEN,
+		.vpn_close_session = fortinet_bye,
+		.tcp_connect = fortinet_connect,
+		.tcp_mainloop = ppp_mainloop,
+		.add_http_headers = fortinet_common_headers,
+		.obtain_cookie = fortinet_obtain_cookie,
+		.secure_cookie = "SVPNCOOKIE",
+		.udp_protocol = "DTLS",
+#ifdef HAVE_DTLSx /* Not yet... */
 		.udp_setup = esp_setup,
 		.udp_mainloop = esp_mainloop,
 		.udp_close = esp_close,
@@ -197,7 +237,7 @@ static const struct vpn_proto openconnect_protos[] = {
 		.tcp_mainloop = nullppp_mainloop,
 		.add_http_headers = http_common_headers,
 		.obtain_cookie = nullppp_obtain_cookie,
-	}
+	},
 };
 
 #define NR_PROTOS (sizeof(openconnect_protos)/sizeof(*openconnect_protos))

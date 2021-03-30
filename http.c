@@ -735,7 +735,7 @@ int process_http_response(struct openconnect_info *vpninfo, int connect,
 					ret = i;
 				} else {
 					vpn_progress(vpninfo, PRG_ERR,
-						     _("Error in chunked decoding. Expected '', got: '%s'"),
+						     _("Error in chunked decoding. Expected '', got: '%s'\n"),
 						     clen_buf);
 					ret = -EINVAL;
 				}

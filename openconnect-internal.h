@@ -185,10 +185,18 @@ struct pkt {
 #define DTLS_CONNECTING	4	/* ESP probe received; must tell server */
 #define DTLS_CONNECTED	5	/* Server informed and should be sending ESP */
 
+/* Flavors of HTML forms to screen-scrape */
+#define FORM_FLAVOR_JUNIPER	1
+#define FORM_FLAVOR_F5		2
+#define FORM_FLAVOR_FORTINET	3
+
 /* All supported PPP packet framings/encapsulations */
 #define PPP_ENCAP_RFC1661	1	/* Plain/synchronous/pre-framed PPP (RFC1661) */
 #define PPP_ENCAP_RFC1662_HDLC	2	/* PPP with HDLC-like framing (RFC1662) */
-#define PPP_ENCAP_MAX		PPP_ENCAP_RFC1662_HDLC
+#define PPP_ENCAP_F5		3	/* F5 BigIP no HDLC */
+#define PPP_ENCAP_F5_HDLC	4	/* F5 BigIP HDLC */
+#define PPP_ENCAP_FORTINET	5	/* Fortinet no HDLC */
+#define PPP_ENCAP_MAX		PPP_ENCAP_FORTINET
 
 #define COMPR_DEFLATE	(1<<0)
 #define COMPR_LZS	(1<<1)
@@ -947,12 +955,12 @@ xmlNodePtr htmlnode_next(xmlNodePtr top, xmlNodePtr node);
 xmlNodePtr htmlnode_dive(xmlNodePtr top, xmlNodePtr node);
 xmlNodePtr find_form_node(xmlDocPtr doc);
 int parse_input_node(struct openconnect_info *vpninfo, struct oc_auth_form *form,
-		     xmlNodePtr node, const char *submit_button,
+		     xmlNodePtr node, const char *submit_button, int flavor,
 		     int (*can_gen_tokencode)(struct openconnect_info *vpninfo, struct oc_auth_form *form, struct oc_form_opt *opt));
 int parse_select_node(struct openconnect_info *vpninfo, struct oc_auth_form *form,
-		      xmlNodePtr node);
+		      xmlNodePtr node, int flavor);
 struct oc_auth_form *parse_form_node(struct openconnect_info *vpninfo,
-				     xmlNodePtr node, const char *submit_button,
+				     xmlNodePtr node, const char *submit_button, int flavor,
 				     int (*can_gen_tokencode)(struct openconnect_info *vpninfo, struct oc_auth_form *form, struct oc_form_opt *opt));
 
 /* auth-juniper.c */
@@ -981,6 +989,17 @@ int pulse_eap_ttls_recv(struct openconnect_info *vpninfo, void *data, int len);
 int nullppp_obtain_cookie(struct openconnect_info *vpninfo);
 int nullppp_connect(struct openconnect_info *vpninfo);
 int nullppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable);
+
+/* f5.c */
+int f5_obtain_cookie(struct openconnect_info *vpninfo);
+int f5_connect(struct openconnect_info *vpninfo);
+int f5_bye(struct openconnect_info *vpninfo, const char *reason);
+
+/* fortinet.c */
+void fortinet_common_headers(struct openconnect_info *vpninfo, struct oc_text_buf *buf);
+int fortinet_obtain_cookie(struct openconnect_info *vpninfo);
+int fortinet_connect(struct openconnect_info *vpninfo);
+int fortinet_bye(struct openconnect_info *vpninfo, const char *reason);
 
 /* ppp.c */
 struct oc_ppp;

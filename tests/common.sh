@@ -110,8 +110,9 @@ launch_simple_pppd() {
 }
 
 wait_server() {
+	test $# -ge 2 && DELAY="$2" || DELAY=5
 	trap "kill $1" 1 15 2
-	sleep 5
+	sleep "$DELAY"
 }
 
 cleanup() {

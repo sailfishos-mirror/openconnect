@@ -12,7 +12,10 @@ CentOS7/GnuTLS:
   image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$CENTOS7_BUILD
   script:
   - ./autogen.sh
-  - ./configure --with-java --enable-ppp-tests CFLAGS=-g
+# For reasons that are not clear, OpenConnect fails to handshake a TLS connection to Python 3.6+Flask
+# (verified in https://gitlab.com/openconnect/openconnect/-/jobs/1135245618#L520), so we disable the
+# Flask-based authentication tests.
+  - ./configure --with-java --enable-ppp-tests --disable-flask-tests CFLAGS=-g
   - make -j4
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
   - make VERBOSE=1 XFAIL_TESTS="auth-nonascii" -j4 check
@@ -31,7 +34,10 @@ CentOS7/OpenSSL:
   image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$CENTOS7_BUILD
   script:
   - ./autogen.sh
-  - ./configure --without-gnutls --with-openssl --with-java --without-openssl-version-check --enable-dtls-xfail --disable-dsa-tests --enable-ppp-tests CFLAGS=-g
+# For reasons that are not clear, OpenConnect fails to handshake a TLS connection to Python 3.6+Flask
+# (verified in https://gitlab.com/openconnect/openconnect/-/jobs/1135245618#L520), so we disable the
+# Flask-based authentication tests.
+  - ./configure --without-gnutls --with-openssl --with-java --without-openssl-version-check --enable-dtls-xfail --disable-dsa-tests --enable-ppp-tests --disable-flask-tests CFLAGS=-g
   - make -j4
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED

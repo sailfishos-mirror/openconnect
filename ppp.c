@@ -170,6 +170,9 @@ static const char *encap_names[PPP_ENCAP_MAX+1] = {
 	NULL,
 	"RFC1661",
 	"RFC1662 HDLC",
+	"F5",
+	"F5 HDLC",
+	"FORTINET",
 };
 
 static const char *lcp_names[] = {
@@ -239,6 +242,24 @@ int openconnect_ppp_new(struct openconnect_info *vpninfo,
 
 	ppp->encap = encap;
 	switch (encap) {
+	case PPP_ENCAP_F5:
+		/* XX: F5 server cancels our IP address allocation if we PPP-terminate */
+		ppp->no_terminate_on_pause = 1;
+		ppp->encap_len = 4;
+		break;
+
+	case PPP_ENCAP_FORTINET:
+		/* XX: Fortinet server rejects asyncmap and header compression. Don't blame me. */
+		ppp->out_lcp_opts &= ~(BIT_PFCOMP | BIT_ACCOMP);
+		ppp->encap_len = 6;
+		ppp->check_http_response = 1;
+		break;
+
+	case PPP_ENCAP_F5_HDLC:
+		/* XX: F5 server cancels our IP address allocation if we PPP-terminate */
+		ppp->no_terminate_on_pause = 1;
+		/* fall through */
+
 	case PPP_ENCAP_RFC1662_HDLC:
 		ppp->encap_len = 0;
 		ppp->hdlc = 1;
@@ -889,7 +910,14 @@ static int handle_state_transition(struct openconnect_info *vpninfo, int *timeou
 		break;
 
 	case PPPS_NETWORK:
-		if (vpninfo->got_pause_cmd || vpninfo->got_cancel_cmd)
+		/* XX: When we pause and reconnect, we expect the auth cookie/session (external to the
+		 * PPP layer) to remain valid, and to negotiate the same IP addresses on reconnection.
+		 *
+		 * However, some servers cancel our session or cancel our IP address allocation if we
+		 * TERMINATE at the PPP layer, so we shouldn't do it when pausing.
+		 */
+		if (vpninfo->got_cancel_cmd ||
+		    (vpninfo->got_pause_cmd && !ppp->no_terminate_on_pause))
 			ppp->ppp_state = PPPS_TERMINATE;
 		else
 			break;
@@ -950,7 +978,7 @@ static inline void add_ppp_header(struct pkt *p, struct oc_ppp *ppp, int proto) 
 
 int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 {
-	int ret, rsv_hdr_size;
+	int ret, magic, rsv_hdr_size;
 	int work_done = 0;
 	struct pkt *this;
 	struct oc_ppp *ppp = vpninfo->ppp;
@@ -997,6 +1025,26 @@ int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		if (len < 0)
 			goto do_reconnect;
 
+		/* XX: Some protocols require us to check for an HTTP response in place
+		 * of the first packet
+		 */
+		if (ppp->check_http_response) {
+			ppp->check_http_response = 0;
+			if (!memcmp(eh, "HTTP/", 5)) {
+				const char *sol = (const char *)eh;
+				const char *eol = memchr(sol, '\r', len) ?: memchr(sol, '\n', len);
+				const char *sp1 = memchr(sol, ' ', len);
+				const char *sp2 = memchr(sp1+1, ' ', len - (sp1-sol) + 1);
+				int status = sp1 && sp2 ? atoi(sp1+1) : -1;
+				if (eol)
+					len = eol - sol;
+				vpn_progress(vpninfo, PRG_ERR,
+					     _("Got unexpected HTTP response: %.*s\n"), len, sol);
+				vpninfo->quit_reason = "Received HTTP response (not a PPP packet)";
+				return (status >= 400 && status <= 499) ? -EPERM : -EINVAL;
+			}
+		}
+
 	next_pkt:
 		/* At this point:
 		 *   eh: pointer to start of bytes-from-the-wire
@@ -1015,6 +1063,42 @@ int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 
 		/* Deencapsulate from pre-PPP header */
 		switch (ppp->encap) {
+		case PPP_ENCAP_F5:
+			magic = load_be16(eh);
+			payload_len = load_be16(eh + 2);
+			next = eh + 4 + payload_len;
+
+			if (magic != 0xf500) {
+			bad_encap_header:
+				vpn_progress(vpninfo, PRG_ERR,
+					     _("Unexpected pre-PPP packet header for encap %d.\n"),
+					     ppp->encap);
+				dump_buf_hex(vpninfo, PRG_ERR, '<', eh, len);
+				continue;
+			}
+
+			if (len < 4 + payload_len) {
+			incomplete_pkt:
+				vpn_progress(vpninfo, PRG_ERR,
+					     _("Packet is incomplete. Received %d bytes on wire (includes %d encap) but header payload_len is %d\n"),
+					     len, ppp->encap_len, payload_len);
+				dump_buf_hex(vpninfo, PRG_ERR, '<', eh, len);
+				continue;
+			}
+			break;
+
+		case PPP_ENCAP_FORTINET:
+			payload_len = load_be16(eh + 4);
+			magic = load_be16(eh + 2);
+			next = eh + 6 + payload_len;
+
+			if (magic != 0x5050 || (load_be16(eh) != payload_len + 6))
+				goto bad_encap_header;
+			if (len < 6 + payload_len)
+				goto incomplete_pkt;
+			break;
+
+		case PPP_ENCAP_F5_HDLC:
 		case PPP_ENCAP_RFC1662_HDLC:
 			payload_len = unhdlc_in_place(vpninfo, eh + ppp->encap_len, len - ppp->encap_len, &next);
 			if (payload_len < 0)
@@ -1242,6 +1326,7 @@ int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 	 * invocation, but how to convince it of that?
 	 */
 	if ((this = vpninfo->current_ssl_pkt)) {
+		unsigned char *eh;
 		const char *lcp = NULL;
 		int id;
 
@@ -1268,14 +1353,19 @@ int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		}
 
 		/* Encapsulate into pre-PPP header */
-		/* Nothing here until we add protocols that require pre-PPP
-		 * header encapsulation. Such a protocol would store the
-		 * pre-PPP header into the range of memory:
-		 *   eh to (eh + ppp->encap_len)
-		 *
-		 * Commented out so that sanitizer doesn't complain:
-		 *   eh = this->data - this->ppp.hlen - ppp->encap_len;
-		 */
+		eh = this->data - this->ppp.hlen - ppp->encap_len;
+		switch (ppp->encap) {
+		case PPP_ENCAP_F5:
+			store_be16(eh, 0xf500);
+			store_be16(eh + 2, this->len + this->ppp.hlen);
+			break;
+		case PPP_ENCAP_FORTINET:
+			/* XX: header contains both TOTAL bytes-on-wire, and (bytes-on-wire excluding this header)  */
+			store_be16(eh, this->len + this->ppp.hlen + 6);
+			store_be16(eh + 2, 0x5050);
+			store_be16(eh + 4, this->len + this->ppp.hlen);
+			break;
+		}
 		this->ppp.hlen += ppp->encap_len;
 
 		if (lcp)
