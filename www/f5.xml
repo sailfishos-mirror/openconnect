@@ -1,0 +1,29 @@
+<PAGE>
+	<INCLUDE file="inc/header.tmpl" />
+
+	<VAR match="VAR_SEL_PROTOCOLS" replace="selected" />
+	<VAR match="VAR_SEL_F5" replace="selected" />
+	<PARSE file="menu1.xml" />
+	<PARSE file="menu2-protocols.xml" />
+	
+	<INCLUDE file="inc/content.tmpl" />
+
+<h1>F5 SSL VPN</h1>
+
+<p>Experimental support for <a
+href="https://www.f5.com/services/resources/glossary/ssl-vpn">F5 SSL
+VPN</a> was added to OpenConnect in March 2021. It is a PPP-based
+protocol using the native PPP support which was merged into the 9.00
+release.</p>
+
+<p>F5 mode is requested by adding <tt>--protocol=f5</tt>
+to the command line:
+<pre>
+  openconnect --protocol=f5 big-ip.example.com
+</pre></p>
+
+<p>OpenConnect does not yet support the UDP transport for F5, and
+will use PPP over TCP for connectivity.</p>
+
+	<INCLUDE file="inc/footer.tmpl" />
+</PAGE>
