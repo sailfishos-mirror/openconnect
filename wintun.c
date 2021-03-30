@@ -20,7 +20,10 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <winioctl.h>
+#include <winsock2.h>
+#include <ws2ipdef.h>
 #include <iphlpapi.h>
+#include <netioapi.h>
 
 #include <errno.h>
 #include <stdio.h>
@@ -135,6 +138,18 @@ intptr_t open_wintun(struct openconnect_info *vpninfo, char *guid, wchar_t *wnam
 		}
 	}
 
+	MIB_UNICASTIPADDRESS_ROW AddressRow;
+	InitializeUnicastIpAddressEntry(&AddressRow);
+	WintunGetAdapterLUID(vpninfo->wintun_adapter, &AddressRow.InterfaceLuid);
+	AddressRow.Address.Ipv4.sin_family = AF_INET;
+	AddressRow.Address.Ipv4.sin_addr.S_un.S_addr = htonl(inet_addr(vpninfo->ip_info.addr));
+	AddressRow.OnLinkPrefixLength = 32; /* This is a /24 network */
+	DWORD LastError = CreateUnicastIpAddressEntry(&AddressRow);
+	if (LastError != ERROR_SUCCESS && LastError != ERROR_OBJECT_ALREADY_EXISTS) {
+		vpn_progress(vpninfo, PRG_ERR, _("Failed to set Legacy IP address on Wintun\n"));
+	}
+	vpn_progress(vpninfo, PRG_INFO, "Set Legacy IP address %s (%x)\n", vpninfo->ip_info.addr, AddressRow.Address.Ipv4.sin_addr.S_un.S_addr);
+
 	vpninfo->wintun_session = WintunStartSession(vpninfo->wintun_adapter, 0x400000);
 	if (!vpninfo->wintun_session) {
 		char *errstr = openconnect__win32_strerror(GetLastError());
@@ -193,7 +208,8 @@ void os_shutdown_wintun(struct openconnect_info *vpninfo)
 		vpninfo->wintun_session = NULL;
 	}
 	if (vpninfo->wintun_adapter) {
-		WintunFreeAdapter(vpninfo->wintun_adapter);
+		BOOL rr;
+		WintunDeleteAdapter(vpninfo->wintun_adapter, FALSE, &rr);
 		vpninfo->wintun_adapter = NULL;
 	}
 	logger_vpninfo = NULL;
@@ -205,6 +221,6 @@ int setup_wintun_fd(struct openconnect_info *vpninfo, intptr_t tun_fd)
 {
 	vpninfo->tun_rd_overlap.hEvent = WintunGetReadWaitEvent(vpninfo->wintun_session);
 	monitor_read_fd(vpninfo, tun);
-	vpninfo->tun_fh = 1;
+	vpninfo->tun_fh = (HANDLE)tun_fd;
 	return 0;
 }
