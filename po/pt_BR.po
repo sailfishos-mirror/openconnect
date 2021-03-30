@@ -1,27 +1,27 @@
 # Brazilian Portuguese Translation of Network-manager-openconnect
-# Copyright (C) 2019 NETWORK-MANAGER-OPENCONNECT'S copyright holder
+# Copyright (C) 2021 NETWORK-MANAGER-OPENCONNECT'S copyright holder
 # This file is distributed under the same license as the network-manager-openconnect package.
-# Enrico Nicoletto <liverig@gmail.com>, 2008, 2014.
 # Antonio Fernandes C. Neto <fernandes@pelivre.org>, 2010.
 # Djavan Fagundes <djavan@comum.org>, 2011.
 # Ricardo Barbosa <barbosa.cisco@gmail.com>, 2014.
 # Rafael Fontenelle <rafaelff@gnome.org>, 2013-2019.
 # Henrique Machado Campos <henriquecamposrj@gmail.com>, 2020.
+# Enrico Nicoletto <liverig@gmail.com>, 2008, 2014, 2021.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: network-manager-openconnect\n"
 "Report-Msgid-Bugs-To: openconnect-devel@lists.infradead.org\n"
 "POT-Creation-Date: 2021-03-30 11:33+0100\n"
-"PO-Revision-Date: 2020-09-04 01:15-0300\n"
-"Last-Translator: Henrique Machado Campos <henriquecamposrj@gmail.com>\n"
+"PO-Revision-Date: 2021-03-27 16:06-0300\n"
+"Last-Translator: Enrico Nicoletto <liverig@gmail.com>\n"
 "Language-Team: Brazilian Portuguese <gnome-pt_br-list@gnome.org>\n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n > 1)\n"
-"X-Generator: Gtranslator 3.36.0\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"X-Generator: Poedit 2.4.2\n"
 "X-Project-Style: gnome\n"
 
 #: auth-globalprotect.c:119
@@ -171,7 +171,7 @@ msgstr "Descartando opção duplicada “%s”\n"
 #: auth-html.c:212 auth.c:437
 #, c-format
 msgid "Cannot handle form method='%s', action='%s'\n"
-msgstr "Não foi possível tratar de formulário method=\"%s\", action=\"%s\"\n"
+msgstr "Não foi possível tratar de formulário method=“%s“, action=“%s“\n"
 
 #: auth-html.c:274
 #, c-format
@@ -197,7 +197,7 @@ msgstr "Nenhum cookie DSPREAUTH; não tentar TNCC\n"
 #: auth-juniper.c:191
 #, c-format
 msgid "Trying to run TNCC/Host Checker Trojan script '%s'.\n"
-msgstr ""
+msgstr "Tentando executar o script verificador de trojan TNCC/Host “%s”.\n"
 
 #: auth-juniper.c:240
 #, c-format
@@ -255,17 +255,19 @@ msgstr "Falha ao localizar ou analisar formulário web na página de login\n"
 
 #: auth-juniper.c:516
 msgid "Encountered form with no 'name' or 'id'\n"
-msgstr ""
+msgstr "Encontrado formulário sem nenhum “nome” ou “id”\n"
 
 #: auth-juniper.c:545
 #, c-format
 msgid "Form action (%s) likely indicates that TNCC/Host Checker failed.\n"
 msgstr ""
+"Ação (%s) do formulário indica que provavelmente o verificador TNCC/Host "
+"falhou.\n"
 
 #: auth-juniper.c:551
 #, c-format
 msgid "Unknown form (name '%s', id '%s')\n"
-msgstr ""
+msgstr "Formulário desconhecido (nome “%s”, id “%s”)\n"
 
 #: auth-juniper.c:554 f5.c:156
 #, c-format
@@ -410,7 +412,7 @@ msgstr "Falha ao escrever arquivo de script CSD temporário: %s\n"
 #: auth.c:1137
 #, c-format
 msgid "Trying to run CSD Trojan script '%s'.\n"
-msgstr ""
+msgstr "Tentando executar o script trojan CSD “%s”.\n"
 
 #: auth.c:1149
 #, c-format
@@ -433,7 +435,7 @@ msgstr ""
 #: auth.c:1164
 #, c-format
 msgid "CSD script '%s' completed successfully.\n"
-msgstr ""
+msgstr "O script CSD “%s” saiu anormalmente\n"
 
 #: auth.c:1192
 #, c-format
@@ -477,7 +479,7 @@ msgstr ""
 #: auth.c:1447
 #, c-format
 msgid "Fetched CSD stub for %s platform (size is %d bytes).\n"
-msgstr ""
+msgstr "Obtendo stub CSD para %s plataforma (tamanho de %d bytes).\n"
 
 #: auth.c:1467
 #, c-format
@@ -1256,7 +1258,8 @@ msgstr "Falha ao definir a credenciais PSK DTLS: %s\n"
 #: gnutls-dtls.c:286
 #, c-format
 msgid "Unknown DTLS parameters for requested CipherSuite '%s'\n"
-msgstr "Parâmetros DTLS desconhecidos para a CipherSuite requisitada “%s”\n"
+msgstr ""
+"Parâmetros DTLS desconhecidos para a Suíte Criptografada requisitada “%s”\n"
 
 #: gnutls-dtls.c:312
 #, c-format
@@ -1304,7 +1307,7 @@ msgstr "Falha ao definir o MTU DTLS: %s\n"
 #: gnutls-dtls.c:460
 #, c-format
 msgid "Established DTLS connection (using GnuTLS). Ciphersuite %s.\n"
-msgstr "Conexão DTLS estabelecida (usando GnuTLS). Ciphersuite %s.\n"
+msgstr "Conexão DTLS estabelecida (usando GnuTLS). Suíte Criptografada %s.\n"
 
 #: gnutls-dtls.c:466 openssl-dtls.c:612
 #, c-format
@@ -1359,32 +1362,32 @@ msgstr "Falha em selecionar () para TLS"
 
 #: gnutls.c:129 openssl.c:187
 msgid "TLS/DTLS write cancelled\n"
-msgstr ""
+msgstr "Escrita TLS/DTLS cancelada\n"
 
 #: gnutls.c:133
 #, c-format
 msgid "Failed to write to TLS/DTLS socket: %s\n"
-msgstr ""
+msgstr "Falha ao escrever em socket TLS/DTLS: %s\n"
 
 #: gnutls.c:179
 msgid "Failed select() for TLS/DTLS"
-msgstr ""
+msgstr "Falha em selecionar () para TLS/DTLS"
 
 #: gnutls.c:184 gnutls.c:280 openssl.c:237 openssl.c:304
 msgid "TLS/DTLS read cancelled\n"
-msgstr ""
+msgstr "Leitura TLS/DTLS cancelada\n"
 
 #. We've seen this with HTTP 1.0 responses followed by abrupt
 #. socket closure and no clean SSL shutdown.
 #. https://bugs.launchpad.net/bugs/1225276
 #: gnutls.c:197
 msgid "TLS/DTLS socket closed uncleanly\n"
-msgstr ""
+msgstr "Socket TLS/DTLS fechado inadequadamente\n"
 
 #: gnutls.c:207 gnutls.c:289
 #, c-format
 msgid "Failed to read from TLS/DTLS socket: %s\n"
-msgstr ""
+msgstr "Falha ao ler de socket TLS/DTLS: %s\n"
 
 #: gnutls.c:309
 #, c-format
@@ -1801,11 +1804,13 @@ msgstr "Carregamento do certificado falhou. Abortando.\n"
 #: gnutls.c:2282
 msgid "Failed to construct GnuTLS priority string\n"
 msgstr ""
+"Falha ao construir string de prioridade GnuTLS\n"
+"\n"
 
 #: gnutls.c:2294
 #, c-format
 msgid "Failed to set GnuTLS priority string (\"%s\"): %s\n"
-msgstr "Falha em definir linha de prioridade GnuTLS (\"%s\"): %s\n"
+msgstr "Falha em definir linha de prioridade GnuTLS (“%s“): %s\n"
 
 #: gnutls.c:2306 openssl.c:1884
 #, c-format
@@ -1874,7 +1879,7 @@ msgstr "ttls_pull_timeout_func %dms\n"
 #: gnutls.c:2700
 #, c-format
 msgid "Could not set ciphersuites: %s\n"
-msgstr ""
+msgstr "Não foi possível definir suítes criptografadas: %s\n"
 
 #: gnutls.c:2707 openssl.c:2177
 msgid "Established EAP-TTLS session\n"
@@ -2173,7 +2178,7 @@ msgstr "Desafio: %s\n"
 #: gpst.c:291
 #, c-format
 msgid "Response was: %s\n"
-msgstr ""
+msgstr "Resposta foi: %s\n"
 
 #: gpst.c:327
 #, c-format
@@ -2213,6 +2218,10 @@ msgid ""
 "<openconnect-devel@lists.infradead.org>, including any problems\n"
 "with ESP or other apparent loss of connectivity or performance.\n"
 msgstr ""
+"O endereço (%s) da configuração XML <connected-gw-ip> é diferente\n"
+"do endereço do gateway externo (%s). Por favor relate qualquer coisa para\n"
+"<openconnect-devel@lists.infradead.org>, incluindo quaisquer problemas\n"
+"com ESP ou outra aparente perda de conectividade ou desempenho.\n"
 
 #: gpst.c:515
 #, c-format
@@ -2229,6 +2238,8 @@ msgstr ""
 #, c-format
 msgid "Potential IPv6-related GlobalProtect config tag <%s>: %s\n"
 msgstr ""
+"Tag de configuração GlobalProtect potencialmente relacionada a IPv6 <%s>: "
+"%s\n"
 
 #: gpst.c:550
 #, c-format
@@ -2241,11 +2252,17 @@ msgid ""
 "it IPv6 due to a lack of information on how GlobalProtect configures it.\n"
 "Please report this to <openconnect-devel@lists.infradead.org>.\n"
 msgstr ""
+"A configuração de GlobalProtect inclui IPv6, porém essa compilação\n"
+"não oferece suporte a IPv6 devido à falta de informações sobre como\n"
+"o GlobalProtect deve configurá-lo. Por favor, relate isso\n"
+"para <openconnect-devel@lists.infradead.org>.\n"
 
 #: gpst.c:596
 msgid ""
 "Did not receive ESP keys in GlobalProtect config; tunnel will be TLS only. "
 msgstr ""
+"Não foi recebido chaves ESP na configuração GlobalProtect; túnel será apenas "
+"TLS. "
 
 #: gpst.c:655
 msgid "ESP disabled"
@@ -2321,15 +2338,15 @@ msgstr ""
 #: gpst.c:916
 #, c-format
 msgid "Trying to run HIP Trojan script '%s'.\n"
-msgstr ""
+msgstr "Tentando executar o script trojan HIP “%s”.\n"
 
 #: gpst.c:924
 msgid "Failed to create pipe for HIP script\n"
-msgstr ""
+msgstr "Falha ao criar pipe para script HIP\n"
 
 #: gpst.c:932
 msgid "Failed to fork for HIP script\n"
-msgstr ""
+msgstr "Falha ao bifurcar (fork) para script HIP\n"
 
 #: gpst.c:948
 #, c-format
@@ -2344,7 +2361,7 @@ msgstr "O script HIP “%s” retornou status não-zero: %d\n"
 #: gpst.c:958
 #, c-format
 msgid "HIP script '%s' completed successfully (report is %d bytes).\n"
-msgstr ""
+msgstr "O script HIP “%s” concluído com sucesso (relatório tem %d bytes).\n"
 
 #: gpst.c:963
 msgid "HIP report submission failed.\n"
@@ -3118,7 +3135,7 @@ msgstr "Validação de servidor"
 
 #: main.c:860
 msgid "Accept only server certificate with this fingerprint"
-msgstr ""
+msgstr "Aceitar apenas certificado do servidor com esta impressão digital"
 
 #: main.c:861
 msgid "Disable default system certificate authorities"
@@ -3356,11 +3373,11 @@ msgstr "Não tenta autenticação XML POST"
 
 #: main.c:938
 msgid "Allow use of the ancient, insecure 3DES and RC4 ciphers"
-msgstr ""
+msgstr "Permitir uso de cifras anciãs, inseguras 3DES e RC4"
 
 #: main.c:939
 msgid "(and attempt to override OS crypto policies)"
-msgstr ""
+msgstr "(e tentar ultrapassar as políticas de criptografia do SO)"
 
 #: main.c:961
 #, c-format
@@ -3400,19 +3417,21 @@ msgstr "ID de usuário inválido “%d”: %s\n"
 #: main.c:1390
 #, c-format
 msgid "Unhandled autocomplete for option %d '--%s'. Please report.\n"
-msgstr "Autocomplete sem manuseio para opção %d '--%s'. Por favor reporte.\n"
+msgstr ""
+"Não há manipulação para auto completar a opção %d “--%s”. Por favor, "
+"relate.\n"
 
 #: main.c:1411 main.c:1425
 msgid "connected"
-msgstr ""
+msgstr "conectado"
 
 #: main.c:1411
 msgid "disconnected"
-msgstr ""
+msgstr "desconectado"
 
 #: main.c:1415
 msgid "unsuccessful"
-msgstr ""
+msgstr "malsucedido"
 
 #: main.c:1419
 msgid "in progress"
@@ -3425,12 +3444,12 @@ msgstr "desabilitado"
 #: main.c:1431
 #, c-format
 msgid "Configured as %s%s%s, with SSL%s%s %s and %s%s%s %s\n"
-msgstr ""
+msgstr "Configurado como %s%s%s, com SSL%s%s %s e %s%s%s %s\n"
 
 #: main.c:1440
 #, c-format
 msgid "Session authentication will expire at %s"
-msgstr ""
+msgstr "A autenticação da sessão irá expirar em %s"
 
 #: main.c:1454
 #, c-format
@@ -3441,27 +3460,27 @@ msgstr ""
 #: main.c:1458
 #, c-format
 msgid "SSL ciphersuite: %s\n"
-msgstr ""
+msgstr "Suíte Criptografada SSL: %s\n"
 
 #: main.c:1460
 #, c-format
 msgid "%s ciphersuite: %s\n"
-msgstr ""
+msgstr "%s suíte criptografada: %s\n"
 
 #: main.c:1463
 #, c-format
 msgid "Next SSL rekey in %ld seconds\n"
-msgstr ""
+msgstr "Próxima renovação de chave SSL em %ld segundos\n"
 
 #: main.c:1466
 #, c-format
 msgid "Next %s rekey in %ld seconds\n"
-msgstr ""
+msgstr "Próxima renovação de chave %s em %ld segundos\n"
 
 #: main.c:1470
 #, c-format
 msgid "Next Trojan invocation in %ld seconds\n"
-msgstr ""
+msgstr "Próxima invocação de Trojan em %ld segundos\n"
 
 #: main.c:1488
 #, c-format
@@ -3504,6 +3523,8 @@ msgid ""
 "WARNING: This build is intended only for debugging purposes and\n"
 "         may allow you to establish insecure connections.\n"
 msgstr ""
+"AVISO: Essa compilação é destinada somente a propósitos de depuração e\n"
+"         pode permitir que estabeleças conexões inseguras.\n"
 
 #: main.c:1599
 #, c-format
@@ -3532,11 +3553,14 @@ msgid ""
 "library\n"
 "%s no longer supports them.\n"
 msgstr ""
+"AVISO: não foi possível habilitar as cifras inseguras 3DES e/ou RC4, pois a "
+"biblioteca\n"
+"%s não mais a suporta.\n"
 
 #: main.c:1703
 #, c-format
 msgid "Unknown error while enabling insecure crypto.\n"
-msgstr ""
+msgstr "Erro desconhecido ao habilitar criptografia insegura.\n"
 
 #: main.c:1710 main.c:1730
 #, c-format
@@ -3602,7 +3626,7 @@ msgid ""
 "         to <openconnect-devel@lists.infradead.org>.\n"
 msgstr ""
 "AVISO: Você especificou %s. Isso não deve ser necessário;\n"
-"       por favor reporte os casos onde é necessária a \n"
+"       por favor relate os casos onde é necessária a \n"
 "       sobreposição da prioridade da linha para conectar a um \n"
 "       servidor para <openconnect-devel@lists.infradead.org>.\n"
 
@@ -3629,7 +3653,7 @@ msgstr "Erro ao abrir redirecionamento de comando\n"
 #: main.c:2065
 #, c-format
 msgid "Failed to complete authentication\n"
-msgstr ""
+msgstr "Falha ao completar autenticação\n"
 
 #: main.c:2086
 #, c-format
@@ -3657,7 +3681,7 @@ msgstr "Usuário requisitou reconexão\n"
 
 #: main.c:2133
 msgid "Cookie was rejected by server; exiting.\n"
-msgstr ""
+msgstr "Cookie rejeitado pelo servidor; saindo.\n"
 
 #: main.c:2137
 msgid "Session terminated by server; exiting.\n"
@@ -3666,20 +3690,20 @@ msgstr "Sessão terminada pelo servidor; saindo.\n"
 #: main.c:2141
 #, c-format
 msgid "User cancelled (%s); exiting.\n"
-msgstr ""
+msgstr "Cancelado pelo usuário (%s); saindo.\n"
 
 #: main.c:2151
 #, c-format
 msgid "User detached from session (%s); exiting.\n"
-msgstr ""
+msgstr "Usuário desanexado da sessão (%s); saindo.\n"
 
 #: main.c:2161
 msgid "Unrecoverable I/O error; exiting.\n"
-msgstr ""
+msgstr "Erro de E/S irrecuperável; saindo.\n"
 
 #: main.c:2168
 msgid "Unknown error; exiting.\n"
-msgstr "Erro desconhecido; saída.\n"
+msgstr "Erro desconhecido; saindo.\n"
 
 #: main.c:2187
 #, c-format
@@ -3697,11 +3721,13 @@ msgid ""
 "Insecurely accepting certificate from VPN server \"%s\" because you ran with "
 "--servercert=ACCEPT.\n"
 msgstr ""
+"Aceitando certificados de forma insegura do servidor VPN “%s” pois você "
+"executou com --servercert=ACCEPT.\n"
 
 #: main.c:2254
 #, c-format
 msgid "Could not check server's certificate against %s\n"
-msgstr ""
+msgstr "Não foi possível verificar certificado do servidor em relação a %s\n"
 
 #: main.c:2262
 #, c-format
@@ -3709,6 +3735,8 @@ msgid ""
 "None of the %d fingerprint(s) specified via --servercert match server's "
 "certificate: %s\n"
 msgstr ""
+"Nenhuma das %d impressão(ões) digital(is) especificadas via --servercert "
+"combina(m) com a do certificado do servidor: %s\n"
 
 #: main.c:2271
 #, c-format
@@ -3851,23 +3879,23 @@ msgstr "A configuração de um dispositivo tun falhou\n"
 #: mainloop.c:211
 #, c-format
 msgid "Delaying tunnel with reason: %s\n"
-msgstr ""
+msgstr "Atrasando túnel com o motivo: %s\n"
 
 #: mainloop.c:245
 msgid "Delaying cancel (immediate callback).\n"
-msgstr ""
+msgstr "Atrasando cancelamento (retorno de chamada imediato).\n"
 
 #: mainloop.c:248
 msgid "Delaying cancel.\n"
-msgstr ""
+msgstr "Atrasando cancelamento.\n"
 
 #: mainloop.c:267
 msgid "Delaying pause (immediate callback).\n"
-msgstr ""
+msgstr "Atrasando pausa (retorno de chamada imediato).\n"
 
 #: mainloop.c:270
 msgid "Delaying pause.\n"
-msgstr ""
+msgstr "Atrasando pausa.\n"
 
 #: mainloop.c:283
 msgid "Caller paused the connection\n"
@@ -4481,11 +4509,11 @@ msgstr "Essa versão do OpenConnect foi compilada sem suporte a PKCS#11\n"
 
 #: openssl.c:180
 msgid "Failed to write to TLS/DTLS socket\n"
-msgstr ""
+msgstr "Falha ao escrever para socket TLS/DTLS\n"
 
 #: openssl.c:230 openssl.c:296
 msgid "Failed to read from TLS/DTLS socket\n"
-msgstr ""
+msgstr "Falha ao ler de socket TLS/DTLS\n"
 
 #: openssl.c:325
 #, c-format
@@ -4701,12 +4729,12 @@ msgstr "Certificado SSL e chave não correspondem\n"
 
 #: openssl.c:1768
 msgid "Failed to construct OpenSSL cipher list\n"
-msgstr ""
+msgstr "Falha ao construir lista de cifras OpenSSL\n"
 
 #: openssl.c:1779
 #, c-format
 msgid "Failed to set OpenSSL cipher list (\"%s\")\n"
-msgstr "Falha ao definir lista de cifras OpenSSL (\"%s\")\n"
+msgstr "Falha ao definir lista de cifras OpenSSL (“%s“)\n"
 
 #: openssl.c:1807
 #, c-format
@@ -5222,7 +5250,7 @@ msgstr "Falha na autenticação: Conta bloqueada\n"
 
 #: pulse.c:1697
 msgid "Authentication failure: Client certificate required\n"
-msgstr ""
+msgstr "Falha na autenticação: Requer certificado do cliente\n"
 
 #: pulse.c:1700
 #, c-format
@@ -5278,8 +5306,8 @@ msgstr "Requisição de autenticação por senha Pulse, código 0x%02x\n"
 #, c-format
 msgid "Pulse password request with unknown code 0x%02x. Please report.\n"
 msgstr ""
-"Solicitação de senha Pulse com código desconhecido 0x%02x. Por favor "
-"reporte.\n"
+"Solicitação de senha Pulse com código desconhecido 0x%02x. Por favor, "
+"relate.\n"
 
 #: pulse.c:1887
 msgid "Pulse password general token code request\n"
@@ -5383,26 +5411,26 @@ msgstr "Descartar exclusão de split incorreta: “%s”\n"
 msgid ""
 "WARNING: Split include \"%s\" has host bits set, replacing with \"%s/%d\".\n"
 msgstr ""
-"AVISO: Inclusão dividida \"%s\" tem bits de host definidos, sendo "
-"substituídos por \"%s/%d\".\n"
+"AVISO: Inclusão dividida “%s” tem bits de host definidos, sendo substituídos "
+"por “%s/%d”.\n"
 
 #: script.c:165
 #, c-format
 msgid ""
 "WARNING: Split exclude \"%s\" has host bits set, replacing with \"%s/%d\".\n"
 msgstr ""
-"AVISO: Exclusão dividida \"%s\" tem bits de host definidos sendo "
-"substituídos por \"%s/%d\".\n"
+"AVISO: Exclusão dividida “%s“ tem bits de host definidos sendo substituídos "
+"por “%s/%d“.\n"
 
 #: script.c:272
 #, c-format
 msgid "Ignoring legacy network because address \"%s\" is invalid.\n"
-msgstr "Ignorando rede legado porque endereço \"%s\" é inválido.\n"
+msgstr "Ignorando rede legado porque endereço “%s“ é inválido.\n"
 
 #: script.c:277
 #, c-format
 msgid "Ignoring legacy network because netmask \"%s\" is invalid.\n"
-msgstr "Ignorando rede legado porque máscara de rede \"%s\" é inválido.\n"
+msgstr "Ignorando rede legado porque máscara de rede “%s“ é inválido.\n"
 
 #: script.c:553 script.c:601
 #, c-format
@@ -5585,7 +5613,7 @@ msgstr "Arquivo %s está vazio\n"
 #: ssl.c:973
 #, c-format
 msgid "File %s has suspicious size %<PRId64>\n"
-msgstr ""
+msgstr "Arquivo %s tem tamanho suspeito %<PRId64>\n"
 
 #: ssl.c:982
 #, c-format
@@ -5778,7 +5806,7 @@ msgstr "Não é possível ler %s\\%s ou isso não é linha\n"
 #: tun-win32.c:109
 #, c-format
 msgid "%s\\ComponentId is '%s' not '%s'\n"
-msgstr "%s\\ComponentId é '%s' não '%s'\n"
+msgstr "%s\\ComponentId é “%s” não “%s”\n"
 
 #: tun-win32.c:115
 #, c-format
