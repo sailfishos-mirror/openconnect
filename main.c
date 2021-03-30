@@ -84,7 +84,7 @@ static int timestamp;
 #ifndef _WIN32
 static int background;
 static int use_syslog = 0;
-static FILE *pid_fp = NULL;
+int wrote_pid = 0;
 static char *pidfile = NULL;
 #endif
 static int do_passphrase_from_fsid;
@@ -1475,7 +1475,7 @@ static void print_connection_stats(void *_vpninfo, const struct oc_stats *stats)
 }
 
 #ifndef _WIN32
-static FILE *background_self(struct openconnect_info *vpninfo, char *pidfile) {
+static int background_self(struct openconnect_info *vpninfo, char *pidfile) {
 	FILE *fp = NULL;
 	int pid;
 
@@ -1508,7 +1508,7 @@ static FILE *background_self(struct openconnect_info *vpninfo, char *pidfile) {
 	}
 	if (fp)
 		fclose(fp);
-	return fp;
+	return !!fp;
 }
 #endif /* _WIN32 */
 
@@ -1518,7 +1518,7 @@ static void fully_up_cb(void *_vpninfo) {
 	print_connection_info(vpninfo);
 #ifndef _WIN32
 	if (background)
-		pid_fp = background_self(vpninfo, pidfile);
+		wrote_pid = background_self(vpninfo, pidfile);
 
 #ifndef __native_client__
 	if (use_syslog) {
@@ -2123,7 +2123,7 @@ int main(int argc, char **argv)
 	}
 
 #ifndef _WIN32
-	if (pid_fp)
+	if (wrote_pid)
 		unlink(pidfile);
 #endif
 
