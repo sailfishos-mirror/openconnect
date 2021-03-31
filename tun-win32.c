@@ -343,28 +343,43 @@ static intptr_t open_tun(struct openconnect_info *vpninfo, int adapter_type, cha
 	return ret;
 }
 
-intptr_t os_setup_tun(struct openconnect_info *vpninfo)
-{
-	if (vpninfo->ifname) {
-		struct oc_text_buf *ifname_buf = buf_alloc();
-		buf_append_utf16le(ifname_buf, vpninfo->ifname);
+static intptr_t create_ifname_w(struct openconnect_info *vpninfo, const char *ifname) {
+	struct oc_text_buf *ifname_buf = buf_alloc();
+	buf_append_utf16le(ifname_buf, vpninfo->ifname);
 
-		if (buf_error(ifname_buf)) {
-			vpn_progress(vpninfo, PRG_ERR, _("Could not construct interface name\n"));
-			return buf_free(ifname_buf);
-		}
-
-		free(vpninfo->ifname_w);
-		vpninfo->ifname_w = (wchar_t *)ifname_buf->data;
-		ifname_buf->data = NULL;
-		buf_free(ifname_buf);
+	if (buf_error(ifname_buf)) {
+		vpn_progress(vpninfo, PRG_ERR, _("Could not construct interface name\n"));
+		return buf_free(ifname_buf);
 	}
 
-	intptr_t ret = search_taps(vpninfo, open_tun);
+	free(vpninfo->ifname_w);
+	vpninfo->ifname_w = (wchar_t *)ifname_buf->data;
+	ifname_buf->data = NULL;
+	buf_free(ifname_buf);
+	return 0;
+}
+
+intptr_t os_setup_tun(struct openconnect_info *vpninfo)
+{
+	intptr_t ret;
+
+	if (vpninfo->ifname) {
+		ret = create_ifname_w(vpninfo, vpninfo->ifname);
+		if (ret)
+			return ret;
+	}
+
+	ret = search_taps(vpninfo, open_tun);
 
 	if (ret == OPEN_TUN_SOFTFAIL) {
-		/* If an interface name was given, try creating a Wintun */
-		if (vpninfo->ifname && !create_wintun(vpninfo)) {
+		if (!vpninfo->ifname_w) {
+			ret = create_ifname_w(vpninfo, vpninfo->hostname);
+			if (ret)
+				return ret;
+		}
+
+		/* Try creating a Wintun instead of TAP */
+		if (!create_wintun(vpninfo)) {
 			ret = search_taps(vpninfo, open_tun);
 
 			if (ret == OPEN_TUN_SOFTFAIL)
@@ -376,10 +391,7 @@ intptr_t os_setup_tun(struct openconnect_info *vpninfo)
 
 	if (ret == OPEN_TUN_SOFTFAIL) {
 		vpn_progress(vpninfo, PRG_ERR,
-			     _("No Windows-TAP adapters found. Is the driver installed?\n"));
-		if (!vpninfo->ifname)
-			vpn_progress(vpninfo, PRG_ERR,
-				     _("Alternatively, specify an interface name to try creating it with Wintun\n"));
+			     _("Neither Windows-TAP nor Wintun adapters were found. Is the driver installed?\n"));
 		ret = OPEN_TUN_HARDFAIL;
 	}
 
