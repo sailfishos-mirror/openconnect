@@ -38,7 +38,7 @@
        <li>Restore compatibility with newer Cisco servers, by no longer sending them the <tt>X-AnyConnect-Platform</tt> header (<a href="https://gitlab.com/openconnect/openconnect/-/issues/101">#101</a>, <a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/175">!175</a>)</li>
        <li>Add support for PPP-based protocols, currently over TLS only (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/165">!165</a>).</li>
        <li>Add support for two PPP-based protocols, F5 with <tt>--protocol=f5</tt> and Fortinet with <tt>--protocol=fortinet</tt> (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/169">!169</a>).</li>
-       <li>Add support for <a href="https://www.wintun.net/">Wintun</a> Layer 3 TUN driver under Windows.</li>
+       <li>Add support for <a href="https://www.wintun.net/">Wintun</a> Layer 3 TUN driver under Windows (<a href="https://gitlab.com/openconnect/openconnect/-/issues/231">#231</a>).</li>
        <li>Fix output redirection under Windows (<a href="https://gitlab.com/openconnect/openconnect/-/issues/229">#229</a>)</li>
        <li>More gracefully handle Pulse/NC idle timeouts and other Pulse fatal errors (<a href="https://gitlab.com/openconnect/openconnect/-/issues/187">!187</a>)</li>
        <li>Ignore failures to fetch the NC landing page if the authentication was successful.</li>
