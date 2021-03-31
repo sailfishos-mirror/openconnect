@@ -102,19 +102,21 @@ static int init_wintun(struct openconnect_info *vpninfo)
 
 int create_wintun(struct openconnect_info *vpninfo)
 {
-	if (init_wintun(vpninfo))
-		return -1;
+	int ret = init_wintun(vpninfo);
+	if (ret < 0)
+		return ret;
 
 	vpninfo->wintun_adapter = WintunCreateAdapter(WINTUN_POOL_NAME,
 						      vpninfo->ifname_w, NULL, NULL);
 	if (vpninfo->wintun_adapter)
 		return 0;
 
-	char *errstr = openconnect__win32_strerror(GetLastError());
+	ret = GetLastError();
+	char *errstr = openconnect__win32_strerror(ret);
 	vpn_progress(vpninfo, PRG_ERR, "Could not create Wintun adapter '%S': %s\n",
 		     vpninfo->ifname_w, errstr);
 	free(errstr);
-	return -EIO;
+	return (ret == ERROR_ACCESS_DENIED ? -EPERM : -EIO);
 }
 
 intptr_t open_wintun(struct openconnect_info *vpninfo, char *guid, wchar_t *wname)

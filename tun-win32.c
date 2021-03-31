@@ -379,13 +379,18 @@ intptr_t os_setup_tun(struct openconnect_info *vpninfo)
 		}
 
 		/* Try creating a Wintun instead of TAP */
-		if (!create_wintun(vpninfo)) {
+		int retw = create_wintun(vpninfo);
+		if (!retw) {
 			ret = search_taps(vpninfo, open_tun);
 
 			if (ret == OPEN_TUN_SOFTFAIL)
 				ret = OPEN_TUN_HARDFAIL;
 			if (ret == OPEN_TUN_HARDFAIL)
 				os_shutdown_wintun(vpninfo);
+		} else if (retw == -EPERM) {
+			ret = OPEN_TUN_HARDFAIL;
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("Access denied creating Wintun adapter. Are you running with Administrator privileges?\n"));
 		}
 	}
 
