@@ -317,14 +317,33 @@ static int __attribute__ ((format(printf, 2, 0)))
 	HANDLE h = GetStdHandle(f == stdout ? STD_OUTPUT_HANDLE : STD_ERROR_HANDLE);
 	wchar_t wbuf[1024];
 	char buf[1024];
-	int chars, wchars;
+	int bytes, wchars;
 
-	buf[sizeof(buf) - 1] = 0;
-	chars = _vsnprintf(buf, sizeof(buf) - 1, fmt, args);
-	wchars = MultiByteToWideChar(CP_UTF8, 0, buf, -1, wbuf, sizeof(wbuf)/2);
-	WriteConsoleW(h, wbuf, wchars, NULL, NULL);
+	/* No need to NUL-terminate strings here */
+	bytes = _vsnprintf(buf, sizeof(buf), fmt, args);
+	if (bytes < 0)
+		return bytes;
+	if (bytes > sizeof(buf))
+		bytes = sizeof(buf);
 
-	return chars;
+	wchars = MultiByteToWideChar(CP_UTF8, 0, buf, bytes, wbuf, sizeof(wbuf)/2);
+	if (!wchars)
+		return -1;
+
+	/*
+	 * If writing to console fails, that's probably due to redirection.
+	 * Convert to console CP and write to the FH, following the example of
+	 * https://github.com/wine-mirror/wine/blob/e909986e6e/programs/whoami/main.c#L33-L49
+	 */
+	if (!WriteConsoleW(h, wbuf, wchars, NULL, NULL)) {
+		bytes = WideCharToMultiByte(GetConsoleOutputCP(), 0, wbuf, wchars,
+					    buf, sizeof(buf), NULL, NULL);
+		if (!bytes)
+			return -1;
+
+		return fwrite(buf, 1, bytes, f);
+	}
+	return bytes;
 }
 
 static int __attribute__ ((format(printf, 2, 3)))
