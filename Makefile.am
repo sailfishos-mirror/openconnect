@@ -30,7 +30,7 @@ openconnect_LDADD = libopenconnect.la $(SSL_LIBS) $(LIBXML2_LIBS) $(LIBPROXY_LIB
 if OPENCONNECT_WIN32
 openconnect_SOURCES += openconnect.rc
 endif
-library_srcs = ssl.c http.c http-auth.c auth-common.c auth-html.c library.c compat.c lzs.c mainloop.c script.c ntlm.c digest.c mtucalc.c openconnect-internal.h
+library_srcs = ssl.c http.c http-auth.c auth-common.c auth-html.c library.c compat.c lzs.c mainloop.c script.c ntlm.c digest.c mtucalc.c openconnect-internal.h version.c
 lib_srcs_cisco = auth.c cstp.c
 lib_srcs_juniper = oncp.c lzo.c auth-juniper.c
 lib_srcs_pulse = pulse.c
@@ -110,7 +110,7 @@ library_srcs += $(lib_srcs_posix)
 endif
 
 
-libopenconnect_la_SOURCES = version.c $(library_srcs)
+libopenconnect_la_SOURCES = version.h $(library_srcs)
 libopenconnect_la_CFLAGS = $(AM_CFLAGS) $(SSL_CFLAGS) $(DTLS_SSL_CFLAGS) $(LIBXML2_CFLAGS) $(LIBPROXY_CFLAGS) $(ZLIB_CFLAGS) $(P11KIT_CFLAGS) $(TSS_CFLAGS) $(LIBSTOKEN_CFLAGS) $(LIBPSKC_CFLAGS) $(GSSAPI_CFLAGS) $(INTL_CFLAGS) $(ICONV_CFLAGS) $(LIBPCSCLITE_CFLAGS) $(LIBP11_CFLAGS) $(LIBLZ4_CFLAGS)
 libopenconnect_la_LIBADD = $(SSL_LIBS) $(DTLS_SSL_LIBS) $(LIBXML2_LIBS) $(LIBPROXY_LIBS) $(ZLIB_LIBS) $(P11KIT_LIBS) $(TSS_LIBS) $(LIBSTOKEN_LIBS) $(LIBPSKC_LIBS) $(GSSAPI_LIBS) $(INTL_LIBS) $(ICONV_LIBS) $(LIBPCSCLITE_LIBS) $(LIBP11_LIBS) $(LIBLZ4_LIBS)
 if OPENBSD_LIBTOOL
@@ -147,7 +147,7 @@ EXTRA_DIST = AUTHORS version.sh COPYING.LGPL openconnect.ico $(lib_srcs_openssl)
 EXTRA_DIST += $(shell cd "$(top_srcdir)" && \
 		git ls-tree HEAD -r --name-only -- android/ java/ trojans/ bash/ 2>/dev/null)
 
-DISTCLEANFILES = $(pkgconfig_DATA) version.c
+DISTCLEANFILES = $(pkgconfig_DATA) version.h
 
 pkglibexec_SCRIPTS = trojans/csd-post.sh trojans/csd-wrapper.sh trojans/tncc-wrapper.py \
 	trojans/hipreport.sh trojans/hipreport-android.sh trojans/tncc-emulate.py
@@ -155,13 +155,15 @@ pkglibexec_SCRIPTS = trojans/csd-post.sh trojans/csd-wrapper.sh trojans/tncc-wra
 bashcompletiondir = $(datadir)/bash-completion/completions
 bashcompletion_DATA = bash/openconnect
 
-# main.c includes version.c
-openconnect-main.$(OBJEXT): version.c
+# main.c and version.c both include version.h
+openconnect-main.$(OBJEXT): version.h
 
-version.c: $(library_srcs) $(lib_openssl_srcs) $(lib_gnutls_srcs) \
+version.c: version.h
+
+version.h: $(library_srcs) $(lib_openssl_srcs) $(lib_gnutls_srcs) \
 	   $(openconnect_SOURCES) Makefile.am configure.ac \
 	   openconnect.h openconnect-internal.h version.sh @GITVERSIONDEPS@
-	@cd $(srcdir) && ./version.sh $(abs_builddir)/version.c
+	@cd $(srcdir) && ./version.sh $(abs_builddir)/config.h $(abs_builddir)/version.h $(abs_builddir)/version.nsi
 
 AUTHORS: @GITVERSIONDEPS@
 	@git shortlog -sen > AUTHORS
@@ -312,20 +314,8 @@ uninstfiles.nsh: file-list.txt file-list-vpnc-script-win.js.txt file-list-$(TAPD
 # Theoretically makensis can define symbols with the -D command line
 # option and much of this could just be done that way, but I couldn't
 # get it to work and life's too short.
-openconnect.nsi: version.c
-	$(AM_V_GEN) VERSION=$$(cut -f2 -d\" version.c); \
-	PROD_VERSION=$$(echo "$$VERSION" | perl -ne 'm|v(\d+)\.(\d+)(?:\.git\.\|\-)?(\d+)?(?:-g.+\|.*)|; print "$$1.$$2." . ($$3 or "0") . ".0"'); \
-	if egrep -q '^#define OPENCONNECT_GNUTLS' config.h; then \
-	    TLS_LIBRARY=GnuTLS; \
-	elif egrep -q '^#define OPENCONNECT_OPENSSL' config.h; then \
-	    TLS_LIBRARY=OpenSSL; \
-	else \
-	    TLS_LIBRARY="Unknown TLS library"; \
-	fi; \
-	( echo "VIProductVersion \"$$PROD_VERSION\""; \
-	  echo "VIAddVersionKey ProductVersion \"$$VERSION\""; \
-	  echo "VIAddVersionKey Comments \"OpenConnect multi-protocol VPN client for Windows (command-line version, built with $$TLS_LIBRARY). For more information, visit http://www.infradead.org/openconnect/\""; \
-	  echo "!include $(srcdir)/openconnect.nsi.in" ) > $@
+openconnect.nsi: version.h
+	echo "!include $(srcdir)/openconnect.nsi.in" > $@
 
 AM_V_MAKENSIS = $(am__v_MAKENSIS_$(V))
 am__v_MAKENSIS_ = $(am__v_MAKENSIS_$(AM_DEFAULT_VERBOSITY))

@@ -1,6 +1,6 @@
 *~
 .#*
-version.c
+version.h
 .*.o.dep
 .*.h.dep
 *.o

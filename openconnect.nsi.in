@@ -22,6 +22,10 @@ ShowUninstDetails hide
 
 SetCompressor /FINAL lzma
 
+!include version.nsi
+VIProductVersion "${OPENCONNECT_WINDOWS_QUAD_VERSION}";
+VIAddVersionKey ProductVersion "${OPENCONNECT_VERSION_STR}";
+VIAddVersionKey Comments "OpenConnect multi-protocol VPN client for Windows (command-line version, built with ${TLS_LIBRARY}). For more information, visit http://www.infradead.org/openconnect/";
 VIAddVersionKey ProductName "OpenConnect"
 
 XPStyle on
