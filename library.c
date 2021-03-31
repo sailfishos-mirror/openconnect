@@ -637,7 +637,7 @@ int openconnect_disable_dtls(struct openconnect_info *vpninfo)
 	 * we currently do not have a reliable indicator of
 	 * this.
 	 */
-	if (vpninfo->dtls_state != DTLS_DISABLED
+	if (vpninfo->dtls_state != DTLS_NOSECRET
 	    || vpninfo->ssl_times.last_tx != 0)
 		return -EINVAL;
 	vpninfo->dtls_state = DTLS_DISABLED;
