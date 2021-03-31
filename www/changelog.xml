@@ -15,6 +15,7 @@
 <ul>
    <li><b>OpenConnect HEAD</b>
      <ul>
+       <li>Make the <a href="https://www.wintun.net/">Wintun</a> Layer 3 TUN driver the default on Windows (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/427">!427</a>).</li>
        <li>Add support for and bundle Wintun 0.14.1 (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/294">!294</a>).</li>
        <li>Fix receiving multiple packets in one TLS frame for Array (<a href="https://gitlab.com/openconnect/openconnect/-/issues/435">#435</a>).</li>
        <li>Fix ESP failures under Windows (<a href="https://gitlab.com/openconnect/openconnect/-/issues/427">#427</a>).</li>

@@ -416,20 +416,6 @@ file-list.txt: Makefile.dlldeps openconnect$(EXEEXT) libopenconnect.la $(WINTUN_
 WINTUNDRIVER = wintun-0.14.1.zip
 WINTUNSHA256 = 07c256185d6ee3652e09fa55c0b673e2624b565e02c4b9091c79ca7d2f24ef51
 
-# OpenVPN TAP driver for Windows Vista/2003 and newer
-# (see https://community.openvpn.net/openvpn/wiki/GettingTapWindows)
-# XX: Newer releases exist, but are split between Win7+ and Win10+ versions.
-TAPDRIVER = tap-windows-9.21.2.exe
-TAPSHA256 = 645bee92ba4e9f32ddfdd9f8519dc1b9f9ff0b0a8e87e342f08d39da77e499a9
-
-$(TAPDRIVER):
-	curl https://build.openvpn.net/downloads/releases/tap-windows-9.21.2.exe -o $@
-
-# Validate file and also let make find it in VPATH
-file-list-$(TAPDRIVER).txt: $(TAPDRIVER)
-	echo $(TAPSHA256) $< | sha256sum -c
-	echo $< > $@
-
 $(WINTUNDRIVER):
 	curl https://www.wintun.net/builds/$(WINTUNDRIVER) -o $@
 
@@ -454,11 +440,11 @@ file-list-extra.txt:
 # Rather than trying to get clever in NSIS and iterate over lists,
 # just emit raw snippets to be included separately in the install
 # and uninstall sections.
-instfiles.nsh: file-list.txt file-list-vpnc-script-win.js.txt file-list-$(TAPDRIVER).txt file-list-extra.txt
+instfiles.nsh: file-list.txt file-list-vpnc-script-win.js.txt file-list-extra.txt
 	$(AM_V_GEN) ( grep -hv "^$(libdir)/qt5/plugins" $^ | sed 's%\(.*\)%File "\1"%' ; \
 	grep -h "^$(libdir)/qt5/plugins" $^ | sed 's%\(.*/qt5/plugins\)/\([^/]*\)/\([^/]*\)%SetOutPath "$$INSTDIR\\\\\2"\nFile "\1/\2/\3"%' ) > $@
 
-uninstfiles.nsh: file-list.txt file-list-vpnc-script-win.js.txt file-list-$(TAPDRIVER).txt file-list-extra.txt
+uninstfiles.nsh: file-list.txt file-list-vpnc-script-win.js.txt file-list-extra.txt
 	$(AM_V_GEN) ( grep -hv "^$(libdir)/qt5/plugins" $^ | sed 's%\(.*/\)\?\([^/]*\)%Delete /rebootok "$$INSTDIR\\\\\2"%' ; \
 	grep -h "^$(libdir)/qt5/plugins" $^ | sed 's%.*/qt5/plugins/\([^/]*\)/\([^/]*\)%Delete /rebootok "$$INSTDIR\\\\\1\\\\\2"\nRMDir "$$INSTDIR\\\\\1"%' ) > $@
 
