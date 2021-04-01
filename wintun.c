@@ -140,50 +140,6 @@ intptr_t open_wintun(struct openconnect_info *vpninfo, char *guid, wchar_t *wnam
 		}
 	}
 
-	if (vpninfo->ip_info.addr) {
-		/*
-		 * For now, vpnc-script-win.js depends on us setting the Legacy IP
-		 * address on the interface. Which of course assumes there *is* a
-		 * Legacy IP configuration not just IPv6. This is kind of horrid
-		 * but stay compatible with it for now. In order to set the address
-		 * up, we may first need to *remove* it from any other interface
-		 * that has it, even if the other interface is down. Testing with
-		 * a TAP-Windows interface and then Wintun was failing until I made
-		 * it explicitly delete the IP address first. The later call to
-		 * CreateUnicastIpAddressEntry() was apparently succeeding, but
-		 * wasn't changing anything. Yay Windows!
-		 */
-		MIB_UNICASTIPADDRESS_ROW AddressRow;
-		InitializeUnicastIpAddressEntry(&AddressRow);
-		WintunGetAdapterLUID(vpninfo->wintun_adapter, &AddressRow.InterfaceLuid);
-		AddressRow.Address.Ipv4.sin_family = AF_INET;
-		AddressRow.Address.Ipv4.sin_addr.S_un.S_addr = htonl(inet_addr(vpninfo->ip_info.addr));
-		AddressRow.OnLinkPrefixLength = 32;
-
-		PMIB_UNICASTIPADDRESS_TABLE pipTable = NULL;
-		DWORD LastError = GetUnicastIpAddressTable(AF_INET, &pipTable);
-		if (LastError == ERROR_SUCCESS) {
-			for (int i = 0; i < pipTable->NumEntries; i++) {
-				if (pipTable->Table[i].Address.Ipv4.sin_addr.S_un.S_addr ==
-				    AddressRow.Address.Ipv4.sin_addr.S_un.S_addr) {
-					DeleteUnicastIpAddressEntry(&pipTable->Table[i]);
-				}
-			}
-		}
-
-		LastError = CreateUnicastIpAddressEntry(&AddressRow);
-		if (LastError != ERROR_SUCCESS) {
-			char *errstr = openconnect__win32_strerror(GetLastError());
-			vpn_progress(vpninfo, PRG_ERR,
-				     _("Failed to set Legacy IP address on Wintun: %s\n"),
-				     errstr);
-			free(errstr);
-
-			ret = OPEN_TUN_HARDFAIL;
-			goto out;
-		}
-	}
-
 	vpninfo->wintun_session = WintunStartSession(vpninfo->wintun_adapter, 0x400000);
 	if (!vpninfo->wintun_session) {
 		char *errstr = openconnect__win32_strerror(GetLastError());
