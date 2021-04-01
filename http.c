@@ -855,7 +855,8 @@ int internal_parse_url(const char *url, char **res_proto, char **res_host,
 char *internal_get_url(struct openconnect_info *vpninfo)
 {
 	char *url;
-	if (asprintf(&url, "https://%s%s%s", vpninfo->hostname, vpninfo->urlpath ? "/" : "", vpninfo->urlpath) < 0)
+	if (asprintf(&url, "https://%s%s%s", vpninfo->hostname,
+		     vpninfo->urlpath ? "/" : "", vpninfo->urlpath ? : "") < 0)
 		return NULL;
 	else
 		return url;
