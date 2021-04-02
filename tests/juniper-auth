@@ -72,10 +72,9 @@ echo -n "frmLogin with username/password → frmNextToken"
 
 ok
 
-# only one role because we don't have a way to auto-fill this
-# (TODO: make --authgroup fill in the role instead, if there's no realm?)
+# --authgroup will now fill in EITHER the role and/or the realm
 echo -n "frmLogin with username/password → frmConfirmation → frmSelectRoles"
-( echo "test" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT --protocol=nc -q "$ADDRESS:443/?confirm=1&roles=only_one_role" -u test $FINGERPRINT --cookieonly >/dev/null 2>&1) ||
+( echo "test" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT --protocol=nc -q "$ADDRESS:443/?confirm=1&roles=foo,bar,baz" --authgroup=bar -u test $FINGERPRINT --cookieonly >/dev/null 2>&1) ||
     fail $PID "Could not receive cookie from fake Juniper server"
 
 echo ok

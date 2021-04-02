@@ -355,6 +355,7 @@ static struct oc_auth_form *parse_roles_table_node(xmlNodePtr node)
 	opt->form.label = strdup("frmSelectRoles");
 	opt->form.name = strdup("frmSelectRoles");
 	opt->form.type = OC_FORM_OPT_SELECT;
+	form->authgroup_opt = opt; /* XX: --authgroup also sets realm field (see parse_select_node in auth-html.c) */
 
 	for (table_itr = node->children; table_itr; table_itr = table_itr->next) {
 		if (!table_itr->name || strcasecmp((const char *)table_itr->name, "tr"))
