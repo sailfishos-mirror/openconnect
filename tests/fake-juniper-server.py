@@ -76,9 +76,11 @@ def check_form_against_session(*fields, use_query=False):
 @app.route('/')
 def root():
     realms = request.args.get('realms')
+    roles = request.args.get('roles')
     confirm = bool(request.args.get('confirm'))
     token_form = request.args.get('token_form')
     session.update(step='initial-GET', realms=realms and realms.split(','),
+                   roles=roles and roles.split(','),
                    confirm=confirm, token_form=token_form)
     # print(session)
     return redirect(url_for('frmLogin'))
@@ -113,6 +115,7 @@ def frmLogin_post():
     realms = session.get('realms')
     confirm = session.get('confirm')
     token_form = session.get('token_form')
+    roles = session.get('roles')
     if realms:
         assert 0 <= int(request.form.get('realm',-1)) < len(realms)
     session.update(step='POST-login', username=request.form.get('username'),
@@ -134,10 +137,42 @@ def frmLogin_post():
         return redirect(url_for('frm2FA'))
     elif need_confirm:
         return redirect(url_for('frmConfirmation'))
+    elif roles:
+        return redirect(url_for('frmSelectRoles'))
     else:
         resp = redirect(url_for('webtop'))
         resp.set_cookie('DSID', cookify(dict(session)))
         return resp
+
+
+# frmSelectRoles
+# This is some insane post-login realm-ish select-y thing
+@app.route('/dana-na/auth/url_default/select_role.cgi')
+def frmSelectRoles():
+    session.update(step='GET-frmSelectRoles')
+    roles = session.get('roles')
+    dest = url_for('frmSelectRoles_AFTER')
+    roles = '\n'.join('<tr><td><a href="%s?role=%d">%s</a></td></tr>' % (dest, nn, role) for (nn, role) in enumerate(roles))
+    return '''
+<html><body><form name="frmSelectRoles">
+<table id="TABLE_SelectRole_1">
+<tr><td>You have access to the following roles:</td></tr>
+%s
+<tr><td>Each role allows you to access certain resources.  Click on the role you want to join for this session.  Please contact your administrator if you need help choosing a role.</td></tr>
+</table>
+</form></body></form>''' % roles
+
+
+# Note the URL is shared with the frmLogin POST URL... so weird
+@app.route('/dana-na/auth/url_default/login.cgi', methods=['GET'])
+def frmSelectRoles_AFTER():
+    roles = session.get('roles')
+    assert roles
+    assert 0 <= int(request.args.get('role',-1)) < len(roles)
+    session.update(step='AFTER-frmSelectRoles', role=request.form.get('role'))
+    resp = redirect(url_for('webtop'))
+    resp.set_cookie('DSID', cookify(dict(session)))
+    return resp
 
 
 # 2FA forms (frmDefender, frmNextToken, or frmTotpToken)
