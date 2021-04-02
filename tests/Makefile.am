@@ -65,6 +65,7 @@ if HAVE_PYTHON36_FLASK
 dist_check_SCRIPTS += fortinet-auth-and-config
 dist_check_SCRIPTS += f5-auth-and-config
 dist_check_SCRIPTS += juniper-auth
+dist_check_SCRIPTS += juniper-sso-auth
 endif
 
 if TEST_PKCS11
