@@ -22,6 +22,8 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <winioctl.h>
+/* must precede iphlpapi.h, per https://docs.microsoft.com/en-us/windows/win32/api/iptypes/ns-iptypes-ip_adapter_addresses_lh */
+#include <winsock2.h>
 #include <iphlpapi.h>
 
 #include <errno.h>
@@ -221,6 +223,92 @@ static int get_adapter_index(struct openconnect_info *vpninfo, char *guid)
 	return ret;
 }
 
+static int check_address_conflicts(struct openconnect_info *vpninfo)
+{
+	ULONG bufSize = 15000;
+	PIP_ADAPTER_ADDRESSES addresses = NULL;
+	DWORD LastError;
+	int ret = 0;
+
+	struct in_addr our_ipv4_addr;
+	struct in6_addr our_ipv6_addr;
+	if (vpninfo->ip_info.addr && !inet_aton(vpninfo->ip_info.addr, &our_ipv4_addr))
+		return -EINVAL;
+	if (vpninfo->ip_info.addr6 && !inet_pton(AF_INET6, vpninfo->ip_info.addr6, &our_ipv6_addr))
+		return -EINVAL;
+
+	/* XX: repeat twice, because it may tell us we need a bigger buffer */
+	for (int tries=0; tries<2; tries++) {
+		free(addresses);
+		addresses = malloc(bufSize);
+		if (!addresses)
+			return -ENOMEM;
+
+		/* AF_UNSPEC means both IPv4 and IPv6 */
+		LastError = GetAdaptersAddresses(AF_UNSPEC,
+						 GAA_FLAG_SKIP_ANYCAST | GAA_FLAG_SKIP_MULTICAST,
+						 NULL, addresses, &bufSize);
+		if (LastError != ERROR_BUFFER_OVERFLOW)
+			break;
+	}
+	if (LastError != ERROR_SUCCESS) {
+		char *errstr = openconnect__win32_strerror(LastError);
+		vpn_progress(vpninfo, PRG_ERR, _("GetAdaptersAddresses() failed: %s\n"), errstr);
+		ret = -EIO;
+		goto out;
+	}
+
+	for (; addresses; addresses=addresses->Next) {
+		/* XX: skip "our own" adapter */
+		if (addresses->IfIndex == vpninfo->tun_idx)
+			continue;
+
+		for (PIP_ADAPTER_UNICAST_ADDRESS ua = addresses->FirstUnicastAddress; ua; ua=ua->Next) {
+			struct sockaddr *a = ua->Address.lpSockaddr;
+			union {
+				struct sockaddr_in s4;
+				struct sockaddr_in6 s6;
+			} *sa = (void *)a;
+			int needs_reclaim = 0;
+
+			if (a->sa_family == AF_INET) {
+				if (vpninfo->ip_info.addr && our_ipv4_addr.s_addr == sa->s4.sin_addr.s_addr)
+					needs_reclaim = 1;
+			} else if (a->sa_family == AF_INET6) {
+				if (vpninfo->ip_info.addr6 && !memcmp(&our_ipv6_addr, &sa->s6.sin6_addr, sizeof(sa->s6.sin6_addr)))
+					needs_reclaim = 1;
+			}
+
+			if (needs_reclaim) {
+				if (addresses->OperStatus == IfOperStatusUp) {
+					/* XX: Interface is up. We shouldn't steal its address */
+					vpn_progress(vpninfo, PRG_ERR,
+						     _("Adapter \"%S\" / %ld is UP and using our IPv%d address. Cannot resolve.\n"),
+						     addresses->FriendlyName, addresses->IfIndex, a->sa_family == AF_INET ? 4 : 6);
+					ret = -ENOENT;
+					goto out;
+				} else {
+					/* XX: Interface is down */
+					vpn_progress(vpninfo, PRG_ERR,
+						     _("Adapter \"%S\" / %ld is DOWN and using our IPv%d address. We will reclaim the address from it.\n"),
+						     addresses->FriendlyName, addresses->IfIndex, a->sa_family == AF_INET ? 4 : 6);
+
+					/* FIXME: we SHOULD be able to delete this address, but
+					 *     DeleteUnicastIpAddressEntry requires a table we don't have right now (maybe make a "fake" row?)
+					 * and DeleteIPAddress is IPv4 only, and requires a magic number we don't have
+					 */
+					ret = -ENOENT;
+					goto out;
+				}
+			}
+		}
+	}
+
+ out:
+	free(addresses);
+	return ret;
+}
+
 static intptr_t open_tuntap(struct openconnect_info *vpninfo, char *guid, wchar_t *wname)
 {
 	char devname[80];
@@ -399,6 +487,9 @@ intptr_t os_setup_tun(struct openconnect_info *vpninfo)
 			     _("Neither Windows-TAP nor Wintun adapters were found. Is the driver installed?\n"));
 		ret = OPEN_TUN_HARDFAIL;
 	}
+
+	if (check_address_conflicts(vpninfo) < 0)
+		ret = OPEN_TUN_HARDFAIL; /* already complained about it */
 
 	return ret;
 }
