@@ -24,7 +24,9 @@
 #include <winioctl.h>
 /* must precede iphlpapi.h, per https://docs.microsoft.com/en-us/windows/win32/api/iptypes/ns-iptypes-ip_adapter_addresses_lh */
 #include <winsock2.h>
+#include <ws2ipdef.h>
 #include <iphlpapi.h>
+#include <netioapi.h>
 
 #include <errno.h>
 #include <stdio.h>
@@ -244,7 +246,7 @@ static int check_address_conflicts(struct openconnect_info *vpninfo)
 		if (!addresses)
 			return -ENOMEM;
 
-		/* AF_UNSPEC means both IPv4 and IPv6 */
+		/* AF_UNSPEC means both Legacy IP and IPv6 */
 		LastError = GetAdaptersAddresses(AF_UNSPEC,
 						 GAA_FLAG_SKIP_ANYCAST | GAA_FLAG_SKIP_MULTICAST,
 						 NULL, addresses, &bufSize);
@@ -263,7 +265,8 @@ static int check_address_conflicts(struct openconnect_info *vpninfo)
 		if (addresses->IfIndex == vpninfo->tun_idx)
 			continue;
 
-		for (PIP_ADAPTER_UNICAST_ADDRESS ua = addresses->FirstUnicastAddress; ua; ua=ua->Next) {
+		for (PIP_ADAPTER_UNICAST_ADDRESS ua = addresses->FirstUnicastAddress;
+		     ua; ua=ua->Next) {
 			struct sockaddr *a = ua->Address.lpSockaddr;
 			union {
 				struct sockaddr_in s4;
@@ -293,12 +296,49 @@ static int check_address_conflicts(struct openconnect_info *vpninfo)
 						     _("Adapter \"%S\" / %ld is DOWN and using our IPv%d address. We will reclaim the address from it.\n"),
 						     addresses->FriendlyName, addresses->IfIndex, a->sa_family == AF_INET ? 4 : 6);
 
-					/* FIXME: we SHOULD be able to delete this address, but
-					 *     DeleteUnicastIpAddressEntry requires a table we don't have right now (maybe make a "fake" row?)
-					 * and DeleteIPAddress is IPv4 only, and requires a magic number we don't have
+					/* XX: In order to use DeleteUnicastIpAddressEntry(), we bizarrely have to iterate through a
+					 * whole different table of IP addresses to find the right row. I previously tried
+					 * faking/synthesizing the requisite MIB_UNICASTIPADDRESS_TABLE rows, and it did not
+					 * work.
 					 */
-					ret = -ENOENT;
-					goto out;
+					int found = 0;
+					PMIB_UNICASTIPADDRESS_TABLE pipTable = NULL;
+					LastError = GetUnicastIpAddressTable(AF_UNSPEC, &pipTable);
+					if (LastError != ERROR_SUCCESS) {
+						char *errstr = openconnect__win32_strerror(LastError);
+						vpn_progress(vpninfo, PRG_ERR, _("GetUnicastIpAddressTable() failed: %s\n"), errstr);
+						ret = -EIO;
+						goto out;
+					}
+					for (int i = 0; i < pipTable->NumEntries; i++) {
+						if (pipTable->Table[i].Address.si_family == AF_INET && a->sa_family == AF_INET) {
+							if (sa->s4.sin_addr.s_addr == pipTable->Table[i].Address.Ipv4.sin_addr.s_addr)
+								found = 1;
+						} else if (pipTable->Table[i].Address.si_family == AF_INET6 && a->sa_family == AF_INET6) {
+							if (!memcmp(&sa->s6.sin6_addr, &pipTable->Table[i].Address.Ipv6, sizeof(sa->s6.sin6_addr)))
+								found = 1;
+						}
+						if (found) {
+							LastError = DeleteUnicastIpAddressEntry(&pipTable->Table[i]);
+							break;
+						}
+					}
+					FreeMibTable(pipTable);
+
+					if (LastError != NO_ERROR) {
+						char *errstr = openconnect__win32_strerror(LastError);
+						vpn_progress(vpninfo, PRG_ERR, _("DeleteUnicastIpAddressEntry() failed: %s\n"), errstr);
+						ret = -EIO;
+						goto out;
+					}
+
+					if (!found) {
+						vpn_progress(vpninfo, PRG_ERR,
+							     _("GetUnicastIpAddressTable() did not find matching address to reclaim\n"));
+						/* ret = -EIO;
+						   goto out; */
+					}
+
 				}
 			}
 		}
