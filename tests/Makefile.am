@@ -46,7 +46,8 @@ EXTRA_DIST = certs/ca.pem certs/ca-key.pem certs/user-cert.pem $(USER_KEYS) $(US
 	configs/user-cert.prm configs/server-cert.prm \
 	softhsm2.conf.in softhsm ns.sh configs/test-dtls-psk.config \
 	scripts/vpnc-script scripts/vpnc-script-detect-disconnect \
-	suppressions.lsan fake-fortinet-server.py fake-f5-server.py fake-juniper-server.py
+	suppressions.lsan fake-fortinet-server.py fake-f5-server.py fake-juniper-server.py \
+	fake-juniper-sso-server.py fake-tncc.py
 
 dist_check_SCRIPTS = autocompletion
 
