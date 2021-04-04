@@ -87,7 +87,6 @@ def ls():
                            name="AuthMethod"
                            type="hidden"
                            value="FormsAuthentication">
-<input type="submit">
                 </form>
                 <form action="{{ url_for("ls") }}" id="options" method="post">
                     <input id="optionSelection"
@@ -124,8 +123,6 @@ def ls():
                                name="SignIn"
                                type="submit"
                                value="Sign in">
-{% else %}
-<input type="submit">
                     {% endif %}
                 </form>
                 <form action="{{ url_for("ls") }}" id="options" method="post">
