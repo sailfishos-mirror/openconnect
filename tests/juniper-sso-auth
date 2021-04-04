@@ -38,15 +38,15 @@ echo -n "Azure SSO with MFA. "
 (
     echo test |
     $OPENCONNECT \
-	$FAKE_TOKEN \
-	$FINGERPRINT \
-	--cookieonly \
-	--csd-wrapper ./fake-tncc.py \
-	--form "loginForm:UserName=test@example.com" \
-	--protocol nc \
-	--quiet \
-	$ADDRESS:1443 \
-	>/dev/null 2>&1
+        $FAKE_TOKEN \
+        $FINGERPRINT \
+        --cookieonly \
+        --csd-wrapper ./fake-tncc.py \
+        --protocol nc \
+        --quiet \
+        --user "test@example.com" \
+        $ADDRESS:1443 \
+        >/dev/null 2>&1
 ) ||
     fail $PID "Could not receive cookie from fake Juniper server"
 
