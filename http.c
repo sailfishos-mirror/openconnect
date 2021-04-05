@@ -854,12 +854,25 @@ int internal_parse_url(const char *url, char **res_proto, char **res_host,
 
 char *internal_get_url(struct openconnect_info *vpninfo)
 {
+	struct oc_text_buf *buf = buf_alloc();
 	char *url;
-	if (asprintf(&url, "https://%s%s%s", vpninfo->hostname,
-		     vpninfo->urlpath ? "/" : "", vpninfo->urlpath ? : "") < 0)
+
+	buf_append(buf, "https://%s", vpninfo->hostname);
+	if (vpninfo->port != 443)
+		buf_append(buf, ":%d", vpninfo->port);
+	buf_append(buf, "/");
+	if (vpninfo->urlpath)
+		buf_append(buf, "%s", vpninfo->urlpath);
+
+	if (buf_error(buf)) {
+		buf_free(buf);
 		return NULL;
-	else
+	} else {
+		url = buf->data;
+		buf->data = NULL;
+		buf_free(buf);
 		return url;
+	}
 }
 
 void openconnect_clear_cookies(struct openconnect_info *vpninfo)
