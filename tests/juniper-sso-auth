@@ -30,7 +30,7 @@ FAKE_TOKEN="--token-mode=totp --token-secret=ABCD"
 
 echo "Testing Juniper SSO auth against fake server ... "
 
-./fake-juniper-sso-server.py $ADDRESS 1443 $CERT $KEY >/dev/null 2>&1 &
+${srcdir}/fake-juniper-sso-server.py $ADDRESS 1443 $CERT $KEY >/dev/null 2>&1 &
 PID=$!
 wait_server $PID 1
 
@@ -41,7 +41,7 @@ echo -n "Azure SSO with MFA. "
         $FAKE_TOKEN \
         $FINGERPRINT \
         --cookieonly \
-        --csd-wrapper ./fake-tncc.py \
+        --csd-wrapper ${srcdir}/fake-tncc.py \
         --protocol nc \
         --quiet \
         --user "test@example.com" \
