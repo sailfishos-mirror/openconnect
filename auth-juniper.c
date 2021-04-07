@@ -60,7 +60,9 @@ static int oncp_can_gen_tokencode(struct openconnect_info *vpninfo,
 	    vpninfo->token_bypassed)
 		return -EINVAL;
 
-	if (!strcmp(form->auth_id, "frmLogin")) {
+	if (opt->type == OC_FORM_OPT_PASSWORD &&
+	    (!strcmp(form->auth_id, "frmLogin") ||
+	     !strcmp(form->auth_id, "loginForm"))) {
 		/* XX: The first occurence of a password input field in frmLogin is likely to be a password,
 		 * not token, input. However, if we have already added a password input field to this form,
 		 * then a second one is likely to hold a token.
@@ -355,6 +357,7 @@ static struct oc_auth_form *parse_roles_table_node(xmlNodePtr node)
 	opt->form.label = strdup("frmSelectRoles");
 	opt->form.name = strdup("frmSelectRoles");
 	opt->form.type = OC_FORM_OPT_SELECT;
+	form->authgroup_opt = opt; /* XX: --authgroup also sets realm field (see parse_select_node in auth-html.c) */
 
 	for (table_itr = node->children; table_itr; table_itr = table_itr->next) {
 		if (!table_itr->name || strcasecmp((const char *)table_itr->name, "tr"))

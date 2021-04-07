@@ -2546,7 +2546,7 @@ static int process_auth_form_cb(void *_vpninfo,
 
 		} else if (opt->type == OC_FORM_OPT_TEXT) {
 			if (username &&
-			    !strncmp(opt->name, "user", 4)) {
+			    !strncasecmp(opt->name, "user", 4)) {
 				opt->_value = username;
 				username = NULL;
 			} else {
