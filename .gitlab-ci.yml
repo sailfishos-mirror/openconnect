@@ -251,8 +251,10 @@ Fedora/GnuTLS:
   - ./autogen.sh
   - ./configure --with-java --disable-dsa-tests --without-gnutls-version-check --enable-ppp-tests CFLAGS=-g
   - make tmp-distdir
-  - cd openconnect-$(git describe --tags | sed s/^v//)
-  - ./configure --with-java --disable-dsa-tests --without-gnutls-version-check --enable-ppp-tests CFLAGS=-g
+  - mkdir build
+  - cd build
+  - TMPDISTDIR=../openconnect-$(git describe --tags | sed s/^v//)
+  - ${TMPDISTDIR}/configure --with-java --disable-dsa-tests --without-gnutls-version-check --enable-ppp-tests CFLAGS=-g
   - make -j4
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
@@ -274,8 +276,10 @@ Fedora/GnuTLS/clang:
   - ./autogen.sh
   - ./configure --with-java --disable-dsa-tests --without-gnutls-version-check CC=clang --enable-ppp-tests CFLAGS=-g
   - make tmp-distdir
-  - cd openconnect-$(git describe --tags | sed s/^v//)
-  - ./configure --with-java --disable-dsa-tests --without-gnutls-version-check CC=clang --enable-ppp-tests CFLAGS=-g
+  - mkdir build
+  - cd build
+  - TMPDISTDIR=../openconnect-$(git describe --tags | sed s/^v//)
+  - ${TMPDISTDIR}/configure --with-java --disable-dsa-tests --without-gnutls-version-check CC=clang --enable-ppp-tests CFLAGS=-g
   - make -j4
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
@@ -299,8 +303,10 @@ Fedora/OpenSSL:
   - ./autogen.sh
   - ./configure --without-gnutls --with-openssl --without-openssl-version-check --disable-dsa-tests --enable-ppp-tests CFLAGS=-g
   - make tmp-distdir
-  - cd openconnect-$(git describe --tags | sed s/^v//)
-  - ./configure --without-gnutls --with-openssl --without-openssl-version-check --disable-dsa-tests --enable-ppp-tests CFLAGS=-g
+  - mkdir build
+  - cd build
+  - TMPDISTDIR=../openconnect-$(git describe --tags | sed s/^v//)
+  - ${TMPDISTDIR}/configure --without-gnutls --with-openssl --without-openssl-version-check --disable-dsa-tests --enable-ppp-tests CFLAGS=-g
   - make -j4
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
@@ -325,8 +331,10 @@ Fedora/OpenSSL/clang:
   - ./autogen.sh
   - ./configure CC=clang --without-gnutls --with-openssl --without-openssl-version-check --disable-dsa-tests --enable-ppp-tests CFLAGS=-g
   - make tmp-distdir
-  - cd openconnect-$(git describe --tags | sed s/^v//)
-  - ./configure CC=clang --without-gnutls --with-openssl --without-openssl-version-check --disable-dsa-tests --enable-ppp-tests CFLAGS=-g
+  - mkdir build
+  - cd build
+  - TMPDISTDIR=../openconnect-$(git describe --tags | sed s/^v//)
+  - ${TMPDISTDIR}/configure CC=clang --without-gnutls --with-openssl --without-openssl-version-check --disable-dsa-tests --enable-ppp-tests CFLAGS=-g
   - make -j4
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
