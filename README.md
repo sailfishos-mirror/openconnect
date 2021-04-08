@@ -1,8 +1,11 @@
 # OpenConnect
 
 OpenConnect is an SSL VPN client initially created to support [Cisco's AnyConnect SSL VPN](http://www.cisco.com/go/asm).
+
 It has since been ported to support the Juniper SSL VPN (which is now known as [Pulse Connect Secure](https://www.pulsesecure.net/products/connect-secure/)),
-and the [Palo Alto Networks GlobalProtect SSL VPN](https://www.paloaltonetworks.com/features/vpn).
+the [Palo Alto Networks GlobalProtect SSL VPN](https://www.paloaltonetworks.com/features/vpn)
+the [F5 Big-IP SSL VPN](https://www.f5.com/products/big-ip-services),
+and the [Fortinet Fortigate SSL VPN](https://www.fortinet.com/products/vpn).</p>
 
 An openconnect VPN server (ocserv), which implements an improved version of the Cisco AnyConnect protocol, has also been written.
 You can find it on Gitlab at [https://gitlab.com/openconnect/ocserv](https://gitlab.com/openconnect/ocserv).
@@ -26,3 +29,4 @@ Commonly-sought documentation:
 * [Mailing list / Help](https://www.infradead.org/openconnect/mail.html)
 * [GUIs / Front Ends](https://www.infradead.org/openconnect/gui.html)
 * [VPN Server / ocserv](http://www.infradead.org/ocserv/)
+* [Protocol-specific details](http://www.infradead.org/openconnect/protocols.html)
