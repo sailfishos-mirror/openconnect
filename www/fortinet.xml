@@ -5,14 +5,16 @@
 	<VAR match="VAR_SEL_FORTINET" replace="selected" />
 	<PARSE file="menu1.xml" />
 	<PARSE file="menu2-protocols.xml" />
-	
+
 	<INCLUDE file="inc/content.tmpl" />
 
 <h1>Fortinet SSL VPN</h1>
 
 <p>Experimental support for <a
 href="https://www.fortinet.com/products/vpn">Fortinet SSL
-VPN</a> was added to OpenConnect in March 2021. It is a PPP-based
+VPN</a> was added to OpenConnect in March 2021. It is also known as FortiGate
+in some documentation. It is a
+<a href="https://en.wikipedia.org/wiki/Point-to-Point_Protocol">PPP</a>-based
 protocol using the native PPP support which was merged into the 9.00
 release.</p>
 
@@ -22,8 +24,33 @@ to the command line:
   openconnect --protocol=fortinet fortigate.example.com
 </pre></p>
 
+<h2>Quirks and Issues</h2>
+
+<p>In terms of authentication for Fortinet VPNs, OpenConnect currently supports
+basic username/password, optional TLS client certificate, and optional multifactor
+authentication token entry via the "tokeninfo" challenge/response mechanism (which
+appears to be the most common mechanism by which Fortinet VPNs support multifactor
+authentication). If you have access to a Fortinet VPN which uses other types of
+authentication, please send information to <a href="mail.html">the mailing
+list</a> so that we add support to OpenConnect.</p>
+
+<p>The Fortinet protocol appears <i>not</i> to allow its
+post-authentication cookie (as output by <tt>--authenticate</tt>) to
+be used to reestablish a dropped connection. This means that if the
+client loses its connection to the gateway (for example, due to a
+network outage, or after roaming to a different physical adapter) a
+new authentication will <i>always</i> be required. This is a substantial
+design flaw which is not present in any of the other protocols
+supported by OpenConnect; if you have access to a Fortinet VPN which
+<i>can</i> automatically reconnect after a dropped connection,
+please send information to <a href="mail.html">the mailing list</a>
+so we can understand it better, and whether we can support this feature
+on other Fortinet VPNs.</p>
+
 <p>OpenConnect does not yet support the UDP transport for Fortinet, and
-will use PPP over TCP for connectivity.</p>
+will use PPP over TCP for connectivity,
+<a href="http://sites.inka.de/~W1011/devel/tcp-tcp.html">which is suboptimal
+for performance</a>.</p>
 
 	<INCLUDE file="inc/footer.tmpl" />
 </PAGE>
