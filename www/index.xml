@@ -9,20 +9,18 @@
 	<INCLUDE file="inc/content.tmpl" />
 
 <h1>OpenConnect</h1>
-<p>OpenConnect is an SSL VPN client initially created to support Cisco's <a href="http://www.cisco.com/go/asm">AnyConnect SSL VPN</a>.
-It has since been ported to support the Juniper SSL VPN (which is now known as <a href="https://www.pulsesecure.net/products/connect-secure/">Pulse Connect Secure</a>),
-and the <a href="https://www.paloaltonetworks.com/features/vpn">Palo Alto Networks GlobalProtect SSL VPN</a>.</p>
+<p>OpenConnect is an SSL VPN client initially created to support Cisco's <a href="http://www.cisco.com/go/asm">AnyConnect SSL VPN</a></p>
+
+<p>It has since been ported to support several other proprietary VPN protocols:
+the Juniper SSL VPN (which is now known as <a href="https://www.pulsesecure.net/products/connect-secure/">Pulse Connect Secure</a>),
+the <a href="https://www.paloaltonetworks.com/features/vpn">Palo Alto Networks GlobalProtect SSL VPN</a>,
+the <a href="https://www.f5.com/products/big-ip-services">F5 Big-IP SSL VPN</a>,
+and the <a href="https://www.fortinet.com/products/vpn">Fortinet Fortigate SSL VPN</a>.</p>
 
 <p>An openconnect VPN server (<a href="https://www.infradead.org/ocserv">ocserv</a>), which implements an improved version of the Cisco AnyConnect protocol,
 has also been written.</p>
 
 <p>OpenConnect is released under the <a href="licence.html">GNU Lesser Public License, version 2.1</a>.</p>
-
-<p>Like <a href="http://www.unix-ag.uni-kl.de/~massar/vpnc/">vpnc</a>,
-OpenConnect is not officially supported by, or associated in any way
-with, Cisco Systems, Juniper Networks, Pulse Secure, or Palo Alto Networks.
-It just happens to interoperate with their equipment.
-</p>
 
 <h2>Motivation</h2>
 
@@ -45,6 +43,22 @@ client under Linux found it to have many deficiencies:</p>
 
 <p>Naturally, OpenConnect addresses all of the above issues, and more.
 </p>
+
+<h2>Multi-protocol support</h2>
+
+<p>Like <a href="http://www.unix-ag.uni-kl.de/~massar/vpnc/">vpnc</a>,
+OpenConnect is not officially supported by, or associated in any way
+with Cisco Systems, nor with Juniper Networks, Pulse Secure,
+Palo Alto Networks, F5, or Fortinet.
+It just happens to interoperate with their equipment.</p>
+
+<p>Wherever possible, OpenConnect presents a uniform API and command-line
+interface to each of these VPNs. For example,
+<a href="manual.html"><tt>openconnect --force-dpd=10</tt></a>
+will attempt dead peer detection every 10 seconds on every VPN that
+supports it, even though the actual mechanism used may be protocol-specific.
+Protocol-specific features and deficiencies are described on the
+<a href="protocol.html">individual protocol pages</a>.</p>
 
 	<INCLUDE file="inc/footer.tmpl" />
 </PAGE>
