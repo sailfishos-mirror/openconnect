@@ -83,10 +83,15 @@ It was originally written to support Cisco "AnyConnect" VPN servers,
 and has since been extended with experimental support for Juniper
 Network Connect
 .RB ( \-\-protocol=nc )
-and Junos Pulse VPN servers
+Junos Pulse VPN servers,
 .RB ( \-\-protocol=pulse )
-and PAN GlobalProtect VPN servers
-.RB ( \-\-protocol=gp ).
+PAN GlobalProtect VPN servers,
+.RB ( \-\-protocol=gp )
+F5 Big-IP VPN servers,
+.RB ( \-\-protocol=f5 )
+and Fortinet Fortigate VPN servers,
+.RB ( \-\-protocol=fortinet )
+.
 
 The connection happens in two phases. First there is a simple HTTPS
 connection over which the user authenticates somehow \- by using a
@@ -491,9 +496,18 @@ for Cisco AnyConnect (the default),
 for experimental support for Juniper Network Connect (also supported
 by most Junos Pulse servers),
 .I pulse
-for experimental support for Junos Pulse, and
+for experimental support for Junos Pulse,
 .I gp
-for experimental support for PAN GlobalProtect.
+for experimental support for PAN GlobalProtect,
+.I f5
+for experimental support for F5 Big-IP, and
+.I fortinet
+for experimental support for Fortinet Fortigate.
+
+See
+.I http://www.infradead.org/openconnect/protocols.html
+for details on features and deficiencies of the individual
+protocols.
 
 OpenConnect does not yet support all of the authentication options used
 by Pulse, nor does it support Host Checker/TNCC with Pulse. If your
