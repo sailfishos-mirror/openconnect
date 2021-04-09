@@ -193,10 +193,14 @@ struct pkt {
 #define DTLS_CONNECTING	4	/* ESP probe received; must tell server */
 #define DTLS_CONNECTED	5	/* Server informed and should be sending ESP */
 
-/* Flavors of HTML forms to screen-scrape */
-#define FORM_FLAVOR_JUNIPER	1
-#define FORM_FLAVOR_F5		2
-#define FORM_FLAVOR_FORTINET	3
+/* Not to be confused with OC_PROTO_xxx flags which are library-visible */
+#define PROTO_ANYCONNECT	0
+#define PROTO_NC		1
+#define PROTO_GPST		2
+#define PROTO_PULSE		3
+#define PROTO_F5		4
+#define PROTO_FORTINET		5
+#define PROTO_NULLPPP		6
 
 /* All supported PPP packet framings/encapsulations */
 #define PPP_ENCAP_RFC1661	1	/* Plain/synchronous/pre-framed PPP (RFC1661) */
@@ -304,6 +308,7 @@ struct vpn_proto {
 	const char *description;
 	const char *secure_cookie;
 	const char *udp_protocol;
+	int proto;
 	unsigned int flags;
 	int (*vpn_close_session)(struct openconnect_info *vpninfo, const char *reason);
 
@@ -977,17 +982,17 @@ int decompress_and_queue_packet(struct openconnect_info *vpninfo, int compr_type
 				unsigned char *buf, int len);
 int compress_packet(struct openconnect_info *vpninfo, int compr_type, struct pkt *this);
 
-/* html-auth.c */
+/* auth-html.c */
 xmlNodePtr htmlnode_next(xmlNodePtr top, xmlNodePtr node);
 xmlNodePtr htmlnode_dive(xmlNodePtr top, xmlNodePtr node);
 xmlNodePtr find_form_node(xmlDocPtr doc);
 int parse_input_node(struct openconnect_info *vpninfo, struct oc_auth_form *form,
-		     xmlNodePtr node, const char *submit_button, int flavor,
+		     xmlNodePtr node, const char *submit_button,
 		     int (*can_gen_tokencode)(struct openconnect_info *vpninfo, struct oc_auth_form *form, struct oc_form_opt *opt));
 int parse_select_node(struct openconnect_info *vpninfo, struct oc_auth_form *form,
-		      xmlNodePtr node, int flavor);
+		      xmlNodePtr node);
 struct oc_auth_form *parse_form_node(struct openconnect_info *vpninfo,
-				     xmlNodePtr node, const char *submit_button, int flavor,
+				     xmlNodePtr node, const char *submit_button,
 				     int (*can_gen_tokencode)(struct openconnect_info *vpninfo, struct oc_auth_form *form, struct oc_form_opt *opt));
 
 /* auth-juniper.c */

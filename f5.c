@@ -148,7 +148,7 @@ int f5_obtain_cookie(struct openconnect_info *vpninfo)
 			if ((form = plain_auth_form()) == NULL)
 				goto nomem;
 		} else {
-			form = parse_form_node(vpninfo, node, NULL, FORM_FLAVOR_F5, NULL);
+			form = parse_form_node(vpninfo, node, NULL, NULL);
 			if (form_order==1 && (xmlnode_get_prop(node, "id", &form_id) || strcmp(form_id, "auth_form"))) {
 				vpn_progress(vpninfo, PRG_ERR, _("Unknown form ID '%s' (expected 'auth_form')\n"),
 					     form_id);

@@ -54,7 +54,7 @@ xmlNodePtr find_form_node(xmlDocPtr doc)
 }
 
 int parse_input_node(struct openconnect_info *vpninfo, struct oc_auth_form *form,
-		     xmlNodePtr node, const char *submit_button, int flavor,
+		     xmlNodePtr node, const char *submit_button,
 		     int (*can_gen_tokencode)(struct openconnect_info *vpninfo, struct oc_auth_form *form, struct oc_form_opt *opt))
 {
 	char *type = (char *)xmlGetProp(node, (unsigned char *)"type"), *style = (char *)xmlGetProp(node, (unsigned char *)"style");
@@ -93,12 +93,12 @@ int parse_input_node(struct openconnect_info *vpninfo, struct oc_auth_form *form
 			ret = -ENOMEM;
 			goto out;
 		}
-		if (flavor == FORM_FLAVOR_JUNIPER &&
+		if (vpninfo->proto->proto == PROTO_NC &&
 		    !strcmp(form->auth_id, "loginForm") &&
 		    !strcmp(opt->name, "VerificationCode") &&
 		    can_gen_tokencode && !can_gen_tokencode(vpninfo, form, opt))
 			opt->type = OC_FORM_OPT_TOKEN;
-	} else if (flavor == FORM_FLAVOR_JUNIPER && !strcasecmp(type, "submit")) {
+	} else if (vpninfo->proto->proto == PROTO_NC && !strcasecmp(type, "submit")) {
 
 		xmlnode_get_prop(node, "name", &opt->name);
 		if (opt->name && submit_button && (!strcmp(opt->name, submit_button) ||
@@ -149,7 +149,7 @@ int parse_input_node(struct openconnect_info *vpninfo, struct oc_auth_form *form
 }
 
 int parse_select_node(struct openconnect_info *vpninfo, struct oc_auth_form *form,
-		      xmlNodePtr node, int flavor)
+		      xmlNodePtr node)
 {
 	xmlNodePtr child;
 	struct oc_form_opt_select *opt;
@@ -162,8 +162,8 @@ int parse_select_node(struct openconnect_info *vpninfo, struct oc_auth_form *for
 	xmlnode_get_prop(node, "name", &opt->form.name);
 	opt->form.label = strdup(opt->form.name);
 	opt->form.type = OC_FORM_OPT_SELECT;
-	if ((flavor == FORM_FLAVOR_JUNIPER && !strcmp(opt->form.name, "realm")) ||
-	    (flavor == FORM_FLAVOR_F5 && !strcmp(opt->form.name, "domain")))
+	if ((vpninfo->proto->proto == PROTO_NC && !strcmp(opt->form.name, "realm")) ||
+	    (vpninfo->proto->proto == PROTO_F5 && !strcmp(opt->form.name, "domain")))
 		form->authgroup_opt = opt;
 
 	for (child = node->children; child; child = child->next) {
@@ -196,7 +196,7 @@ int parse_select_node(struct openconnect_info *vpninfo, struct oc_auth_form *for
 }
 
 struct oc_auth_form *parse_form_node(struct openconnect_info *vpninfo,
-				      xmlNodePtr node, const char *submit_button, int flavor,
+				      xmlNodePtr node, const char *submit_button,
 				      int (*can_gen_tokencode)(struct openconnect_info *vpninfo, struct oc_auth_form *form, struct oc_form_opt *opt))
 {
 	struct oc_auth_form *form = calloc(1, sizeof(*form));
@@ -215,12 +215,12 @@ struct oc_auth_form *parse_form_node(struct openconnect_info *vpninfo,
 		return NULL;
 	}
 
-	if (flavor == FORM_FLAVOR_JUNIPER) {
+	if (vpninfo->proto->proto == PROTO_NC) {
 		/* XX: some forms have 'id', but no 'name' */
 		if (!xmlnode_get_prop(node, "name", &form->auth_id) ||
 		    !xmlnode_get_prop(node, "id", &form->auth_id))
 			form->banner = strdup(form->auth_id);
-	} else if (flavor == FORM_FLAVOR_F5)
+	} else if (vpninfo->proto->proto == PROTO_F5)
 		xmlnode_get_prop(node, "id", &form->auth_id);
 
 	/* XX: fallback auth_id (since other functions expect it to exist) */
@@ -232,13 +232,13 @@ struct oc_auth_form *parse_form_node(struct openconnect_info *vpninfo,
 			continue;
 
 		if (!strcasecmp((char *)child->name, "input"))
-			parse_input_node(vpninfo, form, child, submit_button, flavor, can_gen_tokencode);
+			parse_input_node(vpninfo, form, child, submit_button, can_gen_tokencode);
 		else if (!strcasecmp((char *)child->name, "select")) {
-			parse_select_node(vpninfo, form, child, flavor);
+			parse_select_node(vpninfo, form, child);
 			/* Skip its children */
 			while (child->children)
 				child = child->last;
-		} else if (flavor == FORM_FLAVOR_F5
+		} else if (vpninfo->proto->proto == PROTO_F5
 			   && !strcasecmp((char *)child->name, "td")) {
 
 			char *id = (char *)xmlGetProp(child, (unsigned char *)"id");
@@ -257,7 +257,7 @@ struct oc_auth_form *parse_form_node(struct openconnect_info *vpninfo,
 			}
 			free(id);
 
-		} else if (flavor == FORM_FLAVOR_JUNIPER &&
+		} else if (vpninfo->proto->proto == PROTO_NC &&
 			   !strcasecmp((char *)child->name, "textarea")) {
 
 			/* display the post sign-in message, if any */
