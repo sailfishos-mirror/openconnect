@@ -424,6 +424,17 @@ const char *add_option_steal(struct openconnect_info *vpninfo, const char *opt, 
 	return new->value;
 }
 
+const char *add_option_ipaddr(struct openconnect_info *vpninfo, const char *opt,
+			      int af, void *addr)
+{
+	char buf[40];
+
+	if (!inet_ntop(af, addr, buf, sizeof(buf)))
+		return NULL;
+
+	return add_option_dup(vpninfo, opt, buf, -1);
+}
+
 
 void free_optlist(struct oc_vpn_option *opt)
 {
