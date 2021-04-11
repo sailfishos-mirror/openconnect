@@ -1678,6 +1678,72 @@ static int check_certificate_expiry(struct openconnect_info *vpninfo)
 	return 0;
 }
 
+int openconnect_install_ctx_verify(struct openconnect_info *vpninfo, SSL_CTX *ctx)
+{
+	/* We've seen certificates in the wild which don't have the
+	   purpose fields filled in correctly */
+	SSL_CTX_set_purpose(ctx, X509_PURPOSE_ANY);
+	SSL_CTX_set_cert_verify_callback(ctx, ssl_app_verify_callback,
+					 vpninfo);
+
+	if (!vpninfo->no_system_trust)
+		SSL_CTX_set_default_verify_paths(ctx);
+
+#ifdef ANDROID_KEYSTORE
+	if (vpninfo->cafile && !strncmp(vpninfo->cafile, "keystore:", 9)) {
+		STACK_OF(X509_INFO) *stack;
+		X509_STORE *store;
+		X509_INFO *info;
+		BIO *b = BIO_from_keystore(vpninfo, vpninfo->cafile);
+
+		if (!b)
+			return -EINVAL;
+
+		stack = PEM_X509_INFO_read_bio(b, NULL, NULL, NULL);
+		BIO_free(b);
+
+		if (!stack) {
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("Failed to read certs from CA file '%s'\n"),
+				     vpninfo->cafile);
+			openconnect_report_ssl_errors(vpninfo);
+			return -ENOENT;
+		}
+
+		store = SSL_CTX_get_cert_store(ctx);
+
+		while ((info = sk_X509_INFO_pop(stack))) {
+			if (info->x509)
+				X509_STORE_add_cert(store, info->x509);
+			if (info->crl)
+				X509_STORE_add_crl(store, info->crl);
+			X509_INFO_free(info);
+		}
+		sk_X509_INFO_free(stack);
+	} else
+#endif
+	if (vpninfo->cafile) {
+		/* OpenSSL does actually manage to cope with UTF-8 for
+		   this one, under Windows. So only convert for legacy
+		   UNIX. */
+		char *cafile = openconnect_utf8_to_legacy(vpninfo,
+							  vpninfo->cafile);
+		int err = SSL_CTX_load_verify_locations(ctx, cafile, NULL);
+
+		if (cafile != vpninfo->cafile)
+			free(cafile);
+		if (!err) {
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("Failed to open CA file '%s'\n"),
+				     vpninfo->cafile);
+			openconnect_report_ssl_errors(vpninfo);
+			return -EINVAL;
+		}
+	}
+
+	return 0;
+}
+
 int openconnect_open_https(struct openconnect_info *vpninfo)
 {
 	SSL *https_ssl;
@@ -1762,15 +1828,6 @@ int openconnect_open_https(struct openconnect_info *vpninfo)
 			check_certificate_expiry(vpninfo);
 		}
 
-		/* We've seen certificates in the wild which don't have the
-		   purpose fields filled in correctly */
-		SSL_CTX_set_purpose(vpninfo->https_ctx, X509_PURPOSE_ANY);
-		SSL_CTX_set_cert_verify_callback(vpninfo->https_ctx,
-						 ssl_app_verify_callback, vpninfo);
-
-		if (!vpninfo->no_system_trust)
-			SSL_CTX_set_default_verify_paths(vpninfo->https_ctx);
-
 		if (!vpninfo->ciphersuite_config) {
 			struct oc_text_buf *buf = buf_alloc();
 			if (vpninfo->pfs)
@@ -1805,68 +1862,13 @@ int openconnect_open_https(struct openconnect_info *vpninfo)
 			return -EIO;
 		}
 
-#ifdef ANDROID_KEYSTORE
-		if (vpninfo->cafile && !strncmp(vpninfo->cafile, "keystore:", 9)) {
-			STACK_OF(X509_INFO) *stack;
-			X509_STORE *store;
-			X509_INFO *info;
-			BIO *b = BIO_from_keystore(vpninfo, vpninfo->cafile);
-
-			if (!b) {
-				SSL_CTX_free(vpninfo->https_ctx);
-				vpninfo->https_ctx = NULL;
-				closesocket(ssl_sock);
-				return -EINVAL;
-			}
-
-			stack = PEM_X509_INFO_read_bio(b, NULL, NULL, NULL);
-			BIO_free(b);
-
-			if (!stack) {
-				vpn_progress(vpninfo, PRG_ERR,
-					     _("Failed to read certs from CA file '%s'\n"),
-					     vpninfo->cafile);
-				openconnect_report_ssl_errors(vpninfo);
-				SSL_CTX_free(vpninfo->https_ctx);
-				vpninfo->https_ctx = NULL;
-				closesocket(ssl_sock);
-				return -ENOENT;
-			}
-
-			store = SSL_CTX_get_cert_store(vpninfo->https_ctx);
-
-			while ((info = sk_X509_INFO_pop(stack))) {
-				if (info->x509)
-					X509_STORE_add_cert(store, info->x509);
-				if (info->crl)
-					X509_STORE_add_crl(store, info->crl);
-				X509_INFO_free(info);
-			}
-			sk_X509_INFO_free(stack);
-		} else
-#endif
-		if (vpninfo->cafile) {
-			/* OpenSSL does actually manage to cope with UTF-8 for
-			   this one, under Windows. So only convert for legacy
-			   UNIX. */
-			char *cafile = openconnect_utf8_to_legacy(vpninfo,
-								  vpninfo->cafile);
-			err = SSL_CTX_load_verify_locations(vpninfo->https_ctx,
-							    cafile, NULL);
-			if (cafile != vpninfo->cafile)
-				free(cafile);
-			if (!err) {
-				vpn_progress(vpninfo, PRG_ERR,
-					     _("Failed to open CA file '%s'\n"),
-					     vpninfo->cafile);
-				openconnect_report_ssl_errors(vpninfo);
-				SSL_CTX_free(vpninfo->https_ctx);
-				vpninfo->https_ctx = NULL;
-				closesocket(ssl_sock);
-				return -EINVAL;
-			}
+		err = openconnect_install_ctx_verify(vpninfo, vpninfo->https_ctx);
+		if (err) {
+			SSL_CTX_free(vpninfo->https_ctx);
+			vpninfo->https_ctx = NULL;
+			closesocket(ssl_sock);
+			return err;
 		}
-
 	}
 	https_ssl = SSL_new(vpninfo->https_ctx);
 	workaround_openssl_certchain_bug(vpninfo, https_ssl);
