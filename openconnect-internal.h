@@ -1147,6 +1147,10 @@ int hotp_hmac(struct openconnect_info *vpninfo, const void *challenge);
 #elif defined (OPENCONNECT_GNUTLS)
 #define openconnect_https_connected(_v) ((_v)->https_sess)
 #endif
+#ifdef OPENCONNECT_OPENSSL
+int openconnect_install_ctx_verify(struct openconnect_info *vpninfo,
+				   SSL_CTX *ctx);
+#endif
 
 /* mainloop.c */
 int tun_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable);
