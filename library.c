@@ -626,8 +626,8 @@ int openconnect_disable_ipv6(struct openconnect_info *vpninfo)
 	 * unconfigured state. (Neither a closed TLS socket
 	 * nor tunnel socket is a reliable indicator.)
 	 */
-	if (!vpninfo->disable_ipv6
-	    || vpninfo->ssl_times.last_tx != 0)
+	if (!vpninfo->disable_ipv6 &&
+	    vpninfo->ssl_times.last_tx != 0)
 		return -EINVAL;
 	vpninfo->disable_ipv6 = 1;
 	return 0;
