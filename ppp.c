@@ -222,9 +222,8 @@ int openconnect_ppp_new(struct openconnect_info *vpninfo,
 
 	/* Nameservers to request from peer
 	 * (see https://tools.ietf.org/html/rfc1877#section-1) */
-	ppp->solicit_peerns = 0;
 	if (!vpninfo->ip_info.dns[0] && !vpninfo->ip_info.nbns[0])
-		ppp->solicit_peerns |= IPCP_DNS0|IPCP_DNS1|IPCP_NBNS0|IPCP_NBNS1;
+		ppp->solicit_peerns = IPCP_DNS0|IPCP_DNS1|IPCP_NBNS0|IPCP_NBNS1;
 
 	/* Outgoing IPv4 address and IPv6 interface identifier bits,
 	 * if already configured via another mechanism */
@@ -278,7 +277,7 @@ int openconnect_ppp_new(struct openconnect_info *vpninfo,
 
 	if (ppp->hdlc) ppp->out_lcp_opts |= BIT_ASYNCMAP;
 	ppp->want_ipv4 = want_ipv4;
-	ppp->want_ipv6 = want_ipv6;
+	ppp->want_ipv6 = want_ipv6 && !vpninfo->disable_ipv6;
 	ppp->exp_ppp_hdr_size = 4; /* Address(1), Control(1), Proto(2) */
 
 	return 0;
@@ -287,16 +286,32 @@ int openconnect_ppp_new(struct openconnect_info *vpninfo,
 static void print_ppp_state(struct openconnect_info *vpninfo, int level)
 {
 	struct oc_ppp *ppp = vpninfo->ppp;
-	char buf[40] = {0};
+	char buf4[20];
+	char buf6[40];
 
-	vpn_progress(vpninfo, level, _("Current PPP state: %s (encap %s):\n"), ppps_names[ppp->ppp_state], encap_names[ppp->encap]);
+	if (ppp->want_ipv4)
+		inet_ntop(AF_INET, &ppp->in_ipv4_addr, buf4, sizeof(buf4));
+	else
+		snprintf(buf4, sizeof(buf4), "none");
+
+	if (ppp->want_ipv6)
+		inet_ntop(AF_INET6, &ppp->in_ipv6_addr, buf6, sizeof(buf6));
+	else
+		snprintf(buf6, sizeof(buf6), "none");
+
+	vpn_progress(vpninfo, level, _("Current PPP state: %s (encap %s):\n"),
+		     ppps_names[ppp->ppp_state], encap_names[ppp->encap]);
 	vpn_progress(vpninfo, level, _("    in: asyncmap=0x%08x, lcp_opts=%d, lcp_magic=0x%08x, ipv4=%s, ipv6=%s\n"),
-		     ppp->in_asyncmap, ppp->in_lcp_opts, (unsigned)ntohl(ppp->in_lcp_magic), inet_ntoa(ppp->in_ipv4_addr),
-		     inet_ntop(AF_INET6, &ppp->in_ipv6_addr, buf, sizeof(buf)));
-	inet_ntop(AF_INET6, &ppp->out_ipv6_addr, buf, sizeof(buf));
-	vpn_progress(vpninfo, level, _("   out: asyncmap=0x%08x, lcp_opts=%d, lcp_magic=0x%08x, ipv4=%s, ipv6=%s, solicit_peerns=%d\n"),
-		     ppp->out_asyncmap, ppp->out_lcp_opts, (unsigned)ntohl(ppp->out_lcp_magic), inet_ntoa(ppp->out_ipv4_addr),
-		     inet_ntop(AF_INET6, &ppp->out_ipv6_addr, buf, sizeof(buf)), ppp->solicit_peerns);
+		     ppp->in_asyncmap, ppp->in_lcp_opts, (unsigned)ntohl(ppp->in_lcp_magic),
+		     buf4, buf6);
+
+	if (ppp->want_ipv4)
+		inet_ntop(AF_INET, &ppp->out_ipv4_addr, buf4, sizeof(buf4));
+	if (ppp->want_ipv6)
+		inet_ntop(AF_INET6, &ppp->out_ipv6_addr, buf6, sizeof(buf6));
+	vpn_progress(vpninfo, level, _("   out: asyncmap=0x%08x, lcp_opts=%d, lcp_magic=0x%08x, ipv4=%s, ipv6=%s, solicit_peerns=%d, got_peerns=%d\n"),
+		     ppp->out_asyncmap, ppp->out_lcp_opts, (unsigned)ntohl(ppp->out_lcp_magic),
+		     buf4, buf6, ppp->solicit_peerns, ppp->got_peerns);
 }
 
 static int buf_append_ppp_tlv(struct oc_text_buf *buf, int tag, int len, const void *data)
@@ -664,7 +679,12 @@ static int handle_config_rejnak(struct openconnect_info *vpninfo,
 				vpn_progress(vpninfo, PRG_DEBUG,
 					     _("Server nak-offered IPv4 address: %s\n"), s);
 				ppp->out_ipv4_addr = *a;
-				vpninfo->ip_info.addr = strdup(s); /* XX: need free and add_option() */
+				if (vpninfo->ip_info.addr) {
+					vpn_progress(vpninfo, PRG_ERR,
+						     _("Server rejected Legacy IP address %s\n"),
+						       vpninfo->ip_info.addr);
+					ppp->want_ipv4 = 0;
+				}
 			} else {
 				vpn_progress(vpninfo, PRG_DEBUG,
 					     _("Server rejected/nak'ed our IPv4 address or request: %s\n"), s);
@@ -685,11 +705,8 @@ static int handle_config_rejnak(struct openconnect_info *vpninfo,
 				vpn_progress(vpninfo, PRG_DEBUG,
 					     _("Server nak-offered IPCP request for %s[%d] server: %s\n"),
 					     is_dns ? "DNS" : "NBNS", entry, s);
-				/* XX: need free and add_option() */
-				if (is_dns)
-					vpninfo->ip_info.dns[entry] = strdup(s);
-				else
-					vpninfo->ip_info.nbns[entry] = strdup(s);
+				ppp->nameservers[t & 3] = *a;
+				ppp->got_peerns |= (1<<(t-IPCP_xNS_BASE));
 			} else {
 				vpn_progress(vpninfo, PRG_DEBUG,
 					     _("Server rejected/nak'ed IPCP request for %s[%d] server\n"),
@@ -707,26 +724,19 @@ static int handle_config_rejnak(struct openconnect_info *vpninfo,
 				memcpy(ipv6_ll + 8, val, 8);
 				if (!inet_ntop(AF_INET6, ipv6_ll, buf, sizeof(buf)))
 					return -EINVAL;
+
 				vpn_progress(vpninfo, PRG_DEBUG,
 					     _("Server nak-offered IPv6 link-local address %s\n"), buf);
-
 				/* If we don't already have a valid global IPv6 address, then we are
 				 * supposed to use this one to create a valid link-local IPv6
 				 * address to allow autoconfiguration (https://tools.ietf.org/html/rfc5072)
 				 */
-				if (!vpninfo->ip_info.addr6 && !vpninfo->ip_info.netmask6) {
-					memcpy(&ppp->out_ipv6_addr, ipv6_ll, 16);
-					/* XX: need add-option */
-					if ((asprintf((char **)&vpninfo->ip_info.netmask6, "%s/64", buf)) <= 0)
-						return -ENOMEM;
-					vpn_progress(vpninfo, PRG_INFO,
-						     _("Configured IPv6 link-local address %s.\n"),
-						     vpninfo->ip_info.netmask6);
-				}
+				memcpy(&ppp->out_ipv6_addr, ipv6_ll, 16);
 			} else {
-				vpn_progress(vpninfo, PRG_DEBUG,
+				vpn_progress(vpninfo, PRG_INFO,
 					     _("Server rejected/nak'ed our IPv6 interface identifier\n"));
-				return -EINVAL;
+				ppp->want_ipv6 = 0;
+				return 0;
 			}
 			break;
 		}
@@ -907,6 +917,36 @@ static int handle_state_transition(struct openconnect_info *vpninfo, int *timeou
 			break;
 
 		ppp->ppp_state = PPPS_NETWORK;
+
+		/* Ensure that we use the addresses we configured on PPP */
+		if (ppp->want_ipv4) {
+			vpninfo->ip_info.addr = add_option_ipaddr(vpninfo, "ppp_ipv4", AF_INET,
+								  &ppp->out_ipv4_addr);
+		} else {
+			vpninfo->ip_info.addr = NULL;
+		}
+
+		/* Ensure that we use the addresses we configured on PPP */
+		if (ppp->want_ipv6) {
+			vpninfo->ip_info.addr6 = add_option_ipaddr(vpninfo, "ppp_ipv6", AF_INET6,
+								   &ppp->out_ipv6_addr);
+		} else {
+			vpninfo->ip_info.addr6 = NULL;
+		}
+
+		if (ppp->got_peerns & IPCP_NBNS0)
+			vpninfo->ip_info.nbns[0] = add_option_ipaddr(vpninfo, "ppp_nbns0", AF_INET,
+								     &ppp->nameservers[0]);
+		if (ppp->got_peerns & IPCP_DNS0)
+			vpninfo->ip_info.dns[0] = add_option_ipaddr(vpninfo, "ppp_dns0", AF_INET,
+								    &ppp->nameservers[1]);
+		if (ppp->got_peerns & IPCP_NBNS1)
+			vpninfo->ip_info.nbns[1] = add_option_ipaddr(vpninfo, "ppp_nbns1", AF_INET,
+								     &ppp->nameservers[2]);
+		if (ppp->got_peerns & IPCP_DNS1)
+			vpninfo->ip_info.dns[1] = add_option_ipaddr(vpninfo, "ppp_dns1", AF_INET,
+								    &ppp->nameservers[3]);
+
 		/* on close, we will need to send TERMREQ, then receive TERMACK */
 		vpninfo->delay_close = DELAY_CLOSE_IMMEDIATE_CALLBACK;
 		break;
