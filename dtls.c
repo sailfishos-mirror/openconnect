@@ -629,7 +629,7 @@ static int probe_mtu(struct openconnect_info *vpninfo, unsigned char *buf)
 		wait_ms = PKT_INTERVAL_MS -
 			((now_tv.tv_sec - last_tv.tv_sec) * 1000) -
 			((now_tv.tv_usec - last_tv.tv_usec) / 1000);
-		if (wait_ms < 0 || wait_ms > PKT_INTERVAL_MS)
+		if (wait_ms <= 0 || wait_ms > PKT_INTERVAL_MS)
 			wait_ms = PKT_INTERVAL_MS;
 
 		ret = openconnect_dtls_read(vpninfo, buf, max+1, wait_ms);
