@@ -58,14 +58,6 @@
  * their clients use anyway.
  */
 
-#if defined(OPENCONNECT_OPENSSL)
-#define DTLS_SEND SSL_write
-#define DTLS_RECV SSL_read
-#elif defined(OPENCONNECT_GNUTLS)
-#define DTLS_SEND gnutls_record_send
-#define DTLS_RECV gnutls_record_recv
-#endif
-
 char *openconnect_bin2hex(const char *prefix, const uint8_t *data, unsigned len)
 {
 	struct oc_text_buf *buf;
@@ -283,7 +275,7 @@ int dtls_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		}
 
 		buf = vpninfo->dtls_pkt->data - 1;
-		len = DTLS_RECV(vpninfo->dtls_ssl, buf, len + 1);
+		len = ssl_nonblock_read(vpninfo, 1, buf, len + 1);
 		if (len <= 0)
 			break;
 
@@ -306,7 +298,7 @@ int dtls_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 
 			/* FIXME: What if the packet doesn't get through? */
 			magic_pkt = AC_PKT_DPD_RESP;
-			if (DTLS_SEND(vpninfo->dtls_ssl, &magic_pkt, 1) != 1)
+			if (ssl_nonblock_write(vpninfo, 1, &magic_pkt, 1) != 1)
 				vpn_progress(vpninfo, PRG_ERR,
 					     _("Failed to send DPD response. Expect disconnect\n"));
 			continue;
@@ -377,7 +369,7 @@ int dtls_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		vpn_progress(vpninfo, PRG_DEBUG, _("Send DTLS DPD\n"));
 
 		magic_pkt = AC_PKT_DPD_OUT;
-		if (DTLS_SEND(vpninfo->dtls_ssl, &magic_pkt, 1) != 1)
+		if (ssl_nonblock_write(vpninfo, 1, &magic_pkt, 1) != 1)
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("Failed to send DPD request. Expect disconnect\n"));
 
@@ -395,7 +387,7 @@ int dtls_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		vpn_progress(vpninfo, PRG_DEBUG, _("Send DTLS Keepalive\n"));
 
 		magic_pkt = AC_PKT_KEEPALIVE;
-		if (DTLS_SEND(vpninfo->dtls_ssl, &magic_pkt, 1) != 1)
+		if (ssl_nonblock_write(vpninfo, 1, &magic_pkt, 1) != 1)
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("Failed to send keepalive request. Expect disconnect\n"));
 		time(&vpninfo->dtls_times.last_tx);
@@ -431,45 +423,19 @@ int dtls_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 				send_pkt->cstp.hdr[7] = AC_PKT_COMPRESSED;
 		}
 
-#ifdef OPENCONNECT_OPENSSL
-		ret = SSL_write(vpninfo->dtls_ssl, &send_pkt->cstp.hdr[7], send_pkt->len + 1);
+		ret = ssl_nonblock_write(vpninfo, 1, &send_pkt->cstp.hdr[7], send_pkt->len + 1);
 		if (ret <= 0) {
-			ret = SSL_get_error(vpninfo->dtls_ssl, ret);
-
-			if (ret == SSL_ERROR_WANT_WRITE) {
-				monitor_write_fd(vpninfo, dtls);
-				requeue_packet(&vpninfo->outgoing_queue, this);
-			} else if (ret != SSL_ERROR_WANT_READ) {
-				/* If it's a real error, kill the DTLS connection and
-				   requeue the packet to be sent over SSL */
-				vpn_progress(vpninfo, PRG_ERR,
-					     _("DTLS got write error %d. Falling back to SSL\n"),
-					     ret);
-				openconnect_report_ssl_errors(vpninfo);
-				dtls_reconnect(vpninfo);
-				requeue_packet(&vpninfo->outgoing_queue, this);
-				work_done = 1;
-			}
-			return work_done;
-		}
-#else /* GnuTLS */
-		ret = gnutls_record_send(vpninfo->dtls_ssl, &send_pkt->cstp.hdr[7], send_pkt->len + 1);
-		if (ret <= 0) {
-			if (ret != GNUTLS_E_AGAIN && ret != GNUTLS_E_INTERRUPTED) {
-				vpn_progress(vpninfo, PRG_ERR,
-					     _("DTLS got write error: %s. Falling back to SSL\n"),
-					     gnutls_strerror(ret));
-				dtls_reconnect(vpninfo);
-				work_done = 1;
-			} else {
-				/* Wake me up when it becomes writeable */
-				monitor_write_fd(vpninfo, dtls);
-			}
-
+			/* Zero is -EAGAIN; just requeue. dtls_nonblock_write()
+			 * will have added the socket to the poll wfd list. */
 			requeue_packet(&vpninfo->outgoing_queue, this);
+			if (ret < 0) {
+				/* If it's a real error, kill the DTLS connection so
+				   the requeued packet will be sent over SSL */
+				dtls_reconnect(vpninfo);
+				work_done = 1;
+			}
 			return work_done;
 		}
-#endif
 		time(&vpninfo->dtls_times.last_tx);
 		vpn_progress(vpninfo, PRG_TRACE,
 			     _("Sent DTLS packet of %d bytes; DTLS send returned %d\n"),

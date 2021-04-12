@@ -1123,8 +1123,8 @@ int encrypt_esp_packet(struct openconnect_info *vpninfo, struct pkt *pkt, int cr
 /* {gnutls,openssl}.c */
 const char *openconnect_get_tls_library_version();
 int can_enable_insecure_crypto();
-int ssl_nonblock_read(struct openconnect_info *vpninfo, void *buf, int maxlen);
-int ssl_nonblock_write(struct openconnect_info *vpninfo, void *buf, int buflen);
+int ssl_nonblock_read(struct openconnect_info *vpninfo, int dtls, void *buf, int maxlen);
+int ssl_nonblock_write(struct openconnect_info *vpninfo, int dtls, void *buf, int buflen);
 int openconnect_open_https(struct openconnect_info *vpninfo);
 void openconnect_close_https(struct openconnect_info *vpninfo, int final);
 int cstp_handshake(struct openconnect_info *vpninfo, unsigned init);

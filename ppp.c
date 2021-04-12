@@ -1021,7 +1021,7 @@ int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 
 		/* Load the encap header to end up with the payload where we expect it */
 		eh = this->data - rsv_hdr_size;
-		len = ssl_nonblock_read(vpninfo, eh, receive_mtu + rsv_hdr_size);
+		len = ssl_nonblock_read(vpninfo, 0, eh, receive_mtu + rsv_hdr_size);
 		if (!len)
 			break;
 		if (len < 0)
@@ -1246,7 +1246,7 @@ int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		vpninfo->ssl_times.last_tx = time(NULL);
 		unmonitor_write_fd(vpninfo, ssl);
 
-		ret = ssl_nonblock_write(vpninfo, this->data - this->ppp.hlen, this->len + this->ppp.hlen);
+		ret = ssl_nonblock_write(vpninfo, 0, this->data - this->ppp.hlen, this->len + this->ppp.hlen);
 		if (ret < 0)
 			goto do_reconnect;
 		else if (!ret) {

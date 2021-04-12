@@ -2603,7 +2603,7 @@ int pulse_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		}
 
 		/* Receive packet header, if there's anything there... */
-		len = ssl_nonblock_read(vpninfo, &pkt->pulse.vendor, 16);
+		len = ssl_nonblock_read(vpninfo, 0, &pkt->pulse.vendor, 16);
 		if (!len)
 			break;
 		if (len < 0)
@@ -2624,7 +2624,7 @@ int pulse_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		} else
 			len = load_be32(&pkt->pulse.len) - 0x10;
 
-		payload_len = ssl_nonblock_read(vpninfo, &pkt->data, len);
+		payload_len = ssl_nonblock_read(vpninfo, 0, &pkt->data, len);
 		if (payload_len != load_be32(&pkt->pulse.len) - 0x10) {
 			if (payload_len < 0)
 				len = 0x10;
@@ -2709,7 +2709,7 @@ int pulse_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			     (void *)&vpninfo->current_ssl_pkt->pulse.vendor,
 			     vpninfo->current_ssl_pkt->len + 16);
 
-		ret = ssl_nonblock_write(vpninfo,
+		ret = ssl_nonblock_write(vpninfo, 0,
 					 &vpninfo->current_ssl_pkt->pulse.vendor,
 					 vpninfo->current_ssl_pkt->len + 16);
 		if (ret < 0) {

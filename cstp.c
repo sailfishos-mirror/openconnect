@@ -972,7 +972,7 @@ int cstp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			}
 		}
 
-		len = ssl_nonblock_read(vpninfo, vpninfo->cstp_pkt->cstp.hdr, receive_mtu + 8);
+		len = ssl_nonblock_read(vpninfo, 0, vpninfo->cstp_pkt->cstp.hdr, receive_mtu + 8);
 		if (!len)
 			break;
 		if (len < 0)
@@ -1083,7 +1083,7 @@ int cstp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		vpninfo->ssl_times.last_tx = time(NULL);
 		unmonitor_write_fd(vpninfo, ssl);
 
-		ret = ssl_nonblock_write(vpninfo,
+		ret = ssl_nonblock_write(vpninfo, 0,
 					 vpninfo->current_ssl_pkt->cstp.hdr,
 					 vpninfo->current_ssl_pkt->len + 8);
 		if (ret < 0)
@@ -1264,7 +1264,7 @@ int cstp_bye(struct openconnect_info *vpninfo, const char *reason)
 	vpn_progress(vpninfo, PRG_INFO,
 		     _("Send BYE packet: %s\n"), reason);
 
-	ret = ssl_nonblock_write(vpninfo, bye_pkt, reason_len + 9);
+	ret = ssl_nonblock_write(vpninfo, 0, bye_pkt, reason_len + 9);
 	if (ret == reason_len + 9) {
 		ret = 0;
 	} else if (ret >= 0) {

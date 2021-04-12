@@ -771,7 +771,7 @@ static int oncp_record_read(struct openconnect_info *vpninfo, void *buf, int len
 	if (!vpninfo->oncp_rec_size) {
 		unsigned char lenbuf[2];
 
-		ret = ssl_nonblock_read(vpninfo, lenbuf, 2);
+		ret = ssl_nonblock_read(vpninfo, 0, lenbuf, 2);
 		if (ret <= 0)
 			return ret;
 		if (ret == 1) {
@@ -783,7 +783,7 @@ static int oncp_record_read(struct openconnect_info *vpninfo, void *buf, int len
 		}
 		vpninfo->oncp_rec_size = load_le16(lenbuf);
 		if (!vpninfo->oncp_rec_size) {
-			ret = ssl_nonblock_read(vpninfo, lenbuf, 1);
+			ret = ssl_nonblock_read(vpninfo, 0, lenbuf, 1);
 			if (ret == 1) {
 				if (lenbuf[0] == 1) {
 					vpn_progress(vpninfo, PRG_ERR,
@@ -806,7 +806,7 @@ static int oncp_record_read(struct openconnect_info *vpninfo, void *buf, int len
 	if (len > vpninfo->oncp_rec_size)
 		len = vpninfo->oncp_rec_size;
 
-	ret = ssl_nonblock_read(vpninfo, buf, len);
+	ret = ssl_nonblock_read(vpninfo, 0, buf, len);
 	if (ret > 0)
 		vpninfo->oncp_rec_size -= ret;
 	return ret;
@@ -1013,7 +1013,7 @@ int oncp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			     vpninfo->current_ssl_pkt->oncp.rec,
 			     vpninfo->current_ssl_pkt->len + 22);
 
-		ret = ssl_nonblock_write(vpninfo,
+		ret = ssl_nonblock_write(vpninfo, 0,
 					 vpninfo->current_ssl_pkt->oncp.rec,
 					 vpninfo->current_ssl_pkt->len + 22);
 		if (ret < 0) {

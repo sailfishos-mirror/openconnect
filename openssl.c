@@ -311,43 +311,63 @@ static int openconnect_openssl_gets(struct openconnect_info *vpninfo, char *buf,
 	return i ?: ret;
 }
 
-int ssl_nonblock_read(struct openconnect_info *vpninfo, void *buf, int maxlen)
+int ssl_nonblock_read(struct openconnect_info *vpninfo, int dtls, void *buf, int maxlen)
 {
+	SSL *ssl = dtls ? vpninfo->dtls_ssl : vpninfo->https_ssl;
 	int len, ret;
 
-	len = SSL_read(vpninfo->https_ssl, buf, maxlen);
+	if (!ssl) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Attempted to read from non-existent %s session"),
+			     dtls ? "DTLS" : "TLS");
+		return -1;
+	}
+
+	len = SSL_read(ssl, buf, maxlen);
 	if (len > 0)
 		return len;
 
-	ret = SSL_get_error(vpninfo->https_ssl, len);
-	if (ret == SSL_ERROR_SYSCALL || ret == SSL_ERROR_ZERO_RETURN) {
-		vpn_progress(vpninfo, PRG_ERR,
-			     _("SSL read error %d (server probably closed connection); reconnecting.\n"),
-			     ret);
-		return -EIO;
-	}
-	return 0;
+	ret = SSL_get_error(ssl, len);
+	if (ret == SSL_ERROR_WANT_WRITE || ret == SSL_ERROR_WANT_READ)
+		return 0;
+
+	vpn_progress(vpninfo, PRG_ERR, _("Read error on %s session: %d\n"),
+		       dtls ? "DTLS" : "TLS", ret);
+	return -EIO;
 }
 
-int ssl_nonblock_write(struct openconnect_info *vpninfo, void *buf, int buflen)
+int ssl_nonblock_write(struct openconnect_info *vpninfo, int dtls, void *buf, int buflen)
 {
+	SSL *ssl = dtls ? vpninfo->dtls_ssl : vpninfo->https_ssl;
 	int ret;
 
-	ret = SSL_write(vpninfo->https_ssl, buf, buflen);
+	if (!ssl) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Attempted to write to non-existent %s session"),
+			     dtls ? "DTLS" : "TLS");
+		return -1;
+	}
+
+	ret = SSL_write(ssl, buf, buflen);
 	if (ret > 0)
 		return ret;
 
-	ret = SSL_get_error(vpninfo->https_ssl, ret);
+	ret = SSL_get_error(ssl, ret);
 	switch (ret) {
 	case SSL_ERROR_WANT_WRITE:
 		/* Waiting for the socket to become writable -- it's
 		   probably stalled, and/or the buffers are full */
-		monitor_write_fd(vpninfo, ssl);
+		if (dtls)
+			monitor_write_fd(vpninfo, dtls);
+		else
+			monitor_write_fd(vpninfo, ssl);
+		/* Fall through */
 	case SSL_ERROR_WANT_READ:
 		return 0;
 
 	default:
-		vpn_progress(vpninfo, PRG_ERR, _("SSL_write failed: %d\n"), ret);
+		vpn_progress(vpninfo, PRG_ERR, _("Write error on %s session: %d\n"),
+			     dtls ? "DTLS" : "TLS", ret);
 		openconnect_report_ssl_errors(vpninfo);
 		return -1;
 	}

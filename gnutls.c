@@ -296,28 +296,43 @@ static int openconnect_gnutls_gets(struct openconnect_info *vpninfo, char *buf, 
 	return i ?: ret;
 }
 
-int ssl_nonblock_read(struct openconnect_info *vpninfo, void *buf, int maxlen)
+int ssl_nonblock_read(struct openconnect_info *vpninfo, int dtls, void *buf, int maxlen)
 {
+	gnutls_session_t sess = dtls ? vpninfo->dtls_ssl : vpninfo->https_sess;
 	int ret;
 
-	ret = gnutls_record_recv(vpninfo->https_sess, buf, maxlen);
+	if (!sess) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Attempted to read from non-existent %s session"),
+			     dtls ? "DTLS" : "TLS");
+		return -1;
+	}
+
+	ret = gnutls_record_recv(sess, buf, maxlen);
 	if (ret > 0)
 		return ret;
 
-	if (ret != GNUTLS_E_AGAIN && ret != GNUTLS_E_INTERRUPTED) {
-		vpn_progress(vpninfo, PRG_ERR,
-			     _("SSL read error: %s; reconnecting.\n"),
-			     gnutls_strerror(ret));
-		return -EIO;
-	}
-	return 0;
+	if (ret == GNUTLS_E_AGAIN || ret == GNUTLS_E_INTERRUPTED)
+		return 0;
+
+	vpn_progress(vpninfo, PRG_ERR, _("Read error on %s session: %s\n"),
+		     dtls ? "DTLS" : "SSL", gnutls_strerror(ret));
+	return -1;
 }
 
-int ssl_nonblock_write(struct openconnect_info *vpninfo, void *buf, int buflen)
+int ssl_nonblock_write(struct openconnect_info *vpninfo, int dtls, void *buf, int buflen)
 {
+	gnutls_session_t sess = dtls ? vpninfo->dtls_ssl : vpninfo->https_sess;
 	int ret;
 
-	ret = gnutls_record_send(vpninfo->https_sess, buf, buflen);
+	if (!sess) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Attempted to write to non-existent %s session"),
+			     dtls ? "DTLS" : "TLS");
+		return -1;
+	}
+
+	ret = gnutls_record_send(sess, buf, buflen);
 	if (ret > 0)
 		return ret;
 
@@ -335,15 +350,19 @@ int ssl_nonblock_write(struct openconnect_info *vpninfo, void *buf, int buflen)
 		 * that it's waiting for does arrive.
 		 */
 		if (GNUTLS_VERSION_NUMBER < 0x03030d ||
-		    gnutls_record_get_direction(vpninfo->https_sess)) {
+		    gnutls_record_get_direction(sess)) {
 			/* Waiting for the socket to become writable — it's
 			   probably stalled, and/or the buffers are full */
-			monitor_write_fd(vpninfo, ssl);
+			if (dtls)
+				monitor_write_fd(vpninfo, dtls);
+			else
+				monitor_write_fd(vpninfo, ssl);
 		}
 		return 0;
 	}
-	vpn_progress(vpninfo, PRG_ERR, _("SSL send failed: %s\n"),
-		     gnutls_strerror(ret));
+
+	vpn_progress(vpninfo, PRG_ERR, _("Write error on %s session: %s\n"),
+		     dtls ? "DTLS" : "SSL", gnutls_strerror(ret));
 	return -1;
 }
 

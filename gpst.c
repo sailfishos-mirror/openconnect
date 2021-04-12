@@ -1107,7 +1107,7 @@ int gpst_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			}
 		}
 
-		len = ssl_nonblock_read(vpninfo, vpninfo->cstp_pkt->gpst.hdr, receive_mtu + 16);
+		len = ssl_nonblock_read(vpninfo, 0, vpninfo->cstp_pkt->gpst.hdr, receive_mtu + 16);
 		if (!len)
 			break;
 		if (len < 0) {
@@ -1186,7 +1186,7 @@ int gpst_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		vpninfo->ssl_times.last_tx = time(NULL);
 		unmonitor_write_fd(vpninfo, ssl);
 
-		ret = ssl_nonblock_write(vpninfo,
+		ret = ssl_nonblock_write(vpninfo, 0,
 					 vpninfo->current_ssl_pkt->gpst.hdr,
 					 vpninfo->current_ssl_pkt->len + 16);
 		if (ret < 0)
