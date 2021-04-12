@@ -343,6 +343,10 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 		else if (xmlnode_is_named(xml_node, "idle-timeout") && !xmlnode_get_prop(xml_node, "val", &s)) {
 			int sec = vpninfo->idle_timeout = atoi(s);
 			vpn_progress(vpninfo, PRG_INFO, _("Idle timeout is %d minutes.\n"), sec/60);
+		} else if (xmlnode_is_named(xml_node, "dtls-config") && !xmlnode_get_prop(xml_node, "heartbeat-interval", &s)) {
+			int sec = atoi(s);
+			if (sec && (!vpninfo->dtls_times.dpd || sec < vpninfo->dtls_times.dpd))
+				vpninfo->dtls_times.dpd = vpninfo->ssl_times.dpd = sec;
 		} else if (xmlnode_is_named(xml_node, "fos")) {
 			char platform[80], *p = platform, *e = platform + 80;
 			if (!xmlnode_get_prop(xml_node, "platform", &s)) {
