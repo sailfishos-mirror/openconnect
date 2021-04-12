@@ -185,52 +185,19 @@ static int dtls_reconnect(struct openconnect_info *vpninfo)
 
 int dtls_setup(struct openconnect_info *vpninfo)
 {
-	struct oc_vpn_option *dtls_opt = vpninfo->dtls_options;
-	int dtls_port = 0;
-
 	if (vpninfo->dtls_state == DTLS_DISABLED)
 		return -EINVAL;
 
 	if (!vpninfo->dtls_attempt_period)
 		return 0;
 
-	while (dtls_opt) {
-		vpn_progress(vpninfo, PRG_DEBUG,
-			     _("DTLS option %s : %s\n"),
-			     dtls_opt->option, dtls_opt->value);
-
-		if (!strcmp(dtls_opt->option, "X-DTLS-Port")) {
-			dtls_port = atol(dtls_opt->value);
-		} else if (!strcmp(dtls_opt->option, "X-DTLS-Keepalive")) {
-			vpninfo->dtls_times.keepalive = atol(dtls_opt->value);
-		} else if (!strcmp(dtls_opt->option, "X-DTLS-DPD")) {
-			int j = atol(dtls_opt->value);
-			if (j && (!vpninfo->dtls_times.dpd || j < vpninfo->dtls_times.dpd))
-				vpninfo->dtls_times.dpd = j;
-		} else if (!strcmp(dtls_opt->option, "X-DTLS-Rekey-Method")) {
-			if (!strcmp(dtls_opt->value, "new-tunnel"))
-				vpninfo->dtls_times.rekey_method = REKEY_TUNNEL;
-			else if (!strcmp(dtls_opt->value, "ssl"))
-				vpninfo->dtls_times.rekey_method = REKEY_SSL;
-			else
-				vpninfo->dtls_times.rekey_method = REKEY_NONE;
-		} else if (!strcmp(dtls_opt->option, "X-DTLS-Rekey-Time")) {
-			vpninfo->dtls_times.rekey = atol(dtls_opt->value);
-		}
-
-		dtls_opt = dtls_opt->next;
-	}
-	if (!dtls_port) {
+	if (!vpninfo->dtls_addr) {
 		vpninfo->dtls_attempt_period = 0;
 		return -EINVAL;
 	}
 	if (vpninfo->dtls_times.rekey <= 0)
 		vpninfo->dtls_times.rekey_method = REKEY_NONE;
 
-	if (udp_sockaddr(vpninfo, dtls_port)) {
-		vpninfo->dtls_attempt_period = 0;
-		return -EINVAL;
-	}
 	if (connect_dtls_socket(vpninfo))
 		return -EINVAL;
 

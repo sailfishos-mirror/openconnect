@@ -519,7 +519,27 @@ static int start_cstp_connection(struct openconnect_info *vpninfo)
 				/* Remember if it came from a 'X-DTLS12-CipherSuite:' header */
 				vpninfo->cisco_dtls12 = (i == 9);
 				vpninfo->dtls_cipher = strdup(colon);
+			} else if (!strcmp(buf + i, "Port")) {
+				int dtls_port = atol(colon);
+				if (dtls_port)
+					udp_sockaddr(vpninfo, dtls_port);
+			} else if (!strcmp(buf + i, "Keepalive")) {
+				vpninfo->dtls_times.keepalive = atol(colon);
+			} else if (!strcmp(buf + i, "DPD")) {
+				int j = atol(colon);
+				if (j && (!vpninfo->dtls_times.dpd || j < vpninfo->dtls_times.dpd))
+					vpninfo->dtls_times.dpd = j;
+			} else if (!strcmp(buf + i, "Rekey-Method")) {
+				if (!strcmp(colon, "new-tunnel"))
+					vpninfo->dtls_times.rekey_method = REKEY_TUNNEL;
+				else if (!strcmp(colon, "ssl"))
+					vpninfo->dtls_times.rekey_method = REKEY_SSL;
+				else
+					vpninfo->dtls_times.rekey_method = REKEY_NONE;
+			} else if (!strcmp(buf + i, "Rekey-Time")) {
+				vpninfo->dtls_times.rekey = atol(colon);
 			}
+
 			continue;
 		}
 		/* CSTP options... */
