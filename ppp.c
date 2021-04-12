@@ -868,7 +868,8 @@ static int handle_config_packet(struct openconnect_info *vpninfo,
 	return ret;
 }
 
-static int handle_state_transition(struct openconnect_info *vpninfo, int *timeout)
+static int handle_state_transition(struct openconnect_info *vpninfo, int dtls,
+				   struct keepalive_info *kai, int *timeout)
 {
 	struct oc_ppp *ppp = vpninfo->ppp;
 	time_t now = time(NULL);
@@ -877,7 +878,7 @@ static int handle_state_transition(struct openconnect_info *vpninfo, int *timeou
 	switch (ppp->ppp_state) {
 	case PPPS_DEAD:
 		/* Prevent race conditions after recovering dead peer connection */
-		vpninfo->ssl_times.last_rx = vpninfo->ssl_times.last_tx = now;
+		kai->last_rx = kai->last_tx = now;
 
 		/* Drop any failed outgoing packet from previous connection;
 		 * we need to reconfigure before we can send data packets. */
@@ -1011,8 +1012,9 @@ static int handle_state_transition(struct openconnect_info *vpninfo, int *timeou
 
 	if (last_state != ppp->ppp_state) {
 		vpn_progress(vpninfo, PRG_DEBUG,
-			     _("PPP state transition from %s to %s\n"),
-			     ppps_names[last_state], ppps_names[ppp->ppp_state]);
+			     _("PPP state transition from %s to %s on %s channel\n"),
+			     ppps_names[last_state], ppps_names[ppp->ppp_state],
+			     dtls ? "DTLS" : "TLS");
 		print_ppp_state(vpninfo, PRG_TRACE);
 		return 1;
 	}
@@ -1033,7 +1035,8 @@ static inline void add_ppp_header(struct pkt *p, struct oc_ppp *ppp, int proto) 
 	p->ppp.hlen = p->data - ph;
 }
 
-int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
+static int ppp_mainloop(struct openconnect_info *vpninfo, int dtls,
+			struct keepalive_info *kai, int *timeout, int readable)
 {
 	int ret, magic, rsv_hdr_size;
 	int work_done = 0;
@@ -1041,10 +1044,10 @@ int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 	struct oc_ppp *ppp = vpninfo->ppp;
 	int proto;
 
-	if (vpninfo->ssl_fd == -1)
+	if ((dtls ? vpninfo->dtls_fd : vpninfo->ssl_fd) == -1)
 		goto do_reconnect;
 
-	handle_state_transition(vpninfo, timeout);
+	handle_state_transition(vpninfo, dtls, kai, timeout);
 
 	/* FIXME: The poll() handling here is fairly simplistic. Actually,
 	   if the SSL connection stalls it could return a WANT_WRITE error
@@ -1076,7 +1079,7 @@ int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 
 		/* Load the encap header to end up with the payload where we expect it */
 		eh = this->data - rsv_hdr_size;
-		len = ssl_nonblock_read(vpninfo, 0, eh, receive_mtu + rsv_hdr_size);
+		len = ssl_nonblock_read(vpninfo, dtls, eh, receive_mtu + rsv_hdr_size);
 		if (!len)
 			break;
 		if (len < 0)
@@ -1209,7 +1212,7 @@ int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		 *   payload_len: number of bytes in PPP *payload*
 		 */
 
-		vpninfo->ssl_times.last_rx = time(NULL);
+		kai->last_rx = time(NULL);
 
 		switch (proto) {
 		case PPP_LCP:
@@ -1221,7 +1224,7 @@ int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 				goto short_pkt;
 			if ((ret = handle_config_packet(vpninfo, proto, pp, payload_len)) < 0)
 				return ret;
-			else if ((ret = handle_state_transition(vpninfo, timeout)) < 0)
+			else if ((ret = handle_state_transition(vpninfo, dtls, kai, timeout)) < 0)
 				return ret;
 			break;
 
@@ -1298,10 +1301,13 @@ int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 	   packet we had before.... */
 	if ((this = vpninfo->current_ssl_pkt)) {
 	handle_outgoing:
-		vpninfo->ssl_times.last_tx = time(NULL);
-		unmonitor_write_fd(vpninfo, ssl);
+		kai->last_tx = time(NULL);
+		if (dtls)
+			unmonitor_write_fd(vpninfo, dtls);
+		else
+			unmonitor_write_fd(vpninfo, ssl);
 
-		ret = ssl_nonblock_write(vpninfo, 0, this->data - this->ppp.hlen, this->len + this->ppp.hlen);
+		ret = ssl_nonblock_write(vpninfo, dtls, this->data - this->ppp.hlen, this->len + this->ppp.hlen);
 		if (ret < 0)
 			goto do_reconnect;
 		else if (!ret) {
@@ -1309,7 +1315,7 @@ int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			   fd to ->select_wfds if appropriate, so we can just
 			   return and wait. Unless it's been stalled for so long
 			   that DPD kicks in and we kill the connection. */
-			switch (ka_stalled_action(&vpninfo->ssl_times, timeout)) {
+			switch (ka_stalled_action(kai, timeout)) {
 			case KA_DPD_DEAD:
 				goto peer_dead;
 			case KA_REKEY:
@@ -1335,7 +1341,7 @@ int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		vpninfo->current_ssl_pkt = NULL;
 	}
 
-	switch (keepalive_action(&vpninfo->ssl_times, timeout)) {
+	switch (keepalive_action(kai, timeout)) {
 	case KA_DPD_DEAD:
 	peer_dead:
 		vpn_progress(vpninfo, PRG_ERR,
@@ -1343,7 +1349,10 @@ int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		/* fall through */
 	case KA_REKEY:
 	do_reconnect:
-		ret = ssl_reconnect(vpninfo);
+		if (dtls)
+			ret = dtls_reconnect(vpninfo);
+		else
+			ret = ssl_reconnect(vpninfo);
 		if (ret) {
 			vpn_progress(vpninfo, PRG_ERR, _("Reconnect failed\n"));
 			vpninfo->quit_reason = "PPP reconnect failed";
@@ -1355,7 +1364,7 @@ int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		/* No need to send an explicit keepalive
 		   if we have real data to send */
 		if (vpninfo->tcp_control_queue.head ||
-		    (vpninfo->dtls_state != DTLS_CONNECTED && ppp->ppp_state == PPPS_NETWORK && vpninfo->outgoing_queue.head))
+		    (ppp->ppp_state == PPPS_NETWORK && vpninfo->outgoing_queue.head))
 			break;
 		vpn_progress(vpninfo, PRG_DEBUG, _("Send PPP discard request as keepalive\n"));
 		queue_config_packet(vpninfo, PPP_LCP, ++ppp->lcp.id, DISCREQ, 0, NULL);
@@ -1369,9 +1378,8 @@ int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 	if ((this = vpninfo->current_ssl_pkt = dequeue_packet(&vpninfo->tcp_control_queue))) {
 		/* XX: We pre-stash the PPP protocol field in the header for control packets */
 		proto = this->ppp.proto;
-		handle_state_transition(vpninfo, timeout);
-	} else if (vpninfo->dtls_state != DTLS_CONNECTED &&
-		   ppp->ppp_state == PPPS_NETWORK &&
+		handle_state_transition(vpninfo, dtls, kai, timeout);
+	} else if (ppp->ppp_state == PPPS_NETWORK &&
 		   (this = vpninfo->current_ssl_pkt = dequeue_packet(&vpninfo->outgoing_queue))) {
 		/* XX: Set protocol for IP packets */
 		proto = (this->len && (this->data[0] & 0xf0) == 0x60) ? PPP_IP6 : PPP_IP;
@@ -1444,4 +1452,20 @@ int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 
 	/* Work is not done if we just got rid of packets off the queue */
 	return work_done;
+}
+
+int ppp_tcp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
+{
+	if (vpninfo->dtls_state >= DTLS_SLEEPING)
+		return 0;
+
+	return ppp_mainloop(vpninfo, 0, &vpninfo->ssl_times, timeout, readable);
+}
+
+int ppp_udp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
+{
+	if (vpninfo->dtls_state != DTLS_CONNECTED)
+		return 0;
+
+	return ppp_mainloop(vpninfo, 1, &vpninfo->dtls_times, timeout, readable);
 }
