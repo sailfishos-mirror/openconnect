@@ -177,7 +177,8 @@ int dtls_reconnect(struct openconnect_info *vpninfo, int *timeout)
 
 int dtls_setup(struct openconnect_info *vpninfo)
 {
-	if (vpninfo->dtls_state == DTLS_DISABLED)
+	if (vpninfo->dtls_state == DTLS_DISABLED ||
+	    vpninfo->dtls_state == DTLS_NOSECRET)
 		return -EINVAL;
 
 	if (!vpninfo->dtls_attempt_period)

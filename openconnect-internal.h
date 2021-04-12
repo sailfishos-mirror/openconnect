@@ -434,6 +434,8 @@ struct openconnect_info {
 	uint32_t esp_magic;  /* GlobalProtect magic ping address (network-endian) */
 
 	struct oc_ppp *ppp;
+	struct oc_text_buf *ppp_tls_connect_req;
+	struct oc_text_buf *ppp_dtls_connect_req;
 
 	int tncc_fd; /* For Juniper TNCC */
 	char *platname;
@@ -1035,6 +1037,7 @@ int nullppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readabl
 /* f5.c */
 int f5_obtain_cookie(struct openconnect_info *vpninfo);
 int f5_connect(struct openconnect_info *vpninfo);
+int f5_udp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable);
 int f5_bye(struct openconnect_info *vpninfo, const char *reason);
 
 /* fortinet.c */

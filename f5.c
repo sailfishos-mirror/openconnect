@@ -33,6 +33,7 @@
 #include <libxml/HTMLtree.h>
 
 #include "openconnect-internal.h"
+#include "ppp.h"
 
 #define XCAST(x) ((const xmlChar *)(x))
 
@@ -307,7 +308,7 @@ static int parse_options(struct openconnect_info *vpninfo, char *buf, int len,
 {
 	xmlNode *fav_node, *obj_node, *xml_node;
 	xmlDocPtr xml_doc;
-	int ret = 0, ii, n_dns = 0, n_nbns = 0, default_route = 0;
+	int ret = 0, ii, n_dns = 0, n_nbns = 0, default_route = 0, dtls = 0, dtls_port = 0;
 	char *s = NULL;
 	struct oc_text_buf *domains = NULL;
 
@@ -359,11 +360,13 @@ static int parse_options(struct openconnect_info *vpninfo, char *buf, int len,
 		else if (xmlnode_is_named(xml_node, "idle_session_timeout")) {
 			int sec = vpninfo->idle_timeout = xmlnode_bool_or_int_value(vpninfo, xml_node);
 			vpn_progress(vpninfo, PRG_INFO, _("Idle timeout is %d minutes\n"), sec/60);
-		} else if (xmlnode_is_named(xml_node, "tunnel_port_dtls")) {
-			int port = xmlnode_bool_or_int_value(vpninfo, xml_node);
-			udp_sockaddr(vpninfo, port);
-			vpn_progress(vpninfo, PRG_INFO, _("DTLS port is %d\n"), port);
-		} else if (xmlnode_is_named(xml_node, "UseDefaultGateway0")) {
+		} else if (xmlnode_is_named(xml_node, "tunnel_dtls"))
+			dtls = xmlnode_bool_or_int_value(vpninfo, xml_node);
+		else if (xmlnode_is_named(xml_node, "tunnel_port_dtls"))
+			dtls_port = xmlnode_bool_or_int_value(vpninfo, xml_node);
+		else if (xmlnode_is_named(xml_node, "dtls_v1_2_supported"))
+			vpninfo->dtls12 = xmlnode_bool_or_int_value(vpninfo, xml_node);
+		else if (xmlnode_is_named(xml_node, "UseDefaultGateway0")) {
 			default_route = xmlnode_bool_or_int_value(vpninfo, xml_node);
 			if (default_route)
 				vpn_progress(vpninfo, PRG_INFO, _("Got default routes\n"));
@@ -433,6 +436,11 @@ static int parse_options(struct openconnect_info *vpninfo, char *buf, int len,
 		}
 	}
 
+	if (dtls && dtls_port && vpninfo->dtls_state == DTLS_NOSECRET) {
+		udp_sockaddr(vpninfo, dtls_port);
+		vpn_progress(vpninfo, PRG_INFO, _("DTLS is enabled on port %d\n"), dtls_port);
+		vpninfo->dtls_state = DTLS_SECRET;
+	}
 	if (default_route && *ipv4)
 		vpninfo->ip_info.netmask = add_option_dup(vpninfo, "netmask", "0.0.0.0", -1);
 	if (default_route && *ipv6)
@@ -456,16 +464,27 @@ static int parse_options(struct openconnect_info *vpninfo, char *buf, int len,
 	return ret;
 }
 
-static int get_ip_address(struct openconnect_info *vpninfo, char *header, char *val) {
+static int get_ip_address(struct openconnect_info *vpninfo, char *header, char *val)
+{
+	struct oc_ppp *ppp = vpninfo->ppp;
+
+	if (!ppp || ppp->ppp_state != PPPS_DEAD)
+		return 0;
+
+	/* If the addresses were already negotiated once in PPP and this
+	 * is a reconnect, they'll be in vpninfo->ip_info.addr*. In that
+	 * case don't overwrite them, and let it correctly abort if the
+	 * server rejects the same addresses this time round. */
 	if (!strcasecmp(header, "X-VPN-client-IP")) {
 		vpn_progress(vpninfo, PRG_INFO,
-			     _("Got legacy IP address %s\n"), val);
-		vpninfo->ip_info.addr = add_option_dup(vpninfo, "ipaddr", val, -1);
+			     _("Got Legacy IP address %s\n"), val);
+		if (!vpninfo->ip_info.addr)
+			ppp->out_ipv4_addr.s_addr = inet_addr(val);
 	} else if (!strcasecmp(header, "X-VPN-client-IPv6")) {
 		vpn_progress(vpninfo, PRG_INFO,
 			     _("Got IPv6 address %s\n"), val);
-		/* XX: Should we treat this as a /64 netmask? Or an /128 address? */
-		vpninfo->ip_info.addr6 = add_option_dup(vpninfo, "ipaddr6", val, -1);
+		if (!vpninfo->ip_info.addr6 && !vpninfo->ip_info.netmask6)
+			inet_pton(AF_INET6, val, &ppp->out_ipv6_addr);
 	}
         /* XX: The server's IP address(es) X-VPN-server-{IP,IPv6} are also
          * sent, but the utility of these is unclear. As remarked in oncp.c,
@@ -473,7 +492,7 @@ static int get_ip_address(struct openconnect_info *vpninfo, char *header, char *
 	return 0;
 }
 
-int f5_connect(struct openconnect_info *vpninfo)
+static int f5_configure(struct openconnect_info *vpninfo)
 {
 	int ret;
 	struct oc_text_buf *reqbuf = NULL;
@@ -545,23 +564,21 @@ int f5_connect(struct openconnect_info *vpninfo)
 	if (ipv6 == -1)
 		ipv6 = 0;
 
-	/* To use the DTLS tunnel instead, we should do a DTLS 1.0 handshake
-	 * to the appropriate IP:port, and then send the same request
-	 * ("GET /myvpn/blah") via "HTTP-over-DTLS".
-	 *
-	 * After that, the IP-over-PPP-over-DTLS packet framing presumably proceeds
-	 * identically to the IP-over-PPP-over-TLS framing.
-	 *
-	 * Unsure if/how both TLS+DTLS tunnels can run simultaneously, given that
-	 * they need to do separate PPP negotiations. (Probably they can't.)
-	 */
+	/* The addresses set in ip_info only after they're negotiated in PPP.
+	 * If they were there before a reconnect, preserve them. */
+	if (old_addr)
+		vpninfo->ip_info.addr = add_option_dup(vpninfo, "ppp_addr", old_addr, -1);
+	if (old_addr6)
+		vpninfo->ip_info.addr6 = add_option_dup(vpninfo, "ppp_addr6", old_addr6, -1);
 
-	/* Now establish the actual connection */
-	ret = openconnect_open_https(vpninfo);
-	if (ret)
+	ret = check_address_sanity(vpninfo, old_addr, old_netmask, old_addr6, old_netmask6);
+	if (ret < 0)
 		goto out;
 
-	reqbuf = buf_alloc();
+	reqbuf = vpninfo->ppp_tls_connect_req;
+	if (!reqbuf)
+		reqbuf = buf_alloc();
+	buf_truncate(reqbuf);
 	buf_append(reqbuf, "GET /myvpn?sess=%s&hdlc_framing=%s&ipv4=%s&ipv6=%s&Z=%s&hostname=",
 		   sid, hdlc?"yes":"no", ipv4?"yes":"no", ipv6?"yes":"no", ur_z);
 	buf_append_base64(reqbuf, vpninfo->localname, strlen(vpninfo->localname));
@@ -575,13 +592,94 @@ int f5_connect(struct openconnect_info *vpninfo)
 		ret = buf_error(reqbuf);
 		goto out;
 	}
+	vpninfo->ppp_tls_connect_req = reqbuf;
+	reqbuf = NULL;
+
+	ret = openconnect_ppp_new(vpninfo, hdlc ? PPP_ENCAP_F5_HDLC : PPP_ENCAP_F5, ipv4, ipv6);
+
+ out:
+	if (old_cstp_opts != vpninfo->cstp_options)
+		free_optlist(old_cstp_opts);
+	free(res_buf);
+	free(profile_params);
+	free(sid);
+	free(ur_z);
+	buf_free(reqbuf);
+
+	return ret;
+}
+
+int f5_connect(struct openconnect_info *vpninfo)
+{
+	int ret = 0;
+
+	if (!vpninfo->ppp) {
+		/* Initial connection */
+		ret = f5_configure(vpninfo);
+	} else if (vpninfo->ppp->ppp_state != PPPS_DEAD) {
+		/* TLS/DTLS reconnection with already-established PPP session
+		 * (PPP session will persist past reconnect.)
+		 */
+		ret = ppp_reset(vpninfo);
+	}
+	if (ret)
+		goto out;
+
+
+	/*
+	 * * DTLS_DISABLED:
+	 * * DTLS_NOSECRET: Connect PPP over TLS immediately.
+	 *
+	 * * DTLS_SECRET: This occurs when first called via
+	 *                openconnect_make_cstp_connection(). In this
+	 *                case, defer the PPP setup and allow DTLS to
+	 *                try connecting (which is triggered when
+	 *                openconnect_setup_dtls() gets called).
+	 *
+	 * * DTLS_SLEEPING: On a connection timeout, the mainloop calls
+	 *                dtls_close() before this function, so the state
+	 *                we see will be DTLS_SLEEPING. Establish the PPP
+	 *                over TLS immediately in this case.
+	 *
+	 * * DTLS_CONNECTING: After a pause or SIGUSR2, the UDP mainloop
+	 *                will run first and shift from DTLS_SLEEPING to
+	 *                DTLS_CONNECTING state, before the TCP mainloop
+	 *                invokes this function. So defer the connection.
+	 *
+	 * * DTLS_CONNECTED: If the DTLS manages to establish a connection
+	 *                after PPP was already in use over TLS, then it
+	 *                will call ssl_reconnect(). In that case it's
+	 *                waiting to establish PPP over the active DTLS
+	 *                connection, so don't.
+	 */
+	if (vpninfo->dtls_state != DTLS_NOSECRET &&
+	    vpninfo->dtls_state != DTLS_SLEEPING &&
+	    vpninfo->dtls_state != DTLS_DISABLED) {
+		vpn_progress(vpninfo, PRG_DEBUG, _("Not starting PPP-over-TLS because DTLS state is %d\n"),
+			     vpninfo->dtls_state);
+		return 0;
+	}
+
+	ret = openconnect_open_https(vpninfo);
+	if (ret)
+		goto out;
+
 	if (vpninfo->dump_http_traffic)
-		dump_buf(vpninfo, '>', reqbuf->data);
-	ret = vpninfo->ssl_write(vpninfo, reqbuf->data, reqbuf->pos);
+		dump_buf(vpninfo, '>', vpninfo->ppp_tls_connect_req->data);
+
+	ret = vpninfo->ssl_write(vpninfo, vpninfo->ppp_tls_connect_req->data,
+				 vpninfo->ppp_tls_connect_req->pos);
 	if (ret < 0)
 		goto out;
 
-	ret = process_http_response(vpninfo, 1, get_ip_address, reqbuf);
+	struct oc_text_buf *resp_buf = buf_alloc();
+	if (buf_error(resp_buf)) {
+		ret = buf_free(resp_buf);
+		goto out;
+	}
+
+	ret = process_http_response(vpninfo, 1, get_ip_address, resp_buf);
+	buf_free(resp_buf);
 	if (ret < 0)
 		goto out;
 
@@ -592,24 +690,13 @@ int f5_connect(struct openconnect_info *vpninfo)
 		ret = (ret == 504) ? -EPERM : -EINVAL;
 		goto out;
 	}
+	ret = 0;
 
-	ret = check_address_sanity(vpninfo, old_addr, old_netmask, old_addr6, old_netmask6);
-	if (ret < 0)
-		goto out;
-
-	ret = openconnect_ppp_new(vpninfo, hdlc ? PPP_ENCAP_F5_HDLC : PPP_ENCAP_F5, ipv4, ipv6);
-	if (!ret) {
-		/* Trigger the first PPP negotiations and ensure the PPP state
-		 * is PPPS_ESTABLISH so that ppp_tcp_mainloop() knows we've started. */
-		ppp_start_tcp_mainloop(vpninfo);
-	}
+	/* Trigger the first PPP negotiations and ensure the PPP state
+	 * is PPPS_ESTABLISH so that our mainloop knows we've started. */
+	ppp_start_tcp_mainloop(vpninfo);
 
  out:
-	free_optlist(old_cstp_opts);
-	free(res_buf);
-	free(profile_params);
-	free(sid);
-	free(ur_z);
 	if (ret)
 		openconnect_close_https(vpninfo, 0);
 	else {
@@ -617,9 +704,146 @@ int f5_connect(struct openconnect_info *vpninfo)
 		monitor_read_fd(vpninfo, ssl);
 		monitor_except_fd(vpninfo, ssl);
 	}
-	buf_free(reqbuf);
 
 	return ret;
+}
+
+int f5_udp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
+{
+	if (vpninfo->dtls_state == DTLS_CONNECTING) {
+		if (vpninfo->ppp->ppp_state == PPPS_DEAD)
+			vpninfo->delay_tunnel_reason = "DTLS connecting";
+
+		/* XX: F5 server versions <v16 only support DTLS 1.0, and cannot
+		 * negotiate from a DTLS 1.2 handshake. This is special-cased
+		 * for F5 in start_dtls_anon_handshake.
+		 * https://support.f5.com/csp/article/K52355764 suggests there's
+		 * an option for it which would hopefully be client-visible.
+		 */
+		dtls_try_handshake(vpninfo, timeout);
+
+		/* On transition from DTLS_CONNECTING to DTLS_CONNECTED, send
+		 * the CONNECT request. Ideally perhaps we'd have a separate
+		 * state for DTLS_NEGOTIATING, and we'd retry sending it. But
+		 * the server doesn't cope anyway; if the *response* gets lost
+		 * and we resend the request, the server just keeps sending PPP
+		 * frames at us. Actually we *can* then negotiate our Legacy IP
+		 * address in that case but not IPv6. So a packet loss here is
+		 * going to cause us to fall back to TCP, for now. */
+		if (vpninfo->dtls_state == DTLS_CONNECTED) {
+			if (vpninfo->ppp->ppp_state != PPPS_DEAD) {
+				int ret = ppp_reset(vpninfo);
+				if (ret) {
+					/* This should never happen */
+					vpn_progress(vpninfo, PRG_ERR, _("Reset PPP failed\n"));
+					vpninfo->quit_reason = "PPP DTLS connect failed";
+					return ret;
+				}
+			}
+
+			if (vpninfo->dump_http_traffic)
+				dump_buf(vpninfo, '>', vpninfo->ppp_tls_connect_req->data);
+
+			/* We use the "tls" connect request because for F5 it's
+			 * identical (ick, HTTP over DTLS.) */
+			int ret = ssl_nonblock_write(vpninfo, 1,
+						     vpninfo->ppp_tls_connect_req->data,
+						     vpninfo->ppp_tls_connect_req->pos);
+			if (ret < 0) {
+				vpn_progress(vpninfo, PRG_ERR,
+					     _("Failed to write connect request to F5 DTLS session\n"));
+				dtls_close(vpninfo);
+				vpninfo->dtls_state = DTLS_DISABLED;
+				return 1;
+			}
+			vpninfo->delay_tunnel_reason = "DTLS starting PPP";
+		}
+
+		return 0;
+	}
+
+	int work_done = 0;
+
+	if (vpninfo->dtls_state != DTLS_CONNECTED && vpninfo->dtls_state != DTLS_SLEEPING) {
+		vpn_progress(vpninfo, PRG_ERR, _("DTLS in wrong state %d\n"), vpninfo->dtls_state);
+		dtls_close(vpninfo);
+		vpninfo->dtls_state = DTLS_DISABLED;
+		return 1;
+	}
+
+	if (vpninfo->dtls_state == DTLS_CONNECTED) {
+		if (vpninfo->ppp->ppp_state == PPPS_DEAD) {
+			char buf[4097];
+			int len = ssl_nonblock_read(vpninfo, 1, buf, sizeof(buf) - 1);
+
+			if (len < 0) {
+				/* It will have complained */
+				dtls_close(vpninfo);
+				vpninfo->dtls_state = DTLS_DISABLED;
+				return 1;
+			}
+			if (!len) {
+				/* Allow 5 seconds to receive HTTP-over-DTLS response */
+				if (!ka_check_deadline(timeout, time(NULL), vpninfo->new_dtls_started + 5)) {
+					vpninfo->delay_tunnel_reason = "DTLS starting PPP";
+					return 0;
+				}
+			}
+
+			buf[len] = 0;
+
+			if (vpninfo->dump_http_traffic)
+				dump_buf(vpninfo, '<', buf);
+
+			char *line = buf, *cr, *colon;
+
+			while (line && *line) {
+				if (*line == '\n') {
+					line++;
+					continue;
+				}
+				cr = strchr(line, '\r');
+
+				if (!cr)
+					break;
+
+				*cr = 0;
+				colon = strchr(line, ':');
+				if (colon) {
+					*colon = 0;
+					colon++;
+
+					while (isspace(*colon))
+						colon++;
+
+					get_ip_address(vpninfo, line, colon);
+				}
+				line = cr + 1;
+			}
+			readable = 1;
+		}
+
+		work_done = ppp_udp_mainloop(vpninfo, timeout, readable);
+	}
+
+	/* We check this *after* calling ppp_udp_mainloop() in the DTLS_CONNECTED
+	 * case because DPD might cause it to call dtls_close() and we need to
+	 * reopen immediately to prevent the TCP mainloop seeing the DTLS_SLEEPING
+	 * state and thinking it's timed out. */
+	if (vpninfo->dtls_state == DTLS_SLEEPING) {
+		int when = vpninfo->new_dtls_started + vpninfo->dtls_attempt_period - time(NULL);
+
+		if (when <= 0) {
+			vpn_progress(vpninfo, PRG_DEBUG, _("Attempt new DTLS connection\n"));
+			if (dtls_reconnect(vpninfo, timeout) < 0)
+				*timeout = 1000;
+			work_done = 1;
+		} else if ((when * 1000) < *timeout) {
+			*timeout = when * 1000;
+		}
+	}
+
+	return work_done;
 }
 
 int f5_bye(struct openconnect_info *vpninfo, const char *reason)

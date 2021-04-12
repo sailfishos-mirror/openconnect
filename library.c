@@ -205,13 +205,11 @@ static const struct vpn_proto openconnect_protos[] = {
 		.obtain_cookie = f5_obtain_cookie,
 		.secure_cookie = "MRHSession",
 		.udp_protocol = "DTLS",
-#ifdef HAVE_DTLSx /* Not yet... */
-		.udp_setup = esp_setup,
-		.udp_mainloop = esp_mainloop,
-		.udp_close = esp_close,
-		.udp_shutdown = esp_shutdown,
-		.udp_send_probes = oncp_esp_send_probes,
-		.udp_catch_probe = oncp_esp_catch_probe,
+#ifdef HAVE_DTLS
+		.udp_setup = dtls_setup,
+		.udp_mainloop = f5_udp_mainloop,
+		.udp_close = dtls_close,
+		.udp_shutdown = dtls_shutdown,
 #endif
 	}, {
 		.name = "fortinet",
@@ -461,6 +459,8 @@ void openconnect_vpninfo_free(struct openconnect_info *vpninfo)
 	}
 
 	free(vpninfo->ppp);
+	buf_free(vpninfo->ppp_tls_connect_req);
+	buf_free(vpninfo->ppp_dtls_connect_req);
 
 #ifdef HAVE_ICONV
 	if (vpninfo->ic_utf8_to_legacy != (iconv_t)-1)
