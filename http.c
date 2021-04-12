@@ -773,7 +773,8 @@ int process_http_response(struct openconnect_info *vpninfo, int connect,
 		}
 	}
 
-	body->data[body->pos] = 0;
+	if (body && body->data)
+		body->data[body->pos] = 0;
 	ret = result;
 
 	if (closeconn || vpninfo->no_http_keepalive) {
