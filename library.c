@@ -205,13 +205,12 @@ static const struct vpn_proto openconnect_protos[] = {
 		.obtain_cookie = f5_obtain_cookie,
 		.secure_cookie = "MRHSession",
 		.udp_protocol = "DTLS",
-#ifdef HAVE_DTLSx /* Not yet... */
-		.udp_setup = esp_setup,
-		.udp_mainloop = esp_mainloop,
-		.udp_close = esp_close,
-		.udp_shutdown = esp_shutdown,
-		.udp_send_probes = oncp_esp_send_probes,
-		.udp_catch_probe = oncp_esp_catch_probe,
+#ifdef HAVE_DTLS
+		.udp_setup = dtls_setup,
+		.udp_mainloop = ppp_udp_mainloop,
+		.udp_close = dtls_close,
+		.udp_shutdown = dtls_shutdown,
+		.udp_catch_probe = f5_dtls_catch_probe,
 #endif
 	}, {
 		.name = "fortinet",

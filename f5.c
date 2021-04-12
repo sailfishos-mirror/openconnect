@@ -33,6 +33,7 @@
 #include <libxml/HTMLtree.h>
 
 #include "openconnect-internal.h"
+#include "ppp.h"
 
 #define XCAST(x) ((const xmlChar *)(x))
 
@@ -307,7 +308,7 @@ static int parse_options(struct openconnect_info *vpninfo, char *buf, int len,
 {
 	xmlNode *fav_node, *obj_node, *xml_node;
 	xmlDocPtr xml_doc;
-	int ret = 0, ii, n_dns = 0, n_nbns = 0, default_route = 0;
+	int ret = 0, ii, n_dns = 0, n_nbns = 0, default_route = 0, dtls = 0, dtls_port = 0;
 	char *s = NULL;
 	struct oc_text_buf *domains = NULL;
 
@@ -359,11 +360,13 @@ static int parse_options(struct openconnect_info *vpninfo, char *buf, int len,
 		else if (xmlnode_is_named(xml_node, "idle_session_timeout")) {
 			int sec = vpninfo->idle_timeout = xmlnode_bool_or_int_value(vpninfo, xml_node);
 			vpn_progress(vpninfo, PRG_INFO, _("Idle timeout is %d minutes\n"), sec/60);
-		} else if (xmlnode_is_named(xml_node, "tunnel_port_dtls")) {
-			int port = xmlnode_bool_or_int_value(vpninfo, xml_node);
-			udp_sockaddr(vpninfo, port);
-			vpn_progress(vpninfo, PRG_INFO, _("DTLS port is %d\n"), port);
-		} else if (xmlnode_is_named(xml_node, "UseDefaultGateway0")) {
+		} else if (xmlnode_is_named(xml_node, "tunnel_dtls"))
+			dtls = xmlnode_bool_or_int_value(vpninfo, xml_node);
+		else if (xmlnode_is_named(xml_node, "tunnel_port_dtls"))
+			dtls_port = xmlnode_bool_or_int_value(vpninfo, xml_node);
+		else if (xmlnode_is_named(xml_node, "dtls_v1_2_supported"))
+			vpninfo->dtls12 = xmlnode_bool_or_int_value(vpninfo, xml_node);
+		else if (xmlnode_is_named(xml_node, "UseDefaultGateway0")) {
 			default_route = xmlnode_bool_or_int_value(vpninfo, xml_node);
 			if (default_route)
 				vpn_progress(vpninfo, PRG_INFO, _("Got default routes\n"));
@@ -433,6 +436,23 @@ static int parse_options(struct openconnect_info *vpninfo, char *buf, int len,
 		}
 	}
 
+	if (dtls && dtls_port && vpninfo->dtls_state == DTLS_NOSECRET) {
+		vpn_progress(vpninfo, PRG_INFO, _("DTLS is enabled on port %d\n"), dtls_port);
+		if (!*hdlc) {
+			udp_sockaddr(vpninfo, dtls_port);
+			vpninfo->dtls_state = DTLS_SECRET;
+		} else {
+			/* XX: HDLC-like framing (RFC1662) means that tunneled packets may double in size as part of
+			 * their on-the-wire encapsulation, while efficient datagram transport requires calculation
+			 * of a predictable maximum transfer unit.
+			 *
+			 * We hope no servers expect us to combine them. If they do, we should reject DTLS.
+			 */
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("WARNING: Server enables DTLS, but also requires HDLC. Disabling DTLS,\n"
+				       "    because HDLC prevents determination of efficient and consistent MTU.\n"));
+		}
+	}
 	if (default_route && *ipv4)
 		vpninfo->ip_info.netmask = add_option_dup(vpninfo, "netmask", "0.0.0.0", -1);
 	if (default_route && *ipv6)
@@ -456,16 +476,27 @@ static int parse_options(struct openconnect_info *vpninfo, char *buf, int len,
 	return ret;
 }
 
-static int get_ip_address(struct openconnect_info *vpninfo, char *header, char *val) {
+static int get_ip_address(struct openconnect_info *vpninfo, char *header, char *val)
+{
+	struct oc_ppp *ppp = vpninfo->ppp;
+
+	if (!ppp || ppp->ppp_state != PPPS_DEAD)
+		return 0;
+
+	/* If the addresses were already negotiated once in PPP and this
+	 * is a reconnect, they'll be in vpninfo->ip_info.addr*. In that
+	 * case don't overwrite them, and let it correctly abort if the
+	 * server rejects the same addresses this time round. */
 	if (!strcasecmp(header, "X-VPN-client-IP")) {
 		vpn_progress(vpninfo, PRG_INFO,
-			     _("Got legacy IP address %s\n"), val);
-		vpninfo->ip_info.addr = add_option_dup(vpninfo, "ipaddr", val, -1);
+			     _("Got Legacy IP address %s\n"), val);
+		if (!vpninfo->ip_info.addr)
+			ppp->out_ipv4_addr.s_addr = inet_addr(val);
 	} else if (!strcasecmp(header, "X-VPN-client-IPv6")) {
 		vpn_progress(vpninfo, PRG_INFO,
 			     _("Got IPv6 address %s\n"), val);
-		/* XX: Should we treat this as a /64 netmask? Or an /128 address? */
-		vpninfo->ip_info.addr6 = add_option_dup(vpninfo, "ipaddr6", val, -1);
+		if (!vpninfo->ip_info.addr6 && !vpninfo->ip_info.netmask6)
+			inet_pton(AF_INET6, val, &ppp->out_ipv6_addr);
 	}
         /* XX: The server's IP address(es) X-VPN-server-{IP,IPv6} are also
          * sent, but the utility of these is unclear. As remarked in oncp.c,
@@ -473,14 +504,14 @@ static int get_ip_address(struct openconnect_info *vpninfo, char *header, char *
 	return 0;
 }
 
-int f5_connect(struct openconnect_info *vpninfo)
+static int f5_configure(struct openconnect_info *vpninfo)
 {
 	int ret;
 	struct oc_text_buf *reqbuf = NULL;
 	struct oc_vpn_option *cookie;
 	char *profile_params = NULL;
 	char *sid = NULL, *ur_z = NULL;
-	int ipv4 = -1, ipv6 = -1, hdlc = -1;
+	int ipv4 = -1, ipv6 = -1, hdlc = 0;
 	char *res_buf = NULL;
 	struct oc_vpn_option *old_cstp_opts = vpninfo->cstp_options;
 	const char *old_addr = vpninfo->ip_info.addr;
@@ -545,28 +576,35 @@ int f5_connect(struct openconnect_info *vpninfo)
 	if (ipv6 == -1)
 		ipv6 = 0;
 
-	/* To use the DTLS tunnel instead, we should do a DTLS 1.0 handshake
-	 * to the appropriate IP:port, and then send the same request
-	 * ("GET /myvpn/blah") via "HTTP-over-DTLS".
-	 *
-	 * After that, the IP-over-PPP-over-DTLS packet framing presumably proceeds
-	 * identically to the IP-over-PPP-over-TLS framing.
-	 *
-	 * Unsure if/how both TLS+DTLS tunnels can run simultaneously, given that
-	 * they need to do separate PPP negotiations. (Probably they can't.)
-	 */
+	/* The addresses set in ip_info only after they're negotiated in PPP.
+	 * If they were there before a reconnect, preserve them. */
+	if (old_addr)
+		vpninfo->ip_info.addr = add_option_dup(vpninfo, "ppp_addr", old_addr, -1);
+	if (old_addr6)
+		vpninfo->ip_info.addr6 = add_option_dup(vpninfo, "ppp_addr6", old_addr6, -1);
 
-	/* Now establish the actual connection */
-	ret = openconnect_open_https(vpninfo);
-	if (ret)
+	ret = check_address_sanity(vpninfo, old_addr, old_netmask, old_addr6, old_netmask6);
+	if (ret < 0)
 		goto out;
 
-	reqbuf = buf_alloc();
+	/* XX: This buffer is used to initiate the connection over either TLS or DTLS.
+	 * Cookies are not needed for it to succeed, and can potentially grow without bound,
+	 * which would make it too big to fit in a single DTLS packet (ick, HTTP over DTLS).
+	 *
+	 * Don't blame me. I didn't design this.
+	 */
+	reqbuf = vpninfo->ppp_dtls_connect_req;
+	if (!reqbuf)
+		reqbuf = buf_alloc();
+	buf_truncate(reqbuf);
 	buf_append(reqbuf, "GET /myvpn?sess=%s&hdlc_framing=%s&ipv4=%s&ipv6=%s&Z=%s&hostname=",
 		   sid, hdlc?"yes":"no", ipv4?"yes":"no", ipv6?"yes":"no", ur_z);
 	buf_append_base64(reqbuf, vpninfo->localname, strlen(vpninfo->localname));
 	buf_append(reqbuf, " HTTP/1.1\r\n");
+	struct oc_vpn_option *saved_cookies = vpninfo->cookies;
+	vpninfo->cookies = NULL; /* hide cookies */
 	http_common_headers(vpninfo, reqbuf);
+	vpninfo->cookies = saved_cookies; /* restore cookies */
 	buf_append(reqbuf, "\r\n");
 
 	if (buf_error(reqbuf)) {
@@ -575,51 +613,86 @@ int f5_connect(struct openconnect_info *vpninfo)
 		ret = buf_error(reqbuf);
 		goto out;
 	}
-	if (vpninfo->dump_http_traffic)
-		dump_buf(vpninfo, '>', reqbuf->data);
-	ret = vpninfo->ssl_write(vpninfo, reqbuf->data, reqbuf->pos);
-	if (ret < 0)
-		goto out;
+	vpninfo->ppp_dtls_connect_req = reqbuf;
+	reqbuf = NULL;
 
-	ret = process_http_response(vpninfo, 1, get_ip_address, reqbuf);
+	ret = openconnect_ppp_new(vpninfo, hdlc ? PPP_ENCAP_F5_HDLC : PPP_ENCAP_F5, ipv4, ipv6);
+
+ out:
+	if (old_cstp_opts != vpninfo->cstp_options)
+		free_optlist(old_cstp_opts);
+	free(res_buf);
+	free(profile_params);
+	free(sid);
+	free(ur_z);
+	buf_free(reqbuf);
+
+	return ret;
+}
+
+int f5_connect(struct openconnect_info *vpninfo)
+{
+	int ret = 0;
+
+	if (!vpninfo->ppp) {
+		/* Initial connection */
+		ret = f5_configure(vpninfo);
+	} else if (vpninfo->ppp->ppp_state != PPPS_DEAD) {
+		/* TLS/DTLS reconnection with already-established PPP session
+		 * (PPP session will persist past reconnect.)
+		 */
+		ret = ppp_reset(vpninfo);
+	}
+	if (ret) {
+	err:
+		openconnect_close_https(vpninfo, 0);
+		return ret;
+	}
+
+	ret = ppp_tcp_should_connect(vpninfo);
+	if (ret <= 0)
+		goto err;
+
+	ret = openconnect_open_https(vpninfo);
+	if (ret)
+		goto err;
+
+	if (vpninfo->dump_http_traffic)
+		dump_buf(vpninfo, '>', vpninfo->ppp_dtls_connect_req->data);
+
+	ret = vpninfo->ssl_write(vpninfo, vpninfo->ppp_dtls_connect_req->data,
+				 vpninfo->ppp_dtls_connect_req->pos);
 	if (ret < 0)
-		goto out;
+		goto err;
+
+	struct oc_text_buf *resp_buf = buf_alloc();
+	if (buf_error(resp_buf)) {
+		ret = buf_free(resp_buf);
+		goto err;
+	}
+
+	ret = process_http_response(vpninfo, 1, get_ip_address, resp_buf);
+	buf_free(resp_buf);
+	if (ret < 0)
+		goto err;
 
 	if (ret != 201 && ret != 200) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Unexpected %d result from server\n"),
 			     ret);
 		ret = (ret == 504) ? -EPERM : -EINVAL;
-		goto out;
+		goto err;
 	}
 
-	ret = check_address_sanity(vpninfo, old_addr, old_netmask, old_addr6, old_netmask6);
-	if (ret < 0)
-		goto out;
+	/* Trigger the first PPP negotiations and ensure the PPP state
+	 * is PPPS_ESTABLISH so that our mainloop knows we've started. */
+	ppp_start_tcp_mainloop(vpninfo);
 
-	ret = openconnect_ppp_new(vpninfo, hdlc ? PPP_ENCAP_F5_HDLC : PPP_ENCAP_F5, ipv4, ipv6);
-	if (!ret) {
-		/* Trigger the first PPP negotiations and ensure the PPP state
-		 * is PPPS_ESTABLISH so that ppp_tcp_mainloop() knows we've started. */
-		ppp_start_tcp_mainloop(vpninfo);
-	}
+	monitor_fd_new(vpninfo, ssl);
+	monitor_read_fd(vpninfo, ssl);
+	monitor_except_fd(vpninfo, ssl);
 
- out:
-	free_optlist(old_cstp_opts);
-	free(res_buf);
-	free(profile_params);
-	free(sid);
-	free(ur_z);
-	if (ret)
-		openconnect_close_https(vpninfo, 0);
-	else {
-		monitor_fd_new(vpninfo, ssl);
-		monitor_read_fd(vpninfo, ssl);
-		monitor_except_fd(vpninfo, ssl);
-	}
-	buf_free(reqbuf);
-
-	return ret;
+	return 0;
 }
 
 int f5_bye(struct openconnect_info *vpninfo, const char *reason)
@@ -646,4 +719,49 @@ int f5_bye(struct openconnect_info *vpninfo, const char *reason)
 
 	free(res_buf);
 	return ret;
+}
+
+
+int f5_dtls_catch_probe(struct openconnect_info *vpninfo, struct pkt *pkt)
+{
+	char *line = (void *)pkt->data, *cr, *colon;
+	int first = 1, status = -1;
+
+	pkt->data[pkt->len] = 0;
+	while (line && *line) {
+		if (*line == '\n') {
+			line++;
+			continue;
+		}
+		cr = strchr(line, '\r');
+
+		if (!cr)
+			break;
+
+		*cr = 0;
+
+		if (first) {
+			char junk, c = 0;
+
+			if (sscanf(line, "HTTP/%c.%c %d%c", &junk, &junk, &status, &c) >= 3
+			    && (c == 0 || isspace(c))
+			    && status == 200) {
+				first = 0;
+			} else
+				return (status >= 400 && status <= 499) ? -EPERM : -EINVAL;
+		} else {
+			colon = strchr(line, ':');
+			if (colon) {
+				*colon = 0;
+				colon++;
+
+				while (isspace(*colon))
+					colon++;
+
+				get_ip_address(vpninfo, line, colon);
+			}
+		}
+		line = cr + 1;
+	}
+	return 1;
 }
