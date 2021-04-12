@@ -80,5 +80,5 @@ int nullppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readabl
 			     _("Terminating because nullppp has reached network state.\n"));
 	}
 
-	return ppp_mainloop(vpninfo, timeout, readable);
+	return ppp_tcp_mainloop(vpninfo, timeout, readable);
 }
