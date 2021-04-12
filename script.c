@@ -68,15 +68,40 @@ int script_setenv_int(struct openconnect_info *vpninfo, const char *opt, int val
 	return script_setenv(vpninfo, opt, buf, 0, 0);
 }
 
+static inline int cls(uint32_t word)
+{
+#if defined(HAVE_BUILTIN_CLZ) && UINT_MAX == UINT32_MAX
+	word = ~word;
+	if (!word)
+		return 32;
+	return __builtin_clz(word);
+#else
+	int masklen = 0;
+	while (word & 0x80000000) {
+		word <<= 1;
+		masklen++;
+	}
+	return masklen;
+#endif
+}
+
 static int netmasklen(struct in_addr addr)
 {
-	int masklen;
+	return cls(ntohl(addr.s_addr));
+}
 
-	for (masklen = 0; masklen < 32; masklen++) {
-		if (ntohl(addr.s_addr) >= (0xffffffff << masklen))
-			break;
+static int netmasklen6(struct in6_addr *addr)
+{
+	int masklen;
+	uint32_t *p = (uint32_t *)(addr->s6_addr);
+
+	for (masklen = 0; masklen < 128; p++, masklen += 32) {
+		uint32_t v = ntohl(*p);
+		if (~v == 0)
+			continue;
+		return masklen + cls(v);
 	}
-	return 32 - masklen;
+	return 128;
 }
 
 static uint32_t netmaskbits(int masklen)
@@ -106,10 +131,30 @@ static int process_split_xxclude(struct openconnect_info *vpninfo,
 			 *v6_incs);
 		script_setenv(vpninfo, envname, route, slash ? slash - route : 0, 0);
 
+		/* Accept IPv6 netmask in several forms */
 		snprintf(envname, 79, "CISCO_IPV6_SPLIT_%sC_%d_MASKLEN", in_ex,
 			 *v6_incs);
-		script_setenv(vpninfo, envname, slash ? slash + 1 : "128", 0, 0);
-
+		if (!slash) {
+			/* no mask (same as /128) */
+			script_setenv_int(vpninfo, envname, 128);
+		} else if ((masklen = strtol(slash+1, &endp, 10))<=128 && (*endp=='\0' || isspace(*endp))) {
+			/* mask is /N */
+			script_setenv_int(vpninfo, envname, masklen);
+		} else {
+			/* mask is /dead:beef:: */
+			struct in6_addr a;
+			if (inet_pton(AF_INET6, slash+1, &a) <= 0)
+				goto bad;
+			masklen = netmasklen6(&a);
+			/* something invalid like /ffff::1 */
+			for (int ii = (masklen >> 3); ii < 16; ii++) {
+				if (ii == (masklen >> 3) && (~a.s6_addr[ii] & 0xff) != (0xff >> (masklen & 0x07)))
+					goto bad;
+				else if (a.s6_addr[ii] != 0)
+					goto bad;
+			}
+			script_setenv_int(vpninfo, envname, masklen);
+		}
 		(*v6_incs)++;
 		return 0;
 	}

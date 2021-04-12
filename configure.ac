@@ -174,6 +174,12 @@ AC_CHECK_FUNC(asprintf, [AC_DEFINE(HAVE_ASPRINTF, 1, [Have asprintf() function])
 AC_CHECK_FUNC(vasprintf, [AC_DEFINE(HAVE_VASPRINTF, 1, [Have vasprintf() function])],
     [symver_vasprintf="openconnect__vasprintf;"])
 
+AC_MSG_CHECKING([for __builtin_clz])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([],[return __builtin_clz(0xffffffff);])],
+		[AC_MSG_RESULT(yes)
+		 AC_DEFINE(HAVE_BUILTIN_CLZ, 1, [Have __builtin_clz()])],
+		[AC_MSG_RESULT(no)])
+
 if test -n "$symver_vasprintf"; then
   AC_MSG_CHECKING([for va_copy])
   AC_LINK_IFELSE([AC_LANG_PROGRAM([
