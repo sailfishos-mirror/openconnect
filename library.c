@@ -461,6 +461,8 @@ void openconnect_vpninfo_free(struct openconnect_info *vpninfo)
 	}
 
 	free(vpninfo->ppp);
+	buf_free(vpninfo->ppp_tls_connect_req);
+	buf_free(vpninfo->ppp_dtls_connect_req);
 
 #ifdef HAVE_ICONV
 	if (vpninfo->ic_utf8_to_legacy != (iconv_t)-1)

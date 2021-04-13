@@ -598,6 +598,11 @@ int f5_connect(struct openconnect_info *vpninfo)
 		goto out;
 
 	ret = openconnect_ppp_new(vpninfo, hdlc ? PPP_ENCAP_F5_HDLC : PPP_ENCAP_F5, ipv4, ipv6);
+	if (!ret) {
+		/* Trigger the first PPP negotiations and ensure the PPP state
+		 * is PPPS_ESTABLISH so that ppp_tcp_mainloop() knows we've started. */
+		ppp_start_tcp_mainloop(vpninfo);
+	}
 
  out:
 	free_optlist(old_cstp_opts);

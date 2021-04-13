@@ -435,6 +435,8 @@ struct openconnect_info {
 	uint32_t esp_magic;  /* GlobalProtect magic ping address (network-endian) */
 
 	struct oc_ppp *ppp;
+	struct oc_text_buf *ppp_tls_connect_req;
+	struct oc_text_buf *ppp_dtls_connect_req;
 
 	int tncc_fd; /* For Juniper TNCC */
 	char *platname;
@@ -1049,7 +1051,10 @@ struct oc_ppp;
 void buf_append_ppphdlc(struct oc_text_buf *buf, const unsigned char *bytes, int len, uint32_t asyncmap);
 void buf_append_ppp_hdr(struct oc_text_buf *buf, struct oc_ppp *ppp, uint16_t proto, uint8_t code, uint8_t id);
 int ppp_negotiate_config(struct openconnect_info *vpninfo);
+int ppp_tcp_should_connect(struct openconnect_info *vpninfo);
+int ppp_start_tcp_mainloop(struct openconnect_info *vpninfo);
 int ppp_tcp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable);
+int ppp_udp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable);
 int openconnect_ppp_new(struct openconnect_info *vpninfo, int encap, int want_ipv4, int want_ipv6);
 int ppp_reset(struct openconnect_info *vpninfo);
 

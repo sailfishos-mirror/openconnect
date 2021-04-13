@@ -521,6 +521,11 @@ int fortinet_connect(struct openconnect_info *vpninfo)
 	 */
 
 	ret = openconnect_ppp_new(vpninfo, PPP_ENCAP_FORTINET, ipv4, ipv6);
+	if (!ret) {
+		/* Trigger the first PPP negotiations and ensure the PPP state
+		 * is PPPS_ESTABLISH so that ppp_tcp_mainloop() knows we've started. */
+		ppp_start_tcp_mainloop(vpninfo);
+	}
 
  out:
 	if (ret)

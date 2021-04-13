@@ -1474,10 +1474,290 @@ static int ppp_mainloop(struct openconnect_info *vpninfo, int dtls,
 	return work_done;
 }
 
-int ppp_tcp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
+/* This function in designed to be called from a PPP protocol's
+ * ->tcp_connect() function, to allow it to determine whether it
+ * should establish the PPP connection immediately or wait for
+ * DTLS to have a turn. */
+int ppp_tcp_should_connect(struct openconnect_info *vpninfo)
 {
-	if (vpninfo->dtls_state >= DTLS_SLEEPING)
+	switch (vpninfo->dtls_state) {
+	case DTLS_DISABLED:
+	case DTLS_NOSECRET:
+		/* No DTLS here. Connect PPP immediately over TCP */
+		return 1;
+
+	case DTLS_SECRET:
+		/* When openconnect_make_cstp_connection() is first called,
+		 * before openconnect_setup_dtls() is called, the state is
+		 * DTLS_SECRET. In that case, defer the connection to allow
+		 * DTLS to have a turn. */
 		return 0;
 
-	return ppp_mainloop(vpninfo, 0, &vpninfo->ssl_times, timeout, readable);
+	case DTLS_SLEEPING:
+		/* On a DTLS connection timeout, the TCP mainloop calls
+		 * dtls_close() before calling this function to reconnect,
+		 * so establish the PPP immediately over PPP.
+		 *
+		 * (After a connection pause, DTLS_SLEEPING is also seen but
+		 * the UDP mainloop runs first and the state gets changed
+		 * to DTLS_CONNECTING before the TCP mainloop runs, so that
+		 * variant of DTLS_SLEEPING is never seen here.) */
+		return 1;
+
+	case DTLS_CONNECTING:
+		/* After pause/SIGUSR2, the UDP mainloop will run first and
+		 * shifts from DTLS_SLEEPING to DTLS_CONNECTING state, before
+		 * the TCP mainloop invokes this function. So defer the
+		 * connection to allow DTLS to connect. */
+		return 0;
+
+	default:
+	case DTLS_CONNECTED:
+	case DTLS_ESTABLISHED:
+		/* These should never be seen. */
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("PPP connect called with invalid DTLS state %d\n"),
+			     vpninfo->dtls_state);
+		return -EIO;
+	}
+}
+
+int ppp_start_tcp_mainloop(struct openconnect_info *vpninfo)
+{
+	int timeout = 0;
+
+	return ppp_mainloop(vpninfo, 0, &vpninfo->ssl_times, &timeout, 1);
+}
+
+int ppp_tcp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
+{
+	/* If we're still attempting DTLS, do nothing yet. */
+	switch (vpninfo->dtls_state) {
+	case DTLS_ESTABLISHED:
+		if (vpninfo->ssl_fd != -1) {
+			openconnect_close_https(vpninfo, 0); /* don't keep stale HTTPS socket */
+			vpn_progress(vpninfo, PRG_INFO,
+				     _("DTLS tunnel connected; exiting HTTPS mainloop.\n"));
+		}
+
+		/* Now that we are connected, let's ensure timeout is less than
+		 * or equal to DTLS DPD/keepalive else we might over sleep, e.g.
+		 * if timeout is set to DTLS attempt period from DTLS mainloop,
+		 * and falsely detect dead peer. */
+		if (vpninfo->dtls_times.dpd)
+			if (*timeout > vpninfo->dtls_times.dpd * 1000)
+				*timeout = vpninfo->dtls_times.dpd * 1000;
+
+		return 0;
+
+	case DTLS_CONNECTED:
+	case DTLS_CONNECTING:
+	case DTLS_SECRET:
+		if (vpninfo->ppp->ppp_state == PPPS_DEAD) {
+			/* Allow 5 seconds after configuration for DTLS to start */
+			if (!ka_check_deadline(timeout, time(NULL), vpninfo->new_dtls_started + 5)) {
+				vpninfo->delay_tunnel_reason = "awaiting PPP DTLS connection";
+				return 0;
+			}
+			/* It'll try again in a while, but we want it to be in DTLS_SLEEPING
+			 * so that the tcp_connect() function actually establishes the PPP
+			 * over TCP. */
+			dtls_close(vpninfo);
+		}
+
+		/* Fall through */
+	case DTLS_SLEEPING:
+		/* Should only be seen by the mainloop if DTLS actually *failed*
+		 * (which includes timing out). */
+		if (vpninfo->ppp->ppp_state == PPPS_DEAD) {
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("Failed to connect DTLS tunnel; using HTTPS instead (state %d).\n"),
+				     vpninfo->dtls_state);
+		}
+		/* Fall through */
+	case DTLS_NOSECRET:
+	case DTLS_DISABLED:
+		/* The state is PPPS_DEAD until the first time ppp_tcp_mainloop()
+		 * gets invoked. When f5_connect() actually establishes the tunnel,
+		 * it does so to start the PPP state machine for the TCP connection.
+		 */
+		if (vpninfo->ssl_fd != -1 && vpninfo->ppp->ppp_state != PPPS_DEAD)
+			return ppp_mainloop(vpninfo, 0, &vpninfo->ssl_times, timeout, readable);
+
+		/* This will call *back* into the protocol's ->tcp_connect()
+		 * but this time DTLS is disabled so it'll actually establish
+		 * the connection there. We want to make use of the retry
+		 * handling logic in ssl_reconnect() in the cases where it
+		 * doesn't succeed immediately.
+		 *
+		 * If the connection is already open, try using it directly
+		 * first, before falling back to a full ssl_reconnect().
+		 */
+		if (vpninfo->ssl_fd == -1 || vpninfo->proto->tcp_connect(vpninfo)) {
+			int ret = ssl_reconnect(vpninfo);
+			if (ret) {
+				vpn_progress(vpninfo, PRG_ERR, _("Establishing PPP tunnel over TLS failed\n"));
+				vpninfo->quit_reason = "PPP TLS connect failed";
+				return ret;
+			}
+			vpninfo->delay_tunnel_reason = "DTLS connection pending";
+			return 1;
+		}
+		vpninfo->delay_tunnel_reason = "DTLS connection pending";
+		return 1;
+	}
+
+	vpn_progress(vpninfo, PRG_ERR, _("Invalid DTLS state %d\n"), vpninfo->dtls_state);
+	vpninfo->quit_reason = "Invalid DTLS state";
+	return 1;
+}
+
+int ppp_udp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
+{
+	int work_done = 0;
+	time_t now = time(NULL);
+
+	switch(vpninfo->dtls_state) {
+	case DTLS_CONNECTING:
+		if (vpninfo->ppp->ppp_state == PPPS_DEAD)
+			vpninfo->delay_tunnel_reason = "DTLS connecting";
+
+		dtls_try_handshake(vpninfo, timeout);
+		if (vpninfo->dtls_state == DTLS_CONNECTED)
+			goto newly_connected;
+		return 0;
+
+	case DTLS_CONNECTED:
+		/* First, see if there's a response for us. */
+		while(readable) {
+			int receive_mtu = MAX(16384, vpninfo->ip_info.mtu);
+			int len;
+
+			/* cstp_pkt is used by PPP over either transport, and TCP
+			 * may be in active use while we attempt to connect DTLS.
+			 * So use vpninfo->dtls_pkt for this. */
+			if (!vpninfo->dtls_pkt)
+				vpninfo->dtls_pkt = malloc(sizeof(struct pkt) + receive_mtu);
+			if (!vpninfo->dtls_pkt) {
+				vpn_progress(vpninfo, PRG_ERR, _("Allocation failed\n"));
+				dtls_close(vpninfo);
+				vpninfo->dtls_state = DTLS_DISABLED;
+				return 1;
+			}
+
+			struct pkt *this =  vpninfo->dtls_pkt;
+			len = ssl_nonblock_read(vpninfo, 1, this->data, receive_mtu);
+			if (!len)
+				break;
+			if (len < 0) {
+				vpn_progress(vpninfo, PRG_ERR,
+					     _("Failed to receive authentication response from DTLS\n"));
+				dtls_close(vpninfo);
+				return 1;
+			}
+
+			this->len = len;
+
+			if (vpninfo->dump_http_traffic)
+				dump_buf_hex(vpninfo, PRG_DEBUG, '<', this->data, len);
+
+			int ret = vpninfo->proto->udp_catch_probe(vpninfo, this);
+			if (ret < 0) {
+				dtls_close(vpninfo);
+				return 1;
+			} else if (ret > 0) {
+				vpninfo->dtls_state = DTLS_ESTABLISHED;
+				vpninfo->dtls_pkt = NULL;
+				free(this);
+
+				/* We are going to take over the PPP now; reset the TCP one */
+				ret = ppp_reset(vpninfo);
+				if (ret) {
+					/* This should never happen */
+					vpn_progress(vpninfo, PRG_ERR, _("Reset PPP failed\n"));
+					vpninfo->quit_reason = "PPP DTLS connect failed";
+					return ret;
+				}
+				goto established;
+			}
+			/* This is the ret==0 case, where the packet was recognised
+			 * neither as a success nor failure. In that case it could
+			 * be a PPP frame which has been received out of order and
+			 * made it to us before the OK response. Drop it and keep
+			 * waiting. */
+		}
+
+		/* On first connection, the TCP mainloop will give us five seconds
+		 * to do the whole exchange and reach DTLS_ESTABLISHED before it
+		 * gives up and connects over TCP instead. But for opportunistic
+		 * attempts to "upgrade" to DTLS later, it won't get involved.
+		 * We still want to time out and give up on this DTLS connection
+		 * if we failed to authenticate though. So do it here too. */
+		if (ka_check_deadline(timeout, now, vpninfo->dtls_times.last_rekey + 5)) {
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("Failed to authenticate DTLS session\n"));
+			dtls_close(vpninfo);
+			return 1;
+		}
+
+		/* Resend the connect request every second */
+		if (ka_check_deadline(timeout, now, vpninfo->dtls_times.last_tx + 1)) {
+		newly_connected:
+			if (buf_error(vpninfo->ppp_dtls_connect_req)) {
+				vpn_progress(vpninfo, PRG_ERR,
+					     _("Error creating connect request for DTLS session\n"));
+				dtls_close(vpninfo);
+				vpninfo->dtls_state = DTLS_DISABLED;
+				return 1;
+			}
+
+			if (vpninfo->dump_http_traffic)
+				dump_buf_hex(vpninfo, PRG_DEBUG, '>',
+					     (void *)vpninfo->ppp_dtls_connect_req->data,
+					     vpninfo->ppp_dtls_connect_req->pos);
+
+			int ret = ssl_nonblock_write(vpninfo, 1,
+						     vpninfo->ppp_dtls_connect_req->data,
+						     vpninfo->ppp_dtls_connect_req->pos);
+			if (ret < 0) {
+				vpn_progress(vpninfo, PRG_ERR,
+					     _("Failed to write connect request to DTLS session\n"));
+				dtls_close(vpninfo);
+				vpninfo->dtls_state = DTLS_DISABLED;
+				return 1;
+			}
+			vpninfo->dtls_times.last_tx = now;
+		}
+
+		if (vpninfo->ppp->ppp_state == PPPS_DEAD)
+			vpninfo->delay_tunnel_reason = "DTLS establishing";
+
+		return 0;
+
+	case DTLS_ESTABLISHED:
+	established:
+		work_done = ppp_mainloop(vpninfo, 1, &vpninfo->dtls_times, timeout, readable);
+		if (vpninfo->dtls_state != DTLS_SLEEPING)
+			break;
+
+		/* Fall through */
+	case DTLS_SLEEPING:
+		/* If the SSL connection isn't open, that must mean we've been paused
+		 * and resumed. So reconnect immediately regardless of whether we'd
+		 * just done so, *and* reset the PPP state so that the TCP mainloop
+		 * doesn't get confused. */
+		if (vpninfo->ssl_fd == -1) {
+			ppp_reset(vpninfo);
+			if (now < vpninfo->new_dtls_started + vpninfo->dtls_attempt_period)
+				now = vpninfo->new_dtls_started + vpninfo->dtls_attempt_period;
+		}
+
+		if (ka_check_deadline(timeout, now, vpninfo->new_dtls_started + vpninfo->dtls_attempt_period)) {
+			vpn_progress(vpninfo, PRG_DEBUG, _("Attempt new DTLS connection\n"));
+			dtls_reconnect(vpninfo, timeout);
+			work_done = 1;
+		}
+	}
+
+	return work_done;
 }
