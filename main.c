@@ -1996,7 +1996,7 @@ int main(int argc, char **argv)
 #endif
 				  );
 
-			vpninfo->ciphersuite_config = keep_config_arg();
+			vpninfo->ciphersuite_config = dup_config_arg();
 			break;
 		default:
 			usage();
