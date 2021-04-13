@@ -421,6 +421,7 @@ static int parse_options(struct openconnect_info *vpninfo, char *buf, int len,
 			}
 		} else if (   (!strncmp((char *)xml_node->name, "LAN", 3) && isdigit((char)xml_node->name[3]))
 			   || (!strncmp((char *)xml_node->name, "LAN6_", 5) && isdigit((char)xml_node->name[5]))) {
+			free(s);
 			s = (char *)xmlNodeGetContent(xml_node);
 			if (s && *s) {
 				char *word, *next;
