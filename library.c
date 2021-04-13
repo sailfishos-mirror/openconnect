@@ -389,6 +389,42 @@ int openconnect_set_version_string(struct openconnect_info *vpninfo,
 	return 0;
 }
 
+const char *add_option_dup(struct openconnect_info *vpninfo, const char *opt,
+			   const char *val, int val_len)
+{
+	const char *ret;
+	char *new_val;
+
+	if (val_len >= 0)
+		new_val = strndup(val, val_len);
+	else
+		new_val = strdup(val);
+
+	ret = add_option_steal(vpninfo, opt, &new_val);
+	free(new_val);
+	return ret;
+}
+
+const char *add_option_steal(struct openconnect_info *vpninfo, const char *opt, char **val)
+{
+	struct oc_vpn_option *new = malloc(sizeof(*new));
+	if (!new)
+		return NULL;
+
+	new->option = strdup(opt);
+	if (!new->option) {
+		free(new);
+		return NULL;
+	}
+	new->value = *val;
+	*val = NULL;
+	new->next = vpninfo->cstp_options;
+	vpninfo->cstp_options = new;
+
+	return new->value;
+}
+
+
 void free_optlist(struct oc_vpn_option *opt)
 {
 	struct oc_vpn_option *next;

@@ -61,37 +61,6 @@ static const char authpkt_tail[] = { 0xbb, 0x01, 0x00, 0x00, 0x00, 0x00 };
 
 #define GRP_ATTR(g, a) (((g) << 16) | (a))
 
-/* We behave like CSTP — create a linked list in vpninfo->cstp_options
- * with the strings containing the information we got from the server,
- * and oc_ip_info contains const copies of those pointers. */
-
-static const char *add_option(struct openconnect_info *vpninfo, const char *opt,
-			      const char *val, int val_len)
-{
-	struct oc_vpn_option *new = malloc(sizeof(*new));
-	if (!new)
-		return NULL;
-
-	new->option = strdup(opt);
-	if (!new->option) {
-		free(new);
-		return NULL;
-	}
-	if (val_len >= 0)
-		new->value = strndup(val, val_len);
-	else
-		new->value = strdup(val);
-	if (!new->value) {
-		free(new->option);
-		free(new);
-		return NULL;
-	}
-	new->next = vpninfo->cstp_options;
-	vpninfo->cstp_options = new;
-
-	return new->value;
-}
-
 static int process_attr(struct openconnect_info *vpninfo, int group, int attr,
 			unsigned char *data, int attrlen)
 {
@@ -122,7 +91,7 @@ static int process_attr(struct openconnect_info *vpninfo, int group, int attr,
 
 		for (i = 0; i < 3; i++) {
 			if (!vpninfo->ip_info.dns[i]) {
-				vpninfo->ip_info.dns[i] = add_option(vpninfo, "DNS", buf, -1);
+				vpninfo->ip_info.dns[i] = add_option_dup(vpninfo, "DNS", buf, -1);
 				break;
 			}
 		}
@@ -131,7 +100,7 @@ static int process_attr(struct openconnect_info *vpninfo, int group, int attr,
 	case GRP_ATTR(2, 2):
 		vpn_progress(vpninfo, PRG_DEBUG, _("Received DNS search domain %.*s\n"),
 			     attrlen, (char *)data);
-		vpninfo->ip_info.domain = add_option(vpninfo, "search", (char *)data, attrlen);
+		vpninfo->ip_info.domain = add_option_dup(vpninfo, "search", (char *)data, attrlen);
 		if (vpninfo->ip_info.domain) {
 			char *p = (char *)vpninfo->ip_info.domain;
 			while ((p = strchr(p, ',')))
@@ -145,7 +114,7 @@ static int process_attr(struct openconnect_info *vpninfo, int group, int attr,
 		snprintf(buf, sizeof(buf), "%d.%d.%d.%d", data[0], data[1], data[2], data[3]);
 
 		vpn_progress(vpninfo, PRG_DEBUG, _("Received internal IP address %s\n"), buf);
-		vpninfo->ip_info.addr = add_option(vpninfo, "ipaddr", buf, -1);
+		vpninfo->ip_info.addr = add_option_dup(vpninfo, "ipaddr", buf, -1);
 		break;
 
 	case GRP_ATTR(1, 2):
@@ -154,7 +123,7 @@ static int process_attr(struct openconnect_info *vpninfo, int group, int attr,
 		snprintf(buf, sizeof(buf), "%d.%d.%d.%d", data[0], data[1], data[2], data[3]);
 
 		vpn_progress(vpninfo, PRG_DEBUG, _("Received netmask %s\n"), buf);
-		vpninfo->ip_info.netmask = add_option(vpninfo, "netmask", buf, -1);
+		vpninfo->ip_info.netmask = add_option_dup(vpninfo, "netmask", buf, -1);
 		break;
 
 	case GRP_ATTR(1, 3):
@@ -165,7 +134,7 @@ static int process_attr(struct openconnect_info *vpninfo, int group, int attr,
 		vpn_progress(vpninfo, PRG_DEBUG, _("Received internal gateway address %s\n"), buf);
 		/* Hm, what are we supposed to do with this? It's a tunnel;
 		   having a gateway is meaningless. */
-		add_option(vpninfo, "ipaddr", buf, -1);
+		add_option_dup(vpninfo, "ipaddr", buf, -1);
 		break;
 
 	case GRP_ATTR(3, 3): {
@@ -180,7 +149,7 @@ static int process_attr(struct openconnect_info *vpninfo, int group, int attr,
 			break;
 		inc = malloc(sizeof(*inc));
 		if (inc) {
-			inc->route = add_option(vpninfo, "split-include", buf, -1);
+			inc->route = add_option_dup(vpninfo, "split-include", buf, -1);
 			if (inc->route) {
 				inc->next = vpninfo->ip_info.split_includes;
 				vpninfo->ip_info.split_includes = inc;
@@ -202,7 +171,7 @@ static int process_attr(struct openconnect_info *vpninfo, int group, int attr,
 			break;
 		exc = malloc(sizeof(*exc));
 		if (exc) {
-			exc->route = add_option(vpninfo, "split-exclude", buf, -1);
+			exc->route = add_option_dup(vpninfo, "split-exclude", buf, -1);
 			if (exc->route) {
 				exc->next = vpninfo->ip_info.split_excludes;
 				vpninfo->ip_info.split_excludes = exc;
@@ -221,7 +190,7 @@ static int process_attr(struct openconnect_info *vpninfo, int group, int attr,
 
 		for (i = 0; i < 3; i++) {
 			if (!vpninfo->ip_info.nbns[i]) {
-				vpninfo->ip_info.nbns[i] = add_option(vpninfo, "WINS", buf, -1);
+				vpninfo->ip_info.nbns[i] = add_option_dup(vpninfo, "WINS", buf, -1);
 				break;
 			}
 		}

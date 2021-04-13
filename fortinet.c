@@ -249,31 +249,6 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 	return ret;
 }
 
-/* We behave like CSTP — create a linked list in vpninfo->cstp_options
- * with the strings containing the information we got from the server,
- * and oc_ip_info contains const copies of those pointers.
- *
- * (unlike version in oncp.c, val is stolen rather than strdup'ed) */
-
-static const char *add_option(struct openconnect_info *vpninfo, const char *opt, char **val)
-{
-	struct oc_vpn_option *new = malloc(sizeof(*new));
-	if (!new)
-		return NULL;
-
-	new->option = strdup(opt);
-	if (!new->option) {
-		free(new);
-		return NULL;
-	}
-	new->value = *val;
-	*val = NULL;
-	new->next = vpninfo->cstp_options;
-	vpninfo->cstp_options = new;
-
-	return new->value;
-}
-
 /* Parse this:
 <?xml version="1.0" encoding="utf-8"?>
 <sslvpn-tunnel ver="2" dtls="1" patch="1">
@@ -364,7 +339,7 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 			for (x = xml_node->children; x; x=x->next) {
 				if (xmlnode_is_named(x, "assigned-addr") && !xmlnode_get_prop(x, "ipv4", &s)) {
 					vpn_progress(vpninfo, PRG_INFO, _("Got legacy IP address %s\n"), s);
-					vpninfo->ip_info.addr = add_option(vpninfo, "ipaddr", &s);
+					vpninfo->ip_info.addr = add_option_steal(vpninfo, "ipaddr", &s);
 				} else if (xmlnode_is_named(x, "dns")) {
 					if (!xmlnode_get_prop(x, "domain", &s) && s && *s) {
 						vpn_progress(vpninfo, PRG_INFO, _("Got search domain %s\n"), s);
@@ -372,7 +347,7 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 					}
 					if (!xmlnode_get_prop(x, "ip", &s) && s && *s) {
 						vpn_progress(vpninfo, PRG_INFO, _("Got IPv%d DNS server %s\n"), 4, s);
-						if (n_dns < 3) vpninfo->ip_info.dns[n_dns++] = add_option(vpninfo, "DNS", &s);
+						if (n_dns < 3) vpninfo->ip_info.dns[n_dns++] = add_option_steal(vpninfo, "DNS", &s);
 					}
 				} else if (xmlnode_is_named(x, "split-dns")) {
 					int ii;
@@ -403,10 +378,10 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 								}
 								snprintf(route, 32, "%s/%s", s, s2);
 								vpn_progress(vpninfo, PRG_INFO, _("Got IPv%d route %s\n"), 4, route);
-								inc->route = add_option(vpninfo, "split-include", &route);
+								inc->route = add_option_steal(vpninfo, "split-include", &route);
 								inc->next = vpninfo->ip_info.split_includes;
 								vpninfo->ip_info.split_includes = inc;
-								/* XX: static analyzer doesn't realize that add_option will steal route's reference, so... */
+								/* XX: static analyzer doesn't realize that add_option_steal will steal route's reference, so... */
 								free(route);
 							}
 						}
@@ -422,7 +397,7 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 		vpninfo->ip_info.netmask6 = strdup("::/0");
 	if (buf_error(domains) == 0 && domains->pos > 0) {
 		domains->data[domains->pos-1] = '\0';
-		vpninfo->ip_info.domain = add_option(vpninfo, "search", &domains->data);
+		vpninfo->ip_info.domain = add_option_steal(vpninfo, "search", &domains->data);
 	}
 	buf_free(domains);
 

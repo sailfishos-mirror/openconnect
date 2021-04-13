@@ -74,31 +74,6 @@ static const struct pkt dpd_pkt = {
 	{ .gpst.hdr = { 0x1a, 0x2b, 0x3c, 0x4d } }
 };
 
-/* We behave like CSTP — create a linked list in vpninfo->cstp_options
- * with the strings containing the information we got from the server,
- * and oc_ip_info contains const copies of those pointers.
- *
- * (unlike version in oncp.c, val is stolen rather than strdup'ed) */
-
-static const char *add_option(struct openconnect_info *vpninfo, const char *opt, char **val)
-{
-	struct oc_vpn_option *new = malloc(sizeof(*new));
-	if (!new)
-		return NULL;
-
-	new->option = strdup(opt);
-	if (!new->option) {
-		free(new);
-		return NULL;
-	}
-	new->value = *val;
-	*val = NULL;
-	new->next = vpninfo->cstp_options;
-	vpninfo->cstp_options = new;
-
-	return new->value;
-}
-
 static int filter_opts(struct oc_text_buf *buf, const char *query, const char *incexc, int include)
 {
 	const char *f, *endf, *eq;
@@ -395,7 +370,7 @@ static int gpst_parse_config_xml(struct openconnect_info *vpninfo, xmlNode *xml_
 	/* Parse config */
 	for (xml_node = xml_node->children; xml_node; xml_node=xml_node->next) {
 		if (!xmlnode_get_val(xml_node, "ip-address", &s))
-			vpninfo->ip_info.addr = add_option(vpninfo, "ipaddr", &s);
+			vpninfo->ip_info.addr = add_option_steal(vpninfo, "ipaddr", &s);
 		else if (!xmlnode_get_val(xml_node, "netmask", &deferred_netmask)) {
 			/* XX: GlobalProtect servers always (almost always?) send 255.255.255.255 as their netmask
 			 * (a /32 host route), and if they want to include an actual default route (0.0.0.0/0)
@@ -448,13 +423,13 @@ static int gpst_parse_config_xml(struct openconnect_info *vpninfo, xmlNode *xml_
 						if (!strcmp(s, vpninfo->ip_info.dns[ii]))
 							break;
 					if (ii==n_dns)
-						vpninfo->ip_info.dns[n_dns++] = add_option(vpninfo, "DNS", &s);
+						vpninfo->ip_info.dns[n_dns++] = add_option_steal(vpninfo, "DNS", &s);
 				}
 			}
 		} else if (xmlnode_is_named(xml_node, "wins")) {
 			for (ii=0, member = xml_node->children; member && ii<3; member=member->next)
 				if (!xmlnode_get_val(member, "member", &s))
-					vpninfo->ip_info.nbns[ii++] = add_option(vpninfo, "WINS", &s);
+					vpninfo->ip_info.nbns[ii++] = add_option_steal(vpninfo, "WINS", &s);
 		} else if (xmlnode_is_named(xml_node, "dns-suffix")) {
 			struct oc_text_buf *domains = buf_alloc();
 			for (member = xml_node->children; member; member=member->next)
@@ -462,7 +437,7 @@ static int gpst_parse_config_xml(struct openconnect_info *vpninfo, xmlNode *xml_
 					buf_append(domains, "%s ", s);
 			if (buf_error(domains) == 0 && domains->pos > 0) {
 				domains->data[domains->pos-1] = '\0';
-				vpninfo->ip_info.domain = add_option(vpninfo, "search", &domains->data);
+				vpninfo->ip_info.domain = add_option_steal(vpninfo, "search", &domains->data);
 			}
 			buf_free(domains);
 		} else if (xmlnode_is_named(xml_node, "access-routes-v6") || xmlnode_is_named(xml_node, "exclude-access-routes-v6")) {
@@ -485,11 +460,11 @@ static int gpst_parse_config_xml(struct openconnect_info *vpninfo, xmlNode *xml_
 					if ((inc = malloc(sizeof(*inc))) == NULL)
 						return -ENOMEM;
 					if (is_inc) {
-						inc->route = add_option(vpninfo, "split-include", &s);
+						inc->route = add_option_steal(vpninfo, "split-include", &s);
 						inc->next = vpninfo->ip_info.split_includes;
 						vpninfo->ip_info.split_includes = inc;
 					} else {
-						inc->route = add_option(vpninfo, "split-exclude", &s);
+						inc->route = add_option_steal(vpninfo, "split-exclude", &s);
 						inc->next = vpninfo->ip_info.split_excludes;
 						vpninfo->ip_info.split_excludes = inc;
 					}
@@ -569,7 +544,7 @@ static int gpst_parse_config_xml(struct openconnect_info *vpninfo, xmlNode *xml_
 				if ((inc = malloc(sizeof(*inc))) == NULL ||
 				    asprintf(&s, "%s/%s", inet_ntoa(net_addr), original_netmask) <= 0)
 					return -ENOMEM;
-				inc->route = add_option(vpninfo, "split-include", &s);
+				inc->route = add_option_steal(vpninfo, "split-include", &s);
 				inc->next = vpninfo->ip_info.split_includes;
 				vpninfo->ip_info.split_includes = inc;
 			}
@@ -577,7 +552,7 @@ static int gpst_parse_config_xml(struct openconnect_info *vpninfo, xmlNode *xml_
 		free(original_netmask);
 	}
 	if (deferred_netmask)
-		vpninfo->ip_info.netmask = add_option(vpninfo, "netmask", &deferred_netmask);
+		vpninfo->ip_info.netmask = add_option_steal(vpninfo, "netmask", &deferred_netmask);
 
 	/* Set 10-second DPD/keepalive (same as Windows client) unless
 	 * overridden with --force-dpd */

@@ -302,31 +302,6 @@ static int xmlnode_bool_or_int_value(struct openconnect_info *vpninfo, xmlNode *
 	return ret;
 }
 
-/* We behave like CSTP — create a linked list in vpninfo->cstp_options
- * with the strings containing the information we got from the server,
- * and oc_ip_info contains const copies of those pointers.
- *
- * (unlike version in oncp.c, val is stolen rather than strdup'ed) */
-
-static const char *add_option(struct openconnect_info *vpninfo, const char *opt, char **val)
-{
-	struct oc_vpn_option *new = malloc(sizeof(*new));
-	if (!new)
-		return NULL;
-
-	new->option = strdup(opt);
-	if (!new->option) {
-		free(new);
-		return NULL;
-	}
-	new->value = *val;
-	*val = NULL;
-	new->next = vpninfo->cstp_options;
-	vpninfo->cstp_options = new;
-
-	return new->value;
-}
-
 static int parse_options(struct openconnect_info *vpninfo, char *buf, int len,
 			 char **session_id, char **ur_z, int *ipv4, int *ipv6, int *hdlc)
 {
@@ -403,14 +378,14 @@ static int parse_options(struct openconnect_info *vpninfo, char *buf, int len,
 			if (s && *s) {
 				vpn_progress(vpninfo, PRG_INFO, _("Got IPv%d DNS server %s\n"),
 					     xml_node->name[4]=='_' ? 6 : 4, s);
-				if (n_dns < 3) vpninfo->ip_info.dns[n_dns++] = add_option(vpninfo, "DNS", &s);
+				if (n_dns < 3) vpninfo->ip_info.dns[n_dns++] = add_option_steal(vpninfo, "DNS", &s);
 			}
 		} else if (!strncmp((char *)xml_node->name, "WINS", 4) && isdigit(xml_node->name[4])) {
 			free(s);
 			s = (char *)xmlNodeGetContent(xml_node);
 			if (s && *s) {
 				vpn_progress(vpninfo, PRG_INFO, _("Got WINS/NBNS server %s\n"), s);
-				if (n_nbns < 3) vpninfo->ip_info.dns[n_nbns++] = add_option(vpninfo, "WINS", &s);
+				if (n_nbns < 3) vpninfo->ip_info.dns[n_nbns++] = add_option_steal(vpninfo, "WINS", &s);
 			}
 		} else if (!strncmp((char *)xml_node->name, "DNSSuffix", 9) && isdigit(xml_node->name[9])) {
 			free(s);
@@ -427,7 +402,7 @@ static int parse_options(struct openconnect_info *vpninfo, char *buf, int len,
 				char *word, *next;
 				struct oc_split_include *inc;
 
-				for (word = (char *)add_option(vpninfo, "route-list", &s);
+				for (word = (char *)add_option_steal(vpninfo, "route-list", &s);
 				     *word; word = next) {
 					for (next = word; *next && !isspace(*next); next++);
 					if (*next)
@@ -452,7 +427,7 @@ static int parse_options(struct openconnect_info *vpninfo, char *buf, int len,
 		vpninfo->ip_info.netmask6 = strdup("::/0");
 	if (buf_error(domains) == 0 && domains->pos > 0) {
 		domains->data[domains->pos-1] = '\0';
-		vpninfo->ip_info.domain = add_option(vpninfo, "search", &domains->data);
+		vpninfo->ip_info.domain = add_option_steal(vpninfo, "search", &domains->data);
 	}
 	buf_free(domains);
 
@@ -470,21 +445,19 @@ static int parse_options(struct openconnect_info *vpninfo, char *buf, int len,
 }
 
 static int get_ip_address(struct openconnect_info *vpninfo, char *header, char *val) {
-	char *s = strdup(val);
 	if (!strcasecmp(header, "X-VPN-client-IP")) {
 		vpn_progress(vpninfo, PRG_INFO,
 			     _("Got legacy IP address %s\n"), val);
-		vpninfo->ip_info.addr = add_option(vpninfo, "ipaddr", &s);
+		vpninfo->ip_info.addr = add_option_dup(vpninfo, "ipaddr", val, -1);
 	} else if (!strcasecmp(header, "X-VPN-client-IPv6")) {
 		vpn_progress(vpninfo, PRG_INFO,
 			     _("Got IPv6 address %s\n"), val);
 		/* XX: Should we treat this as a /64 netmask? Or an /128 address? */
-		vpninfo->ip_info.addr6 = add_option(vpninfo, "ipaddr6", &s);
+		vpninfo->ip_info.addr6 = add_option_dup(vpninfo, "ipaddr6", val, -1);
 	}
         /* XX: The server's IP address(es) X-VPN-server-{IP,IPv6} are also
          * sent, but the utility of these is unclear. As remarked in oncp.c,
 	 * "this is a tunnel; having a gateway is meaningless." */
-	free(s);
 	return 0;
 }
 
