@@ -33,6 +33,7 @@
 #include <libxml/tree.h>
 
 #include "openconnect-internal.h"
+#include "ppp.h"
 
 void fortinet_common_headers(struct openconnect_info *vpninfo,
 			 struct oc_text_buf *buf)
@@ -415,14 +416,16 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 	return ret;
 }
 
-int fortinet_connect(struct openconnect_info *vpninfo)
+static int fortinet_configure(struct openconnect_info *vpninfo)
 {
 	char *res_buf = NULL;
 	struct oc_text_buf *reqbuf = NULL;
+	struct oc_vpn_option *svpncookie = NULL;
 	int ret, ipv4 = -1, ipv6 = -1;
 
-	/* XXX: We should do what cstp_connect() does to check that configuration
-	   hasn't changed on a reconnect. */
+	/* XXX: We should use check_address_sanity to verify that addresses haven't
+	   changed on a reconnect, except that Fortinet doesn't appear to actually
+	   support reconnects. */
 
 	if (!vpninfo->cookies) {
 		/* XX: This will happen if authentication was separate/external */
@@ -430,12 +433,18 @@ int fortinet_connect(struct openconnect_info *vpninfo)
 		if (ret)
 			return ret;
 	}
+	for (svpncookie = vpninfo->cookies; svpncookie; svpncookie = svpncookie->next)
+		if (!strcmp(svpncookie->option, "SVPNCOOKIE"))
+			break;
+	if (!svpncookie) {
+		vpn_progress(vpninfo, PRG_ERR, _("No cookie named SVPNCOOKIE.\n"));
+		ret = -EINVAL;
+		goto out;
+	}
 
 	ret = openconnect_open_https(vpninfo);
 	if (ret)
 		return ret;
-
-	reqbuf = buf_alloc();
 
 	/* XXX: Why do Forticlient and Openfortivpn do this anyway?
 	 * It's fetching the legacy non-XML configuration, isn't it?
@@ -470,7 +479,7 @@ int fortinet_connect(struct openconnect_info *vpninfo)
 	if (ipv6 == -1)
 		ipv6 = 0;
 
-	/* To use the DTLS tunnel instead, we should do a DTLS 1.0 handshake
+	/* To use the DTLS tunnel instead, we should do a DTLS handshake
 	 * to the appropriate IP:port, and then send the packet...
 	 *
 	 * "${BE16_LEN_OF_THIS_PACKET}GFtype\x00clthello\x00SVPNCOOKIE\x00${SVPNCOOKIE}\x00dns0\x0010.0.2.3\x00"
@@ -487,6 +496,61 @@ int fortinet_connect(struct openconnect_info *vpninfo)
 	 * presumably vice versa.
 	 */
 
+	reqbuf = vpninfo->ppp_tls_connect_req;
+	if (!reqbuf)
+		reqbuf = buf_alloc();
+	buf_truncate(reqbuf);
+	buf_append(reqbuf, "GET /remote/sslvpn-tunnel HTTP/1.1\r\n");
+	fortinet_common_headers(vpninfo, reqbuf);
+	buf_append(reqbuf, "\r\n");
+	if ((ret = buf_error(reqbuf))) {
+	buf_err:
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Error establishing Fortinet connection\n"));
+		goto out;
+	}
+	vpninfo->ppp_tls_connect_req = reqbuf;
+	reqbuf = NULL;
+
+	reqbuf = vpninfo->ppp_dtls_connect_req;
+	if (!reqbuf)
+		reqbuf = buf_alloc();
+	buf_truncate(reqbuf);
+	const char clthello[] = "GFtype\x00clthello\x00SVPNCOOKIE\x00";
+	int len = 2 + sizeof(clthello) + strlen(svpncookie->value) + 1;
+	buf_append_be16(reqbuf, len);
+	buf_append_bytes(reqbuf, clthello, sizeof(clthello));
+	buf_append(reqbuf, "%s%c", svpncookie->value, 0);
+	if ((ret = buf_error(reqbuf)))
+		goto buf_err;
+	vpninfo->ppp_dtls_connect_req = reqbuf;
+	reqbuf = NULL;
+
+	ret = openconnect_ppp_new(vpninfo, PPP_ENCAP_FORTINET, ipv4, ipv6);
+
+ out:
+	buf_free(reqbuf);
+	free(res_buf);
+
+	return ret;
+}
+
+int fortinet_connect(struct openconnect_info *vpninfo)
+{
+	int ret = 0;
+
+	if (!vpninfo->ppp) {
+		/* Initial connection */
+		ret = fortinet_configure(vpninfo);
+	} else if (vpninfo->ppp->ppp_state != PPPS_DEAD) {
+		/* TLS/DTLS reconnection with already-established PPP session
+		 * (PPP session will persist past reconnect.)
+		 */
+		ret = ppp_reset(vpninfo);
+	}
+	if (ret)
+		goto out;
+
 	/* XX: Openfortivpn closes and reopens the HTTPS connection here, and
 	 * also sends 'Host: sslvpn' (rather than the true hostname). Neither
 	 * appears to be necessary, and either might prevent connecting to
@@ -495,22 +559,14 @@ int fortinet_connect(struct openconnect_info *vpninfo)
 	ret = openconnect_open_https(vpninfo);
 	if (ret)
 		goto out;
-	reqbuf = buf_alloc();
-	buf_append(reqbuf, "GET /remote/sslvpn-tunnel HTTP/1.1\r\n");
-	fortinet_common_headers(vpninfo, reqbuf);
-	buf_append(reqbuf, "\r\n");
 
-	if (buf_error(reqbuf)) {
-		vpn_progress(vpninfo, PRG_ERR,
-			     _("Error creating fortinet connection request\n"));
-		ret = buf_error(reqbuf);
-		goto out;
-	}
 	if (vpninfo->dump_http_traffic)
-		dump_buf(vpninfo, '>', reqbuf->data);
-	ret = vpninfo->ssl_write(vpninfo, reqbuf->data, reqbuf->pos);
+		dump_buf(vpninfo, '>', vpninfo->ppp_tls_connect_req->data);
+	ret = vpninfo->ssl_write(vpninfo, vpninfo->ppp_tls_connect_req->data,
+				 vpninfo->ppp_tls_connect_req->pos);
 	if (ret < 0)
 		goto out;
+	ret = 0;
 
 	/* XX: If this connection request succeeds, no HTTP response appears.
 	 * We just start sending our encapsulated PPP configuration packets.
@@ -520,12 +576,9 @@ int fortinet_connect(struct openconnect_info *vpninfo)
 	 * Don't blame me. I didn't design this.
 	 */
 
-	ret = openconnect_ppp_new(vpninfo, PPP_ENCAP_FORTINET, ipv4, ipv6);
-	if (!ret) {
-		/* Trigger the first PPP negotiations and ensure the PPP state
-		 * is PPPS_ESTABLISH so that ppp_tcp_mainloop() knows we've started. */
-		ppp_start_tcp_mainloop(vpninfo);
-	}
+	/* Trigger the first PPP negotiations and ensure the PPP state
+	 * is PPPS_ESTABLISH so that ppp_tcp_mainloop() knows we've started. */
+	ppp_start_tcp_mainloop(vpninfo);
 
  out:
 	if (ret)
@@ -535,9 +588,6 @@ int fortinet_connect(struct openconnect_info *vpninfo)
 		monitor_read_fd(vpninfo, ssl);
 		monitor_except_fd(vpninfo, ssl);
 	}
-	buf_free(reqbuf);
-	free(res_buf);
-
 	return ret;
 }
 
