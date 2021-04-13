@@ -422,9 +422,9 @@ static int parse_options(struct openconnect_info *vpninfo, char *buf, int len,
 	}
 
 	if (default_route && *ipv4)
-		vpninfo->ip_info.netmask = strdup("0.0.0.0");
+		vpninfo->ip_info.netmask = add_option_dup(vpninfo, "f5_netmask", "0.0.0.0", -1);
 	if (default_route && *ipv6)
-		vpninfo->ip_info.netmask6 = strdup("::/0");
+		vpninfo->ip_info.netmask6 = add_option_dup(vpninfo, "f5_netmask6", "::/0", -1);
 	if (buf_error(domains) == 0 && domains->pos > 0) {
 		domains->data[domains->pos-1] = '\0';
 		vpninfo->ip_info.domain = add_option_steal(vpninfo, "search", &domains->data);
