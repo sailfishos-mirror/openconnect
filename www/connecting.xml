@@ -5,45 +5,50 @@
 	<VAR match="VAR_SEL_CONNECTING" replace="selected" />
 	<PARSE file="menu1.xml" />
 	<PARSE file="menu2-started.xml" />
-	
+
 	<INCLUDE file="inc/content.tmpl" />
 
     	<h1>Connecting to the VPN</h1>
 
 <p>Once you have <a href="building.html">installed</a> OpenConnect and checked that you have a
 <a href="vpnc-script.html">vpnc-script</a> which will set up the routing and DNS for it, using OpenConnect
- is very simple. As root, run the following command:
+ is very simple. As root, run the following command for an AnyConnect/ocserv VPN:
  <ul>
    <li><tt>openconnect https://vpn.mycompany.com/</tt></li>
  </ul>
-    </p>
+ For one of the other <a href="protocols.html">supported protocols</a>, you'll need to add <tt>--protocol</tt>.
+ For example, for a PAN GlobalProtect VPN:
+ <ul>
+   <li><tt>openconnect --protocol=gp https://vpn.mycompany.com/</tt></li>
+ </ul>
+</p>
 
-<p>That should be it, if you have a password-based login. If you use
-certificates, you'll need to tell OpenConnect where to find the
-certificate with the <tt>-c</tt> option.</p>
+<p>That should be it, if you have a password-based login. If your VPN uses
+<a href="https://en.wikipedia.org/wiki/Client_certificate">TLS/SSL client certificates</a> for authentication,
+you'll need to tell OpenConnect where to find the certificate with the <tt>-c</tt> option.</p>
 
 <p>You can provide the certificate either as the file name of a PKCS#12 or PEM file,
 or if OpenConnect is built against a suitable version of GnuTLS you can provide the
-certificate in the form of a PKCS#11 URL:
+certificate in the form of a PKCS#11 URL. If the private key is in a separate file
+from the certificate, this must be specified with <tt>-k</tt>:
 <ul>
-  <li><tt>openconnect -c certificate.pem https://vpn.mycompany.com/</tt></li>
+  <li><tt>openconnect -c cert_and_private_key.pem https://vpn.mycompany.com/</tt></li>
+  <li><tt>openconnect -c certificate.pem -k private_key.pem https://vpn.mycompany.com/</tt></li>
   <li><tt>openconnect -c pkcs11:id=X_%b04%c3%85%d4u%e7%0b%10v%08%c9%0dA%8f%3bl%df https://vpn.mycompany.com/</tt></li>
 </ul>
 </p>
 
-<p>You might need to steal the
-certificate from your Windows certificate store using a tool like <a
-href="https://github.com/iSECPartners/jailbreak">Jailbreak</a>.</p>
 <p>
-To start with, you can ignore anything you see in the <a href="technical.html">technical</a>
-page about needing to patch OpenSSL or GnuTLS so that DTLS works &#8212; you
-can survive without it, although DTLS will make your connections much
-faster if you're experiencing packet loss between you and the VPN
-server. But you can worry about that later.
+See the <a href="manual.html">manual</a> for additional options which can be used to tune
+OpenConnect's connections, and automate various aspects of the authentication process (e.g.
+populating multi-factor authentication codes using RSA- or OATH-based soft tokens).
 </p>
+
+<h2>Extracting certificates from Windows</h2>
+
+<p>If your certificate is stored on a Windows system, and marked as "non-exportable",
+you might need to steal the certificate from your Windows certificate store using a tool like
+<a href="https://github.com/iSECPartners/jailbreak">Jailbreak</a>.</p>
 
 	<INCLUDE file="inc/footer.tmpl" />
 </PAGE>
-
-
-
