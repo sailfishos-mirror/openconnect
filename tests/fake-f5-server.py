@@ -81,8 +81,9 @@ def check_form_against_session(*fields, use_query=False):
 # [Save list of domains/authgroups in the session for use later]
 @app.route('/')
 def root():
-    domains = request.args.get('domains')
-    session.update(step='initial-GET', domains=domains and domains.split(','))
+    domains, mock_dtls = request.args.get('domains'), request.args.get('mock_dtls')
+    session.update(step='initial-GET', domains=domains and domains.split(','),
+		   mock_dtls=mock_dtls and bool(mock_dtls))
     # print(session)
     return redirect(url_for('get_policy'))
 
@@ -181,7 +182,7 @@ def options():
                 <idle_session_timeout>900</idle_session_timeout>
                 <IPV4_0>{int(session['ipv4']=='yes')}</IPV4_0>
                 <IPV6_0>{int(session['ipv6']=='yes')}</IPV6_0>
-                <tunnel_dtls>1</tunnel_dtls>
+                <tunnel_dtls>{int(session['mock_dtls'] or 0)}</tunnel_dtls>
                 <tunnel_port_dtls>{app.config['PORT']}</tunnel_port_dtls>
 
                 <DNS0>1.1.1.1</DNS0>
@@ -216,10 +217,10 @@ def tunnel():
 
 
 # Respond to 'GET /remote/logout' by clearing session and MRHSession
-@app.route('/remote/logout')
+@app.route('/vdesk/hangup.php3')
 @require_MRHSession
 def logout():
-    assert request.args == {'hangup_error': '1'}
+    assert request.args.get('hangup_error') == '1'
     session.clear()
     resp = make_response('successful logout')
     resp.set_cookie('MRHSession', '')
