@@ -1360,14 +1360,17 @@ static int ppp_mainloop(struct openconnect_info *vpninfo, int dtls,
 		/* fall through */
 	case KA_REKEY:
 	do_reconnect:
-		if (dtls)
-			ret = dtls_reconnect(vpninfo);
-		else
+		if (dtls) {
+			/* This leaves it in state DTLS_SLEEPING, and will allow
+			 * the protocol to handle any magic required to reopen it. */
+			dtls_close(vpninfo);
+		} else {
 			ret = ssl_reconnect(vpninfo);
-		if (ret) {
-			vpn_progress(vpninfo, PRG_ERR, _("Reconnect failed\n"));
-			vpninfo->quit_reason = "PPP reconnect failed";
-			return ret;
+			if (ret) {
+				vpn_progress(vpninfo, PRG_ERR, _("Reconnect failed\n"));
+				vpninfo->quit_reason = "PPP reconnect failed";
+				return ret;
+			}
 		}
 		return 1;
 
@@ -1465,12 +1468,93 @@ static int ppp_mainloop(struct openconnect_info *vpninfo, int dtls,
 	return work_done;
 }
 
+int ppp_start_tcp_mainloop(struct openconnect_info *vpninfo)
+{
+	int timeout = 0;
+
+	return ppp_mainloop(vpninfo, 0, &vpninfo->ssl_times, &timeout, 1);
+}
+
 int ppp_tcp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 {
-	if (vpninfo->dtls_state >= DTLS_SLEEPING)
+	/* If we're still attempting DTLS, do nothing yet. */
+	switch (vpninfo->dtls_state) {
+	case DTLS_CONNECTED:
+		if (vpninfo->ssl_fd != -1) {
+			openconnect_close_https(vpninfo, 0); /* don't keep stale HTTPS socket */
+			vpn_progress(vpninfo, PRG_INFO,
+				     _("DTLS tunnel connected; exiting HTTPS mainloop.\n"));
+		}
+
+		/* Now that we are connected, let's ensure timeout is less than
+		 * or equal to DTLS DPD/keepalive else we might over sleep, e.g.
+		 * if timeout is set to DTLS attempt period from DTLS mainloop,
+		 * and falsely detect dead peer. */
+		if (vpninfo->dtls_times.dpd)
+			if (*timeout > vpninfo->dtls_times.dpd * 1000)
+				*timeout = vpninfo->dtls_times.dpd * 1000;
+
 		return 0;
 
-	return ppp_mainloop(vpninfo, 0, &vpninfo->ssl_times, timeout, readable);
+	case DTLS_CONNECTING:
+	case DTLS_SECRET:
+		if (vpninfo->ppp->ppp_state == PPPS_DEAD) {
+			/* Allow 5 seconds after configuration for DTLS to start */
+			if (!ka_check_deadline(timeout, time(NULL), vpninfo->new_dtls_started + 5)) {
+				vpninfo->delay_tunnel_reason = "awaiting PPP DTLS connection";
+				return 0;
+			}
+		}
+		/* It'll try again in a while, but we want it to be in DTLS_SLEEPING
+		 * so that the tcp_connect() function actually establishes the PPP
+		 * over TCP. */
+		dtls_close(vpninfo);
+
+		/* Fall through */
+	case DTLS_SLEEPING:
+		/* Should only be seen by the mainloop if DTLS actually *failed*
+		 * (which includes timing out). */
+		if (vpninfo->ppp->ppp_state == PPPS_DEAD) {
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("Failed to connect DTLS tunnel; using HTTPS instead (state %d).\n"),
+				     vpninfo->dtls_state);
+		}
+		/* Fall through */
+	case DTLS_NOSECRET:
+	case DTLS_DISABLED:
+		/* The state is PPPS_DEAD until the first time ppp_tcp_mainloop()
+		 * gets invoked. When f5_connect() actually establishes the tunnel,
+		 * it does so to start the PPP state machine for the TCP connection.
+		 */
+		if (vpninfo->ssl_fd != -1 && vpninfo->ppp->ppp_state != PPPS_DEAD)
+			return ppp_mainloop(vpninfo, 0, &vpninfo->ssl_times, timeout, readable);
+
+		/* This will call *back* into the protocol's ->tcp_connect()
+		 * but this time DTLS is disabled so it'll actually establish
+		 * the connection there. We want to make use of the retry
+		 * handling logic in ssl_reconnect() in the cases where it
+		 * doesn't succeed immediately.
+		 *
+		 * If the connection is already open, try using it directly
+		 * first, before falling back to a full ssl_reconnect().
+		 */
+		if (vpninfo->ssl_fd == -1 || vpninfo->proto->tcp_connect(vpninfo)) {
+			int ret = ssl_reconnect(vpninfo);
+			if (ret) {
+				vpn_progress(vpninfo, PRG_ERR, _("Establishing PPP tunnel over TLS failed\n"));
+				vpninfo->quit_reason = "PPP TLS connect failed";
+				return ret;
+			}
+			vpninfo->delay_tunnel_reason = "DTLS connection pending";
+			return 1;
+		}
+		vpninfo->delay_tunnel_reason = "DTLS connection pending";
+		return 1;
+	}
+
+	vpn_progress(vpninfo, PRG_ERR, _("Invalid DTLS state %d\n"), vpninfo->dtls_state);
+	vpninfo->quit_reason = "Invalid DTLS state";
+	return 1;
 }
 
 int ppp_udp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
