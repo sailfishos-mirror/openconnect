@@ -269,7 +269,7 @@ Fedora/GnuTLS:
     expire_in: 1 week
     when: on_failure
     paths:
-      - tests/*.log
+      - build/tests/*.log
 
 Fedora/GnuTLS/clang:
   script:
@@ -294,7 +294,7 @@ Fedora/GnuTLS/clang:
     expire_in: 1 week
     when: on_failure
     paths:
-      - tests/*.log
+      - build/tests/*.log
 
 Fedora/OpenSSL:
   script:
@@ -322,7 +322,7 @@ Fedora/OpenSSL:
     expire_in: 1 week
     when: on_failure
     paths:
-      - tests/*.log
+      - build/tests/*.log
 
 Fedora/OpenSSL/clang:
   script:
@@ -349,7 +349,7 @@ Fedora/OpenSSL/clang:
     expire_in: 1 week
     when: on_failure
     paths:
-      - tests/*.log
+      - build/tests/*.log
 
 Ubuntu18.04/GnuTLS:
   image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$UBUNTU_BUILD
