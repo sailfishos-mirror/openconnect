@@ -35,6 +35,12 @@
 #include "openconnect-internal.h"
 #include "ppp.h"
 
+/* clthello/svrhello strings for Fortinet DTLS initialization.
+ * NB: C string literals implicitly add a final \0 (which is correct for these).
+ */
+static const char clthello[] = "GFtype\0clthello\0SVPNCOOKIE"; /* + cookie value + '\0' */
+static const char svrhello[] = "GFtype\0svrhello\0handshake"; /* + "ok"/"fail" + '\0' */
+
 void fortinet_common_headers(struct openconnect_info *vpninfo,
 			 struct oc_text_buf *buf)
 {
@@ -309,9 +315,14 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 
 	domains = buf_alloc();
 
-	if (!xmlnode_get_prop(xml_node, "dtls", &s) && atoi(s))
-		vpn_progress(vpninfo, PRG_ERR,
-			     _("WARNING: Fortinet server enables DTLS, but OpenConnect does not implement it yet.\n"));
+	if (vpninfo->dtls_state == DTLS_NOSECRET &&
+	    !xmlnode_get_prop(xml_node, "dtls", &s) && atoi(s)) {
+		udp_sockaddr(vpninfo, vpninfo->port); /* XX: DTLS always uses same port as TLS? */
+		vpn_progress(vpninfo, PRG_INFO, _("DTLS is enabled on port %d\n"), vpninfo->port);
+		vpninfo->dtls_state = DTLS_SECRET;
+		/* This doesn't mean it actually will; it means that we can at least *try* */
+		vpninfo->dtls12 = 1;
+	}
 
 	for (xml_node = xml_node->children; xml_node; xml_node=xml_node->next) {
 		if (xmlnode_is_named(xml_node, "auth-timeout") && !xmlnode_get_prop(xml_node, "val", &s))
@@ -491,23 +502,6 @@ static int fortinet_configure(struct openconnect_info *vpninfo)
 	if (ipv6 == -1)
 		ipv6 = 0;
 
-	/* To use the DTLS tunnel instead, we should do a DTLS handshake
-	 * to the appropriate IP:port, and then send the packet...
-	 *
-	 * "${BE16_LEN_OF_THIS_PACKET}GFtype\x00clthello\x00SVPNCOOKIE\x00${SVPNCOOKIE}\x00dns0\x0010.0.2.3\x00"
-	 *
-	 * to which the server will respond either 'ok' or 'fail'...
-	 *
-	 * "${BE16_LEN_OF_THIS_PACKET}GFtype\x00svrhello\x00handshake\x00ok\x00"
-	 *
-	 * After that, the IP-over-PPP-over-DTLS packet framing is identical to
-	 * the IP-over-PPP-over-TLS framing. (See evidence at
-	 * https://github.com/adrienverge/openfortivpn/issues/473#issuecomment-776456040)
-	 *
-	 * Starting the TLS tunnel appears to invalidate the DTLS tunnel option, and
-	 * presumably vice versa.
-	 */
-
 	reqbuf = vpninfo->ppp_tls_connect_req;
 	if (!reqbuf)
 		reqbuf = buf_alloc();
@@ -528,9 +522,7 @@ static int fortinet_configure(struct openconnect_info *vpninfo)
 	if (!reqbuf)
 		reqbuf = buf_alloc();
 	buf_truncate(reqbuf);
-	const char clthello[] = "GFtype\x00clthello\x00SVPNCOOKIE\x00";
-	int len = 2 + sizeof(clthello) + strlen(svpncookie->value) + 1;
-	buf_append_be16(reqbuf, len);
+	buf_append_be16(reqbuf, 2 + sizeof(clthello) + strlen(svpncookie->value) + 1); /* length */
 	buf_append_bytes(reqbuf, clthello, sizeof(clthello));
 	buf_append(reqbuf, "%s%c", svpncookie->value, 0);
 	if ((ret = buf_error(reqbuf)))
@@ -562,6 +554,40 @@ int fortinet_connect(struct openconnect_info *vpninfo)
 	}
 	if (ret)
 		goto out;
+
+	/*
+	 * * DTLS_DISABLED:
+	 * * DTLS_NOSECRET: Connect PPP over TLS immediately.
+	 *
+	 * * DTLS_SECRET: This occurs when first called via
+	 *                openconnect_make_cstp_connection(). In this
+	 *                case, defer the PPP setup and allow DTLS to
+	 *                try connecting (which is triggered when
+	 *                openconnect_setup_dtls() gets called).
+	 *
+	 * * DTLS_SLEEPING: On a connection timeout, the mainloop calls
+	 *                dtls_close() before this function, so the state
+	 *                we see will be DTLS_SLEEPING. Establish the PPP
+	 *                over TLS immediately in this case.
+	 *
+	 * * DTLS_CONNECTING: After a pause or SIGUSR2, the UDP mainloop
+	 *                will run first and shift from DTLS_SLEEPING to
+	 *                DTLS_CONNECTING state, before the TCP mainloop
+	 *                invokes this function. So defer the connection.
+	 *
+	 * * DTLS_CONNECTED: If the DTLS manages to establish a connection
+	 *                after PPP was already in use over TLS, then it
+	 *                will call ssl_reconnect(). In that case it's
+	 *                waiting to establish PPP over the active DTLS
+	 *                connection, so don't.
+	 */
+	if (vpninfo->dtls_state != DTLS_NOSECRET &&
+	    vpninfo->dtls_state != DTLS_SLEEPING &&
+	    vpninfo->dtls_state != DTLS_DISABLED) {
+		vpn_progress(vpninfo, PRG_DEBUG, _("Not starting PPP-over-TLS because DTLS state is %d\n"),
+			     vpninfo->dtls_state);
+		return 0;
+	}
 
 	/* XX: Openfortivpn closes and reopens the HTTPS connection here, and
 	 * also sends 'Host: sslvpn' (rather than the true hostname). Neither
@@ -601,6 +627,130 @@ int fortinet_connect(struct openconnect_info *vpninfo)
 		monitor_except_fd(vpninfo, ssl);
 	}
 	return ret;
+}
+
+int fortinet_udp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
+{
+	if (vpninfo->dtls_state == DTLS_CONNECTING) {
+		if (vpninfo->ppp->ppp_state == PPPS_DEAD)
+			vpninfo->delay_tunnel_reason = "DTLS connecting";
+
+		dtls_try_handshake(vpninfo, timeout);
+
+		if (vpninfo->dtls_state == DTLS_CONNECTED) {
+			/* XX: Fortinet doesn't allow us to redo the configuration requests
+			 * without invalidating the cookie, so we *must* use only
+			 * ppp_reset(), rather than fortinet_configure(), to redo the PPP
+			 * tunnel setup. See
+			 * https://gitlab.com/openconnect/openconnect/-/issues/235#note_552995833
+			 */
+			if (vpninfo->ppp->ppp_state != PPPS_DEAD) {
+				int ret = ppp_reset(vpninfo);
+				if (ret) {
+					/* This should never happen */
+					vpn_progress(vpninfo, PRG_ERR, _("Reset PPP failed\n"));
+					vpninfo->quit_reason = "PPP DTLS connect failed";
+					return ret;
+				}
+			}
+
+		clthello:
+			vpn_progress(vpninfo, PRG_DEBUG,
+				     _("Sending clthello request to start Fortinet DTLS session\n"));
+			if (vpninfo->dump_http_traffic)
+				dump_buf_hex(vpninfo, PRG_DEBUG, '>', (void *)vpninfo->ppp_dtls_connect_req->data,
+					     vpninfo->ppp_dtls_connect_req->pos);
+
+			int ret = ssl_nonblock_write(vpninfo, 1,
+						     vpninfo->ppp_dtls_connect_req->data,
+						     vpninfo->ppp_dtls_connect_req->pos);
+			if (ret < 0) {
+				vpn_progress(vpninfo, PRG_ERR,
+					     _("Failed to write clthello request to Fortinet DTLS session\n"));
+				dtls_close(vpninfo);
+				vpninfo->dtls_state = DTLS_DISABLED;
+				return 1;
+			}
+			/* Retry the clthello every second if we don't get a response */
+			vpninfo->delay_tunnel_reason = "DTLS starting PPP";
+			if (*timeout > 1000)
+				*timeout = 1000;
+		}
+
+		return 0;
+	}
+
+	int work_done = 0;
+
+	if (vpninfo->dtls_state != DTLS_CONNECTED && vpninfo->dtls_state != DTLS_SLEEPING) {
+		vpn_progress(vpninfo, PRG_ERR, _("DTLS in wrong state %d\n"), vpninfo->dtls_state);
+		dtls_close(vpninfo);
+		vpninfo->dtls_state = DTLS_DISABLED;
+		return 1;
+	}
+
+	if (vpninfo->dtls_state == DTLS_CONNECTED) {
+		if (vpninfo->ppp->ppp_state == PPPS_DEAD) {
+			char buf[4097];
+			int len = ssl_nonblock_read(vpninfo, 1, buf, sizeof(buf) - 1);
+
+			if (len < 0) {
+			disable:
+				/* It will have complained */
+				dtls_close(vpninfo);
+				vpninfo->dtls_state = DTLS_DISABLED;
+				return 1;
+			}
+			if (!len) {
+				/* Allow 5 seconds to receive a svrhello, and resend clthello */
+				if (!ka_check_deadline(timeout, time(NULL), vpninfo->new_dtls_started + 5))
+					goto clthello;
+			}
+
+			buf[len] = 0;
+
+			if (load_be16(buf) != len || len < sizeof(svrhello) + 2 ||
+			    memcmp(buf + 2, svrhello, sizeof(svrhello))) {
+				vpn_progress(vpninfo, PRG_ERR,
+					     _("Did not receive expected svrhello response.\n"));
+				dump_buf_hex(vpninfo, PRG_ERR, '<', (void *)buf, len);
+				goto disable;
+			}
+
+			if (vpninfo->dump_http_traffic)
+				dump_buf_hex(vpninfo, PRG_DEBUG, '<', (void *)buf, len);
+
+			if (strncmp("ok", buf + 2 + sizeof(svrhello),
+				    len - 2 - sizeof(svrhello))) {
+				vpn_progress(vpninfo, PRG_ERR,
+					     _("svrhello status was \"%.*s\" rather than \"ok\"\n"),
+					     (int)(len - 2 - sizeof(svrhello)),
+					     buf + 2 + sizeof(svrhello));
+				goto disable;
+			}
+			readable = 1;
+		}
+
+		work_done = ppp_udp_mainloop(vpninfo, timeout, readable);
+	}
+
+	/* We check this *after* calling ppp_udp_mainloop() in the DTLS_CONNECTED
+	 * case because DPD might cause it to call dtls_close() and we need to
+	 * reopen immediately to prevent the TCP mainloop seeing the DTLS_SLEEPING
+	 * state and thinking it's timed out. */
+	if (vpninfo->dtls_state == DTLS_SLEEPING) {
+		int when = vpninfo->new_dtls_started + vpninfo->dtls_attempt_period - time(NULL);
+
+		if (when <= 0) {
+			vpn_progress(vpninfo, PRG_DEBUG, _("Attempt new DTLS connection\n"));
+			if (dtls_reconnect(vpninfo, timeout) < 0)
+				*timeout = 1000;
+		} else if ((when * 1000) < *timeout) {
+			*timeout = when * 1000;
+		}
+	}
+
+	return work_done;
 }
 
 int fortinet_bye(struct openconnect_info *vpninfo, const char *reason)

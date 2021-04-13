@@ -1044,6 +1044,7 @@ int f5_bye(struct openconnect_info *vpninfo, const char *reason);
 void fortinet_common_headers(struct openconnect_info *vpninfo, struct oc_text_buf *buf);
 int fortinet_obtain_cookie(struct openconnect_info *vpninfo);
 int fortinet_connect(struct openconnect_info *vpninfo);
+int fortinet_udp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable);
 int fortinet_bye(struct openconnect_info *vpninfo, const char *reason);
 
 /* ppp.c */

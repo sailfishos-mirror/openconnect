@@ -24,6 +24,11 @@ to the command line:
   openconnect --protocol=fortinet fortigate.example.com
 </pre></p>
 
+<p>Since <a href="http://sites.inka.de/~W1011/devel/tcp-tcp.html">TCP over
+TCP is very suboptimal</a>, OpenConnect tries to always use PPP-over-DTLS,
+and will only fall over to the PPP-over-TLS tunnel if that fails, or if
+disabled via the <tt>--no-dtls</tt> argument.</p>
+
 <h2>Quirks and Issues</h2>
 
 <p>In terms of authentication for Fortinet VPNs, OpenConnect currently supports
@@ -46,11 +51,6 @@ supported by OpenConnect; if you have access to a Fortinet VPN which
 please send information to <a href="mail.html">the mailing list</a>
 so we can understand it better, and whether we can support this feature
 on other Fortinet VPNs.</p>
-
-<p>OpenConnect does not yet support the UDP transport for Fortinet, and
-will use PPP over TCP for connectivity,
-<a href="http://sites.inka.de/~W1011/devel/tcp-tcp.html">which is suboptimal
-for performance</a>.</p>
 
 	<INCLUDE file="inc/footer.tmpl" />
 </PAGE>
