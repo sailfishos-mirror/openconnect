@@ -210,6 +210,8 @@ inline static const char *proto_names(uint16_t proto) {
 int openconnect_ppp_new(struct openconnect_info *vpninfo,
 			int encap, int want_ipv4, int want_ipv6)
 {
+	free(vpninfo->ppp);
+
 	struct oc_ppp *ppp = vpninfo->ppp = calloc(sizeof(*ppp), 1);
 
 	if (!ppp)
