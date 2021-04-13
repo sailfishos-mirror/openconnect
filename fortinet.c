@@ -35,6 +35,12 @@
 #include "openconnect-internal.h"
 #include "ppp.h"
 
+/* clthello/svrhello strings for Fortinet DTLS initialization.
+ * NB: C string literals implicitly add a final \0 (which is correct for these).
+ */
+static const char clthello[] = "GFtype\0clthello\0SVPNCOOKIE"; /* + cookie value + '\0' */
+static const char svrhello[] = "GFtype\0svrhello\0handshake"; /* + "ok"/"fail" + '\0' */
+
 void fortinet_common_headers(struct openconnect_info *vpninfo,
 			 struct oc_text_buf *buf)
 {
@@ -309,9 +315,14 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 
 	domains = buf_alloc();
 
-	if (!xmlnode_get_prop(xml_node, "dtls", &s) && atoi(s))
-		vpn_progress(vpninfo, PRG_ERR,
-			     _("WARNING: Fortinet server enables DTLS, but OpenConnect does not implement it yet.\n"));
+	if (vpninfo->dtls_state == DTLS_NOSECRET &&
+	    !xmlnode_get_prop(xml_node, "dtls", &s) && atoi(s)) {
+		udp_sockaddr(vpninfo, vpninfo->port); /* XX: DTLS always uses same port as TLS? */
+		vpn_progress(vpninfo, PRG_INFO, _("DTLS is enabled on port %d\n"), vpninfo->port);
+		vpninfo->dtls_state = DTLS_SECRET;
+		/* This doesn't mean it actually will; it means that we can at least *try* */
+		vpninfo->dtls12 = 1;
+	}
 
 	for (xml_node = xml_node->children; xml_node; xml_node=xml_node->next) {
 		if (xmlnode_is_named(xml_node, "auth-timeout") && !xmlnode_get_prop(xml_node, "val", &s))
@@ -424,8 +435,16 @@ static int fortinet_configure(struct openconnect_info *vpninfo)
 	int ret, ipv4 = -1, ipv6 = -1;
 
 	/* XXX: We should use check_address_sanity to verify that addresses haven't
-	   changed on a reconnect, except that Fortinet doesn't appear to actually
-	   support reconnects. */
+	   changed on a reconnect, except that:
+
+	   1) We haven't yet been able to test fully on a Fortinet
+	      server that actually allows reconnects
+	   2) The evidence we do have suggests that Fortinet servers which *do* allow
+	      reconnects nevertheless *do not* allow us to redo the configuration requests
+	      without invalidating the cookie. So reconnects *must* use only ppp_reset(),
+	      rather than calling fortinet_configure(), to redo the PPP tunnel setup. See
+	      https://gitlab.com/openconnect/openconnect/-/issues/235#note_552995833
+	*/
 
 	if (!vpninfo->cookies) {
 		/* XX: This will happen if authentication was separate/external */
@@ -487,23 +506,6 @@ static int fortinet_configure(struct openconnect_info *vpninfo)
 	if (ipv6 == -1)
 		ipv6 = 0;
 
-	/* To use the DTLS tunnel instead, we should do a DTLS handshake
-	 * to the appropriate IP:port, and then send the packet...
-	 *
-	 * "${BE16_LEN_OF_THIS_PACKET}GFtype\x00clthello\x00SVPNCOOKIE\x00${SVPNCOOKIE}\x00dns0\x0010.0.2.3\x00"
-	 *
-	 * to which the server will respond either 'ok' or 'fail'...
-	 *
-	 * "${BE16_LEN_OF_THIS_PACKET}GFtype\x00svrhello\x00handshake\x00ok\x00"
-	 *
-	 * After that, the IP-over-PPP-over-DTLS packet framing is identical to
-	 * the IP-over-PPP-over-TLS framing. (See evidence at
-	 * https://github.com/adrienverge/openfortivpn/issues/473#issuecomment-776456040)
-	 *
-	 * Starting the TLS tunnel appears to invalidate the DTLS tunnel option, and
-	 * presumably vice versa.
-	 */
-
 	reqbuf = vpninfo->ppp_tls_connect_req;
 	if (!reqbuf)
 		reqbuf = buf_alloc();
@@ -524,9 +526,7 @@ static int fortinet_configure(struct openconnect_info *vpninfo)
 	if (!reqbuf)
 		reqbuf = buf_alloc();
 	buf_truncate(reqbuf);
-	const char clthello[] = "GFtype\x00clthello\x00SVPNCOOKIE\x00";
-	int len = 2 + sizeof(clthello) + strlen(svpncookie->value) + 1;
-	buf_append_be16(reqbuf, len);
+	buf_append_be16(reqbuf, 2 + sizeof(clthello) + strlen(svpncookie->value) + 1); /* length */
 	buf_append_bytes(reqbuf, clthello, sizeof(clthello));
 	buf_append(reqbuf, "%s%c", svpncookie->value, 0);
 	if ((ret = buf_error(reqbuf)))
@@ -556,8 +556,15 @@ int fortinet_connect(struct openconnect_info *vpninfo)
 		 */
 		ret = ppp_reset(vpninfo);
 	}
-	if (ret)
-		goto out;
+	if (ret) {
+	err:
+		openconnect_close_https(vpninfo, 0);
+		return ret;
+	}
+
+	ret = ppp_tcp_should_connect(vpninfo);
+	if (ret <= 0)
+		goto err;
 
 	/* XX: Openfortivpn closes and reopens the HTTPS connection here, and
 	 * also sends 'Host: sslvpn' (rather than the true hostname). Neither
@@ -566,15 +573,16 @@ int fortinet_connect(struct openconnect_info *vpninfo)
 	 */
 	ret = openconnect_open_https(vpninfo);
 	if (ret)
-		goto out;
+		goto err;
 
 	if (vpninfo->dump_http_traffic)
 		dump_buf(vpninfo, '>', vpninfo->ppp_tls_connect_req->data);
 	ret = vpninfo->ssl_write(vpninfo, vpninfo->ppp_tls_connect_req->data,
 				 vpninfo->ppp_tls_connect_req->pos);
-	if (ret < 0)
-		goto out;
-	ret = 0;
+	if (ret < 0) {
+		openconnect_close_https(vpninfo, 0);
+		goto err;
+	}
 
 	/* XX: If this connection request succeeds, no HTTP response appears.
 	 * We just start sending our encapsulated PPP configuration packets.
@@ -588,15 +596,57 @@ int fortinet_connect(struct openconnect_info *vpninfo)
 	 * is PPPS_ESTABLISH so that ppp_tcp_mainloop() knows we've started. */
 	ppp_start_tcp_mainloop(vpninfo);
 
- out:
-	if (ret)
-		openconnect_close_https(vpninfo, 0);
-	else {
-		monitor_fd_new(vpninfo, ssl);
-		monitor_read_fd(vpninfo, ssl);
-		monitor_except_fd(vpninfo, ssl);
+	/* XX: Some Fortinet servers can't cope with reconnect, which means
+	 * there's absolutely no point in trying to opportunistically do
+	 * DTLS after this point. Can we detect that, and disable DTLS?
+	 * I think it's relatively harmless because the auth packet over
+	 * DTLS will fail anyway, so we'll never make it past DTLS_CONNECTED
+	 * to DTLS_ESTABLISHED and never give up on the existing TCP link
+	 * but it's still a waste of time and resources trying to do it
+	 * at all. */
+
+	monitor_fd_new(vpninfo, ssl);
+	monitor_read_fd(vpninfo, ssl);
+	monitor_except_fd(vpninfo, ssl);
+
+	return 0;
+}
+
+int fortinet_dtls_catch_svrhello(struct openconnect_info *vpninfo, struct pkt *pkt)
+{
+	char *const buf = (void *)pkt->data;
+	const int len = pkt->len;
+
+	buf[len] = 0;
+
+	if (load_be16(buf) != len || len < sizeof(svrhello) + 2 ||
+	    memcmp(buf + 2, svrhello, sizeof(svrhello))) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Did not receive expected svrhello response.\n"));
+		dump_buf_hex(vpninfo, PRG_ERR, '<', (void *)buf, len);
+	disable:
+		dtls_close(vpninfo);
+		vpninfo->dtls_state = DTLS_DISABLED;
+		return -EINVAL;
 	}
-	return ret;
+
+	if (strncmp("ok", buf + 2 + sizeof(svrhello),
+		    len - 2 - sizeof(svrhello))) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("svrhello status was \"%.*s\" rather than \"ok\"\n"),
+			     (int)(len - 2 - sizeof(svrhello)),
+			     buf + 2 + sizeof(svrhello));
+		goto disable;
+	}
+
+	/* XX: The 'ok' packet might get dropped, and the server won't resend
+	 * it when we resend the GET request. What will happen in that case
+	 * is it'll just keep sending PPP frames. If we detect a PPP frame
+	 * we should take that as 'success' too. Bonus points for actually
+	 * feeding it to the PPP code to process too, but dropping it *ought*
+	 * to be OK. */
+
+	return 1;
 }
 
 int fortinet_bye(struct openconnect_info *vpninfo, const char *reason)
