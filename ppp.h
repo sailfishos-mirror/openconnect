@@ -94,6 +94,7 @@
 struct oc_ncp {
 	int state;
 	int id;
+	int termreqs_sent;
 	time_t last_req;
 };
 
