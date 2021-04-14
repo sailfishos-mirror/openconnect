@@ -96,7 +96,7 @@ char *openconnect_bin2base64(const char *prefix, const uint8_t *data, unsigned l
 	return p;
 }
 
-static int connect_dtls_socket(struct openconnect_info *vpninfo)
+static int connect_dtls_socket(struct openconnect_info *vpninfo, int *timeout)
 {
 	int dtls_fd, ret;
 
@@ -147,7 +147,7 @@ static int connect_dtls_socket(struct openconnect_info *vpninfo)
 
 	time(&vpninfo->new_dtls_started);
 
-	return dtls_try_handshake(vpninfo);
+	return dtls_try_handshake(vpninfo, timeout);
 }
 
 void dtls_close(struct openconnect_info *vpninfo)
@@ -164,7 +164,7 @@ void dtls_close(struct openconnect_info *vpninfo)
 	vpninfo->dtls_state = DTLS_SLEEPING;
 }
 
-static int dtls_reconnect(struct openconnect_info *vpninfo)
+int dtls_reconnect(struct openconnect_info *vpninfo, int *timeout)
 {
 	dtls_close(vpninfo);
 
@@ -172,7 +172,7 @@ static int dtls_reconnect(struct openconnect_info *vpninfo)
 		return -EINVAL;
 
 	vpninfo->dtls_state = DTLS_SLEEPING;
-	return connect_dtls_socket(vpninfo);
+	return connect_dtls_socket(vpninfo, timeout);
 }
 
 int dtls_setup(struct openconnect_info *vpninfo)
@@ -190,7 +190,7 @@ int dtls_setup(struct openconnect_info *vpninfo)
 	if (vpninfo->dtls_times.rekey <= 0)
 		vpninfo->dtls_times.rekey_method = REKEY_NONE;
 
-	if (connect_dtls_socket(vpninfo))
+	if (connect_dtls_socket(vpninfo, NULL))
 		return -EINVAL;
 
 	vpn_progress(vpninfo, PRG_DEBUG,
@@ -239,12 +239,12 @@ int dtls_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 
 	if (vpninfo->dtls_need_reconnect) {
 		vpninfo->dtls_need_reconnect = 0;
-		dtls_reconnect(vpninfo);
+		dtls_reconnect(vpninfo, timeout);
 		return 1;
 	}
 
 	if (vpninfo->dtls_state == DTLS_CONNECTING) {
-		dtls_try_handshake(vpninfo);
+		dtls_try_handshake(vpninfo, timeout);
 		vpninfo->delay_tunnel_reason = "DTLS MTU detection";
 		return 0;
 	}
@@ -254,7 +254,7 @@ int dtls_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 
 		if (when <= 0) {
 			vpn_progress(vpninfo, PRG_DEBUG, _("Attempt new DTLS connection\n"));
-			if (connect_dtls_socket(vpninfo) < 0)
+			if (connect_dtls_socket(vpninfo, timeout) < 0)
 				*timeout = 1000;
 		} else if ((when * 1000) < *timeout) {
 			*timeout = when * 1000;
@@ -349,10 +349,10 @@ int dtls_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		if (vpninfo->dtls_times.rekey_method == REKEY_SSL) {
 			time(&vpninfo->new_dtls_started);
 			vpninfo->dtls_state = DTLS_CONNECTING;
-			ret = dtls_try_handshake(vpninfo);
+			ret = dtls_try_handshake(vpninfo, timeout);
 			if (ret) {
 				vpn_progress(vpninfo, PRG_ERR, _("DTLS Rehandshake failed; reconnecting.\n"));
-				return connect_dtls_socket(vpninfo);
+				return connect_dtls_socket(vpninfo, timeout);
 			}
 		}
 
@@ -362,7 +362,7 @@ int dtls_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 	case KA_DPD_DEAD:
 		vpn_progress(vpninfo, PRG_ERR, _("DTLS Dead Peer Detection detected dead peer!\n"));
 		/* Fall back to SSL, and start a new DTLS connection */
-		dtls_reconnect(vpninfo);
+		dtls_reconnect(vpninfo, timeout);
 		return 1;
 
 	case KA_DPD:
@@ -431,7 +431,7 @@ int dtls_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			if (ret < 0) {
 				/* If it's a real error, kill the DTLS connection so
 				   the requeued packet will be sent over SSL */
-				dtls_reconnect(vpninfo);
+				dtls_reconnect(vpninfo, timeout);
 				work_done = 1;
 			}
 			return work_done;
