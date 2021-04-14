@@ -987,19 +987,30 @@ static int handle_state_transition(struct openconnect_info *vpninfo, int dtls,
 		if (ppp->lcp.state & NCP_TERM_REQ_RECEIVED)
 			return -EPIPE;
 		else if (!(ppp->lcp.state & NCP_TERM_ACK_RECEIVED)) {
-			/* We need to send a TERMREQ and wait for a TERMACK, but not keep retrying if it
-			 * fails. We attempt to send TERMREQ once, then wait for 3 seconds, and
-			 * send once more TERMREQ if that fails. */
+			/* We need to send a TERMREQ and wait for a TERMACK, but not keep
+			 * retrying for ever if it fails. For TLS, which ought to be
+			 * lossless, we send TERMREQ just once, wait for a second, and
+			 * give up. For DTLS we try three times (with a second between
+			 * them and give up if none of them elicit a TERMACK. */
 			if (!(ppp->lcp.state & NCP_TERM_REQ_SENT)) {
 				ppp->lcp.state |= NCP_TERM_REQ_SENT;
+				ppp->lcp.termreqs_sent = 1;
 				ppp->lcp.last_req = now;
 				(void) queue_config_packet(vpninfo, PPP_LCP, ++ppp->lcp.id, TERMREQ, 0, NULL);
-				vpninfo->delay_close = DELAY_CLOSE_WAIT; /* need to wait until we receive TERMACK */
-			}
-			if (!ka_check_deadline(timeout, now, ppp->lcp.last_req + 3))
-				vpninfo->delay_close = DELAY_CLOSE_WAIT; /* still waiting to receive TERMACK */
-			else
+				vpninfo->delay_close = DELAY_CLOSE_WAIT; /* Wait 1s for TERMACK */
+
+			} else if (!ka_check_deadline(timeout, now, ppp->lcp.last_req + 1)) {
+				vpninfo->delay_close = DELAY_CLOSE_WAIT; /* Still waiting */
+
+			} else if (!dtls || ppp->lcp.termreqs_sent >= 3) {
+				ppp->ppp_state = PPPS_TERMINATE;
+
+			} else {
+				ppp->lcp.termreqs_sent++;
+				ppp->lcp.last_req = now;
 				(void) queue_config_packet(vpninfo, PPP_LCP, ++ppp->lcp.id, TERMREQ, 0, NULL);
+				vpninfo->delay_close = DELAY_CLOSE_WAIT; /* Wait 1s more */
+			}
 		}
 		break;
 	case PPPS_AUTHENTICATE: /* XX: should never */
