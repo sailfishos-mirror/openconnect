@@ -1050,6 +1050,7 @@ void buf_append_ppp_hdr(struct oc_text_buf *buf, struct oc_ppp *ppp, uint16_t pr
 int ppp_negotiate_config(struct openconnect_info *vpninfo);
 int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable);
 int openconnect_ppp_new(struct openconnect_info *vpninfo, int encap, int want_ipv4, int want_ipv6);
+int ppp_reset(struct openconnect_info *vpninfo);
 
 /* auth-globalprotect.c */
 int gpst_obtain_cookie(struct openconnect_info *vpninfo);
