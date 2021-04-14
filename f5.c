@@ -365,10 +365,12 @@ static int parse_options(struct openconnect_info *vpninfo, char *buf, int len,
 			vpn_progress(vpninfo, PRG_INFO, _("DTLS port is %d\n"), port);
 		} else if (xmlnode_is_named(xml_node, "UseDefaultGateway0")) {
 			default_route = xmlnode_bool_or_int_value(vpninfo, xml_node);
-			vpn_progress(vpninfo, PRG_INFO, _("Got UseDefaultGateway0 value of %d\n"), default_route);
+			if (default_route)
+				vpn_progress(vpninfo, PRG_INFO, _("Got default routes\n"));
 		} else if (xmlnode_is_named(xml_node, "SplitTunneling0")) {
 			int st = xmlnode_bool_or_int_value(vpninfo, xml_node);
 			vpn_progress(vpninfo, PRG_INFO, _("Got SplitTunneling0 value of %d\n"), st);
+			/* XX: Should we ignore split-{in,ex}cludes if this is zero? */
                 }
 		/* XX: This is an objectively stupid way to use XML, a hierarchical data format. */
 		else if (   (!strncmp((char *)xml_node->name, "DNS", 3) && isdigit(xml_node->name[3]))
@@ -376,8 +378,7 @@ static int parse_options(struct openconnect_info *vpninfo, char *buf, int len,
 			free(s);
 			s = (char *)xmlNodeGetContent(xml_node);
 			if (s && *s) {
-				vpn_progress(vpninfo, PRG_INFO, _("Got IPv%d DNS server %s\n"),
-					     xml_node->name[4]=='_' ? 6 : 4, s);
+				vpn_progress(vpninfo, PRG_INFO, _("Got DNS server %s\n"), s);
 				if (n_dns < 3) vpninfo->ip_info.dns[n_dns++] = add_option_steal(vpninfo, "DNS", &s);
 			}
 		} else if (!strncmp((char *)xml_node->name, "WINS", 4) && isdigit(xml_node->name[4])) {
@@ -394,37 +395,48 @@ static int parse_options(struct openconnect_info *vpninfo, char *buf, int len,
 				vpn_progress(vpninfo, PRG_INFO, _("Got search domain %s\n"), s);
 				buf_append(domains, "%s ", s);
 			}
-		} else if (   (!strncmp((char *)xml_node->name, "LAN", 3) && isdigit((char)xml_node->name[3]))
-			   || (!strncmp((char *)xml_node->name, "LAN6_", 5) && isdigit((char)xml_node->name[5]))) {
+		}
+		/* XX: Like the above, but even stupider because one tag can contain multiple space-separated values. */
+		else if (   (!strncmp((char *)xml_node->name, "LAN", 3) && isdigit((char)xml_node->name[3]))
+			 || (!strncmp((char *)xml_node->name, "LAN6_", 5) && isdigit((char)xml_node->name[5]))
+			 || (!strncmp((char *)xml_node->name, "ExcludeSubnets", 14) && isdigit((char)xml_node->name[14]))
+			 || (!strncmp((char *)xml_node->name, "ExcludeSubnets6_", 16) && isdigit((char)xml_node->name[16]))) {
 			free(s);
 			s = (char *)xmlNodeGetContent(xml_node);
 			if (s && *s) {
 				char *word, *next;
-				struct oc_split_include *inc;
+				int is_exclude = (xml_node->name[0] == 'E');
+				const char *option = is_exclude ? "split-exclude" : "split-include";
 
-				for (word = (char *)add_option_steal(vpninfo, "route-list", &s);
-				     *word; word = next) {
+				for (word = s; *word; word = next) {
 					for (next = word; *next && !isspace(*next); next++);
 					if (*next)
 						*next++ = 0;
 					if (next == word + 1)
 						continue;
 
-					inc = malloc(sizeof(*inc));
-					inc->route = word;
-					inc->next = vpninfo->ip_info.split_includes;
-					vpninfo->ip_info.split_includes = inc;
-					vpn_progress(vpninfo, PRG_INFO, _("Got IPv%d route %s\n"),
-						     xml_node->name[4]=='_' ? 6 : 4, word);
+					struct oc_split_include *inc = malloc(sizeof(*inc));
+					if (!inc)
+						continue;
+					inc->route = add_option_dup(vpninfo, option, word, -1);
+					if (is_exclude) {
+						inc->next = vpninfo->ip_info.split_excludes;
+						vpninfo->ip_info.split_excludes = inc;
+						vpn_progress(vpninfo, PRG_INFO, _("Got split exclude route %s\n"), word);
+					} else {
+						inc->next = vpninfo->ip_info.split_includes;
+						vpninfo->ip_info.split_includes = inc;
+						vpn_progress(vpninfo, PRG_INFO, _("Got split include route %s\n"), word);
+					}
 				}
 			}
 		}
 	}
 
 	if (default_route && *ipv4)
-		vpninfo->ip_info.netmask = add_option_dup(vpninfo, "f5_netmask", "0.0.0.0", -1);
+		vpninfo->ip_info.netmask = add_option_dup(vpninfo, "netmask", "0.0.0.0", -1);
 	if (default_route && *ipv6)
-		vpninfo->ip_info.netmask6 = add_option_dup(vpninfo, "f5_netmask6", "::/0", -1);
+		vpninfo->ip_info.netmask6 = add_option_dup(vpninfo, "netmask6", "::/0", -1);
 	if (buf_error(domains) == 0 && domains->pos > 0) {
 		domains->data[domains->pos-1] = '\0';
 		vpninfo->ip_info.domain = add_option_steal(vpninfo, "search", &domains->data);
