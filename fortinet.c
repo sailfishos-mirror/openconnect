@@ -455,6 +455,17 @@ static int fortinet_configure(struct openconnect_info *vpninfo)
 	ret = do_https_request(vpninfo, "GET", NULL, NULL, &res_buf, 0);
 	if (ret < 0)
 		goto out;
+	else if (ret == 0) {
+		/* This is normally a redirect to /remote/login, which
+		 * indicates that the auth session/cookie is no longer valid.
+		 *
+		 * XX: See do_https_request() for why ret==0 can only happen
+		 * if there was a successful-but-unfetched redirect.
+		 */
+	invalid_cookie:
+		ret = -EPERM;
+		goto out;
+	}
 	/* We don't care what it returned as long as it was successful */
 	free(res_buf);
 	res_buf = NULL;
@@ -468,7 +479,8 @@ static int fortinet_configure(struct openconnect_info *vpninfo)
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("Server doesn't support XML config format. Ancient HTML format is not currently implemented.\n"));
 		goto out;
-	}
+	} else if (ret == 0)
+		goto invalid_cookie;
 
 	ret = parse_fortinet_xml_config(vpninfo, res_buf, ret, &ipv4, &ipv6);
 	if (ret)
