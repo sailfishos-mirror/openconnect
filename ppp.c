@@ -220,11 +220,6 @@ int openconnect_ppp_new(struct openconnect_info *vpninfo,
 	/* Delay tunnel setup during PPP negotiation */
 	vpninfo->delay_tunnel_reason = "PPP negotiation";
 
-	/* Nameservers to request from peer
-	 * (see https://tools.ietf.org/html/rfc1877#section-1) */
-	if (!vpninfo->ip_info.dns[0] && !vpninfo->ip_info.nbns[0])
-		ppp->solicit_peerns = IPCP_DNS0|IPCP_DNS1|IPCP_NBNS0|IPCP_NBNS1;
-
 	/* Outgoing IPv4 address and IPv6 interface identifier bits,
 	 * if already configured via another mechanism */
 	if (vpninfo->ip_info.addr)
@@ -238,11 +233,33 @@ int openconnect_ppp_new(struct openconnect_info *vpninfo,
 		inet_pton(AF_INET6, vpninfo->ip_info.addr6, &ppp->out_ipv6_addr);
 	}
 
+	/* Nameservers to request from peer
+	 * (see https://tools.ietf.org/html/rfc1877#section-1) */
+	if (!vpninfo->ip_info.dns[0] && !vpninfo->ip_info.nbns[0])
+		ppp->solicit_peerns = IPCP_DNS0|IPCP_DNS1|IPCP_NBNS0|IPCP_NBNS1;
+
+	ppp->encap = encap;
+	ppp->want_ipv4 = want_ipv4;
+	ppp->want_ipv6 = want_ipv6 && !vpninfo->disable_ipv6;
+
+	return ppp_reset(vpninfo);
+}
+
+int ppp_reset(struct openconnect_info *vpninfo)
+{
+	struct oc_ppp *ppp = vpninfo->ppp;
+	if (!ppp)
+		return -EINVAL;
+
+	memset(&ppp->lcp, 0, sizeof(ppp->lcp));
+	memset(&ppp->ipcp, 0, sizeof(ppp->ipcp));
+	memset(&ppp->ip6cp, 0, sizeof(ppp->ip6cp));
+
+	ppp->ppp_state = PPPS_DEAD;
 	ppp->out_asyncmap = 0;
 	ppp->out_lcp_opts = BIT_MRU | BIT_MAGIC | BIT_PFCOMP | BIT_ACCOMP | BIT_MRU_COAX;
 
-	ppp->encap = encap;
-	switch (encap) {
+	switch (ppp->encap) {
 	case PPP_ENCAP_F5:
 		/* XX: F5 server cancels our IP address allocation if we PPP-terminate */
 		ppp->no_terminate_on_pause = 1;
@@ -277,8 +294,6 @@ int openconnect_ppp_new(struct openconnect_info *vpninfo,
 	}
 
 	if (ppp->hdlc) ppp->out_lcp_opts |= BIT_ASYNCMAP;
-	ppp->want_ipv4 = want_ipv4;
-	ppp->want_ipv6 = want_ipv6 && !vpninfo->disable_ipv6;
 	ppp->exp_ppp_hdr_size = 4; /* Address(1), Control(1), Proto(2) */
 
 	return 0;
