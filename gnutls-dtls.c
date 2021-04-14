@@ -397,7 +397,7 @@ int start_dtls_handshake(struct openconnect_info *vpninfo, int dtls_fd)
 	return 0;
 }
 
-int dtls_try_handshake(struct openconnect_info *vpninfo)
+int dtls_try_handshake(struct openconnect_info *vpninfo, int *timeout)
 {
 	int err = gnutls_handshake(vpninfo->dtls_ssl);
 	char *str;
@@ -476,8 +476,18 @@ int dtls_try_handshake(struct openconnect_info *vpninfo)
 	}
 
 	if (err == GNUTLS_E_AGAIN || err == GNUTLS_E_INTERRUPTED) {
-		if (time(NULL) < vpninfo->new_dtls_started + 12)
+		int quit_time = vpninfo->new_dtls_started + 12 - time(NULL);
+		if (quit_time > 0) {
+			if (timeout) {
+				unsigned next_resend = gnutls_dtls_get_timeout(vpninfo->dtls_ssl);
+				if (next_resend && *timeout > next_resend)
+					*timeout = next_resend;
+
+				if (*timeout > quit_time * 1000)
+					*timeout = quit_time * 1000;
+			}
 			return 0;
+		}
 		vpn_progress(vpninfo, PRG_DEBUG, _("DTLS handshake timed out\n"));
 	}
 
@@ -491,6 +501,8 @@ int dtls_try_handshake(struct openconnect_info *vpninfo)
 
 	vpninfo->dtls_state = DTLS_SLEEPING;
 	time(&vpninfo->new_dtls_started);
+	if (timeout && *timeout > vpninfo->dtls_attempt_period * 1000)
+		*timeout = vpninfo->dtls_attempt_period * 1000;
 	return -EINVAL;
 }
 

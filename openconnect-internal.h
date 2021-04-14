@@ -948,7 +948,7 @@ int create_wintun(struct openconnect_info *vpninfo);
 
 /* {gnutls,openssl}-dtls.c */
 int start_dtls_handshake(struct openconnect_info *vpninfo, int dtls_fd);
-int dtls_try_handshake(struct openconnect_info *vpninfo);
+int dtls_try_handshake(struct openconnect_info *vpninfo, int *timeout);
 unsigned dtls_set_mtu(struct openconnect_info *vpninfo, unsigned mtu);
 void dtls_ssl_free(struct openconnect_info *vpninfo);
 
@@ -957,6 +957,7 @@ void destroy_eap_ttls(struct openconnect_info *vpninfo, void *sess);
 
 /* dtls.c */
 int dtls_setup(struct openconnect_info *vpninfo);
+int dtls_reconnect(struct openconnect_info *vpninfo, int *timeout);
 int udp_tos_update(struct openconnect_info *vpninfo, struct pkt *pkt);
 int dtls_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable);
 void dtls_close(struct openconnect_info *vpninfo);

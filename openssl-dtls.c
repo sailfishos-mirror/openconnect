@@ -553,7 +553,7 @@ int start_dtls_handshake(struct openconnect_info *vpninfo, int dtls_fd)
 	return 0;
 }
 
-int dtls_try_handshake(struct openconnect_info *vpninfo)
+int dtls_try_handshake(struct openconnect_info *vpninfo, int *timeout)
 {
 	int ret = SSL_do_handshake(vpninfo->dtls_ssl);
 
@@ -683,9 +683,24 @@ int dtls_try_handshake(struct openconnect_info *vpninfo)
 
 	ret = SSL_get_error(vpninfo->dtls_ssl, ret);
 	if (ret == SSL_ERROR_WANT_WRITE || ret == SSL_ERROR_WANT_READ) {
-		static int badossl_bitched = 0;
-		if (time(NULL) < vpninfo->new_dtls_started + 12)
+		int quit_time = vpninfo->new_dtls_started + 12 - time(NULL);
+
+		if (quit_time > 0) {
+			if (timeout) {
+				struct timeval tv;
+				if (SSL_ctrl(vpninfo->dtls_ssl, DTLS_CTRL_GET_TIMEOUT, 0, &tv)) {
+					unsigned timeout_ms = tv.tv_sec * 1000 + tv.tv_usec / 1000;
+					if (*timeout > timeout_ms)
+						*timeout = timeout_ms;
+				}
+
+				if (*timeout > quit_time * 1000)
+					*timeout = quit_time * 1000;
+			}
 			return 0;
+		}
+
+		static int badossl_bitched = 0;
 		if (((OPENSSL_VERSION_NUMBER >= 0x100000b0L && OPENSSL_VERSION_NUMBER <= 0x100000c0L) || \
 		     (OPENSSL_VERSION_NUMBER >= 0x10001040L && OPENSSL_VERSION_NUMBER <= 0x10001060L) || \
 		     OPENSSL_VERSION_NUMBER == 0x10002000L) && !badossl_bitched) {
@@ -705,6 +720,8 @@ int dtls_try_handshake(struct openconnect_info *vpninfo)
 
 	vpninfo->dtls_state = DTLS_SLEEPING;
 	time(&vpninfo->new_dtls_started);
+	if (timeout && *timeout > vpninfo->dtls_attempt_period * 1000)
+		*timeout = vpninfo->dtls_attempt_period * 1000;
 	return -EINVAL;
 }
 
