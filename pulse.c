@@ -1747,14 +1747,19 @@ static int pulse_authenticate(struct openconnect_info *vpninfo, int connecting)
 		} else if (avp_vendor == VENDOR_JUNIPER2 && avp_code == 0xd4f) {
 			realm_entry++;
 		} else if (avp_vendor == VENDOR_JUNIPER2 && avp_code == 0xd5c) {
-			uint32_t val;
-
 			if (avp_len != 4)
 				goto auth_unknown;
-			val = load_be32(avp_p);
+			uint32_t val = load_be32(avp_p);
 
 			if (val)
 				vpninfo->auth_expiration = time(NULL) + val;
+		} else if (avp_vendor == VENDOR_JUNIPER2 && avp_code == 0xd75) {
+			if (avp_len != 4)
+				goto auth_unknown;
+			uint32_t val = load_be32(avp_p);
+
+			if (val)
+				vpninfo->idle_timeout = val;
 		} else if (avp_vendor == VENDOR_JUNIPER2 && avp_code == 0xd53) {
 			free(vpninfo->cookie);
 			vpninfo->cookie = strndup(avp_p, avp_len);
