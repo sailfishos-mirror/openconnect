@@ -1256,11 +1256,12 @@ int ppp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			case KA_DPD_DEAD:
 				goto peer_dead;
 			case KA_REKEY:
-//				goto do_rekey;
+				goto do_reconnect;
 			case KA_NONE:
-//				return work_done;
+				return work_done;
 			default:
-				/* This should never happen */
+				/* This can never happen because ka_stalled_action()
+				 * always returns one of the above. */
 				;
 			}
 		}
