@@ -436,6 +436,26 @@ int internal_split_cookies(struct openconnect_info *vpninfo, int replace, const 
 	return 0;
 }
 
+int urldecode_inplace(char *p)
+{
+	char *q;
+	if (!p)
+		return -EINVAL;
+
+	for (q = p; *p; p++, q++) {
+		if (*p == '+') {
+			*q = ' ';
+		} else if (*p == '%' && isxdigit((int)(unsigned char)p[1]) &&
+			   isxdigit((int)(unsigned char)p[2])) {
+			*q = unhex(p + 1);
+			p += 2;
+		} else
+			*q = *p;
+	}
+	*q = 0;
+	return 0;
+}
+
 /* Read one HTTP header line into hdrbuf, potentially allowing for
  * continuation lines. Will never leave a character in 'nextchar' when
  * an empty line (signifying end of headers) is received. Will only

@@ -2712,6 +2712,29 @@ int pulse_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			print_esp_keys(vpninfo, _("new outgoing"), &vpninfo->esp_out);
 			continue;
 
+		case 0x93: {
+			/* Expected contents are "errorType=%d errorString=%s\n". Known values:
+			 * 6: "agentd error" (another session started and kicked this one off)
+			 * 7: "session has been terminated" (by client)
+			 * 8: "session timed out" (idle timeout)
+			 */
+			if (payload_len < 12 || strncmp("errorType=", (const char *)pkt->data, 10))
+				goto unknown_pkt;
+			pkt->data[payload_len - 1] = '\0'; /* overwrite final '\n' */
+
+			char *endp;
+			unsigned long reason = strtol((const char *)pkt->data + 10, &endp, 10);
+			if (strncmp(" errorString=", endp, 13))
+				goto unknown_pkt;
+
+			urldecode_inplace(endp+1);
+
+			vpn_progress(vpninfo, PRG_ERR, _("Pulse fatal error (reason: %ld): %s\n"),
+				     reason, endp+13);
+			vpninfo->quit_reason = strdup(endp+13);
+			return -EPIPE;
+		}
+
 		case 0x96:
 			/* It sends the licence information once the connection is set up. For
 			 * now, abuse this to deal with the race condition in ESP setup — it looks

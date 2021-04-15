@@ -243,26 +243,6 @@ static int challenge_cb(struct openconnect_info *vpninfo, char *prompt, char *in
 	return -EAGAIN;
 }
 
-static int urldecode_inplace(char *p)
-{
-	char *q;
-	if (!p)
-		return -EINVAL;
-
-	for (q = p; *p; p++, q++) {
-		if (*p == '+') {
-			*q = ' ';
-		} else if (*p == '%' && isxdigit((int)(unsigned char)p[1]) &&
-			   isxdigit((int)(unsigned char)p[2])) {
-			*q = unhex(p + 1);
-			p += 2;
-		} else
-			*q = *p;
-	}
-	*q = 0;
-	return 0;
-}
-
 /* Parse gateway login response (POST /ssl-vpn/login.esp)
  *
  * Extracts the relevant arguments from the XML (<jnlp><application-desc><argument>...</argument></application-desc></jnlp>)
