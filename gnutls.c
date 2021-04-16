@@ -32,6 +32,7 @@
 #include <gnutls/crypto.h>
 #include <gnutls/pkcs12.h>
 #include <gnutls/abstract.h>
+#include <gnutls/dtls.h>
 
 #ifdef HAVE_P11KIT
 #include <p11-kit/p11-kit.h>
@@ -2339,6 +2340,24 @@ int openconnect_open_https(struct openconnect_info *vpninfo)
 	vpninfo->ssl_read = openconnect_gnutls_read;
 	vpninfo->ssl_write = openconnect_gnutls_write;
 	vpninfo->ssl_gets = openconnect_gnutls_gets;
+
+	int basemtu = measure_base_mtu(vpninfo, 0 /* not UDP */);
+	if (basemtu != vpninfo->basemtu) {
+		vpninfo->basemtu = basemtu;
+
+		if (vpninfo->peer_addr->sa_family == IPPROTO_IPV6)
+			basemtu -= 40; /* IPv6 header */
+		else
+			basemtu -= 20; /* Legacy IP header */
+		basemtu -= 20; /* TCP header */
+
+		/* XX: Does this really work for TLS? */
+		gnutls_dtls_set_mtu(vpninfo->https_sess, basemtu);
+		vpninfo->tcp_data_mtu = gnutls_dtls_get_data_mtu(vpninfo->https_sess);
+
+		vpn_progress(vpninfo, PRG_INFO, _("Measured MTU to server as %d, TLS data MTU of %d\n"),
+			     vpninfo->basemtu, vpninfo->tcp_data_mtu);
+	}
 
 	return 0;
 }

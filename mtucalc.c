@@ -21,6 +21,8 @@
 #if defined(__linux__)
 /* For TCP_INFO */
 # include <linux/tcp.h>
+/* For IP_MTU */
+# include <linux/in.h>
 #endif
 
 #define ESP_HEADER_SIZE (4 /* SPI */ + 4 /* sequence number */)
@@ -29,6 +31,54 @@
 #define TCP_HEADER_SIZE 20 /* with no options */
 #define IPV4_HEADER_SIZE 20
 #define IPV6_HEADER_SIZE 40
+
+/* Attempt to measure base MTU to peer, using TCP PMTU or TCP MAXSEG
+ */
+int measure_base_mtu(struct openconnect_info *vpninfo, int is_udp) {
+#if defined(__linux__) && defined(TCP_INFO)
+	/* Try to figure out base_mtu (from TCP PMTU), and save TCP MSS for later */
+	struct tcp_info ti;
+	socklen_t ti_size = sizeof(ti);
+	if (!is_udp && !getsockopt(vpninfo->ssl_fd, IPPROTO_TCP, TCP_INFO, &ti, &ti_size)) {
+		vpn_progress(vpninfo, PRG_DEBUG,
+			     _("TCP_INFO rcv mss %d, snd mss %d, adv mss %d, pmtu %d\n"),
+			     ti.tcpi_rcv_mss, ti.tcpi_snd_mss, ti.tcpi_advmss, ti.tcpi_pmtu);
+
+		if (ti.tcpi_pmtu)
+			return ti.tcpi_pmtu;
+	}
+#endif
+#ifdef TCP_MAXSEG
+	int mss;
+	socklen_t mss_size = sizeof(mss);
+	if (!is_udp && !getsockopt(vpninfo->ssl_fd, IPPROTO_TCP, TCP_MAXSEG, &mss, &mss_size)) {
+		vpn_progress(vpninfo, PRG_DEBUG, _("TCP_MAXSEG %d\n"), mss);
+
+		int base_mtu = mss + TCP_HEADER_SIZE;
+		base_mtu += (vpninfo->peer_addr->sa_family == AF_INET6) ? IPV6_HEADER_SIZE : IPV4_HEADER_SIZE;
+		vpn_progress(vpninfo, PRG_DEBUG,
+			     _("TCP_MAXSEG + TCP_HEADER_SIZE + IPV%d_HEADER_SIZE %d\n"),
+			     vpninfo->peer_addr->sa_family == AF_INET6 ? 6 : 4, base_mtu);
+		return base_mtu;
+	}
+#endif
+#if defined(__linux__) && defined(IP_MTU)
+	int mtu;
+	socklen_t mtu_size = sizeof(mtu);
+	if (!getsockopt(is_udp ? vpninfo->dtls_fd : vpninfo->ssl_fd, IPPROTO_IP, IP_MTU, &mtu, &mtu_size)) {
+		vpn_progress(vpninfo, PRG_DEBUG, _("IP_MTU %d\n"), mtu);
+		return mtu;
+	}
+#endif
+
+	/* XX: Default to existing vpninfo->basemtu value (possibly set via --base-mtu)
+	 */
+	int default_mtu = vpninfo->basemtu ? : 1280;
+	vpn_progress(vpninfo, PRG_DEBUG, _("Can't measure base_mtu for %s socket. Defaulting to %d\n"),
+		is_udp ? (vpninfo->proto->udp_protocol ? : "UDP") : "SSL", default_mtu);
+	return default_mtu;
+}
+
 
 /* Calculate MTU of a tunnel.
  *

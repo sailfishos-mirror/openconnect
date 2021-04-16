@@ -659,7 +659,11 @@ struct openconnect_info {
 	char *ifname;
 	char *cmd_ifname;
 
-	int reqmtu, basemtu; /* Local static configured values */
+	int reqmtu;       /* Configured/requested MTU for the tunnel */
+	int basemtu;      /* PMTU to the server (calculated or overridden with --base-mtu) */
+	int udp_data_mtu; /* Calculated largest payload that can be sent using our UDP transport (DTLS/ESP) */
+	int tcp_data_mtu; /* Calculated largest payload that can be sent using our TCP transport (TLS) */
+
 	const char *banner;
 
 	struct oc_ip_info ip_info;
@@ -982,6 +986,7 @@ char *openconnect_bin2base64(const char *prefix, const uint8_t *data, unsigned l
 
 /* mtucalc.c */
 
+int measure_base_mtu(struct openconnect_info *vpninfo, int is_udp);
 int calculate_mtu(struct openconnect_info *vpninfo, int is_udp, int unpadded_overhead, int padded_overhead, int block_size);
 
 /* cstp.c */

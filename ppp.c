@@ -886,17 +886,33 @@ static int handle_state_transition(struct openconnect_info *vpninfo, int dtls,
 					vpn_progress(vpninfo, PRG_INFO,
 						     _("Attempting requested MTU of %d for PPP\n"), vpninfo->ip_info.mtu);
 				} else {
-					/* FIXME: TLS_OVERHEAD and DTLS_OVERHEAD are themselves somewhat bogusly calculated
+					/* FIXME: TLS_OVERHEAD and DTLS_OVERHEAD are themselves bogusly calculated
 					 */
-					const int dtls_overhead = DTLS_OVERHEAD - 16; /* block padding is handled separately by calculate_mtu */
 
-					int overhead = ppp->encap_len                       /* Encapsulation overhead */
-						+ (dtls ? dtls_overhead : TLS_OVERHEAD)     /* TLS/DTLS overhead */
+					int ppp_overhead = ppp->encap_len                   /* Encapsulation overhead */
 						+ (ppp->hdlc ? 4 : 0)                       /* HDLC framing and FCS */
 						+ (ppp->out_lcp_opts & BIT_ACCOMP ? 0 : 2)  /* PPP header AC fields */
 						+ (ppp->out_lcp_opts & BIT_PFCOMP ? 1 : 2); /* PPP header protocol field */
-					vpninfo->ip_info.mtu = calculate_mtu(vpninfo, 0 /* not UDP */, overhead, 0 /* no footer */,
-									     dtls ? 16 : 1 /* no block padding for TLS, 16 bytes for DTLS*/);
+
+					if (dtls) {
+						if (vpninfo->udp_data_mtu) {
+							vpninfo->ip_info.mtu = vpninfo->udp_data_mtu - ppp_overhead;
+						} else {
+							/* XX: Should never happen because we set vpninfo->udp_data_mtu in dtls_try_handshake */
+							int overhead = ppp_overhead + DTLS_OVERHEAD - 16; /* 16 bytes block padding is handled separately by calculate_mtu */
+							vpninfo->ip_info.mtu = calculate_mtu(vpninfo, 1 /* yes UDP */, overhead, 0 /* no footer */,
+											     16 /* up to 16 bytes block padding for DTLS */);
+						}
+					} else {
+						if (vpninfo->tcp_data_mtu) {
+							vpninfo->ip_info.mtu = vpninfo->tcp_data_mtu - ppp_overhead;
+						} else {
+							/* XX: Should never happen because we set tcp_data_mtu in openconnect_open_https */
+							int overhead = ppp_overhead + TLS_OVERHEAD;
+							vpninfo->ip_info.mtu = calculate_mtu(vpninfo, 0 /* not UDP */, overhead, 0 /* no footer */,
+											     1 /* no block padding for TLS */);
+						}
+					}
 					/* XX: HDLC fudge factor (average overhead on random payload is 1/128, we'll use 4x that) */
 					if (ppp->hdlc)
 						vpninfo->ip_info.mtu -= vpninfo->ip_info.mtu >> 5;

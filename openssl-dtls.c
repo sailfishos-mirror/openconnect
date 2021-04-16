@@ -597,13 +597,19 @@ int dtls_try_handshake(struct openconnect_info *vpninfo, int *timeout)
 			 * XX: Needs forthcoming overhaul to detect MTU correctly and offer
 			 * reasonable MRU values during PPP negotiation.
 			 */
-			int data_mtu = vpninfo->cstp_basemtu = 1500;
+			int data_mtu = vpninfo->basemtu;
 			if (vpninfo->peer_addr->sa_family == IPPROTO_IPV6)
 				data_mtu -= 40; /* IPv6 header */
 			else
 				data_mtu -= 20; /* Legacy IP header */
 			data_mtu -= 8; /* UDP header */
-			dtls_set_mtu(vpninfo, data_mtu);
+			if (data_mtu < 0) {
+				vpn_progress(vpninfo, PRG_ERR,
+					     _("Peer MTU %d too small to allow DTLS\n"),
+					     vpninfo->basemtu);
+				goto nodtls;
+			}
+			vpninfo->udp_data_mtu = dtls_set_mtu(vpninfo, data_mtu);
 		} else if (!strcmp(vpninfo->dtls_cipher, "PSK-NEGOTIATE")) {
 			/* For PSK-NEGOTIATE, we have to determine the tunnel MTU
 			 * for ourselves based on the base MTU */

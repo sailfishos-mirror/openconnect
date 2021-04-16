@@ -1954,6 +1954,23 @@ int openconnect_open_https(struct openconnect_info *vpninfo)
 	vpn_progress(vpninfo, PRG_INFO, _("Connected to HTTPS on %s with ciphersuite %s\n"),
 		     vpninfo->hostname, vpninfo->cstp_cipher);
 
+	int basemtu = measure_base_mtu(vpninfo, 0 /* not UDP */);
+	if (basemtu != vpninfo->basemtu) {
+		vpninfo->basemtu = basemtu;
+
+		if (vpninfo->peer_addr->sa_family == IPPROTO_IPV6)
+			basemtu -= 40; /* IPv6 header */
+		else
+			basemtu -= 20; /* Legacy IP header */
+		basemtu -= 20; /* TCP header */
+
+		/* XX: FIXME: how do we calculate this with OpenSSL? */
+		vpninfo->tcp_data_mtu = 0;
+
+		vpn_progress(vpninfo, PRG_INFO, _("Measured MTU to server as %d, TLS data MTU of %d\n"),
+			     vpninfo->basemtu, vpninfo->tcp_data_mtu);
+	}
+
 	return 0;
 }
 
