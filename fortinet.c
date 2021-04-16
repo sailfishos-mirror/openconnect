@@ -453,10 +453,6 @@ static int fortinet_configure(struct openconnect_info *vpninfo)
 		goto out;
 	}
 
-	ret = openconnect_open_https(vpninfo);
-	if (ret)
-		return ret;
-
 	/* XXX: Why do Forticlient and Openfortivpn do this anyway?
 	 * It's fetching the legacy non-XML configuration, isn't it?
 	 * Do we *actually* have to do this, before fetching the XML config?
