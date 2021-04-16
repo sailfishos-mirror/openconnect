@@ -659,15 +659,61 @@ struct openconnect_info {
 	char *ifname;
 	char *cmd_ifname;
 
+	/* MTUs tracked by OpenConnect:
+	 *
+	 *                           <==================================== UDP MTU ==========================================>
+	 *                                      <====================== udp_data_mtu =======================>
+	 *                                                        <==== UDP tunnel MTU ===>
+	 *
+	 *                                      +-----------------+-----------------------+-----------------+
+	 *                                      |    UDP tunnel   |  Tunneled IP packet   |   UDP Tunnel    |
+	 *                                      | protocol header |                       | footer&padding  |
+	 *                  +--------+----------+-----------------+-----------------------+-----------------+----------------+
+	 *                  |  UDP   | DTLS/ESP |                    UDP-based transport                    |    DTLS/ESP    |
+	 *                  | header |  header  |                       (TLS or ESP)                        | footer&padding |
+	 *  +---------------+--------+----------+-----------------------------------------------------------+----------------+
+	 *  |   IP header   |                                  IP socket connection                                          |
+	 *  |               |                                      to VPN server                                             |
+	 *  +---------------+--------+----------+-----------------------------------------------------------+----------------+
+	 *                  |  TCP   |   TLS    |                    TCP-based transport                    |   TLS footer&  |
+	 *                  | header |  header  |                          (TLS)                            |    padding     |
+	 *                  +--------+----------+-----------------+-----------------------+-----------------+----------------+
+	 *                                      |    TCP tunnel   |  Tunneled IP packet   |   TCP Tunnel    |
+	 *                                      | protocol header |                       | footer&padding  |
+	 *                                      +-----------------+-----------------------+-----------------+
+	 *
+	 *                                                        <==== TCP tunnel MTU ===>
+	 *                                      <======================== tcp_data_mtu ======================================>
+	 *                            <==================================== TCP MSS =========================================>
+	 *
+	 *  <========================== basemtu (calculated by OS, or overriden with --base-mtu) ============================>
+	 *  <================================ cstp_basemtu (calculated and sent by server) ==================================>
+	 *
+	 *
+	 * 1. basemtu should be obtained from the OS where the OS can reliably measure it, or by probing if not.
+	 *    cstp_basemtu should be used only as a fallback.
+	 *
+	 * 2. udp_data_mtu and tcp_data_mtu should be calculated with the assistance of the TLS libraries where
+	 *    possible.
+	 *
+	 * 3. TCP/UDP tunnel MTUs must be calculated by us.
+	 *
+	 * 4. If and when the UDP-based transport is in use, the UDP tunnel MTU should be verified by probing (whether it is
+	 *    more practical and efficient to directly probe for the UDP tunnel MTU, or udp_data_mtu, may depend on protocol).
+	 *
+	 * 5. The MTU to be configured on the tunnel interface (ip_info.mtu) should be set to the UDP tunnel MTU, unless
+	 *    UDP-based transport is disabled or unavailable, in which case it should be set to the TCP tunnel MTU.
+	 */
+
 	int reqmtu;       /* Configured/requested MTU for the tunnel */
 	int basemtu;      /* PMTU to the server (calculated or overridden with --base-mtu) */
 	int udp_data_mtu; /* Calculated largest payload that can be sent using our UDP transport (DTLS/ESP) */
 	int tcp_data_mtu; /* Calculated largest payload that can be sent using our TCP transport (TLS) */
+	int cstp_basemtu; /* PMTU to the server (as calculate by the server, and sent to us) */
 
 	const char *banner;
 
 	struct oc_ip_info ip_info;
-	int cstp_basemtu; /* Returned by server */
 	int idle_timeout; /* Returned by server */
 
 #ifdef _WIN32

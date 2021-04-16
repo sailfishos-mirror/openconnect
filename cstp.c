@@ -590,6 +590,10 @@ static int start_cstp_connection(struct openconnect_info *vpninfo)
 				return -EINVAL;
 			}
 		} else if (!strcmp(buf + 7, "Base-MTU")) {
+			/* XX: This is the server's measurement or estimate of the MTU for
+			 * IP packets between us and the server. We shouldn't rely on it,
+			 * except perhaps as a lower bound in case the MTU is asymmetrical.
+			 */
 			vpninfo->cstp_basemtu = atol(colon);
 		} else if (!strcmp(buf + 7, "MTU")) {
 			int cstpmtu = atol(colon);
