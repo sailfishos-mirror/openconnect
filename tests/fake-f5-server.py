@@ -207,7 +207,8 @@ def options():
 # (what the real F5 server responds with when it doesn't like the parameters, intended
 # to trigger "cookie rejected" error in OpenConnect)
 @app.route('/myvpn')
-@check_form_against_session('sess', 'hdlc_framing', 'ipv4', 'ipv6', 'Z', use_query=True)
+# Can't use because OpenConnect doesn't send cookies here (see f5.c for why)
+# @check_form_against_session('sess', 'hdlc_framing', 'ipv4', 'ipv6', 'Z', use_query=True)
 def tunnel():
     try:
         base64.urlsafe_b64decode(request.args.get('hostname') or None)
