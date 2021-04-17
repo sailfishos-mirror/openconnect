@@ -575,6 +575,12 @@ static int f5_configure(struct openconnect_info *vpninfo)
 	if (ret < 0)
 		goto out;
 
+	/* XX: This buffer is used to initiate the connection over either TLS or DTLS.
+	 * Cookies are not needed for it to succeed, and can potentially grow without bound,
+	 * which would make it too big to fit in a single DTLS packet (ick, HTTP over DTLS).
+	 *
+	 * Don't blame me. I didn't design this.
+	 */
 	reqbuf = vpninfo->ppp_tls_connect_req;
 	if (!reqbuf)
 		reqbuf = buf_alloc();
@@ -583,7 +589,10 @@ static int f5_configure(struct openconnect_info *vpninfo)
 		   sid, hdlc?"yes":"no", ipv4?"yes":"no", ipv6?"yes":"no", ur_z);
 	buf_append_base64(reqbuf, vpninfo->localname, strlen(vpninfo->localname));
 	buf_append(reqbuf, " HTTP/1.1\r\n");
+	struct oc_vpn_option *saved_cookies = vpninfo->cookies;
+	vpninfo->cookies = NULL; /* hide cookies */
 	http_common_headers(vpninfo, reqbuf);
+	vpninfo->cookies = saved_cookies; /* restore cookies */
 	buf_append(reqbuf, "\r\n");
 
 	if (buf_error(reqbuf)) {
