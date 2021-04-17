@@ -1764,10 +1764,12 @@ static int pulse_authenticate(struct openconnect_info *vpninfo, int connecting)
 			free(vpninfo->cookie);
 			vpninfo->cookie = strndup(avp_p, avp_len);
 			cookie_found = 1;
+			/* DSID cookie may be needed for fallback to oNCP/Juniper logout */
+			http_add_cookie(vpninfo, "DSID", vpninfo->cookie, 1 /* replace */);
 		} else if (!avp_vendor && avp_code == AVP_CODE_EAP_MESSAGE) {
 			char *avp_c = avp_p;
 
-			/* EAP within AVP within EAP within IF-T/TLS. Chewck EAP header. */
+			/* EAP within AVP within EAP within IF-T/TLS. Check EAP header. */
 			if (avp_len < 5 || avp_c[0] != EAP_REQUEST ||
 			    load_be16(avp_c + 2) != avp_len)
 				goto auth_unknown;
@@ -2938,14 +2940,17 @@ int pulse_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 
 int pulse_bye(struct openconnect_info *vpninfo, const char *reason)
 {
+	int ret = -1;
 	if (vpninfo->ssl_fd != -1) {
 		struct oc_text_buf *buf = buf_alloc();
 		buf_append_ift_hdr(buf, VENDOR_JUNIPER, 0x89);
 		if (!buf_error(buf))
-			send_ift_packet(vpninfo, buf);
+			ret = send_ift_packet(vpninfo, buf);
 		buf_free(buf);
-
 		openconnect_close_https(vpninfo, 0);
 	}
-	return 0;
+	/* Try Juniper logout if tunnel was already closed */
+	if (ret < 0)
+		ret = oncp_bye(vpninfo, reason);
+	return ret;
 }
