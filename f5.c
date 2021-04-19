@@ -437,9 +437,21 @@ static int parse_options(struct openconnect_info *vpninfo, char *buf, int len,
 	}
 
 	if (dtls && dtls_port && vpninfo->dtls_state == DTLS_NOSECRET) {
-		udp_sockaddr(vpninfo, dtls_port);
 		vpn_progress(vpninfo, PRG_INFO, _("DTLS is enabled on port %d\n"), dtls_port);
-		vpninfo->dtls_state = DTLS_SECRET;
+		if (!*hdlc) {
+			udp_sockaddr(vpninfo, dtls_port);
+			vpninfo->dtls_state = DTLS_SECRET;
+		} else {
+			/* XX: HDLC-like framing (RFC1662) means that tunneled packets may double in size as part of
+			 * their on-the-wire encapsulation, while efficient datagram transport requires calculation
+			 * of a predictable maximum transfer unit.
+			 *
+			 * We hope no servers expect us to combine them. If they do, we should reject DTLS.
+			 */
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("WARNING: Server enables DTLS, but also requires HDLC. Disabling DTLS,\n"
+				       "    because HDLC prevents determination of efficient and consistent MTU.\n"));
+		}
 	}
 	if (default_route && *ipv4)
 		vpninfo->ip_info.netmask = add_option_dup(vpninfo, "netmask", "0.0.0.0", -1);
@@ -499,7 +511,7 @@ static int f5_configure(struct openconnect_info *vpninfo)
 	struct oc_vpn_option *cookie;
 	char *profile_params = NULL;
 	char *sid = NULL, *ur_z = NULL;
-	int ipv4 = -1, ipv6 = -1, hdlc = -1;
+	int ipv4 = -1, ipv6 = -1, hdlc = 0;
 	char *res_buf = NULL;
 	struct oc_vpn_option *old_cstp_opts = vpninfo->cstp_options;
 	const char *old_addr = vpninfo->ip_info.addr;
