@@ -842,6 +842,14 @@ int f5_udp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable
 	if (vpninfo->dtls_state == DTLS_SLEEPING) {
 		int when = vpninfo->new_dtls_started + vpninfo->dtls_attempt_period - time(NULL);
 
+		/* If the SSL connection isn't open, that must mean we've been paused
+		 * and resumed. So reconnect immediately regardless of whether we'd
+		 * just done so, *and* reset the PPP state so that the TCP mainloop
+		 * doesn't get confused. */
+		if (vpninfo->ssl_fd == -1) {
+			when = 0;
+			ppp_reset(vpninfo);
+		}
 		if (when <= 0) {
 			vpn_progress(vpninfo, PRG_DEBUG, _("Attempt new DTLS connection\n"));
 			if (dtls_reconnect(vpninfo, timeout) < 0)

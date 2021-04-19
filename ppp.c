@@ -1504,11 +1504,11 @@ int ppp_tcp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readabl
 				vpninfo->delay_tunnel_reason = "awaiting PPP DTLS connection";
 				return 0;
 			}
+			/* It'll try again in a while, but we want it to be in DTLS_SLEEPING
+			 * so that the tcp_connect() function actually establishes the PPP
+			 * over TCP. */
+			dtls_close(vpninfo);
 		}
-		/* It'll try again in a while, but we want it to be in DTLS_SLEEPING
-		 * so that the tcp_connect() function actually establishes the PPP
-		 * over TCP. */
-		dtls_close(vpninfo);
 
 		/* Fall through */
 	case DTLS_SLEEPING:
