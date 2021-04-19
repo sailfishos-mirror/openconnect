@@ -591,8 +591,19 @@ int dtls_try_handshake(struct openconnect_info *vpninfo, int *timeout)
 		const char *c;
 
 		if (!vpninfo->dtls_cipher) {
-			/* Anonymous DTLS (PPP protocols) */
-			vpninfo->ip_info.mtu = dtls_set_mtu(vpninfo, 1300);
+			/* Anonymous DTLS (PPP protocols) will set vpninfo->ip_info.mtu
+			 * in PPP negotiation.
+			 *
+			 * XX: Needs forthcoming overhaul to detect MTU correctly and offer
+			 * reasonable MRU values during PPP negotiation.
+			 */
+			int data_mtu = vpninfo->cstp_basemtu = 1500;
+			if (vpninfo->peer_addr->sa_family == IPPROTO_IPV6)
+				data_mtu -= 40; /* IPv6 header */
+			else
+				data_mtu -= 20; /* Legacy IP header */
+			data_mtu -= 8; /* UDP header */
+			dtls_set_mtu(vpninfo, data_mtu);
 		} else if (!strcmp(vpninfo->dtls_cipher, "PSK-NEGOTIATE")) {
 			/* For PSK-NEGOTIATE, we have to determine the tunnel MTU
 			 * for ourselves based on the base MTU */
@@ -645,7 +656,7 @@ int dtls_try_handshake(struct openconnect_info *vpninfo, int *timeout)
 				     _("DTLS connection compression using %s.\n"), c);
 		}
 
-		vpninfo->dtls_times.last_rekey = vpninfo->dtls_times.last_rx = 
+		vpninfo->dtls_times.last_rekey = vpninfo->dtls_times.last_rx =
 			vpninfo->dtls_times.last_tx = time(NULL);
 
 		/* From about 8.4.1(11) onwards, the ASA seems to get
