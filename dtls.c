@@ -245,8 +245,11 @@ int dtls_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 
 	if (vpninfo->dtls_state == DTLS_CONNECTING) {
 		dtls_try_handshake(vpninfo, timeout);
-		vpninfo->delay_tunnel_reason = "DTLS MTU detection";
-		return 0;
+		if (vpninfo->dtls_state != DTLS_CONNECTED) {
+			vpninfo->delay_tunnel_reason = "DTLS MTU detection";
+			return 0;
+		}
+		return 1;
 	}
 
 	if (vpninfo->dtls_state == DTLS_SLEEPING) {
@@ -261,6 +264,10 @@ int dtls_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		}
 		return 0;
 	}
+
+	/* Nothing to do here for Cisco DTLS as it is preauthenticated */
+	if (vpninfo->dtls_state == DTLS_CONNECTED)
+		vpninfo->dtls_state = DTLS_ESTABLISHED;
 
 	while (readable) {
 		int len = MAX(16384, vpninfo->ip_info.mtu);

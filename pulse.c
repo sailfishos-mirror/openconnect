@@ -2826,7 +2826,7 @@ int pulse_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 	case KA_KEEPALIVE:
 		/* No need to send an explicit keepalive
 		   if we have real data to send */
-		if (vpninfo->dtls_state != DTLS_CONNECTED &&
+		if (vpninfo->dtls_state != DTLS_ESTABLISHED &&
 		    vpninfo->outgoing_queue.head)
 			break;
 
@@ -2839,11 +2839,11 @@ int pulse_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		;
 	}
 #endif
-	if (vpninfo->dtls_state == DTLS_CONNECTING) {
+	if (vpninfo->dtls_state == DTLS_CONNECTED) {
 		/* We don't currently do anything to make the server start sending
 		 * data packets in ESP instead of over IF-T/TLS. Just go straight
 		 * to CONNECTED mode. */
-		vpninfo->dtls_state = DTLS_CONNECTED;
+		vpninfo->dtls_state = DTLS_ESTABLISHED;
 		work_done = 1;
 	}
 
@@ -2856,7 +2856,7 @@ int pulse_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 	}
 
 	/* Service outgoing packet queue, if no DTLS */
-	while (vpninfo->dtls_state != DTLS_CONNECTED &&
+	while (vpninfo->dtls_state != DTLS_ESTABLISHED &&
 	       (vpninfo->current_ssl_pkt = dequeue_packet(&vpninfo->outgoing_queue))) {
 		struct pkt *this = vpninfo->current_ssl_pkt;
 

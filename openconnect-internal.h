@@ -190,8 +190,9 @@ struct pkt {
 #define DTLS_SECRET	1	/* Secret is present, ready to attempt DTLS */
 #define DTLS_DISABLED	2	/* DTLS was disabled on the *client* side */
 #define DTLS_SLEEPING	3	/* For ESP, sometimes sending probes */
-#define DTLS_CONNECTING	4	/* ESP probe received; must tell server */
-#define DTLS_CONNECTED	5	/* Server informed and should be sending ESP */
+#define DTLS_CONNECTING	4	/* DTLS (re)handshaking. Not used for ESP */
+#define DTLS_CONNECTED	5	/* Transport connected but not yet enabled */
+#define DTLS_ESTABLISHED 6	/* Data path fully established */
 
 /* Not to be confused with OC_PROTO_xxx flags which are library-visible */
 #define PROTO_ANYCONNECT	0

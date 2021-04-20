@@ -1184,7 +1184,7 @@ const char *openconnect_get_dtls_compression(struct openconnect_info * vpninfo)
 
 const char *openconnect_get_dtls_cipher(struct openconnect_info *vpninfo)
 {
-	if (vpninfo->dtls_state != DTLS_CONNECTED || !vpninfo->dtls_ssl) {
+	if (vpninfo->dtls_state < DTLS_CONNECTED || !vpninfo->dtls_ssl) {
 #if defined(OPENCONNECT_GNUTLS)
 		gnutls_free(vpninfo->dtls_cipher_desc);
 #else

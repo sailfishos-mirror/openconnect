@@ -1071,7 +1071,7 @@ int oncp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			   *sent* over the TCP channel. */
 			vpn_progress(vpninfo, PRG_TRACE,
 				     _("Sent ESP enable control packet\n"));
-			vpninfo->dtls_state = DTLS_CONNECTED;
+			vpninfo->dtls_state = DTLS_ESTABLISHED;
 			work_done = 1;
 		} else {
 			free(vpninfo->current_ssl_pkt);
@@ -1137,7 +1137,7 @@ int oncp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 	case KA_KEEPALIVE:
 		/* No need to send an explicit keepalive
 		   if we have real data to send */
-		if (vpninfo->dtls_state != DTLS_CONNECTED && vpninfo->outgoing_queue)
+		if (vpninfo->dtls_state != DTLS_ESTABLISHED && vpninfo->outgoing_queue)
 			break;
 
 		vpn_progress(vpninfo, PRG_DEBUG, _("Send CSTP Keepalive\n"));
@@ -1153,7 +1153,7 @@ int oncp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 	 * via ESP once the enable message has been *sent* over the
 	 * TCP channel. Assign it directly to current_ssl_pkt so that
 	 * we can use it in-place and match against it above. */
-	if (vpninfo->dtls_state == DTLS_CONNECTING) {
+	if (vpninfo->dtls_state == DTLS_CONNECTED) {
 		vpninfo->current_ssl_pkt = (struct pkt *)&esp_enable_pkt;
 		goto handle_outgoing;
 	}
@@ -1163,7 +1163,7 @@ int oncp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		goto handle_outgoing;
 
 	/* Service outgoing packet queue, if no DTLS */
-	while (vpninfo->dtls_state != DTLS_CONNECTED &&
+	while (vpninfo->dtls_state != DTLS_ESTABLISHED &&
 	       (vpninfo->current_ssl_pkt = dequeue_packet(&vpninfo->outgoing_queue))) {
 		struct pkt *this = vpninfo->current_ssl_pkt;
 
@@ -1214,7 +1214,7 @@ int oncp_bye(struct openconnect_info *vpninfo, const char *reason)
 void oncp_esp_close(struct openconnect_info *vpninfo)
 {
 	/* Tell server to stop sending on ESP channel */
-	if (vpninfo->dtls_state >= DTLS_CONNECTING)
+	if (vpninfo->dtls_state >= DTLS_CONNECTED)
 		queue_esp_control(vpninfo, 0);
 	esp_close(vpninfo);
 }
@@ -1241,7 +1241,7 @@ int oncp_esp_send_probes(struct openconnect_info *vpninfo)
 	if (!pkt)
 		return -ENOMEM;
 
-	for (seq=1; seq <= (vpninfo->dtls_state==DTLS_CONNECTED ? 1 : 2); seq++) {
+	for (seq=1; seq <= (vpninfo->dtls_state==DTLS_ESTABLISHED ? 1 : 2); seq++) {
 		pkt->len = 1;
 		pkt->data[0] = 0;
 		pktlen = construct_esp_packet(vpninfo, pkt,

@@ -232,7 +232,7 @@ int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 				if (vpninfo->dtls_state == DTLS_SLEEPING) {
 					vpn_progress(vpninfo, PRG_INFO,
 						     _("ESP session established with server\n"));
-					vpninfo->dtls_state = DTLS_CONNECTING;
+					vpninfo->dtls_state = DTLS_CONNECTED;
 				}
 				continue;
 			}
@@ -263,7 +263,7 @@ int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		}
 	}
 
-	if (vpninfo->dtls_state != DTLS_CONNECTED)
+	if (vpninfo->dtls_state != DTLS_ESTABLISHED)
 		return 0;
 
 	switch (keepalive_action(&vpninfo->dtls_times, timeout)) {

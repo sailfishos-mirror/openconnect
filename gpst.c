@@ -1044,11 +1044,12 @@ int gpst_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 	 * it if the ESP tunnel is connected or connecting.
 	 */
 	switch (vpninfo->dtls_state) {
-	case DTLS_CONNECTING:
+	case DTLS_CONNECTING: /* Can never happen */
+	case DTLS_CONNECTED:
 		openconnect_close_https(vpninfo, 0); /* don't keep stale HTTPS socket */
 		vpn_progress(vpninfo, PRG_INFO,
 			     _("ESP tunnel connected; exiting HTTPS mainloop.\n"));
-		vpninfo->dtls_state = DTLS_CONNECTED;
+		vpninfo->dtls_state = DTLS_ESTABLISHED;
 		/* Now that we are connected, let's ensure timeout is less than
 		 * or equal to DTLS DPD/keepalive else we might over sleep, eg
 		 * if timeout is set to DTLS attempt period from ESP mainloop,
@@ -1057,7 +1058,7 @@ int gpst_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			if (*timeout > vpninfo->dtls_times.dpd * 1000)
 				*timeout = vpninfo->dtls_times.dpd * 1000;
 		/* fall through */
-	case DTLS_CONNECTED:
+	case DTLS_ESTABLISHED:
 		/* Rekey or check-and-resubmit HIP if needed */
 		if (keepalive_action(&vpninfo->ssl_times, timeout) == KA_REKEY)
 			goto do_rekey;
@@ -1263,7 +1264,7 @@ int gpst_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 	case KA_KEEPALIVE:
 		/* No need to send an explicit keepalive
 		   if we have real data to send */
-		if (vpninfo->dtls_state != DTLS_CONNECTED &&
+		if (vpninfo->dtls_state != DTLS_ESTABLISHED &&
 		    vpninfo->outgoing_queue.head)
 			break;
 		/* fall through */
@@ -1276,7 +1277,7 @@ int gpst_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 
 
 	/* Service outgoing packet queue */
-	while (vpninfo->dtls_state != DTLS_CONNECTED &&
+	while (vpninfo->dtls_state != DTLS_ESTABLISHED &&
 	       (vpninfo->current_ssl_pkt = dequeue_packet(&vpninfo->outgoing_queue))) {
 		struct pkt *this = vpninfo->current_ssl_pkt;
 
@@ -1356,7 +1357,7 @@ int gpst_esp_send_probes(struct openconnect_info *vpninfo)
 		monitor_except_fd(vpninfo, dtls);
 	}
 
-	for (seq=1; seq <= (vpninfo->dtls_state==DTLS_CONNECTED ? 1 : 3); seq++) {
+	for (seq=1; seq <= (vpninfo->dtls_state==DTLS_ESTABLISHED ? 1 : 3); seq++) {
 		memset(pkt, 0, sizeof(*pkt) + sizeof(*iph) + ICMP_MINLEN + sizeof(magic_ping_payload));
 		pkt->len = sizeof(struct ip) + ICMP_MINLEN + sizeof(magic_ping_payload);
 
