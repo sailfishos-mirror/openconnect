@@ -303,7 +303,7 @@ int ssl_nonblock_read(struct openconnect_info *vpninfo, int dtls, void *buf, int
 
 	if (!sess) {
 		vpn_progress(vpninfo, PRG_ERR,
-			     _("Attempted to read from non-existent %s session"),
+			     _("Attempted to read from non-existent %s session\n"),
 			     dtls ? "DTLS" : "TLS");
 		return -1;
 	}
@@ -327,7 +327,7 @@ int ssl_nonblock_write(struct openconnect_info *vpninfo, int dtls, void *buf, in
 
 	if (!sess) {
 		vpn_progress(vpninfo, PRG_ERR,
-			     _("Attempted to write to non-existent %s session"),
+			     _("Attempted to write to non-existent %s session\n"),
 			     dtls ? "DTLS" : "TLS");
 		return -1;
 	}
