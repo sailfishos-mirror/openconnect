@@ -371,7 +371,11 @@ static int gpst_parse_config_xml(struct openconnect_info *vpninfo, xmlNode *xml_
 	for (xml_node = xml_node->children; xml_node; xml_node=xml_node->next) {
 		if (!xmlnode_get_val(xml_node, "ip-address", &s))
 			vpninfo->ip_info.addr = add_option_steal(vpninfo, "ipaddr", &s);
-		else if (!xmlnode_get_val(xml_node, "netmask", &deferred_netmask)) {
+		else if (!xmlnode_get_val(xml_node, "ip-address-v6", &s)) {
+			got_ipv6 |= 1;
+			if (!vpninfo->disable_ipv6)
+				vpninfo->ip_info.addr6 = add_option_steal(vpninfo, "ipaddr6", &s);
+		} else if (!xmlnode_get_val(xml_node, "netmask", &deferred_netmask)) {
 			/* XX: GlobalProtect servers always (almost always?) send 255.255.255.255 as their netmask
 			 * (a /32 host route), and if they want to include an actual default route (0.0.0.0/0)
 			 * they instead put it under <access-routes/>. We defer saving the netmask until later.
@@ -507,15 +511,15 @@ static int gpst_parse_config_xml(struct openconnect_info *vpninfo, xmlNode *xml_
 			   || xmlnode_is_named(xml_node, "bw-c2s")
 			   || xmlnode_is_named(xml_node, "bw-s2c")
 			   || xmlnode_is_named(xml_node, "default-gateway")
+			   || xmlnode_is_named(xml_node, "default-gateway-v6")
 			   || xmlnode_is_named(xml_node, "no-direct-access-to-local-network")
 			   || xmlnode_is_named(xml_node, "ip-address-preferred")
+			   || xmlnode_is_named(xml_node, "ip-address-v6-preferred")
+			   || xmlnode_is_named(xml_node, "ipv6-connection")
 			   || xmlnode_is_named(xml_node, "portal")
 			   || xmlnode_is_named(xml_node, "user")) {
 			/* XX: Do these have any potential value at all for routing configuration or diagnostics? */
 		} else if (xml_node->type == XML_ELEMENT_NODE) {
-			/* XX: Don't know what tags are used for IPv6 addresses and networks, since
-			 * we haven't yet seen a real GlobalProtect VPN with IPv6 internal addresses.
-			 */
 			free(s);
 			s = (char *)xmlNodeGetContent(xml_node);
 			if (strchr((char *)xml_node->name, '6')) {
@@ -562,9 +566,8 @@ static int gpst_parse_config_xml(struct openconnect_info *vpninfo, xmlNode *xml_
 
 	/* Warn about IPv6 config, if present, and ESP config, if absent */
 	if (got_ipv6)
-		vpn_progress(vpninfo, PRG_ERR, _("GlobalProtect config includes IPv6, but this build does not support\n"
-						 "it IPv6 due to a lack of information on how GlobalProtect configures it.\n"
-						 "Please report this to <openconnect-devel@lists.infradead.org>.\n"));
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("GlobalProtect IPv6 support is experimental. Please report results to <openconnect-devel@lists.infradead.org>.\n"));
 #ifdef HAVE_ESP
 	if (!got_esp)
 		vpn_progress(vpninfo, vpninfo->dtls_state != DTLS_DISABLED ? PRG_ERR : PRG_DEBUG,
@@ -590,6 +593,7 @@ static int gpst_get_config(struct openconnect_info *vpninfo)
 
 	/* submit getconfig request */
 	buf_append(request_body, "client-type=1&protocol-version=p1&app-version=5.1.5-8");
+	append_opt(request_body, "ipv6-support", vpninfo->disable_ipv6 ? "no" : "yes");
 	append_opt(request_body, "clientos", gpst_os_name(vpninfo));
 	append_opt(request_body, "os-version", vpninfo->platname);
 	append_opt(request_body, "hmac-algo", "sha1,md5,sha256");
