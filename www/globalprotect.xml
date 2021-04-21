@@ -98,10 +98,9 @@ encapsulating each packets within ESP, UDP, and IP.</p>
 
 <p>IPv6 support was added in <a
 href="https://live.paloaltonetworks.com/t5/Colossal-Event-Blog/New-GlobalProtect-4-0-announced-with-IPv6-support/ba-p/141593">GlobalProtect
-4.0 in 2017</a> but <b>OpenConnect support for GlobalProtect IPv6 is incomplete</b>
-due to developers' lack of access to a GlobalProtect VPN server that supports it.
-If you have access to a GlobalProtect VPN that supports IPv6, please send information
-to <a href="mail.html">the mailing list</a> so we can add complete support.</p>
+4.0 in 2017</a>. OpenConnect has experimental support for GlobalProtect IPv6 as of
+9.0. If you have access to a GlobalProtect VPN that supports IPv6, please send
+feedback to <a href="mail.html">the mailing list</a>.</p>
 
 <p>The ESP and HTTPS tunnels cannot be connected simultaneously.  The ESP
 tunnel becomes unresponsive as soon as the HTTPS tunnel is started, and
