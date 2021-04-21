@@ -789,18 +789,23 @@ static int oncp_record_read(struct openconnect_info *vpninfo, void *buf, int len
 					vpn_progress(vpninfo, PRG_ERR,
 						     _("Server terminated connection (session expired)\n"));
 					vpninfo->quit_reason = "VPN session expired";
+				} else if (lenbuf[0] == 8) {
+					vpn_progress(vpninfo, PRG_ERR,
+						     _("Server terminated connection (idle timeout)\n"));
+					vpninfo->quit_reason = "Idle timeout";
 				} else {
 					vpn_progress(vpninfo, PRG_ERR,
 						     _("Server terminated connection (reason: %d)\n"),
 						     lenbuf[0]);
 					vpninfo->quit_reason = "Server terminated connection";
 				}
+				return -EPIPE;
 			} else {
 				vpn_progress(vpninfo, PRG_ERR,
 					     _("Server sent zero-length oNCP record\n"));
 				vpninfo->quit_reason = "Zero-length oNCP record";
+				return -EIO;
 			}
-			return -EIO;
 		}
 	}
 	if (len > vpninfo->oncp_rec_size)

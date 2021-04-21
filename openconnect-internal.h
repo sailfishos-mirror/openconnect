@@ -1274,6 +1274,7 @@ int do_https_request(struct openconnect_info *vpninfo, const char *method,
 int http_add_cookie(struct openconnect_info *vpninfo, const char *option,
 		    const char *value, int replace);
 int internal_split_cookies(struct openconnect_info *vpninfo, int replace, const char *def_cookie);
+int urldecode_inplace(char *p);
 int process_http_response(struct openconnect_info *vpninfo, int connect,
 			  int (*header_cb)(struct openconnect_info *, char *, char *),
 			  struct oc_text_buf *body);

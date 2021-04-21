@@ -1716,22 +1716,29 @@ static int pulse_authenticate(struct openconnect_info *vpninfo, int connecting)
 		} else if (avp_vendor == VENDOR_JUNIPER2 && avp_code == 0xd4f) {
 			realm_entry++;
 		} else if (avp_vendor == VENDOR_JUNIPER2 && avp_code == 0xd5c) {
-			uint32_t val;
-
 			if (avp_len != 4)
 				goto auth_unknown;
-			val = load_be32(avp_p);
+			uint32_t val = load_be32(avp_p);
 
 			if (val)
 				vpninfo->auth_expiration = time(NULL) + val;
+		} else if (avp_vendor == VENDOR_JUNIPER2 && avp_code == 0xd75) {
+			if (avp_len != 4)
+				goto auth_unknown;
+			uint32_t val = load_be32(avp_p);
+
+			if (val)
+				vpninfo->idle_timeout = val;
 		} else if (avp_vendor == VENDOR_JUNIPER2 && avp_code == 0xd53) {
 			free(vpninfo->cookie);
 			vpninfo->cookie = strndup(avp_p, avp_len);
 			cookie_found = 1;
+			/* DSID cookie may be needed for fallback to oNCP/Juniper logout */
+			http_add_cookie(vpninfo, "DSID", vpninfo->cookie, 1 /* replace */);
 		} else if (!avp_vendor && avp_code == AVP_CODE_EAP_MESSAGE) {
 			char *avp_c = avp_p;
 
-			/* EAP within AVP within EAP within IF-T/TLS. Chewck EAP header. */
+			/* EAP within AVP within EAP within IF-T/TLS. Check EAP header. */
 			if (avp_len < 5 || avp_c[0] != EAP_REQUEST ||
 			    load_be16(avp_c + 2) != avp_len)
 				goto auth_unknown;
@@ -2676,6 +2683,29 @@ int pulse_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			print_esp_keys(vpninfo, _("new outgoing"), &vpninfo->esp_out);
 			continue;
 
+		case 0x93: {
+			/* Expected contents are "errorType=%d errorString=%s\n". Known values:
+			 * 6: "agentd error" (another session started and kicked this one off)
+			 * 7: "session has been terminated" (by client)
+			 * 8: "session timed out" (idle timeout)
+			 */
+			if (payload_len < 12 || strncmp("errorType=", (const char *)pkt->data, 10))
+				goto unknown_pkt;
+			pkt->data[payload_len - 1] = '\0'; /* overwrite final '\n' */
+
+			char *endp;
+			unsigned long reason = strtol((const char *)pkt->data + 10, &endp, 10);
+			if (strncmp(" errorString=", endp, 13))
+				goto unknown_pkt;
+
+			urldecode_inplace(endp+1);
+
+			vpn_progress(vpninfo, PRG_ERR, _("Pulse fatal error (reason: %ld): %s\n"),
+				     reason, endp+13);
+			vpninfo->quit_reason = strdup(endp+13);
+			return -EPIPE;
+		}
+
 		case 0x96:
 			/* It sends the licence information once the connection is set up. For
 			 * now, abuse this to deal with the race condition in ESP setup — it looks
@@ -2879,14 +2909,17 @@ int pulse_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 
 int pulse_bye(struct openconnect_info *vpninfo, const char *reason)
 {
+	int ret = -1;
 	if (vpninfo->ssl_fd != -1) {
 		struct oc_text_buf *buf = buf_alloc();
 		buf_append_ift_hdr(buf, VENDOR_JUNIPER, 0x89);
 		if (!buf_error(buf))
-			send_ift_packet(vpninfo, buf);
+			ret = send_ift_packet(vpninfo, buf);
 		buf_free(buf);
-
 		openconnect_close_https(vpninfo, 0);
 	}
-	return 0;
+	/* Try Juniper logout if tunnel was already closed */
+	if (ret < 0)
+		ret = oncp_bye(vpninfo, reason);
+	return ret;
 }
