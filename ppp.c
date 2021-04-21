@@ -252,6 +252,7 @@ int openconnect_ppp_new(struct openconnect_info *vpninfo,
 
 	case PPP_ENCAP_FORTINET:
 		/* XX: Fortinet server rejects asyncmap and header compression. Don't blame me. */
+		ppp->no_terminate_on_pause = 1;
 		ppp->out_lcp_opts &= ~(BIT_PFCOMP | BIT_ACCOMP);
 		ppp->encap_len = 6;
 		ppp->check_http_response = 1;
