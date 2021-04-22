@@ -217,7 +217,8 @@ static int valid_ift_auth_eap_exj1(unsigned char *bytes, int len)
 	return 1;
 }
 
-static int process_attr(struct openconnect_info *vpninfo, uint16_t type,
+static int process_attr(struct openconnect_info *vpninfo, struct oc_vpn_option **new_opts,
+			struct oc_ip_info *new_ip_info, uint16_t type,
 			unsigned char *data, int attrlen)
 {
 	struct oc_split_include *xc;
@@ -232,7 +233,7 @@ static int process_attr(struct openconnect_info *vpninfo, uint16_t type,
 		snprintf(buf, sizeof(buf), "%d.%d.%d.%d", data[0], data[1], data[2], data[3]);
 
 		vpn_progress(vpninfo, PRG_DEBUG, _("Received internal Legacy IP address %s\n"), buf);
-		vpninfo->ip_info.addr = add_option_dup(vpninfo, "ipaddr", buf, -1);
+		new_ip_info->addr = add_option_dup(new_opts, "ipaddr", buf, -1);
 		break;
 
 	case 0x0002:
@@ -241,7 +242,7 @@ static int process_attr(struct openconnect_info *vpninfo, uint16_t type,
 		snprintf(buf, sizeof(buf), "%d.%d.%d.%d", data[0], data[1], data[2], data[3]);
 
 		vpn_progress(vpninfo, PRG_DEBUG, _("Received netmask %s\n"), buf);
-		vpninfo->ip_info.netmask = add_option_dup(vpninfo, "netmask", buf, -1);
+		new_ip_info->netmask = add_option_dup(new_opts, "netmask", buf, -1);
 		break;
 
 	case 0x0003:
@@ -252,8 +253,8 @@ static int process_attr(struct openconnect_info *vpninfo, uint16_t type,
 		vpn_progress(vpninfo, PRG_DEBUG, _("Received DNS server %s\n"), buf);
 
 		for (i = 0; i < 3; i++) {
-			if (!vpninfo->ip_info.dns[i]) {
-				vpninfo->ip_info.dns[i] = add_option_dup(vpninfo, "DNS", buf, -1);
+			if (!new_ip_info->dns[i]) {
+				new_ip_info->dns[i] = add_option_dup(new_opts, "DNS", buf, -1);
 				break;
 			}
 		}
@@ -267,8 +268,8 @@ static int process_attr(struct openconnect_info *vpninfo, uint16_t type,
 		vpn_progress(vpninfo, PRG_DEBUG, _("Received WINS server %s\n"), buf);
 
 		for (i = 0; i < 3; i++) {
-			if (!vpninfo->ip_info.nbns[i]) {
-				vpninfo->ip_info.nbns[i] = add_option_dup(vpninfo, "WINS", buf, -1);
+			if (!new_ip_info->nbns[i]) {
+				new_ip_info->nbns[i] = add_option_dup(new_opts, "WINS", buf, -1);
 				break;
 			}
 		}
@@ -282,11 +283,11 @@ static int process_attr(struct openconnect_info *vpninfo, uint16_t type,
 				     _("Failed to handle IPv6 address\n"));
 			return -EINVAL;
 		}
-		vpninfo->ip_info.addr6 = add_option_dup(vpninfo, "ip6addr", buf, -1);
+		new_ip_info->addr6 = add_option_dup(new_opts, "ip6addr", buf, -1);
 
 		i = strlen(buf);
 		snprintf(buf + i, sizeof(buf) - i, "/%d", data[16]);
-		vpninfo->ip_info.netmask6 = add_option_dup(vpninfo, "ip6netmask", buf, -1);
+		new_ip_info->netmask6 = add_option_dup(new_opts, "ip6netmask", buf, -1);
 
 		vpn_progress(vpninfo, PRG_DEBUG, _("Received internal IPv6 address %s\n"), buf);
 		break;
@@ -301,8 +302,8 @@ static int process_attr(struct openconnect_info *vpninfo, uint16_t type,
 		}
 
 		for (i = 0; i < 3; i++) {
-			if (!vpninfo->ip_info.dns[i]) {
-				vpninfo->ip_info.dns[i] = add_option_dup(vpninfo, "DNS", buf, -1);
+			if (!new_ip_info->dns[i]) {
+				new_ip_info->dns[i] = add_option_dup(new_opts, "DNS", buf, -1);
 				break;
 			}
 		}
@@ -323,10 +324,10 @@ static int process_attr(struct openconnect_info *vpninfo, uint16_t type,
 
 		xc = malloc(sizeof(*xc));
 		if (xc) {
-			xc->route =  add_option_dup(vpninfo, "split-include6", buf, -1);
+			xc->route =  add_option_dup(new_opts, "split-include6", buf, -1);
 			if (xc->route) {
-				xc->next = vpninfo->ip_info.split_includes;
-				vpninfo->ip_info.split_includes = xc;
+				xc->next = new_ip_info->split_includes;
+				new_ip_info->split_includes = xc;
 			} else
 				free(xc);
 		}
@@ -346,10 +347,10 @@ static int process_attr(struct openconnect_info *vpninfo, uint16_t type,
 
 		xc = malloc(sizeof(*xc));
 		if (xc) {
-			xc->route =  add_option_dup(vpninfo, "split-exclude6", buf, -1);
+			xc->route =  add_option_dup(new_opts, "split-exclude6", buf, -1);
 			if (xc->route) {
-				xc->next = vpninfo->ip_info.split_excludes;
-				vpninfo->ip_info.split_excludes = xc;
+				xc->next = new_ip_info->split_excludes;
+				new_ip_info->split_excludes = xc;
 			} else
 				free(xc);
 		}
@@ -364,10 +365,10 @@ static int process_attr(struct openconnect_info *vpninfo, uint16_t type,
 				     attrlen, type);
 			return -EINVAL;
 		}
-		vpninfo->ip_info.mtu = load_be32(data);
+		new_ip_info->mtu = load_be32(data);
 		vpn_progress(vpninfo, PRG_DEBUG,
 			     _("Received MTU %d from server\n"),
-			     vpninfo->ip_info.mtu);
+			     new_ip_info->mtu);
 		break;
 
 	case 0x4006:
@@ -377,9 +378,9 @@ static int process_attr(struct openconnect_info *vpninfo, uint16_t type,
 		    attrlen--;
 		vpn_progress(vpninfo, PRG_DEBUG, _("Received DNS search domain %.*s\n"),
 			     attrlen, (char *)data);
-		vpninfo->ip_info.domain = add_option_dup(vpninfo, "search", (char *)data, attrlen);
-		if (vpninfo->ip_info.domain) {
-			char *p = (char *)vpninfo->ip_info.domain;
+		new_ip_info->domain = add_option_dup(new_opts, "search", (char *)data, attrlen);
+		if (new_ip_info->domain) {
+			char *p = (char *)new_ip_info->domain;
 			while ((p = strchr(p, ',')))
 				*p = ' ';
 		}
@@ -393,7 +394,7 @@ static int process_attr(struct openconnect_info *vpninfo, uint16_t type,
 		vpn_progress(vpninfo, PRG_DEBUG, _("Received internal gateway address %s\n"), buf);
 		/* Hm, what are we supposed to do with this? It's a tunnel;
 		   having a gateway is meaningless. */
-		add_option_dup(vpninfo, "ipaddr", buf, -1);
+		add_option_dup(new_opts, "ipaddr", buf, -1);
 		break;
 
 	case 0x4010: {
@@ -2257,10 +2258,6 @@ static int handle_main_config_packet(struct openconnect_info *vpninfo,
 	int routes_len = 0;
 	int l;
 	unsigned char *p;
-	const char *old_addr = vpninfo->ip_info.addr;
-	const char *old_netmask = vpninfo->ip_info.netmask;
-	const char *old_addr6 = vpninfo->ip_info.addr6;
-	const char *old_netmask6 = vpninfo->ip_info.netmask6;
 
 	/* First part of header, similar to ESP, has already been checked */
 	if (len < 0x31 ||
@@ -2280,6 +2277,9 @@ static int handle_main_config_packet(struct openconnect_info *vpninfo,
 	}
 	p = bytes + 0x34;
 	routes_len -= 8; /* The header including length and number of routes */
+
+	struct oc_vpn_option *new_opts = NULL;
+	struct oc_ip_info new_ip_info = {};
 
 	/* We know it's a multiple of 0x10 now. We checked. */
 	while (routes_len) {
@@ -2310,7 +2310,7 @@ static int handle_main_config_packet(struct openconnect_info *vpninfo,
 			vpn_progress(vpninfo, PRG_DEBUG, _("Received split include route %s\n"), buf);
 			inc = malloc(sizeof(*inc));
 			if (inc) {
-				inc->route = add_option_dup(vpninfo, "split-include", buf, -1);
+				inc->route = add_option_dup(&new_opts, "split-include", buf, -1);
 				if (inc->route) {
 					inc->next = vpninfo->ip_info.split_includes;
 					vpninfo->ip_info.split_includes = inc;
@@ -2323,7 +2323,7 @@ static int handle_main_config_packet(struct openconnect_info *vpninfo,
 			vpn_progress(vpninfo, PRG_DEBUG, _("Received split exclude route %s\n"), buf);
 			exc = malloc(sizeof(*exc));
 			if (exc) {
-				exc->route = add_option_dup(vpninfo, "split-exclude", buf, -1);
+				exc->route = add_option_dup(&new_opts, "split-exclude", buf, -1);
 				if (exc->route) {
 					exc->next = vpninfo->ip_info.split_excludes;
 					vpninfo->ip_info.split_excludes = exc;
@@ -2358,14 +2358,19 @@ static int handle_main_config_packet(struct openconnect_info *vpninfo,
 
 		p += 4;
 		l -= 4;
-		process_attr(vpninfo, type, p, attrlen);
+		process_attr(vpninfo, &new_opts, &new_ip_info, type, p, attrlen);
 		p += attrlen;
 		l -= attrlen;
 		if (l && l < 4)
 			goto bad_config;
 	}
 
-	return check_address_sanity(vpninfo, old_addr, old_netmask, old_addr6, old_netmask6);
+	int ret = install_vpn_opts(vpninfo, new_opts, &new_ip_info);
+	if (ret) {
+		free_optlist(new_opts);
+		free_split_routes(&new_ip_info);
+	}
+	return ret;
 }
 
 /* Example ESP config packet:

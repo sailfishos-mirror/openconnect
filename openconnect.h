@@ -284,9 +284,10 @@ struct oc_split_include {
 
 struct oc_ip_info {
 	const char *addr;
-	const char *netmask;
+	const char *netmask; /* Just the netmask, in dotted-quad form. */
 	const char *addr6;
-	const char *netmask6;
+	const char *netmask6; /* This is the IPv6 address *and* netmask
+			       * e.g. "2001::dead:beef/128". */
 	const char *dns[3];
 	const char *nbns[3];
 	const char *domain;

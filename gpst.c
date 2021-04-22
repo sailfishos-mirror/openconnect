@@ -348,39 +348,35 @@ static int gpst_parse_config_xml(struct openconnect_info *vpninfo, xmlNode *xml_
 	struct oc_split_include *inc;
 	int split_route_is_default_route = 0;
 	int n_dns = 0, got_esp = 0;
+	int ret = 0;
 	int ii;
 
 	if (!xml_node || !xmlnode_is_named(xml_node, "response"))
 		return -EINVAL;
 
-	/* Clear old options which will be overwritten */
-	vpninfo->ip_info.addr = vpninfo->ip_info.netmask = NULL;
-	vpninfo->ip_info.addr6 = vpninfo->ip_info.netmask6 = NULL;
-	vpninfo->ip_info.domain = NULL;
-	vpninfo->ip_info.mtu = 0;
-	vpninfo->esp_magic = inet_addr(vpninfo->ip_info.gateway_addr);
+
+	struct oc_vpn_option *new_opts = NULL;
+	struct oc_ip_info new_ip_info = {};
+
+	if (vpninfo->ip_info.gateway_addr)
+		vpninfo->esp_magic = inet_addr(vpninfo->ip_info.gateway_addr);
 	vpninfo->esp_replay_protect = 1;
 	vpninfo->ssl_times.rekey_method = REKEY_NONE;
-	vpninfo->cstp_options = NULL;
-
-	for (ii = 0; ii < 3; ii++)
-		vpninfo->ip_info.dns[ii] = vpninfo->ip_info.nbns[ii] = NULL;
-	free_split_routes(vpninfo);
 
 	/* Parse config */
 	for (xml_node = xml_node->children; xml_node; xml_node=xml_node->next) {
 		if (!xmlnode_get_val(xml_node, "ip-address", &s))
-			vpninfo->ip_info.addr = add_option_steal(vpninfo, "ipaddr", &s);
+			new_ip_info.addr = add_option_steal(&new_opts, "ipaddr", &s);
 		else if (!xmlnode_get_val(xml_node, "ip-address-v6", &s)) {
 			if (!vpninfo->disable_ipv6)
-				vpninfo->ip_info.addr6 = add_option_steal(vpninfo, "ipaddr6", &s);
+				new_ip_info.addr6 = add_option_steal(&new_opts, "ipaddr6", &s);
 		} else if (!xmlnode_get_val(xml_node, "netmask", &deferred_netmask)) {
 			/* XX: GlobalProtect servers always (almost always?) send 255.255.255.255 as their netmask
 			 * (a /32 host route), and if they want to include an actual default route (0.0.0.0/0)
 			 * they instead put it under <access-routes/>. We defer saving the netmask until later.
 			 */
 		} else if (!xmlnode_get_val(xml_node, "mtu", &s))
-			vpninfo->ip_info.mtu = atoi(s);
+			new_ip_info.mtu = atoi(s);
 		else if (!xmlnode_get_val(xml_node, "lifetime", &s))
 			vpninfo->auth_expiration = time(NULL) + atol(s);
 		else if (!xmlnode_get_val(xml_node, "quarantine", &s) && strcmp(s, "no"))
@@ -408,9 +404,9 @@ static int gpst_parse_config_xml(struct openconnect_info *vpninfo, xmlNode *xml_
 			 * gateway is meaningless." See esp_send_probes_gp for the
 			 * gory details of what this field actually means.
 			 */
-			if (strcmp(s, vpninfo->ip_info.gateway_addr))
+			if (vpninfo->ip_info.gateway_addr && strcmp(s, vpninfo->ip_info.gateway_addr))
 				vpn_progress(vpninfo, PRG_DEBUG,
-							 _("Gateway address in config XML (%s) differs from external gateway address (%s).\n"), s, vpninfo->ip_info.gateway_addr);
+							 _("Gateway address in config XML (%s) differs from external gateway address (%s).\n"), s, new_ip_info.gateway_addr);
 			vpninfo->esp_magic = inet_addr(s);
 		} else if (!xmlnode_get_val(xml_node, "gw-address-v6", &s)) {
 			/* This is probably used analogously to <gw-address>, but
@@ -419,27 +415,28 @@ static int gpst_parse_config_xml(struct openconnect_info *vpninfo, xmlNode *xml_
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("WARNING: IPv6 gateway address set in config XML (%s). IPv6 ESP may not yet be functional.\n"), s);
 		} else if (!xmlnode_get_val(xml_node, "connected-gw-ip", &s)) {
-			if (strcmp(s, vpninfo->ip_info.gateway_addr))
+			if (vpninfo->ip_info.gateway_addr && strcmp(s, vpninfo->ip_info.gateway_addr))
 				vpn_progress(vpninfo, PRG_DEBUG, _("Config XML <connected-gw-ip> address (%s) differs from external\n"
 				                                   "gateway address (%s). Please report any this to\n"
 								   "<openconnect-devel@lists.infradead.org>, including any problems\n"
-								   "with ESP or other apparent loss of connectivity or performance.\n"), s, vpninfo->ip_info.gateway_addr);
+								   "with ESP or other apparent loss of connectivity or performance.\n"),
+					     s, vpninfo->ip_info.gateway_addr);
 		} else if (xmlnode_is_named(xml_node, "dns-v6") ||
 			   xmlnode_is_named(xml_node, "dns")) {
 			for (member = xml_node->children; member && n_dns<3; member=member->next) {
 				if (!xmlnode_get_val(member, "member", &s)) {
 					for (ii=0; ii<n_dns; ii++)
 						/* XX: frequent duplicates between <dns> and <dns-v6> */
-						if (!strcmp(s, vpninfo->ip_info.dns[ii]))
+						if (!strcmp(s, new_ip_info.dns[ii]))
 							break;
 					if (ii==n_dns)
-						vpninfo->ip_info.dns[n_dns++] = add_option_steal(vpninfo, "DNS", &s);
+						new_ip_info.dns[n_dns++] = add_option_steal(&new_opts, "DNS", &s);
 				}
 			}
 		} else if (xmlnode_is_named(xml_node, "wins")) {
 			for (ii=0, member = xml_node->children; member && ii<3; member=member->next)
 				if (!xmlnode_get_val(member, "member", &s))
-					vpninfo->ip_info.nbns[ii++] = add_option_steal(vpninfo, "WINS", &s);
+					new_ip_info.nbns[ii++] = add_option_steal(&new_opts, "WINS", &s);
 		} else if (xmlnode_is_named(xml_node, "dns-suffix")) {
 			struct oc_text_buf *domains = buf_alloc();
 			for (member = xml_node->children; member; member=member->next)
@@ -447,7 +444,7 @@ static int gpst_parse_config_xml(struct openconnect_info *vpninfo, xmlNode *xml_
 					buf_append(domains, "%s ", s);
 			if (buf_error(domains) == 0 && domains->pos > 0) {
 				domains->data[domains->pos-1] = '\0';
-				vpninfo->ip_info.domain = add_option_steal(vpninfo, "search", &domains->data);
+				new_ip_info.domain = add_option_steal(&new_opts, "search", &domains->data);
 			}
 			buf_free(domains);
 		} else if (xmlnode_is_named(xml_node, "access-routes-v6") || xmlnode_is_named(xml_node, "exclude-access-routes-v6") ||
@@ -464,16 +461,19 @@ static int gpst_parse_config_xml(struct openconnect_info *vpninfo, xmlNode *xml_
 						continue;
 					}
 
-					if ((inc = malloc(sizeof(*inc))) == NULL)
-						return -ENOMEM;
+					inc = malloc(sizeof(*inc));
+					if (!inc) {
+						ret = -ENOMEM;
+						goto err;
+					}
 					if (is_inc) {
-						inc->route = add_option_steal(vpninfo, "split-include", &s);
-						inc->next = vpninfo->ip_info.split_includes;
-						vpninfo->ip_info.split_includes = inc;
+						inc->route = add_option_steal(&new_opts, "split-include", &s);
+						inc->next = new_ip_info.split_includes;
+						new_ip_info.split_includes = inc;
 					} else {
-						inc->route = add_option_steal(vpninfo, "split-exclude", &s);
-						inc->next = vpninfo->ip_info.split_excludes;
-						vpninfo->ip_info.split_excludes = inc;
+						inc->route = add_option_steal(&new_opts, "split-exclude", &s);
+						inc->next = new_ip_info.split_excludes;
+						new_ip_info.split_excludes = inc;
 					}
 				}
 			}
@@ -540,25 +540,25 @@ static int gpst_parse_config_xml(struct openconnect_info *vpninfo, xmlNode *xml_
 			return -ENOMEM;
 
 		/* If the original netmask wasn't /32, add it as a split route */
-		if (vpninfo->ip_info.addr && original_netmask) {
+		if (new_ip_info.addr && original_netmask) {
 			uint32_t nm_bits = inet_addr(original_netmask);
 			if (nm_bits != 0xffffffff) { /* 255.255.255.255 */
 				struct in_addr net_addr;
-				inet_aton(vpninfo->ip_info.addr, &net_addr);
+				inet_aton(new_ip_info.addr, &net_addr);
 				net_addr.s_addr &= nm_bits; /* clear host bits */
 
 				if ((inc = malloc(sizeof(*inc))) == NULL ||
 				    asprintf(&s, "%s/%s", inet_ntoa(net_addr), original_netmask) <= 0)
 					return -ENOMEM;
-				inc->route = add_option_steal(vpninfo, "split-include", &s);
-				inc->next = vpninfo->ip_info.split_includes;
-				vpninfo->ip_info.split_includes = inc;
+				inc->route = add_option_steal(&new_opts, "split-include", &s);
+				inc->next = new_ip_info.split_includes;
+				new_ip_info.split_includes = inc;
 			}
 		}
 		free(original_netmask);
 	}
 	if (deferred_netmask)
-		vpninfo->ip_info.netmask = add_option_steal(vpninfo, "netmask", &deferred_netmask);
+		new_ip_info.netmask = add_option_steal(&new_opts, "netmask", &deferred_netmask);
 
 	/* Set 10-second DPD/keepalive (same as Windows client) unless
 	 * overridden with --force-dpd */
@@ -567,7 +567,7 @@ static int gpst_parse_config_xml(struct openconnect_info *vpninfo, xmlNode *xml_
 	vpninfo->ssl_times.keepalive = vpninfo->esp_ssl_fallback = vpninfo->ssl_times.dpd;
 
 	/* Warn about IPv6 config, if present, and ESP config, if absent */
-	if (vpninfo->ip_info.addr6)
+	if (new_ip_info.addr6)
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("GlobalProtect IPv6 support is experimental. Please report results to <openconnect-devel@lists.infradead.org>.\n"));
 #ifdef HAVE_ESP
@@ -577,7 +577,15 @@ static int gpst_parse_config_xml(struct openconnect_info *vpninfo, xmlNode *xml_
 #endif
 
 	free(s);
-	return 0;
+
+	ret = install_vpn_opts(vpninfo, new_opts, &new_ip_info);
+	if (ret) {
+	err:
+		free_optlist(new_opts);
+		free_split_routes(&new_ip_info);
+	}
+
+	return ret;
 }
 
 static int gpst_get_config(struct openconnect_info *vpninfo)
@@ -585,13 +593,12 @@ static int gpst_get_config(struct openconnect_info *vpninfo)
 	char *orig_path;
 	int result;
 	struct oc_text_buf *request_body = buf_alloc();
-	struct oc_vpn_option *old_cstp_opts = vpninfo->cstp_options;
-	const char *old_addr = vpninfo->ip_info.addr, *old_netmask = vpninfo->ip_info.netmask;
-	const char *old_addr6 = vpninfo->ip_info.addr6, *old_netmask6 = vpninfo->ip_info.netmask6;
+	const char *old_addr = vpninfo->ip_info.addr;
+	const char *old_addr6 = vpninfo->ip_info.addr6;
 	const char *request_body_type = "application/x-www-form-urlencoded";
 	const char *method = "POST";
-	char *xml_buf=NULL;
-	vpninfo->cstp_options = NULL;
+	char *xml_buf = NULL;
+
 
 	/* submit getconfig request */
 	buf_append(request_body, "client-type=1&protocol-version=p1&app-version=5.1.5-8");
@@ -653,18 +660,8 @@ static int gpst_get_config(struct openconnect_info *vpninfo)
 			     no_esp_reason ? "SSL tunnel. " : "ESP tunnel", no_esp_reason ? : "");
 		/* return -EINVAL; */
 	}
-	if (!vpninfo->ip_info.addr && !vpninfo->ip_info.addr6 &&
-	    !vpninfo->ip_info.netmask6) {
-		vpn_progress(vpninfo, PRG_ERR,
-			     _("No IP address received. Aborting\n"));
-		result = -EINVAL;
-		goto out;
-	}
-
-	result = check_address_sanity(vpninfo, old_addr, old_netmask, old_addr6, old_netmask6);
 
 out:
-	free_optlist(old_cstp_opts);
 	buf_free(request_body);
 	free(xml_buf);
 	return result;

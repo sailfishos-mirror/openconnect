@@ -937,32 +937,32 @@ static int handle_state_transition(struct openconnect_info *vpninfo, int dtls,
 
 		/* Ensure that we use the addresses we configured on PPP */
 		if (ppp->want_ipv4) {
-			vpninfo->ip_info.addr = add_option_ipaddr(vpninfo, "ppp_ipv4", AF_INET,
-								  &ppp->out_ipv4_addr);
+			vpninfo->ip_info.addr = add_option_ipaddr(&vpninfo->cstp_options, "ppp_ipv4",
+								  AF_INET, &ppp->out_ipv4_addr);
 		} else {
 			vpninfo->ip_info.addr = NULL;
 		}
 
 		/* Ensure that we use the addresses we configured on PPP */
 		if (ppp->want_ipv6) {
-			vpninfo->ip_info.addr6 = add_option_ipaddr(vpninfo, "ppp_ipv6", AF_INET6,
-								   &ppp->out_ipv6_addr);
+			vpninfo->ip_info.addr6 = add_option_ipaddr(&vpninfo->cstp_options, "ppp_ipv6",
+								   AF_INET6, &ppp->out_ipv6_addr);
 		} else {
 			vpninfo->ip_info.addr6 = NULL;
 		}
 
 		if (ppp->got_peerns & IPCP_NBNS0)
-			vpninfo->ip_info.nbns[0] = add_option_ipaddr(vpninfo, "ppp_nbns0", AF_INET,
-								     &ppp->nameservers[0]);
+			vpninfo->ip_info.nbns[0] = add_option_ipaddr(&vpninfo->cstp_options, "ppp_nbns0",
+								     AF_INET, &ppp->nameservers[0]);
 		if (ppp->got_peerns & IPCP_DNS0)
-			vpninfo->ip_info.dns[0] = add_option_ipaddr(vpninfo, "ppp_dns0", AF_INET,
-								    &ppp->nameservers[1]);
+			vpninfo->ip_info.dns[0] = add_option_ipaddr(&vpninfo->cstp_options, "ppp_dns0",
+								    AF_INET, &ppp->nameservers[1]);
 		if (ppp->got_peerns & IPCP_NBNS1)
-			vpninfo->ip_info.nbns[1] = add_option_ipaddr(vpninfo, "ppp_nbns1", AF_INET,
-								     &ppp->nameservers[2]);
+			vpninfo->ip_info.nbns[1] = add_option_ipaddr(&vpninfo->cstp_options, "ppp_nbns1",
+								     AF_INET, &ppp->nameservers[2]);
 		if (ppp->got_peerns & IPCP_DNS1)
-			vpninfo->ip_info.dns[1] = add_option_ipaddr(vpninfo, "ppp_dns1", AF_INET,
-								    &ppp->nameservers[3]);
+			vpninfo->ip_info.dns[1] = add_option_ipaddr(&vpninfo->cstp_options, "ppp_dns1",
+								    AF_INET, &ppp->nameservers[3]);
 
 		/* on close, we will need to send TERMREQ, then receive TERMACK */
 		vpninfo->delay_close = DELAY_CLOSE_IMMEDIATE_CALLBACK;

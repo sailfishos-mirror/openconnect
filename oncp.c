@@ -61,8 +61,9 @@ static const char authpkt_tail[] = { 0xbb, 0x01, 0x00, 0x00, 0x00, 0x00 };
 
 #define GRP_ATTR(g, a) (((g) << 16) | (a))
 
-static int process_attr(struct openconnect_info *vpninfo, int group, int attr,
-			unsigned char *data, int attrlen)
+static int process_attr(struct openconnect_info *vpninfo,
+			struct oc_vpn_option **new_opts, struct oc_ip_info *new_ip_info,
+			int group, int attr, unsigned char *data, int attrlen)
 {
 	char buf[80];
 	int i;
@@ -76,10 +77,10 @@ static int process_attr(struct openconnect_info *vpninfo, int group, int attr,
 				     attrlen, group, attr);
 			return -EINVAL;
 		}
-		vpninfo->ip_info.mtu = load_be32(data);
+		new_ip_info->mtu = load_be32(data);
 		vpn_progress(vpninfo, PRG_DEBUG,
 			     _("Received MTU %d from server\n"),
-			     vpninfo->ip_info.mtu);
+			     new_ip_info->mtu);
 		break;
 
 	case GRP_ATTR(2, 1):
@@ -90,8 +91,8 @@ static int process_attr(struct openconnect_info *vpninfo, int group, int attr,
 		vpn_progress(vpninfo, PRG_DEBUG, _("Received DNS server %s\n"), buf);
 
 		for (i = 0; i < 3; i++) {
-			if (!vpninfo->ip_info.dns[i]) {
-				vpninfo->ip_info.dns[i] = add_option_dup(vpninfo, "DNS", buf, -1);
+			if (!new_ip_info->dns[i]) {
+				new_ip_info->dns[i] = add_option_dup(new_opts, "DNS", buf, -1);
 				break;
 			}
 		}
@@ -100,9 +101,9 @@ static int process_attr(struct openconnect_info *vpninfo, int group, int attr,
 	case GRP_ATTR(2, 2):
 		vpn_progress(vpninfo, PRG_DEBUG, _("Received DNS search domain %.*s\n"),
 			     attrlen, (char *)data);
-		vpninfo->ip_info.domain = add_option_dup(vpninfo, "search", (char *)data, attrlen);
-		if (vpninfo->ip_info.domain) {
-			char *p = (char *)vpninfo->ip_info.domain;
+		new_ip_info->domain = add_option_dup(new_opts, "search", (char *)data, attrlen);
+		if (new_ip_info->domain) {
+			char *p = (char *)new_ip_info->domain;
 			while ((p = strchr(p, ',')))
 				*p = ' ';
 		}
@@ -114,7 +115,7 @@ static int process_attr(struct openconnect_info *vpninfo, int group, int attr,
 		snprintf(buf, sizeof(buf), "%d.%d.%d.%d", data[0], data[1], data[2], data[3]);
 
 		vpn_progress(vpninfo, PRG_DEBUG, _("Received internal IP address %s\n"), buf);
-		vpninfo->ip_info.addr = add_option_dup(vpninfo, "ipaddr", buf, -1);
+		new_ip_info->addr = add_option_dup(new_opts, "ipaddr", buf, -1);
 		break;
 
 	case GRP_ATTR(1, 2):
@@ -123,7 +124,7 @@ static int process_attr(struct openconnect_info *vpninfo, int group, int attr,
 		snprintf(buf, sizeof(buf), "%d.%d.%d.%d", data[0], data[1], data[2], data[3]);
 
 		vpn_progress(vpninfo, PRG_DEBUG, _("Received netmask %s\n"), buf);
-		vpninfo->ip_info.netmask = add_option_dup(vpninfo, "netmask", buf, -1);
+		new_ip_info->netmask = add_option_dup(new_opts, "netmask", buf, -1);
 		break;
 
 	case GRP_ATTR(1, 3):
@@ -134,7 +135,7 @@ static int process_attr(struct openconnect_info *vpninfo, int group, int attr,
 		vpn_progress(vpninfo, PRG_DEBUG, _("Received internal gateway address %s\n"), buf);
 		/* Hm, what are we supposed to do with this? It's a tunnel;
 		   having a gateway is meaningless. */
-		add_option_dup(vpninfo, "ipaddr", buf, -1);
+		add_option_dup(new_opts, "ipaddr", buf, -1);
 		break;
 
 	case GRP_ATTR(3, 3): {
@@ -149,10 +150,10 @@ static int process_attr(struct openconnect_info *vpninfo, int group, int attr,
 			break;
 		inc = malloc(sizeof(*inc));
 		if (inc) {
-			inc->route = add_option_dup(vpninfo, "split-include", buf, -1);
+			inc->route = add_option_dup(new_opts, "split-include", buf, -1);
 			if (inc->route) {
-				inc->next = vpninfo->ip_info.split_includes;
-				vpninfo->ip_info.split_includes = inc;
+				inc->next = new_ip_info->split_includes;
+				new_ip_info->split_includes = inc;
 			} else
 				free(inc);
 		}
@@ -171,10 +172,10 @@ static int process_attr(struct openconnect_info *vpninfo, int group, int attr,
 			break;
 		exc = malloc(sizeof(*exc));
 		if (exc) {
-			exc->route = add_option_dup(vpninfo, "split-exclude", buf, -1);
+			exc->route = add_option_dup(new_opts, "split-exclude", buf, -1);
 			if (exc->route) {
-				exc->next = vpninfo->ip_info.split_excludes;
-				vpninfo->ip_info.split_excludes = exc;
+				exc->next = new_ip_info->split_excludes;
+				new_ip_info->split_excludes = exc;
 			} else
 				free(exc);
 		}
@@ -189,8 +190,8 @@ static int process_attr(struct openconnect_info *vpninfo, int group, int attr,
 		vpn_progress(vpninfo, PRG_DEBUG, _("Received WINS server %s\n"), buf);
 
 		for (i = 0; i < 3; i++) {
-			if (!vpninfo->ip_info.nbns[i]) {
-				vpninfo->ip_info.nbns[i] = add_option_dup(vpninfo, "WINS", buf, -1);
+			if (!new_ip_info->nbns[i]) {
+				new_ip_info->nbns[i] = add_option_dup(new_opts, "WINS", buf, -1);
 				break;
 			}
 		}
@@ -396,6 +397,8 @@ static int parse_conf_pkt(struct openconnect_info *vpninfo, unsigned char *bytes
 	int kmplen, kmpend, grouplen, groupend, group, attr, attrlen;
 	int ofs = 0;
 	int split_enc_hmac_keys = 0;
+	struct oc_vpn_option *new_opts = NULL;
+	struct oc_ip_info new_ip_info = {};
 
 	kmplen = load_be16(bytes + ofs + 18);
 	kmpend = ofs + kmplen;
@@ -404,6 +407,9 @@ static int parse_conf_pkt(struct openconnect_info *vpninfo, unsigned char *bytes
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Failed to parse KMP message\n"));
 		dump_buf_hex(vpninfo, PRG_ERR, '<', bytes, pktlen);
+	einval:
+		free_optlist(new_opts);
+		free_split_routes(&new_ip_info);
 		return -EINVAL;
 	}
 
@@ -426,7 +432,7 @@ static int parse_conf_pkt(struct openconnect_info *vpninfo, unsigned char *bytes
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("Received non-ESP TLVs (group %d) in ESP negotiation KMP\n"),
 				     group);
-			return -EINVAL;
+			goto einval;
 		}
 
 		while (ofs < groupend) {
@@ -437,7 +443,8 @@ static int parse_conf_pkt(struct openconnect_info *vpninfo, unsigned char *bytes
 			ofs += 6;
 			if (attrlen + ofs > groupend)
 				goto eparse;
-			if (process_attr(vpninfo, group, attr, bytes + ofs, attrlen))
+			if (process_attr(vpninfo, &new_opts, &new_ip_info,
+					 group, attr, bytes + ofs, attrlen))
 				goto eparse;
 			if (GRP_ATTR(group, attr)==GRP_ATTR(7, 2))
 				split_enc_hmac_keys = 1;
@@ -450,6 +457,13 @@ static int parse_conf_pkt(struct openconnect_info *vpninfo, unsigned char *bytes
 	if (split_enc_hmac_keys)
 		memcpy(vpninfo->esp_out.hmac_key, vpninfo->esp_out.enc_key + vpninfo->enc_key_len, vpninfo->hmac_key_len);
 
+	int ret = install_vpn_opts(vpninfo, new_opts, &new_ip_info);
+	if (ret) {
+		free_optlist(new_opts);
+		free_split_routes(&new_ip_info);
+		return ret;
+	}
+
 	return 0;
 }
 
@@ -459,7 +473,6 @@ int oncp_connect(struct openconnect_info *vpninfo)
 	int ret, len, kmp, kmplen, group, check_len;
 	struct oc_text_buf *reqbuf;
 	unsigned char bytes[65536];
-	const char *old_addr = vpninfo->ip_info.addr, *old_netmask = vpninfo->ip_info.netmask;
 
 	if (!vpninfo->cookies) {
 		/* XX: This will happen if authentication was separate/external */
@@ -704,8 +717,7 @@ int oncp_connect(struct openconnect_info *vpninfo)
 		}
 		goto out;
 	}
-
-	ret = check_address_sanity(vpninfo, old_addr, old_netmask, NULL, NULL);
+	ret = 0;
 
  out:
 	if (ret)

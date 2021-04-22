@@ -507,8 +507,7 @@ static-analyzer/GnuTLS/Fedora:
     expire_in: 1 week
     when: always
     paths:
-      - tests/*.log
-      - openconnect-installer.exe
+      - scan-build-src/*
 
 static-analyzer/OpenSSL/Fedora:
   image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:buildenv-fedora

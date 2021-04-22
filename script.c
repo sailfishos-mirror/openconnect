@@ -336,13 +336,16 @@ void prepare_script_env(struct openconnect_info *vpninfo)
 			}
 		}
 	}
-	if (vpninfo->ip_info.addr6) {
+
+	if (vpninfo->ip_info.addr6)
 		script_setenv(vpninfo, "INTERNAL_IP6_ADDRESS", vpninfo->ip_info.addr6, 0, 0);
+	if (vpninfo->ip_info.netmask6)
 		script_setenv(vpninfo, "INTERNAL_IP6_NETMASK", vpninfo->ip_info.netmask6, 0, 0);
-	} else if (vpninfo->ip_info.netmask6) {
-               char *slash = strchr(vpninfo->ip_info.netmask6, '/');
-               script_setenv(vpninfo, "INTERNAL_IP6_NETMASK", vpninfo->ip_info.netmask6, 0, 0);
-               if (slash)
+	/* The 'netmask6' is actually the address *and* netmask. From which we
+	 * obtain just the address on its own, if we don't have it separately */
+	if (vpninfo->ip_info.netmask6 && !vpninfo->ip_info.addr6) {
+		char *slash = strchr(vpninfo->ip_info.netmask6, '/');
+		if (slash)
                        script_setenv(vpninfo, "INTERNAL_IP6_ADDRESS", vpninfo->ip_info.netmask6,
 				     slash - vpninfo->ip_info.netmask6, 0);
 	}
@@ -436,27 +439,27 @@ void prepare_script_env(struct openconnect_info *vpninfo)
 	setenv_cstp_opts(vpninfo);
 }
 
-void free_split_routes(struct openconnect_info *vpninfo)
+void free_split_routes(struct oc_ip_info *ip_info)
 {
 	struct oc_split_include *inc;
 
-	for (inc = vpninfo->ip_info.split_includes; inc; ) {
+	for (inc = ip_info->split_includes; inc; ) {
 		struct oc_split_include *next = inc->next;
 		free(inc);
 		inc = next;
 	}
-	for (inc = vpninfo->ip_info.split_excludes; inc; ) {
+	for (inc = ip_info->split_excludes; inc; ) {
 		struct oc_split_include *next = inc->next;
 		free(inc);
 		inc = next;
 	}
-	for (inc = vpninfo->ip_info.split_dns; inc; ) {
+	for (inc = ip_info->split_dns; inc; ) {
 		struct oc_split_include *next = inc->next;
 		free(inc);
 		inc = next;
 	}
-	vpninfo->ip_info.split_dns = vpninfo->ip_info.split_includes =
-		vpninfo->ip_info.split_excludes = NULL;
+	ip_info->split_dns = ip_info->split_includes =
+		ip_info->split_excludes = NULL;
 }
 
 

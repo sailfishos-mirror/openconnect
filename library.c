@@ -387,7 +387,8 @@ int openconnect_set_version_string(struct openconnect_info *vpninfo,
 	return 0;
 }
 
-const char *add_option_dup(struct openconnect_info *vpninfo, const char *opt,
+const char *add_option_dup(struct oc_vpn_option **list,
+			   const char *opt,
 			   const char *val, int val_len)
 {
 	const char *ret;
@@ -398,12 +399,13 @@ const char *add_option_dup(struct openconnect_info *vpninfo, const char *opt,
 	else
 		new_val = strdup(val);
 
-	ret = add_option_steal(vpninfo, opt, &new_val);
+	ret = add_option_steal(list, opt, &new_val);
 	free(new_val);
 	return ret;
 }
 
-const char *add_option_steal(struct openconnect_info *vpninfo, const char *opt, char **val)
+const char *add_option_steal(struct oc_vpn_option **list,
+			     const char *opt, char **val)
 {
 	struct oc_vpn_option *new = malloc(sizeof(*new));
 	if (!new)
@@ -416,21 +418,21 @@ const char *add_option_steal(struct openconnect_info *vpninfo, const char *opt, 
 	}
 	new->value = *val;
 	*val = NULL;
-	new->next = vpninfo->cstp_options;
-	vpninfo->cstp_options = new;
+	new->next = *list;
+	*list = new;
 
 	return new->value;
 }
 
-const char *add_option_ipaddr(struct openconnect_info *vpninfo, const char *opt,
-			      int af, void *addr)
+const char *add_option_ipaddr(struct oc_vpn_option **list,
+			      const char *opt, int af, void *addr)
 {
 	char buf[40];
 
 	if (!inet_ntop(af, addr, buf, sizeof(buf)))
 		return NULL;
 
-	return add_option_dup(vpninfo, opt, buf, -1);
+	return add_option_dup(list, opt, buf, -1);
 }
 
 
@@ -444,6 +446,75 @@ void free_optlist(struct oc_vpn_option *opt)
 		free(opt->value);
 		free(opt);
 	}
+}
+
+int install_vpn_opts(struct openconnect_info *vpninfo, struct oc_vpn_option *opt,
+		     struct oc_ip_info *ip_info)
+{
+	/* F5 doesn't get its IP address until it actually establishes the
+	 * PPP connection. */
+	if (vpninfo->proto->proto != PROTO_F5 && !ip_info->addr &&
+	    !ip_info->addr6 && !ip_info->netmask6) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("No IP address received. Aborting\n"));
+		return -EINVAL;
+	}
+
+	if (vpninfo->ip_info.addr) {
+		if (!ip_info->addr || strcmp(ip_info->addr, vpninfo->ip_info.addr)) {
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("Reconnect gave different Legacy IP address (%s != %s)\n"),
+				     ip_info->addr, vpninfo->ip_info.addr);
+			/* EPERM means that the retry loop will abort and won't keep trying. */
+			return -EPERM;
+		}
+	}
+	if (vpninfo->ip_info.netmask) {
+		if (!ip_info->netmask || strcmp(ip_info->netmask, vpninfo->ip_info.netmask)) {
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("Reconnect gave different Legacy IP netmask (%s != %s)\n"),
+				     ip_info->netmask, vpninfo->ip_info.netmask);
+			return -EPERM;
+		}
+	}
+	if (vpninfo->ip_info.addr6) {
+		if (!ip_info->addr6 || strcmp(ip_info->addr6, vpninfo->ip_info.addr6)) {
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("Reconnect gave different IPv6 address (%s != %s)\n"),
+				     ip_info->addr6, vpninfo->ip_info.addr6);
+			return -EPERM;
+		}
+	}
+	if (vpninfo->ip_info.netmask6) {
+		if (!ip_info->netmask6 || strcmp(ip_info->netmask6, vpninfo->ip_info.netmask6)) {
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("Reconnect gave different IPv6 netmask (%s != %s)\n"),
+				     ip_info->netmask6, vpninfo->ip_info.netmask6);
+			return -EPERM;
+		}
+	}
+
+	/* Preserve gateway_addr and MTU if they were set */
+	ip_info->gateway_addr = vpninfo->ip_info.gateway_addr;
+	if (!ip_info->mtu)
+		ip_info->mtu = vpninfo->ip_info.mtu;
+
+	if (ip_info->mtu && ip_info->mtu < 1280 &&
+	    (ip_info->addr6 || ip_info->netmask6)) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("IPv6 configuration received but MTU %d is too small.\n"),
+			     ip_info->mtu);
+	}
+
+	/* Free the original options */
+	free_split_routes(&vpninfo->ip_info);
+	free_optlist(vpninfo->cstp_options);
+
+	/* Install the new options */
+	vpninfo->cstp_options = opt;
+	vpninfo->ip_info = *ip_info;
+
+	return 0;
 }
 
 void openconnect_vpninfo_free(struct openconnect_info *vpninfo)
@@ -485,7 +556,7 @@ void openconnect_vpninfo_free(struct openconnect_info *vpninfo)
 	free_optlist(vpninfo->cookies);
 	free_optlist(vpninfo->cstp_options);
 	free_optlist(vpninfo->dtls_options);
-	free_split_routes(vpninfo);
+	free_split_routes(&vpninfo->ip_info);
 	free(vpninfo->hostname);
 	free(vpninfo->unique_hostname);
 	free(vpninfo->urlpath);

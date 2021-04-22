@@ -278,12 +278,11 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
   <auth-timeout val="18000"/>
 </sslvpn-tunnel>
 */
-static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf, int len,
-				     int *ipv4, int *ipv6)
+static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf, int len)
 {
 	xmlNode *xml_node, *x, *x2;
 	xmlDocPtr xml_doc;
-	int ret = 0, ii, n_dns = 0, default_route = 1;
+	int ret = 0, n_dns = 0, default_route = 1;
 	char *s = NULL, *s2 = NULL;
 	struct oc_text_buf *domains = NULL;
 
@@ -304,14 +303,8 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 	if (!xml_node || !xmlnode_is_named(xml_node, "sslvpn-tunnel"))
 		return -EINVAL;
 
-	/* Clear old options which will be overwritten */
-	vpninfo->ip_info.addr = vpninfo->ip_info.netmask = NULL;
-	vpninfo->ip_info.addr6 = vpninfo->ip_info.netmask6 = NULL;
-	vpninfo->ip_info.domain = NULL;
-	vpninfo->cstp_options = NULL;
-	for (ii = 0; ii < 3; ii++)
-		vpninfo->ip_info.dns[ii] = vpninfo->ip_info.nbns[ii] = NULL;
-	free_split_routes(vpninfo);
+	struct oc_vpn_option *new_opts = NULL;
+	struct oc_ip_info new_ip_info = {};
 
 	domains = buf_alloc();
 
@@ -347,11 +340,10 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 					 _("Reported platform is %s\n"), platform);
 			}
 		} else if (xmlnode_is_named(xml_node, "ipv4")) {
-			*ipv4 = 1;
 			for (x = xml_node->children; x; x=x->next) {
 				if (xmlnode_is_named(x, "assigned-addr") && !xmlnode_get_prop(x, "ipv4", &s)) {
 					vpn_progress(vpninfo, PRG_INFO, _("Got legacy IP address %s\n"), s);
-					vpninfo->ip_info.addr = add_option_steal(vpninfo, "ipaddr", &s);
+					new_ip_info.addr = add_option_steal(&new_opts, "ipaddr", &s);
 				} else if (xmlnode_is_named(x, "dns")) {
 					if (!xmlnode_get_prop(x, "domain", &s) && s && *s) {
 						vpn_progress(vpninfo, PRG_INFO, _("Got search domain %s\n"), s);
@@ -359,7 +351,7 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 					}
 					if (!xmlnode_get_prop(x, "ip", &s) && s && *s) {
 						vpn_progress(vpninfo, PRG_INFO, _("Got IPv%d DNS server %s\n"), 4, s);
-						if (n_dns < 3) vpninfo->ip_info.dns[n_dns++] = add_option_steal(vpninfo, "DNS", &s);
+						if (n_dns < 3) new_ip_info.dns[n_dns++] = add_option_steal(&new_opts, "DNS", &s);
 					}
 				} else if (xmlnode_is_named(x, "split-dns")) {
 					int ii;
@@ -385,14 +377,16 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 								if (!route || !inc) {
 									free(route);
 									free(inc);
+									free_optlist(new_opts);
+									free_split_routes(&new_ip_info);
 									ret = -ENOMEM;
 									goto out;
 								}
 								snprintf(route, 32, "%s/%s", s, s2);
 								vpn_progress(vpninfo, PRG_INFO, _("Got IPv%d route %s\n"), 4, route);
-								inc->route = add_option_steal(vpninfo, "split-include", &route);
-								inc->next = vpninfo->ip_info.split_includes;
-								vpninfo->ip_info.split_includes = inc;
+								inc->route = add_option_steal(&new_opts, "split-include", &route);
+								inc->next = new_ip_info.split_includes;
+								new_ip_info.split_includes = inc;
 								/* XX: static analyzer doesn't realize that add_option_steal will steal route's reference, so... */
 								free(route);
 							}
@@ -403,17 +397,19 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 		}
 	}
 
-	if (default_route && *ipv4)
-		vpninfo->ip_info.netmask = strdup("0.0.0.0");
-	if (default_route && *ipv6)
-		vpninfo->ip_info.netmask6 = strdup("::/0");
+	if (default_route && new_ip_info.addr)
+		new_ip_info.netmask = add_option_dup(&new_opts, "full-netmask", "0.0.0.0", -1);
 	if (buf_error(domains) == 0 && domains->pos > 0) {
 		domains->data[domains->pos-1] = '\0';
-		vpninfo->ip_info.domain = add_option_steal(vpninfo, "search", &domains->data);
+		new_ip_info.domain = add_option_steal(&new_opts, "search", &domains->data);
 	}
 	buf_free(domains);
 
-	if (*ipv4 < 1 && *ipv6 < 1) {
+	ret = install_vpn_opts(vpninfo, new_opts, &new_ip_info);
+	if (ret) {
+		free_optlist(new_opts);
+                free_split_routes(&new_ip_info);
+
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Failed to find VPN options\n"));
 		vpn_progress(vpninfo, PRG_DEBUG,
@@ -432,7 +428,7 @@ static int fortinet_configure(struct openconnect_info *vpninfo)
 	char *res_buf = NULL;
 	struct oc_text_buf *reqbuf = NULL;
 	struct oc_vpn_option *svpncookie = NULL;
-	int ret, ipv4 = -1, ipv6 = -1;
+	int ret;
 
 	/* XXX: We should use check_address_sanity to verify that addresses haven't
 	   changed on a reconnect, except that:
@@ -497,14 +493,9 @@ static int fortinet_configure(struct openconnect_info *vpninfo)
 	} else if (ret == 0)
 		goto invalid_cookie;
 
-	ret = parse_fortinet_xml_config(vpninfo, res_buf, ret, &ipv4, &ipv6);
+	ret = parse_fortinet_xml_config(vpninfo, res_buf, ret);
 	if (ret)
 		goto out;
-
-	if (ipv4 == -1)
-		ipv4 = 0;
-	if (ipv6 == -1)
-		ipv6 = 0;
 
 	reqbuf = vpninfo->ppp_tls_connect_req;
 	if (!reqbuf)
@@ -534,6 +525,8 @@ static int fortinet_configure(struct openconnect_info *vpninfo)
 	vpninfo->ppp_dtls_connect_req = reqbuf;
 	reqbuf = NULL;
 
+	int ipv4 = !!vpninfo->ip_info.addr;
+	int ipv6 = !!(vpninfo->ip_info.addr6 || vpninfo->ip_info.netmask6);
 	ret = openconnect_ppp_new(vpninfo, PPP_ENCAP_FORTINET, ipv4, ipv6);
 
  out:

@@ -308,7 +308,7 @@ static int parse_options(struct openconnect_info *vpninfo, char *buf, int len,
 {
 	xmlNode *fav_node, *obj_node, *xml_node;
 	xmlDocPtr xml_doc;
-	int ret = 0, ii, n_dns = 0, n_nbns = 0, default_route = 0, dtls = 0, dtls_port = 0;
+	int ret = 0, n_dns = 0, n_nbns = 0, default_route = 0, dtls = 0, dtls_port = 0;
 	char *s = NULL;
 	struct oc_text_buf *domains = NULL;
 
@@ -332,14 +332,8 @@ static int parse_options(struct openconnect_info *vpninfo, char *buf, int len,
 	if (!xmlnode_is_named(obj_node, "object"))
 		goto err;
 
-	/* Clear old options which will be overwritten */
-	vpninfo->ip_info.addr = vpninfo->ip_info.netmask = NULL;
-	vpninfo->ip_info.addr6 = vpninfo->ip_info.netmask6 = NULL;
-	vpninfo->ip_info.domain = NULL;
-	vpninfo->cstp_options = NULL;
-	for (ii = 0; ii < 3; ii++)
-		vpninfo->ip_info.dns[ii] = vpninfo->ip_info.nbns[ii] = NULL;
-	free_split_routes(vpninfo);
+	struct oc_vpn_option *new_opts = NULL;
+	struct oc_ip_info new_ip_info = {};
 
 	domains = buf_alloc();
 
@@ -382,14 +376,14 @@ static int parse_options(struct openconnect_info *vpninfo, char *buf, int len,
 			s = (char *)xmlNodeGetContent(xml_node);
 			if (s && *s) {
 				vpn_progress(vpninfo, PRG_INFO, _("Got DNS server %s\n"), s);
-				if (n_dns < 3) vpninfo->ip_info.dns[n_dns++] = add_option_steal(vpninfo, "DNS", &s);
+				if (n_dns < 3) new_ip_info.dns[n_dns++] = add_option_steal(&new_opts, "DNS", &s);
 			}
 		} else if (!strncmp((char *)xml_node->name, "WINS", 4) && isdigit(xml_node->name[4])) {
 			free(s);
 			s = (char *)xmlNodeGetContent(xml_node);
 			if (s && *s) {
 				vpn_progress(vpninfo, PRG_INFO, _("Got WINS/NBNS server %s\n"), s);
-				if (n_nbns < 3) vpninfo->ip_info.dns[n_nbns++] = add_option_steal(vpninfo, "WINS", &s);
+				if (n_nbns < 3) new_ip_info.dns[n_nbns++] = add_option_steal(&new_opts, "WINS", &s);
 			}
 		} else if (!strncmp((char *)xml_node->name, "DNSSuffix", 9) && isdigit(xml_node->name[9])) {
 			free(s);
@@ -421,14 +415,14 @@ static int parse_options(struct openconnect_info *vpninfo, char *buf, int len,
 					struct oc_split_include *inc = malloc(sizeof(*inc));
 					if (!inc)
 						continue;
-					inc->route = add_option_dup(vpninfo, option, word, -1);
+					inc->route = add_option_dup(&new_opts, option, word, -1);
 					if (is_exclude) {
-						inc->next = vpninfo->ip_info.split_excludes;
-						vpninfo->ip_info.split_excludes = inc;
+						inc->next = new_ip_info.split_excludes;
+						new_ip_info.split_excludes = inc;
 						vpn_progress(vpninfo, PRG_INFO, _("Got split exclude route %s\n"), word);
 					} else {
-						inc->next = vpninfo->ip_info.split_includes;
-						vpninfo->ip_info.split_includes = inc;
+						inc->next = new_ip_info.split_includes;
+						new_ip_info.split_includes = inc;
 						vpn_progress(vpninfo, PRG_INFO, _("Got split include route %s\n"), word);
 					}
 				}
@@ -454,16 +448,20 @@ static int parse_options(struct openconnect_info *vpninfo, char *buf, int len,
 		}
 	}
 	if (default_route && *ipv4)
-		vpninfo->ip_info.netmask = add_option_dup(vpninfo, "netmask", "0.0.0.0", -1);
+		new_ip_info.netmask = add_option_dup(&new_opts, "netmask", "0.0.0.0", -1);
 	if (default_route && *ipv6)
-		vpninfo->ip_info.netmask6 = add_option_dup(vpninfo, "netmask6", "::/0", -1);
+		new_ip_info.netmask6 = add_option_dup(&new_opts, "netmask6", "::/0", -1);
 	if (buf_error(domains) == 0 && domains->pos > 0) {
 		domains->data[domains->pos-1] = '\0';
-		vpninfo->ip_info.domain = add_option_steal(vpninfo, "search", &domains->data);
+		new_ip_info.domain = add_option_steal(&new_opts, "search", &domains->data);
 	}
 	buf_free(domains);
 
-	if ( (*ipv4 < 1 && *ipv6 < 1) || !*ur_z || !*session_id) {
+	ret = install_vpn_opts(vpninfo, new_opts, &new_ip_info);
+
+	if (ret || (*ipv4 < 1 && *ipv6 < 1) || !*ur_z || !*session_id) {
+		free_optlist(new_opts);
+                free_split_routes(&new_ip_info);
 	err:
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Failed to find VPN options\n"));
@@ -513,11 +511,6 @@ static int f5_configure(struct openconnect_info *vpninfo)
 	char *sid = NULL, *ur_z = NULL;
 	int ipv4 = -1, ipv6 = -1, hdlc = 0;
 	char *res_buf = NULL;
-	struct oc_vpn_option *old_cstp_opts = vpninfo->cstp_options;
-	const char *old_addr = vpninfo->ip_info.addr;
-	const char *old_netmask = vpninfo->ip_info.netmask;
-	const char *old_addr6 = vpninfo->ip_info.addr6;
-	const char *old_netmask6 = vpninfo->ip_info.netmask6;
 
 	if (!vpninfo->cookies) {
 		/* XX: This will happen if authentication was separate/external */
@@ -576,17 +569,6 @@ static int f5_configure(struct openconnect_info *vpninfo)
 	if (ipv6 == -1)
 		ipv6 = 0;
 
-	/* The addresses set in ip_info only after they're negotiated in PPP.
-	 * If they were there before a reconnect, preserve them. */
-	if (old_addr)
-		vpninfo->ip_info.addr = add_option_dup(vpninfo, "ppp_addr", old_addr, -1);
-	if (old_addr6)
-		vpninfo->ip_info.addr6 = add_option_dup(vpninfo, "ppp_addr6", old_addr6, -1);
-
-	ret = check_address_sanity(vpninfo, old_addr, old_netmask, old_addr6, old_netmask6);
-	if (ret < 0)
-		goto out;
-
 	/* XX: This buffer is used to initiate the connection over either TLS or DTLS.
 	 * Cookies are not needed for it to succeed, and can potentially grow without bound,
 	 * which would make it too big to fit in a single DTLS packet (ick, HTTP over DTLS).
@@ -619,8 +601,6 @@ static int f5_configure(struct openconnect_info *vpninfo)
 	ret = openconnect_ppp_new(vpninfo, hdlc ? PPP_ENCAP_F5_HDLC : PPP_ENCAP_F5, ipv4, ipv6);
 
  out:
-	if (old_cstp_opts != vpninfo->cstp_options)
-		free_optlist(old_cstp_opts);
 	free(res_buf);
 	free(profile_params);
 	free(sid);

@@ -936,7 +936,9 @@ int script_setenv_int(struct openconnect_info *vpninfo, const char *opt, int val
 void prepare_script_env(struct openconnect_info *vpninfo);
 int script_config_tun(struct openconnect_info *vpninfo, const char *reason);
 int apply_script_env(struct oc_vpn_option *envs);
-void free_split_routes(struct openconnect_info *vpninfo);
+void free_split_routes(struct oc_ip_info *ip_info);
+int install_vpn_opts(struct openconnect_info *vpninfo, struct oc_vpn_option *opt,
+		     struct oc_ip_info *ip_info);
 
 /* tun.c / tun-win32.c */
 void os_shutdown_tun(struct openconnect_info *vpninfo);
@@ -986,7 +988,6 @@ char *openconnect_bin2base64(const char *prefix, const uint8_t *data, unsigned l
 int calculate_mtu(struct openconnect_info *vpninfo, int is_udp, int unpadded_overhead, int padded_overhead, int block_size);
 
 /* cstp.c */
-int check_address_sanity(struct openconnect_info *vpninfo, const char *old_addr, const char *old_netmask, const char *old_addr6, const char *old_netmask6);
 void cstp_common_headers(struct openconnect_info *vpninfo, struct oc_text_buf *buf);
 int cstp_connect(struct openconnect_info *vpninfo);
 int cstp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable);
@@ -1304,9 +1305,9 @@ int digest_authorization(struct openconnect_info *vpninfo, int proxy, struct htt
 
 /* library.c */
 void nuke_opt_values(struct oc_form_opt *opt);
-const char *add_option_dup(struct openconnect_info *vpninfo, const char *opt, const char *val, int val_len);
-const char *add_option_steal(struct openconnect_info *vpninfo, const char *opt, char **val);
-const char *add_option_ipaddr(struct openconnect_info *vpninfo, const char *opt, int af, void *addr);
+const char *add_option_dup(struct oc_vpn_option **list, const char *opt, const char *val, int val_len);
+const char *add_option_steal(struct oc_vpn_option **list, const char *opt, char **val);
+const char *add_option_ipaddr(struct oc_vpn_option **list, const char *opt, int af, void *addr);
 void free_optlist(struct oc_vpn_option *opt);
 int process_auth_form(struct openconnect_info *vpninfo, struct oc_auth_form *form);
 /* This is private for now since we haven't yet worked out what the API will be */
