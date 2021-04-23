@@ -1306,14 +1306,24 @@ int gpst_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 }
 
 #ifdef HAVE_ESP
-static uint16_t csum(uint16_t *buf, int nwords)
+static inline uint32_t csum_partial(uint16_t *buf, int nwords)
 {
 	uint32_t sum = 0;
 	for(sum=0; nwords>0; nwords--)
 		sum += ntohs(*buf++);
+	return sum;
+}
+
+static inline uint16_t csum_finish(uint32_t sum)
+{
 	sum = (sum >> 16) + (sum &0xffff);
 	sum += (sum >> 16);
 	return htons((uint16_t)(~sum));
+}
+
+static inline uint16_t csum(uint16_t *buf, int nwords)
+{
+	return csum_finish(csum_partial(buf, nwords));
 }
 
 static char magic_ping_payload[16] = "monitor\x00\x00pan ha ";
