@@ -432,7 +432,9 @@ struct openconnect_info {
 	int enc_key_len;
 	int hmac_key_len;
 	int hmac_out_len;
-	uint32_t esp_magic;  /* GlobalProtect magic ping address (network-endian) */
+
+	int esp_magic_af;
+	unsigned char esp_magic[16]; /* GlobalProtect magic ping address (network-endian) */
 
 	struct oc_ppp *ppp;
 	struct oc_text_buf *ppp_tls_connect_req;
