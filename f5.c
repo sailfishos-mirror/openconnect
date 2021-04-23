@@ -68,8 +68,13 @@ static int check_cookie_success(struct openconnect_info *vpninfo)
 	struct oc_vpn_option *cookie;
 	const char *session = NULL, *f5_st = NULL;
 
-	/* XX: if login succeeded worked, we should have a response size of zero, and F5_ST
-	 * and MRHSession cookies in the response.
+	/* XX: The MRHSession cookie is often set repeatedly to new values prior
+	 * to the completion of authentication, so it is not a sufficient
+	 * indicator of successfully completed authentication by itself.
+	 *
+	 * The combination of the MRHSession and F5_ST cookies appears to be
+	 * reliable indicator. F5_ST is a "session timeout" cookie (see
+	 * https://support.f5.com/csp/article/K15387).
 	 */
 	for (cookie = vpninfo->cookies; cookie; cookie = cookie->next) {
 		if (!strcmp(cookie->option, "MRHSession"))
@@ -111,14 +116,14 @@ int f5_obtain_cookie(struct openconnect_info *vpninfo)
 			ret = do_https_request(vpninfo, "GET", NULL, NULL,
 					       &resp_buf, 2);
 
-		if (ret < 0)
-			break;
-
 		if (!check_cookie_success(vpninfo)) {
 			free(resp_buf);
 			ret = 0;
 			break;
 		}
+
+		if (ret < 0)
+			break;
 
 		url = internal_get_url(vpninfo);
 		if (!url) {

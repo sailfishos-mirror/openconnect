@@ -194,55 +194,53 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 		ret = do_https_request(vpninfo, "POST", "application/x-www-form-urlencoded",
 				       req_buf, &resp_buf, 0);
 
-		/* XX: if this worked, we should have 200 status */
-		if (ret >= 0) {
-			/* If we got SVPNCOOKIE, then we're done. */
-			struct oc_vpn_option *cookie;
-			for (cookie = vpninfo->cookies; cookie; cookie = cookie->next) {
-				if (!strcmp(cookie->option, "SVPNCOOKIE")) {
-					free(vpninfo->cookie);
-					vpninfo->cookie = strdup(cookie->value);
-					if (!vpninfo->cookie)
-						goto nomem;
-					ret = 0;
-					goto out;
-				}
+		/* If we got SVPNCOOKIE, then we're done. */
+		struct oc_vpn_option *cookie;
+		for (cookie = vpninfo->cookies; cookie; cookie = cookie->next) {
+			if (!strcmp(cookie->option, "SVPNCOOKIE")) {
+				free(vpninfo->cookie);
+				vpninfo->cookie = strdup(cookie->value);
+				if (!vpninfo->cookie)
+					goto nomem;
+				ret = 0;
+				goto out;
 			}
+		}
 
-			/* XX: We didn't get SVPNCOOKIE. 2FA? */
-			if (!strncmp(resp_buf, "ret=", 4) && strstr(resp_buf, ",tokeninfo=")) {
-				const char *prompt;
-				struct oc_text_buf *action_buf = buf_alloc();
+		/* XX: We got 200 status, but no SVPNCOOKIE. 2FA? */
+		if (ret >= 0 &&
+		    !strncmp(resp_buf, "ret=", 4) && strstr(resp_buf, ",tokeninfo=")) {
+			const char *prompt;
+			struct oc_text_buf *action_buf = buf_alloc();
 
-				/* Hide 'username' field */
-				opt->type = OC_FORM_OPT_HIDDEN;
-				free(opt2->label);
-				free(opt2->_value);
+			/* Hide 'username' field */
+			opt->type = OC_FORM_OPT_HIDDEN;
+			free(opt2->label);
+			free(opt2->_value);
 
-				/* Change 'credential' field to 'code'. */
-				opt2->_value = NULL;
-				opt2->name = strdup("code");
-				opt2->label = strdup("Code: ");
-				if (!can_gen_tokencode(vpninfo, form, opt2))
-					opt2->type = OC_FORM_OPT_TOKEN;
-				else
-					opt2->type = OC_FORM_OPT_PASSWORD;
+			/* Change 'credential' field to 'code'. */
+			opt2->_value = NULL;
+			opt2->name = strdup("code");
+			opt2->label = strdup("Code: ");
+			if (!can_gen_tokencode(vpninfo, form, opt2))
+				opt2->type = OC_FORM_OPT_TOKEN;
+			else
+				opt2->type = OC_FORM_OPT_PASSWORD;
 
-				/* Save a bunch of values to parrot back */
-				filter_opts(action_buf, resp_buf, "reqid,polid,grp,portal,peer,magic", 1);
-				if ((ret = buf_error(action_buf)))
-					goto out;
-				free(form->action);
-				form->action = action_buf->data;
-				action_buf->data = NULL;
-				buf_free(action_buf);
+			/* Save a bunch of values to parrot back */
+			filter_opts(action_buf, resp_buf, "reqid,polid,grp,portal,peer,magic", 1);
+			if ((ret = buf_error(action_buf)))
+				goto out;
+			free(form->action);
+			form->action = action_buf->data;
+			action_buf->data = NULL;
+			buf_free(action_buf);
 
-				if ((prompt = strstr(resp_buf, ",chal_msg="))) {
-					const char *end = strchrnul(prompt, ',');
-					prompt += 10;
-					free(form->message);
-					form->message = strndup(prompt, end-prompt);
-				}
+			if ((prompt = strstr(resp_buf, ",chal_msg="))) {
+				const char *end = strchrnul(prompt, ',');
+				prompt += 10;
+				free(form->message);
+				form->message = strndup(prompt, end-prompt);
 			}
 		}
 	}
