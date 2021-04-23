@@ -467,14 +467,19 @@ int oncp_obtain_cookie(struct openconnect_info *vpninfo)
 			ret = do_https_request(vpninfo, "GET", NULL, NULL,
 					       &form_buf, 2);
 
-		if (ret < 0)
-			break;
-
+		/* After login, the server will redirect the "browser" to a landing page.
+		 * https://kb.pulsesecure.net/articles/Pulse_Security_Advisories/SA44784
+		 * turned some of those landing pages into a 403 but we don't *care*
+		 * about that as long as we have the cookie we wanted. So check for
+		 * cookie success *before* checking 'ret'. */
 		if (!check_cookie_success(vpninfo)) {
 			free(form_buf);
 			ret = 0;
 			break;
 		}
+
+		if (ret < 0)
+			break;
 
 		url = internal_get_url(vpninfo);
 		if (!url) {
