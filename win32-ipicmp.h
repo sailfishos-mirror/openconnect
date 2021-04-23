@@ -37,6 +37,34 @@ struct ip {
 	struct	in_addr ip_src,ip_dst;	/* source and dest address */
 };
 
+/* IPv6 header used in gpst.c */
+
+struct ip6_hdr
+  {
+    union
+      {
+	struct ip6_hdrctl
+	  {
+	    uint32_t ip6_un1_flow;   /* 4 bits version, 8 bits TC,
+					20 bits flow-ID */
+	    uint16_t ip6_un1_plen;   /* payload length */
+	    uint8_t  ip6_un1_nxt;    /* next header */
+	    uint8_t  ip6_un1_hlim;   /* hop limit */
+	  } ip6_un1;
+	uint8_t ip6_un2_vfc;       /* 4 bits version, top 4 bits tclass */
+      } ip6_ctlun;
+    struct in6_addr ip6_src;      /* source address */
+    struct in6_addr ip6_dst;      /* destination address */
+  };
+
+
+#define ip6_vfc   ip6_ctlun.ip6_un2_vfc
+#define ip6_flow  ip6_ctlun.ip6_un1.ip6_un1_flow
+#define ip6_plen  ip6_ctlun.ip6_un1.ip6_un1_plen
+#define ip6_nxt   ip6_ctlun.ip6_un1.ip6_un1_nxt
+#define ip6_hlim  ip6_ctlun.ip6_un1.ip6_un1_hlim
+#define ip6_hops  ip6_ctlun.ip6_un1.ip6_un1_hlim
+
 /* ICMP header and flags used in gpst.c */
 
 #define IPPROTO_ICMP    1
@@ -118,5 +146,33 @@ struct icmp
     uint8_t    id_data[1];
   } icmp_dun;
 };
+
+/* ICMPv6 header and flags used in gpst.c */
+
+#define IPPROTO_ICMPV6	58
+#define ICMP6_ECHO_REQUEST	128
+#define ICMP6_ECHO_REPLY	129
+
+struct icmp6_hdr
+  {
+    uint8_t     icmp6_type;   /* type field */
+    uint8_t     icmp6_code;   /* code field */
+    uint16_t    icmp6_cksum;  /* checksum field */
+    union
+      {
+	uint32_t  icmp6_un_data32[1]; /* type-specific field */
+	uint16_t  icmp6_un_data16[2]; /* type-specific field */
+	uint8_t   icmp6_un_data8[4];  /* type-specific field */
+      } icmp6_dataun;
+  };
+
+#define icmp6_data32    icmp6_dataun.icmp6_un_data32
+#define icmp6_data16    icmp6_dataun.icmp6_un_data16
+#define icmp6_data8     icmp6_dataun.icmp6_un_data8
+#define icmp6_pptr      icmp6_data32[0]  /* parameter prob */
+#define icmp6_mtu       icmp6_data32[0]  /* packet too big */
+#define icmp6_id        icmp6_data16[0]  /* echo request/reply */
+#define icmp6_seq       icmp6_data16[1]  /* echo request/reply */
+#define icmp6_maxdelay  icmp6_data16[0]  /* mcast group membership */
 
 #endif /* __OPENCONNECT_WIN32_IPICMP_H__ */
