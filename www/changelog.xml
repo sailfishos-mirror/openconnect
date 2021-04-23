@@ -15,7 +15,7 @@
 <ul>
    <li><b>OpenConnect HEAD</b>
      <ul>
-       <li><i>No changelog entries yet</i></li>
+       <li>Ignore failures to fetch the NC landing page if the authentication was successful.</li>
      </ul><br/>
   </li>
   <li><b><a href="ftp://ftp.infradead.org/pub/openconnect/openconnect-8.10.tar.gz">OpenConnect v8.10</a></b>
