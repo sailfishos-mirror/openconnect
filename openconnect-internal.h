@@ -201,7 +201,8 @@ struct pkt {
 #define PROTO_PULSE		3
 #define PROTO_F5		4
 #define PROTO_FORTINET		5
-#define PROTO_NULLPPP		6
+#define PROTO_NX		6
+#define PROTO_NULLPPP		7
 
 /* All supported PPP packet framings/encapsulations */
 #define PPP_ENCAP_RFC1661	1	/* Plain/synchronous/pre-framed PPP (RFC1661) */
@@ -209,7 +210,8 @@ struct pkt {
 #define PPP_ENCAP_F5		3	/* F5 BigIP no HDLC */
 #define PPP_ENCAP_F5_HDLC	4	/* F5 BigIP HDLC */
 #define PPP_ENCAP_FORTINET	5	/* Fortinet no HDLC */
-#define PPP_ENCAP_MAX		PPP_ENCAP_FORTINET
+#define PPP_ENCAP_NX_HDLC	6	/* SonicWall NetExtender HDLC */
+#define PPP_ENCAP_MAX		PPP_ENCAP_NX_HDLC
 
 #define COMPR_DEFLATE	(1<<0)
 #define COMPR_LZS	(1<<1)
@@ -1021,6 +1023,12 @@ int oncp_bye(struct openconnect_info *vpninfo, const char *reason);
 void oncp_esp_close(struct openconnect_info *vpninfo);
 int oncp_esp_send_probes(struct openconnect_info *vpninfo);
 int oncp_esp_catch_probe(struct openconnect_info *vpninfo, struct pkt *pkt);
+
+/* nx.c */
+int nx_obtain_cookie(struct openconnect_info *vpninfo);
+void nx_common_headers(struct openconnect_info *vpninfo, struct oc_text_buf *buf);
+int nx_connect(struct openconnect_info *vpninfo);
+int nx_bye(struct openconnect_info *vpninfo, const char *reason);
 
 /* pulse.c */
 int pulse_obtain_cookie(struct openconnect_info *vpninfo);

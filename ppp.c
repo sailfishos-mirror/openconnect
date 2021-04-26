@@ -173,6 +173,7 @@ static const char *encap_names[PPP_ENCAP_MAX+1] = {
 	"F5",
 	"F5 HDLC",
 	"FORTINET",
+	"NX HDLC",
 };
 
 static const char *lcp_names[] = {
@@ -281,6 +282,11 @@ int ppp_reset(struct openconnect_info *vpninfo)
 
 	case PPP_ENCAP_RFC1662_HDLC:
 		ppp->encap_len = 0;
+		ppp->hdlc = 1;
+		break;
+
+	case PPP_ENCAP_NX_HDLC:
+		ppp->encap_len = 4;
 		ppp->hdlc = 1;
 		break;
 
@@ -1172,9 +1178,12 @@ static int ppp_mainloop(struct openconnect_info *vpninfo, int dtls,
 
 		case PPP_ENCAP_F5_HDLC:
 		case PPP_ENCAP_RFC1662_HDLC:
+		case PPP_ENCAP_NX_HDLC:
 			payload_len = unhdlc_in_place(vpninfo, eh + ppp->encap_len, len - ppp->encap_len, &next);
 			if (payload_len < 0)
 				continue; /* unhdlc_in_place already logged */
+			if (ppp->encap == PPP_ENCAP_NX_HDLC && load_be32(eh) != payload_len)
+				goto bad_encap_header; /* NX has a length header even though it's redundant with HDLC */
 			if (vpninfo->dump_http_traffic)
 				dump_buf_hex(vpninfo, PRG_TRACE, '<', eh + ppp->encap_len, payload_len);
 			break;
@@ -1446,6 +1455,9 @@ static int ppp_mainloop(struct openconnect_info *vpninfo, int dtls,
 			store_be16(eh, this->len + this->ppp.hlen + 6);
 			store_be16(eh + 2, 0x5050);
 			store_be16(eh + 4, this->len + this->ppp.hlen);
+			break;
+		case PPP_ENCAP_NX_HDLC:
+			store_le32(eh, this->len);
 			break;
 		}
 		this->ppp.hlen += ppp->encap_len;
