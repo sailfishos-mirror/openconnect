@@ -614,15 +614,7 @@ int fortinet_connect(struct openconnect_info *vpninfo)
 {
 	int ret = 0;
 
-	if (!vpninfo->ppp) {
-		/* Initial connection */
-		ret = fortinet_configure(vpninfo);
-	} else if (vpninfo->ppp->ppp_state != PPPS_DEAD) {
-		/* TLS/DTLS reconnection with already-established PPP session
-		 * (PPP session will persist past reconnect.)
-		 */
-		ret = ppp_reset(vpninfo);
-	}
+	ret = fortinet_configure(vpninfo);
 	if (ret) {
 	err:
 		openconnect_close_https(vpninfo, 0);
