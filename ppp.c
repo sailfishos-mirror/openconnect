@@ -936,7 +936,7 @@ static int handle_state_transition(struct openconnect_info *vpninfo, int dtls,
 		ppp->ppp_state = PPPS_NETWORK;
 
 		/* Ensure that we use the addresses we configured on PPP */
-		if (ppp->want_ipv4) {
+		if (ppp->want_ipv4 && !vpninfo->ip_info.addr) {
 			vpninfo->ip_info.addr = add_option_ipaddr(&vpninfo->cstp_options, "ppp_ipv4",
 								  AF_INET, &ppp->out_ipv4_addr);
 		} else {
@@ -944,7 +944,7 @@ static int handle_state_transition(struct openconnect_info *vpninfo, int dtls,
 		}
 
 		/* Ensure that we use the addresses we configured on PPP */
-		if (ppp->want_ipv6) {
+		if (ppp->want_ipv6 && !vpninfo->ip_info.addr6 && !vpninfo->ip_info.netmask6) {
 			vpninfo->ip_info.addr6 = add_option_ipaddr(&vpninfo->cstp_options, "ppp_ipv6",
 								   AF_INET6, &ppp->out_ipv6_addr);
 		} else {
