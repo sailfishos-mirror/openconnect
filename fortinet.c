@@ -485,7 +485,6 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 			     _("Failed to find VPN options\n"));
 		vpn_progress(vpninfo, PRG_DEBUG,
 			     _("Response was:%s\n"), buf);
-		ret = -EINVAL;
 	}
  out:
  	xmlFreeDoc(xml_doc);
