@@ -1367,6 +1367,11 @@ static int ppp_mainloop(struct openconnect_info *vpninfo, int dtls,
 			 * the protocol to handle any magic required to reopen it. */
 			dtls_close(vpninfo);
 		} else {
+			if (ppp->ppp_state == PPPS_ESTABLISH) {
+				vpn_progress(vpninfo, PRG_ERR, _("Failed to establish PPP\n"));
+				vpninfo->quit_reason = "Failed to establish PPP";
+				return -EPERM;
+			}
 			ret = ssl_reconnect(vpninfo);
 			if (ret) {
 				vpn_progress(vpninfo, PRG_ERR, _("Reconnect failed\n"));
