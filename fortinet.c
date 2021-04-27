@@ -199,8 +199,7 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 		for (cookie = vpninfo->cookies; cookie; cookie = cookie->next) {
 			if (!strcmp(cookie->option, "SVPNCOOKIE")) {
 				free(vpninfo->cookie);
-				vpninfo->cookie = strdup(cookie->value);
-				if (!vpninfo->cookie)
+				if (asprintf(&vpninfo->cookie, "SVPNCOOKIE=%s", cookie->value) < 0)
 					goto nomem;
 				ret = 0;
 				goto out;
