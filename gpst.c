@@ -379,11 +379,12 @@ static int gpst_parse_config_xml(struct openconnect_info *vpninfo, xmlNode *xml_
 			new_ip_info.mtu = atoi(s);
 		else if (!xmlnode_get_val(xml_node, "lifetime", &s))
 			vpninfo->auth_expiration = time(NULL) + atol(s);
-		else if (!xmlnode_get_val(xml_node, "quarantine", &s) && strcmp(s, "no"))
-			vpn_progress(vpninfo, PRG_DEBUG,
-				     _("WARNING: Config XML contains <quarantine> tag with value of \"%s\".\n"
-				       "    VPN connectivity may be disabled or limited.\n"), s);
-		else if (!xmlnode_get_val(xml_node, "disconnect-on-idle", &s)) {
+		else if (!xmlnode_get_val(xml_node, "quarantine", &s)) {
+			if (strcmp(s, "no"))
+				vpn_progress(vpninfo, PRG_DEBUG,
+					     _("WARNING: Config XML contains <quarantine> tag with value of \"%s\".\n"
+					       "    VPN connectivity may be disabled or limited.\n"), s);
+		} else if (!xmlnode_get_val(xml_node, "disconnect-on-idle", &s)) {
 			int sec = atoi(s);
 			vpn_progress(vpninfo, PRG_INFO, _("Idle timeout is %d minutes.\n"), sec/60);
 			vpninfo->idle_timeout = sec;
