@@ -290,31 +290,16 @@ static int parse_connection_info_line(struct openconnect_info *vpninfo, char con
 	return 0;
 }
 
-/*
- * allocates and adds a new cstp_option (key and value must be allocated by someone else)
- */
-static char *add_cstp_option(struct openconnect_info *vpninfo, char *key, char *value)
-{
-	struct oc_vpn_option *option_entry = malloc(sizeof(*option_entry));
-	if (!option_entry) {
-		return NULL;
-	}
-	option_entry->option = key;
-	option_entry->value = value;
-	option_entry->next = vpninfo->cstp_options;
-	vpninfo->cstp_options = option_entry;
-	return value;
-}
-
-static struct oc_split_include *add_split_include(struct openconnect_info *vpninfo, char const *route)
+static struct oc_split_include *add_split_include(struct oc_ip_info *new_ip_info,
+						  char const *route)
 {
 	struct oc_split_include *include = malloc(sizeof(*include));
-	if (!include) {
+	if (!include)
 		return NULL;
-	}
+
 	include->route = route;
-	include->next = vpninfo->ip_info.split_includes;
-	vpninfo->ip_info.split_includes = include;
+	include->next = new_ip_info->split_includes;
+	new_ip_info->split_includes = include;
 	return include;
 }
 
@@ -325,18 +310,19 @@ static struct oc_split_include *add_split_include(struct openconnect_info *vpnin
  * and oc_ip_info contains const copies of those pointers.
  * Takes care of freeing if key is not added to vpninfo->cstp_options.
  */
-static int populate_vpninfo(struct openconnect_info *vpninfo, char *key, char *value)
+static int populate_vpninfo(struct openconnect_info *vpninfo, struct oc_vpn_option **new_opts,
+			    struct oc_ip_info *new_ip_info, char *key, char *value)
 {
 	if (strcmp(key, "Route") == 0 || strcmp(key, "Ipv6Route") == 0) {
-		add_split_include(vpninfo, add_cstp_option(vpninfo, key, value));
+		add_split_include(new_ip_info, add_option_steal(new_opts, key, &value));
 	} else if (strcmp(key, "dns1") == 0) {
-		vpninfo->ip_info.dns[0] = add_cstp_option(vpninfo, key, value);
+		new_ip_info->dns[0] = add_option_steal(new_opts, key, &value);
 	} else if (strcmp(key, "dns2") == 0) {
-		vpninfo->ip_info.dns[1] = add_cstp_option(vpninfo, key, value);
+		new_ip_info->dns[1] = add_option_steal(new_opts, key, &value);
 	} else if (strcmp(key, "GlobalIPv6Addr") == 0) {
-		vpninfo->ip_info.addr6 = add_cstp_option(vpninfo, key, value);
+		new_ip_info->addr6 = add_option_steal(new_opts, key, &value);
 	} else if (strcmp(key, "dnsSuffix") == 0) {
-		if (vpninfo->ip_info.domain) {
+		if (new_ip_info->domain) {
 			vpn_progress(vpninfo, PRG_DEBUG,
 				     _("Not overwriting DNS domains with 'dnsSuffix', "
 				       "because value from dnsSuffixes take precedence"));
@@ -344,9 +330,9 @@ static int populate_vpninfo(struct openconnect_info *vpninfo, char *key, char *v
 			free(value);
 			return 0;
 		}
-		vpninfo->ip_info.domain = add_cstp_option(vpninfo, key, value);
+		new_ip_info->domain = add_option_steal(new_opts, key, &value);
 	} else if (strcmp(key, "dnsSuffixes") == 0) {
-		vpninfo->ip_info.domain = add_cstp_option(vpninfo, key, value);
+		new_ip_info->domain = add_option_steal(new_opts, key, &value);
 	} else {
 		/* going to throw away key and value for the following keys */
 		if (strcmp(key, "NX_TUNNEL_PROTO_VER") == 0) {
@@ -358,9 +344,9 @@ static int populate_vpninfo(struct openconnect_info *vpninfo, char *key, char *v
 
 		} else if (strcmp(key, "TunnelAllMode") == 0) {
 			if (strcmp(value, "1") == 0) {
-				add_split_include(vpninfo, ipv4_default_route);
-				if (vpninfo->ip_info.addr6) {
-					add_split_include(vpninfo, ipv6_default_route);
+				add_split_include(new_ip_info, ipv4_default_route);
+				if (new_ip_info->addr6) {
+					add_split_include(new_ip_info, ipv6_default_route);
 				}
 			}
 		} else if (strcmp(key, "SessionId") == 0) {
@@ -400,6 +386,9 @@ static int nx_get_connection_info(struct openconnect_info *vpninfo)
 	char *key, *value;
 	char url[70];
 	char const *support_ipv6 = (!vpninfo->disable_ipv6) ? "yes" : "no";
+	struct oc_vpn_option *new_opts = NULL;
+	struct oc_ip_info new_ip_info = {};
+
 	snprintf(url, sizeof(url), "cgi-bin/sslvpnclient?launchplatform=mac&neProto=3&supportipv6=%s", support_ipv6);
 	if (!vpninfo->cookies && vpninfo->cookie)
 		http_add_cookie(vpninfo, "swap", vpninfo->cookie, 1);
@@ -409,13 +398,6 @@ static int nx_get_connection_info(struct openconnect_info *vpninfo)
 	if (ret < 0)
 		goto out;
 
-	/* clear old data */
-	/* vpninfo->ip_info.addr: keep IPv4 info which is negotiated over PPP */
-	vpninfo->ip_info.addr6 = vpninfo->ip_info.netmask6 = NULL;
-	vpninfo->ip_info.domain = NULL;
-	vpninfo->ip_info.dns[0] = vpninfo->ip_info.dns[1] = vpninfo->ip_info.dns[2] = NULL;
-	free_split_routes(vpninfo);
-	free_optlist(vpninfo->cstp_options);
 
 	if (!strstr(result_buf, "SessionId")) {
 		vpn_progress(vpninfo, PRG_ERR,
@@ -437,13 +419,19 @@ static int nx_get_connection_info(struct openconnect_info *vpninfo)
 				     line);
 			ret = 0;
 		} else {
-			ret = populate_vpninfo(vpninfo, key, value);
+			ret = populate_vpninfo(vpninfo, &new_opts, &new_ip_info,
+					       key, value);
 			if (ret)
 				goto out;
 		}
 		line = line_break ? (line_break + 1) : NULL;
 	}
+	ret = install_vpn_opts(vpninfo, new_opts, &new_ip_info);
 out:
+	if (ret) {
+		free_optlist(new_opts);
+                free_split_routes(&new_ip_info);
+	}
 	free(result_buf);
 	return ret;
 }
@@ -461,6 +449,8 @@ int nx_connect(struct openconnect_info *vpninfo)
 		return -EINVAL;
 	}
 
+	/* XX: Do we need to do this every time? Can't we skip it if this isn't
+	 * the first connection? E.g. if vpninfo->ppp already exists? */
 	ret = nx_get_connection_info(vpninfo);
 	if (ret) {
 		vpn_progress(vpninfo, PRG_ERR, _("Failed getting NX connection information\n"));
