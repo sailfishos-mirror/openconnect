@@ -531,6 +531,7 @@ static int fortinet_configure(struct openconnect_info *vpninfo)
 	 * It's fetching the legacy non-XML configuration, isn't it?
 	 * Do we *actually* have to do this, before fetching the XML config?
 	 */
+#if 0 /* Nah... */
 	free(vpninfo->urlpath);
 	vpninfo->urlpath = strdup("remote/fortisslvpn");
 	ret = do_https_request(vpninfo, "GET", NULL, NULL, &res_buf, 0);
@@ -550,6 +551,7 @@ static int fortinet_configure(struct openconnect_info *vpninfo)
 	/* We don't care what it returned as long as it was successful */
 	free(res_buf);
 	res_buf = NULL;
+#endif
 	free(vpninfo->urlpath);
 
 	/* Now fetch the connection options in XML format */
@@ -560,8 +562,10 @@ static int fortinet_configure(struct openconnect_info *vpninfo)
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("Server doesn't support XML config format. Ancient HTML format is not currently implemented.\n"));
 		goto out;
-	} else if (ret == 0)
-		goto invalid_cookie;
+	} else if (ret == 0) {
+		ret = -EPERM;
+		goto out;
+	}
 
 	ret = parse_fortinet_xml_config(vpninfo, res_buf, ret);
 	if (ret)
