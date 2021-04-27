@@ -261,6 +261,7 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
   <tunnel-method value="ppp"/>
   <tunnel-method value="tun"/>
   <fos platform="FG100E" major="5" minor="06" patch="6" build="1630" branch="1630"/>
+  <auth-ses check-src-ip='1' tun-connect-without-reauth='1' tun-user-ses-timeout='240' />
   <client-config save-password="off" keep-alive="on" auto-connect="off"/>
   <ipv4>
     <dns ip="1.1.1.1"/>
@@ -272,6 +273,12 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
       <addr ip="10.11.1.0" mask="255.255.255.0"/>
     </split-tunnel-info>
   </ipv4>
+  <ipv6>
+    <assigned-addr ipv6='fdff:ffff::1' prefix-len='120'/>
+    <split-tunnel-info>
+      <addr ipv6='fdff:ffff::' prefix-len='120'/>
+    </split-tunnel-info>
+  </ipv6>
   <idle-timeout val="3600"/>
   <auth-timeout val="18000"/>
 </sslvpn-tunnel>
@@ -395,8 +402,18 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 		} else if (xmlnode_is_named(xml_node, "ipv6")) {
 			for (x = xml_node->children; x; x=x->next) {
 				if (xmlnode_is_named(x, "assigned-addr") && !xmlnode_get_prop(x, "ipv6", &s)) {
-					vpn_progress(vpninfo, PRG_INFO, _("Got IPv6 address %s\n"), s);
-					new_ip_info.addr6 = add_option_steal(&new_opts, "ipv6addr", &s);
+					if (!xmlnode_get_prop(x, "prefix-len", &s2)) {
+						char *a;
+						if (asprintf(&a, "%s/%s", s, s2) < 0) {
+							ret = -ENOMEM;
+							goto out;
+						}
+						vpn_progress(vpninfo, PRG_INFO, _("Got IPv6 address %s\n"), a);
+						new_ip_info.netmask6 = add_option_steal(&new_opts, "ipaddr6", &a);
+					} else {
+						vpn_progress(vpninfo, PRG_INFO, _("Got IPv6 address %s\n"), s);
+						new_ip_info.addr6 = add_option_steal(&new_opts, "ipaddr6", &s);
+					}
 				} else if (xmlnode_is_named(x, "dns")) {
 					if (!xmlnode_get_prop(x, "domain", &s) && s && *s) {
 						vpn_progress(vpninfo, PRG_INFO, _("Got search domain %s\n"), s);
@@ -422,7 +439,7 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 					for (x2 = x->children; x2; x2=x2->next) {
 						if (xmlnode_is_named(x2, "addr")) {
 							if (!xmlnode_get_prop(x2, "ipv6", &s) &&
-							    !xmlnode_get_prop(x2, "mask", &s2) &&
+							    !xmlnode_get_prop(x2, "prefix-len", &s2) &&
 							    s && s2 && *s && *s2) {
 								struct oc_split_include *inc = malloc(sizeof(*inc));
 								char *route = NULL;

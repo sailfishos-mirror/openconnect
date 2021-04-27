@@ -184,6 +184,15 @@ def xml_config():
                   <addr ip="10.11.1.0" mask="255.255.255.0"/>
                 </split-tunnel-info>
               </ipv4>
+              <!-- Real Fortinet servers are too dumb to send both IPv4 and IPv6 config simultaneously, but we
+                   may as well test it here nonetheless. -->
+              <ipv6>
+                <dns ipv6="cafe:1234::5678"/>
+                <assigned-addr ipv6="faff:ffff::1" prefix-len="64"/>
+                <split-tunnel-info>
+                  <addr ipv6="fdff:ffff::" prefix-len="120"/>
+                </split-tunnel-info>
+              </ipv6>
               <idle-timeout val="3600"/>
               <auth-timeout val="18000"/>
             </sslvpn-tunnel>''',
