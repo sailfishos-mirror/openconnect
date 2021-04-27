@@ -340,7 +340,7 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 		} else if (xmlnode_is_named(xml_node, "ipv4")) {
 			for (x = xml_node->children; x; x=x->next) {
 				if (xmlnode_is_named(x, "assigned-addr") && !xmlnode_get_prop(x, "ipv4", &s)) {
-					vpn_progress(vpninfo, PRG_INFO, _("Got legacy IP address %s\n"), s);
+					vpn_progress(vpninfo, PRG_INFO, _("Got Legacy IP address %s\n"), s);
 					new_ip_info.addr = add_option_steal(&new_opts, "ipaddr", &s);
 				} else if (xmlnode_is_named(x, "dns")) {
 					if (!xmlnode_get_prop(x, "domain", &s) && s && *s) {
@@ -382,6 +382,63 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 								}
 								snprintf(route, 32, "%s/%s", s, s2);
 								vpn_progress(vpninfo, PRG_INFO, _("Got IPv%d route %s\n"), 4, route);
+								inc->route = add_option_steal(&new_opts, "split-include", &route);
+								inc->next = new_ip_info.split_includes;
+								new_ip_info.split_includes = inc;
+								/* XX: static analyzer doesn't realize that add_option_steal will steal route's reference, so... */
+								free(route);
+							}
+						}
+					}
+				}
+			}
+		} else if (xmlnode_is_named(xml_node, "ipv6")) {
+			for (x = xml_node->children; x; x=x->next) {
+				if (xmlnode_is_named(x, "assigned-addr") && !xmlnode_get_prop(x, "ipv6", &s)) {
+					vpn_progress(vpninfo, PRG_INFO, _("Got IPv6 address %s\n"), s);
+					new_ip_info.addr6 = add_option_steal(&new_opts, "ipv6addr", &s);
+				} else if (xmlnode_is_named(x, "dns")) {
+					if (!xmlnode_get_prop(x, "domain", &s) && s && *s) {
+						vpn_progress(vpninfo, PRG_INFO, _("Got search domain %s\n"), s);
+						buf_append(domains, "%s ", s);
+					}
+					if (!xmlnode_get_prop(x, "ipv6", &s) && s && *s) {
+						vpn_progress(vpninfo, PRG_INFO, _("Got IPv%d DNS server %s\n"), 6, s);
+						if (n_dns < 3) new_ip_info.dns[n_dns++] = add_option_steal(&new_opts, "DNS", &s);
+					}
+				} else if (xmlnode_is_named(x, "split-dns")) {
+					int ii;
+					if (!xmlnode_get_prop(x, "domains", &s) && s && *s)
+						vpn_progress(vpninfo, PRG_ERR, _("WARNING: Got split-DNS domains %s (not yet implemented)\n"), s);
+					for (ii=1; ii<10; ii++) {
+						char propname[] = "dnsserver0";
+						propname[9] = '0' + ii;
+						if (!xmlnode_get_prop(x, propname, &s) && s && *s)
+							vpn_progress(vpninfo, PRG_ERR, _("WARNING: Got split-DNS server %s (not yet implemented)\n"), s);
+						else
+							break;
+					}
+				} else if (xmlnode_is_named(x, "split-tunnel-info")) {
+					for (x2 = x->children; x2; x2=x2->next) {
+						if (xmlnode_is_named(x2, "addr")) {
+							if (!xmlnode_get_prop(x2, "ipv6", &s) &&
+							    !xmlnode_get_prop(x2, "mask", &s2) &&
+							    s && s2 && *s && *s2) {
+								struct oc_split_include *inc = malloc(sizeof(*inc));
+								char *route = NULL;
+
+								default_route = 0;
+
+								if (!inc || asprintf(&route, "%s/%s", s, s2) == -1) {
+									free(route);
+									free(inc);
+									free_optlist(new_opts);
+									free_split_routes(&new_ip_info);
+									ret = -ENOMEM;
+									goto out;
+								}
+
+								vpn_progress(vpninfo, PRG_INFO, _("Got IPv%d route %s\n"), 6, route);
 								inc->route = add_option_steal(&new_opts, "split-include", &route);
 								inc->next = new_ip_info.split_includes;
 								new_ip_info.split_includes = inc;
