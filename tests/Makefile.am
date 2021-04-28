@@ -47,7 +47,7 @@ EXTRA_DIST = certs/ca.pem certs/ca-key.pem certs/user-cert.pem $(USER_KEYS) $(US
 	softhsm2.conf.in softhsm ns.sh configs/test-dtls-psk.config \
 	scripts/vpnc-script scripts/vpnc-script-detect-disconnect \
 	suppressions.lsan fake-fortinet-server.py fake-f5-server.py fake-juniper-server.py \
-	fake-juniper-sso-server.py fake-tncc.py
+	fake-juniper-sso-server.py fake-tncc.py fake-gp-server.py
 
 dist_check_SCRIPTS = autocompletion
 
@@ -67,6 +67,7 @@ dist_check_SCRIPTS += fortinet-auth-and-config
 dist_check_SCRIPTS += f5-auth-and-config
 dist_check_SCRIPTS += juniper-auth
 dist_check_SCRIPTS += juniper-sso-auth
+dist_check_SCRIPTS += gp-auth-and-config
 endif
 
 if TEST_PKCS11
