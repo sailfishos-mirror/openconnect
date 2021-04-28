@@ -474,7 +474,6 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 		domains->data[domains->pos-1] = '\0';
 		new_ip_info.domain = add_option_steal(&new_opts, "search", &domains->data);
 	}
-	buf_free(domains);
 
 	ret = install_vpn_opts(vpninfo, new_opts, &new_ip_info);
 	if (ret) {
@@ -488,8 +487,10 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 	}
  out:
  	xmlFreeDoc(xml_doc);
+	buf_free(domains);
 	free(s);
 	free(s2);
+
 	return ret;
 }
 
