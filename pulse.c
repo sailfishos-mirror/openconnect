@@ -2568,9 +2568,13 @@ int pulse_connect(struct openconnect_info *vpninfo)
 
 	if (!vpninfo->ip_info.mtu ||
 	    (!vpninfo->ip_info.addr && !vpninfo->ip_info.addr6)) {
-		vpn_progress(vpninfo, PRG_ERR, "Insufficient configuration found\n");
+		vpn_progress(vpninfo, PRG_ERR, _("Insufficient configuration found\n"));
 		return -EINVAL;
 	}
+
+	/* This should never happen, but be defensive and shut Coverity up */
+	if (vpninfo->ssl_fd == -1)
+		return -EIO;
 
 	ret = 0;
 	monitor_fd_new(vpninfo, ssl);
