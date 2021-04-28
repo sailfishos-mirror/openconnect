@@ -55,7 +55,7 @@ public final class LibTest {
 
 			System.out.print("\nAccept this certificate? [n] ");
 			String s = getline();
-			if (s.startsWith("y") || s.startsWith("Y")) {
+			if (s != null && (s.startsWith("y") || s.startsWith("Y"))) {
 				return 0;
 			} else {
 				return -1;
