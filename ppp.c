@@ -493,15 +493,19 @@ static int handle_config_request(struct openconnect_info *vpninfo,
 		reject:
 			if (!rejbuf)
 				rejbuf = buf_alloc();
-			if (!rejbuf)
-				return -ENOMEM;
+			if (!rejbuf) {
+				ret = -ENOMEM;
+				goto out;
+			}
 			buf_append_bytes(rejbuf, p, l);
 			break;
 		nak:
 			if (!nakbuf)
 				nakbuf = buf_alloc();
-			if (!nakbuf)
-				return -ENOMEM;
+			if (!nakbuf) {
+				ret = -ENOMEM;
+				goto out;
+			}
 			buf_append_bytes(nakbuf, p, l);
 
 		}
@@ -553,7 +557,10 @@ static int queue_config_request(struct openconnect_info *vpninfo, int proto)
 	struct oc_text_buf *buf;
 
 	buf = buf_alloc();
-	buf_ensure_space(buf, 64);
+
+	ret = buf_ensure_space(buf, 64);
+	if (ret)
+		goto out;
 
 	switch (proto) {
 	case PPP_LCP:
@@ -578,8 +585,9 @@ static int queue_config_request(struct openconnect_info *vpninfo, int proto)
 			buf_append_ppp_tlv_be32(buf, LCP_ASYNCMAP, ppp->out_asyncmap);
 
 		if (ppp->out_lcp_opts & BIT_MAGIC) {
-			if (openconnect_random(&ppp->out_lcp_magic, sizeof(ppp->out_lcp_magic)))
-				return -EINVAL;
+			ret = openconnect_random(&ppp->out_lcp_magic, sizeof(ppp->out_lcp_magic));
+			if (ret)
+				goto out;
 			buf_append_ppp_tlv(buf, LCP_MAGIC, 4, &ppp->out_lcp_magic);
 		}
 
@@ -1298,10 +1306,14 @@ static int ppp_mainloop(struct openconnect_info *vpninfo, int dtls,
 		}
 
 		if (next_len) {
-			/* XX: need to copy to a new struct pkt, not just move pointers, because data
-			 * packets will get stolen for incoming queue and free()'d.
-			 */
-			this = malloc(sizeof(struct pkt) + next_len - rsv_hdr_size);
+			/* Need to copy to a new struct pkt, not just move pointers, because data
+			 * packets will get stolen for incoming queue and free()'d. Allocate a
+			 * full sized packet so it can remain in vpninfo->cstp_pkt and be reused
+			 * for receiving the next packet, if it's something other than data and
+			 * doesn't get queued and freed. */
+			this = vpninfo->cstp_pkt = malloc(sizeof(struct pkt) + receive_mtu);
+			if (!this)
+				return -ENOMEM;
 			eh = this->data - rsv_hdr_size;
 			memcpy(eh, next, next_len);
 			len = next_len;
