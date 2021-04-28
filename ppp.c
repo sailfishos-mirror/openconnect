@@ -1047,6 +1047,17 @@ static inline void add_ppp_header(struct pkt *p, struct oc_ppp *ppp, int proto) 
 	p->ppp.hlen = p->data - ph;
 }
 
+int check_http_status(const char *buf, int len)
+{
+	if (len >= 5 && !memcmp(buf, "HTTP/", 5)) {
+		const char *eol = memchr(buf, '\r', len) ?: memchr(buf, '\n', len);
+		const char *sp1 = memchr(buf, ' ', len);
+		const char *sp2 = sp1 ? memchr(sp1+1, ' ', len - (sp1-buf) + 1) : NULL;
+		return (sp1 && sp2 && (!eol || sp2<eol)) ? atoi(sp1+1) : 500;
+	}
+	return -EINVAL;
+}
+
 static int ppp_mainloop(struct openconnect_info *vpninfo, int dtls,
 			struct keepalive_info *kai, int *timeout, int readable)
 {
@@ -1101,17 +1112,11 @@ static int ppp_mainloop(struct openconnect_info *vpninfo, int dtls,
 		 * of the first packet
 		 */
 		if (ppp->check_http_response) {
+			int status = check_http_status((const char *)eh, len);
 			ppp->check_http_response = 0;
-			if (!memcmp(eh, "HTTP/", 5)) {
-				const char *sol = (const char *)eh;
-				const char *eol = memchr(sol, '\r', len) ?: memchr(sol, '\n', len);
-				const char *sp1 = memchr(sol, ' ', len);
-				const char *sp2 = memchr(sp1+1, ' ', len - (sp1-sol) + 1);
-				int status = sp1 && sp2 ? atoi(sp1+1) : -1;
-				if (eol)
-					len = eol - sol;
-				vpn_progress(vpninfo, PRG_ERR,
-					     _("Got unexpected HTTP response: %.*s\n"), len, sol);
+		        if (status >= 0) {
+				vpn_progress(vpninfo, PRG_ERR,_("Got unexpected HTTP response: %.*s\n"),
+					     len, (const char *)eh);
 				vpninfo->quit_reason = "Received HTTP response (not a PPP packet)";
 				return (status >= 400 && status <= 499) ? -EPERM : -EINVAL;
 			}

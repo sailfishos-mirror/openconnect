@@ -650,7 +650,7 @@ static int gpst_get_config(struct openconnect_info *vpninfo)
 		/* XX: if our "cookie" is bogus (doesn't include at least 'user', 'authcookie',
 		 * and 'portal' fields) the server will respond like this.
 		 */
-		if (result == -EINVAL && !strcmp(xml_buf, "errors getting SSL/VPN config"))
+		if (result == -EINVAL && xml_buf && !strcmp(xml_buf, "errors getting SSL/VPN config"))
 			result = -EPERM;
 		goto out;
 	}
@@ -741,10 +741,15 @@ static int gpst_connect(struct openconnect_info *vpninfo)
 			ret = vpninfo->ssl_gets(vpninfo, buf+sizeof(start_tunnel), sizeof(buf)-sizeof(start_tunnel));
 			ret = (ret>0 ? ret : 0) + sizeof(start_tunnel);
 		}
-		vpn_progress(vpninfo, PRG_ERR,
-		             _("Got inappropriate HTTP GET-tunnel response: %.*s\n"), ret, buf);
-		/* XX: this is what GP servers return when they don't like the cookie */
-		ret = !strncmp(buf, "HTTP/1.1 502 ", 13) ? -EPERM : -EINVAL;
+		int status = check_http_status(buf, ret);
+		/* XX: GP servers return 502 when they don't like the cookie */
+		if (status == 502)
+			ret = -EPERM;
+		else {
+			vpn_progress(vpninfo, PRG_ERR, _("Got unexpected HTTP response: %.*s\n"),
+				     ret, buf);
+			ret = -EINVAL;
+		}
 	}
 
 	if (ret < 0)
