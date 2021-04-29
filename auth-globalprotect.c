@@ -559,16 +559,27 @@ static int gpst_login(struct openconnect_info *vpninfo, int portal, struct login
 
 	/* Ask the user to fill in the auth form; repeat as necessary */
 	for (;;) {
-		/* submit prelogin request to get form */
-		orig_path = vpninfo->urlpath;
-		if (asprintf(&vpninfo->urlpath, "%s/prelogin.esp?tmp=tmp&clientVer=4100&clientos=%s",
-			     portal ? "global-protect" : "ssl-vpn", gpst_os_name(vpninfo)) < 0) {
-			result = -ENOMEM;
-			goto out;
+		int keep_urlpath = 0;
+		if (vpninfo->urlpath) {
+			/* XX: If the path ends with .esp (possibly followed by a query string), leave as-is */
+			const char *esp = strstr(vpninfo->urlpath, ".esp");
+			if (esp && (esp[4] == '\0' || esp[4] == '?'))
+				keep_urlpath = 1;
 		}
-		result = do_https_request(vpninfo, "POST", NULL, NULL, &xml_buf, 0);
-		free(vpninfo->urlpath);
-		vpninfo->urlpath = orig_path;
+		if (!keep_urlpath) {
+			orig_path = vpninfo->urlpath;
+			if (asprintf(&vpninfo->urlpath, "%s/prelogin.esp?tmp=tmp&clientVer=4100&clientos=%s",
+				     portal ? "global-protect" : "ssl-vpn", gpst_os_name(vpninfo)) < 0) {
+				result = -ENOMEM;
+				goto out;
+			}
+		}
+		/* submit prelogin request to get form */
+		result = do_https_request(vpninfo, "POST", NULL, NULL, &xml_buf, 1);
+		if (!keep_urlpath) {
+			free(vpninfo->urlpath);
+			vpninfo->urlpath = orig_path;
+		}
 
 		if (result >= 0)
 			result = gpst_xml_or_error(vpninfo, xml_buf, parse_prelogin_xml, NULL, ctx);
