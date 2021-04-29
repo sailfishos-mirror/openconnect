@@ -60,16 +60,22 @@ def check_form_against_session(*fields, use_query=False, on_failure=None):
 ########################################
 
 
-# TODO: need a way to get parameters into the initial session setup (just as
-# fake-{f5,fortinet,juniper}-server.py do), in order to configure gateways,
-# 2FA requirement, etc.
+# Get parameters into the initial session setup in order to configure gateways, 2FA requirement
+@app.route('/global-protect/testconfig.esp', methods=('GET','POST',))
+@app.route('/ssl-vpn/testconfig.esp', methods=('GET','POST',))
+def testconfig():
+    gateways, portal_2fa, gw_2fa = request.args.get('gateways'), request.args.get('portal_2fa'), request.args.get('gw_2fa')
+    session.update(gateways=gateways and gateways.split(','),
+                   portal_2fa=portal_2fa and bool(portal_2fa), gw_2fa=gw_2fa and bool(gw_2fa))
+    prelogin = '/'.join(request.path.split('/')[:-1] + ['prelogin.esp'])
+    return redirect(prelogin)
 
 
 # Respond to initial prelogin requests
 @app.route('/global-protect/prelogin.esp', methods=('GET','POST',))
 @app.route('/ssl-vpn/prelogin.esp', methods=('GET','POST',))
 def prelogin():
-    session.update(step='prelogin')
+    session.update(step='%s-prelogin' % ('portal' if 'global-protect' in request.path else 'gateway'))
     return '''
 <prelogin-response>
 <status>Success</status>
@@ -85,13 +91,30 @@ def prelogin():
 </prelogin-response>'''.format(request.path)
 
 
+def challenge_2fa(where):
+    # select a random inputStr of 4 hex digits, and randomly return challenge in either XML or Javascript-y form
+    inputStr = '%04x' % randint(0x1000, 0xffff)
+    session.update(step='%s-2FA' % where, inputStr=inputStr)
+    if randint(1, 2) == 1:
+        tmpl = '<challenge><respmsg>2FA challenge from %s</respmsg><inputstr>%s</inputstr></challenge>'
+    else:
+        tmpl = ('var respStatus = "Challenge";\n'
+                'var respMsg = "2FA challenge from %s";\n'
+                'thisForm.inputStr.value = "%s";\n')
+    return tmpl % (where, inputStr)
+
+
 # Respond to portal getconfig request
 @app.route('/global-protect/getconfig.esp', methods=('POST',))
 def portal_config():
-    session.update(step='portal-config', user=request.form.get('user'), passwd=request.form.get('passwd'))
-    if not (request.form.get('user') and request.form.get('passwd')):
+    portal_2fa = session.get('portal_2fa')
+    inputStr = request.form.get('inputStr') or None
+    if portal_2fa and not inputStr:
+        return challenge_2fa('portal')
+    if not (request.form.get('user') and request.form.get('passwd') and inputStr == session.get('inputStr')):
         return 'Invalid username or password', 512
 
+    session.update(step='portal-config', user=request.form.get('user'), passwd=request.form.get('passwd'), inputStr=None)
     gateways = session.get('gateways') or ('Default gateway',)
     gwlist = ''.join('<entry name="{}:{}"><description>{}</description></entry>'.format(app.config['HOST'], app.config['PORT'], gw)
                      for gw in gateways)
@@ -105,10 +128,13 @@ def portal_config():
 # Respond to gateway login request
 @app.route('/ssl-vpn/login.esp', methods=('POST',))
 def gateway_login():
-    session.update(step='gateway-login')
-    if not (request.form.get('user') and request.form.get('passwd')):
+    gw_2fa = session.get('gw_2fa')
+    inputStr = request.form.get('inputStr') or None
+    if gw_2fa and not inputStr:
+        return challenge_2fa('gateway')
+    if not (request.form.get('user') and request.form.get('passwd') and inputStr == session.get('inputStr')):
         return 'Invalid username or password', 512
-    session.update(user=request.form.get('user'), passwd=request.form.get('passwd'))
+    session.update(step='gateway-login', user=request.form.get('user'), passwd=request.form.get('passwd'), inputStr=None)
 
     for k, v in (('jnlpReady', 'jnlpReady'), ('ok', 'Login'), ('direct', 'yes'), ('clientVer', '4100'), ('prot', 'https:')):
         if request.form.get(k) != v:
