@@ -29,7 +29,10 @@
 #include <stdarg.h>
 #include <sys/types.h>
 
+#include "json.h"
+
 #include "openconnect-internal.h"
+
 static struct oc_auth_form *plain_auth_form() {
         struct oc_auth_form *form;
         struct oc_form_opt *opt, *opt2, *opt3;
@@ -172,19 +175,422 @@ static const unsigned char ipff[] = { 0x45, 0x00, 0x00, 0x14, 0x00, 0x00, 0x00, 
 				      0x00, 0xff, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00,
 				      0x00, 0x00, 0x00, 0x00 };
 
+static int parse_one_inc_exc(struct openconnect_info *vpninfo, struct oc_vpn_option **opts,
+			     struct oc_ip_info *ip_info, int incl, int ipv6, json_value *val)
+{
+	if (val->type != json_object) {
+		vpn_progress(vpninfo, PRG_ERR, "Include not object\n");
+		return -EINVAL;
+	}
+
+	/* We have no idea how they expose IPv6 yet. Hopefully not
+	   as wrong-endian integers like Legacy IP! */
+	if (ipv6)
+		return 0;
+
+	uint32_t route_ip = 0, route_mask = 0;
+	int route_ip_found = 0, route_mask_found = 0;
+
+	for (int i = 0; i < val->u.object.length; i++) {
+		json_char *child_name = val->u.object.values[i].name;
+		json_value *child_val = val->u.object.values[i].value;
+
+		if (child_val->type != json_integer)
+			continue;
+
+		if (!strcmp(child_name, "ip")) {
+			store_le32(&route_ip, child_val->u.integer);
+			route_ip_found = 1;
+		} else if (!strcmp(child_name, "mask")) {
+			store_le32(&route_mask, child_val->u.integer);
+			route_mask_found = 1;
+		}
+	}
+	if (route_ip_found && route_mask_found) {
+		char buf[64];
+		if (!inet_ntop(AF_INET, &route_ip, buf, sizeof(buf)/2))
+			return -errno;
+		char *p = buf + strlen(buf);
+		*(p++) = '/';
+		if (!inet_ntop(AF_INET, &route_mask, p, sizeof(buf) - (p - buf)))
+			return -errno;
+
+		vpn_progress(vpninfo, PRG_INFO, "Found split route %s\n", buf);
+
+		struct oc_split_include *inc = malloc(sizeof (*inc));
+		if (!inc)
+			return -ENOMEM;
+
+		struct oc_split_include **list;
+		if (incl)
+			list = &ip_info->split_includes;
+		else
+			list = &ip_info->split_excludes;
+
+		inc->route = add_option_dup(opts, "split-include", buf, -1);
+		inc->next = *list;
+		*list = inc;
+	}
+
+	return 0;
+}
+
+static int parse_network_inc_exc(struct openconnect_info *vpninfo, struct oc_vpn_option **opts,
+				 struct oc_ip_info *ip_info, int incl, json_value *val)
+{
+	int ret = 0;
+
+	if (val->type != json_object) {
+		vpn_progress(vpninfo, PRG_ERR, "Includes not object\n");
+		return -EINVAL;
+	}
+
+	for (int i = 0; i < val->u.object.length; i++) {
+		json_char *child_name = val->u.object.values[i].name;
+		json_value *child_val = val->u.object.values[i].value;
+		int is_ipv6;
+
+		if (child_val->type != json_array)
+			continue;
+
+		if (!strcmp(child_name, "ipv6"))
+			is_ipv6 = 1;
+		else if (!strcmp(child_name, "ipv4"))
+			is_ipv6 = 0;
+		else
+			continue;
+
+		for (int j = 0; j < child_val->u.array.length; j++) {
+			ret = parse_one_inc_exc(vpninfo, opts, ip_info, incl, is_ipv6,
+						child_val->u.array.values[j]);
+			if (ret)
+				goto out;
+		}
+	}
+ out:
+	return ret;
+}
+
+static int parse_proxy_script(struct openconnect_info *vpninfo, struct oc_vpn_option **opts,
+			      struct oc_ip_info *ip_info, json_value *val)
+{
+	return 0;
+}
+
+static int parse_dns_servers(struct openconnect_info *vpninfo, struct oc_vpn_option **opts,
+			     struct oc_ip_info *ip_info, json_value *val)
+{
+	int servers_found = 0;
+
+	if (val->type != json_array)
+		return -EINVAL;
+	/*
+	 * The 'dns_servers' object is an array, containing object[s] with
+	 * children named 'ipv4' and, presumably, 'ipv6'. Each of those is
+	 * *itself* an array. It isn't clear why we need an array of arrays.
+	 * Nor why IPv6 and Legacy IP need to be separate at all.
+	 *
+	 * "dns_servers": [{
+	 *			"ipv4":	[67373064, 134744072]
+	 *		  }],
+	*/
+	for (int i = 0; i < val->u.array.length; i++) {
+		json_value *elem1 = val->u.array.values[i];
+
+		if (elem1->type != json_object)
+			continue;
+
+		for (int j = 0; j < elem1->u.object.length; j++) {
+			json_char *child_name = elem1->u.object.values[j].name;
+			json_value *child_val = elem1->u.object.values[j].value;
+
+			if (child_val->type != json_array)
+				continue;
+
+			int legacyip;
+
+			if (!strcmp(child_name, "ipv4"))
+				legacyip = 1;
+			else if (!strcmp(child_name, "ipv6"))
+				legacyip = 0;
+			else
+				continue;
+
+			for (int k = 0; k < child_val->u.array.length; k++) {
+				json_value *elem2 = child_val->u.array.values[k];
+				char buf[32];
+				const char *server = buf;
+
+				if (legacyip && elem2->type == json_integer) {
+					uint32_t addr;
+					store_le32(&addr, elem2->u.integer);
+					if (!inet_ntop(AF_INET, &addr, buf, sizeof(buf)))
+						return -errno;
+				} else if (!legacyip && elem2->type == json_string) {
+					server = elem2->u.string.ptr;
+				} else continue;
+
+				vpn_progress(vpninfo, PRG_INFO, _("Found DNS server %s\n"), server);
+
+				if (servers_found < 4)
+					ip_info->dns[servers_found++] = add_option_dup(opts, "DNS", server, -1);
+			}
+		}
+	}
+
+	return 0;
+}
+
+static int parse_search_domains(struct openconnect_info *vpninfo, struct oc_vpn_option **opts,
+				struct oc_ip_info *ip_info, json_value *val)
+{
+	if (val->type != json_array)
+		return -EINVAL;
+
+	struct oc_text_buf *domains = buf_alloc();
+
+	for (int i = 0; i < val->u.array.length; i++) {
+		json_value *elem = val->u.array.values[i];
+
+		if (elem->type != json_string)
+			continue;
+
+		vpn_progress(vpninfo, PRG_INFO, _("Got search domain '%s'\n"),
+			     elem->u.string.ptr);
+
+		buf_append(domains, "%s ", elem->u.string.ptr);
+	}
+
+	if (buf_error(domains))
+		return buf_free(domains);
+
+	if (domains->pos) {
+		domains->data[domains->pos - 1] = '\0';
+		ip_info->domain = add_option_steal(opts, "search", &domains->data);
+	}
+
+	buf_free(domains);
+	return 0;
+}
+
+static int parse_interface_info(struct openconnect_info *vpninfo,
+				json_value *val)
+{
+	struct oc_vpn_option *new_opts = NULL;
+	struct oc_ip_info new_ip_info = {};
+	int i, ret = 0;
+
+	if (val->type != json_object)
+		return -EINVAL;
+
+	for (i = 0; i < val->u.object.length; i++) {
+		json_char *child_name = val->u.object.values[i].name;
+		json_value *child_val = val->u.object.values[i].value;
+
+		if (child_val->type == json_integer) {
+			json_int_t ival = child_val->u.integer;
+
+			/* The Array server gives us Legacy IP addresses as
+			 * decimal integers, in wrong-endian form. So an IP
+			 * address of e.g. 1.2.3.4 is presented as 0x04030201
+			 * or "client_ipv4: 67305985" in the JSON response.
+			 * Obviously, integers represented as decimal strings
+			 * don't have an endianness on the wire per se; this
+			 * is only "wrong" endian. So... since the address in
+			 * struct in_addr is supposed to be stored in network
+			 * (big) endian form, we need to store the
+			 * wrong-endian integer as *little* endian in order
+			 * end up with the correct result. */
+
+			if (!strcmp(child_name, "client_ipv4")) {
+				uint32_t ip;
+				store_le32(&ip, ival);
+				new_ip_info.addr = add_option_ipaddr(&new_opts,
+								     "client_ipv4",
+								     AF_INET, &ip);
+				printf("Found Legacy IP address %s\n", new_ip_info.addr);
+			} else if (!strcmp(child_name, "client_ipv4_mask")) {
+				uint32_t mask;
+				store_le32(&mask, ival);
+				new_ip_info.netmask = add_option_ipaddr(&new_opts,
+									"client_ipv4_mask",
+									AF_INET, &mask);
+				printf("Found Legacy IP netmask %s\n", new_ip_info.netmask);
+			}
+			else goto unknown;
+		} else if (child_val->type == json_object) {
+			if (!strcmp(child_name, "include_network_resource")) {
+				ret = parse_network_inc_exc(vpninfo, &new_opts, &new_ip_info,
+							    1, child_val);
+			} else if (!strcmp(child_name, "exclude_network_resource")) {
+				ret = parse_network_inc_exc(vpninfo, &new_opts, &new_ip_info,
+							    0, child_val);
+			} else if (!strcmp(child_name, "proxy_script")) {
+				ret = parse_proxy_script(vpninfo, &new_opts, &new_ip_info,
+							 child_val);
+			}
+			else goto unknown;
+		} else if (child_val->type == json_array) {
+			if (!strcmp(child_name, "dns_servers")) {
+				ret = parse_dns_servers(vpninfo, &new_opts, &new_ip_info,
+							child_val);
+			} else if (!strcmp(child_name, "search_domains")) {
+				ret = parse_search_domains(vpninfo, &new_opts, &new_ip_info,
+							   child_val);
+			}
+			else goto unknown;
+		} else {
+		unknown:
+			vpn_progress(vpninfo, PRG_DEBUG,
+				     _("Unknown Array config element '%s'\n"),
+				     child_name);
+		}
+		if (ret)
+			goto out;
+	}
+
+	if (!ret)
+		ret = install_vpn_opts(vpninfo, new_opts, &new_ip_info);
+ out:
+	if (ret) {
+		free_optlist(new_opts);
+                free_split_routes(&new_ip_info);
+	}
+	return ret;
+}
+
+static int parse_speed_tunnel(struct openconnect_info *vpninfo,
+			      json_value *val)
+{
+	int speed_tunnel = 0, speed_tunnel_enc = 0, dpd = 0;
+	int i;
+	for (i = 0; i < val->u.object.length; i++) {
+		json_char *child_name = val->u.object.values[i].name;
+		json_value *child_val = val->u.object.values[i].value;
+
+		if (child_val->type == json_integer) {
+			json_int_t ival = child_val->u.integer;
+
+			if (!strcmp(child_name, "allow_speed_tunnel"))
+				speed_tunnel = ival;
+			else if (!strcmp(child_name, "speed_tunnel_encryption"))
+				speed_tunnel_enc = ival;
+			else if (!strcmp(child_name, "keepalive_interval"))
+				dpd = ival;
+		}
+	}
+
+	vpn_progress(vpninfo, PRG_INFO,
+		     _("Initial config: Speed tunnel %d, enc %d, DPD %d\n"),
+		     speed_tunnel, speed_tunnel_enc, dpd);
+
+	if (!speed_tunnel)
+		vpninfo->dtls_state = DTLS_DISABLED;
+
+	/* We don't support DPD yet...*/
+	if (0 && dpd) {
+		if (!vpninfo->ssl_times.dpd || vpninfo->ssl_times.dpd > dpd)
+			vpninfo->ssl_times.dpd = dpd;
+		if (!vpninfo->dtls_times.dpd || vpninfo->dtls_times.dpd > dpd)
+			vpninfo->dtls_times.dpd = dpd;
+	}
+
+	return 0;
+}
+
+static int do_json_request(struct openconnect_info *vpninfo, void *req, int reqlen,
+			   int (*rq_parser)(struct openconnect_info *vpninfo,
+					    json_value *val))
+{
+	unsigned char bytes[16384];
+	int ret;
+
+	if (vpninfo->dump_http_traffic)
+		dump_buf_hex(vpninfo, PRG_DEBUG, '>', req, reqlen);
+
+	ret = vpninfo->ssl_write(vpninfo, req, reqlen);
+	if (ret != reqlen) {
+		if (ret >= 0) {
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("Short write in Array JSON negotiation\n"));
+			return -EIO;
+		}
+		return ret;
+	}
+
+	ret = vpninfo->ssl_read(vpninfo, (void *)bytes, sizeof(bytes));
+	if (ret < 0) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Failed to read Array JSON response\n"));
+		return ret;
+	}
+
+	if (vpninfo->dump_http_traffic)
+		dump_buf_hex(vpninfo, PRG_DEBUG, '<', bytes, ret);
+
+	if (ret <= 16 || bytes[16] != '{') {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Unexpected response to Array JSON request\n"));
+		return -EINVAL;
+	}
+
+	dump_buf(vpninfo, '<', (char *)bytes + 16);
+
+	json_settings settings = { 0 };
+	char json_err[json_error_max];
+
+	json_value *val = json_parse_ex(&settings, (json_char *)bytes + 16, ret - 16, json_err);
+	if (!val) {
+	eparse:
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Failed to parse conf50 response\n"));
+		return -EINVAL;
+	}
+
+	if (vpninfo->verbose >= PRG_DEBUG)
+		dump_json(vpninfo, PRG_DEBUG, val);
+
+	if (val->type != json_object) {
+		json_value_free(val);
+		goto eparse;
+	}
+
+	ret = rq_parser(vpninfo, val);
+
+	json_value_free(val);
+
+	return ret;
+}
+
+
 int array_connect(struct openconnect_info *vpninfo)
 {
 	int ret;
 	struct oc_text_buf *reqbuf;
 	unsigned char bytes[65536];
 
-	/* XXX: We should do what cstp_connect() does to check that configuration
-	   hasn't changed on a reconnect. */
-
 	if (!vpninfo->cookies) {
 		ret = parse_cookie(vpninfo);
 		if (ret)
 			return ret;
+	}
+
+	/* We abuse ppp_dtls_connect_req for the random client-id */
+	if (!vpninfo->ppp_dtls_connect_req) {
+		struct oc_text_buf *buf = buf_alloc();
+		unsigned char bin[16];
+
+		ret = openconnect_random(bin, sizeof(bin));
+		if (ret)
+			return ret;
+
+		buf_append(buf, "%02X%02X%02X%02X-%02X%02X-%02X%02X-%02X%02X-%02X%02X%02X%02X%02X%02X",
+			   bin[0], bin[1], bin[2], bin[3], bin[4], bin[5], bin[6], bin[7],
+			   bin[8], bin[9], bin[10], bin[11], bin[12], bin[13], bin[14], bin[15]);
+		if (buf_error(buf))
+			return buf_free(buf);
+
+		vpninfo->ppp_dtls_connect_req = buf;
 	}
 
 	ret = openconnect_open_https(vpninfo);
@@ -196,8 +602,8 @@ int array_connect(struct openconnect_info *vpninfo)
 	buf_append(reqbuf, "GET /vpntunnel HTTP/1.1\r\n");
 	http_common_headers(vpninfo, reqbuf);
 	buf_append(reqbuf, "appid: SSPVPN\r\n");
-	buf_append(reqbuf, "clientid: xx\r\n");
-	//	buf_append(reqbuf, "cpuid: FBFEDA5D-6603-451F-AC36-9231868A32D3\r\n");
+	buf_append(reqbuf, "clientid: %s\r\n", vpninfo->ppp_dtls_connect_req->data);
+	buf_append(reqbuf, "cpuid: %s\r\n", vpninfo->ppp_dtls_connect_req->data);
 	buf_append(reqbuf, "hostname: %s\r\n", vpninfo->localname);
 	buf_append(reqbuf, "payload-ip-version: 6\r\n");
 	buf_append(reqbuf, "x-devtype: 6\r\n");
@@ -227,55 +633,15 @@ int array_connect(struct openconnect_info *vpninfo)
 		goto out;
 	}
 
-	buf_truncate(reqbuf);
-
-	/* Send first configuration request 'conf50' */
-	dump_buf_hex(vpninfo, PRG_DEBUG, '>', (void *)conf50, sizeof(conf50));
-	ret = vpninfo->ssl_write(vpninfo, (void *)conf50, sizeof(conf50));
-	if (ret != sizeof(conf50)) {
-		if (ret >= 0) {
-			vpn_progress(vpninfo, PRG_ERR,
-				     _("Short write in array negotiation\n"));
-			ret = -EIO;
-		}
+	ret = do_json_request(vpninfo, (void *)conf50, sizeof(conf50),
+			      parse_speed_tunnel);
+	if (ret)
 		goto out;
-	}
 
-	ret = vpninfo->ssl_read(vpninfo, (void *)bytes, sizeof(bytes));
-	if (ret < 0) {
-		vpn_progress(vpninfo, PRG_ERR,
-			     _("Failed to read conf50 response\n"));
+	ret = do_json_request(vpninfo, (void *)conf54, sizeof(conf54),
+			      parse_interface_info);
+	if (ret)
 		goto out;
-	}
-
-	/* Parse it, learn what we need from it */
-	dump_buf_hex(vpninfo, PRG_DEBUG, '<', bytes, ret);
-	if (ret > 16 && bytes[16] == '{')
-		dump_buf(vpninfo, '<', (char *)bytes + 16);
-
-	/* Send second configuration request 'conf54' */
-	dump_buf_hex(vpninfo, PRG_DEBUG, '>', (void *)conf54, sizeof(conf54));
-	ret = vpninfo->ssl_write(vpninfo, (void *)conf54, sizeof(conf54));
-	if (ret != sizeof(conf54)) {
-		if (ret >= 0) {
-			vpn_progress(vpninfo, PRG_ERR,
-				     _("Short write in array negotiation\n"));
-			ret = -EIO;
-		}
-		goto out;
-	}
-
-	ret = vpninfo->ssl_read(vpninfo, (void *)bytes, sizeof(bytes));
-	if (ret < 0) {
-		vpn_progress(vpninfo, PRG_ERR,
-			     _("Failed to read conf54 response\n"));
-		goto out;
-	}
-
-	/* Parse it, learn what we need from it */
-	dump_buf_hex(vpninfo, PRG_DEBUG, '<', bytes, ret);
-	if (ret > 16 && bytes[16] == '{')
-		dump_buf(vpninfo, '<', (char *)bytes + 16);
 
 	/* Send third request 'ipff' */
 	dump_buf_hex(vpninfo, PRG_DEBUG, '>', (void *)ipff, sizeof(ipff));
@@ -307,6 +673,7 @@ int array_connect(struct openconnect_info *vpninfo)
 		monitor_fd_new(vpninfo, ssl);
 		monitor_read_fd(vpninfo, ssl);
 		monitor_except_fd(vpninfo, ssl);
+		vpninfo->ssl_times.last_rx = vpninfo->ssl_times.last_tx = time(NULL);
 	}
 	buf_free(reqbuf);
 
