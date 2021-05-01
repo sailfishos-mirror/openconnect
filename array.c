@@ -30,10 +30,94 @@
 #include <sys/types.h>
 
 #include "openconnect-internal.h"
+static struct oc_auth_form *plain_auth_form() {
+        struct oc_auth_form *form;
+        struct oc_form_opt *opt, *opt2, *opt3;
+
+        form = calloc(1, sizeof(*form));
+        if (!form) {
+        nomem:
+                free_auth_form(form);
+                return NULL;
+        }
+	form->auth_id = strdup("form");
+        opt = form->opts = calloc(1, sizeof(*opt));
+        if (!opt)
+                goto nomem;
+        opt->label = strdup("authgroup:");
+        opt->name = strdup("method");
+        opt->type = OC_FORM_OPT_TEXT;
+
+        opt2 = opt->next = calloc(1, sizeof(*opt2));
+        if (!opt2)
+                goto nomem;
+        opt2->label = strdup("username:");
+        opt2->name = strdup("uname");
+        opt2->type = OC_FORM_OPT_TEXT;
+
+        opt3 = opt2->next = calloc(1, sizeof(*opt3));
+        if (!opt3)
+                goto nomem;
+        opt3->label = strdup("password:");
+        opt3->name = strdup("pwd");
+        opt3->type = OC_FORM_OPT_PASSWORD;
+        return form;
+}
 
 int array_obtain_cookie(struct openconnect_info *vpninfo)
 {
-	return -EINVAL;
+	struct oc_auth_form *form = plain_auth_form();
+	if (!form)
+		return -ENOMEM;
+
+	struct oc_text_buf *req_buf = buf_alloc();
+	int ret;
+        if ((ret = buf_error(req_buf)))
+                goto out;
+
+	do {
+		ret = process_auth_form(vpninfo, form);
+	} while (ret == OC_FORM_RESULT_NEWGROUP);
+	if (ret)
+		goto out;
+
+	append_form_opts(vpninfo, form, req_buf);
+	if ((ret = buf_error(req_buf)))
+		goto out;
+
+	free(vpninfo->urlpath);
+	vpninfo->urlpath = strdup("prx/000/http/localhost/login");
+	if (!vpninfo->urlpath) {
+		ret = -ENOMEM;
+		goto out;
+	}
+
+	char *resp_buf = NULL;
+	ret = do_https_request(vpninfo, "POST",
+			       "application/x-www-form-urlencoded",
+			       req_buf, &resp_buf, 2);
+	free(resp_buf);
+	if (ret <= 0)
+		goto out;
+
+	struct oc_vpn_option *cookie;
+	for (cookie = vpninfo->cookies; cookie; cookie = cookie->next) {
+		if (!strncmp(cookie->option, "ANsession", 9)) {
+			free(vpninfo->cookie);
+			if (asprintf(&vpninfo->cookie, "%s=%s", cookie->option, cookie->value) <= 0)
+				return -ENOMEM;
+			ret = 0;
+			goto out;
+		}
+	}
+	vpn_progress(vpninfo, PRG_INFO, _("No ANsession cookie found\n"));
+	ret = -EPERM;
+
+ out:
+        if (form) free_auth_form(form);
+        if (req_buf) buf_free(req_buf);
+	printf("obtain return %d\n", ret);
+        return ret;
 }
 
 /* XXX: Lifted from oncp.c. Share it. */
@@ -116,7 +200,7 @@ int array_connect(struct openconnect_info *vpninfo)
 	//	buf_append(reqbuf, "cpuid: FBFEDA5D-6603-451F-AC36-9231868A32D3\r\n");
 	buf_append(reqbuf, "hostname: %s\r\n", vpninfo->localname);
 	buf_append(reqbuf, "payload-ip-version: 6\r\n");
-	//	buf_append(reqbuf, "x-devtype: 6\r\n");
+	buf_append(reqbuf, "x-devtype: 6\r\n");
 	buf_append(reqbuf, "\r\n");
 
 	if (buf_error(reqbuf)) {
@@ -166,6 +250,8 @@ int array_connect(struct openconnect_info *vpninfo)
 
 	/* Parse it, learn what we need from it */
 	dump_buf_hex(vpninfo, PRG_DEBUG, '<', bytes, ret);
+	if (ret > 16 && bytes[16] == '{')
+		dump_buf(vpninfo, '<', (char *)bytes + 16);
 
 	/* Send second configuration request 'conf54' */
 	dump_buf_hex(vpninfo, PRG_DEBUG, '>', (void *)conf54, sizeof(conf54));
@@ -188,6 +274,8 @@ int array_connect(struct openconnect_info *vpninfo)
 
 	/* Parse it, learn what we need from it */
 	dump_buf_hex(vpninfo, PRG_DEBUG, '<', bytes, ret);
+	if (ret > 16 && bytes[16] == '{')
+		dump_buf(vpninfo, '<', (char *)bytes + 16);
 
 	/* Send third request 'ipff' */
 	dump_buf_hex(vpninfo, PRG_DEBUG, '>', (void *)ipff, sizeof(ipff));
