@@ -118,6 +118,8 @@
 
 #include <libxml/tree.h>
 
+#include <json.h>
+
 #define SHA256_SIZE 32
 #define SHA1_SIZE 20
 #define MD5_SIZE 16
@@ -1305,6 +1307,9 @@ int socks_gssapi_auth(struct openconnect_info *vpninfo);
 
 /* digest.c */
 int digest_authorization(struct openconnect_info *vpninfo, int proxy, struct http_auth_state *auth_state, struct oc_text_buf *buf);
+
+/* jsondump.c */
+void dump_json(struct openconnect_info *vpninfo, int lvl, json_value *value);
 
 /* library.c */
 void nuke_opt_values(struct oc_form_opt *opt);

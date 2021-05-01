@@ -24,8 +24,13 @@ AM_CFLAGS = @WFLAGS@
 AM_CPPFLAGS = -DLOCALEDIR="\"$(localedir)\""
 
 openconnect_SOURCES = xml.c main.c
-openconnect_CFLAGS = $(AM_CFLAGS) $(SSL_CFLAGS) $(DTLS_SSL_CFLAGS) $(LIBXML2_CFLAGS) $(LIBPROXY_CFLAGS) $(ZLIB_CFLAGS) $(LIBSTOKEN_CFLAGS) $(LIBPSKC_CFLAGS) $(GSSAPI_CFLAGS) $(INTL_CFLAGS) $(ICONV_CFLAGS) $(LIBPCSCLITE_CFLAGS)
-openconnect_LDADD = libopenconnect.la $(SSL_LIBS) $(LIBXML2_LIBS) $(LIBPROXY_LIBS) $(INTL_LIBS) $(ICONV_LIBS)
+openconnect_CFLAGS = $(AM_CFLAGS) $(SSL_CFLAGS) $(DTLS_SSL_CFLAGS) \
+	$(LIBXML2_CFLAGS) $(JSON_CFLAGS) $(LIBPROXY_CFLAGS) \
+	$(ZLIB_CFLAGS) $(LIBSTOKEN_CFLAGS) $(LIBPSKC_CFLAGS) \
+	$(GSSAPI_CFLAGS) $(INTL_CFLAGS) $(ICONV_CFLAGS) \
+	$(LIBPCSCLITE_CFLAGS)
+openconnect_LDADD = libopenconnect.la $(SSL_LIBS) $(LIBXML2_LIBS) \
+	$(LIBPROXY_LIBS) $(INTL_LIBS) $(ICONV_LIBS)
 
 if OPENCONNECT_WIN32
 openconnect_SOURCES += openconnect.rc
@@ -41,12 +46,12 @@ lib_srcs_ppp = ppp.c ppp.h
 lib_srcs_nullppp = nullppp.c
 lib_srcs_f5 = f5.c
 lib_srcs_fortinet = fortinet.c
+lib_srcs_json = jsondump.c
 
 library_srcs += $(lib_srcs_juniper) $(lib_srcs_cisco) $(lib_srcs_oath) \
 		$(lib_srcs_globalprotect) $(lib_srcs_pulse) \
 		$(lib_srcs_oidc) $(lib_srcs_ppp) $(lib_srcs_nullppp) \
-		$(lib_srcs_f5) $(lib_srcs_fortinet)
-
+		$(lib_srcs_f5) $(lib_srcs_fortinet) $(lib_srcs_json)
 
 lib_srcs_gnutls = gnutls.c gnutls_tpm.c gnutls_tpm2.c
 lib_srcs_openssl = openssl.c openssl-pkcs11.c
@@ -99,6 +104,9 @@ endif
 if OPENCONNECT_ICONV
 library_srcs += $(lib_srcs_iconv)
 endif
+if BUILTIN_JSON
+library_srcs += json/json.c json/json.h
+endif
 if OPENCONNECT_WIN32
 library_srcs += $(lib_srcs_win32)
 .rc.o:
@@ -111,8 +119,17 @@ endif
 
 
 libopenconnect_la_SOURCES = version.c $(library_srcs)
-libopenconnect_la_CFLAGS = $(AM_CFLAGS) $(SSL_CFLAGS) $(DTLS_SSL_CFLAGS) $(LIBXML2_CFLAGS) $(LIBPROXY_CFLAGS) $(ZLIB_CFLAGS) $(P11KIT_CFLAGS) $(TSS_CFLAGS) $(LIBSTOKEN_CFLAGS) $(LIBPSKC_CFLAGS) $(GSSAPI_CFLAGS) $(INTL_CFLAGS) $(ICONV_CFLAGS) $(LIBPCSCLITE_CFLAGS) $(LIBP11_CFLAGS) $(LIBLZ4_CFLAGS)
-libopenconnect_la_LIBADD = $(SSL_LIBS) $(DTLS_SSL_LIBS) $(LIBXML2_LIBS) $(LIBPROXY_LIBS) $(ZLIB_LIBS) $(P11KIT_LIBS) $(TSS_LIBS) $(LIBSTOKEN_LIBS) $(LIBPSKC_LIBS) $(GSSAPI_LIBS) $(INTL_LIBS) $(ICONV_LIBS) $(LIBPCSCLITE_LIBS) $(LIBP11_LIBS) $(LIBLZ4_LIBS)
+libopenconnect_la_CFLAGS = $(AM_CFLAGS) $(SSL_CFLAGS) $(DTLS_SSL_CFLAGS) \
+	$(LIBXML2_CFLAGS) $(LIBPROXY_CFLAGS) $(ZLIB_CFLAGS) $(P11KIT_CFLAGS) \
+	$(TSS_CFLAGS) $(LIBSTOKEN_CFLAGS) $(LIBPSKC_CFLAGS) $(GSSAPI_CFLAGS) \
+	$(INTL_CFLAGS) $(ICONV_CFLAGS) $(LIBPCSCLITE_CFLAGS) $(LIBP11_CFLAGS) \
+	$(LIBLZ4_CFLAGS) $(JSON_CFLAGS)
+libopenconnect_la_LIBADD = $(SSL_LIBS) $(DTLS_SSL_LIBS) \
+	$(LIBXML2_LIBS) $(LIBPROXY_LIBS) $(ZLIB_LIBS) $(P11KIT_LIBS) \
+	$(TSS_LIBS) $(LIBSTOKEN_LIBS) $(LIBPSKC_LIBS) $(GSSAPI_LIBS) \
+	$(INTL_LIBS) $(ICONV_LIBS) $(LIBPCSCLITE_LIBS) $(LIBP11_LIBS)\
+	$(LIBLZ4_LIBS) ${JSON_LIBS}
+
 if OPENBSD_LIBTOOL
 # OpenBSD's libtool doesn't have -version-number, but its -version-info arg
 # does what GNU libtool's -version-number does. Which arguably is what the
@@ -144,6 +161,7 @@ endif
 pkgconfig_DATA = openconnect.pc
 
 EXTRA_DIST = AUTHORS version.sh COPYING.LGPL openconnect.ico $(POTFILES) openconnect.nsi.in
+EXTRA_DIST += json/AUTHORS json/LICENSE json/json.c json/json.h
 EXTRA_DIST += $(shell cd "$(top_srcdir)" && \
 		git ls-tree HEAD -r --name-only -- android/ java/ trojans/ bash/ 2>/dev/null)
 

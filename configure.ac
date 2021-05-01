@@ -5,7 +5,7 @@ PKG_PROG_PKG_CONFIG
 AC_LANG_C
 AC_CANONICAL_HOST
 AM_MAINTAINER_MODE([enable])
-AM_INIT_AUTOMAKE([foreign tar-ustar])
+AM_INIT_AUTOMAKE([foreign tar-ustar subdir-objects])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
 AC_PREREQ([2.62], [], [AC_SUBST([localedir], ['$(datadir)/locale'])])
@@ -748,6 +748,32 @@ AX_CHECK_VSCRIPT
 
 PKG_CHECK_MODULES(LIBXML2, libxml-2.0)
 
+AC_ARG_WITH([builtin-json],
+	AS_HELP_STRING([--with-builtin-json],
+	[Build with builtin json-parser library [default=auto]]))
+
+json=
+AS_IF([test "$with_builtin_json" != "yes"],
+	[PKG_CHECK_MODULES(JSON, json-parser,
+			   [AC_SUBST(JSON_PC, [json-parser])
+			    json=system], [:])
+      ])
+
+AS_IF([test "$with_builtin_json" != "no"  && test "$json" = "" ],
+	[json=builtin
+	 oldLIBS="$LIBS"
+	 AC_SEARCH_LIBS(pow, [m])
+	 LIBS="$oldLIBS"
+	 AC_SUBST([JSON_LIBS], [$ac_cv_search_pow])
+	 AC_SUBST([JSON_CFLAGS], ['-I$(srcdir)/json'])
+      ])
+
+AS_IF([test "$json" = ""],
+    AC_ERROR([No json-parser package found and --without-builtin-json specified])
+    )
+
+AM_CONDITIONAL(BUILTIN_JSON, [test "$json" = "builtin"])
+
 PKG_CHECK_MODULES(ZLIB, zlib, [AC_SUBST(ZLIB_PC, [zlib])],
 		  [oldLIBS="$LIBS"
 		  LIBS="$LIBS -lz"
@@ -1216,6 +1242,7 @@ SUMMARY([RSA SecurID support], [$libstoken_pkg])
 SUMMARY([PSKC OATH file support], [$libpskc_pkg])
 SUMMARY([GSSAPI support], [$linked_gssapi])
 SUMMARY([Yubikey support], [$libpcsclite_pkg])
+SUMMARY([JSON parser], [$json])
 SUMMARY([LZ4 compression], [$lz4_pkg])
 SUMMARY([Java bindings], [$with_java])
 SUMMARY([Build docs], [$build_www])
