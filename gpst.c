@@ -578,7 +578,7 @@ static int gpst_parse_config_xml(struct openconnect_info *vpninfo, xmlNode *xml_
 
 	free(s);
 
-	ret = install_vpn_opts(vpninfo, new_opts, &new_ip_info);
+	ret = install_vpn_opts(vpninfo, new_opts, &new_ip_info, 0);
 	if (ret) {
 	err:
 		free_optlist(new_opts);

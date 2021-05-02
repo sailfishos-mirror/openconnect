@@ -426,7 +426,7 @@ static int nx_get_connection_info(struct openconnect_info *vpninfo)
 		}
 		line = line_break ? (line_break + 1) : NULL;
 	}
-	ret = install_vpn_opts(vpninfo, new_opts, &new_ip_info);
+	ret = install_vpn_opts(vpninfo, new_opts, &new_ip_info, 1);
 out:
 	if (ret) {
 		free_optlist(new_opts);
