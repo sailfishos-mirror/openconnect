@@ -36,7 +36,7 @@ static int store_cookie_if_valid(struct openconnect_info *vpninfo)
 	for (cookie = vpninfo->cookies; cookie; cookie = cookie->next) {
 		if (strcmp(cookie->option, "swap") == 0) {
 			buf = buf_alloc();
-			buf_append(buf, "swap=%s", cookie->value);
+			buf_append(buf, "%s", cookie->value);
 			if (!buf_error(buf)) {
 				vpninfo->cookie = buf->data;
 				buf->data = NULL;
@@ -456,7 +456,7 @@ int nx_connect(struct openconnect_info *vpninfo)
 		vpn_progress(vpninfo, PRG_ERR, _("Failed getting NX connection information\n"));
 		return -EINVAL;
 	}
-	auth_token = openconnect_base64_decode(&auth_token_len, vpninfo->cookie + 5);
+	auth_token = openconnect_base64_decode(&auth_token_len, vpninfo->cookie);
 	if (!auth_token) {
 		ret = auth_token_len;
 		goto out;
