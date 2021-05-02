@@ -474,12 +474,12 @@ void free_optlist(struct oc_vpn_option *opt)
 }
 
 int install_vpn_opts(struct openconnect_info *vpninfo, struct oc_vpn_option *opt,
-		     struct oc_ip_info *ip_info)
+		     struct oc_ip_info *ip_info, int allow_no_ip)
 {
-	/* F5 doesn't get its IP address until it actually establishes the
-	 * PPP connection. */
-	if (vpninfo->proto->proto != PROTO_F5 && !ip_info->addr &&
-	    !ip_info->addr6 && !ip_info->netmask6) {
+	/* XX: Some PPP-based protocols don't get their IP address(es)
+	 * until they actually establish the PPP connection, which is
+	 * after we first call install_vpn_opts. */
+	if (!allow_no_ip && !ip_info->addr && !ip_info->addr6 && !ip_info->netmask6) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("No IP address received. Aborting\n"));
 		return -EINVAL;

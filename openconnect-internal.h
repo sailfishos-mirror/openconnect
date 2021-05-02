@@ -1154,7 +1154,7 @@ int script_config_tun(struct openconnect_info *vpninfo, const char *reason);
 int apply_script_env(struct oc_vpn_option *envs);
 void free_split_routes(struct oc_ip_info *ip_info);
 int install_vpn_opts(struct openconnect_info *vpninfo, struct oc_vpn_option *opt,
-		     struct oc_ip_info *ip_info);
+		     struct oc_ip_info *ip_info, int allow_no_ip);
 
 /* vhost.h */
 int setup_vhost(struct openconnect_info *vpninfo, int tun_fd);
