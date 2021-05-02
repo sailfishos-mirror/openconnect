@@ -503,6 +503,7 @@ out:
 	if (ret < 0)
 		openconnect_close_https(vpninfo, 0);
 	else {
+		ppp_start_tcp_mainloop(vpninfo);
 		monitor_fd_new(vpninfo, ssl);
 		monitor_read_fd(vpninfo, ssl);
 		monitor_except_fd(vpninfo, ssl);
