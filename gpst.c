@@ -823,9 +823,9 @@ static int build_csd_token(struct openconnect_info *vpninfo)
 	if (!vpninfo->csd_token)
 		return -ENOMEM;
 
-	/* use cookie (excluding volatile authcookie and preferred-ip) to build md5sum */
+	/* use cookie (excluding volatile authcookie and preferred-ip/ipv6) to build md5sum */
 	buf = buf_alloc();
-	filter_opts(buf, vpninfo->cookie, "authcookie,preferred-ip", 0);
+	filter_opts(buf, vpninfo->cookie, "authcookie,preferred-ip,preferred-ipv6", 0);
 	if (buf_error(buf))
 		goto out;
 
@@ -848,7 +848,7 @@ static int check_or_submit_hip_report(struct openconnect_info *vpninfo, const ch
 	const char *method = "POST";
 	char *xml_buf=NULL, *orig_path;
 
-	/* cookie gives us these fields: authcookie, portal, user, domain, computer, and (maybe the unnecessary) preferred-ip */
+	/* cookie gives us these fields: authcookie, portal, user, domain, computer, and (maybe the unnecessary) preferred-ip/ipv6 */
 	buf_append(request_body, "client-role=global-protect-full&%s", vpninfo->cookie);
 	if (vpninfo->ip_info.addr)
 		append_opt(request_body, "client-ip", vpninfo->ip_info.addr);

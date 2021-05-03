@@ -278,7 +278,7 @@ static const struct gp_login_arg gp_login_args[] = {
 	{ .opt="preferred-ip", .save=1 },
 	{ .opt="portal-userauthcookie", .show=1},
 	{ .opt="portal-prelogonuserauthcookie", .show=1},
-	{ .unknown=1 },
+	{ .opt="preferred-ipv6", .save=1 },
 	{ .opt="usually-equals-4", .show=1 },           /* newer servers send "4" here, meaning unknown */
 	{ .opt="usually-equals-unknown", .show=1 },     /* newer servers send "unknown" here */
 };
@@ -611,6 +611,8 @@ static int gpst_login(struct openconnect_info *vpninfo, int portal, struct login
 		append_opt(request_body, "computer", vpninfo->localname);
 		if (vpninfo->ip_info.addr)
 			append_opt(request_body, "preferred-ip", vpninfo->ip_info.addr);
+		if (vpninfo->ip_info.addr6)
+			append_opt(request_body, "preferred-ipv6", vpninfo->ip_info.addr);
 		if (ctx->form->action)
 			append_opt(request_body, "inputStr", ctx->form->action);
 		append_form_opts(vpninfo, ctx->form, request_body);

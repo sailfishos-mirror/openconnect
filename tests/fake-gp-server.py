@@ -47,12 +47,13 @@ def check_form_against_session(*fields, use_query=False, on_failure=None):
             source = request.args if use_query else request.form
             source_name = 'args' if use_query else 'form'
             for f in fields:
+                fs = f.replace('_', '-')
                 if on_failure:
-                    if session.get(f) != source.get(f) or f not in source:
+                    if session.get(f) != source.get(fs):
                         return on_failure
                 else:
-                    assert session.get(f) == source.get(f), \
-                        f'at step {session.get("step")}: {source_name} {f!r} {source.get(f)!r} != session {f!r} {session.get(f)!r}'
+                    assert session.get(f) == source.get(fs), \
+                        f'at step {session.get("step")}: {source_name} {f!r} {source.get(fs)!r} != session {f!r} {session.get(f)!r}'
             return fn(*args, **kwargs)
         return wrapped
     return inner
@@ -147,7 +148,12 @@ def gateway_login():
     auth = 'Auth%d' % randint(1, 10)
     domain = 'Domain%d' % randint(1, 10)
     preferred_ip = request.form.get('preferred-ip') or '192.168.%d.%d' % (randint(2, 254), randint(2, 254))
-    session.update(preferred_ip=preferred_ip, portal=portal, auth=auth, domain=domain, computer=request.form.get('computer'))
+    if request.form.get('ipv6-support') == 'yes':
+        preferred_ipv6 = request.form.get('preferred-ipv6') or 'fd00::%x' % randint(0x1000, 0xffff)
+    else:
+        preferred_ipv6 = None
+    session.update(preferred_ip=preferred_ip, portal=portal, auth=auth, domain=domain, computer=request.form.get('computer'),
+                   ipv6_support=request.form.get('ipv6-support'), preferred_ipv6=preferred_ipv6)
     session['authcookie'] = cookify(dict(session)).decode()
 
     return '''<?xml version="1.0" encoding="utf-8"?> <jnlp> <application-desc>
@@ -167,17 +173,21 @@ def gateway_login():
             <argument>-1</argument>
             <argument>4100</argument>
             <argument>{preferred_ip}</argument>
-            </application-desc></jnlp>'''.format(**session)
+            <argument/>
+            <argument/>
+            <argument>{ipv6}</argument>
+            </application-desc></jnlp>'''.format(ipv6=preferred_ipv6 or '', **session)
 
 
 # Respond to gateway getconfig request
 @app.route('/ssl-vpn/getconfig.esp', methods=('POST',))
-@check_form_against_session('user', 'portal', 'domain', 'authcookie', on_failure="errors getting SSL/VPN config")
+@check_form_against_session('user', 'portal', 'domain', 'authcookie', 'preferred_ip', 'preferred_ipv6', 'ipv6_support', on_failure="errors getting SSL/VPN config")
 def getconfig():
     session.update(step='gateway-config')
-    return '''<response><ip-address>{preferred_ip}</ip-address>
-        <ssl-tunnel-url>/ssl-tunnel-connect.sslvpn</ssl-tunnel-url>
-        </response>'''.format(**session)
+    addrs = '<ip-address>{}</ip-address>'.format(session['preferred_ip'])
+    if session['ipv6_support'] == 'yes':
+        addrs += '<ip-address-v6>{}</ip-address-v6>'.format(session['preferred_ipv6'])
+    return '''<response>{}<ssl-tunnel-url>/ssl-tunnel-connect.sslvpn</ssl-tunnel-url></response>'''.format(addrs)
 
 
 # Respond to gateway getconfig request

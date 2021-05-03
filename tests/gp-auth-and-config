@@ -72,6 +72,13 @@ test $? = 2 || # what OpenConnect returns when server rejects cookie upon tunnel
 
 echo ok
 
+echo -n "Authenticating with username/password via portal, then proceeding to tunnel stage (with IPv6 disabled)... "
+echo "test" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT --protocol=gp --disable-ipv6 -q $ADDRESS:443/portal -u test $FINGERPRINT >/dev/null 2>&1
+test $? = 2 || # what OpenConnect returns when server rejects cookie upon tunnel connection, as the fake server does
+    fail $PID "Something went wrong in fake GlobalProtect server (other than the expected rejection of cookie)"
+
+echo ok
+
 cleanup
 
 exit 0
