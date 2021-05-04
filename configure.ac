@@ -567,6 +567,7 @@ case "$ssl_library" in
 
 	dtls=yes
 	AC_DEFINE(OPENCONNECT_OPENSSL, 1, [Using OpenSSL])
+	AC_DEFINE(OPENSSL_SUPPRESS_DEPRECATED, 1, [We need to update to OpenSSL 3.0.0 API])
 	AC_SUBST(SSL_LIBS, ['$(OPENSSL_LIBS)'])
 	AC_SUBST(SSL_CFLAGS, ['$(OPENSSL_CFLAGS)'])
 	;;

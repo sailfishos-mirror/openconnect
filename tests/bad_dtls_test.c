@@ -37,6 +37,8 @@
  */
 #include <string.h>
 
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
