@@ -347,9 +347,15 @@ static struct oc_auth_form *parse_roles_table_node(xmlNodePtr node)
 	if (!form)
 		return NULL;
 
+	form->auth_id = strdup("frmSelectRoles");
+	if (!form->auth_id) {
+		free(form);
+		return NULL;
+	};
+
 	opt = calloc(1, sizeof(*opt));
 	if (!opt) {
-		free(form);
+		free_auth_form(form);
 		return NULL;
 	}
 
