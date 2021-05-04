@@ -435,6 +435,15 @@ int start_dtls_handshake(struct openconnect_info *vpninfo, int dtls_fd)
 			 */
 			SSL_CTX_set_options(vpninfo->dtls_ctx, SSL_OP_NO_ENCRYPT_THEN_MAC);
 #endif
+#ifdef SSL_OP_LEGACY_SERVER_CONNECT
+			/*
+			 * Since https://github.com/openssl/openssl/pull/15127, OpenSSL
+			 * *requires* secure renegotiation support by default. For interop
+			 * with Cisco's resumed DTLS sessions, we have to turn that off.
+			 */
+			if (dtlsver)
+				SSL_CTX_set_options(vpninfo->dtls_ctx, SSL_OP_LEGACY_SERVER_CONNECT);
+#endif
 #ifdef SSL_OP_NO_EXTENDED_MASTER_SECRET
 			/* RFC7627 says:
 			 *

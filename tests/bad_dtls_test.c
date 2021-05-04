@@ -788,7 +788,8 @@ int main(int argc, char *argv[])
     ctx = SSL_CTX_new(DTLS_client_method());
     if (ctx == NULL ||
 	!SSL_CTX_set_min_proto_version(ctx, DTLS1_BAD_VER) ||
-	!SSL_CTX_set_max_proto_version(ctx, DTLS1_BAD_VER)) {
+	!SSL_CTX_set_max_proto_version(ctx, DTLS1_BAD_VER) ||
+	!SSL_CTX_set_options(ctx, SSL_OP_LEGACY_SERVER_CONNECT)) {
         printf("Failed to allocate SSL_CTX\n");
         goto end_md;
     }
