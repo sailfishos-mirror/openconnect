@@ -144,6 +144,9 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 		ret = -ENOMEM;
 		goto out;
 	}
+	form->auth_id = strdup("fortinet_auth");
+	if (!form->auth_id)
+		goto nomem;
 	opt = form->opts = calloc(1, sizeof(*opt));
 	if (!opt)
 		goto nomem;
@@ -207,7 +210,7 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 		}
 
 		/* XX: We got 200 status, but no SVPNCOOKIE. 2FA? */
-		if (ret >= 0 &&
+		if (ret > 0 &&
 		    !strncmp(resp_buf, "ret=", 4) && strstr(resp_buf, ",tokeninfo=")) {
 			const char *prompt;
 			struct oc_text_buf *action_buf = buf_alloc();
