@@ -204,6 +204,7 @@ struct pkt {
 #define PROTO_F5		4
 #define PROTO_FORTINET		5
 #define PROTO_NULLPPP		6
+#define PROTO_ARRAY		7
 
 /* All supported PPP packet framings/encapsulations */
 #define PPP_ENCAP_RFC1661	1	/* Plain/synchronous/pre-framed PPP (RFC1661) */
@@ -631,6 +632,10 @@ struct openconnect_info {
 
 	int dtls_state;
 	int dtls_need_reconnect;
+
+	int tcp_blocked_for_udp; /* Some protocols explicitly *tell* the server
+				  * over the TCP channel to switch to UDP. */
+
 	struct keepalive_info dtls_times;
 	unsigned char dtls_session_id[32];
 	unsigned char dtls_secret[TLS_MASTER_KEY_SIZE];
@@ -1070,6 +1075,7 @@ int check_http_status(const char *buf, int len);
 int array_obtain_cookie(struct openconnect_info *vpninfo);
 int array_connect(struct openconnect_info *vpninfo);
 int array_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable);
+int array_dtls_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable);
 int array_bye(struct openconnect_info *vpninfo, const char *reason);
 
 /* auth-globalprotect.c */

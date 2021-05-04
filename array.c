@@ -29,6 +29,21 @@
 #include <stdarg.h>
 #include <sys/types.h>
 
+#ifdef _WIN32
+#include "win32-ipicmp.h"
+#else
+/* The BSDs require the first two headers before netinet/ip.h
+ * (Linux and macOS already #include them within netinet/ip.h)
+ */
+#include <sys/types.h>
+#include <netinet/in_systm.h>
+#include <netinet/in.h>
+#include <netinet/ip.h>
+#include <netinet/ip_icmp.h>
+#include <netinet/ip6.h>
+#include <netinet/icmp6.h>
+#endif
+
 #include "json.h"
 
 #include "openconnect-internal.h"
@@ -174,6 +189,23 @@ static const unsigned char conf54[] = { 0x54, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 static const unsigned char ipff[] = { 0x45, 0x00, 0x00, 0x14, 0x00, 0x00, 0x00, 0x00,
 				      0x00, 0xff, 0x00, 0x00, 0x00, 0x06, 0x00, 0x00,
 				      0x00, 0x00, 0x00, 0x00 };
+
+static const struct pkt dpd_pkt = {
+	.next = NULL,
+	.data =  { 0x45, 0x00, 0x00, 0x14, 0x00, 0x00, 0x00, 0x00,
+		   0x00, 0xff, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00,
+		   0x00, 0x00, 0x00, 0x00 },
+	.len = 20,
+};
+
+static const struct pkt nodtls_pkt = {
+	.next = NULL,
+	.data =  { 0x45, 0x00, 0x00, 0x14, 0x00, 0x00, 0x00, 0x00,
+		   0x00, 0xff, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00,
+		   0x00, 0x00, 0x00, 0x00 },
+	.len = 20,
+};
+
 
 static int parse_one_inc_exc(struct openconnect_info *vpninfo, struct oc_vpn_option **opts,
 			     struct oc_ip_info *ip_info, int incl, int ipv6, json_value *val)
@@ -488,7 +520,7 @@ static int parse_speed_tunnel(struct openconnect_info *vpninfo,
 		vpninfo->dtls_state = DTLS_DISABLED;
 
 	/* We don't support DPD yet...*/
-	if (0 && dpd) {
+	if (dpd) {
 		if (!vpninfo->ssl_times.dpd || vpninfo->ssl_times.dpd > dpd)
 			vpninfo->ssl_times.dpd = dpd;
 		if (!vpninfo->dtls_times.dpd || vpninfo->dtls_times.dpd > dpd)
@@ -543,7 +575,7 @@ static int do_json_request(struct openconnect_info *vpninfo, void *req, int reql
 	if (!val) {
 	eparse:
 		vpn_progress(vpninfo, PRG_ERR,
-			     _("Failed to parse conf50 response\n"));
+			     _("Failed to parse Array JSON response\n"));
 		return -EINVAL;
 	}
 
@@ -575,8 +607,8 @@ int array_connect(struct openconnect_info *vpninfo)
 			return ret;
 	}
 
-	/* We abuse ppp_dtls_connect_req for the random client-id */
-	if (!vpninfo->ppp_dtls_connect_req) {
+	/* We abuse ppp_tls_connect_req for the random client-id */
+	if (!vpninfo->ppp_tls_connect_req) {
 		struct oc_text_buf *buf = buf_alloc();
 		unsigned char bin[16];
 
@@ -590,7 +622,7 @@ int array_connect(struct openconnect_info *vpninfo)
 		if (buf_error(buf))
 			return buf_free(buf);
 
-		vpninfo->ppp_dtls_connect_req = buf;
+		vpninfo->ppp_tls_connect_req = buf;
 	}
 
 	ret = openconnect_open_https(vpninfo);
@@ -602,8 +634,8 @@ int array_connect(struct openconnect_info *vpninfo)
 	buf_append(reqbuf, "GET /vpntunnel HTTP/1.1\r\n");
 	http_common_headers(vpninfo, reqbuf);
 	buf_append(reqbuf, "appid: SSPVPN\r\n");
-	buf_append(reqbuf, "clientid: %s\r\n", vpninfo->ppp_dtls_connect_req->data);
-	buf_append(reqbuf, "cpuid: %s\r\n", vpninfo->ppp_dtls_connect_req->data);
+	buf_append(reqbuf, "clientid: %s\r\n", vpninfo->ppp_tls_connect_req->data);
+	buf_append(reqbuf, "cpuid: %s\r\n", vpninfo->ppp_tls_connect_req->data);
 	buf_append(reqbuf, "hostname: %s\r\n", vpninfo->localname);
 	buf_append(reqbuf, "payload-ip-version: 6\r\n");
 	buf_append(reqbuf, "x-devtype: 6\r\n");
@@ -643,11 +675,87 @@ int array_connect(struct openconnect_info *vpninfo)
 	if (ret)
 		goto out;
 
+	if (vpninfo->dtls_state != DTLS_DISABLED) {
+		struct oc_text_buf *dtlsbuf = buf_alloc();
+		buf_append_bytes(dtlsbuf, (void *)ipff, 16);
+		buf_append(dtlsbuf, "%s", vpninfo->ppp_tls_connect_req->data);
+
+		if (!buf_error(dtlsbuf)) {
+			store_be16(dtlsbuf->data + 12, 4);
+			store_be16(dtlsbuf->data + 2, dtlsbuf->pos);
+
+			if (vpninfo->dump_http_traffic)
+				dump_buf_hex(vpninfo, PRG_DEBUG, '>', (void *)dtlsbuf->data,
+					     dtlsbuf->pos);
+			ret = vpninfo->ssl_write(vpninfo, (void *)dtlsbuf->data, dtlsbuf->pos);
+			if (ret != dtlsbuf->pos) {
+				buf_free(dtlsbuf);
+				if (ret >= 0) {
+					vpn_progress(vpninfo, PRG_ERR,
+						     _("Short write in array negotiation\n"));
+					ret = -EIO;
+				}
+				goto out;
+			}
+
+			ret = vpninfo->ssl_read(vpninfo, (void *)bytes, sizeof(bytes));
+			if (ret < 0) {
+				vpn_progress(vpninfo, PRG_ERR,
+					     _("Failed to read UDP negotiation response\n"));
+				buf_free(dtlsbuf);
+				ret = -EIO;
+				goto out;
+			}
+
+			/* Parse it, learn what we need from it */
+			if (vpninfo->dump_http_traffic)
+				dump_buf_hex(vpninfo, PRG_DEBUG, '<', bytes, ret);
+
+			if (ret == 0x25 && !memcmp(bytes + 0x14, "DTLS SPEED TUNNEL", 0x11)) {
+				int udp_port = load_be16(bytes + 0x12);
+
+				vpn_progress(vpninfo, PRG_INFO, _("DTLS enabled on port %d\n"),
+					     udp_port);
+
+				if (vpninfo->dtls_state == DTLS_NOSECRET) {
+					/* Now build the request we actually send over DTLS, which
+					 * must have "13" following the client-id. Without that at
+					 * the end, we can send over DTLS but the worker process
+					 * seems to crash as soon as it needs to send us anything
+					 * more than a keepalive response. */
+					buf_truncate(dtlsbuf);
+					buf_append(dtlsbuf, "%s13", vpninfo->ppp_tls_connect_req->data);
+
+					if (buf_error(dtlsbuf)) {
+						buf_free(dtlsbuf);
+						vpninfo->dtls_state = DTLS_DISABLED;
+					} else {
+						vpninfo->ppp_dtls_connect_req = dtlsbuf;
+
+						udp_sockaddr(vpninfo, udp_port);
+						vpninfo->dtls_state = DTLS_SECRET;
+					}
+				} else {
+					buf_free(dtlsbuf);
+				}
+			} else {
+				/* The 'encrypted' UDP tunnel without DTLS looks like it's using
+				 * the same key repeatedly without IV or replay protection. I'm
+				 * not touching it with a bargepole, or the unencrypted one. */
+				vpn_progress(vpninfo, PRG_INFO,
+					     _("Refusing non-DTLS UDP tunnel\n"));
+				vpninfo->dtls_state = DTLS_DISABLED;
+			}
+		}
+	}
+
+	#if 0
 	/* Send third request 'ipff' */
 	dump_buf_hex(vpninfo, PRG_DEBUG, '>', (void *)ipff, sizeof(ipff));
 	ret = vpninfo->ssl_write(vpninfo,  (void *)ipff, sizeof(ipff));
 	if (ret != sizeof(ipff)) {
-		if (ret >= 0) {
+		shortwrite:
+			if (ret >= 0) {
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("Short write in array negotiation\n"));
 			ret = -EIO;
@@ -664,6 +772,8 @@ int array_connect(struct openconnect_info *vpninfo)
 
 	/* Parse it, learn what we need from it */
 	dump_buf_hex(vpninfo, PRG_DEBUG, '<', bytes, ret);
+#endif
+	vpninfo->tcp_blocked_for_udp = 0;
 
 	ret = 0; /* success */
  out:
@@ -731,8 +841,19 @@ int array_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 
 		vpninfo->ssl_times.last_rx = time(NULL);
 
+		unsigned char *buf = vpninfo->cstp_pkt->data;
+		if (len >= sizeof(struct ip) && buf[0] == 0x45 &&
+		    load_be16(buf + 2) == len && buf[9] == 0xff) {
+			uint16_t ctrl_type = load_be16(buf + 12);
+			vpn_progress(vpninfo, PRG_DEBUG,
+				     _("Receive control packet of type %x:\n"),
+				     ctrl_type);
+			dump_buf_hex(vpninfo, PRG_DEBUG, '<', buf, len);
+			continue;
+		}
+
 		vpn_progress(vpninfo, PRG_TRACE,
-			     _("Received uncompressed data packet of %d bytes\n"),
+			     _("Received data packet of %d bytes\n"),
 			     len);
 		vpninfo->cstp_pkt->len = len;
 		queue_packet(&vpninfo->incoming_queue, vpninfo->cstp_pkt);
@@ -780,6 +901,10 @@ int array_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			vpninfo->quit_reason = "Internal error";
 			return 1;
 		}
+		/* Don't free the 'special' packets */
+		if (vpninfo->current_ssl_pkt != &dpd_pkt &&
+		    vpninfo->current_ssl_pkt != &nodtls_pkt)
+			free(vpninfo->current_ssl_pkt);
 
 		vpninfo->current_ssl_pkt = NULL;
 	}
@@ -799,7 +924,6 @@ int array_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 				vpn_progress(vpninfo, PRG_ERR, _("Rehandshake failed; attempting new-tunnel\n"));
 				goto do_reconnect;
 			}
-
 			goto do_dtls_reconnect;
 		}
 		break;
@@ -807,7 +931,7 @@ int array_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 	case KA_DPD_DEAD:
 	peer_dead:
 		vpn_progress(vpninfo, PRG_ERR,
-			     _("CSTP Dead Peer Detection detected dead peer!\n"));
+			     _("TCP Dead Peer Detection detected dead peer!\n"));
 	do_reconnect:
 		ret = ssl_reconnect(vpninfo);
 		if (ret) {
@@ -827,20 +951,24 @@ int array_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		return 1;
 
 	case KA_DPD:
-		vpn_progress(vpninfo, PRG_DEBUG, _("Send CSTP DPD\n"));
+		vpn_progress(vpninfo, PRG_DEBUG, _("Send TCP DPD\n"));
 
-		//vpninfo->current_ssl_pkt = (struct pkt *)&dpd_pkt;
-		//goto handle_outgoing;
+		/* last_dpd will just have been set */
+		vpninfo->dtls_times.last_tx = vpninfo->dtls_times.last_dpd;
+		work_done = 1;
+
+		vpninfo->current_ssl_pkt = (struct pkt *)&dpd_pkt;
+		goto handle_outgoing;
 		break;
 
 	case KA_KEEPALIVE:
 		/* No need to send an explicit keepalive
 		   if we have real data to send */
-		if (vpninfo->dtls_state != DTLS_CONNECTED &&
+		if (vpninfo->dtls_state != DTLS_ESTABLISHED &&
 		    vpninfo->outgoing_queue.head)
 			break;
 
-		vpn_progress(vpninfo, PRG_DEBUG, _("Send CSTP Keepalive\n"));
+		vpn_progress(vpninfo, PRG_DEBUG, _("Send TCP Keepalive\n"));
 
 		//vpninfo->current_ssl_pkt = (struct pkt *)&keepalive_pkt;
 		//goto handle_outgoing;
@@ -850,8 +978,18 @@ int array_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		;
 	}
 
+	if (vpninfo->dtls_state != DTLS_ESTABLISHED &&
+	    vpninfo->tcp_blocked_for_udp) {
+		vpninfo->current_ssl_pkt = (struct pkt *)&nodtls_pkt;
+		vpninfo->tcp_blocked_for_udp = 0;
+
+		vpn_progress(vpninfo, PRG_TRACE,
+			     _("Sending DTLS off packet\n"));
+		goto handle_outgoing;
+	}
+
 	/* Service outgoing packet queue, if no DTLS */
-	while (vpninfo->dtls_state != DTLS_CONNECTED &&
+	while (vpninfo->dtls_state != DTLS_ESTABLISHED &&
 	       (vpninfo->current_ssl_pkt = dequeue_packet(&vpninfo->outgoing_queue))) {
 		struct pkt *this = vpninfo->current_ssl_pkt;
 
@@ -864,6 +1002,280 @@ int array_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 	}
 
 	/* Work is not done if we just got rid of packets off the queue */
+	return work_done;
+}
+
+int array_dtls_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
+{
+	int work_done = 0;
+	time_t now = time(NULL);
+	int first_connected = 0;
+
+	if (vpninfo->dtls_need_reconnect) {
+		vpninfo->dtls_need_reconnect = 0;
+		dtls_reconnect(vpninfo, timeout);
+		return 1;
+	}
+
+	if (vpninfo->dtls_state == DTLS_CONNECTING) {
+		dtls_try_handshake(vpninfo, timeout);
+		if (vpninfo->dtls_state == DTLS_CONNECTED) {
+			first_connected = 1;
+			goto newly_connected;
+		}
+
+		vpninfo->delay_tunnel_reason = "DTLS establishing";
+		return 0;
+	}
+
+	if (vpninfo->dtls_state == DTLS_SLEEPING) {
+		int when = vpninfo->new_dtls_started + vpninfo->dtls_attempt_period - time(NULL);
+
+		if (when <= 0) {
+			vpn_progress(vpninfo, PRG_DEBUG, _("Attempt new DTLS connection\n"));
+			if (dtls_reconnect(vpninfo, timeout) < 0)
+				*timeout = 1000;
+		} else if ((when * 1000) < *timeout) {
+			*timeout = when * 1000;
+		}
+		return 0;
+	}
+
+	/* Nothing to do here for Cisco DTLS as it is preauthenticated */
+	if (vpninfo->dtls_state == DTLS_CONNECTED) {
+		/* First, see if there's a response for us. */
+		while(readable) {
+			int receive_mtu = MAX(16384, vpninfo->ip_info.mtu);
+			int len;
+
+			/* cstp_pkt is used by PPP over either transport, and TCP
+			 * may be in active use while we attempt to connect DTLS.
+			 * So use vpninfo->dtls_pkt for this. */
+			if (!vpninfo->dtls_pkt)
+				vpninfo->dtls_pkt = malloc(sizeof(struct pkt) + receive_mtu);
+			if (!vpninfo->dtls_pkt) {
+				vpn_progress(vpninfo, PRG_ERR, _("Allocation failed\n"));
+				dtls_close(vpninfo);
+				vpninfo->dtls_state = DTLS_DISABLED;
+				return 1;
+			}
+
+			struct pkt *this =  vpninfo->dtls_pkt;
+			len = ssl_nonblock_read(vpninfo, 1, this->data, receive_mtu);
+			if (!len)
+				break;
+			if (len < 0) {
+				vpn_progress(vpninfo, PRG_ERR,
+					     _("Failed to receive authentication response from DTLS\n"));
+				dtls_close(vpninfo);
+				return 1;
+			}
+
+			this->len = len;
+
+			if (vpninfo->dump_http_traffic)
+				dump_buf_hex(vpninfo, PRG_DEBUG, '<', this->data, len);
+
+			if (len >= 6 && !memcmp(this->data, "200 OK", 6)) {
+				vpn_progress(vpninfo, PRG_TRACE,
+					     _("DTLS session established\n"));
+				vpninfo->dtls_state = DTLS_ESTABLISHED;
+				vpninfo->tcp_blocked_for_udp = 1;
+				goto established;
+			}
+			/* The '200 OK' packet might get dropped; we *assume* the server
+			 * won't resend it even if we send the clientip again, so let's
+			 * take IP traffic as 'success' too. */
+			if (len >= sizeof(struct ip) && (this->data[0] >> 4) == 4 &&
+			    load_be16(this->data + 2) == len) {
+				/* Looks like a Legacy IP packet; the '200 OK' was
+				 * probably dropped. */
+				vpn_progress(vpninfo, PRG_TRACE,
+					     _("Received Legacy IP over DTLS; assuming established\n"));
+				vpninfo->dtls_state = DTLS_ESTABLISHED;
+				vpninfo->tcp_blocked_for_udp = 1;
+				goto got_pkt;
+			}
+			if (len >= sizeof(struct ip6_hdr) && (this->data[0] >> 4) == 6 &&
+			    len == load_be16(this->data + 4) + sizeof(struct ip6_hdr)) {
+				vpn_progress(vpninfo, PRG_TRACE,
+					     _("Received IPv6 over DTLS; assuming established\n"));
+				vpninfo->dtls_state = DTLS_ESTABLISHED;
+				vpninfo->tcp_blocked_for_udp = 1;
+				goto got_pkt;
+			}
+			vpn_progress(vpninfo, PRG_TRACE,
+				     _("Received unknown DTLS packet\n"));
+		}
+
+		/* Resend the connect request every second */
+		if (ka_check_deadline(timeout, now, vpninfo->dtls_times.last_tx + 1)) {
+		newly_connected:
+			if (buf_error(vpninfo->ppp_dtls_connect_req)) {
+				vpn_progress(vpninfo, PRG_ERR,
+					     _("Error creating connect request for DTLS session\n"));
+				dtls_close(vpninfo);
+				vpninfo->dtls_state = DTLS_DISABLED;
+				return 1;
+			}
+
+			if (vpninfo->dump_http_traffic)
+				dump_buf_hex(vpninfo, PRG_DEBUG, '>',
+					     (void *)vpninfo->ppp_dtls_connect_req->data,
+					     vpninfo->ppp_dtls_connect_req->pos);
+
+			int ret = ssl_nonblock_write(vpninfo, 1,
+						     vpninfo->ppp_dtls_connect_req->data,
+						     vpninfo->ppp_dtls_connect_req->pos);
+			if (ret < 0) {
+				vpn_progress(vpninfo, PRG_ERR,
+					     _("Failed to write connect request to DTLS session\n"));
+				dtls_close(vpninfo);
+				vpninfo->dtls_state = DTLS_DISABLED;
+				return 1;
+			}
+
+			/* On the second and subsequent attempt, send a keepalive packet
+			 * too. The server will *ignore* the clientid packet on a resend
+			 * so we have to send this too to elicit a response. Sadly, if
+			 * this ends up being the *first* packet it receives, it cuts
+			 * us off. */
+			if (!first_connected) {
+				if (vpninfo->dump_http_traffic)
+					dump_buf_hex(vpninfo, PRG_DEBUG, '>',
+						     (void *)dpd_pkt.data, dpd_pkt.len);
+				ssl_nonblock_write(vpninfo, 1, (void *)dpd_pkt.data, dpd_pkt.len);
+			}
+
+			vpninfo->dtls_times.last_tx = now;
+		}
+
+		return 0;
+	}
+
+	if (vpninfo->dtls_state != DTLS_ESTABLISHED)
+		return 0;
+
+ established:
+	while (readable) {
+		int len = MAX(16384, vpninfo->ip_info.mtu);
+		unsigned char *buf;
+
+		if (!vpninfo->dtls_pkt) {
+			vpninfo->dtls_pkt = malloc(sizeof(struct pkt) + len);
+			if (!vpninfo->dtls_pkt) {
+				vpn_progress(vpninfo, PRG_ERR, _("Allocation failed\n"));
+				break;
+			}
+		}
+
+		buf = vpninfo->dtls_pkt->data;
+		len = ssl_nonblock_read(vpninfo, 1, buf, len);
+		if (len <= 0)
+			break;
+
+		vpninfo->dtls_pkt->len = len;
+
+		if (0) {
+		got_pkt:
+			len = vpninfo->dtls_pkt->len;
+			buf = vpninfo->dtls_pkt->data;
+		}
+		vpn_progress(vpninfo, PRG_TRACE,
+			     _("Received DTLS packet 0x%02x of %d bytes\n"),
+			     buf[0], len);
+
+		vpninfo->dtls_times.last_rx = time(NULL);
+
+		if (len >= sizeof(struct ip) && buf[0] == 0x45 &&
+		    load_be16(buf + 2) == len && buf[9] == 0xff) {
+			uint16_t ctrl_type = load_be16(buf + 12);
+			vpn_progress(vpninfo, PRG_DEBUG,
+				     _("Receive control packet of type %x:\n"),
+				     ctrl_type);
+			dump_buf_hex(vpninfo, PRG_DEBUG, '<', buf, len);
+			continue;
+		}
+
+		queue_packet(&vpninfo->incoming_queue, vpninfo->dtls_pkt);
+		vpninfo->dtls_pkt = NULL;
+		work_done = 1;
+	}
+
+	switch (keepalive_action(&vpninfo->dtls_times, timeout)) {
+	case KA_REKEY: {
+		int ret;
+
+		vpn_progress(vpninfo, PRG_INFO, _("DTLS rekey due\n"));
+
+		if (vpninfo->dtls_times.rekey_method == REKEY_SSL) {
+			time(&vpninfo->new_dtls_started);
+			vpninfo->dtls_state = DTLS_CONNECTING;
+			ret = dtls_try_handshake(vpninfo, timeout);
+			if (ret) {
+				vpn_progress(vpninfo, PRG_ERR, _("DTLS Rehandshake failed; reconnecting.\n"));
+				return dtls_reconnect(vpninfo, timeout);
+			}
+		}
+
+		return 1;
+	}
+
+	case KA_DPD_DEAD:
+		vpn_progress(vpninfo, PRG_ERR, _("DTLS Dead Peer Detection detected dead peer!\n"));
+		/* Fall back to SSL, and start a new DTLS connection */
+		dtls_reconnect(vpninfo, timeout);
+		return 1;
+
+	case KA_DPD:
+		vpn_progress(vpninfo, PRG_DEBUG, _("Send DTLS DPD\n"));
+
+		if (ssl_nonblock_write(vpninfo, 1, (void *)dpd_pkt.data, dpd_pkt.len) != dpd_pkt.len)
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("Failed to send DPD request. Expect disconnect\n"));
+
+		/* last_dpd will just have been set */
+		vpninfo->dtls_times.last_tx = vpninfo->dtls_times.last_dpd;
+		work_done = 1;
+		break;
+
+	case KA_KEEPALIVE: /* We don't do keepalive; only DPD */
+	case KA_NONE:
+		;
+	}
+
+	/* Service outgoing packet queue */
+	unmonitor_write_fd(vpninfo, dtls);
+	while (vpninfo->outgoing_queue.head) {
+		struct pkt *this = dequeue_packet(&vpninfo->outgoing_queue);
+		struct pkt *send_pkt = this;
+		int ret;
+
+		/* If TOS optname is set, we want to copy the TOS/TCLASS header
+		   to the outer UDP packet */
+		if (vpninfo->dtls_tos_optname)
+			udp_tos_update(vpninfo, this);
+
+		ret = ssl_nonblock_write(vpninfo, 1, send_pkt->data, send_pkt->len);
+		if (ret <= 0) {
+			/* Zero is -EAGAIN; just requeue. dtls_nonblock_write()
+			 * will have added the socket to the poll wfd list. */
+			requeue_packet(&vpninfo->outgoing_queue, this);
+			if (ret < 0) {
+				/* If it's a real error, kill the DTLS connection so
+				   the requeued packet will be sent over SSL */
+				dtls_reconnect(vpninfo, timeout);
+				work_done = 1;
+			}
+			return work_done;
+		}
+		time(&vpninfo->dtls_times.last_tx);
+		vpn_progress(vpninfo, PRG_TRACE,
+			     _("Sent DTLS packet of %d bytes; DTLS send returned %d\n"),
+			     this->len, ret);
+		free(this);
+	}
+
 	return work_done;
 }
 
