@@ -2494,6 +2494,9 @@ static int process_auth_form_cb(void *_vpninfo,
 	struct oc_form_opt *opt;
 	int empty = 1;
 
+	if (!form->auth_id)
+		return -EINVAL;
+
 	if (form->banner && verbose > PRG_ERR)
 		fprintf(stderr, "%s\n", form->banner);
 
