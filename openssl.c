@@ -1807,6 +1807,10 @@ int openconnect_open_https(struct openconnect_info *vpninfo)
 			 * For now we will set the security level to 0, thus reverting
 			 * to the functionality seen in versions before 1.1.0. */
 			SSL_CTX_set_security_level(vpninfo->https_ctx, 0);
+
+			/* OpenSSL 3.0.0 refuses legacy renegotiation by default.
+			 * Current versions of the Cisco ASA doesn't seem to cope */
+			SSL_CTX_set_options(vpninfo->https_ctx, SSL_OP_LEGACY_SERVER_CONNECT);
 		}
 #endif
 
