@@ -549,8 +549,9 @@ static int gpst_parse_config_xml(struct openconnect_info *vpninfo, xmlNode *xml_
 				inet_aton(new_ip_info.addr, &net_addr);
 				net_addr.s_addr &= nm_bits; /* clear host bits */
 
+				char abuf[INET_ADDRSTRLEN];
 				if ((inc = malloc(sizeof(*inc))) == NULL ||
-				    asprintf(&s, "%s/%s", inet_ntoa(net_addr), original_netmask) <= 0)
+				    asprintf(&s, "%s/%s", inet_ntop(AF_INET, &net_addr, abuf, sizeof(abuf)), original_netmask) <= 0)
 					return -ENOMEM;
 				inc->route = add_option_steal(&new_opts, "split-include", &s);
 				inc->next = new_ip_info.split_includes;
