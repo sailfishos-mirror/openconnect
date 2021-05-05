@@ -278,7 +278,7 @@ static const struct gp_login_arg gp_login_args[] = {
 	{ .opt="preferred-ip", .save=1 },
 	{ .opt="portal-userauthcookie", .show=1},
 	{ .opt="portal-prelogonuserauthcookie", .show=1},
-	{ .unknown=1 },
+	{ .opt="preferred-ipv6", .save=1 },
 	{ .opt="usually-equals-4", .show=1 },           /* newer servers send "4" here, meaning unknown */
 	{ .opt="usually-equals-unknown", .show=1 },     /* newer servers send "unknown" here */
 };
@@ -559,16 +559,27 @@ static int gpst_login(struct openconnect_info *vpninfo, int portal, struct login
 
 	/* Ask the user to fill in the auth form; repeat as necessary */
 	for (;;) {
-		/* submit prelogin request to get form */
-		orig_path = vpninfo->urlpath;
-		if (asprintf(&vpninfo->urlpath, "%s/prelogin.esp?tmp=tmp&clientVer=4100&clientos=%s",
-			     portal ? "global-protect" : "ssl-vpn", gpst_os_name(vpninfo)) < 0) {
-			result = -ENOMEM;
-			goto out;
+		int keep_urlpath = 0;
+		if (vpninfo->urlpath) {
+			/* XX: If the path ends with .esp (possibly followed by a query string), leave as-is */
+			const char *esp = strstr(vpninfo->urlpath, ".esp");
+			if (esp && (esp[4] == '\0' || esp[4] == '?'))
+				keep_urlpath = 1;
 		}
-		result = do_https_request(vpninfo, "POST", NULL, NULL, &xml_buf, 0);
-		free(vpninfo->urlpath);
-		vpninfo->urlpath = orig_path;
+		if (!keep_urlpath) {
+			orig_path = vpninfo->urlpath;
+			if (asprintf(&vpninfo->urlpath, "%s/prelogin.esp?tmp=tmp&clientVer=4100&clientos=%s",
+				     portal ? "global-protect" : "ssl-vpn", gpst_os_name(vpninfo)) < 0) {
+				result = -ENOMEM;
+				goto out;
+			}
+		}
+		/* submit prelogin request to get form */
+		result = do_https_request(vpninfo, "POST", NULL, NULL, &xml_buf, 1);
+		if (!keep_urlpath) {
+			free(vpninfo->urlpath);
+			vpninfo->urlpath = orig_path;
+		}
 
 		if (result >= 0)
 			result = gpst_xml_or_error(vpninfo, xml_buf, parse_prelogin_xml, NULL, ctx);
@@ -600,6 +611,8 @@ static int gpst_login(struct openconnect_info *vpninfo, int portal, struct login
 		append_opt(request_body, "computer", vpninfo->localname);
 		if (vpninfo->ip_info.addr)
 			append_opt(request_body, "preferred-ip", vpninfo->ip_info.addr);
+		if (vpninfo->ip_info.addr6)
+			append_opt(request_body, "preferred-ipv6", vpninfo->ip_info.addr);
 		if (ctx->form->action)
 			append_opt(request_body, "inputStr", ctx->form->action);
 		append_form_opts(vpninfo, ctx->form, request_body);
@@ -638,7 +651,7 @@ static int gpst_login(struct openconnect_info *vpninfo, int portal, struct login
 				 * unless it was a challenge auth form or alt-secret form.
 				 */
 				portal = 0;
-				if (ctx->form->auth_id[0] == '_' && !ctx->alt_secret) {
+				if (strcmp(ctx->form->auth_id, "_challenge") && !ctx->alt_secret) {
 					blind_retry = 1;
 					goto replay_form;
 				}

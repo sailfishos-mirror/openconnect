@@ -1062,6 +1062,7 @@ int ppp_tcp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readabl
 int ppp_udp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable);
 int openconnect_ppp_new(struct openconnect_info *vpninfo, int encap, int want_ipv4, int want_ipv6);
 int ppp_reset(struct openconnect_info *vpninfo);
+int check_http_status(const char *buf, int len);
 
 /* auth-globalprotect.c */
 int gpst_obtain_cookie(struct openconnect_info *vpninfo);

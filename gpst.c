@@ -651,7 +651,7 @@ static int gpst_get_config(struct openconnect_info *vpninfo)
 		/* XX: if our "cookie" is bogus (doesn't include at least 'user', 'authcookie',
 		 * and 'portal' fields) the server will respond like this.
 		 */
-		if (result == -EINVAL && !strcmp(xml_buf, "errors getting SSL/VPN config"))
+		if (result == -EINVAL && xml_buf && !strcmp(xml_buf, "errors getting SSL/VPN config"))
 			result = -EPERM;
 		goto out;
 	}
@@ -742,10 +742,15 @@ static int gpst_connect(struct openconnect_info *vpninfo)
 			ret = vpninfo->ssl_gets(vpninfo, buf+sizeof(start_tunnel), sizeof(buf)-sizeof(start_tunnel));
 			ret = (ret>0 ? ret : 0) + sizeof(start_tunnel);
 		}
-		vpn_progress(vpninfo, PRG_ERR,
-		             _("Got inappropriate HTTP GET-tunnel response: %.*s\n"), ret, buf);
-		/* XX: this is what GP servers return when they don't like the cookie */
-		ret = !strncmp(buf, "HTTP/1.1 502 ", 13) ? -EPERM : -EINVAL;
+		int status = check_http_status(buf, ret);
+		/* XX: GP servers return 502 when they don't like the cookie */
+		if (status == 502)
+			ret = -EPERM;
+		else {
+			vpn_progress(vpninfo, PRG_ERR, _("Got unexpected HTTP response: %.*s\n"),
+				     ret, buf);
+			ret = -EINVAL;
+		}
 	}
 
 	if (ret < 0)
@@ -819,9 +824,9 @@ static int build_csd_token(struct openconnect_info *vpninfo)
 	if (!vpninfo->csd_token)
 		return -ENOMEM;
 
-	/* use cookie (excluding volatile authcookie and preferred-ip) to build md5sum */
+	/* use cookie (excluding volatile authcookie and preferred-ip/ipv6) to build md5sum */
 	buf = buf_alloc();
-	filter_opts(buf, vpninfo->cookie, "authcookie,preferred-ip", 0);
+	filter_opts(buf, vpninfo->cookie, "authcookie,preferred-ip,preferred-ipv6", 0);
 	if (buf_error(buf))
 		goto out;
 
@@ -844,7 +849,7 @@ static int check_or_submit_hip_report(struct openconnect_info *vpninfo, const ch
 	const char *method = "POST";
 	char *xml_buf=NULL, *orig_path;
 
-	/* cookie gives us these fields: authcookie, portal, user, domain, computer, and (maybe the unnecessary) preferred-ip */
+	/* cookie gives us these fields: authcookie, portal, user, domain, computer, and (maybe the unnecessary) preferred-ip/ipv6 */
 	buf_append(request_body, "client-role=global-protect-full&%s", vpninfo->cookie);
 	if (vpninfo->ip_info.addr)
 		append_opt(request_body, "client-ip", vpninfo->ip_info.addr);
