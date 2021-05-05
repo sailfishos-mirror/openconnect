@@ -1435,13 +1435,21 @@ static void print_connection_info(struct openconnect_info *vpninfo)
 		break;
 	case DTLS_SLEEPING:
 	case DTLS_SECRET:
+	case DTLS_CONNECTING:
 		dtls_state = _("in progress");
 		break;
 	case DTLS_DISABLED:
 		dtls_state = _("disabled");
 		break;
-	default:
+	case DTLS_CONNECTED:
 		dtls_state = _("connected");
+		break;
+	case DTLS_ESTABLISHED:
+		dtls_state = _("established");
+		break;
+	default:
+		dtls_state = _("unknown");
+		break;
 	}
 
 	ssl_compr = openconnect_get_cstp_compression(vpninfo);
