@@ -499,6 +499,9 @@ int start_dtls_handshake(struct openconnect_info *vpninfo, int dtls_fd)
 	if (!cipher) {
 		/* Non-AnyConnect protocols need to verify the peer */
 		SSL_set_verify(dtls_ssl, SSL_VERIFY_PEER, NULL);
+		/* Where they only do DTLSv1, they also don't cope with secure renegotiation */
+		if (dtlsver == DTLS1_VERSION)
+			SSL_set_options(dtls_ssl, SSL_OP_LEGACY_SERVER_CONNECT);
 	} else if (dtlsver) {
 		/* This is the actual Cisco AnyConnect method, using session resume */
 		STACK_OF(SSL_CIPHER) *ciphers = SSL_get_ciphers(dtls_ssl);
@@ -582,7 +585,22 @@ int start_dtls_handshake(struct openconnect_info *vpninfo, int dtls_fd)
 		SSL_SESSION_free(dtls_session);
 	} /* else it's ocserv PSK-NEGOTIATE without an App-ID */
 
-	dtls_bio = BIO_new_socket(dtls_fd, BIO_NOCLOSE);
+	dtls_bio = BIO_new_dgram(dtls_fd, BIO_NOCLOSE);
+	if (!dtls_bio || !BIO_ctrl(dtls_bio, BIO_CTRL_DGRAM_SET_CONNECTED,
+				  0, (char *)vpninfo->dtls_addr)) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Create DTLS dgram BIO failed"));
+
+		if (dtls_bio)
+			BIO_free(dtls_bio);
+
+		SSL_CTX_free(vpninfo->dtls_ctx);
+		SSL_free(dtls_ssl);
+		vpninfo->dtls_ctx = NULL;
+		vpninfo->dtls_attempt_period = 0;
+		return -EIO;
+	}
+
 	/* Set non-blocking */
 	BIO_set_nbio(dtls_bio, 1);
 	SSL_set_bio(dtls_ssl, dtls_bio, dtls_bio);
