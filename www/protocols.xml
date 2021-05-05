@@ -30,6 +30,7 @@ See <a href="manual.xml">the <tt>--protocol</tt> option</a> for how to use a dif
   <a href="https://www.f5.com/products/big-ip-services">F5 Big-IP SSL VPN</a> (<tt>--protocol=f5</tt>; PPP-based)</li>
   <li><a href="fortinet.html">Details</a> on support for
   <a href="https://www.fortinet.com/products/vpn">Fortinet Fortigate SSL VPN</a> (<tt>--protocol=fortinet</tt>; PPP-based)</li>
+  <li><a href="array.html">Details</a> on support for <a href="https://arraynetworks.com/products-secure-access-gateways-ag-series.html">Array Networks AG SSL VPN</a> (<tt>--protocol=array</tt>)</li>
 </ul>
 
 	<INCLUDE file="inc/footer.tmpl" />

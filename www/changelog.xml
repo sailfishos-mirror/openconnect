@@ -39,6 +39,7 @@
        <li>Fix output redirection under Windows (<a href="https://gitlab.com/openconnect/openconnect/-/issues/229">#229</a>)</li>
        <li>More gracefully handle Pulse/NC idle timeouts and other Pulse fatal errors (<a href="https://gitlab.com/openconnect/openconnect/-/issues/187">!187</a>)</li>
        <li>Ignore failures to fetch the NC landing page if the authentication was successful.</li>
+       <li>Add support for <a href="https://arraynetworks.com/products-secure-access-gateways-ag-series.html">Array Networks SSL VPN</a> (<a href="https://gitlab.com/openconnect/openconnect/-/issues/102">#102</a>)</li>
      </ul><br/>
   </li>
   <li><b><a href="ftp://ftp.infradead.org/pub/openconnect/openconnect-8.10.tar.gz">OpenConnect v8.10</a></b>

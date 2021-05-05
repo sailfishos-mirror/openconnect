@@ -89,8 +89,10 @@ PAN GlobalProtect VPN servers,
 .RB ( \-\-protocol=gp )
 F5 Big-IP VPN servers,
 .RB ( \-\-protocol=f5 )
-and Fortinet Fortigate VPN servers,
+Fortinet Fortigate VPN servers,
 .RB ( \-\-protocol=fortinet )
+and Array Networks SSL VPN servers,
+.RB ( \-\-protocol=array )
 .
 
 The connection happens in two phases. First there is a simple HTTPS
@@ -500,9 +502,11 @@ for experimental support for Junos Pulse,
 .I gp
 for experimental support for PAN GlobalProtect,
 .I f5
-for experimental support for F5 Big-IP, and
+for experimental support for F5 Big-IP,
 .I fortinet
-for experimental support for Fortinet Fortigate.
+for experimental support for Fortinet Fortigate, and
+.I array
+for experimental support for Array Networks SSL VPN.
 
 See
 .I http://www.infradead.org/openconnect/protocols.html
