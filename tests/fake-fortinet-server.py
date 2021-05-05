@@ -34,7 +34,8 @@
 # values via a (cookie-based) session.
 #
 # In order to test with 2FA, the initial 'GET /' request should include
-# the query string '?want_2fa=1'.
+# the query string '?want_2fa=1'. If >1, multiple rounds of 2FA token entry
+# will be required.
 ########################################
 
 import sys
@@ -86,7 +87,7 @@ def check_form_against_session(*fields):
 @app.route('/')
 @app.route('/<realm>')
 def realm(realm=None):
-    session.update(step='GET-realm', want_2fa='want_2fa' in request.args)
+    session.update(step='GET-realm', want_2fa=int(request.args.get('want_2fa', 0)))
     # print(session)
     if realm:
         return redirect(url_for('login', realm=realm))
@@ -108,8 +109,12 @@ def login():
 def logincheck():
     want_2fa = session.get('want_2fa')
 
-    if (want_2fa and request.form.get('code')):
-        return complete_2fa()
+    if want_2fa and request.form.get('username') and request.form.get('code'):
+        if want_2fa == 1:
+            return complete_2fa()
+        else:
+            session.update(want_2fa=want_2fa - 1)
+            return send_2fa_challenge()
     elif (want_2fa and request.form.get('username') and request.form.get('credential')):
         return send_2fa_challenge()
     elif (request.form.get('username') and request.form.get('credential')):
@@ -141,7 +146,7 @@ def send_2fa_challenge():
     # print(session)
 
     return ('ret=2,reqid={reqid},polid={polid},grp={grp},portal={portal},magic={magic},'
-            'tokeninfo=,chal_msg=Please enter your token code'.format(**session),
+            'tokeninfo=,chal_msg=Please enter your token code ({want_2fa} remaining)'.format(**session),
             {'content-type': 'text/plain'})
 
 

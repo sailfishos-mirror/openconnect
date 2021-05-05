@@ -51,6 +51,12 @@ echo -n "Authenticating with username/password/token and DEFAULT path... "
 ( echo "test" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT --protocol=fortinet -q $ADDRESS:443/?want_2fa=1 -u test --token-mode=totp --token-secret=FAKE $FINGERPRINT --cookieonly >/dev/null 2>&1) ||
     fail $PID "Could not receive cookie from fake Fortinet server"
 
+ok
+
+echo -n "Authenticating with username/password/(2 round of token) and DEFAULT path... "
+( echo "test" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT --protocol=fortinet -q $ADDRESS:443/?want_2fa=2 -u test --token-mode=totp --token-secret=FAKE $FINGERPRINT --cookieonly >/dev/null 2>&1) ||
+    fail $PID "Could not receive cookie from fake Fortinet server"
+
 echo ok
 
 echo -n "Authenticating with username/password/token and NON-DEFAULT path... "

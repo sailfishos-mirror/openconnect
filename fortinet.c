@@ -144,7 +144,7 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 		ret = -ENOMEM;
 		goto out;
 	}
-	form->auth_id = strdup("fortinet_auth");
+	form->auth_id = strdup("_login");
 	if (!form->auth_id)
 		goto nomem;
 	opt = form->opts = calloc(1, sizeof(*opt));
@@ -219,6 +219,7 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 			opt->type = OC_FORM_OPT_HIDDEN;
 			free(opt2->label);
 			free(opt2->_value);
+			opt2->label = opt2->_value = NULL;
 
 			/* Change 'credential' field to 'code'. */
 			opt2->_value = NULL;
@@ -228,6 +229,11 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 				opt2->type = OC_FORM_OPT_TOKEN;
 			else
 				opt2->type = OC_FORM_OPT_PASSWORD;
+
+			/* Change 'auth_id' to '_challenge'. */
+			free(form->auth_id);
+			if (!(form->auth_id = strdup("_challenge")))
+				goto nomem;
 
 			/* Save a bunch of values to parrot back */
 			filter_opts(action_buf, resp_buf, "reqid,polid,grp,portal,peer,magic", 1);
@@ -564,7 +570,9 @@ static int fortinet_configure(struct openconnect_info *vpninfo)
 		 * XX: See do_https_request() for why ret==0 can only happen
 		 * if there was a successful-but-unfetched redirect.
 		 */
+#if 0
 	invalid_cookie:
+#endif
 		ret = -EPERM;
 		goto out;
 	}
