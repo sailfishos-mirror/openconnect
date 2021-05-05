@@ -118,7 +118,7 @@ static int process_split_xxclude(struct openconnect_info *vpninfo,
 {
 	struct in_addr net_addr, mask_addr;
 	const char *in_ex = include ? "IN" : "EX";
-	char envname[80], uptoslash[20];
+	char envname[80], uptoslash[20], abuf[INET_ADDRSTRLEN];
 	const char *slash;
 	char *endp;
 	int masklen;
@@ -201,21 +201,22 @@ static int process_split_xxclude(struct openconnect_info *vpninfo,
 	/* Fix incorrectly-set host bits */
 	if (net_addr.s_addr & ~mask_addr.s_addr) {
 		net_addr.s_addr &= mask_addr.s_addr;
+		inet_ntop(AF_INET, &net_addr, abuf, sizeof(abuf));
 		if (include)
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("WARNING: Split include \"%s\" has host bits set, replacing with \"%s/%d\".\n"),
-				     route, inet_ntoa(net_addr), masklen);
+				     route, abuf, masklen);
 		else
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("WARNING: Split exclude \"%s\" has host bits set, replacing with \"%s/%d\".\n"),
-				     route, inet_ntoa(net_addr), masklen);
+				     route, abuf, masklen);
 	}
 
 	snprintf(envname, 79, "CISCO_SPLIT_%sC_%d_ADDR", in_ex, *v4_incs);
-	script_setenv(vpninfo, envname, inet_ntoa(net_addr), 0, 0);
+	script_setenv(vpninfo, envname, inet_ntop(AF_INET, &net_addr, abuf, sizeof(abuf)), 0, 0);
 
 	snprintf(envname, 79, "CISCO_SPLIT_%sC_%d_MASK", in_ex, *v4_incs);
-	script_setenv(vpninfo, envname, inet_ntoa(mask_addr), 0, 0);
+	script_setenv(vpninfo, envname, inet_ntop(AF_INET, &mask_addr, abuf, sizeof(abuf)), 0, 0);
 
 	snprintf(envname, 79, "CISCO_SPLIT_%sC_%d_MASKLEN", in_ex, *v4_incs);
 	script_setenv_int(vpninfo, envname, masklen);
@@ -322,13 +323,13 @@ void prepare_script_env(struct openconnect_info *vpninfo)
 					     _("Ignoring legacy network because netmask \"%s\" is invalid.\n"),
 					     vpninfo->ip_info.netmask);
 			else {
-				char *netaddr;
+				char netaddr[INET_ADDRSTRLEN];
 				int masklen = netmasklen(mask);
 
 				if (netmaskbits(masklen) != mask.s_addr)
 					goto bad_netmask;
 				addr.s_addr &= mask.s_addr;
-				netaddr = inet_ntoa(addr);
+				inet_ntop(AF_INET, &addr, netaddr, sizeof(netaddr));
 
 				script_setenv(vpninfo, "INTERNAL_IP4_NETADDR", netaddr, 0, 0);
 				script_setenv(vpninfo, "INTERNAL_IP4_NETMASK", vpninfo->ip_info.netmask, 0, 0);

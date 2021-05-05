@@ -390,6 +390,7 @@ static int handle_config_request(struct openconnect_info *vpninfo,
 	int ret;
 	struct oc_ncp *ncp;
 	unsigned char *p;
+	char abuf[MAX(INET_ADDRSTRLEN, INET6_ADDRSTRLEN)];
 
 	switch (proto) {
 	case PPP_LCP: ncp = &ppp->lcp; break;
@@ -462,10 +463,9 @@ static int handle_config_request(struct openconnect_info *vpninfo,
 			memcpy(&ppp->in_ipv4_addr, p+2, 4);
 			vpn_progress(vpninfo, PRG_DEBUG,
 				     _("Received peer IPv4 address %s from server\n"),
-				     inet_ntoa(ppp->in_ipv4_addr));
+				     inet_ntop(AF_INET, &ppp->in_ipv4_addr, abuf, sizeof(abuf)));
 			break;
 		case PROTO_TAG_LEN(PPP_IP6CP, IP6CP_INT_ID, 8): {
-			char buf[40];
 			unsigned char ipv6_ll[16] = {0xfe, 0x80, 0, 0, 0, 0, 0, 0};
 
 			/* XX: The server has allegedly sent us its link-local IPv6 address.
@@ -477,11 +477,9 @@ static int handle_config_request(struct openconnect_info *vpninfo,
 			 */
 			memcpy(ipv6_ll + 8, p+2, 8);
 			memcpy(&ppp->in_ipv6_addr, ipv6_ll, 16);
-			if (!inet_ntop(AF_INET6, &ppp->in_ipv6_addr, buf, sizeof(buf)))
-				return -EINVAL;
 			vpn_progress(vpninfo, PRG_DEBUG,
 				     _("Received peer IPv6 link-local address %s from server\n"),
-				     buf);
+				     inet_ntop(AF_INET6, &ppp->in_ipv6_addr, abuf, sizeof(abuf)));
 			break;
 		}
 		default:
@@ -648,6 +646,7 @@ static int handle_config_rejnak(struct openconnect_info *vpninfo,
 	struct oc_ppp *ppp = vpninfo->ppp;
 	struct oc_ncp *ncp;
 	unsigned char *p;
+	char abuf[MAX(INET_ADDRSTRLEN, INET6_ADDRSTRLEN)];
 
 	switch (proto) {
 	case PPP_LCP: ncp = &ppp->lcp; break;
@@ -698,10 +697,10 @@ static int handle_config_rejnak(struct openconnect_info *vpninfo,
 			break;
 		case PROTO_TAG_LEN(PPP_IPCP, IPCP_IPADDR, 4): {
 			struct in_addr *a = (void *)(p + 2);
-			const char *s = inet_ntoa(*a);
+			inet_ntop(AF_INET, a, abuf, sizeof(abuf));
 			if (code == CONFNAK && a->s_addr) {
 				vpn_progress(vpninfo, PRG_DEBUG,
-					     _("Server nak-offered IPv4 address: %s\n"), s);
+					     _("Server nak-offered IPv4 address: %s\n"), abuf);
 				ppp->out_ipv4_addr = *a;
 				if (vpninfo->ip_info.addr) {
 					vpn_progress(vpninfo, PRG_ERR,
@@ -711,7 +710,7 @@ static int handle_config_rejnak(struct openconnect_info *vpninfo,
 				}
 			} else {
 				vpn_progress(vpninfo, PRG_DEBUG,
-					     _("Server rejected/nak'ed our IPv4 address or request: %s\n"), s);
+					     _("Server rejected/nak'ed our IPv4 address or request: %s\n"), abuf);
 				return -EINVAL;
 			}
 			break;
@@ -721,14 +720,14 @@ static int handle_config_rejnak(struct openconnect_info *vpninfo,
 		case PROTO_TAG_LEN(PPP_IPCP, IPCP_xNS_BASE + 2, 4):
 		case PROTO_TAG_LEN(PPP_IPCP, IPCP_xNS_BASE + 3, 4): {
 			struct in_addr *a = (void *)(p + 2);
-			const char *s = inet_ntoa(*a);
 			/* XX: see ppp.h for why bitfields work here */
 			int is_dns = t&1;
 			int entry = (t&2)>>1;
+			inet_ntop(AF_INET, a, abuf, sizeof(abuf));
 			if (code == CONFNAK && a->s_addr) {
 				vpn_progress(vpninfo, PRG_DEBUG,
 					     _("Server nak-offered IPCP request for %s[%d] server: %s\n"),
-					     is_dns ? "DNS" : "NBNS", entry, s);
+					     is_dns ? "DNS" : "NBNS", entry, abuf);
 				ppp->nameservers[t & 3] = *a;
 				ppp->got_peerns |= (1<<(t-IPCP_xNS_BASE));
 			} else {
@@ -743,14 +742,12 @@ static int handle_config_rejnak(struct openconnect_info *vpninfo,
 		case PROTO_TAG_LEN(PPP_IP6CP, IP6CP_INT_ID, 8): {
 			uint64_t *val = (void *)(p + 2);
 			if (code == CONFNAK && *val != 0) {
-				char buf[40];
 				unsigned char ipv6_ll[16] = {0xfe, 0x80, 0, 0, 0, 0, 0, 0};
 				memcpy(ipv6_ll + 8, val, 8);
-				if (!inet_ntop(AF_INET6, ipv6_ll, buf, sizeof(buf)))
-					return -EINVAL;
+				inet_ntop(AF_INET6, ipv6_ll, abuf, sizeof(abuf));
 
 				vpn_progress(vpninfo, PRG_DEBUG,
-					     _("Server nak-offered IPv6 link-local address %s\n"), buf);
+					     _("Server nak-offered IPv6 link-local address %s\n"), abuf);
 				/* If we don't already have a valid global IPv6 address, then we are
 				 * supposed to use this one to create a valid link-local IPv6
 				 * address to allow autoconfiguration (https://tools.ietf.org/html/rfc5072)
