@@ -364,8 +364,10 @@ static int parse_dns_servers(struct openconnect_info *vpninfo, struct oc_vpn_opt
 
 				vpn_progress(vpninfo, PRG_INFO, _("Found DNS server %s\n"), server);
 
-				if (servers_found < 4)
-					ip_info->dns[servers_found++] = add_option_dup(opts, "DNS", server, -1);
+				if (servers_found < 3 &&
+				    (ip_info->dns[servers_found] =
+				     add_option_dup(opts, "DNS", server, -1)))
+					servers_found++;
 			}
 		}
 	}
@@ -609,13 +611,13 @@ int array_connect(struct openconnect_info *vpninfo)
 
 	/* We abuse ppp_tls_connect_req for the random client-id */
 	if (!vpninfo->ppp_tls_connect_req) {
-		struct oc_text_buf *buf = buf_alloc();
 		unsigned char bin[16];
 
 		ret = openconnect_random(bin, sizeof(bin));
 		if (ret)
 			return ret;
 
+		struct oc_text_buf *buf = buf_alloc();
 		buf_append(buf, "%02X%02X%02X%02X-%02X%02X-%02X%02X-%02X%02X-%02X%02X%02X%02X%02X%02X",
 			   bin[0], bin[1], bin[2], bin[3], bin[4], bin[5], bin[6], bin[7],
 			   bin[8], bin[9], bin[10], bin[11], bin[12], bin[13], bin[14], bin[15]);
@@ -623,6 +625,18 @@ int array_connect(struct openconnect_info *vpninfo)
 			return buf_free(buf);
 
 		vpninfo->ppp_tls_connect_req = buf;
+
+		/* Now build the request we actually send over DTLS, which
+		 * must have "13" following the client-id. Without that at
+		 * the end, we can send over DTLS but the worker process
+		 * seems to crash as soon as it needs to send us anything
+		 * more than a keepalive response. */
+		buf = buf_alloc();
+		buf_append(buf, "%s13", vpninfo->ppp_tls_connect_req->data);
+		if (buf_error(buf))
+			return buf_free(buf);
+
+		vpninfo->ppp_dtls_connect_req = buf;
 	}
 
 	ret = openconnect_open_https(vpninfo);
@@ -680,76 +694,66 @@ int array_connect(struct openconnect_info *vpninfo)
 		buf_append_bytes(dtlsbuf, (void *)ipff, 16);
 		buf_append(dtlsbuf, "%s", vpninfo->ppp_tls_connect_req->data);
 
-		if (!buf_error(dtlsbuf)) {
-			store_be16(dtlsbuf->data + 12, 4);
-			store_be16(dtlsbuf->data + 2, dtlsbuf->pos);
+		if (buf_error(dtlsbuf)) {
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("Error building Array DTLS negotiation packet\n"));
+			vpninfo->dtls_state = DTLS_DISABLED;
+			ret = buf_free(dtlsbuf);
+			goto out;
+		}
 
-			if (vpninfo->dump_http_traffic)
-				dump_buf_hex(vpninfo, PRG_DEBUG, '>', (void *)dtlsbuf->data,
-					     dtlsbuf->pos);
-			ret = vpninfo->ssl_write(vpninfo, (void *)dtlsbuf->data, dtlsbuf->pos);
-			if (ret != dtlsbuf->pos) {
-				buf_free(dtlsbuf);
-				if (ret >= 0) {
-					vpn_progress(vpninfo, PRG_ERR,
-						     _("Short write in array negotiation\n"));
-					ret = -EIO;
-				}
-				goto out;
-			}
+		store_be16(dtlsbuf->data + 12, 4);
+		store_be16(dtlsbuf->data + 2, dtlsbuf->pos);
 
-			ret = vpninfo->ssl_read(vpninfo, (void *)bytes, sizeof(bytes));
-			if (ret < 0) {
+		if (vpninfo->dump_http_traffic)
+			dump_buf_hex(vpninfo, PRG_DEBUG, '>', (void *)dtlsbuf->data,
+				     dtlsbuf->pos);
+
+		ret = vpninfo->ssl_write(vpninfo, (void *)dtlsbuf->data, dtlsbuf->pos);
+		if (ret != dtlsbuf->pos) {
+			buf_free(dtlsbuf);
+			if (ret >= 0) {
 				vpn_progress(vpninfo, PRG_ERR,
-					     _("Failed to read UDP negotiation response\n"));
-				buf_free(dtlsbuf);
+					     _("Short write in array negotiation\n"));
 				ret = -EIO;
-				goto out;
 			}
+			goto out;
+		}
+		buf_free(dtlsbuf);
 
-			/* Parse it, learn what we need from it */
-			if (vpninfo->dump_http_traffic)
-				dump_buf_hex(vpninfo, PRG_DEBUG, '<', bytes, ret);
+		ret = vpninfo->ssl_read(vpninfo, (void *)bytes, sizeof(bytes));
+		if (ret < 0) {
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("Failed to read UDP negotiation response\n"));
+			ret = -EIO;
+			goto out;
+		}
 
-			if (ret == 0x25 && !memcmp(bytes + 0x14, "DTLS SPEED TUNNEL", 0x11)) {
-				int udp_port = load_be16(bytes + 0x12);
+		/* Parse it, learn what we need from it */
+		if (vpninfo->dump_http_traffic)
+			dump_buf_hex(vpninfo, PRG_DEBUG, '<', bytes, ret);
 
-				vpn_progress(vpninfo, PRG_INFO, _("DTLS enabled on port %d\n"),
-					     udp_port);
+		if (ret == 0x25 && !memcmp(bytes + 0x14, "DTLS SPEED TUNNEL", 0x11)) {
+			int udp_port = load_be16(bytes + 0x12);
 
-				if (vpninfo->dtls_state == DTLS_NOSECRET) {
-					/* Now build the request we actually send over DTLS, which
-					 * must have "13" following the client-id. Without that at
-					 * the end, we can send over DTLS but the worker process
-					 * seems to crash as soon as it needs to send us anything
-					 * more than a keepalive response. */
-					buf_truncate(dtlsbuf);
-					buf_append(dtlsbuf, "%s13", vpninfo->ppp_tls_connect_req->data);
+			vpn_progress(vpninfo, PRG_INFO, _("DTLS enabled on port %d\n"),
+				     udp_port);
 
-					if (buf_error(dtlsbuf)) {
-						buf_free(dtlsbuf);
-						vpninfo->dtls_state = DTLS_DISABLED;
-					} else {
-						vpninfo->ppp_dtls_connect_req = dtlsbuf;
+			udp_sockaddr(vpninfo, udp_port);
 
-						udp_sockaddr(vpninfo, udp_port);
-						vpninfo->dtls_state = DTLS_SECRET;
-					}
-				} else {
-					buf_free(dtlsbuf);
-				}
-			} else {
-				/* The 'encrypted' UDP tunnel without DTLS looks like it's using
-				 * the same key repeatedly without IV or replay protection. I'm
-				 * not touching it with a bargepole, or the unencrypted one. */
-				vpn_progress(vpninfo, PRG_INFO,
-					     _("Refusing non-DTLS UDP tunnel\n"));
-				vpninfo->dtls_state = DTLS_DISABLED;
-			}
+			if (vpninfo->dtls_state == DTLS_NOSECRET)
+				vpninfo->dtls_state = DTLS_SECRET;
+		} else {
+			/* The 'encrypted' UDP tunnel without DTLS looks like it's using
+			 * the same key repeatedly without IV or replay protection. I'm
+			 * not touching it with a bargepole, or the unencrypted one. */
+			vpn_progress(vpninfo, PRG_INFO,
+				     _("Refusing non-DTLS UDP tunnel\n"));
+			vpninfo->dtls_state = DTLS_DISABLED;
 		}
 	}
 
-	#if 0
+#if 0
 	/* Send third request 'ipff' */
 	dump_buf_hex(vpninfo, PRG_DEBUG, '>', (void *)ipff, sizeof(ipff));
 	ret = vpninfo->ssl_write(vpninfo,  (void *)ipff, sizeof(ipff));
