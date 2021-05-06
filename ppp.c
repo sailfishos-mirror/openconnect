@@ -288,6 +288,7 @@ int ppp_reset(struct openconnect_info *vpninfo)
 	case PPP_ENCAP_NX_HDLC:
 		ppp->encap_len = 4;
 		ppp->hdlc = 1;
+		ppp->check_http_response = 1;
 		break;
 
 	case PPP_ENCAP_RFC1661:

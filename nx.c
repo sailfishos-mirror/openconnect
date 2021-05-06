@@ -490,13 +490,6 @@ int nx_connect(struct openconnect_info *vpninfo)
 		dump_buf(vpninfo, '>', reqbuf->data);
 	vpninfo->ssl_write(vpninfo, reqbuf->data, reqbuf->pos);
 
-	// In case of success, there won't be a HTTP 200, data will start straight away
-	// TODO: refactor process_http_response to handle this, so we can use it and do proper error handling
-	// We expect either a HTTP response (failure) or a size (BE, 4b) (success).
-	// The size will be smaller than 0x01000000 for sure, so we can use the
-	// first byte as an indicator of success and don't need to check for "HTTP"
-	// TODO: actually handle errors as described above
-	vpn_progress(vpninfo, PRG_DEBUG, _("Connection established\n"));
 	ret = openconnect_ppp_new(vpninfo, PPP_ENCAP_NX_HDLC, ipv4, vpninfo->ip_info.addr6 != NULL);
 
 out:
