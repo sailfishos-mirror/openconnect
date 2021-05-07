@@ -163,8 +163,8 @@ int load_tpm1_key(struct openconnect_info *vpninfo, gnutls_datum_t *fdata,
 		goto out_srk;
 	}
 
-	pass = vpninfo->cert_password;
-	vpninfo->cert_password = NULL;
+	pass = vpninfo->certinfo[0].password;
+	vpninfo->certinfo[0].password = NULL;
 	while (1) {
 		static const char nullpass[20];
 

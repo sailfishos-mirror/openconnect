@@ -356,12 +356,12 @@ static int auth_tpm2_key(struct openconnect_info *vpninfo, ESYS_CONTEXT *ctx, ES
 {
 	TSS2_RC r;
 
-	if (vpninfo->tpm2->need_userauth || vpninfo->cert_password) {
+	if (vpninfo->tpm2->need_userauth || vpninfo->certinfo[0].password) {
 		char *pass = NULL;
 
-		if (vpninfo->cert_password) {
-			pass = vpninfo->cert_password;
-			vpninfo->cert_password = NULL;
+		if (vpninfo->certinfo[0].password) {
+			pass = vpninfo->certinfo[0].password;
+			vpninfo->certinfo[0].password = NULL;
 		} else {
 			int err = request_passphrase(vpninfo, "openconnect_tpm2_key",
 						     &pass, _("Enter TPM2 key password:"));

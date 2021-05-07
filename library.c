@@ -584,7 +584,7 @@ void openconnect_vpninfo_free(struct openconnect_info *vpninfo)
 	free(vpninfo->proxy);
 	free(vpninfo->proxy_user);
 	free_pass(&vpninfo->proxy_pass);
-	free_pass(&vpninfo->cert_password);
+	free_pass(&vpninfo->certinfo[0].password);
 	free(vpninfo->vpnc_script);
 	free(vpninfo->cafile);
 	free(vpninfo->ifname);
@@ -630,9 +630,9 @@ void openconnect_vpninfo_free(struct openconnect_info *vpninfo)
 	/* These are const in openconnect itself, but for consistency of
 	   the library API we do take ownership of the strings we're given,
 	   and thus we have to free them too. */
-	if (vpninfo->cert != vpninfo->sslkey)
-		free((void *)vpninfo->sslkey);
-	free((void *)vpninfo->cert);
+	if (vpninfo->certinfo[0].cert != vpninfo->certinfo[0].key)
+		free((void *)vpninfo->certinfo[0].key);
+	free((void *)vpninfo->certinfo[0].cert);
 	if (vpninfo->peer_cert) {
 #if defined(OPENCONNECT_OPENSSL)
 		X509_free(vpninfo->peer_cert);
@@ -873,15 +873,15 @@ int openconnect_set_client_cert(struct openconnect_info *vpninfo,
 	UTF8CHECK(sslkey);
 
 	/* Avoid freeing it twice if it's the same */
-	if (vpninfo->sslkey == vpninfo->cert)
-		vpninfo->sslkey = NULL;
+	if (vpninfo->certinfo[0].key == vpninfo->certinfo[0].cert)
+		vpninfo->certinfo[0].key = NULL;
 
-	STRDUP(vpninfo->cert, cert);
+	STRDUP(vpninfo->certinfo[0].cert, cert);
 
 	if (sslkey) {
-		STRDUP(vpninfo->sslkey, sslkey);
+		STRDUP(vpninfo->certinfo[0].key, sslkey);
 	} else {
-		vpninfo->sslkey = vpninfo->cert;
+		vpninfo->certinfo[0].key = vpninfo->certinfo[0].cert;
 	}
 
 	return 0;
@@ -963,7 +963,7 @@ void openconnect_set_cert_expiry_warning(struct openconnect_info *vpninfo,
 
 int openconnect_set_key_password(struct openconnect_info *vpninfo, const char *pass)
 {
-	STRDUP(vpninfo->cert_password, pass);
+	STRDUP(vpninfo->certinfo[0].password, pass);
 
 	return 0;
 }

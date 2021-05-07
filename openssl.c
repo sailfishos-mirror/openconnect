@@ -504,9 +504,9 @@ static int pem_pw_cb(char *buf, int len, int w, void *v)
 	char *pass = NULL;
 	int plen;
 
-	if (vpninfo->cert_password) {
-		pass = vpninfo->cert_password;
-		vpninfo->cert_password = NULL;
+	if (vpninfo->certinfo[0].password) {
+		pass = vpninfo->certinfo[0].password;
+		vpninfo->certinfo[0].password = NULL;
 	} else if (request_passphrase(vpninfo, "openconnect_pem",
 				      &pass, _("Enter PEM pass phrase:")))
 		return -1;
@@ -568,8 +568,8 @@ static int load_pkcs12_certificate(struct openconnect_info *vpninfo, PKCS12 *p12
 	int ret = 0;
 	char *pass;
 
-	pass = vpninfo->cert_password;
-	vpninfo->cert_password = NULL;
+	pass = vpninfo->certinfo[0].password;
+	vpninfo->certinfo[0].password = NULL;
  retrypass:
 	/* We do this every time round the loop, to work around a bug in
 	   OpenSSL < 1.0.0-beta2 -- where the stack at *ca will be freed
@@ -667,20 +667,20 @@ static int load_tpm_certificate(struct openconnect_info *vpninfo,
 		return -EINVAL;
 	}
 
-	if (vpninfo->cert_password) {
-		if (!ENGINE_ctrl_cmd(e, "PIN", strlen(vpninfo->cert_password),
-				     vpninfo->cert_password, NULL, 0)) {
+	if (vpninfo->certinfo[0].password) {
+		if (!ENGINE_ctrl_cmd(e, "PIN", strlen(vpninfo->certinfo[0].password),
+				     vpninfo->certinfo[0].password, NULL, 0)) {
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("Failed to set TPM SRK password\n"));
 			openconnect_report_ssl_errors(vpninfo);
 		}
-		free_pass(&vpninfo->cert_password);
+		free_pass(&vpninfo->certinfo[0].password);
 	}
 
 	/* Provide our own UI method to handle the PIN callback. */
 	meth = create_openssl_ui();
 
-	key = ENGINE_load_private_key(e, vpninfo->sslkey, meth, vpninfo);
+	key = ENGINE_load_private_key(e, vpninfo->certinfo[0].key, meth, vpninfo);
 	if (meth)
 		UI_destroy_method(meth);
 	if (!key) {
@@ -736,14 +736,14 @@ static int load_tpm_certificate(struct openconnect_info *vpninfo,
 static int load_cert_chain_file(struct openconnect_info *vpninfo)
 {
 	BIO *b;
-	FILE *f = openconnect_fopen_utf8(vpninfo, vpninfo->cert, "rb");
+	FILE *f = openconnect_fopen_utf8(vpninfo, vpninfo->certinfo[0].cert, "rb");
 	STACK_OF(X509) *extra_certs = NULL;
 	char buf[200];
 
 	if (!f) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Failed to open certificate file %s: %s\n"),
-			     vpninfo->cert, strerror(errno));
+			     vpninfo->certinfo[0].cert, strerror(errno));
 		return -ENOENT;
 	}
 
@@ -874,7 +874,7 @@ static int load_certificate(struct openconnect_info *vpninfo)
 	char buf[256];
 	int ret;
 
-	if (!strncmp(vpninfo->cert, "pkcs11:", 7)) {
+	if (!strncmp(vpninfo->certinfo[0].cert, "pkcs11:", 7)) {
 		int ret = load_pkcs11_certificate(vpninfo);
 		if (ret)
 			return ret;
@@ -882,16 +882,16 @@ static int load_certificate(struct openconnect_info *vpninfo)
 	}
 
 	vpn_progress(vpninfo, PRG_DEBUG,
-		     _("Using certificate file %s\n"), vpninfo->cert);
+		     _("Using certificate file %s\n"), vpninfo->certinfo[0].cert);
 
-	if (strncmp(vpninfo->cert, "keystore:", 9)) {
+	if (strncmp(vpninfo->certinfo[0].cert, "keystore:", 9)) {
 		PKCS12 *p12;
 
-		f = openconnect_fopen_utf8(vpninfo, vpninfo->cert, "rb");
+		f = openconnect_fopen_utf8(vpninfo, vpninfo->certinfo[0].cert, "rb");
 		if (!f) {
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("Failed to open certificate file %s: %s\n"),
-				     vpninfo->cert, strerror(errno));
+				     vpninfo->certinfo[0].cert, strerror(errno));
 			return -ENOENT;
 		}
 		p12 = d2i_PKCS12_fp(f, NULL);
@@ -905,8 +905,8 @@ static int load_certificate(struct openconnect_info *vpninfo)
 
 	/* It's PEM or TPM now, and either way we need to load the plain cert: */
 #ifdef ANDROID_KEYSTORE
-	if (!strncmp(vpninfo->cert, "keystore:", 9)) {
-		BIO *b = BIO_from_keystore(vpninfo, vpninfo->cert);
+	if (!strncmp(vpninfo->certinfo[0].cert, "keystore:", 9)) {
+		BIO *b = BIO_from_keystore(vpninfo, vpninfo->certinfo[0].cert);
 		if (!b)
 			return -EINVAL;
 		vpninfo->cert_x509 = PEM_read_bio_X509_AUX(b, NULL, pem_pw_cb, vpninfo);
@@ -935,11 +935,11 @@ static int load_certificate(struct openconnect_info *vpninfo)
 
  got_cert:
 #ifdef ANDROID_KEYSTORE
-	if (!strncmp(vpninfo->sslkey, "keystore:", 9)) {
+	if (!strncmp(vpninfo->certinfo[0].key, "keystore:", 9)) {
 		BIO *b;
 
 	again_android:
-		b = BIO_from_keystore(vpninfo, vpninfo->sslkey);
+		b = BIO_from_keystore(vpninfo, vpninfo->certinfo[0].key);
 		if (!b)
 			return -EINVAL;
 		key = PEM_read_bio_PrivateKey(b, NULL, pem_pw_cb, vpninfo);
@@ -961,14 +961,14 @@ static int load_certificate(struct openconnect_info *vpninfo)
 		return 0;
 	}
 #endif /* ANDROID_KEYSTORE */
-	if (!strncmp(vpninfo->sslkey, "pkcs11:", 7))
+	if (!strncmp(vpninfo->certinfo[0].key, "pkcs11:", 7))
 		return load_pkcs11_key(vpninfo);
 
-	f = openconnect_fopen_utf8(vpninfo, vpninfo->sslkey, "rb");
+	f = openconnect_fopen_utf8(vpninfo, vpninfo->certinfo[0].key, "rb");
 	if (!f) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Failed to open private key file %s: %s\n"),
-			     vpninfo->sslkey, strerror(errno));
+			     vpninfo->certinfo[0].key, strerror(errno));
 		return -ENOENT;
 	}
 
@@ -1044,7 +1044,7 @@ static int load_certificate(struct openconnect_info *vpninfo)
 
 		if (p8) {
 			PKCS8_PRIV_KEY_INFO *p8inf;
-			char *pass = vpninfo->cert_password;
+			char *pass = vpninfo->certinfo[0].password;
 
 			fclose(f);
 
@@ -1073,13 +1073,13 @@ static int load_certificate(struct openconnect_info *vpninfo)
 				}
 
 				free_pass(&pass);
-				vpninfo->cert_password = NULL;
+				vpninfo->certinfo[0].password = NULL;
 
 				X509_SIG_free(p8);
 				return -EINVAL;
 			}
 			free_pass(&pass);
-			vpninfo->cert_password = NULL;
+			vpninfo->certinfo[0].password = NULL;
 
 			key = EVP_PKCS82PKEY(p8inf);
 
@@ -1106,7 +1106,7 @@ static int load_certificate(struct openconnect_info *vpninfo)
 	fclose(f);
 	vpn_progress(vpninfo, PRG_ERR,
 		     _("Failed to identify private key type in '%s'\n"),
-		     vpninfo->sslkey);
+		     vpninfo->certinfo[0].key);
 	return -EINVAL;
 }
 
@@ -1814,7 +1814,7 @@ int openconnect_open_https(struct openconnect_info *vpninfo)
 		}
 #endif
 
-		if (vpninfo->cert) {
+		if (vpninfo->certinfo[0].cert) {
 			err = load_certificate(vpninfo);
 			if (!err && !SSL_CTX_check_private_key(vpninfo->https_ctx)) {
 				vpn_progress(vpninfo, PRG_ERR,

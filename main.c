@@ -994,7 +994,7 @@ static char *xstrdup(const char *arg)
  *    For this we use the keep_config_arg() macro below.
  * 3. It may be freed during normal operation, so we have to use strdup()
  *    or convert_arg_to_utf8() even when it's an option from argv[].
- *    (e.g. vpninfo->cert_password).
+ *    (e.g. vpninfo->certinfo[0].password).
  *    For this we use the dup_config_arg() macro below.
  */
 
@@ -1811,13 +1811,13 @@ int main(int argc, char **argv)
 			vpninfo->cookie = dup_config_arg();
 			break;
 		case 'c':
-			vpninfo->cert = dup_config_arg();
+			vpninfo->certinfo[0].cert = dup_config_arg();
 			break;
 		case 'e':
 			vpninfo->cert_expire_warning = 86400 * atoi(config_arg);
 			break;
 		case 'k':
-			vpninfo->sslkey = dup_config_arg();
+			vpninfo->certinfo[0].key = dup_config_arg();
 			break;
 		case 'd':
 			vpninfo->req_compr = COMPR_ALL;
@@ -1852,7 +1852,7 @@ int main(int argc, char **argv)
 			}
 			break;
 		case 'p':
-			vpninfo->cert_password = dup_config_arg();
+			vpninfo->certinfo[0].password = dup_config_arg();
 			break;
 		case 'P':
 			proxy = keep_config_arg();
@@ -2022,8 +2022,8 @@ int main(int argc, char **argv)
 		usage();
 	}
 
-	if (!vpninfo->sslkey)
-		vpninfo->sslkey = vpninfo->cert;
+	if (!vpninfo->certinfo[0].key)
+		vpninfo->certinfo[0].key = vpninfo->certinfo[0].cert;
 
 	if (vpninfo->dump_http_traffic && verbose < PRG_DEBUG)
 		verbose = PRG_DEBUG;
@@ -2060,7 +2060,7 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	if (vpninfo->sslkey && do_passphrase_from_fsid)
+	if (vpninfo->certinfo[0].key && do_passphrase_from_fsid)
 		openconnect_passphrase_from_fsid(vpninfo);
 
 	if (config_lookup_host(vpninfo, argv[optind]))

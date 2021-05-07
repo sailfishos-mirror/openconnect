@@ -411,6 +411,12 @@ struct oc_pcsc_ctx;
 struct oc_tpm1_ctx;
 struct oc_tpm2_ctx;
 
+struct cert_info {
+	char *cert;
+	char *key;
+	char *password;
+};
+
 struct openconnect_info {
 	const struct vpn_proto *proto;
 
@@ -483,9 +489,9 @@ struct openconnect_info {
 	int port;
 	char *urlpath;
 	int cert_expire_warning;
-	char *cert;
-	char *sslkey;
-	char *cert_password;
+
+	struct cert_info certinfo[1];
+
 	char *cafile;
 	unsigned no_system_trust;
 	const char *xmlconfig;

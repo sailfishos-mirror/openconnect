@@ -1292,7 +1292,7 @@ int cstp_obtain_cookie(struct openconnect_info *vpninfo)
 	const char *method = "POST";
 	char *orig_host = NULL, *orig_path = NULL, *form_path = NULL;
 	int orig_port = 0;
-	int cert_rq, cert_sent = !vpninfo->cert;
+	int cert_rq, cert_sent = !vpninfo->certinfo[0].cert;
 	int newgroup_attempts = 5;
 
 	if (!vpninfo->xmlpost)
@@ -1386,10 +1386,10 @@ newgroup:
 			free_auth_form(form);
 			form = NULL;
 
-			if (!cert_sent && vpninfo->cert) {
+			if (!cert_sent && vpninfo->certinfo[0].cert) {
 				/* Try again on a fresh connection. */
 				cert_sent = 1;
-			} else if (cert_sent && vpninfo->cert) {
+			} else if (cert_sent && vpninfo->certinfo[0].cert) {
 				/* Try again with <client-cert-fail/> in the request */
 				vpn_progress(vpninfo, PRG_ERR,
 					     _("Server requested SSL client certificate after one was provided\n"));

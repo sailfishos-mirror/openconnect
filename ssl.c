@@ -559,17 +559,17 @@ int __attribute__ ((format(printf, 4, 5)))
 int openconnect_passphrase_from_fsid(struct openconnect_info *vpninfo)
 {
 	struct statvfs buf;
-	char *sslkey = openconnect_utf8_to_legacy(vpninfo, vpninfo->sslkey);
+	char *sslkey = openconnect_utf8_to_legacy(vpninfo, vpninfo->certinfo[0].key);
 	int err = 0;
 
 	if (statvfs(sslkey, &buf)) {
 		err = -errno;
 		vpn_progress(vpninfo, PRG_ERR, _("statvfs: %s\n"),
 			     strerror(errno));
-	} else if (asprintf(&vpninfo->cert_password, "%lx", buf.f_fsid) == -1)
+	} else if (asprintf(&vpninfo->certinfo[0].password, "%lx", buf.f_fsid) == -1)
 		err = -ENOMEM;
 
-	if (sslkey != vpninfo->sslkey)
+	if (sslkey != vpninfo->certinfo[0].key)
 		free(sslkey);
 	return err;
 }
@@ -600,11 +600,11 @@ int openconnect_passphrase_from_fsid(struct openconnect_info *vpninfo)
 	if (!func)
 		goto notsupp;
 
-	fd = openconnect_open_utf8(vpninfo, vpninfo->sslkey, O_RDONLY);
+	fd = openconnect_open_utf8(vpninfo, vpninfo->certinfo[0].key, O_RDONLY);
 	if (fd == -1) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Failed to open private key file '%s': %s\n"),
-			     vpninfo->sslkey, strerror(errno));
+			     vpninfo->certinfo[0].key, strerror(errno));
 		return -ENOENT;
 	}
 
@@ -615,7 +615,7 @@ int openconnect_passphrase_from_fsid(struct openconnect_info *vpninfo)
 	if (!success)
 		return -EIO;
 
-	if (asprintf(&vpninfo->cert_password, "%lx", serial) == -1)
+	if (asprintf(&vpninfo->certinfo[0].password, "%lx", serial) == -1)
 		return -ENOMEM;
 
 	return 0;
@@ -623,7 +623,7 @@ int openconnect_passphrase_from_fsid(struct openconnect_info *vpninfo)
 #elif defined(HAVE_STATFS)
 int openconnect_passphrase_from_fsid(struct openconnect_info *vpninfo)
 {
-	char *sslkey = openconnect_utf8_to_legacy(vpninfo, vpninfo->sslkey);
+	char *sslkey = openconnect_utf8_to_legacy(vpninfo, vpninfo->certinfo[0].key);
 	struct statfs buf;
 	unsigned *fsid = (unsigned *)&buf.f_fsid;
 	unsigned long long fsid64;
@@ -637,11 +637,11 @@ int openconnect_passphrase_from_fsid(struct openconnect_info *vpninfo)
 	} else {
 		fsid64 = ((unsigned long long)fsid[0] << 32) | fsid[1];
 
-		if (asprintf(&vpninfo->cert_password, "%llx", fsid64) == -1)
+		if (asprintf(&vpninfo->certinfo[0].password, "%llx", fsid64) == -1)
 			err = -ENOMEM;
 	}
 
-	if (sslkey != vpninfo->sslkey)
+	if (sslkey != vpninfo->certinfo[0].key)
 		free(sslkey);
 
 	return err;

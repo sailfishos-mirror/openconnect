@@ -191,9 +191,9 @@ static int request_pin(struct openconnect_info *vpninfo, struct pin_cache *cache
 	if (!vpninfo || !vpninfo->process_auth_form)
 		return -EINVAL;
 
-	if (vpninfo->cert_password) {
-		cache->pin = vpninfo->cert_password;
-		vpninfo->cert_password = NULL;
+	if (vpninfo->certinfo[0].password) {
+		cache->pin = vpninfo->certinfo[0].password;
+		vpninfo->certinfo[0].password = NULL;
 		return 0;
 	}
 	memset(&f, 0, sizeof(f));
@@ -340,11 +340,11 @@ int load_pkcs11_certificate(struct openconnect_info *vpninfo)
 	if (!ctx)
 		return -EIO;
 
-	if (parse_pkcs11_uri(vpninfo->cert, &match_tok, &cert_id,
-			     &cert_id_len, &cert_label, &vpninfo->cert_password) < 0) {
+	if (parse_pkcs11_uri(vpninfo->certinfo[0].cert, &match_tok, &cert_id,
+			     &cert_id_len, &cert_label, &vpninfo->certinfo[0].password) < 0) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Failed to parse PKCS#11 URI '%s'\n"),
-			     vpninfo->cert);
+			     vpninfo->certinfo[0].cert);
 		return -EINVAL;
 	}
 
@@ -395,7 +395,7 @@ int load_pkcs11_certificate(struct openconnect_info *vpninfo)
 	ret = -EINVAL;
 	vpn_progress(vpninfo, PRG_ERR,
 		     _("Failed to find PKCS#11 cert '%s'\n"),
-		     vpninfo->cert);
+		     vpninfo->certinfo[0].cert);
  got_cert:
 	if (cert) {
 		/* This happens if the cert is too large for the fixed buffer
@@ -408,7 +408,7 @@ int load_pkcs11_certificate(struct openconnect_info *vpninfo)
 		}
 
 		vpn_progress(vpninfo, PRG_DEBUG,
-			     _("Using PKCS#11 certificate %s\n"), vpninfo->cert);
+			     _("Using PKCS#11 certificate %s\n"), vpninfo->certinfo[0].cert);
 
 		vpninfo->cert_x509 = X509_dup(cert->x509);
 		if (!SSL_CTX_use_certificate(vpninfo->https_ctx, vpninfo->cert_x509)) {
@@ -421,7 +421,7 @@ int load_pkcs11_certificate(struct openconnect_info *vpninfo)
 		/* If the key is in PKCS#11 too (which is likely), then keep the slot around.
 		   We might want to know which slot the certificate was found in, so we can
 		   log into it to find the key. */
-		if (!strncmp(vpninfo->sslkey, "pkcs11:", 7)) {
+		if (!strncmp(vpninfo->certinfo[0].key, "pkcs11:", 7)) {
 			vpninfo->pkcs11_slot_list = slot_list;
 			vpninfo->pkcs11_slot_count = slot_count;
 			vpninfo->pkcs11_cert_slot = slot;
@@ -563,11 +563,11 @@ int load_pkcs11_key(struct openconnect_info *vpninfo)
 	if (!ctx)
 		return -EIO;
 
-	if (parse_pkcs11_uri(vpninfo->sslkey, &match_tok, &key_id,
-			     &key_id_len, &key_label, &vpninfo->cert_password) < 0) {
+	if (parse_pkcs11_uri(vpninfo->certinfo[0].key, &match_tok, &key_id,
+			     &key_id_len, &key_label, &vpninfo->certinfo[0].password) < 0) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Failed to parse PKCS#11 URI '%s'\n"),
-			     vpninfo->sslkey);
+			     vpninfo->certinfo[0].key);
 		return -EINVAL;
 	}
 
@@ -609,7 +609,7 @@ int load_pkcs11_key(struct openconnect_info *vpninfo)
 	   the cert was found in and the key wasn't separately specified, then
 	   try that slot. */
 	if (matching_slots != 1 && vpninfo->pkcs11_cert_slot &&
-	    vpninfo->sslkey == vpninfo->cert) {
+	    vpninfo->certinfo[0].key == vpninfo->certinfo[0].cert) {
 		/* Use the slot the cert was found in, if one specifier was given for both */
 		matching_slots = 1;
 		login_slot = vpninfo->pkcs11_cert_slot;
@@ -628,7 +628,7 @@ int load_pkcs11_key(struct openconnect_info *vpninfo)
 			/* We still haven't found it. If we weren't explicitly given a URI for
 			   the key and we're inferring the location of the key from the cert,
 			   then drop the label and try matching the CKA_ID of the cert. */
-			if (vpninfo->cert == vpninfo->sslkey && vpninfo->pkcs11_cert_id &&
+			if (vpninfo->certinfo[0].cert == vpninfo->certinfo[0].key && vpninfo->pkcs11_cert_id &&
 			    (key_label || !key_id)) {
 				key = slot_find_key(vpninfo, ctx, slot, NULL, vpninfo->pkcs11_cert_id,
 						    vpninfo->pkcs11_cert_id_len);
@@ -640,12 +640,12 @@ int load_pkcs11_key(struct openconnect_info *vpninfo)
 	ret = -EINVAL;
 	vpn_progress(vpninfo, PRG_ERR,
 		     _("Failed to find PKCS#11 key '%s'\n"),
-		     vpninfo->sslkey);
+		     vpninfo->certinfo[0].key);
 
  got_key:
 	if (key) {
 		vpn_progress(vpninfo, PRG_DEBUG,
-			     _("Using PKCS#11 key %s\n"), vpninfo->sslkey);
+			     _("Using PKCS#11 key %s\n"), vpninfo->certinfo[0].key);
 
 		pkey = PKCS11_get_private_key(key);
 		if (!pkey) {
