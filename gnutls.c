@@ -610,8 +610,7 @@ static int get_cert_name(gnutls_x509_crt_t cert, char *name, size_t namelen)
 static int assign_privkey(struct openconnect_info *vpninfo,
 			  gnutls_privkey_t pkey,
 			  gnutls_x509_crt_t *certs,
-			  unsigned int nr_certs,
-			  uint8_t *free_certs)
+			  unsigned int nr_certs)
 {
 	gnutls_pcert_st *pcerts = gnutls_calloc(nr_certs, sizeof(*pcerts));
 	unsigned int i;
@@ -1776,8 +1775,7 @@ static int load_certificate(struct openconnect_info *vpninfo)
 #endif
 		err = assign_privkey(vpninfo, pkey,
 				     supporting_certs,
-				     nr_supporting_certs,
-				     free_supporting_certs);
+				     nr_supporting_certs);
 		if (!err) {
 			pkey = NULL; /* we gave it away, and potentially also some
 					of extra_certs[] may have been zeroed. */
