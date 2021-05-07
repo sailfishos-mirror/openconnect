@@ -605,45 +605,6 @@ static int get_cert_name(gnutls_x509_crt_t cert, char *name, size_t namelen)
 }
 
 #if defined(HAVE_P11KIT) || defined(HAVE_TROUSERS) || defined(HAVE_TSS2) || defined (HAVE_GNUTLS_SYSTEM_KEYS)
-/* We have to convert the array of X509 certificates to gnutls_pcert_st
-   for ourselves. There's no function that takes a gnutls_privkey_t as
-   the key and gnutls_x509_crt_t certificates. */
-static int assign_privkey(struct openconnect_info *vpninfo,
-			  gnutls_privkey_t pkey,
-			  gnutls_x509_crt_t *certs,
-			  unsigned int nr_certs)
-{
-	gnutls_pcert_st *pcerts = gnutls_calloc(nr_certs, sizeof(*pcerts));
-	unsigned int i;
-	int err;
-
-	if (!pcerts)
-		return GNUTLS_E_MEMORY_ERROR;
-
-	for (i = 0 ; i < nr_certs; i++) {
-		err = gnutls_pcert_import_x509(pcerts + i, certs[i], 0);
-		if (err) {
-			vpn_progress(vpninfo, PRG_ERR,
-				     _("Importing X509 certificate failed: %s\n"),
-				     gnutls_strerror(err));
-			goto free_pcerts;
-		}
-	}
-
-	err = gnutls_certificate_set_key(vpninfo->https_cred, NULL, 0,
-					 pcerts, nr_certs, pkey);
-	if (err) {
-		vpn_progress(vpninfo, PRG_ERR,
-			     _("Setting PKCS#11 certificate failed: %s\n"),
-			     gnutls_strerror(err));
-	free_pcerts:
-		for (i = 0 ; i < nr_certs; i++)
-			gnutls_pcert_deinit(pcerts + i);
-	}
-	free(pcerts);
-	return err;
-}
-
 static int verify_signed_data(gnutls_pubkey_t pubkey, gnutls_privkey_t privkey,
 			      gnutls_digest_algorithm_t dig,
 			      const gnutls_datum_t *data, const gnutls_datum_t *sig)
@@ -1630,20 +1591,8 @@ static int load_certificate(struct openconnect_info *vpninfo, struct cert_info *
 	   a PKCS#12 file we may have a trust chain in 'gci->certs[]' too. */
 	check_certificate_expiry(vpninfo, cert);
 	get_cert_name(cert, name, sizeof(name));
-	get_cert_md5_fingerprint(vpninfo, cert, vpninfo->local_cert_md5);
 	vpn_progress(vpninfo, PRG_INFO, _("Using client certificate '%s'\n"),
 		     name);
-
-	if (gci->crl) {
-		err = gnutls_certificate_set_x509_crl(vpninfo->https_cred, &gci->crl, 1);
-		if (err) {
-			vpn_progress(vpninfo, PRG_ERR,
-				     _("Setting certificate revocation list failed: %s\n"),
-				     gnutls_strerror(err));
-			ret = -EINVAL;
-			goto out;
-		}
-	}
 
 	/* OpenSSL has problems with certificate chains — if there are
 	   multiple certs with the same name, it doesn't necessarily
@@ -1774,6 +1723,8 @@ static int load_certificate(struct openconnect_info *vpninfo, struct cert_info *
 			     _("Adding supporting CA '%s'\n"), name);
 	}
 
+	ret = 0;
+
 	/* OK, now we've checked the cert expiry and warned the user if it's
 	   going to expire soon, and we've built up as much of a trust chain
 	   in gci->certs[] as we can find, to help the server work around
@@ -1781,50 +1732,10 @@ static int load_certificate(struct openconnect_info *vpninfo, struct cert_info *
 	   key and certs. GnuTLS makes us do this differently for X509 privkeys
 	   vs. TPM/PKCS#11 "generic" privkeys, and the latter is particularly
 	   'fun' for GnuTLS 2.12... */
-#if defined(HAVE_P11KIT) || defined(HAVE_TROUSERS) || defined(HAVE_TSS2) || defined(HAVE_GNUTLS_SYSTEM_KEYS)
-	if (gci->pkey) {
-#if GNUTLS_VERSION_NUMBER >= 0x030600
-		if (gnutls_privkey_get_pk_algorithm(gci->pkey, NULL) == GNUTLS_PK_RSA) {
-			/*
-			 * For hardware RSA keys, we need to check if they can cope with PSS.
-			 * If not, disable TLSv1.3 which would make PSS mandatory.
-			 * https://bugzilla.redhat.com/show_bug.cgi?id=1663058
-			 */
-			err = gnutls_privkey_sign_data2(gci->pkey, GNUTLS_SIGN_RSA_PSS_RSAE_SHA256, 0, &fdata, &pkey_sig);
-			if (err) {
-				vpn_progress(vpninfo, PRG_INFO,
-					     _("Private key appears not to support RSA-PSS. Disabling TLSv1.3\n"));
-				vpninfo->no_tls13 = 1;
-			} else {
-				free(pkey_sig.data);
-				pkey_sig.data = NULL;
-			}
-		}
-#endif
-		err = assign_privkey(vpninfo, gci->pkey,
-				     gci->certs,
-				     gci->nr_certs);
-		if (!err) {
-			gci->pkey = NULL; /* we gave it away, and potentially also some
-					     of extra_certs[] may have been zeroed. */
-		}
-	} else
-#endif /* P11KIT || TROUSERS || TSS2 || SYSTEM_KEYS  */
-		err = gnutls_certificate_set_x509_key(vpninfo->https_cred,
-						      gci->certs,
-						      gci->nr_certs, gci->key);
-
-	if (err) {
-		vpn_progress(vpninfo, PRG_ERR,
-			     _("Setting certificate failed: %s\n"),
-			     gnutls_strerror(err));
-		ret = -EIO;
-	} else
-		ret = 0;
  out:
 	if (cert && !gci->certs) {
-		/* Not if gci->certs. It's gci->certs[0] then and
-		   will be freed as such. */
+		/* Not if gci->certs. It's gci->certs[0] then and will be
+		 * freed as such. This is only for the error path. */
 		gnutls_x509_crt_deinit(cert);
 	}
 	for (i = 0; i < nr_extra_certs; i++) {
@@ -1848,15 +1759,110 @@ static int load_certificate(struct openconnect_info *vpninfo, struct cert_info *
 	if (key_url != certinfo->key)
 		free(key_url);
 #endif
-	free_gtls_cert_info(gci);
+	if (ret)
+		free_gtls_cert_info(gci);
 	return ret;
 }
+
+/* We have to convert the array of X509 certificates to gnutls_pcert_st
+   for ourselves. There's no function that takes a gnutls_privkey_t as
+   the key and gnutls_x509_crt_t certificates. */
+static int assign_privkey(struct openconnect_info *vpninfo, struct gtls_cert_info *gci)
+{
+	gnutls_pcert_st *pcerts = gnutls_calloc(gci->nr_certs, sizeof(*pcerts));
+	unsigned int i;
+	int err;
+
+	if (!pcerts)
+		return GNUTLS_E_MEMORY_ERROR;
+
+	for (i = 0 ; i < gci->nr_certs; i++) {
+		err = gnutls_pcert_import_x509(pcerts + i, gci->certs[i], 0);
+		if (err) {
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("Importing X509 certificate failed: %s\n"),
+				     gnutls_strerror(err));
+			goto free_pcerts;
+		}
+	}
+
+	err = gnutls_certificate_set_key(vpninfo->https_cred, NULL, 0,
+					 pcerts, gci->nr_certs, gci->pkey);
+	if (err) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Setting PKCS#11 certificate failed: %s\n"),
+			     gnutls_strerror(err));
+	free_pcerts:
+		for (i = 0 ; i < gci->nr_certs; i++)
+			gnutls_pcert_deinit(pcerts + i);
+	} else
+		gci->pkey = NULL; /* We gave it away */
+
+	free(pcerts);
+	return err;
+}
+
 
 static int load_primary_certificate(struct openconnect_info *vpninfo)
 {
 	struct gtls_cert_info gci = {};
+	int err;
+	int ret = load_certificate(vpninfo, &vpninfo->certinfo[0], &gci);
+	if (ret)
+		return ret;
 
-	return load_certificate(vpninfo, &vpninfo->certinfo[0], &gci);
+	gnutls_x509_crt_t cert = gci.certs[0];
+
+	get_cert_md5_fingerprint(vpninfo, cert, vpninfo->local_cert_md5);
+
+	if (gci.crl) {
+		err = gnutls_certificate_set_x509_crl(vpninfo->https_cred, &gci.crl, 1);
+		if (err) {
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("Setting certificate revocation list failed: %s\n"),
+				     gnutls_strerror(err));
+			ret = -EINVAL;
+			goto out;
+		}
+	}
+
+	if (gci.pkey) {
+#if GNUTLS_VERSION_NUMBER >= 0x030600
+		if (gnutls_privkey_get_pk_algorithm(gci.pkey, NULL) == GNUTLS_PK_RSA) {
+			/*
+			 * For hardware RSA keys, we need to check if they can cope with PSS.
+			 * If not, disable TLSv1.3 which would make PSS mandatory.
+			 * https://bugzilla.redhat.com/show_bug.cgi?id=1663058
+			 */
+			gnutls_datum_t fdata= { (void *)&gci, sizeof(gci) };
+			gnutls_datum_t pkey_sig = { NULL, 0 };
+
+			err = gnutls_privkey_sign_data2(gci.pkey, GNUTLS_SIGN_RSA_PSS_RSAE_SHA256, 0, &fdata, &pkey_sig);
+			if (err) {
+				vpn_progress(vpninfo, PRG_INFO,
+					     _("Private key appears not to support RSA-PSS. Disabling TLSv1.3\n"));
+				vpninfo->no_tls13 = 1;
+			}
+
+			free(pkey_sig.data);
+		}
+#endif
+		err = assign_privkey(vpninfo, &gci);
+	} else
+		err = gnutls_certificate_set_x509_key(vpninfo->https_cred, gci.certs,
+						      gci.nr_certs, gci.key);
+
+	if (err) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Setting certificate failed: %s\n"),
+			     gnutls_strerror(err));
+		ret = -EIO;
+	} else
+		ret = 0;
+
+ out:
+	free_gtls_cert_info(&gci);
+	return ret;
 }
 
 static int get_cert_fingerprint(struct openconnect_info *vpninfo,
