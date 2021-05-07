@@ -956,12 +956,34 @@ static void fill_token_info(char *buf, size_t s, unsigned char *dst, size_t dstl
 }
 
 struct gtls_cert_info {
+	gnutls_x509_crl_t crl;
 	gnutls_x509_privkey_t key;
 	gnutls_privkey_t pkey;
 	gnutls_x509_crt_t *certs;
 	unsigned int nr_certs;
 	char *free_certs;
 };
+
+static void free_gtls_cert_info(struct gtls_cert_info *gci)
+{
+	if (gci->crl)
+		gnutls_x509_crl_deinit(gci->crl);
+	if (gci->pkey)
+		gnutls_privkey_deinit(gci->pkey);
+	if (gci->key)
+		gnutls_x509_privkey_deinit(gci->key);
+	if (gci->certs) {
+		for (int i = 0; i < gci->nr_certs; i++) {
+			/* We get here in an error case with !gci->free_certs
+			   and should free them all in that case */
+			if (!gci->free_certs || gci->free_certs[i])
+				gnutls_x509_crt_deinit(gci->certs[i]);
+		}
+		gnutls_free(gci->certs);
+		gnutls_free(gci->free_certs);
+	}
+	memset(gci, 0, sizeof(*gci));
+}
 
 static int load_certificate(struct openconnect_info *vpninfo, struct cert_info *certinfo, struct gtls_cert_info *gci)
 {
@@ -978,7 +1000,6 @@ static int load_certificate(struct openconnect_info *vpninfo, struct cert_info *
 	gnutls_pkcs11_privkey_t p11key = NULL;
 #endif
 	char *pem_header;
-	gnutls_x509_crl_t crl = NULL;
 	gnutls_x509_crt_t last_cert, cert = NULL;
 	gnutls_x509_crt_t *extra_certs = NULL;
 	unsigned int nr_extra_certs = 0;
@@ -1099,7 +1120,7 @@ static int load_certificate(struct openconnect_info *vpninfo, struct cert_info *
 		ret = load_pkcs12_certificate(vpninfo, certinfo, &fdata, &gci->key,
 					      &gci->certs, &gci->nr_certs,
 					      &extra_certs, &nr_extra_certs,
-					      &crl);
+					      &gci->crl);
 		if (ret < 0)
 			goto out;
 		else if (!ret) {
@@ -1613,8 +1634,8 @@ static int load_certificate(struct openconnect_info *vpninfo, struct cert_info *
 	vpn_progress(vpninfo, PRG_INFO, _("Using client certificate '%s'\n"),
 		     name);
 
-	if (crl) {
-		err = gnutls_certificate_set_x509_crl(vpninfo->https_cred, &crl, 1);
+	if (gci->crl) {
+		err = gnutls_certificate_set_x509_crl(vpninfo->https_cred, &gci->crl, 1);
 		if (err) {
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("Setting certificate revocation list failed: %s\n"),
@@ -1801,22 +1822,9 @@ static int load_certificate(struct openconnect_info *vpninfo, struct cert_info *
 	} else
 		ret = 0;
  out:
-	if (crl)
-		gnutls_x509_crl_deinit(crl);
-	if (gci->key)
-		gnutls_x509_privkey_deinit(gci->key);
-	if (gci->certs) {
-		for (i = 0; i < gci->nr_certs; i++) {
-			/* We get here in an error case with !gci->free_certs
-			   and should free them all in that case */
-			if (!gci->free_certs || gci->free_certs[i])
-				gnutls_x509_crt_deinit(gci->certs[i]);
-		}
-		gnutls_free(gci->certs);
-		gnutls_free(gci->free_certs);
-	} else if (cert) {
+	if (cert && !gci->certs) {
 		/* Not if gci->certs. It's gci->certs[0] then and
-		   was already freed. */
+		   will be freed as such. */
 		gnutls_x509_crt_deinit(cert);
 	}
 	for (i = 0; i < nr_extra_certs; i++) {
@@ -1826,8 +1834,6 @@ static int load_certificate(struct openconnect_info *vpninfo, struct cert_info *
 	gnutls_free(extra_certs);
 
 #if defined(HAVE_P11KIT) || defined(HAVE_TROUSERS) || defined(HAVE_TSS2) || defined(HAVE_GNUTLS_SYSTEM_KEYS)
-	if (gci->pkey)
-		gnutls_privkey_deinit(gci->pkey);
 	/* If we support arbitrary privkeys, we might have abused fdata.data
 	   just to point to something to hash. Don't free it in that case! */
 	if (fdata.data != dummy_hash_data)
@@ -1842,6 +1848,7 @@ static int load_certificate(struct openconnect_info *vpninfo, struct cert_info *
 	if (key_url != certinfo->key)
 		free(key_url);
 #endif
+	free_gtls_cert_info(gci);
 	return ret;
 }
 
