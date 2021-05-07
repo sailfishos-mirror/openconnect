@@ -412,6 +412,7 @@ struct oc_tpm1_ctx;
 struct oc_tpm2_ctx;
 
 struct cert_info {
+	struct openconnect_info *vpninfo;
 	char *cert;
 	char *key;
 	char *password;
@@ -1143,8 +1144,8 @@ int cancellable_send(struct openconnect_info *vpninfo, int fd,
 int cancellable_recv(struct openconnect_info *vpninfo, int fd,
 		     char *buf, size_t len);
 /* openssl-pkcs11.c */
-int load_pkcs11_key(struct openconnect_info *vpninfo);
-int load_pkcs11_certificate(struct openconnect_info *vpninfo);
+int load_pkcs11_key(struct openconnect_info *vpninfo, struct cert_info *certinfo);
+int load_pkcs11_certificate(struct openconnect_info *vpninfo, struct cert_info *certinfo);
 
 /* esp.c */
 int verify_packet_seqno(struct openconnect_info *vpninfo,
