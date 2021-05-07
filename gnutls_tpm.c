@@ -85,8 +85,8 @@ static int tpm_sign_fn(gnutls_privkey_t key, void *_vpninfo,
 	return 0;
 }
 
-int load_tpm1_key(struct openconnect_info *vpninfo, gnutls_datum_t *fdata,
-		  gnutls_privkey_t *pkey, gnutls_datum_t *pkey_sig)
+int load_tpm1_key(struct openconnect_info *vpninfo, struct cert_info *certinfo,
+		  gnutls_datum_t *fdata, gnutls_privkey_t *pkey, gnutls_datum_t *pkey_sig)
 {
 	static const TSS_UUID SRK_UUID = TSS_UUID_SRK;
 	gnutls_datum_t asn1;
@@ -163,8 +163,8 @@ int load_tpm1_key(struct openconnect_info *vpninfo, gnutls_datum_t *fdata,
 		goto out_srk;
 	}
 
-	pass = vpninfo->certinfo[0].password;
-	vpninfo->certinfo[0].password = NULL;
+	pass = certinfo->password;
+	certinfo->password = NULL;
 	while (1) {
 		static const char nullpass[20];
 
