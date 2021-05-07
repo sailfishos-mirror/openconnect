@@ -352,16 +352,17 @@ static int init_tpm2_key(ESYS_CONTEXT **ctx, ESYS_TR *keyHandle,
 	return -EIO;
 }
 
-static int auth_tpm2_key(struct openconnect_info *vpninfo, ESYS_CONTEXT *ctx, ESYS_TR key_handle)
+static int auth_tpm2_key(struct openconnect_info *vpninfo, struct cert_info *certinfo,
+			 ESYS_CONTEXT *ctx, ESYS_TR key_handle)
 {
 	TSS2_RC r;
 
-	if (vpninfo->tpm2->need_userauth || vpninfo->certinfo[0].password) {
+	if (vpninfo->tpm2->need_userauth || certinfo->password) {
 		char *pass = NULL;
 
-		if (vpninfo->certinfo[0].password) {
-			pass = vpninfo->certinfo[0].password;
-			vpninfo->certinfo[0].password = NULL;
+		if (certinfo->password) {
+			pass = certinfo->password;
+			certinfo->password = NULL;
 		} else {
 			int err = request_passphrase(vpninfo, "openconnect_tpm2_key",
 						     &pass, _("Enter TPM2 key password:"));
@@ -383,10 +384,11 @@ static int auth_tpm2_key(struct openconnect_info *vpninfo, ESYS_CONTEXT *ctx, ES
 }
 
 int tpm2_rsa_sign_hash_fn(gnutls_privkey_t key, gnutls_sign_algorithm_t algo,
-			  void *_vpninfo, unsigned int flags,
+			  void *_certinfo, unsigned int flags,
 			  const gnutls_datum_t *data, gnutls_datum_t *sig)
 {
-	struct openconnect_info *vpninfo = _vpninfo;
+	struct cert_info *certinfo = _certinfo;
+	struct openconnect_info *vpninfo = certinfo->vpninfo;
 	int ret = GNUTLS_E_PK_SIGN_FAILED;
 	ESYS_CONTEXT *ectx = NULL;
 	TPM2B_PUBLIC_KEY_RSA digest, *tsig = NULL;
@@ -407,7 +409,7 @@ int tpm2_rsa_sign_hash_fn(gnutls_privkey_t key, gnutls_sign_algorithm_t algo,
 	if (init_tpm2_key(&ectx, &key_handle, vpninfo))
 		goto out;
  reauth:
-	if (auth_tpm2_key(vpninfo, ectx, key_handle))
+	if (auth_tpm2_key(vpninfo, certinfo, ectx, key_handle))
 		goto out;
 
 	r = Esys_RSA_Decrypt(ectx, key_handle,
@@ -448,10 +450,11 @@ int tpm2_rsa_sign_hash_fn(gnutls_privkey_t key, gnutls_sign_algorithm_t algo,
 }
 
 int tpm2_ec_sign_hash_fn(gnutls_privkey_t key, gnutls_sign_algorithm_t algo,
-			 void *_vpninfo, unsigned int flags,
+			 void *_certinfo, unsigned int flags,
 			 const gnutls_datum_t *data, gnutls_datum_t *sig)
 {
-	struct openconnect_info *vpninfo = _vpninfo;
+	struct cert_info *certinfo = _certinfo;
+	struct openconnect_info *vpninfo = certinfo->vpninfo;
 	int ret = GNUTLS_E_PK_SIGN_FAILED;
 	ESYS_CONTEXT *ectx = NULL;
 	TPM2B_DIGEST digest;
@@ -486,7 +489,7 @@ int tpm2_ec_sign_hash_fn(gnutls_privkey_t key, gnutls_sign_algorithm_t algo,
 	if (init_tpm2_key(&ectx, &key_handle, vpninfo))
 		goto out;
  reauth:
-	if (auth_tpm2_key(vpninfo, ectx, key_handle))
+	if (auth_tpm2_key(vpninfo, certinfo, ectx, key_handle))
 		goto out;
 
 	r = Esys_Sign(ectx, key_handle,
@@ -524,8 +527,10 @@ int tpm2_ec_sign_hash_fn(gnutls_privkey_t key, gnutls_sign_algorithm_t algo,
 	return ret;
 }
 
-int install_tpm2_key(struct openconnect_info *vpninfo, gnutls_privkey_t *pkey, gnutls_datum_t *pkey_sig,
-		     unsigned int parent, int emptyauth, int legacy, gnutls_datum_t *privdata, gnutls_datum_t *pubdata)
+int install_tpm2_key(struct openconnect_info *vpninfo, struct cert_info *certinfo,
+		     gnutls_privkey_t *pkey, gnutls_datum_t *pkey_sig,
+		     unsigned int parent, int emptyauth, int legacy,
+		     gnutls_datum_t *privdata, gnutls_datum_t *pubdata)
 {
 	TSS2_RC r;
 

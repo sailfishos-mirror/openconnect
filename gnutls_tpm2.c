@@ -69,17 +69,18 @@ static const char OID_legacy_loadableKey[] = "2.23.133.10.2";
 static const char OID_loadableKey[] =        "2.23.133.10.1.3";
 
 #if GNUTLS_VERSION_NUMBER < 0x030600
-static int tpm2_rsa_sign_fn(gnutls_privkey_t key, void *_vpninfo,
+static int tpm2_rsa_sign_fn(gnutls_privkey_t key, void *_certinfo,
 			    const gnutls_datum_t *data, gnutls_datum_t *sig)
 {
-	return tpm2_rsa_sign_hash_fn(key, GNUTLS_SIGN_UNKNOWN, _vpninfo, 0, data, sig);
+	return tpm2_rsa_sign_hash_fn(key, GNUTLS_SIGN_UNKNOWN, _certinfo, 0, data, sig);
 }
 
 
-static int tpm2_ec_sign_fn(gnutls_privkey_t key, void *_vpninfo,
+static int tpm2_ec_sign_fn(gnutls_privkey_t key, void *_certinfo,
 			   const gnutls_datum_t *data, gnutls_datum_t *sig)
 {
-	struct openconnect_info *vpninfo = _vpninfo;
+	struct cert_info *certinfo = _certinfo;
+	struct openconnect_info *vpninfo = certinfo->vpninfo;
 	gnutls_sign_algorithm_t algo;
 
 	switch (data->size) {
@@ -94,12 +95,12 @@ static int tpm2_ec_sign_fn(gnutls_privkey_t key, void *_vpninfo,
 		return GNUTLS_E_PK_SIGN_FAILED;
 	}
 
-	return tpm2_ec_sign_hash_fn(key, algo, vpninfo, 0, data, sig);
+	return tpm2_ec_sign_hash_fn(key, algo, certinfo, 0, data, sig);
 }
 #endif
 
 #if GNUTLS_VERSION_NUMBER >= 0x030600
-static int rsa_key_info(gnutls_privkey_t key, unsigned int flags, void *_vpninfo)
+static int rsa_key_info(gnutls_privkey_t key, unsigned int flags, void *_certinfo)
 {
 	if (flags & GNUTLS_PRIVKEY_INFO_PK_ALGO)
 		return GNUTLS_PK_RSA;
@@ -127,7 +128,7 @@ static int rsa_key_info(gnutls_privkey_t key, unsigned int flags, void *_vpninfo
 #endif
 
 #if GNUTLS_VERSION_NUMBER >= 0x030400
-static int ec_key_info(gnutls_privkey_t key, unsigned int flags, void *_vpninfo)
+static int ec_key_info(gnutls_privkey_t key, unsigned int flags, void *_certinfo)
 {
 	if (flags & GNUTLS_PRIVKEY_INFO_PK_ALGO)
 		return GNUTLS_PK_EC;
@@ -174,8 +175,8 @@ static int decode_data(ASN1_TYPE n, gnutls_datum_t *r)
 	return 0;
 }
 
-int load_tpm2_key(struct openconnect_info *vpninfo, gnutls_datum_t *fdata,
-		  gnutls_privkey_t *pkey, gnutls_datum_t *pkey_sig)
+int load_tpm2_key(struct openconnect_info *vpninfo, struct cert_info *certinfo,
+		  gnutls_datum_t *fdata, gnutls_privkey_t *pkey, gnutls_datum_t *pkey_sig)
 {
 	gnutls_datum_t asn1, pubdata, privdata;
 	ASN1_TYPE tpmkey_def = ASN1_TYPE_EMPTY, tpmkey = ASN1_TYPE_EMPTY;
@@ -282,7 +283,7 @@ int load_tpm2_key(struct openconnect_info *vpninfo, gnutls_datum_t *fdata,
 
 	/* Now we've extracted what we need from the ASN.1, invoke the
 	 * actual TPM2 code (whichever implementation we end up with */
-	ret = install_tpm2_key(vpninfo, pkey, pkey_sig, parent, emptyauth,
+	ret = install_tpm2_key(vpninfo, certinfo, pkey, pkey_sig, parent, emptyauth,
 			       asn1tab == tpmkey_asn1_tab_old, &privdata, &pubdata);
 	if (ret < 0)
 		goto out_tpmkey;
@@ -292,19 +293,19 @@ int load_tpm2_key(struct openconnect_info *vpninfo, gnutls_datum_t *fdata,
 	switch(ret) {
 	case GNUTLS_PK_RSA:
 #if GNUTLS_VERSION_NUMBER >= 0x030600
-		gnutls_privkey_import_ext4(*pkey, vpninfo, NULL, tpm2_rsa_sign_hash_fn, NULL, NULL, rsa_key_info, 0);
+		gnutls_privkey_import_ext4(*pkey, certinfo, NULL, tpm2_rsa_sign_hash_fn, NULL, NULL, rsa_key_info, 0);
 #else
-		gnutls_privkey_import_ext(*pkey, GNUTLS_PK_RSA, vpninfo, tpm2_rsa_sign_fn, NULL, 0);
+		gnutls_privkey_import_ext(*pkey, GNUTLS_PK_RSA, certinfo, tpm2_rsa_sign_fn, NULL, 0);
 #endif
 		break;
 
 	case GNUTLS_PK_ECC:
 #if GNUTLS_VERSION_NUMBER >= 0x030600
-		gnutls_privkey_import_ext4(*pkey, vpninfo, NULL, tpm2_ec_sign_hash_fn, NULL, NULL, ec_key_info, 0);
+		gnutls_privkey_import_ext4(*pkey, certinfo, NULL, tpm2_ec_sign_hash_fn, NULL, NULL, ec_key_info, 0);
 #elif GNUTLS_VERSION_NUMBER >= 0x030400
-		gnutls_privkey_import_ext3(*pkey, vpninfo, tpm2_ec_sign_fn, NULL, NULL, ec_key_info, 0);
+		gnutls_privkey_import_ext3(*pkey, certinfo, tpm2_ec_sign_fn, NULL, NULL, ec_key_info, 0);
 #else
-		gnutls_privkey_import_ext(*pkey, GNUTLS_PK_EC, vpninfo, tpm2_ec_sign_fn, NULL, 0);
+		gnutls_privkey_import_ext(*pkey, GNUTLS_PK_EC, certinfo, tpm2_ec_sign_fn, NULL, 0);
 #endif
 		break;
 	}

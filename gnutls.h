@@ -28,18 +28,19 @@ int load_tpm1_key(struct openconnect_info *vpninfo, struct cert_info *certinfo,
 		  gnutls_datum_t *fdata, gnutls_privkey_t *pkey, gnutls_datum_t *pkey_sig);
 void release_tpm1_ctx(struct openconnect_info *info);
 
-int load_tpm2_key(struct openconnect_info *vpninfo, gnutls_datum_t *fdata,
-		 gnutls_privkey_t *pkey, gnutls_datum_t *pkey_sig);
+int load_tpm2_key(struct openconnect_info *vpninfo, struct cert_info *certinfo,
+		  gnutls_datum_t *fdata, gnutls_privkey_t *pkey, gnutls_datum_t *pkey_sig);
 void release_tpm2_ctx(struct openconnect_info *info);
-int install_tpm2_key(struct openconnect_info *vpninfo, gnutls_privkey_t *pkey, gnutls_datum_t *pkey_sig,
+int install_tpm2_key(struct openconnect_info *vpninfo, struct cert_info *certinfo,
+		     gnutls_privkey_t *pkey, gnutls_datum_t *pkey_sig,
 		     unsigned int parent, int emptyauth, int legacy,
 		     gnutls_datum_t *privdata, gnutls_datum_t *pubdata);
 
 int tpm2_rsa_sign_hash_fn(gnutls_privkey_t key, gnutls_sign_algorithm_t algo,
-			  void *_vpninfo, unsigned int flags,
+			  void *_certinfo, unsigned int flags,
 			  const gnutls_datum_t *data, gnutls_datum_t *sig);
 int tpm2_ec_sign_hash_fn(gnutls_privkey_t key, gnutls_sign_algorithm_t algo,
-			 void *_vpninfo, unsigned int flags,
+			 void *_certinfo, unsigned int flags,
 			 const gnutls_datum_t *data, gnutls_datum_t *sig);
 int oc_pkcs1_pad(struct openconnect_info *vpninfo,
 		 unsigned char *buf, int size, const gnutls_datum_t *data);

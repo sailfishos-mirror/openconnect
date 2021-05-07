@@ -991,6 +991,7 @@ static int load_certificate(struct openconnect_info *vpninfo, struct cert_info *
 	size_t key_id_size = sizeof(key_id);
 	char name[80];
 
+	certinfo->vpninfo = vpninfo;
 	fdata.data = NULL;
 
 	key_is_p11 = !strncmp(certinfo->key, "pkcs11:", 7);
@@ -1063,7 +1064,7 @@ static int load_certificate(struct openconnect_info *vpninfo, struct cert_info *
 			goto out;
 		}
 
-		gnutls_x509_crt_set_pin_function(cert, gnutls_pin_callback, vpninfo);
+		gnutls_x509_crt_set_pin_function(cert, gnutls_pin_callback, certinfo);
 
 		/* Yes, even for *system* URLs the only API GnuTLS offers us is
 		   ...import_pkcs11_url(). */
@@ -1170,7 +1171,7 @@ static int load_certificate(struct openconnect_info *vpninfo, struct cert_info *
 			goto out;
 		}
 
-		gnutls_privkey_set_pin_function(gci->pkey, gnutls_pin_callback, vpninfo);
+		gnutls_privkey_set_pin_function(gci->pkey, gnutls_pin_callback, certinfo);
 
 		err = gnutls_privkey_import_url(gci->pkey, certinfo->key, 0);
 		if (err) {
@@ -1197,7 +1198,7 @@ static int load_certificate(struct openconnect_info *vpninfo, struct cert_info *
 			goto out;
 		}
 
-		gnutls_pkcs11_privkey_set_pin_function(p11key, gnutls_pin_callback, vpninfo);
+		gnutls_pkcs11_privkey_set_pin_function(p11key, gnutls_pin_callback, certinfo);
 
 		err = gnutls_pkcs11_privkey_import_url(p11key, key_url, 0);
 
@@ -1369,7 +1370,7 @@ static int load_certificate(struct openconnect_info *vpninfo, struct cert_info *
 			     _("This version of OpenConnect was built without TPM2 support\n"));
 		return -EINVAL;
 #else
-		ret = load_tpm2_key(vpninfo, &fdata, &gci->pkey, &pkey_sig);
+		ret = load_tpm2_key(vpninfo, certinfo, &fdata, &gci->pkey, &pkey_sig);
 		if (ret)
 			goto out;
 
@@ -2518,7 +2519,8 @@ static int gnutls_pin_callback(void *priv, int attempt, const char *uri,
 			       const char *token_label, unsigned int flags,
 			       char *pin, size_t pin_max)
 {
-	struct openconnect_info *vpninfo = priv;
+	struct cert_info *certinfo = priv;
+	struct openconnect_info *vpninfo = certinfo->vpninfo;
 	struct pin_cache **cache = &vpninfo->pin_cache;
 	struct oc_auth_form f;
 	struct oc_form_opt o;
@@ -2551,10 +2553,10 @@ static int gnutls_pin_callback(void *priv, int attempt, const char *uri,
 		(*cache)->token = strdup(uri);
 	}
 
-	if (!attempt && vpninfo->certinfo[0].password) {
-		snprintf(pin, pin_max, "%s", vpninfo->certinfo[0].password);
-		(*cache)->pin = vpninfo->certinfo[0].password;
-		vpninfo->certinfo[0].password = NULL;
+	if (!attempt && certinfo->password) {
+		snprintf(pin, pin_max, "%s", certinfo->password);
+		(*cache)->pin = certinfo->password;
+		certinfo->password = NULL;
 		return 0;
 	}
 
