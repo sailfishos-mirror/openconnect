@@ -2447,7 +2447,7 @@ void openconnect_close_https(struct openconnect_info *vpninfo, int final)
 		gnutls_certificate_free_credentials(vpninfo->https_cred);
 		vpninfo->https_cred = NULL;
 #ifdef HAVE_TROUSERS
-		release_tpm1_ctx(vpninfo);
+		release_tpm1_ctx(vpninfo, &vpninfo->certinfo[0]);
 #endif
 #ifdef HAVE_TSS2
 		release_tpm2_ctx(vpninfo);
