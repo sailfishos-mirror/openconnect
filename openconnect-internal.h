@@ -419,6 +419,9 @@ struct cert_info {
 #if defined(OPENCONNECT_GNUTLS) && defined(HAVE_TROUSERS)
 	struct oc_tpm1_ctx *tpm1;
 #endif
+#if defined(OPENCONNECT_GNUTLS) && defined (HAVE_TSS2)
+	struct oc_tpm2_ctx *tpm2;
+#endif
 };
 
 struct openconnect_info {
@@ -586,9 +589,6 @@ struct openconnect_info {
 	gnutls_certificate_credentials_t https_cred;
 	gnutls_psk_client_credentials_t psk_cred;
 	char local_cert_md5[MD5_SIZE * 2 + 1]; /* For CSD */
-#ifdef HAVE_TSS2
-	struct oc_tpm2_ctx *tpm2;
-#endif
 #endif /* OPENCONNECT_GNUTLS */
 	char *ciphersuite_config;
 	struct oc_text_buf *ttls_pushbuf;

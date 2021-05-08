@@ -182,14 +182,14 @@ static void install_tpm_passphrase(struct openconnect_info *vpninfo, TPM2B_DIGES
 	free_pass(&pass);
 }
 
-static int init_tpm2_primary(struct openconnect_info *vpninfo,
+static int init_tpm2_primary(struct openconnect_info *vpninfo, struct cert_info *certinfo,
 			     ESYS_CONTEXT *ctx, ESYS_TR *primaryHandle)
 {
 	TSS2_RC r;
 	const char *hierarchy_name;
 	ESYS_TR hierarchy;
 
-	switch(vpninfo->tpm2->parent) {
+	switch(certinfo->tpm2->parent) {
 	case TPM2_RH_OWNER:	hierarchy = ESYS_TR_RH_OWNER;	hierarchy_name = _("owner"); break;
 	case TPM2_RH_NULL:	hierarchy = ESYS_TR_RH_NULL;	hierarchy_name = _("null"); break;
 	case TPM2_RH_ENDORSEMENT:hierarchy = ESYS_TR_RH_ENDORSEMENT; hierarchy_name = _("endorsement"); break;
@@ -199,15 +199,15 @@ static int init_tpm2_primary(struct openconnect_info *vpninfo,
 
 	vpn_progress(vpninfo, PRG_DEBUG, _("Creating primary key under %s hierarchy.\n"), hierarchy_name);
  reauth:
-	if (vpninfo->tpm2->need_ownerauth) {
+	if (certinfo->tpm2->need_ownerauth) {
 		char *pass = NULL;
 		if (request_passphrase(vpninfo, "openconnect_tpm2_hierarchy", &pass,
 					   _("Enter TPM2 %s hierarchy password:"), hierarchy_name))
 			return -EPERM;
-		install_tpm_passphrase(vpninfo, &vpninfo->tpm2->ownerauth, pass);
-		vpninfo->tpm2->need_ownerauth = 0;
+		install_tpm_passphrase(vpninfo, &certinfo->tpm2->ownerauth, pass);
+		certinfo->tpm2->need_ownerauth = 0;
 	}
-	r = Esys_TR_SetAuth(ctx, hierarchy, &vpninfo->tpm2->ownerauth);
+	r = Esys_TR_SetAuth(ctx, hierarchy, &certinfo->tpm2->ownerauth);
 	if (r) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("TPM2 Esys_TR_SetAuth failed: 0x%x\n"),
@@ -217,13 +217,13 @@ static int init_tpm2_primary(struct openconnect_info *vpninfo,
 	r = Esys_CreatePrimary(ctx, hierarchy,
 			       ESYS_TR_PASSWORD, ESYS_TR_NONE, ESYS_TR_NONE,
 			       &primarySensitive,
-			       vpninfo->tpm2->legacy_srk ? &primaryTemplate_legacy : &primaryTemplate,
+			       certinfo->tpm2->legacy_srk ? &primaryTemplate_legacy : &primaryTemplate,
 			       &allOutsideInfo, &allCreationPCR,
 			       primaryHandle, NULL, NULL, NULL, NULL);
 	if (r == KEY_AUTH_FAILED) {
 		vpn_progress(vpninfo, PRG_DEBUG,
 			     _("TPM2 Esys_CreatePrimary owner auth failed\n"));
-		vpninfo->tpm2->need_ownerauth = 1;
+		certinfo->tpm2->need_ownerauth = 1;
 		goto reauth;
 	} else if (r) {
 		vpn_progress(vpninfo, PRG_ERR,
@@ -238,7 +238,7 @@ static int init_tpm2_primary(struct openconnect_info *vpninfo,
 #define parent_is_persistent(parent) ((parent) >> TPM2_HR_SHIFT == TPM2_HT_PERSISTENT)
 
 static int init_tpm2_key(ESYS_CONTEXT **ctx, ESYS_TR *keyHandle,
-			 struct openconnect_info *vpninfo)
+			 struct openconnect_info *vpninfo, struct cert_info *certinfo)
 {
 	ESYS_TR parentHandle = ESYS_TR_NONE;
 	TSS2_RC r;
@@ -267,41 +267,41 @@ static int init_tpm2_key(ESYS_CONTEXT **ctx, ESYS_TR *keyHandle,
 		goto error;
 	}
 
-	if (parent_is_generated(vpninfo->tpm2->parent)) {
-		if (init_tpm2_primary(vpninfo, *ctx, &parentHandle))
+	if (parent_is_generated(certinfo->tpm2->parent)) {
+		if (init_tpm2_primary(vpninfo, certinfo, *ctx, &parentHandle))
 			goto error;
 	} else {
-		r = Esys_TR_FromTPMPublic(*ctx, vpninfo->tpm2->parent,
+		r = Esys_TR_FromTPMPublic(*ctx, certinfo->tpm2->parent,
 					  ESYS_TR_NONE, ESYS_TR_NONE, ESYS_TR_NONE, &parentHandle);
 		if (r) {
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("Esys_TR_FromTPMPublic failed for handle 0x%x: 0x%x\n"),
-				     vpninfo->tpm2->parent, r);
+				     certinfo->tpm2->parent, r);
 			goto error;
 		}
 		/* If we don't already have a password (and haven't already authenticated
 		 * successfully), check the NODA flag on the parent and demand one if DA
 		 * protection is enabled (since that strongly implies there is a non-empty
 		 * password). */
-		if (!vpninfo->tpm2->did_ownerauth && !vpninfo->tpm2->ownerauth.size) {
+		if (!certinfo->tpm2->did_ownerauth && !certinfo->tpm2->ownerauth.size) {
 			TPM2B_PUBLIC *pub = NULL;
 
 			r = Esys_ReadPublic(*ctx, parentHandle, ESYS_TR_NONE, ESYS_TR_NONE, ESYS_TR_NONE,
 					    &pub, NULL, NULL);
 			if (!r && !(pub->publicArea.objectAttributes & TPMA_OBJECT_NODA))
-				vpninfo->tpm2->need_ownerauth = 1;
+				certinfo->tpm2->need_ownerauth = 1;
 			free(pub);
 		}
 	reauth:
-		if (vpninfo->tpm2->need_ownerauth) {
+		if (certinfo->tpm2->need_ownerauth) {
 			char *pass = NULL;
 			if (request_passphrase(vpninfo, "openconnect_tpm2_parent", &pass,
 					       _("Enter TPM2 parent key password:")))
 				return -EPERM;
-			install_tpm_passphrase(vpninfo, &vpninfo->tpm2->ownerauth, pass);
-			vpninfo->tpm2->need_ownerauth = 0;
+			install_tpm_passphrase(vpninfo, &certinfo->tpm2->ownerauth, pass);
+			certinfo->tpm2->need_ownerauth = 0;
 		}
-		r = Esys_TR_SetAuth(*ctx, parentHandle, &vpninfo->tpm2->ownerauth);
+		r = Esys_TR_SetAuth(*ctx, parentHandle, &certinfo->tpm2->ownerauth);
 		if (r) {
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("TPM2 Esys_TR_SetAuth failed: 0x%x\n"),
@@ -314,12 +314,12 @@ static int init_tpm2_key(ESYS_CONTEXT **ctx, ESYS_TR *keyHandle,
 
 	r = Esys_Load(*ctx, parentHandle,
 		      ESYS_TR_PASSWORD, ESYS_TR_NONE, ESYS_TR_NONE,
-		      &vpninfo->tpm2->priv, &vpninfo->tpm2->pub,
+		      &certinfo->tpm2->priv, &certinfo->tpm2->pub,
 		      keyHandle);
 	if (r == PARENT_AUTH_FAILED) {
 		vpn_progress(vpninfo, PRG_DEBUG,
 			     _("TPM2 Esys_Load auth failed\n"));
-		vpninfo->tpm2->need_ownerauth = 1;
+		certinfo->tpm2->need_ownerauth = 1;
 		goto reauth;
 	}
 	if (r) {
@@ -328,9 +328,9 @@ static int init_tpm2_key(ESYS_CONTEXT **ctx, ESYS_TR *keyHandle,
 			     r);
 		goto error;
 	}
-	vpninfo->tpm2->did_ownerauth = 1;
+	certinfo->tpm2->did_ownerauth = 1;
 
-	if (parent_is_generated(vpninfo->tpm2->parent)) {
+	if (parent_is_generated(certinfo->tpm2->parent)) {
 		r = Esys_FlushContext(*ctx, parentHandle);
 		if (r) {
 			vpn_progress(vpninfo, PRG_ERR,
@@ -342,7 +342,7 @@ static int init_tpm2_key(ESYS_CONTEXT **ctx, ESYS_TR *keyHandle,
 
 	return 0;
  error:
-	if (parent_is_generated(vpninfo->tpm2->parent) && parentHandle != ESYS_TR_NONE)
+	if (parent_is_generated(certinfo->tpm2->parent) && parentHandle != ESYS_TR_NONE)
 		Esys_FlushContext(*ctx, parentHandle);
 	if (*keyHandle != ESYS_TR_NONE)
 		Esys_FlushContext(*ctx, *keyHandle);
@@ -357,7 +357,7 @@ static int auth_tpm2_key(struct openconnect_info *vpninfo, struct cert_info *cer
 {
 	TSS2_RC r;
 
-	if (vpninfo->tpm2->need_userauth || certinfo->password) {
+	if (certinfo->tpm2->need_userauth || certinfo->password) {
 		char *pass = NULL;
 
 		if (certinfo->password) {
@@ -369,11 +369,11 @@ static int auth_tpm2_key(struct openconnect_info *vpninfo, struct cert_info *cer
 			if (err)
 				return err;
 		}
-		install_tpm_passphrase(vpninfo, &vpninfo->tpm2->userauth, pass);
-		vpninfo->tpm2->need_userauth = 0;
+		install_tpm_passphrase(vpninfo, &certinfo->tpm2->userauth, pass);
+		certinfo->tpm2->need_userauth = 0;
 	}
 
-	r = Esys_TR_SetAuth(ctx, key_handle, &vpninfo->tpm2->userauth);
+	r = Esys_TR_SetAuth(ctx, key_handle, &certinfo->tpm2->userauth);
 	if (r) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("TPM2 Esys_TR_SetAuth failed: 0x%x\n"),
@@ -401,12 +401,12 @@ int tpm2_rsa_sign_hash_fn(gnutls_privkey_t key, gnutls_sign_algorithm_t algo,
 		     _("TPM2 RSA sign function called for %d bytes.\n"),
 		     data->size);
 
-	digest.size = vpninfo->tpm2->pub.publicArea.unique.rsa.size;
+	digest.size = certinfo->tpm2->pub.publicArea.unique.rsa.size;
 
 	if (oc_pkcs1_pad(vpninfo, digest.buffer, digest.size, data))
 		return GNUTLS_E_PK_SIGN_FAILED;
 
-	if (init_tpm2_key(&ectx, &key_handle, vpninfo))
+	if (init_tpm2_key(&ectx, &key_handle, vpninfo, certinfo))
 		goto out;
  reauth:
 	if (auth_tpm2_key(vpninfo, certinfo, ectx, key_handle))
@@ -418,7 +418,7 @@ int tpm2_rsa_sign_hash_fn(gnutls_privkey_t key, gnutls_sign_algorithm_t algo,
 	if (r == KEY_AUTH_FAILED) {
 		vpn_progress(vpninfo, PRG_DEBUG,
 			     _("TPM2 Esys_RSA_Decrypt auth failed\n"));
-		vpninfo->tpm2->need_userauth = 1;
+		certinfo->tpm2->need_userauth = 1;
 		goto reauth;
 	}
 	if (r) {
@@ -486,7 +486,7 @@ int tpm2_ec_sign_hash_fn(gnutls_privkey_t key, gnutls_sign_algorithm_t algo,
 	memcpy(digest.buffer, data->data, data->size);
 	digest.size = data->size;
 
-	if (init_tpm2_key(&ectx, &key_handle, vpninfo))
+	if (init_tpm2_key(&ectx, &key_handle, vpninfo, certinfo))
 		goto out;
  reauth:
 	if (auth_tpm2_key(vpninfo, certinfo, ectx, key_handle))
@@ -499,7 +499,7 @@ int tpm2_ec_sign_hash_fn(gnutls_privkey_t key, gnutls_sign_algorithm_t algo,
 	if (r == KEY_AUTH_FAILED) {
 		vpn_progress(vpninfo, PRG_DEBUG,
 			     _("TPM2 Esys_Sign auth failed\n"));
-		vpninfo->tpm2->need_userauth = 1;
+		certinfo->tpm2->need_userauth = 1;
 		goto reauth;
 	}
 	if (r) {
@@ -542,14 +542,14 @@ int install_tpm2_key(struct openconnect_info *vpninfo, struct cert_info *certinf
 		return -EINVAL;
 	}
 
-	vpninfo->tpm2 = calloc(1, sizeof(*vpninfo->tpm2));
-	if (!vpninfo->tpm2)
+	certinfo->tpm2 = calloc(1, sizeof(*certinfo->tpm2));
+	if (!certinfo->tpm2)
 		return -ENOMEM;
 
-	vpninfo->tpm2->parent = parent;
+	certinfo->tpm2->parent = parent;
 
 	r = Tss2_MU_TPM2B_PRIVATE_Unmarshal(privdata->data, privdata->size, NULL,
-					    &vpninfo->tpm2->priv);
+					    &certinfo->tpm2->priv);
 	if (r) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Failed to import TPM2 private key data: 0x%x\n"),
@@ -558,7 +558,7 @@ int install_tpm2_key(struct openconnect_info *vpninfo, struct cert_info *certinf
 	}
 
 	r = Tss2_MU_TPM2B_PUBLIC_Unmarshal(pubdata->data, pubdata->size, NULL,
-					   &vpninfo->tpm2->pub);
+					   &certinfo->tpm2->pub);
 	if (r) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Failed to import TPM2 public key data: 0x%x\n"),
@@ -566,29 +566,29 @@ int install_tpm2_key(struct openconnect_info *vpninfo, struct cert_info *certinf
 		goto err_out;
 	}
 
-	vpninfo->tpm2->need_userauth = !emptyauth;
-	vpninfo->tpm2->legacy_srk = legacy;
+	certinfo->tpm2->need_userauth = !emptyauth;
+	certinfo->tpm2->legacy_srk = legacy;
 
-	switch(vpninfo->tpm2->pub.publicArea.type) {
+	switch(certinfo->tpm2->pub.publicArea.type) {
 	case TPM2_ALG_RSA: return GNUTLS_PK_RSA;
 	case TPM2_ALG_ECC: return GNUTLS_PK_ECC;
 	}
 
 	vpn_progress(vpninfo, PRG_ERR,
 		     _("Unsupported TPM2 key type %d\n"),
-		     vpninfo->tpm2->pub.publicArea.type);
+		     certinfo->tpm2->pub.publicArea.type);
  err_out:
-	release_tpm2_ctx(vpninfo);
+	release_tpm2_ctx(vpninfo, certinfo);
 	return -EINVAL;
 }
 
 
-void release_tpm2_ctx(struct openconnect_info *vpninfo)
+void release_tpm2_ctx(struct openconnect_info *vpninfo, struct cert_info *certinfo)
 {
-	if (vpninfo->tpm2) {
-		clear_mem(vpninfo->tpm2->ownerauth.buffer, sizeof(vpninfo->tpm2->ownerauth.buffer));
-		clear_mem(vpninfo->tpm2->userauth.buffer, sizeof(vpninfo->tpm2->userauth.buffer));
-		free(vpninfo->tpm2);
+	if (certinfo->tpm2) {
+		clear_mem(certinfo->tpm2->ownerauth.buffer, sizeof(certinfo->tpm2->ownerauth.buffer));
+		clear_mem(certinfo->tpm2->userauth.buffer, sizeof(certinfo->tpm2->userauth.buffer));
+		free(certinfo->tpm2);
 	}
-	vpninfo->tpm2 = NULL;
+	certinfo->tpm2 = NULL;
 }

@@ -2450,7 +2450,7 @@ void openconnect_close_https(struct openconnect_info *vpninfo, int final)
 		release_tpm1_ctx(vpninfo, &vpninfo->certinfo[0]);
 #endif
 #ifdef HAVE_TSS2
-		release_tpm2_ctx(vpninfo);
+		release_tpm2_ctx(vpninfo, &vpninfo->certinfo[0]);
 #endif
 	}
 }

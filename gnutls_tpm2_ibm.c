@@ -227,10 +227,10 @@ static TPM_HANDLE tpm2_load_key(struct openconnect_info *vpninfo, TSS_CONTEXT **
 	TPM_HANDLE key = 0;
 	TPM_RC rc;
 	TPM_HANDLE session;
-	char *pass = vpninfo->tpm2->parent_pass;
+	char *pass = certinfo->tpm2->parent_pass;
 	int need_pw = 0;
 
-	vpninfo->tpm2->parent_pass = NULL;
+	certinfo->tpm2->parent_pass = NULL;
 
 	rc = TSS_Create(&tssContext);
 	if (rc) {
@@ -241,10 +241,10 @@ static TPM_HANDLE tpm2_load_key(struct openconnect_info *vpninfo, TSS_CONTEXT **
 	memset(&in, 0, sizeof(in));
 	memset(&out, 0, sizeof(out));
 
-	if (parent_is_persistent(vpninfo->tpm2->parent)) {
+	if (parent_is_persistent(certinfo->tpm2->parent)) {
 		if (!pass) {
 			TPMT_PUBLIC pub;
-			rc = tpm2_readpublic(vpninfo, tssContext, vpninfo->tpm2->parent, &pub);
+			rc = tpm2_readpublic(vpninfo, tssContext, certinfo->tpm2->parent, &pub);
 			if (rc)
 				goto out;
 
@@ -252,10 +252,10 @@ static TPM_HANDLE tpm2_load_key(struct openconnect_info *vpninfo, TSS_CONTEXT **
 				need_pw = 1;
 		}
 
-		in.parentHandle = vpninfo->tpm2->parent;
+		in.parentHandle = certinfo->tpm2->parent;
 	} else {
 	reauth_srk:
-		rc = tpm2_load_srk(vpninfo, tssContext, &in.parentHandle, pass, vpninfo->tpm2->parent, vpninfo->tpm2->legacy_srk);
+		rc = tpm2_load_srk(vpninfo, tssContext, &in.parentHandle, pass, certinfo->tpm2->parent, certinfo->tpm2->legacy_srk);
 		if (rc == KEY_AUTH_FAILED) {
 			free_pass(&pass);
 			if (!request_passphrase(vpninfo, "openconnect_tpm2_hierarchy", &pass,
@@ -270,8 +270,8 @@ static TPM_HANDLE tpm2_load_key(struct openconnect_info *vpninfo, TSS_CONTEXT **
 	if (rc)
 		goto out_flush_srk;
 
-	memcpy(&in.inPublic, &vpninfo->tpm2->pub, sizeof(in.inPublic));
-	memcpy(&in.inPrivate, &vpninfo->tpm2->priv, sizeof(in.inPrivate));
+	memcpy(&in.inPublic, &certinfo->tpm2->pub, sizeof(in.inPublic));
+	memcpy(&in.inPrivate, &certinfo->tpm2->priv, sizeof(in.inPrivate));
 	if (need_pw && !pass) {
 	reauth_parent:
 		if (request_passphrase(vpninfo, "openconnect_tpm2_parent", &pass,
@@ -299,10 +299,10 @@ static TPM_HANDLE tpm2_load_key(struct openconnect_info *vpninfo, TSS_CONTEXT **
 		key = out.objectHandle;
 
  out_flush_srk:
-	if (parent_is_generated(vpninfo->tpm2->parent))
+	if (parent_is_generated(certinfo->tpm2->parent))
 		tpm2_flush_handle(tssContext, in.parentHandle);
  out:
-	vpninfo->tpm2->parent_pass = pass;
+	certinfo->tpm2->parent_pass = pass;
 	if (!key)
 		TSS_Delete(tssContext);
 	else
@@ -329,13 +329,13 @@ int tpm2_rsa_sign_hash_fn(gnutls_privkey_t key, gnutls_sign_algorithm_t algo,
 	int ret = GNUTLS_E_PK_SIGN_FAILED;
 	TPM_HANDLE authHandle;
 	TPM_RC rc;
-	char *pass = vpninfo->tpm2->key_pass;
+	char *pass = certinfo->tpm2->key_pass;
 
-	vpninfo->tpm2->key_pass = NULL;
+	certinfo->tpm2->key_pass = NULL;
 
 	memset(&in, 0, sizeof(in));
 
-	in.cipherText.t.size = vpninfo->tpm2->pub.publicArea.unique.rsa.t.size;
+	in.cipherText.t.size = certinfo->tpm2->pub.publicArea.unique.rsa.t.size;
 
 	if (oc_pkcs1_pad(vpninfo, in.cipherText.t.buffer, in.cipherText.t.size, data))
 		return GNUTLS_E_PK_SIGN_FAILED;
@@ -371,7 +371,7 @@ int tpm2_rsa_sign_hash_fn(gnutls_privkey_t key, gnutls_sign_algorithm_t algo,
 		goto out;
 	}
 
-	vpninfo->tpm2->key_pass = pass;
+	certinfo->tpm2->key_pass = pass;
 
 	sig->data = malloc(out.message.t.size);
 	if (!sig->data)
@@ -398,10 +398,10 @@ int tpm2_ec_sign_hash_fn(gnutls_privkey_t key, gnutls_sign_algorithm_t algo,
 	int ret = GNUTLS_E_PK_SIGN_FAILED;
 	TPM_HANDLE authHandle;
 	TPM_RC rc;
-	char *pass = vpninfo->tpm2->key_pass;
+	char *pass = certinfo->tpm2->key_pass;
 	gnutls_datum_t sig_r, sig_s;
 
-	vpninfo->tpm2->key_pass = NULL;
+	certinfo->tpm2->key_pass = NULL;
 
 	vpn_progress(vpninfo, PRG_DEBUG,
 		     _("TPM2 EC sign function called for %d bytes.\n"),
@@ -458,7 +458,7 @@ int tpm2_ec_sign_hash_fn(gnutls_privkey_t key, gnutls_sign_algorithm_t algo,
 		goto out;
 	}
 
-	vpninfo->tpm2->key_pass = pass;
+	certinfo->tpm2->key_pass = pass;
 	sig_r.data = out.signature.signature.ecdsa.signatureR.t.buffer;
 	sig_r.size = out.signature.signature.ecdsa.signatureR.t.size;
 	sig_s.data = out.signature.signature.ecdsa.signatureS.t.buffer;
@@ -489,17 +489,17 @@ int install_tpm2_key(struct openconnect_info *vpninfo, struct cert_info *certinf
 		return -EINVAL;
 	}
 
-	vpninfo->tpm2 = calloc(1, sizeof(*vpninfo->tpm2));
-	if (!vpninfo->tpm2)
+	certinfo->tpm2 = calloc(1, sizeof(*certinfo->tpm2));
+	if (!certinfo->tpm2)
 		return -ENOMEM;
 
-	vpninfo->tpm2->parent = parent;
-	vpninfo->tpm2->need_userauth = !emptyauth;
-	vpninfo->tpm2->legacy_srk = legacy;
+	certinfo->tpm2->parent = parent;
+	certinfo->tpm2->need_userauth = !emptyauth;
+	certinfo->tpm2->legacy_srk = legacy;
 
 	der = privdata->data;
 	dersize = privdata->size;
-	rc = TPM2B_PRIVATE_Unmarshal(&vpninfo->tpm2->priv, &der, &dersize);
+	rc = TPM2B_PRIVATE_Unmarshal(&certinfo->tpm2->priv, &der, &dersize);
 	if (rc) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Failed to import TPM2 private key data: 0x%x\n"),
@@ -509,7 +509,7 @@ int install_tpm2_key(struct openconnect_info *vpninfo, struct cert_info *certinf
 
 	der = pubdata->data;
 	dersize = pubdata->size;
-	rc = TPM2B_PUBLIC_Unmarshal(&vpninfo->tpm2->pub, &der, &dersize, FALSE);
+	rc = TPM2B_PUBLIC_Unmarshal(&certinfo->tpm2->pub, &der, &dersize, FALSE);
 	if (rc) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Failed to import TPM2 public key data: 0x%x\n"),
@@ -517,27 +517,27 @@ int install_tpm2_key(struct openconnect_info *vpninfo, struct cert_info *certinf
 		goto err_out;
 	}
 
-	switch(vpninfo->tpm2->pub.publicArea.type) {
+	switch(certinfo->tpm2->pub.publicArea.type) {
 	case TPM_ALG_RSA: return GNUTLS_PK_RSA;
 	case TPM_ALG_ECC: return GNUTLS_PK_ECC;
 	}
 
 	vpn_progress(vpninfo, PRG_ERR,
 		     _("Unsupported TPM2 key type %d\n"),
-		     vpninfo->tpm2->pub.publicArea.type);
-;
+		     certinfo->tpm2->pub.publicArea.type);
+
  err_out:
-	release_tpm2_ctx(vpninfo);
+	release_tpm2_ctx(vpninfo, certinfo);
 	return -EINVAL;
 }
 
 
-void release_tpm2_ctx(struct openconnect_info *vpninfo)
+void release_tpm2_ctx(struct openconnect_info *vpninfo, struct cert_info *certinfo)
 {
-	if (vpninfo->tpm2) {
-		free_pass(&vpninfo->tpm2->parent_pass);
-		free_pass(&vpninfo->tpm2->key_pass);
-		free(vpninfo->tpm2);
-		vpninfo->tpm2 = NULL;
+	if (certinfo->tpm2) {
+		free_pass(&certinfo->tpm2->parent_pass);
+		free_pass(&certinfo->tpm2->key_pass);
+		free(certinfo->tpm2);
+		certinfo->tpm2 = NULL;
 	}
 }
