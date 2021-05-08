@@ -1143,9 +1143,12 @@ int cancellable_send(struct openconnect_info *vpninfo, int fd,
 		     char *buf, size_t len);
 int cancellable_recv(struct openconnect_info *vpninfo, int fd,
 		     char *buf, size_t len);
+
+#if defined(OPENCONNECT_OPENSSL)
 /* openssl-pkcs11.c */
-int load_pkcs11_key(struct openconnect_info *vpninfo, struct cert_info *certinfo);
-int load_pkcs11_certificate(struct openconnect_info *vpninfo, struct cert_info *certinfo);
+int load_pkcs11_key(struct openconnect_info *vpninfo, struct cert_info *certinfo, EVP_PKEY **keyp);
+int load_pkcs11_certificate(struct openconnect_info *vpninfo, struct cert_info *certinfo, X509 **certp);
+#endif
 
 /* esp.c */
 int verify_packet_seqno(struct openconnect_info *vpninfo,

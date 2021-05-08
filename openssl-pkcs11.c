@@ -326,7 +326,7 @@ static PKCS11_CERT *slot_find_cert(struct openconnect_info *vpninfo, PKCS11_CTX 
 	return NULL;
 }
 
-int load_pkcs11_certificate(struct openconnect_info *vpninfo, struct cert_info *certinfo)
+int load_pkcs11_certificate(struct openconnect_info *vpninfo, struct cert_info *certinfo, X509 **certp)
 {
 	PKCS11_CTX *ctx;
 	PKCS11_TOKEN *match_tok = NULL;
@@ -412,14 +412,7 @@ int load_pkcs11_certificate(struct openconnect_info *vpninfo, struct cert_info *
 		vpn_progress(vpninfo, PRG_DEBUG,
 			     _("Using PKCS#11 certificate %s\n"), certinfo->cert);
 
-		vpninfo->cert_x509 = X509_dup(cert->x509);
-		if (!SSL_CTX_use_certificate(vpninfo->https_ctx, vpninfo->cert_x509)) {
-			vpn_progress(vpninfo, PRG_ERR,
-				     _("Failed to install certificate in OpenSSL context\n"));
-			openconnect_report_ssl_errors(vpninfo);
-			ret = -EIO;
-			goto out;
-		}
+		*certp = cert->x509;
 		/* If the key is in PKCS#11 too (which is likely), then keep the slot around.
 		   We might want to know which slot the certificate was found in, so we can
 		   log into it to find the key. */
@@ -548,7 +541,7 @@ static int validate_ecdsa_key(struct openconnect_info *vpninfo, EC_KEY *priv_ec)
 }
 #endif
 
-int load_pkcs11_key(struct openconnect_info *vpninfo, struct cert_info *certinfo)
+int load_pkcs11_key(struct openconnect_info *vpninfo, struct cert_info *certinfo, EVP_PKEY **keyp)
 {
 	PKCS11_CTX *ctx;
 	PKCS11_TOKEN *match_tok = NULL;
@@ -680,12 +673,7 @@ int load_pkcs11_key(struct openconnect_info *vpninfo, struct cert_info *certinfo
 				goto out;
 		}
 #endif
-		if (!SSL_CTX_use_PrivateKey(vpninfo->https_ctx, pkey)) {
-			vpn_progress(vpninfo, PRG_ERR, _("Add key from PKCS#11 failed\n"));
-			openconnect_report_ssl_errors(vpninfo);
-			ret = -EINVAL;
-			goto out;
-		}
+		*keyp = pkey;
 
 		/* We have to keep the entire slot list around, because the EVP_PKEY
 		   depends on the one we're using, and we have no way to free the
@@ -710,13 +698,13 @@ int load_pkcs11_key(struct openconnect_info *vpninfo, struct cert_info *certinfo
 	return ret;
 }
 #else
-int load_pkcs11_key(struct openconnect_info *vpninfo, struct cert_info *certinfo)
+int load_pkcs11_key(struct openconnect_info *vpninfo, struct cert_info *certinfo, EVP_PKEY **keyp)
 {
 	vpn_progress(vpninfo, PRG_ERR,
 		     _("This version of OpenConnect was built without PKCS#11 support\n"));
 	return -EINVAL;
 }
-int load_pkcs11_certificate(struct openconnect_info *vpninfo, struct cert_info *certinfo)
+int load_pkcs11_certificate(struct openconnect_info *vpninfo, struct cert_info *certinfo, X509 **certp)
 {
 	vpn_progress(vpninfo, PRG_ERR,
 		     _("This version of OpenConnect was built without PKCS#11 support\n"));
