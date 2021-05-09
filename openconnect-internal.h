@@ -1346,6 +1346,17 @@ void openconnect_set_juniper(struct openconnect_info *vpninfo);
 /* version.c */
 extern const char *openconnect_version_str;
 
+
+static inline int certinfo_is_primary(struct cert_info *certinfo)
+{
+	return certinfo == &certinfo->vpninfo->certinfo[0];
+}
+static inline int certinfo_is_secondary(struct cert_info *certinfo)
+{
+	return certinfo == &certinfo->vpninfo->certinfo[1];
+}
+#define certinfo_string(ci, strA, strB) (certinfo_is_primary(ci) ? (strA) : (strB))
+
 /* strncasecmp() just checks that the first n characters match. This
    function ensures that the first n characters of the left-hand side
    are a *precise* match for the right-hand side. */

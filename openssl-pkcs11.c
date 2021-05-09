@@ -198,7 +198,7 @@ static int request_pin(struct openconnect_info *vpninfo, struct cert_info *certi
 		return 0;
 	}
 	memset(&f, 0, sizeof(f));
-	f.auth_id = (char *)"pkcs11_pin";
+	f.auth_id = (char *)certinfo_string(certinfo, "pkcs11_pin", "secondary_pkcs11_pin");
 	f.opts = &o;
 	message[sizeof(message)-1] = 0;
 	snprintf(message, sizeof(message) - 1, _("PIN required for %s"), cache->token);
@@ -410,7 +410,9 @@ int load_pkcs11_certificate(struct openconnect_info *vpninfo, struct cert_info *
 		}
 
 		vpn_progress(vpninfo, PRG_DEBUG,
-			     _("Using PKCS#11 certificate %s\n"), certinfo->cert);
+			     certinfo_string(certinfo, _("Using PKCS#11 certificate %s\n"),
+					     _("Using secondary PKCS#11 certificate %s\n")),
+			     certinfo->cert);
 
 		*certp = cert->x509;
 		/* If the key is in PKCS#11 too (which is likely), then keep the slot around.
@@ -481,7 +483,8 @@ static PKCS11_KEY *slot_find_key(struct openconnect_info *vpninfo, PKCS11_CTX *c
 #if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 #define EVP_PKEY_id(k) ((k)->type)
 #endif
-static int validate_ecdsa_key(struct openconnect_info *vpninfo, EC_KEY *priv_ec)
+static int validate_ecdsa_key(struct openconnect_info *vpninfo, struct cert_info *certinfo,
+			      EC_KEY *priv_ec)
 {
 	EVP_PKEY *pub_pkey;
 	EC_KEY *pub_ec;
@@ -493,13 +496,15 @@ static int validate_ecdsa_key(struct openconnect_info *vpninfo, EC_KEY *priv_ec)
 	pub_pkey = X509_get_pubkey(vpninfo->cert_x509);
 	if (!pub_pkey) {
 		vpn_progress(vpninfo, PRG_ERR,
-			     _("Certificate has no public key\n"));
+			     certinfo_string(certinfo, _("Certificate has no public key\n"),
+					     _("Secondary certificate has no public key\n")));
 		goto out;
 	}
 	pub_ec = EVP_PKEY_get1_EC_KEY(pub_pkey);
 	if (!pub_ec) {
 		vpn_progress(vpninfo, PRG_ERR,
-			     _("Certificate does not match private key\n"));
+			     certinfo_string(certinfo, _("Certificate does not match private key\n"),
+					     _("Secondary certificate does not match private key\n")));
 		goto out_pkey;
 	}
 	vpn_progress(vpninfo, PRG_TRACE, _("Checking EC key matches cert\n"));
@@ -522,7 +527,8 @@ static int validate_ecdsa_key(struct openconnect_info *vpninfo, EC_KEY *priv_ec)
 	}
 	if (!ECDSA_verify(NID_sha1, rdata, sizeof(rdata), sig, siglen, pub_ec)) {
 		vpn_progress(vpninfo, PRG_ERR,
-			     _("Certificate does not match private key\n"));
+			     certinfo_string(certinfo, _("Certificate does not match private key\n"),
+					     _("Secondary certificate does not match private key\n")));
 		goto out_sig;
 	}
 
@@ -640,12 +646,15 @@ int load_pkcs11_key(struct openconnect_info *vpninfo, struct cert_info *certinfo
  got_key:
 	if (key) {
 		vpn_progress(vpninfo, PRG_DEBUG,
-			     _("Using PKCS#11 key %s\n"), certinfo->key);
+			     certinfo_string(certinfo, _("Using PKCS#11 key %s\n"),
+					     _("Using secondary PKCS#11 key %s\n")),
+			     certinfo->key);
 
 		pkey = PKCS11_get_private_key(key);
 		if (!pkey) {
 			vpn_progress(vpninfo, PRG_ERR,
-				     _("Failed to instantiated private key from PKCS#11\n"));
+				     certinfo_string(certinfo, _("Failed to instantiate private key from PKCS#11\n"),
+						     _("Failed to instantiate secondary private key from PKCS#11\n")));
 			openconnect_report_ssl_errors(vpninfo);
 			ret = -EIO;
 			goto out;
@@ -667,7 +676,7 @@ int load_pkcs11_key(struct openconnect_info *vpninfo, struct cert_info *certinfo
 
 			ret = 0;
 			if (!EC_KEY_get0_public_key(priv_ec))
-				ret = validate_ecdsa_key(vpninfo, priv_ec);
+				ret = validate_ecdsa_key(vpninfo, certinfo, priv_ec);
 			EC_KEY_free(priv_ec);
 			if (ret)
 				goto out;
