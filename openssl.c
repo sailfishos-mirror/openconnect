@@ -1692,7 +1692,7 @@ static int check_certificate_expiry(struct openconnect_info *vpninfo, struct cer
 
 static int load_primary_certificate(struct openconnect_info *vpninfo)
 {
-	struct ossl_cert_info oci = { };
+	struct ossl_cert_info oci = { 0 };
 
 	int ret = load_certificate(vpninfo, &vpninfo->certinfo[0], &oci);
 	if (!ret)
@@ -2248,5 +2248,91 @@ int multicert_compute_response(struct openconnect_info *vpninfo,
 			       struct multicert_client_cert *ccert,
 			       struct multicert_client_signature *csignature)
 {
-	return -ENOSYS;
+	struct ossl_cert_info oci = {};
+	PKCS7 *p7 = NULL;
+	int hash, ret = 0;
+
+	ret = load_certificate(vpninfo, &vpninfo->certinfo[1], &oci);
+	if (ret) /* The error will already have been reported */
+		return -EINVAL;
+
+	csignature->data = buf_alloc();
+	for (hash = MULTICERT_SIGNHASH_MAX; hash > MULTICERT_SIGNHASH_UNKNOWN; hash--) {
+		if ((digests & MULTICERT_SIGNHASH_FLAG(hash)) == 0)
+			continue;
+
+		const char *hashname = (const char *)multicert_signhash_get_name(hash);
+		const EVP_MD *md = EVP_get_digestbyname(hashname);
+		if (!md)
+			continue;
+
+		EVP_MD_CTX *mdctx = EVP_MD_CTX_new();
+		if (!mdctx)
+			continue;
+
+		size_t siglen = 0;
+		if (EVP_DigestSignInit(mdctx, NULL, md, NULL, oci.key) &&
+		    EVP_DigestSignUpdate(mdctx, chdata, chdata_len) &&
+		    EVP_DigestSignFinal(mdctx, NULL, &siglen) &&
+		    !buf_ensure_space(csignature->data, siglen) &&
+		    EVP_DigestSignFinal(mdctx, (void *)csignature->data->data, &siglen)) {
+
+			csignature->data->pos = siglen;
+			csignature->algorithm = hash;
+			EVP_MD_CTX_free(mdctx);
+			break;
+		}
+
+		EVP_MD_CTX_free(mdctx);
+	}
+
+	if (hash == MULTICERT_SIGNHASH_UNKNOWN) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Failed to generate signature for multicert authentication\n"));
+		openconnect_report_ssl_errors(vpninfo);
+		ret = -EIO;
+		goto out;
+	}
+
+	ccert->format = MULTICERT_CERT_FORMAT_PKCS7;
+	ccert->data = buf_alloc();
+
+	if (!csignature->data || !ccert->data) {
+		ret = -ENOMEM;
+		goto out;
+	}
+
+	/* We have the client certificate in 'oci.cert' and *optionally*
+	 * a stack of intermediate certs in oci.extra_certs. For the TLS
+	 * connection those would be used by SSL_CTX_use_certificate() and
+	 * SSL_CTX_add_extra_chain_cert() respectively. For PKCS7_sign()
+	 * we need the actual cert at the head of the stack, so *create*
+	 * one if needed, and insert oci.cert at position zero. */
+	if (!oci.extra_certs)
+		oci.extra_certs = sk_X509_new_null();
+	if (!oci.extra_certs)
+		goto err;
+	if (!sk_X509_insert(oci.extra_certs, oci.cert, 0))
+		goto err;
+	X509_up_ref(oci.cert);
+
+	p7 = PKCS7_sign(NULL, NULL, oci.extra_certs, NULL, PKCS7_DETACHED);
+	if (!p7) {
+	err:
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Failed to create PKCS#7 structure\n"));
+		ret = -EIO;
+		goto out;
+	}
+	ccert->data->pos = i2d_PKCS7(p7, (unsigned char **)&ccert->data->data);
+	if (!ccert->data->pos) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Failed to output PKCS#7 structure\n"));
+		ret = -EIO;
+	}
+ out:
+	free_ossl_cert_info(&oci);
+	if (p7)
+		PKCS7_free(p7);
+	return ret;
 }
