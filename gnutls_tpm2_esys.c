@@ -201,8 +201,11 @@ static int init_tpm2_primary(struct openconnect_info *vpninfo, struct cert_info 
  reauth:
 	if (certinfo->tpm2->need_ownerauth) {
 		char *pass = NULL;
-		if (request_passphrase(vpninfo, "openconnect_tpm2_hierarchy", &pass,
-					   _("Enter TPM2 %s hierarchy password:"), hierarchy_name))
+		if (request_passphrase(vpninfo,
+				       certinfo_string(certinfo, "openconnect_tpm2_hierarchy",
+						       "openconnect_secondary_tpm2_hierarchy"),
+				       &pass,
+				       _("Enter TPM2 %s hierarchy password:"), hierarchy_name))
 			return -EPERM;
 		install_tpm_passphrase(vpninfo, &certinfo->tpm2->ownerauth, pass);
 		certinfo->tpm2->need_ownerauth = 0;
@@ -295,8 +298,12 @@ static int init_tpm2_key(ESYS_CONTEXT **ctx, ESYS_TR *keyHandle,
 	reauth:
 		if (certinfo->tpm2->need_ownerauth) {
 			char *pass = NULL;
-			if (request_passphrase(vpninfo, "openconnect_tpm2_parent", &pass,
-					       _("Enter TPM2 parent key password:")))
+			if (request_passphrase(vpninfo,
+					       certinfo_string(certinfo, "openconnect_tpm2_parent",
+							       "openconnect_secondary_tpm2_parent"),
+					       &pass,
+					       certinfo_string(certinfo, _("Enter TPM2 parent key password:"),
+							       _("Enter secondary TPM2 parent key password:"))))
 				return -EPERM;
 			install_tpm_passphrase(vpninfo, &certinfo->tpm2->ownerauth, pass);
 			certinfo->tpm2->need_ownerauth = 0;
@@ -364,8 +371,12 @@ static int auth_tpm2_key(struct openconnect_info *vpninfo, struct cert_info *cer
 			pass = certinfo->password;
 			certinfo->password = NULL;
 		} else {
-			int err = request_passphrase(vpninfo, "openconnect_tpm2_key",
-						     &pass, _("Enter TPM2 key password:"));
+			int err = request_passphrase(vpninfo,
+						     certinfo_string(certinfo, "openconnect_tpm2_key",
+								     "openconnect_secondary_tpm2_key"),
+						     &pass,
+						     certinfo_string(certinfo, _("Enter TPM2 key password:"),
+								     _("Enter secondary TPM2 key password:")));
 			if (err)
 				return err;
 		}

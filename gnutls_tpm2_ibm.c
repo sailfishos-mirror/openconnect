@@ -219,7 +219,7 @@ static TPM_RC tpm2_load_srk(struct openconnect_info *vpninfo, TSS_CONTEXT *tssCo
 }
 
 
-static TPM_HANDLE tpm2_load_key(struct openconnect_info *vpninfo, TSS_CONTEXT **tsscp)
+static TPM_HANDLE tpm2_load_key(struct openconnect_info *vpninfo, struct cert_info *certinfo, TSS_CONTEXT **tsscp)
 {
 	TSS_CONTEXT *tssContext;
 	Load_In in;
@@ -258,7 +258,10 @@ static TPM_HANDLE tpm2_load_key(struct openconnect_info *vpninfo, TSS_CONTEXT **
 		rc = tpm2_load_srk(vpninfo, tssContext, &in.parentHandle, pass, certinfo->tpm2->parent, certinfo->tpm2->legacy_srk);
 		if (rc == KEY_AUTH_FAILED) {
 			free_pass(&pass);
-			if (!request_passphrase(vpninfo, "openconnect_tpm2_hierarchy", &pass,
+			if (!request_passphrase(vpninfo,
+						certinfo_string(certinfo, "openconnect_tpm2_hierarchy",
+								"openconnect_secondary_tpm2_hierarchy"),
+						&pass,
 						_("Enter TPM2 %s hierarchy password:"), "owner")) {
 				goto reauth_srk;
 			}
@@ -274,8 +277,12 @@ static TPM_HANDLE tpm2_load_key(struct openconnect_info *vpninfo, TSS_CONTEXT **
 	memcpy(&in.inPrivate, &certinfo->tpm2->priv, sizeof(in.inPrivate));
 	if (need_pw && !pass) {
 	reauth_parent:
-		if (request_passphrase(vpninfo, "openconnect_tpm2_parent", &pass,
-				       _("Enter TPM2 parent key password:"))) {
+		if (request_passphrase(vpninfo,
+				       certinfo_string(certinfo, "openconnect_tpm2_parent",
+						       "openconnect_secondary_tpm2_parent"),
+				       &pass,
+				       certinfo_string(certinfo, _("Enter TPM2 parent key password:"),
+						       _("Enter secondary TPM2 parent key password:")))) {
 			tpm2_flush_handle(tssContext, session);
 			goto out_flush_srk;
 		}
@@ -341,7 +348,7 @@ int tpm2_rsa_sign_hash_fn(gnutls_privkey_t key, gnutls_sign_algorithm_t algo,
 		return GNUTLS_E_PK_SIGN_FAILED;
 
 	in.inScheme.scheme = TPM_ALG_NULL;
-	in.keyHandle = tpm2_load_key(vpninfo, &tssContext);
+	in.keyHandle = tpm2_load_key(vpninfo, certinfo, &tssContext);
 	in.label.t.size = 0;
 	if (!in.keyHandle)
 		return GNUTLS_E_PK_SIGN_FAILED;
@@ -360,8 +367,12 @@ int tpm2_rsa_sign_hash_fn(gnutls_privkey_t key, gnutls_sign_algorithm_t algo,
 			 TPM_RH_NULL, NULL, 0);
 	if (rc == KEY_AUTH_FAILED) {
 		free_pass(&pass);
-		if (!request_passphrase(vpninfo, "openconnect_tpm2_key",
-					&pass, _("Enter TPM2 key password:")))
+		if (!request_passphrase(vpninfo,
+					certinfo_string(certinfo, "openconnect_tpm2_key",
+							"openconnect_secondary_tpm2_key"),
+					&pass,
+					certinfo_string(certinfo, _("Enter TPM2 key password:"),
+							_("Enter secondary TPM2 key password:"))))
 			goto reauth;
 	}
 	if (rc) {
@@ -430,7 +441,7 @@ int tpm2_ec_sign_hash_fn(gnutls_privkey_t key, gnutls_sign_algorithm_t algo,
 	in.validation.hierarchy = TPM_RH_NULL;
 	in.validation.digest.t.size = 0;
 
-	in.keyHandle = tpm2_load_key(vpninfo, &tssContext);
+	in.keyHandle = tpm2_load_key(vpninfo, certinfo, &tssContext);
 	if (!in.keyHandle)
 		return GNUTLS_E_PK_SIGN_FAILED;
 

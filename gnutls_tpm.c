@@ -237,8 +237,12 @@ int load_tpm1_key(struct openconnect_info *vpninfo, struct cert_info *certinfo,
 				goto out_key_policy;
 			}
 		}
-		err = request_passphrase(vpninfo, "openconnect_tpm_key",
-					 &pass, _("Enter TPM key PIN:"));
+		err = request_passphrase(vpninfo,
+					 certinfo_string(certinfo, "openconnect_tpm_key",
+							 "openconnect_secondary_tpm_key"),
+					 &pass,
+					 certinfo_string(certinfo, _("Enter TPM key PIN:"),
+							 _("Enter secondary key TPM PIN:")));
 		if (err)
 			goto out_key_policy;
 

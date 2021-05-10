@@ -366,7 +366,8 @@ int ssl_nonblock_write(struct openconnect_info *vpninfo, int dtls, void *buf, in
 	return -1;
 }
 
-static int check_certificate_expiry(struct openconnect_info *vpninfo, gnutls_x509_crt_t cert)
+static int check_certificate_expiry(struct openconnect_info *vpninfo, struct cert_info *certinfo,
+				    gnutls_x509_crt_t cert)
 {
 	const char *reason = NULL;
 	time_t expires = gnutls_x509_crt_get_expiration_time(cert);
@@ -379,9 +380,11 @@ static int check_certificate_expiry(struct openconnect_info *vpninfo, gnutls_x50
 	}
 
 	if (expires < now)
-		reason = _("Client certificate has expired at");
+		reason = certinfo_string(certinfo, _("Client certificate has expired at"),
+					 _("Secondary client certificate has expired at"));
 	else if (expires < now + vpninfo->cert_expire_warning)
-		reason = _("Client certificate expires soon at");
+		reason = certinfo_string(certinfo, _("Client certificate expires soon at"),
+					 _("Secondary client certificate expires soon at"));
 
 	if (reason) {
 		char buf[80];
@@ -525,8 +528,12 @@ static int load_pkcs12_certificate(struct openconnect_info *vpninfo,
 				     _("Failed to decrypt PKCS#12 certificate file\n"));
 		free_pass(&pass);
 		certinfo->password = NULL;
-		err = request_passphrase(vpninfo, "openconnect_pkcs12", &pass,
-					 _("Enter PKCS#12 pass phrase:"));
+		err = request_passphrase(vpninfo,
+					 certinfo_string(certinfo, "openconnect_pkcs12",
+							 "openconnect_secondary_pkcs12"),
+					 &pass,
+					 certinfo_string(certinfo, _("Enter PKCS#12 pass phrase:"),
+							 _("Enter secondary PKCS#12 pass phrase:")));
 		if (err) {
 			gnutls_pkcs12_deinit(p12);
 			return -EINVAL;
@@ -561,7 +568,8 @@ static int load_pkcs12_certificate(struct openconnect_info *vpninfo,
 	gnutls_pkcs12_deinit(p12);
 	if (err) {
 		vpn_progress(vpninfo, PRG_ERR,
-			     _("Failed to load PKCS#12 certificate: %s\n"),
+			     certinfo_string(certinfo, _("Failed to load PKCS#12 certificate: %s\n"),
+					     _("Failed to load secondary PKCS#12 certificate: %s\n")),
 			     gnutls_strerror(err));
 		return -EINVAL;
 	}
@@ -886,8 +894,12 @@ static int import_openssl_pem(struct openconnect_info *vpninfo, struct cert_info
 			vpn_progress(vpninfo, PRG_ERR,  _("Decrypting PEM key failed\n"));
 			free_pass(&pass);
 		}
-		err = request_passphrase(vpninfo, "openconnect_pem",
-					 &pass, _("Enter PEM pass phrase:"));
+		err = request_passphrase(vpninfo,
+					 certinfo_string(certinfo, "openconnect_pem",
+							 "openconnect_secondary_pem"),
+					 &pass,
+					 certinfo_string(certinfo, _("Enter PEM pass phrase:"),
+							 _("Enter secondary PEM pass phrase:")));
 		if (err) {
 			ret = -EINVAL;
 			goto out;
@@ -1068,7 +1080,9 @@ static int load_certificate(struct openconnect_info *vpninfo, struct cert_info *
 
 	/* OK, not a PKCS#11 certificate so it must be coming from a file... */
 	vpn_progress(vpninfo, PRG_DEBUG,
-		     _("Using certificate file %s\n"), certinfo->cert);
+		     certinfo_string(certinfo, _("Using certificate file %s\n"),
+				     _("Using secondary certificate file %s\n")),
+		     certinfo->cert);
 
 	/* Load file contents */
 	ret = load_datum(vpninfo, &fdata, certinfo->cert);
@@ -1127,7 +1141,8 @@ static int load_certificate(struct openconnect_info *vpninfo, struct cert_info *
 			reason = gnutls_strerror(err);
 
 		vpn_progress(vpninfo, PRG_ERR,
-			     _("Loading certificate failed: %s\n"),
+			     certinfo_string(certinfo, _("Loading certificate failed: %s\n"),
+					     _("Loading secondary certificate failed: %s\n")),
 			     reason);
 		nr_extra_certs = 0;
 		ret = -EINVAL;
@@ -1142,7 +1157,9 @@ static int load_certificate(struct openconnect_info *vpninfo, struct cert_info *
 #ifdef HAVE_GNUTLS_SYSTEM_KEYS
 	if (key_is_sys) {
 		vpn_progress(vpninfo, PRG_DEBUG,
-			     _("Using system key %s\n"), certinfo->key);
+			     certinfo_string(certinfo, _("Using system key %s\n"),
+					     _("Using secondary system key %s\n")),
+			     certinfo->key);
 
 		err = gnutls_privkey_init(&gci->pkey);
 		if (err) {
@@ -1580,7 +1597,8 @@ static int load_certificate(struct openconnect_info *vpninfo, struct cert_info *
 
 	/* We shouldn't reach this. It means that we didn't find *any* matching cert */
 	vpn_progress(vpninfo, PRG_ERR,
-		     _("No SSL certificate found to match private key\n"));
+		     certinfo_string(certinfo, _("No SSL certificate found to match private key\n"),
+				     _("No secondary certificate found to match private key\n")));
 	ret = -EINVAL;
 	goto out;
 
@@ -1589,9 +1607,11 @@ static int load_certificate(struct openconnect_info *vpninfo, struct cert_info *
 	/* Now we have a key in either 'key' or 'pkey', a matching cert in 'cert',
 	   and potentially a list of other certs in 'extra_certs[]'. If we loaded
 	   a PKCS#12 file we may have a trust chain in 'gci->certs[]' too. */
-	check_certificate_expiry(vpninfo, cert);
+	check_certificate_expiry(vpninfo, certinfo, cert);
 	get_cert_name(cert, name, sizeof(name));
-	vpn_progress(vpninfo, PRG_INFO, _("Using client certificate '%s'\n"),
+	vpn_progress(vpninfo, PRG_INFO,
+		     certinfo_string(certinfo, _("Using client certificate '%s'\n"),
+				     _("Using secondary certificate '%s'\n")),
 		     name);
 
 	/* OpenSSL has problems with certificate chains — if there are
@@ -2574,7 +2594,8 @@ static int gnutls_pin_callback(void *priv, int attempt, const char *uri,
 	}
 
 	memset(&f, 0, sizeof(f));
-	f.auth_id = (char *)"pkcs11_pin";
+	f.auth_id = (char *)certinfo_string(certinfo, "pkcs11_pin",
+					    "secondary_pkcs11_pin");
 	f.opts = &o;
 
 	message[sizeof(message)-1] = 0;
