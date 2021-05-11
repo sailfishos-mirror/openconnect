@@ -364,7 +364,7 @@ static int auth_tpm2_key(struct openconnect_info *vpninfo, struct cert_info *cer
 {
 	TSS2_RC r;
 
-	if (certinfo->tpm2->need_userauth || certinfo->password) {
+	if (certinfo->tpm2->need_userauth) {
 		char *pass = NULL;
 
 		if (certinfo->password) {
