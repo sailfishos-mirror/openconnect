@@ -35,11 +35,29 @@ USER_KEYS += $(certsdir)/ec-key-pkcs1.pem $(certsdir)/ec-key-pkcs1.der \
 	$(certsdir)/ec-key-pkcs8-pbes2-sha1.pem $(certsdir)/ec-key-pkcs8-pbes2-sha1.der \
 	$(certsdir)/ec-key-aes256-cbc-sha256.p12
 
+SWTPM_KEYS = $(certsdir)/ec-key-swtpm.pem $(certsdir)/swtpm-ec-key-tpm.pem $(certsdir)/swtpm-rsa-key-tpm.pem
+SWTPM_CERTS = $(certsdir)/swtpm-ec-cert.pem $(certsdir)/swtpm-rsa-cert.pem
+
+HWTPM_KEYS =
+HWTPM_CERTS =
+
+# Importing the existing EC key (not DSA since it's ancient and not RSA because
+# the TPM probably can't cope with 2432-bit keys).
+if TEST_TPM2_IMPORT
+HWTPM_KEYS += ec-key-hwtpm.pem
+endif
+
+# Creating new keys in TPM.
+if TEST_TPM2_CREATE
+HWTPM_KEYS += hwtpm-ec-key-tpm.pem hwtpm-rsa-key-tpm.pem
+HWTPM_CERTS += hwtpm-ec-cert.pem hwtpm-rsa-cert.pem
+endif
+
 USER_CERTS = $(certsdir)/user-cert.pem $(certsdir)/dsa-cert.pem $(certsdir)/ec-cert.pem
 
 EXTRA_DIST = certs/ca.pem certs/ca-key.pem certs/user-cert.pem $(USER_KEYS) $(USER_CERTS) \
 	$(OSSL_KEYS) $(DSA_KEYS) $(certsdir)/user-key-nonascii-password.p12 \
-	pass-UTF-8 pass-ISO8859-2 \
+	pass-UTF-8 pass-ISO8859-2 $(SWTPM_KEYS) $(SWTPM_CERTS) swtpm-perm.state \
 	certs/server-cert.pem certs/server-key.pem configs/test1.passwd \
 	common.sh configs/test-user-cert.config configs/test-user-pass.config \
 	configs/test-obsolete-server-crypto.config \
@@ -50,28 +68,46 @@ EXTRA_DIST = certs/ca.pem certs/ca-key.pem certs/user-cert.pem $(USER_KEYS) $(US
 	fake-juniper-sso-server.py fake-tncc.py fake-gp-server.py
 
 dist_check_SCRIPTS = autocompletion
+TESTS = autocompletion
 
-if HAVE_NETNS
 dist_check_SCRIPTS += dtls-psk sigterm
+if HAVE_NETNS
+TESTS += dtls-psk sigterm
 endif
 
-if TEST_PPP
 dist_check_SCRIPTS += ppp-over-tls
+if TEST_PPP
+TESTS += ppp-over-tls
 endif
+
+dist_check_SCRIPTS += auth-username-pass auth-certificate auth-nonascii cert-fingerprint \
+	id-test obsolete-server-crypto pfs auth-swtpm auth-hwtpm fortinet-auth-and-config \
+	f5-auth-and-config juniper-auth juniper-sso-auth gp-auth-and-config auth-pkcs11
 
 if HAVE_CWRAP
-dist_check_SCRIPTS += auth-username-pass auth-certificate auth-nonascii cert-fingerprint id-test obsolete-server-crypto pfs
+TESTS += auth-username-pass auth-certificate auth-nonascii cert-fingerprint id-test \
+	obsolete-server-crypto pfs
+
+if TEST_SWTPM
+TESTS += auth-swtpm
+# The rules for swtpm-perm.state are not invoked during normal builds since
+# the files are already present in git.
+auth-swtpm: swtpm-perm.state
+endif
+
+if TEST_HWTPM
+# This is only invoked *manually* with 'make TESTS=auth-hwtpm check'.
+TESTS += auth-hwtpm
+# These files are generated locally against the real TPM.
+auth-hwtpm: $(HWTPM_CERTS) $(HWTPM_KEYS)
+endif
 
 if HAVE_PYTHON36_FLASK
-dist_check_SCRIPTS += fortinet-auth-and-config
-dist_check_SCRIPTS += f5-auth-and-config
-dist_check_SCRIPTS += juniper-auth
-dist_check_SCRIPTS += juniper-sso-auth
-dist_check_SCRIPTS += gp-auth-and-config
+TESTS += fortinet-auth-and-config f5-auth-and-config juniper-auth juniper-sso-auth gp-auth-and-config
 endif
 
 if TEST_PKCS11
-dist_check_SCRIPTS += auth-pkcs11
+TESTS += auth-pkcs11
 
 PKCS11_TOKENS = openconnect-test openconnect-test1
 
@@ -95,6 +131,10 @@ endif # HAVE_CWRAP
 TESTS_ENVIRONMENT = srcdir="$(srcdir)" \
 	top_builddir="$(top_builddir)" \
 	key_list="$(USER_KEYS)" \
+	swtpm_list="$(SWTPM_KEYS)" \
+	hwtpm_list="$(HWTPM_KEYS)" \
+	SWTPM="$(SWTPM)" \
+	SWTPM_IOCTL="$(SWTPM_IOCTL)" \
 	pkcs11_keys="$(PKCS11_KEYS)" \
 	pkcs11_tokens="$(PKCS11_TOKENS)" \
 	EXEEXT=$(EXEEXT) \
@@ -117,7 +157,7 @@ XFAIL_TESTS = bad_dtls_test
 endif
 endif
 
-TESTS = $(dist_check_SCRIPTS) $(C_TESTS)
+TESTS += $(C_TESTS)
 
 noinst_PROGRAMS = $(C_TESTS) serverhash
 
@@ -129,7 +169,6 @@ serverhash_LDADD = ../libopenconnect.la $(SSL_LIBS)
 # reference, the commands used to generate them are here...
 
 keyfiles: $(USER_KEYS) $(USER_CERTS) $(certsdir)/server-cert.pem
-
 
 OPENSSL = openssl
 OSSLARGS = -in $< -out $@ -passout pass:password
@@ -209,6 +248,84 @@ $(certsdir)/server-cert.pem:
 	$(OPENSSL) x509 -days 3650 -CA $(certsdir)/ca.pem -CAkey $(certsdir)/ca-key.pem \
 		-extfile $(srcdir)/configs/server-cert.prm -extensions req_EXT \
 		-set_serial $(shell date +%s) -req -out $@ -in $@.csr
+
+# Like most of the rules to generate keys/certs, the swtpm rules are
+# dormant for most builds; they were used once to generate the state
+# which is committed to git and used thereafter (just like the cert
+# files and the SoftHSM state). The rules here are to ensure that
+# what gets committed was reproducible, and to document how it was
+# created. So for swtpm, we need to:
+#
+#   • Start a new swtpm
+#   • Import/create the keys
+#   • Generate CSRs from the created keys
+#   • Extract the swtpm state to 'swtpm-perm.state'
+#   • Shut down the swtpm
+#
+# These rules attempt to do that, keeping variants of the existing
+# CSR/cert generation rules for the middle parts.
+
+SWTPM_TMPDIR := $(shell echo swtpm.$$$$.tmp)
+SWTPM_PRELOAD := LD_PRELOAD=libsocket_wrapper.so SOCKET_WRAPPER_DIR=$(SWTPM_TMPDIR) \
+	TPM_INTERFACE_TYPE=socsim TPM2TSSENGINE_TCTI=swtpm
+
+SWTPM_IOCTL_RUN = $(SWTPM_PRELOAD) $(SWTPM_IOCTL) --tcp 127.0.0.1:2322
+
+# This isn't safe for parallel builds, as it is invoked in mulltiple
+# places and has an obvious race condition.  However, this is only for
+# the one-time setup of the persistent swtpm state, and I can remember
+# not to use 'make -j' that one time. Fixing it to be a proper
+# separate 'tpm-started' phony rule without *always* having that rule
+# executed even when the certs/keys already exist is beyond me today.
+START_SWTPM := \
+	mkdir -p $(SWTPM_TMPDIR); \
+	if ! $(SWTPM_IOCTL_RUN) -g; then \
+		$(SWTPM_PRELOAD) $(SWTPM) socket --tpm2 --server type=tcp,port=2321 --ctrl type=tcp,port=2322 \
+			--tpmstate dir=`pwd`/$(SWTPM_TMPDIR) --flags not-need-init,startup-clear -d; \
+	fi
+
+swtpm-perm.state: $(SWTPM_KEYS) $(SWTPM_CERTS)
+	$(SWTPM_IOCTL_RUN) --save permanent $@
+	$(SWTPM_IOCTL_RUN) -s
+	rm -rf $(SWTPM_TMPDIR)
+
+# This is an *import* of the normal ec key, hence having same prefix 'ec-'.
+# Separate fileames for swtpm (which is shipped with OpenConnect sources)
+# vs local real TPM. Like many of the key/cert rules here, the swtpm rule
+# is dormant and should never really be invoked for normal users once the
+# files are committed to git. Which is why it doesn't matter that it needs
+# the swtpm to have been started manually.
+
+$(certsdir)/ec-key-swtpm.pem: certs/ec-key-pkcs8.pem
+	$(START_SWTPM)
+	$(SWTPM_PRELOAD) $(CREATE_TPM2_KEY) -w $< $@
+
+ec-key-hwtpm.pem: certs/ec-key-pkcs8.pem
+	TPM_INTERFACE_TYPE=dev $(CREATE_TPM2_KEY) -w $< $@
+
+# These are *different* keys generated inside the TPM, hence a different prefix.
+$(certsdir)/swtpm-ec-key-tpm.pem:
+	$(START_SWTPM)
+	$(SWTPM_PRELOAD) $(TPM2TSS_GENKEY) -t swtpm -a ecdsa $@
+
+hwtpm-ec-key-tpm.pem:
+	$(TPM2TSS_GENKEY) -t device -a ecdsa $@
+
+$(certsdir)/swtpm-rsa-key-tpm.pem:
+	$(START_SWTPM)
+	$(SWTPM_PRELOAD) $(TPM2TSS_GENKEY) -t swtpm -a rsa -s 2048 $@
+
+hwtpm-rsa-key-tpm.pem:
+	$(TPM2TSS_GENKEY) -t device -a rsa -s 2048 $@
+
+$(certsdir)/swtpm-%-cert.csr: $(certsdir)/swtpm-%-key-tpm.pem
+	$(SWTPM_PRELOAD) $(OPENSSL) req -new -config $(srcdir)/configs/user-cert.prm -engine tpm2tss -keyform ENGINE -key $< -out $@
+
+hwtpm-%-cert.csr: hwtpm-%-key-tpm.pem
+	TPM2TSSENGINE_TCTI=device $(OPENSSL) req -new -config $(srcdir)/configs/user-cert.prm -engine tpm2tss -keyform ENGINE -key $< -out $@
+
+%-cert.csr: %-key-hwtpm.pem
+	TPM2TSSENGINE_TCTI=device $(OPENSSL) req -new -config $(srcdir)/configs/user-cert.prm -engine tpm2tss -keyform ENGINE -key $< -out $@
 
 %-cert.csr: %-key-pkcs8.pem
 	$(OPENSSL) req -new -config $(srcdir)/configs/user-cert.prm -key $< -out $@

@@ -704,6 +704,30 @@ esac
 AM_CONDITIONAL(OPENCONNECT_TSS2_ESYS, [ test "$tss2lib" = "tss2-esys" ])
 AM_CONDITIONAL(OPENCONNECT_TSS2_IBM, [ test "$tss2lib" = "ibmtss" -o "$tss2lib" = "tss" ])
 
+AC_PATH_PROG(SWTPM, swtpm)
+SWTPM_IOCTL=""
+if test "$SWTPM" != ""; then
+    AC_PATH_PROG(SWTPM_IOCTL, swtpm_ioctl)
+fi
+
+# The Intel/TCG TSS can only *create* keys
+AC_PATH_PROG(TPM2TSS_GENKEY, tpm2tss-genkey)
+# James's one can import them too.
+AC_PATH_PROG(CREATE_TPM2_KEY, create_tpm2_key)
+
+AC_ARG_ENABLE([hwtpm-test],
+	AS_HELP_STRING([--enable-hwtpm-test], [Test TPM support using real TPMv2 [default=no]]),
+	[test_hwtpm=$enableval], [test_hwtpm=no])
+
+if test "$test_hwtpm" = "yes" -a "$TPM2TSS_GENKEY$CREATE_TPM2_KEY" = ""; then
+   AC_MSG_ERROR([Hardware TPM test requires tpm2tss-genkey and/or create_tpm2_key tools])
+fi
+
+AM_CONDITIONAL(TEST_HWTPM, [ test "$test_hwtpm" = "yes" ])
+AM_CONDITIONAL(TEST_SWTPM, [ test "$SWTPM_IOCTL" != "" ])
+AM_CONDITIONAL(TEST_TPM2_IMPORT, [ test "$TPM2TSS_GENKEY" != "" ])
+AM_CONDITIONAL(TEST_TPM2_CREATE, [ test "$CREATE_TPM2_KEY" != "" ])
+
 test_pkcs11=
 if test "$pkcs11_support" != ""; then
    AC_CHECK_PROG(test_pkcs11, softhsm2-util, yes)
