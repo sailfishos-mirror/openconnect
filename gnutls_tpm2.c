@@ -84,10 +84,10 @@ static int tpm2_ec_sign_fn(gnutls_privkey_t key, void *_certinfo,
 	gnutls_sign_algorithm_t algo;
 
 	switch (data->size) {
-	case 20: algo = GNUTLS_SIGN_ECDSA_SHA1; break;
-	case 32: algo = GNUTLS_SIGN_ECDSA_SHA256; break;
-	case 48: algo = GNUTLS_SIGN_ECDSA_SHA384; break;
-	case 64: algo = GNUTLS_SIGN_ECDSA_SHA512; break;
+	case SHA1_SIZE:   algo = GNUTLS_SIGN_ECDSA_SHA1; break;
+	case SHA256_SIZE: algo = GNUTLS_SIGN_ECDSA_SHA256; break;
+	case SHA384_SIZE: algo = GNUTLS_SIGN_ECDSA_SHA384; break;
+	case SHA512_SIZE: algo = GNUTLS_SIGN_ECDSA_SHA512; break;
 	default:
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Unknown TPM2 EC digest size %d\n"),

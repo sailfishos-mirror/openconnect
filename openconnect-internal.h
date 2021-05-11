@@ -120,6 +120,8 @@
 
 #include <json.h>
 
+#define SHA512_SIZE 64
+#define SHA384_SIZE 48
 #define SHA256_SIZE 32
 #define SHA1_SIZE 20
 #define MD5_SIZE 16

@@ -420,17 +420,28 @@ int tpm2_ec_sign_hash_fn(gnutls_privkey_t key, gnutls_sign_algorithm_t algo,
 
 	memset(&in, 0, sizeof(in));
 
-	switch (algo) {
-	case GNUTLS_SIGN_ECDSA_SHA1:   in.inScheme.details.ecdsa.hashAlg = TPM_ALG_SHA1;   break;
-	case GNUTLS_SIGN_ECDSA_SHA256: in.inScheme.details.ecdsa.hashAlg = TPM_ALG_SHA256; break;
-	case GNUTLS_SIGN_ECDSA_SHA384: in.inScheme.details.ecdsa.hashAlg = TPM_ALG_SHA384; break;
+
+	/* FIPS-186-4 §6.4 says "When the length of the output of the hash
+	 * function is greater than the bit length of n, then the leftmost
+	 * n bits of the hash function output block shall be used in any
+	 * calculation using the hash function output during the generation
+	 * or verification of a digital signature."
+	 *
+	 * So GnuTLS is expected to *truncate* a larger hash to fit the
+	 * curve bit length, and then we lie to the TPM about which hash
+	 * it was because the TPM only really cares about the size of the
+	 * data anyway. */
+	switch (data->size) {
+	case SHA1_SIZE:   in.inScheme.details.ecdsa.hashAlg = TPM_ALG_SHA1;   break;
+	case SHA256_SIZE: in.inScheme.details.ecdsa.hashAlg = TPM_ALG_SHA256; break;
+	case SHA384_SIZE: in.inScheme.details.ecdsa.hashAlg = TPM_ALG_SHA384; break;
 #ifdef TPM_ALG_SHA512
-	case GNUTLS_SIGN_ECDSA_SHA512: in.inScheme.details.ecdsa.hashAlg = TPM_ALG_SHA512; break;
+	case SHA512_SIZE: in.inScheme.details.ecdsa.hashAlg = TPM_ALG_SHA512; break;
 #endif
 	default:
 		vpn_progress(vpninfo, PRG_ERR,
-			     _("Unknown TPM2 EC digest size %d\n"),
-			     data->size);
+			     _("Unknown TPM2 EC digest size %d for algo 0x%x\n"),
+			     data->size, algo);
 		return GNUTLS_E_PK_SIGN_FAILED;
 	}
 
