@@ -130,18 +130,34 @@ static int rsa_key_info(gnutls_privkey_t key, unsigned int flags, void *_certinf
 #if GNUTLS_VERSION_NUMBER >= 0x030400
 static int ec_key_info(gnutls_privkey_t key, unsigned int flags, void *_certinfo)
 {
+	struct cert_info *certinfo = _certinfo;
+	struct openconnect_info *vpninfo = certinfo->vpninfo;
+
 	if (flags & GNUTLS_PRIVKEY_INFO_PK_ALGO)
 		return GNUTLS_PK_EC;
 
 #ifdef GNUTLS_PRIVKEY_INFO_HAVE_SIGN_ALGO
 	if (flags & GNUTLS_PRIVKEY_INFO_HAVE_SIGN_ALGO) {
+		uint16_t tpm2_curve = tpm2_key_curve(vpninfo, certinfo);
 		gnutls_sign_algorithm_t algo = GNUTLS_FLAGS_TO_SIGN_ALGO(flags);
 		switch (algo) {
 		case GNUTLS_SIGN_ECDSA_SHA1:
 		case GNUTLS_SIGN_ECDSA_SHA256:
 			return 1;
 
+		case GNUTLS_SIGN_ECDSA_SECP256R1_SHA256:
+			return tpm2_curve == 0x0003; /* TPM2_ECC_NIST_P256 */
+
+		case GNUTLS_SIGN_ECDSA_SECP384R1_SHA384:
+			return tpm2_curve == 0x0004; /* TPM2_ECC_NIST_P384 */
+
+		case GNUTLS_SIGN_ECDSA_SECP521R1_SHA512:
+			return tpm2_curve == 0x0005; /* TPM2_ECC_NIST_P521 */
+
 		default:
+			vpn_progress(vpninfo, PRG_DEBUG,
+				     _("Not supporting EC sign algo %s\n"),
+				     gnutls_sign_get_name(algo));
 			return 0;
 		}
 	}

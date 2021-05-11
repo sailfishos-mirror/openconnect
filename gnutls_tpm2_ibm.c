@@ -553,6 +553,10 @@ int install_tpm2_key(struct openconnect_info *vpninfo, struct cert_info *certinf
 	return -EINVAL;
 }
 
+uint16_t tpm2_key_curve(struct openconnect_info *vpninfo, struct cert_info *certinfo)
+{
+	return certinfo->tpm2->pub.publicArea.parameters.eccDetail.curveID;
+}
 
 void release_tpm2_ctx(struct openconnect_info *vpninfo, struct cert_info *certinfo)
 {
