@@ -42,9 +42,10 @@ int tpm2_rsa_sign_hash_fn(gnutls_privkey_t key, gnutls_sign_algorithm_t algo,
 int tpm2_ec_sign_hash_fn(gnutls_privkey_t key, gnutls_sign_algorithm_t algo,
 			 void *_certinfo, unsigned int flags,
 			 const gnutls_datum_t *data, gnutls_datum_t *sig);
-int oc_pkcs1_pad(struct openconnect_info *vpninfo,
-		 unsigned char *buf, int size, const gnutls_datum_t *data);
+int oc_pad_rsasig(struct openconnect_info *vpninfo, gnutls_sign_algorithm_t algo,
+		  unsigned char *buf, int size, const gnutls_datum_t *data, int keybits);
 uint16_t tpm2_key_curve(struct openconnect_info *vpninfo, struct cert_info *certinfo);
+int tpm2_rsa_key_bits(struct openconnect_info *vpninfo, struct cert_info *certinfo);
 
 /* GnuTLS 3.6.0+ provides this. We have our own for older GnuTLS. There is
  * also _gnutls_encode_ber_rs_raw() in some older versions, but there were

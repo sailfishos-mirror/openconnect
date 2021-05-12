@@ -409,12 +409,13 @@ int tpm2_rsa_sign_hash_fn(gnutls_privkey_t key, gnutls_sign_algorithm_t algo,
 	TSS2_RC r;
 
 	vpn_progress(vpninfo, PRG_DEBUG,
-		     _("TPM2 RSA sign function called for %d bytes.\n"),
-		     data->size);
+		     _("TPM2 RSA sign function called for %d bytes, algo %s\n"),
+		     data->size, gnutls_sign_get_name(algo));
 
 	digest.size = certinfo->tpm2->pub.publicArea.unique.rsa.size;
 
-	if (oc_pkcs1_pad(vpninfo, digest.buffer, digest.size, data))
+	if (oc_pad_rsasig(vpninfo, algo, digest.buffer, digest.size, data,
+			  certinfo->tpm2->pub.publicArea.parameters.rsaDetail.keyBits))
 		return GNUTLS_E_PK_SIGN_FAILED;
 
 	if (init_tpm2_key(&ectx, &key_handle, vpninfo, certinfo))
@@ -606,6 +607,11 @@ int install_tpm2_key(struct openconnect_info *vpninfo, struct cert_info *certinf
 uint16_t tpm2_key_curve(struct openconnect_info *vpninfo, struct cert_info *certinfo)
 {
 	return certinfo->tpm2->pub.publicArea.parameters.eccDetail.curveID;
+}
+
+int tpm2_rsa_key_bits(struct openconnect_info *vpninfo, struct cert_info *certinfo)
+{
+	return certinfo->tpm2->pub.publicArea.parameters.rsaDetail.keyBits;
 }
 
 void release_tpm2_ctx(struct openconnect_info *vpninfo, struct cert_info *certinfo)
