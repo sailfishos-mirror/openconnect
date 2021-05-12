@@ -937,10 +937,8 @@ struct gtls_cert_info {
 
 static void free_gtls_cert_info(struct gtls_cert_info *gci)
 {
-	if (gci->crl)
-		gnutls_x509_crl_deinit(gci->crl);
-	if (gci->pkey)
-		gnutls_privkey_deinit(gci->pkey);
+	gnutls_x509_crl_deinit(gci->crl);
+	gnutls_privkey_deinit(gci->pkey);
 	if (gci->certs) {
 		for (int i = 0; i < gci->nr_certs; i++)
 			gnutls_x509_crt_deinit(gci->certs[i]);
