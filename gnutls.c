@@ -934,7 +934,6 @@ struct gtls_cert_info {
 	gnutls_privkey_t pkey;
 	gnutls_x509_crt_t *certs;
 	unsigned int nr_certs;
-	char *free_certs;
 };
 
 static void free_gtls_cert_info(struct gtls_cert_info *gci)
@@ -946,16 +945,55 @@ static void free_gtls_cert_info(struct gtls_cert_info *gci)
 	if (gci->key)
 		gnutls_x509_privkey_deinit(gci->key);
 	if (gci->certs) {
-		for (int i = 0; i < gci->nr_certs; i++) {
-			/* We get here in an error case with !gci->free_certs
-			   and should free them all in that case */
-			if (!gci->free_certs || gci->free_certs[i])
-				gnutls_x509_crt_deinit(gci->certs[i]);
-		}
+		for (int i = 0; i < gci->nr_certs; i++)
+			gnutls_x509_crt_deinit(gci->certs[i]);
 		gnutls_free(gci->certs);
-		gnutls_free(gci->free_certs);
 	}
 	memset(gci, 0, sizeof(*gci));
+}
+
+static int import_cert(gnutls_x509_crt_t *cert, const gnutls_datum_t *der)
+{
+	gnutls_x509_crt_t crt = NULL;
+	int ret;
+
+	if (!cert)
+		return GNUTLS_E_INVALID_REQUEST;
+
+	ret = gnutls_x509_crt_init(&crt);
+	if (ret < 0)
+		goto done;
+
+	ret = gnutls_x509_crt_import(crt, der, GNUTLS_X509_FMT_DER);
+	if (ret < 0) {
+		gnutls_x509_crt_deinit(crt);
+		crt = NULL;
+	}
+
+done:
+	*cert = crt;
+	return ret;
+}
+
+static int copy_cert(gnutls_x509_crt_t *cert_copy, gnutls_x509_crt_t cert)
+{
+	gnutls_datum_t data = { NULL, 0 };
+	gnutls_x509_crt_t copy = NULL;
+	int ret;
+
+	if (!cert_copy)
+		return GNUTLS_E_INVALID_REQUEST;
+
+	ret = gnutls_x509_crt_export2(cert, GNUTLS_X509_FMT_DER, &data);
+	if (ret < 0)
+		goto done;
+
+	ret = import_cert(&copy, &data);
+	gnutls_free(data.data);
+
+done:
+	*cert_copy = copy;
+	return ret;
 }
 
 static int load_certificate(struct openconnect_info *vpninfo, struct cert_info *certinfo, struct gtls_cert_info *gci)
@@ -1101,12 +1139,6 @@ static int load_certificate(struct openconnect_info *vpninfo, struct cert_info *
 		else if (!ret) {
 			if (gci->nr_certs) {
 				cert = gci->certs[0];
-				gci->free_certs = gnutls_malloc(gci->nr_certs);
-				if (!gci->free_certs) {
-					ret = -ENOMEM;
-					goto out;
-				}
-				memset(gci->free_certs, 1, gci->nr_certs);
 				goto got_key;
 			}
 			vpn_progress(vpninfo, PRG_ERR,
@@ -1628,22 +1660,12 @@ static int load_certificate(struct openconnect_info *vpninfo, struct cert_info *
 		}
 		gci->certs[0] = cert;
 		gci->nr_certs = 1;
-
-		gci->free_certs = gnutls_malloc(1);
-		if (!gci->free_certs) {
-			vpn_progress(vpninfo, PRG_ERR,
-				     _("Failed to allocate memory for certificate\n"));
-			ret = -ENOMEM;
-			goto out;
-		}
-		gci->free_certs[0] = 1;
 	}
 	last_cert = gci->certs[gci->nr_certs-1];
 
 	while (1) {
-		uint8_t free_issuer;
-		gnutls_x509_crt_t issuer;
-		void *tmp;
+		gnutls_x509_crt_t issuer = NULL;
+		gnutls_x509_crt_t *saved_cert_list = NULL;
 
 		for (i = 0; i < nr_extra_certs; i++) {
 			if (extra_certs[i] &&
@@ -1655,30 +1677,28 @@ static int load_certificate(struct openconnect_info *vpninfo, struct cert_info *
 			/* We found the next cert in the chain in extra_certs[] */
 			issuer = extra_certs[i];
 			extra_certs[i] = NULL;
-			free_issuer = 1;
 		} else {
 			/* Look for it in the system trust cafile too. */
 			err = gnutls_certificate_get_issuer(vpninfo->https_cred,
 							    last_cert, &issuer, 0);
-			free_issuer = 0;
+			/* GnuTLS 3.2.10 does not support flag GNUTLS_TL_GET_COPY,
+			 * which makes a copy of the issuer.  Therefore, we make
+			 * an explicit copy of the certificate
+			 */
+			if (err >= 0)
+				err = copy_cert(&issuer, issuer);
 
 #ifdef HAVE_P11KIT
-			if (err && cert_is_p11) {
-				gnutls_datum_t t;
+			if (err == GNUTLS_E_REQUESTED_DATA_NOT_AVAILABLE && cert_is_p11) {
+				gnutls_datum_t t = {NULL, 0};
 
 				err = gnutls_pkcs11_get_raw_issuer(cert_url, last_cert, &t, GNUTLS_X509_FMT_DER, 0);
-				if (!err) {
-					err = gnutls_x509_crt_init(&issuer);
-					if (!err) {
-						err = gnutls_x509_crt_import(issuer, &t, GNUTLS_X509_FMT_DER);
-						if (err)
-							gnutls_x509_crt_deinit(issuer);
-						else
-							free_issuer = 1;
-					}
+				if (err >= 0) {
+					err = import_cert(&issuer, &t);
 					gnutls_free(t.data);
 				}
-				if (err) {
+
+				if (err < 0) {
 					vpn_progress(vpninfo, PRG_TRACE,
 						     _("Got no issuer from PKCS#11\n"));
 				} else {
@@ -1698,35 +1718,24 @@ static int load_certificate(struct openconnect_info *vpninfo, struct cert_info *
 			/* Don't actually include the root CA. If they don't already trust it,
 			   then handing it to them isn't going to help. But don't omit the
 			   original certificate if it's self-signed. */
-			if (free_issuer)
-				gnutls_x509_crt_deinit(issuer);
+			gnutls_x509_crt_deinit(issuer);
 			break;
 		}
 
 		/* OK, we found a new cert to add to our chain. */
-		tmp = gci->certs;
+		saved_cert_list = gci->certs;
 		gci->certs = gnutls_realloc(gci->certs,
 					    sizeof(cert) * (gci->nr_certs+1));
 		if (!gci->certs) {
-			gci->certs = tmp;
-		realloc_failed:
+			gci->certs = saved_cert_list;
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("Failed to allocate memory for supporting certificates\n"));
-			if (free_issuer)
-				gnutls_x509_crt_deinit(issuer);
+			gnutls_x509_crt_deinit(issuer);
 			break;
-		}
-
-		tmp = gci->free_certs;
-		gci->free_certs = gnutls_realloc(gci->free_certs, gci->nr_certs+1);
-		if (!gci->free_certs) {
-			gci->free_certs = tmp;
-			goto realloc_failed;
 		}
 
 		/* Append the new one */
 		gci->certs[gci->nr_certs] = issuer;
-		gci->free_certs[gci->nr_certs] = free_issuer;
 		gci->nr_certs++;
 		last_cert = issuer;
 	}
