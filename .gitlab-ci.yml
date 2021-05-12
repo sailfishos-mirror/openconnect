@@ -271,6 +271,31 @@ Fedora/GnuTLS:
     paths:
       - build/tests/*.log
 
+Fedora/GnuTLS/ibmtss:
+  script:
+  - ./autogen.sh
+  - ./configure --with-java --disable-dsa-tests --without-gnutls-version-check --enable-ppp-tests CFLAGS=-g
+  - make tmp-distdir
+  - mkdir build
+  - cd build
+  - TMPDISTDIR=../openconnect-$(git describe --tags | sed s/^v//)
+  - ${TMPDISTDIR}/configure --with-java --disable-dsa-tests --without-gnutls-version-check --enable-ppp-tests --with-gnutls-tss2=ibmtss CFLAGS=-g
+  - make -j4
+# we don't want pppd to invoke any actual connection scripts
+  - mv /etc/ppp /etc/ppp.DISABLED
+# auth-pkcs11: Disable rdrand to work around https://bugzilla.redhat.com/1831086
+  - make VERBOSE=1 OPENSSL_ia32cap=~0x4000000000000000 -j4 check
+  tags:
+  - shared
+  except:
+  - tags
+  - schedules
+  artifacts:
+    expire_in: 1 week
+    when: on_failure
+    paths:
+      - build/tests/*.log
+
 Fedora/GnuTLS/clang:
   script:
   - ./autogen.sh
