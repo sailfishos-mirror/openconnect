@@ -2,14 +2,14 @@
 # Copyright (C) 2009-2010 Free Software Foundation, Inc.
 # This file is distributed under the same license as the network-manager-openconnect package.
 # Žygimantas Beručka <zygis@gnome.org>, 2009.
-# Aurimas Černius <aurisc4@gmail.com>, 2010-2020.
+# Aurimas Černius <aurisc4@gmail.com>, 2010-2021.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: network-manager-openconnect master\n"
 "Report-Msgid-Bugs-To: openconnect-devel@lists.infradead.org\n"
 "POT-Creation-Date: 2021-05-12 23:02+0100\n"
-"PO-Revision-Date: 2020-05-10 22:30+0300\n"
+"PO-Revision-Date: 2021-04-25 22:29+0300\n"
 "Last-Translator: Aurimas Černius <aurisc4@gmail.com>\n"
 "Language-Team: Lietuvių <gnome-lt@lists.akl.lt>\n"
 "Language: lt\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && (n"
 "%100<10 || n%100>=20) ? 1 : 2)\n"
-"X-Generator: Gtranslator 3.36.0\n"
+"X-Generator: Gtranslator 3.38.0\n"
 
 #: array.c:131
 msgid "No ANsession cookie found\n"
@@ -168,7 +168,7 @@ msgstr "Bandomas naujas DTLS ryšys\n"
 
 #: array.c:1073 ppp.c:1669
 msgid "Failed to receive authentication response from DTLS\n"
-msgstr ""
+msgstr "Nepavyko gauti tapatybės patvirtinimo atsakymo iš DTLS\n"
 
 #: array.c:1085
 msgid "DTLS session established\n"
@@ -188,11 +188,11 @@ msgstr ""
 
 #: array.c:1120 ppp.c:1723
 msgid "Error creating connect request for DTLS session\n"
-msgstr ""
+msgstr "Klaida sukuriant connect užklausą DTLS seansui\n"
 
 #: array.c:1136 ppp.c:1739
 msgid "Failed to write connect request to DTLS session\n"
-msgstr ""
+msgstr "Nepavyko įrašyti connect užklausos DTLS seansui\n"
 
 #: array.c:1189 dtls.c:291
 #, c-format
@@ -395,7 +395,7 @@ msgstr "Nėra DSPREAUTH slapuko; nebandoma TNCC\n"
 #: auth-juniper.c:193
 #, c-format
 msgid "Trying to run TNCC/Host Checker Trojan script '%s'.\n"
-msgstr ""
+msgstr "Bandoma vykdyti Linux TNCC/Host trojos arklio scenarijų „%s“.\n"
 
 #: auth-juniper.c:242
 #, c-format
@@ -456,17 +456,18 @@ msgstr ""
 
 #: auth-juniper.c:530
 msgid "Encountered form with no 'name' or 'id'\n"
-msgstr ""
+msgstr "Sutikta forma be „name“ arba „id“\n"
 
 #: auth-juniper.c:559
 #, c-format
 msgid "Form action (%s) likely indicates that TNCC/Host Checker failed.\n"
 msgstr ""
+"Formos veiksmas (%s) greičiausiai reiškia nepavykusį TNCC/Host patikrinimą.\n"
 
 #: auth-juniper.c:565
 #, c-format
 msgid "Unknown form (name '%s', id '%s')\n"
-msgstr ""
+msgstr "Nežinoma forma (pavadinimas „%s“, id „%s“)\n"
 
 #: auth-juniper.c:568 f5.c:162
 #, c-format
@@ -611,7 +612,7 @@ msgstr "Nepavyko įrašyti laikinojo CSD scenarijaus failo: %s\n"
 #: auth.c:1137
 #, c-format
 msgid "Trying to run CSD Trojan script '%s'.\n"
-msgstr ""
+msgstr "Bandoma vykdyti Linux CSD trojos arklio scenarijų „%s“.\n"
 
 #: auth.c:1149
 #, c-format
@@ -635,7 +636,7 @@ msgstr ""
 #: auth.c:1164
 #, c-format
 msgid "CSD script '%s' completed successfully.\n"
-msgstr ""
+msgstr "CSD scenarijus „%s“ sėkmingai baigė darbą.\n"
 
 #: auth.c:1192
 #, c-format
@@ -676,7 +677,7 @@ msgstr ""
 #: auth.c:1447
 #, c-format
 msgid "Fetched CSD stub for %s platform (size is %d bytes).\n"
-msgstr ""
+msgstr "Gautas CSD %s platformai (dydis %d baitų).\n"
 
 #: auth.c:1467
 #, c-format
@@ -1180,111 +1181,116 @@ msgstr "Nepavyko sugeneruoti pradinio IV ESP\n"
 msgid ""
 "WARNING: no HTML login form found; assuming username and password fields\n"
 msgstr ""
+"ĮSPĖJIMAS: nerasta HTML prisijungimo forma; daroma prielaida, kad yra "
+"naudotojo vardo ir slaptažodžio laukai\n"
 
 #: f5.c:159
 #, c-format
 msgid "Unknown form ID '%s' (expected 'auth_form')\n"
-msgstr ""
+msgstr "Nežinomas formos ID „%s“ (tikėtasi „auth_form“)\n"
 
 #: f5.c:242
 msgid "Failed to parse F5 profile response\n"
-msgstr ""
+msgstr "Nepavyko perskaityti F5 profilio atsakymo\n"
 
 #: f5.c:284
 msgid "Failed to find VPN profile parameters\n"
-msgstr ""
+msgstr "Nepavyko rasti VPN profilio parametrų\n"
 
 #: f5.c:327
 msgid "Failed to parse F5 options response\n"
-msgstr ""
+msgstr "Nepavyko perskaityti F5 parametrų atsakymo\n"
 
 #: f5.c:361
 #, c-format
 msgid "Idle timeout is %d minutes\n"
-msgstr ""
+msgstr "Neveiksnumo laiko limitas yra %d minutės\n"
 
 #: f5.c:371
 msgid "Got default routes\n"
-msgstr ""
+msgstr "Gauti numatytieji keliai\n"
 
 #: f5.c:374
 #, c-format
 msgid "Got SplitTunneling0 value of %d\n"
-msgstr ""
+msgstr "Gauta SplitTunneling0 vertė %d\n"
 
 #: f5.c:383
 #, c-format
 msgid "Got DNS server %s\n"
-msgstr ""
+msgstr "Gautas DNS serveris %s\n"
 
 #: f5.c:390
 #, c-format
 msgid "Got WINS/NBNS server %s\n"
-msgstr ""
+msgstr "Gautas WINS/NBNS serveris %s\n"
 
 #: f5.c:397 fortinet.c:362 fortinet.c:427
 #, c-format
 msgid "Got search domain %s\n"
-msgstr ""
+msgstr "Gauta DNS paieškos sritis %s\n"
 
 #: f5.c:427
 #, c-format
 msgid "Got split exclude route %s\n"
-msgstr ""
+msgstr "Gautas padalinimas išmeta kelią %s\n"
 
 #: f5.c:431
 #, c-format
 msgid "Got split include route %s\n"
-msgstr ""
+msgstr "Gautas padalinimas įtraukia kelią %s\n"
 
 #. XX: DTLS always uses same port as TLS?
 #: f5.c:439 fortinet.c:327
 #, c-format
 msgid "DTLS is enabled on port %d\n"
-msgstr ""
+msgstr "DTLS įjungtas prievadui %d\n"
 
 #: f5.c:451
 msgid ""
 "WARNING: Server enables DTLS, but also requires HDLC. Disabling DTLS,\n"
 "    because HDLC prevents determination of efficient and consistent MTU.\n"
 msgstr ""
+"ĮSPĖJIMAS: serveri įjungia DTLS, bet taip pat reikalauja HDLC. Išjungiamas "
+"DTLS,\n"
+"    kadangi HDLC neleidžia nustatyti efektyvaus ir pastovaus MTU.\n"
 
 #: f5.c:472 fortinet.c:493
 msgid "Failed to find VPN options\n"
-msgstr ""
+msgstr "Nepavyko rasti VPN parametrų\n"
 
 #: f5.c:495 fortinet.c:358
 #, c-format
 msgid "Got Legacy IP address %s\n"
-msgstr ""
+msgstr "Gautas pasenęs IP adresas %s\n"
 
 #: f5.c:500 fortinet.c:419 fortinet.c:422
 #, c-format
 msgid "Got IPv6 address %s\n"
-msgstr ""
+msgstr "Gautas IPv6 adresas %s\n"
 
 #: f5.c:550
 #, c-format
 msgid "Got profile parameters '%s'\n"
-msgstr ""
+msgstr "Gauti profilio parametrai „%s“\n"
 
 #: f5.c:570
 #, c-format
 msgid "Got ipv4 %d ipv6 %d hdlc %d ur_Z '%s'\n"
-msgstr ""
+msgstr "Guta ipv4 %d ipv6 %d hdlc %d ur_Z '%s'\n"
 
 #: f5.c:599
 msgid "Error establishing F5 connection\n"
-msgstr ""
+msgstr "Klaida užmezgant F5 ryšį\n"
 
 #: fortinet.c:128
 #, c-format
 msgid "Got login realm '%s'\n"
-msgstr ""
+msgstr "Gauta prisijungimo sritis „%s“\n"
 
 #: fortinet.c:309
 msgid "Failed to parse Fortinet config XML\n"
-msgstr ""
+msgstr "Nepavyko perskaityti Fortinet konfigūracijos XML\n"
 
 #: fortinet.c:338 gpst.c:393
 #, c-format
@@ -1294,50 +1300,52 @@ msgstr "Neveiksnumo laiko limitas yra %d minutės.\n"
 #: fortinet.c:353
 #, c-format
 msgid "Reported platform is %s\n"
-msgstr ""
+msgstr "Pranešta platforma yra %s\n"
 
 #: fortinet.c:366 fortinet.c:431
 #, c-format
 msgid "Got IPv%d DNS server %s\n"
-msgstr ""
+msgstr "Gautas IPv%d DNS serveris %s\n"
 
 #: fortinet.c:372 fortinet.c:437
 #, c-format
 msgid "WARNING: Got split-DNS domains %s (not yet implemented)\n"
-msgstr ""
+msgstr "ĮSPĖJIMAS: gauti padalinto DNS domenai %s (dar nerealizuota)\n"
 
 #: fortinet.c:377 fortinet.c:442
 #, c-format
 msgid "WARNING: Got split-DNS server %s (not yet implemented)\n"
-msgstr ""
+msgstr "ĮSPĖJIMAS: gautas padalinto DNS serveris %s (dar nerealizuota)\n"
 
 #: fortinet.c:399 fortinet.c:466
 #, c-format
 msgid "Got IPv%d route %s\n"
-msgstr ""
+msgstr "Gautas IPV%d kelias %s\n"
 
 #: fortinet.c:535
 msgid "No cookie named SVPNCOOKIE.\n"
-msgstr ""
+msgstr "Nėra slapuko pavadinimu SVPNCOOKIE.\n"
 
 #: fortinet.c:564
 msgid ""
 "Server doesn't support XML config format. Ancient HTML format is not "
 "currently implemented.\n"
 msgstr ""
+"Serveris nepalaiko XML konfigūracijos formato. Senas HTML formatas šiuo metu "
+"nerealizuotas.\n"
 
 #: fortinet.c:594
 msgid "Error establishing Fortinet connection\n"
-msgstr ""
+msgstr "Klaida Užmezgant Fortinet ryšį\n"
 
 #: fortinet.c:694
 msgid "Did not receive expected svrhello response.\n"
-msgstr ""
+msgstr "Negautas lauktas svrhello atsakas.\n"
 
 #: fortinet.c:705
 #, c-format
 msgid "svrhello status was \"%.*s\" rather than \"ok\"\n"
-msgstr ""
+msgstr "svrhello būsena buvo „%.*s“, o ne „ok“\n"
 
 #: gnutls-dtls.c:186
 msgid "Deferring DTLS resumption until CSTP generates a PSK\n"
@@ -1478,52 +1486,52 @@ msgstr "Nepavyko TLS select()"
 
 #: gnutls.c:129 openssl.c:187
 msgid "TLS/DTLS write cancelled\n"
-msgstr ""
+msgstr "TLS/DTLS rašymas atšauktas\n"
 
 #: gnutls.c:133
 #, c-format
 msgid "Failed to write to TLS/DTLS socket: %s\n"
-msgstr ""
+msgstr "Nepavyko rašyti į TLS/DTLS lizdą: %s\n"
 
 #: gnutls.c:179
 msgid "Failed select() for TLS/DTLS"
-msgstr ""
+msgstr "Nepavyko TLS/DTLS select()"
 
 #: gnutls.c:184 gnutls.c:280 openssl.c:237 openssl.c:304
 msgid "TLS/DTLS read cancelled\n"
-msgstr ""
+msgstr "TLS/DTLS skaitymas atšauktas\n"
 
 #. We've seen this with HTTP 1.0 responses followed by abrupt
 #. socket closure and no clean SSL shutdown.
 #. https://bugs.launchpad.net/bugs/1225276
 #: gnutls.c:197
 msgid "TLS/DTLS socket closed uncleanly\n"
-msgstr ""
+msgstr "TLS/DTLS lizdas netvarkingai užvertas\n"
 
 #: gnutls.c:207 gnutls.c:289
 #, c-format
 msgid "Failed to read from TLS/DTLS socket: %s\n"
-msgstr ""
+msgstr "Nepavyko skaityti iš TLS/DTLS lizdo: %s\n"
 
 #: gnutls.c:306 openssl.c:321
 #, c-format
 msgid "Attempted to read from non-existent %s session\n"
-msgstr ""
+msgstr "Bandyta skaityti iš neegzistuojančio senso %s\n"
 
 #: gnutls.c:318
 #, c-format
 msgid "Read error on %s session: %s\n"
-msgstr ""
+msgstr "%s seanso skaitymo klaida: %s\n"
 
 #: gnutls.c:330 openssl.c:346
 #, c-format
 msgid "Attempted to write to non-existent %s session\n"
-msgstr ""
+msgstr "Bandyta rašyti į neegzistuojantį seansą %s\n"
 
 #: gnutls.c:364
 #, c-format
 msgid "Write error on %s session: %s\n"
-msgstr ""
+msgstr "%s seanso rašymo klaida: %s\n"
 
 #: gnutls.c:378
 msgid "Could not extract expiration time of certificate\n"
@@ -1977,7 +1985,7 @@ msgstr "Nepavyko įkelti liudijimo. Nutraukiama.\n"
 
 #: gnutls.c:2346
 msgid "Failed to construct GnuTLS priority string\n"
-msgstr ""
+msgstr "Nepavyko sugeneruoti GnuTLS prioriteto eilutės\n"
 
 #: gnutls.c:2358
 #, c-format
@@ -2051,7 +2059,7 @@ msgstr "ttls_pull_timeout_func %dms\n"
 #: gnutls.c:2766
 #, c-format
 msgid "Could not set ciphersuites: %s\n"
-msgstr ""
+msgstr "Nepavyko nustatyti šifravimo rinkinių: %s\n"
 
 #: gnutls.c:2773 openssl.c:2241
 msgid "Established EAP-TTLS session\n"
@@ -2382,7 +2390,7 @@ msgstr "Patikrinimas: %s\n"
 #: gpst.c:268
 #, c-format
 msgid "Response was: %s\n"
-msgstr ""
+msgstr "Atsakymas buvo:%s\n"
 
 #: gpst.c:304
 #, c-format
@@ -2435,6 +2443,10 @@ msgid ""
 "<openconnect-devel@lists.infradead.org>, including any problems\n"
 "with ESP or other apparent loss of connectivity or performance.\n"
 msgstr ""
+"Konfigūracijos XML <connected-gw-ip> adresas (%s) skiriasi nuo išorinio\n"
+"kelvedžio adreso (%s). Praneškite apie tai\n"
+"<openconnect-devel@lists.infradead.org>, įskaitant bet kokias problemas\n"
+"su ESP arba ryšio ar našumo praradimus.\n"
 
 #: gpst.c:505
 #, c-format
@@ -2450,6 +2462,7 @@ msgstr "Nepaisoma ESP raktų, kadangi ESP palaikymo nėra šioje versijoje\n"
 #, c-format
 msgid "Potential IPv6-related GlobalProtect config tag <%s>: %s\n"
 msgstr ""
+"Potenciali su IPv6 susijusi GlobalProtect konfigūracijos žyma <%s>: %s\n"
 
 #: gpst.c:533
 #, c-format
@@ -2500,7 +2513,7 @@ msgstr "Tinklų sietuvas atsijungė iš karto po GET-tunnel užklausos.\n"
 #: gpst.c:750 ppp.c:1119
 #, c-format
 msgid "Got unexpected HTTP response: %.*s\n"
-msgstr ""
+msgstr "Gautas nalauktas HTTP atsakymas: %.*s\n"
 
 #: gpst.c:899
 #, c-format
@@ -2541,15 +2554,15 @@ msgstr ""
 #: gpst.c:920
 #, c-format
 msgid "Trying to run HIP Trojan script '%s'.\n"
-msgstr ""
+msgstr "Bandoma vykdyti HIP trojos arklio scenarijų „%s“.\n"
 
 #: gpst.c:928
 msgid "Failed to create pipe for HIP script\n"
-msgstr ""
+msgstr "Nepavyko sukurti kanalo HIP scenarijui\n"
 
 #: gpst.c:936
 msgid "Failed to fork for HIP script\n"
-msgstr ""
+msgstr "Nepavyko atsišakoti HIP scenarijui\n"
 
 #: gpst.c:952
 #, c-format
@@ -2564,7 +2577,7 @@ msgstr "HIP scenarijus „%s“ grąžino nenulinę būseną: %d\n"
 #: gpst.c:962
 #, c-format
 msgid "HIP script '%s' completed successfully (report is %d bytes).\n"
-msgstr ""
+msgstr "HIP scenarijus „%s“ sėkmingai baigtas (%d baitų ataskaita).\n"
 
 #: gpst.c:967
 msgid "HIP report submission failed.\n"
@@ -2882,7 +2895,7 @@ msgstr "Klaida parsiunčiant HTTP atsakymo pagrindinę dalį\n"
 #: http.c:758
 #, c-format
 msgid "Error in chunked decoding. Expected '', got: '%s'\n"
-msgstr ""
+msgstr "Klaida padalintame dekodavime. Tikėtasi „“, gauta: „%s“\n"
 
 #: http.c:771
 msgid "Cannot receive HTTP 1.0 body without closing connection\n"
@@ -3098,27 +3111,27 @@ msgstr "Suderinama su Pulse Connect Secure SSL VPN"
 
 #: library.c:197
 msgid "F5 BIG-IP SSL VPN"
-msgstr ""
+msgstr "F5 BIG-IP SSL VPN"
 
 #: library.c:198
 msgid "Compatible with F5 BIG-IP SSL VPN"
-msgstr ""
+msgstr "Suderinamas su F5 BIG-IP SSL VPN"
 
 #: library.c:217
 msgid "Fortinet SSL VPN"
-msgstr ""
+msgstr "Fortinet SSL VPN"
 
 #: library.c:218
 msgid "Compatible with FortiGate SSL VPN"
-msgstr ""
+msgstr "Suderinamas su FortiGate SSL VPN"
 
 #: library.c:237
 msgid "PPP over TLS"
-msgstr ""
+msgstr "PPP per TLS"
 
 #: library.c:238
 msgid "Unauthenticated RFC1661/RFC1662 PPP over TLS, for testing"
-msgstr ""
+msgstr "Nepatvirtintos tapatybės RFC1661/RFC1662 PPP per TLS, testavimui"
 
 #: library.c:247
 msgid "Array SSL VPN"
@@ -3380,7 +3393,7 @@ msgstr "Serverio tikrinimas"
 
 #: main.c:879
 msgid "Accept only server certificate with this fingerprint"
-msgstr ""
+msgstr "Priimti tik serverio liudijimą su šiuo kontroliniu kodu"
 
 #: main.c:880
 msgid "Disable default system certificate authorities"
@@ -3619,11 +3632,11 @@ msgstr "Nemėginti XML POST tapatybės nustatymo"
 
 #: main.c:957
 msgid "Allow use of the ancient, insecure 3DES and RC4 ciphers"
-msgstr ""
+msgstr "Leisti naudoti senus, nesaugius 3DES ir RC4 šifrus"
 
 #: main.c:958
 msgid "(and attempt to override OS crypto policies)"
-msgstr ""
+msgstr "(ir bandoma pakeisti OS kriptografijos taisykles)"
 
 #: main.c:980
 #, c-format
@@ -3668,15 +3681,15 @@ msgstr ""
 
 #: main.c:1430 main.c:1445
 msgid "connected"
-msgstr ""
+msgstr "prisijungta"
 
 #: main.c:1430
 msgid "disconnected"
-msgstr ""
+msgstr "atsijungta"
 
 #: main.c:1434
 msgid "unsuccessful"
-msgstr ""
+msgstr "nesėkminga"
 
 #: main.c:1439
 msgid "in progress"
@@ -3697,43 +3710,44 @@ msgstr ""
 #: main.c:1458
 #, c-format
 msgid "Configured as %s%s%s, with SSL%s%s %s and %s%s%s %s\n"
-msgstr ""
+msgstr "Sukonfigūruota kaip %s%s%s, naudojant SSL%s%s %s, su %s%s%s %s\n"
 
 #: main.c:1467
 #, c-format
 msgid "Session authentication will expire at %s"
-msgstr ""
+msgstr "Seanso tapatybės patvirtinimo galiojimas baigsis %s"
 
 #: main.c:1481
 #, c-format
 msgid ""
 "RX: %<PRId64> packets (%<PRId64> B); TX: %<PRId64> packets (%<PRId64> B)\n"
 msgstr ""
+"RX: %<PRId64> paketai (%<PRId64> B); TX: %<PRId64> paketai (%<PRId64> B)\n"
 
 #: main.c:1485
 #, c-format
 msgid "SSL ciphersuite: %s\n"
-msgstr ""
+msgstr "SSL šifravimo rinkinys: %s\n"
 
 #: main.c:1487
 #, c-format
 msgid "%s ciphersuite: %s\n"
-msgstr ""
+msgstr "%s šifravimo rinkinys: %s\n"
 
 #: main.c:1490
 #, c-format
 msgid "Next SSL rekey in %ld seconds\n"
-msgstr ""
+msgstr "Kita SSL raktų keitimas po %ld sekundžių\n"
 
 #: main.c:1493
 #, c-format
 msgid "Next %s rekey in %ld seconds\n"
-msgstr ""
+msgstr "Kita %s raktų keitimas po %ld sekundžių\n"
 
 #: main.c:1497
 #, c-format
 msgid "Next Trojan invocation in %ld seconds\n"
-msgstr ""
+msgstr "Kitas Trojos arklio iškvietimas po %ld sekundžių\n"
 
 #: main.c:1515
 #, c-format
@@ -3776,6 +3790,8 @@ msgid ""
 "WARNING: This build is intended only for debugging purposes and\n"
 "         may allow you to establish insecure connections.\n"
 msgstr ""
+"ĮSPĖJIMAS: ši versija skirta tik derinimui ir\n"
+"           gali leisti užmegzti nesaugius ryšius.\n"
 
 #: main.c:1626
 #, c-format
@@ -3804,11 +3820,13 @@ msgid ""
 "library\n"
 "%s no longer supports them.\n"
 msgstr ""
+"ĮSPĖJIMAS: negalima įjungti nesaugių 3DES ir/ar RC4 šifrų, nes biblioteka\n"
+"%s jų nebepalaiko.\n"
 
 #: main.c:1730
 #, c-format
 msgid "Unknown error while enabling insecure crypto.\n"
-msgstr ""
+msgstr "Nežinoma klaida įjungiant nesaugią kriptografiją.\n"
 
 #: main.c:1737 main.c:1757
 #, c-format
@@ -3901,7 +3919,7 @@ msgstr "Klaida atveriant cmd kanalą\n"
 #: main.c:2092
 #, c-format
 msgid "Failed to complete authentication\n"
-msgstr ""
+msgstr "Nepavyko užbaigti tapatybės patvirtinimo\n"
 
 #: main.c:2113
 #, c-format
@@ -3928,7 +3946,7 @@ msgstr "Naudotojas paprašė persijungti\n"
 
 #: main.c:2160
 msgid "Cookie was rejected by server; exiting.\n"
-msgstr ""
+msgstr "Serveris atmetė slapuką; išeinama.\n"
 
 #: main.c:2164
 msgid "Session terminated by server; exiting.\n"
@@ -3937,16 +3955,16 @@ msgstr "Serveris nutraukė seansą; išeinama.\n"
 #: main.c:2168
 #, c-format
 msgid "User cancelled (%s); exiting.\n"
-msgstr ""
+msgstr "Naudotojas atsisakė (%s); išeinama.\n"
 
 #: main.c:2178
 #, c-format
 msgid "User detached from session (%s); exiting.\n"
-msgstr ""
+msgstr "Naudotojas atsijungė nuo seanso (%s); išeinama.\n"
 
 #: main.c:2188
 msgid "Unrecoverable I/O error; exiting.\n"
-msgstr ""
+msgstr "Neatstatoma I/O klaida; išeinama.\n"
 
 #: main.c:2195
 msgid "Unknown error; exiting.\n"
@@ -3968,11 +3986,13 @@ msgid ""
 "Insecurely accepting certificate from VPN server \"%s\" because you ran with "
 "--servercert=ACCEPT.\n"
 msgstr ""
+"Nesaugiai priimamas liudijimas iš VPN serverio „%s“, kadangi jūs paleidote "
+"su --servercert=ACCEPT.\n"
 
 #: main.c:2281
 #, c-format
 msgid "Could not check server's certificate against %s\n"
-msgstr ""
+msgstr "Nepavyko patikrinti serverio liudijimo naudojant %s\n"
 
 #: main.c:2289
 #, c-format
@@ -3980,6 +4000,8 @@ msgid ""
 "None of the %d fingerprint(s) specified via --servercert match server's "
 "certificate: %s\n"
 msgstr ""
+"Nei vienas iš %d kontrolinių kodų, nurodytų per --servercert, neatitinka "
+"serverio liudijimo: %s\n"
 
 #: main.c:2298
 #, c-format
@@ -4120,23 +4142,23 @@ msgstr "Nepavyko nustatyti tun įrenginio\n"
 #: mainloop.c:211
 #, c-format
 msgid "Delaying tunnel with reason: %s\n"
-msgstr ""
+msgstr "Atidedamas tunelis, nes: %s\n"
 
 #: mainloop.c:245
 msgid "Delaying cancel (immediate callback).\n"
-msgstr ""
+msgstr "Atidedamas atsisakymas (nedelsiamas atgalinis iškvietimas).\n"
 
 #: mainloop.c:248
 msgid "Delaying cancel.\n"
-msgstr ""
+msgstr "Atidedamas atsisakymas.\n"
 
 #: mainloop.c:267
 msgid "Delaying pause (immediate callback).\n"
-msgstr ""
+msgstr "Atidedamas pristabdymas (nedelsiamas atgalinis iškvietimas).\n"
 
 #: mainloop.c:270
 msgid "Delaying pause.\n"
-msgstr ""
+msgstr "Atidedamas pristabdymas.\n"
 
 #: mainloop.c:283
 msgid "Caller paused the connection\n"
@@ -4159,12 +4181,12 @@ msgstr "Nepavyko select() pagrindiniame cikle"
 #: mtucalc.c:89
 #, c-format
 msgid "Using base_mtu of %d\n"
-msgstr ""
+msgstr "Naudojamas base_mtu %d\n"
 
 #: mtucalc.c:105
 #, c-format
 msgid "After removing %s/IPv%d headers, MTU of %d\n"
-msgstr ""
+msgstr "Po %s/IPv%d pašalinimo, MTU yra %d\n"
 
 #. MTU is now (we hope) the number of payload bytes that can fit in a UDP or
 #. * TCP packet exchanged with the VPN gateway.
@@ -4177,6 +4199,8 @@ msgid ""
 "After removing protocol specific overhead (%d unpadded, %d padded, %d "
 "blocksize), MTU of %d\n"
 msgstr ""
+"Po protokolo priedų pašalinimo (%d be tarpų, %d su tarpais, %d bloko dydis), "
+"MTU yra %d\n"
 
 #: ntlm.c:87 sspi.c:114 sspi.c:197
 #, c-format
@@ -4217,7 +4241,7 @@ msgstr "Bandomas HTTP NTLMv%d tapatybės nustatymas serveryje „%s“\n"
 
 #: nullppp.c:84
 msgid "Terminating because nullppp has reached network state.\n"
-msgstr ""
+msgstr "Baigiama, nes nullppp pasiekė tinklo stadiją.\n"
 
 #: oath.c:104
 msgid "Invalid base32 token string\n"
@@ -4586,6 +4610,10 @@ msgid ""
 "See http://rt.openssl.org/Ticket/Display.html?id=1751\n"
 "Use the --no-dtls command line option to avoid this message\n"
 msgstr ""
+"SSL_set_session() nepavyko su sena protokolo versija 0x%x\n"
+"Ar naudojate OpenSSL versiją senesnę nei 0.9.8m?\n"
+"Žiūrėkite http://rt.openssl.org/Ticket/Display.html?id=1751\n"
+"Naudokite --no-dtls komandų eilutės parametrą šio pranešimo išvengimui\n"
 
 #: openssl-dtls.c:576
 msgid "SSL_set_session() failed\n"
@@ -4768,21 +4796,21 @@ msgstr "Ši OpenConnect versija sukurta be PKCS#11 palaikymo\n"
 
 #: openssl.c:180
 msgid "Failed to write to TLS/DTLS socket\n"
-msgstr ""
+msgstr "Nepavyko rašyti į TLS/DTLS lizdą\n"
 
 #: openssl.c:230 openssl.c:296
 msgid "Failed to read from TLS/DTLS socket\n"
-msgstr ""
+msgstr "Nepavyko skaityti iš TLS/DTLS lizdo\n"
 
 #: openssl.c:334
 #, c-format
 msgid "Read error on %s session: %d\n"
-msgstr ""
+msgstr "Skaitymo klaida %s seanse: %d\n"
 
 #: openssl.c:369
 #, c-format
 msgid "Write error on %s session: %d\n"
-msgstr ""
+msgstr "Rašymo klaida %s seanse: %d\n"
 
 #: openssl.c:442
 #, c-format
@@ -5040,7 +5068,7 @@ msgstr "Nepavyko sukurti TLSv1 CTX\n"
 
 #: openssl.c:1887
 msgid "Failed to construct OpenSSL cipher list\n"
-msgstr ""
+msgstr "Nepavyko sukurti OpenSSL šifrų sąrašo\n"
 
 #: openssl.c:1898
 #, c-format
@@ -5067,37 +5095,38 @@ msgstr "EAP-TTLS ryšio klaida %d\n"
 
 #: ppp.c:113
 msgid "HDLC initial flag sequence (0x7e) is missing\n"
-msgstr ""
+msgstr "Trūksta HDLC pradinės požymių sekos (0x7e)\n"
 
 #: ppp.c:131
 msgid "HDLC buffer ended without FCS and flag sequence (0x7e)\n"
-msgstr ""
+msgstr "HDLC buferis baigėsi su FCS požymių seka (0x7e)\n"
 
 #: ppp.c:137
 #, c-format
 msgid "HDLC frame too short (%d bytes)\n"
-msgstr ""
+msgstr "HDLC kadras per trumpas (%d baitai)\n"
 
 #: ppp.c:149
 #, c-format
 msgid "Bad HDLC packet FCS %04x\n"
-msgstr ""
+msgstr "Blogas HDLC paketo FCS %04x\n"
 
 #: ppp.c:154
 #, c-format
 msgid "Un-HDLC'ed packet (%ld bytes -> %ld), FCS=0x%04x\n"
-msgstr ""
+msgstr "Ne HDLC paketas (%ld baitai -> %ld), FCS=0x%04x\n"
 
 #: ppp.c:318
 #, c-format
 msgid "Current PPP state: %s (encap %s):\n"
-msgstr ""
+msgstr "Dabartinė PPP būsena: %s (encap %s):\n"
 
 #: ppp.c:320
 #, c-format
 msgid ""
 "    in: asyncmap=0x%08x, lcp_opts=%d, lcp_magic=0x%08x, ipv4=%s, ipv6=%s\n"
 msgstr ""
+"    įeina: asyncmap=0x%08x, lcp_opts=%d, lcp_magic=0x%08x, ipv4=%s, ipv6=%s\n"
 
 #: ppp.c:328
 #, c-format
@@ -5105,176 +5134,178 @@ msgid ""
 "   out: asyncmap=0x%08x, lcp_opts=%d, lcp_magic=0x%08x, ipv4=%s, ipv6=%s, "
 "solicit_peerns=%d, got_peerns=%d\n"
 msgstr ""
+"   išeina: asyncmap=0x%08x, lcp_opts=%d, lcp_magic=0x%08x, ipv4=%s, ipv6=%s, "
+"solicit_peerns=%d, got_peerns=%d\n"
 
 #: ppp.c:413
 #, c-format
 msgid "Received MRU %d from server. Nak-offering larger MRU of %d (our MTU)\n"
-msgstr ""
+msgstr "Iš serverio gautas MRU %d. Nak siūlomas didesnis MRU %d (mūsų MTU)\n"
 
 #: ppp.c:419
 #, c-format
 msgid "Received MRU %d from server. Setting our MTU to match.\n"
-msgstr ""
+msgstr "Iš serverio gautas MRU %d. Nustatomas mūsų MTU, kad atitiktų.\n"
 
 #: ppp.c:427
 #, c-format
 msgid "Received asyncmap of 0x%08x from server\n"
-msgstr ""
+msgstr "Iš serverio gautas asyncmap 0x%08x \n"
 
 #: ppp.c:433
 #, c-format
 msgid "Received magic number of 0x%08x from server\n"
-msgstr ""
+msgstr "Iš serverio gautas magiškas skaičius 0x%08x\n"
 
 #: ppp.c:438
 msgid "Received protocol field compression from server\n"
-msgstr ""
+msgstr "Iš serverio gautas protokolo lauko suspaudimas\n"
 
 #: ppp.c:443
 msgid "Received address and control field compression from server\n"
-msgstr ""
+msgstr "Iš serverio gautas valdymo lauko suspaudimas\n"
 
 #: ppp.c:450
 msgid "Received deprecated IP-Addresses from server, ignoring\n"
-msgstr ""
+msgstr "Iš serverio gautas pasenęs IP-Addresses, nepaisoma\n"
 
 #: ppp.c:457
 msgid "Received Van Jacobson TCP/IP compression from server\n"
-msgstr ""
+msgstr "Iš serverio gautas Van Jacobson TCP/IP suspaudimas\n"
 
 #: ppp.c:465
 #, c-format
 msgid "Received peer IPv4 address %s from server\n"
-msgstr ""
+msgstr "Iš serverio gautas porininko IPv6 adresas %s\n"
 
 #: ppp.c:481
 #, c-format
 msgid "Received peer IPv6 link-local address %s from server\n"
-msgstr ""
+msgstr "Iš serverio gautas saitui vietinis IPv6 adresas %s\n"
 
 #: ppp.c:488
 #, c-format
 msgid "Received unknown %s TLV (tag %d, len %d+2) from server:\n"
-msgstr ""
+msgstr "Iš serverio gautas nežinomas %s TLV (žyma %d, ilgis %d+2):\n"
 
 #: ppp.c:515
 #, c-format
 msgid "Received %ld extra bytes at end of Config-Request:\n"
-msgstr ""
+msgstr "Gauta papildomai %ld baitų Config-Request pabaigoje:\n"
 
 #: ppp.c:522
 #, c-format
 msgid "Reject %s/id %d config from server\n"
-msgstr ""
+msgstr "Atmetimo %s/id %d konfigūraciją iš serverio\n"
 
 #: ppp.c:530
 #, c-format
 msgid "Nak %s/id %d config from server\n"
-msgstr ""
+msgstr "Nak %s/id %d konfigūraciją iš serverio\n"
 
 #: ppp.c:536
 #, c-format
 msgid "Ack %s/id %d config from server\n"
-msgstr ""
+msgstr "Ack %s/id %d konfigūraciją iš serverio\n"
 
 #: ppp.c:576
 #, c-format
 msgid "Requesting calculated MTU of %d\n"
-msgstr ""
+msgstr "Prašomas suskaičiuoto MTU %d\n"
 
 #: ppp.c:631
 #, c-format
 msgid "Sending our %s/id %d config request to server\n"
-msgstr ""
+msgstr "Siunčiama serveriui mūsų %s/id %d konfigūracijos užklausa\n"
 
 #: ppp.c:668
 msgid "Server rejected/nak'ed LCP MRU option\n"
-msgstr ""
+msgstr "Serveris atmetė nak LCP MRU parametrą\n"
 
 #: ppp.c:673
 msgid "Server rejected/nak'ed LCP asyncmap option\n"
-msgstr ""
+msgstr "Serveris atmetė nak LCP asyncmap parametrą\n"
 
 #: ppp.c:684
 msgid "Server rejected LCP magic option\n"
-msgstr ""
+msgstr "Serveris atmetė LCP magišką parametrą\n"
 
 #: ppp.c:690
 msgid "Server rejected/nak'ed LCP PFCOMP option\n"
-msgstr ""
+msgstr "Serveris atmetė nak LCP PFCOMP parametrą\n"
 
 #: ppp.c:695
 msgid "Server rejected/nak'ed LCP ACCOMP option\n"
-msgstr ""
+msgstr "Serveris atmetė nak LCP ACCOMP parametrą\n"
 
 #: ppp.c:703
 #, c-format
 msgid "Server nak-offered IPv4 address: %s\n"
-msgstr ""
+msgstr "Serveris nak pasiūlė IPv4 adresą: %s\n"
 
 #: ppp.c:707
 #, c-format
 msgid "Server rejected Legacy IP address %s\n"
-msgstr ""
+msgstr "Serveris atmetė pasenusį IP adresą %s\n"
 
 #: ppp.c:713
 #, c-format
 msgid "Server rejected/nak'ed our IPv4 address or request: %s\n"
-msgstr ""
+msgstr "Serveris atmetė nak mūsų IPv4 adresą ar užklausą: %s\n"
 
 #: ppp.c:729
 #, c-format
 msgid "Server nak-offered IPCP request for %s[%d] server: %s\n"
-msgstr ""
+msgstr "Serveris pasiūlė nak IPCP užklausą %s[%d] serveriui: %s\n"
 
 #: ppp.c:735
 #, c-format
 msgid "Server rejected/nak'ed IPCP request for %s[%d] server\n"
-msgstr ""
+msgstr "Serveris atmetė nak IPCP užklausą %s[%d] serveriui\n"
 
 #: ppp.c:750
 #, c-format
 msgid "Server nak-offered IPv6 link-local address %s\n"
-msgstr ""
+msgstr "Serveris pasiūlė nak IPv6 saitui lokalų adresą %s\n"
 
 #: ppp.c:758
 msgid "Server rejected/nak'ed our IPv6 interface identifier\n"
-msgstr ""
+msgstr "Serveris atmetė nak mūsų IPv6 sąsajos identifikatorių\n"
 
 #: ppp.c:766
 #, c-format
 msgid "Server rejected/nak'ed %s TLV (tag %d, len %d+2)\n"
-msgstr ""
+msgstr "Serveris atmetė nak %s TLV (žyma %d, ilgis %d+2)\n"
 
 #: ppp.c:775
 #, c-format
 msgid "Received %ld extra bytes at end of Config-Reject:\n"
-msgstr ""
+msgstr "Gauta %ld papildomų baitų Config-Reject pabaigoje:\n"
 
 #: ppp.c:800
 #, c-format
 msgid "Received %s/id %d %s from server\n"
-msgstr ""
+msgstr "Iš serverio gauta %s/id %d %s\n"
 
 #: ppp.c:831
 #, c-format
 msgid "Server terminates with reason: %s\n"
-msgstr ""
+msgstr "Serveris nutraukė ryšį su priežastimi: %s\n"
 
 #: ppp.c:858
 #, c-format
 msgid "Server rejected our request to configure IPv%d\n"
-msgstr ""
+msgstr "Serveris atmetė mūsų užklausą sukonfigūruoti IPv%d\n"
 
 #: ppp.c:1028
 #, c-format
 msgid "PPP state transition from %s to %s on %s channel\n"
-msgstr ""
+msgstr "PPP būsenos perėjimas iš %s į %s kanale %s\n"
 
 #: ppp.c:1152
 #, c-format
 msgid "Unexpected pre-PPP packet header for encap %d.\n"
-msgstr ""
+msgstr "Nelaukta prieš PPP paketo antraštė encap %d.\n"
 
 #: ppp.c:1161
 #, c-format
@@ -5282,39 +5313,41 @@ msgid ""
 "Packet is incomplete. Received %d bytes on wire (includes %d encap) but "
 "header payload_len is %d\n"
 msgstr ""
+"Paketas yra nepilnas. Gauta %d baitų ryšiu (įskaitant %d encap), bet "
+"antraštės payload_len yra %d\n"
 
 #: ppp.c:1194
 msgid "Invalid PPP encapsulation\n"
-msgstr ""
+msgstr "Netinkama PPP kapsuliacija\n"
 
 #: ppp.c:1203
 #, c-format
 msgid "Packet contains %d bytes after payload. Assuming concatenated packet.\n"
-msgstr ""
+msgstr "Pakete yra %d baitų po duomenų. Laikoma apjungtu paketu.\n"
 
 #: ppp.c:1253
 #, c-format
 msgid "Unexpected IPv%d packet in PPP state %s.\n"
-msgstr ""
+msgstr "Nelauktas IPv%d paketas PPP būsenoje %s.\n"
 
 #: ppp.c:1258
 #, c-format
 msgid "Received IPv%d data packet of %d bytes over %s\n"
-msgstr ""
+msgstr "Gautas IPv%d duomenų paketas su %d baitų per %s\n"
 
 #: ppp.c:1264
 #, c-format
 msgid "Expected %d PPP header bytes but got %ld, shifting payload.\n"
-msgstr ""
+msgstr "Laukta %d baitų PPP antraštės, bet gauta %ld, perstumiami duomenys.\n"
 
 #: ppp.c:1287
 #, c-format
 msgid "Sending Protocol-Reject for %s. Payload:\n"
-msgstr ""
+msgstr "Siunčiamas %s Protocol-Reject. Duomenys:\n"
 
 #: ppp.c:1371
 msgid "Detected dead peer!\n"
-msgstr ""
+msgstr "Aptiktas negyvas porininkas!\n"
 
 #: ppp.c:1381
 msgid "Failed to establish PPP\n"
@@ -5322,53 +5355,55 @@ msgstr ""
 
 #: ppp.c:1400
 msgid "Send PPP discard request as keepalive\n"
-msgstr ""
+msgstr "Siunčiama PPP išmetimo užklausa kaip keepalive\n"
 
 #: ppp.c:1404
 msgid "Send PPP echo request as DPD\n"
-msgstr ""
+msgstr "Siųsti PPP aido užklausą kaip DPD\n"
 
 #: ppp.c:1470
 #, c-format
 msgid "Sending PPP %s %s packet over %s (id %d, %d bytes total)\n"
-msgstr ""
+msgstr "Siunčiamas PPP %s %s paketas per %s (id %d, iš viso %d baitų)\n"
 
 #: ppp.c:1476
 #, c-format
 msgid "Sending PPP %s packet over %s (%d bytes total)\n"
-msgstr ""
+msgstr "Siunčiamas PPP %s paketas per %s (iš viso %d baitų)\n"
 
 #: ppp.c:1534
 #, c-format
 msgid "PPP connect called with invalid DTLS state %d\n"
-msgstr ""
+msgstr "PPP connect iškviesta su netinkama DTLS būsena %d\n"
 
 #: ppp.c:1555
 msgid "DTLS tunnel connected; exiting HTTPS mainloop.\n"
-msgstr ""
+msgstr "Prisijungta prie DTLS tunelio; išeinama iš HTTPS pagrindinio ciklo.\n"
 
 #: ppp.c:1589
 #, c-format
 msgid "Failed to connect DTLS tunnel; using HTTPS instead (state %d).\n"
 msgstr ""
+"Nepavyko prisijungti prie DTLS tunelio; vietoj to naudojamas HTTPS (būsena "
+"%d).\n"
 
 #: ppp.c:1614
 msgid "Establishing PPP tunnel over TLS failed\n"
-msgstr ""
+msgstr "Nepavyko užmegzti PPP tunelio per TLS\n"
 
 #: ppp.c:1625
 #, c-format
 msgid "Invalid DTLS state %d\n"
-msgstr ""
+msgstr "Netinkamas DTLS būsena %d\n"
 
 #. This should never happen
 #: ppp.c:1692
 msgid "Reset PPP failed\n"
-msgstr ""
+msgstr "Nepavyko atstatyti PPP\n"
 
 #: ppp.c:1713
 msgid "Failed to authenticate DTLS session\n"
-msgstr ""
+msgstr "Nepavyko patvirtinti tapatybės DTLS seansui\n"
 
 #: pulse.c:235
 #, c-format
@@ -5586,7 +5621,7 @@ msgstr "Tapatybės patvirtinimo klaida: paskyra užrakinta\n"
 
 #: pulse.c:1667
 msgid "Authentication failure: Client certificate required\n"
-msgstr ""
+msgstr "Tapatybės patvirtinimo klaida: būtinas kliento liudijimas\n"
 
 #: pulse.c:1670
 #, c-format
@@ -5955,7 +5990,7 @@ msgstr "Failas %s yra tuščias\n"
 #: ssl.c:973
 #, c-format
 msgid "File %s has suspicious size %<PRId64>\n"
-msgstr ""
+msgstr "Failas %s yra įtartino dydžio %<PRId64>\n"
 
 #: ssl.c:982
 #, c-format
@@ -6149,7 +6184,7 @@ msgstr "Nepavyko perskaityti %s\\%s arba tai ne eilutė\n"
 #: tun-win32.c:118
 #, c-format
 msgid "%s\\ComponentId is unknown '%s'\n"
-msgstr ""
+msgstr "%s\\ComponentId yra nežinomas „%s“\n"
 
 #: tun-win32.c:124
 #, c-format
@@ -6188,7 +6223,7 @@ msgstr "Nepavyko atverti %s\n"
 #: tun-win32.c:242
 #, c-format
 msgid "Opened tun device %S\n"
-msgstr ""
+msgstr "Atvertas tun įrenginys %S\n"
 
 #: tun-win32.c:250
 #, c-format
@@ -6215,20 +6250,20 @@ msgstr "Nepavyko nustatyti TAP laikmenos būsenos: %s\n"
 #: tun-win32.c:303
 #, c-format
 msgid "Ignoring non-matching interface \"%S\"\n"
-msgstr ""
+msgstr "Nepaisoma neatitinkančios sąsajos „%S“\n"
 
 #: tun-win32.c:326
 msgid "Could not convert interface name to UTF-8\n"
-msgstr ""
+msgstr "Nepavyko konvertuoti sąsajos pavadinimo į UTF-8\n"
 
 #: tun-win32.c:339
 #, c-format
 msgid "Using %s device '%s', index %d\n"
-msgstr ""
+msgstr "Naudojamas %s įrenginys „%s“, indeksas %d\n"
 
 #: tun-win32.c:353
 msgid "Could not construct interface name\n"
-msgstr ""
+msgstr "Nepavyko sukonstruoti sąsajos pavadinimo\n"
 
 #: tun-win32.c:379
 msgid "No Windows-TAP adapters found. Is the driver installed?\n"
@@ -6238,6 +6273,7 @@ msgstr "Rasti ne Windows-TAP adapteriai. Ar tvarkyklė įdiegta?\n"
 msgid ""
 "Alternatively, specify an interface name to try creating it with Wintun\n"
 msgstr ""
+"Taip pat galima nurodyti sąsajos pavadinimą ir bandyti ją sukurti su Wintun\n"
 
 #: tun-win32.c:406
 msgid "TAP device aborted connectivity. Disconnecting.\n"
@@ -6415,26 +6451,26 @@ msgstr "Nepavyko įrašyti įeinančio paketo: %s\n"
 
 #: wintun.c:75
 msgid "Could not load wintun.dll\n"
-msgstr ""
+msgstr "Nepavyko įkelti wintun.dll\n"
 
 #: wintun.c:90
 msgid "Could not resolve functions from wintun.dll\n"
-msgstr ""
+msgstr "Nepavyko rasti funkcijų iš wintun.dll\n"
 
 #: wintun.c:176
 #, c-format
 msgid "Failed to set Legacy IP address on Wintun: %s\n"
-msgstr ""
+msgstr "Nepavyko nustatyti pasenusių IP adresų į Wintun: %s\n"
 
 #: wintun.c:188
 #, c-format
 msgid "Failed to create Wintun session: %s"
-msgstr ""
+msgstr "Nepavyko sukurti Wintun seanso: %s"
 
 #: wintun.c:197
 #, c-format
 msgid "Loaded Wintun v%d.%d\n"
-msgstr ""
+msgstr "Įkeltas Wintun v%d %d\n"
 
 #: xml.c:75 xml.c:100
 #, c-format

@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: network-manager-openconnect\n"
 "Report-Msgid-Bugs-To: openconnect-devel@lists.infradead.org\n"
 "POT-Creation-Date: 2021-05-12 23:02+0100\n"
-"PO-Revision-Date: 2021-03-27 21:08+0200\n"
+"PO-Revision-Date: 2021-04-22 10:50+0300\n"
 "Last-Translator: Yuri Chornoivan <yurchor@ukr.net>\n"
 "Language-Team: Ukrainian <kde-i18n-uk@kde.org>\n"
 "Language: uk\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
-"X-Generator: Lokalize 20.11.70\n"
+"X-Generator: Lokalize 20.12.0\n"
 
 #: array.c:131
 msgid "No ANsession cookie found\n"
@@ -168,7 +168,7 @@ msgstr "Спроба встановити нове з'єднання DTLS\n"
 
 #: array.c:1073 ppp.c:1669
 msgid "Failed to receive authentication response from DTLS\n"
-msgstr ""
+msgstr "Не вдалося отримати відповідь щодо розпізнавання від DTLS\n"
 
 #: array.c:1085
 msgid "DTLS session established\n"
@@ -188,11 +188,11 @@ msgstr ""
 
 #: array.c:1120 ppp.c:1723
 msgid "Error creating connect request for DTLS session\n"
-msgstr ""
+msgstr "Помилка під час спроби створення запиту на з'єднання для сеансу DTLS\n"
 
 #: array.c:1136 ppp.c:1739
 msgid "Failed to write connect request to DTLS session\n"
-msgstr ""
+msgstr "Не вдалося записати запит на з'єднання до сеансу DTLS\n"
 
 #: array.c:1189 dtls.c:291
 #, c-format
@@ -1200,111 +1200,117 @@ msgstr "Не вдалося створити початковий IV для ESP\
 msgid ""
 "WARNING: no HTML login form found; assuming username and password fields\n"
 msgstr ""
+"УВАГА: не знайдено форми входу у форматі HTML; поля користувача і пароля "
+"буде визначено евристикою\n"
 
 #: f5.c:159
 #, c-format
 msgid "Unknown form ID '%s' (expected 'auth_form')\n"
 msgstr ""
+"Невідомий ідентифікатор форми «%s» (мало бути використано «auth_form»)\n"
 
 #: f5.c:242
 msgid "Failed to parse F5 profile response\n"
-msgstr ""
+msgstr "Не вдалося обробити відповідь профілю F5\n"
 
 #: f5.c:284
 msgid "Failed to find VPN profile parameters\n"
-msgstr ""
+msgstr "Не вдалося знайти параметри профілю VPN\n"
 
 #: f5.c:327
 msgid "Failed to parse F5 options response\n"
-msgstr ""
+msgstr "Не вдалося обробити відповідь щодо параметрів F5\n"
 
 #: f5.c:361
 #, c-format
 msgid "Idle timeout is %d minutes\n"
-msgstr ""
+msgstr "Час очікування на завершення бездіяльності дорівнює %d хвилин\n"
 
 #: f5.c:371
 msgid "Got default routes\n"
-msgstr ""
+msgstr "Отримано типові маршрути\n"
 
 #: f5.c:374
 #, c-format
 msgid "Got SplitTunneling0 value of %d\n"
-msgstr ""
+msgstr "Отримано значення SplitTunneling0 %d\n"
 
 #: f5.c:383
 #, c-format
 msgid "Got DNS server %s\n"
-msgstr ""
+msgstr "Отримано запис сервера DNS %s\n"
 
 #: f5.c:390
 #, c-format
 msgid "Got WINS/NBNS server %s\n"
-msgstr ""
+msgstr "Отримано сервер WINS/NBNS %s\n"
 
 #: f5.c:397 fortinet.c:362 fortinet.c:427
 #, c-format
 msgid "Got search domain %s\n"
-msgstr ""
+msgstr "Отримано домен пошуку %s\n"
 
 #: f5.c:427
 #, c-format
 msgid "Got split exclude route %s\n"
-msgstr ""
+msgstr "Отримано маршрут виключення поділу %s\n"
 
 #: f5.c:431
 #, c-format
 msgid "Got split include route %s\n"
-msgstr ""
+msgstr "Отримано маршрут включення поділу %s\n"
 
 #. XX: DTLS always uses same port as TLS?
 #: f5.c:439 fortinet.c:327
 #, c-format
 msgid "DTLS is enabled on port %d\n"
-msgstr ""
+msgstr "На порту %d увімкнено DTLS\n"
 
 #: f5.c:451
 msgid ""
 "WARNING: Server enables DTLS, but also requires HDLC. Disabling DTLS,\n"
 "    because HDLC prevents determination of efficient and consistent MTU.\n"
 msgstr ""
+"УВАГА! Сервером увімкнено DTLS, але висунуто вимогу щодо HDLC. Вимикаємо "
+"DTLS,\n"
+"    оскільки HDLC заважає визначенню ефективного і сумісного MTU.\n"
 
 #: f5.c:472 fortinet.c:493
 msgid "Failed to find VPN options\n"
-msgstr ""
+msgstr "Не вдалося знайти параметри VPN\n"
 
 #: f5.c:495 fortinet.c:358
 #, c-format
 msgid "Got Legacy IP address %s\n"
-msgstr ""
+msgstr "Отримано застарілу IP-адресу %s\n"
 
 #: f5.c:500 fortinet.c:419 fortinet.c:422
 #, c-format
 msgid "Got IPv6 address %s\n"
-msgstr ""
+msgstr "Отримано IPv6-адресу %s\n"
 
 #: f5.c:550
 #, c-format
 msgid "Got profile parameters '%s'\n"
-msgstr ""
+msgstr "Отримано параметри профілю «%s»\n"
 
 #: f5.c:570
 #, c-format
 msgid "Got ipv4 %d ipv6 %d hdlc %d ur_Z '%s'\n"
-msgstr ""
+msgstr "Отримано ipv4 %d ipv6 %d hdlc %d ur_Z «%s»\n"
 
 #: f5.c:599
 msgid "Error establishing F5 connection\n"
-msgstr ""
+msgstr "Помилка під час встановлення з'єднання F5\n"
 
 #: fortinet.c:128
 #, c-format
 msgid "Got login realm '%s'\n"
-msgstr ""
+msgstr "Отримано область входу «%s»\n"
 
 #: fortinet.c:309
 msgid "Failed to parse Fortinet config XML\n"
-msgstr ""
+msgstr "Не вдалося обробити налаштування XML Fortinet\n"
 
 #: fortinet.c:338 gpst.c:393
 #, c-format
@@ -1314,50 +1320,52 @@ msgstr "Час очікування на завершення бездіяльн
 #: fortinet.c:353
 #, c-format
 msgid "Reported platform is %s\n"
-msgstr ""
+msgstr "Повідомлено про платформу %s\n"
 
 #: fortinet.c:366 fortinet.c:431
 #, c-format
 msgid "Got IPv%d DNS server %s\n"
-msgstr ""
+msgstr "Отримано IPv%d сервера DNS %s\n"
 
 #: fortinet.c:372 fortinet.c:437
 #, c-format
 msgid "WARNING: Got split-DNS domains %s (not yet implemented)\n"
-msgstr ""
+msgstr "УВАГА: отримано домени split-DNS %s (ще не реалізовано)\n"
 
 #: fortinet.c:377 fortinet.c:442
 #, c-format
 msgid "WARNING: Got split-DNS server %s (not yet implemented)\n"
-msgstr ""
+msgstr "УВАГА: отримано сервер split-DNS %s (ще не реалізовано)\n"
 
 #: fortinet.c:399 fortinet.c:466
 #, c-format
 msgid "Got IPv%d route %s\n"
-msgstr ""
+msgstr "Отримано маршрут IPv%d %s\n"
 
 #: fortinet.c:535
 msgid "No cookie named SVPNCOOKIE.\n"
-msgstr ""
+msgstr "Немає куки із назвою SVPNCOOKIE.\n"
 
 #: fortinet.c:564
 msgid ""
 "Server doesn't support XML config format. Ancient HTML format is not "
 "currently implemented.\n"
 msgstr ""
+"На сервері не передбачено підтримки налаштувань у форматі XML. Давній формат "
+"HTML у поточній версії не реалізовано.\n"
 
 #: fortinet.c:594
 msgid "Error establishing Fortinet connection\n"
-msgstr ""
+msgstr "Помилка під час встановлення з'єднання Fortinet\n"
 
 #: fortinet.c:694
 msgid "Did not receive expected svrhello response.\n"
-msgstr ""
+msgstr "Не отримано очікуваної відповіді svrhello.\n"
 
 #: fortinet.c:705
 #, c-format
 msgid "svrhello status was \"%.*s\" rather than \"ok\"\n"
-msgstr ""
+msgstr "Станом svrhello був «%.*s», а не «ok»\n"
 
 #: gnutls-dtls.c:186
 msgid "Deferring DTLS resumption until CSTP generates a PSK\n"
@@ -1530,22 +1538,22 @@ msgstr "Не вдалося виконати читання з сокета TLS/
 #: gnutls.c:306 openssl.c:321
 #, c-format
 msgid "Attempted to read from non-existent %s session\n"
-msgstr ""
+msgstr "Спроба читання із сеансу %s, якого не існує\n"
 
 #: gnutls.c:318
 #, c-format
 msgid "Read error on %s session: %s\n"
-msgstr ""
+msgstr "Помилка читання у сеансі %s: %s\n"
 
 #: gnutls.c:330 openssl.c:346
 #, c-format
 msgid "Attempted to write to non-existent %s session\n"
-msgstr ""
+msgstr "Спроба записати сеанс %s, якого не існує\n"
 
 #: gnutls.c:364
 #, c-format
 msgid "Write error on %s session: %s\n"
-msgstr ""
+msgstr "Помилка запису у сеансі %s: %s\n"
 
 #: gnutls.c:378
 msgid "Could not extract expiration time of certificate\n"
@@ -2535,7 +2543,7 @@ msgstr "Шлюз від'єднано негайно після запиту GET-
 #: gpst.c:750 ppp.c:1119
 #, c-format
 msgid "Got unexpected HTTP response: %.*s\n"
-msgstr ""
+msgstr "Отримано неочікувану відповідь HTTP: %.*s\n"
 
 #: gpst.c:899
 #, c-format
@@ -2916,6 +2924,7 @@ msgstr "Помилка під час спроби отримання вміст�
 #, c-format
 msgid "Error in chunked decoding. Expected '', got: '%s'\n"
 msgstr ""
+"Помилка під час розшифровування фрагментів. Мало бути «», отримано: «%s»\n"
 
 #: http.c:771
 msgid "Cannot receive HTTP 1.0 body without closing connection\n"
@@ -3147,27 +3156,27 @@ msgstr "Сумісний із VPN SSL Pulse Connect Secure"
 
 #: library.c:197
 msgid "F5 BIG-IP SSL VPN"
-msgstr ""
+msgstr "F5 BIG-IP SSL VPN"
 
 #: library.c:198
 msgid "Compatible with F5 BIG-IP SSL VPN"
-msgstr ""
+msgstr "Сумісний із F5 BIG-IP SSL VPN"
 
 #: library.c:217
 msgid "Fortinet SSL VPN"
-msgstr ""
+msgstr "VPN SSL Fortinet"
 
 #: library.c:218
 msgid "Compatible with FortiGate SSL VPN"
-msgstr ""
+msgstr "Сумісний із VPN SSL FortiGate"
 
 #: library.c:237
 msgid "PPP over TLS"
-msgstr ""
+msgstr "PPP над TLS"
 
 #: library.c:238
 msgid "Unauthenticated RFC1661/RFC1662 PPP over TLS, for testing"
-msgstr ""
+msgstr "Без розпізнавання PPP над TLS RFC1661/RFC1662, для тестування"
 
 #: library.c:247
 msgid "Array SSL VPN"
@@ -3775,6 +3784,8 @@ msgstr "Строк дії розпізнавання у сеансі буде в
 msgid ""
 "RX: %<PRId64> packets (%<PRId64> B); TX: %<PRId64> packets (%<PRId64> B)\n"
 msgstr ""
+"Отримання: %<PRId64> пакетів (%<PRId64> Б); передавання: %<PRId64> пакети "
+"(%<PRId64> Б)\n"
 
 #: main.c:1485
 #, c-format
@@ -4238,12 +4249,12 @@ msgstr "Помилка select() у основному циклі"
 #: mtucalc.c:89
 #, c-format
 msgid "Using base_mtu of %d\n"
-msgstr ""
+msgstr "Використовуємо base_mtu %d\n"
 
 #: mtucalc.c:105
 #, c-format
 msgid "After removing %s/IPv%d headers, MTU of %d\n"
-msgstr ""
+msgstr "Після вилучення заголовків %s/IPv%d MTU %d\n"
 
 #. MTU is now (we hope) the number of payload bytes that can fit in a UDP or
 #. * TCP packet exchanged with the VPN gateway.
@@ -4256,6 +4267,8 @@ msgid ""
 "After removing protocol specific overhead (%d unpadded, %d padded, %d "
 "blocksize), MTU of %d\n"
 msgstr ""
+"Після вилучення специфічного перевищення протоколу (%d без доповнення, %d з "
+"доповненням, %d розмір блоку), MTU %d\n"
 
 #: ntlm.c:87 sspi.c:114 sspi.c:197
 #, c-format
@@ -4296,7 +4309,7 @@ msgstr "Спроба виконати розпізнавання за HTTP NTLMv
 
 #: nullppp.c:84
 msgid "Terminating because nullppp has reached network state.\n"
-msgstr ""
+msgstr "Перериваємося, оскільки nullppp досягнуто стану мережі.\n"
 
 #: oath.c:104
 msgid "Invalid base32 token string\n"
@@ -4667,6 +4680,11 @@ msgid ""
 "See http://rt.openssl.org/Ticket/Display.html?id=1751\n"
 "Use the --no-dtls command line option to avoid this message\n"
 msgstr ""
+"Помилка SSL_set_session() із версією протоколу DTLS 0x%x\n"
+"Використовуєте версію OpenSSL, яка є старішою за 0.9.8m?\n"
+"Див. http://rt.openssl.org/Ticket/Display.html?id=1751\n"
+"Скористайтеся параметром командного рядка --no-dtls command,\n"
+"щоб програма не виводила це повідомлення\n"
 
 #: openssl-dtls.c:576
 msgid "SSL_set_session() failed\n"
@@ -4861,12 +4879,12 @@ msgstr "Не вдалося виконати читання з сокета TLS/
 #: openssl.c:334
 #, c-format
 msgid "Read error on %s session: %d\n"
-msgstr ""
+msgstr "Помилка читання у сеансі %s: %d\n"
 
 #: openssl.c:369
 #, c-format
 msgid "Write error on %s session: %d\n"
-msgstr ""
+msgstr "Помилка запису у сеансі %s: %d\n"
 
 #: openssl.c:442
 #, c-format
@@ -5159,37 +5177,38 @@ msgstr "Критична помилка з'єднання EAP-TTLS %d\n"
 
 #: ppp.c:113
 msgid "HDLC initial flag sequence (0x7e) is missing\n"
-msgstr ""
+msgstr "Пропущено початкову послідовність прапорців HDLC (0x7e)\n"
 
 #: ppp.c:131
 msgid "HDLC buffer ended without FCS and flag sequence (0x7e)\n"
-msgstr ""
+msgstr "Буфер HDLC завершено без FCS і послідовності прапорців (0x7e)\n"
 
 #: ppp.c:137
 #, c-format
 msgid "HDLC frame too short (%d bytes)\n"
-msgstr ""
+msgstr "Фрейм HDLC є надто коротким (%d байтів)\n"
 
 #: ppp.c:149
 #, c-format
 msgid "Bad HDLC packet FCS %04x\n"
-msgstr ""
+msgstr "Помилковий пакет HDLC FCS %04x\n"
 
 #: ppp.c:154
 #, c-format
 msgid "Un-HDLC'ed packet (%ld bytes -> %ld), FCS=0x%04x\n"
-msgstr ""
+msgstr "Un-HDLC-вано пакет (%ld байтів -> %ld), FCS=0x%04x\n"
 
 #: ppp.c:318
 #, c-format
 msgid "Current PPP state: %s (encap %s):\n"
-msgstr ""
+msgstr "Поточний стан PPP: %s (обгортка %s):\n"
 
 #: ppp.c:320
 #, c-format
 msgid ""
 "    in: asyncmap=0x%08x, lcp_opts=%d, lcp_magic=0x%08x, ipv4=%s, ipv6=%s\n"
 msgstr ""
+"    вхід: asyncmap=0x%08x, lcp_opts=%d, lcp_magic=0x%08x, ipv4=%s, ipv6=%s\n"
 
 #: ppp.c:328
 #, c-format
@@ -5197,176 +5216,178 @@ msgid ""
 "   out: asyncmap=0x%08x, lcp_opts=%d, lcp_magic=0x%08x, ipv4=%s, ipv6=%s, "
 "solicit_peerns=%d, got_peerns=%d\n"
 msgstr ""
+"   вихід: asyncmap=0x%08x, lcp_opts=%d, lcp_magic=0x%08x, ipv4=%s, ipv6=%s, "
+"solicit_peerns=%d, got_peerns=%d\n"
 
 #: ppp.c:413
 #, c-format
 msgid "Received MRU %d from server. Nak-offering larger MRU of %d (our MTU)\n"
-msgstr ""
+msgstr "Отримано MRU %d від сервера. Nak-пропонуємо більший MRU %d (наш MTU)\n"
 
 #: ppp.c:419
 #, c-format
 msgid "Received MRU %d from server. Setting our MTU to match.\n"
-msgstr ""
+msgstr "Отримано MRU %d від сервера. Встановлюємо наш MTU відповідно.\n"
 
 #: ppp.c:427
 #, c-format
 msgid "Received asyncmap of 0x%08x from server\n"
-msgstr ""
+msgstr "Отримано asyncmap 0x%08x від сервера\n"
 
 #: ppp.c:433
 #, c-format
 msgid "Received magic number of 0x%08x from server\n"
-msgstr ""
+msgstr "Отримано контрольну суму 0x%08x від сервера\n"
 
 #: ppp.c:438
 msgid "Received protocol field compression from server\n"
-msgstr ""
+msgstr "Отримано стискання поля протоколу від сервера\n"
 
 #: ppp.c:443
 msgid "Received address and control field compression from server\n"
-msgstr ""
+msgstr "Отримано адресу і стискання поля керування від сервера\n"
 
 #: ppp.c:450
 msgid "Received deprecated IP-Addresses from server, ignoring\n"
-msgstr ""
+msgstr "Отримано застарілі IP-адреси від сервера, ігноруємо\n"
 
 #: ppp.c:457
 msgid "Received Van Jacobson TCP/IP compression from server\n"
-msgstr ""
+msgstr "Отримано стискання Ван Якобсона TCP/IP від сервера\n"
 
 #: ppp.c:465
 #, c-format
 msgid "Received peer IPv4 address %s from server\n"
-msgstr ""
+msgstr "Отримано адресу IPv4 вузла %s від сервера\n"
 
 #: ppp.c:481
 #, c-format
 msgid "Received peer IPv6 link-local address %s from server\n"
-msgstr ""
+msgstr "Отримано адресу lical IPv6 %s від сервера\n"
 
 #: ppp.c:488
 #, c-format
 msgid "Received unknown %s TLV (tag %d, len %d+2) from server:\n"
-msgstr ""
+msgstr "Отримано невідомий TLV %s (мітка %d, довжина %d+2) від сервера:\n"
 
 #: ppp.c:515
 #, c-format
 msgid "Received %ld extra bytes at end of Config-Request:\n"
-msgstr ""
+msgstr "Отримано %ld зайвих байтів наприкінці Config-Request:\n"
 
 #: ppp.c:522
 #, c-format
 msgid "Reject %s/id %d config from server\n"
-msgstr ""
+msgstr "Відкинути %s/ід. %d налаштування з сервера\n"
 
 #: ppp.c:530
 #, c-format
 msgid "Nak %s/id %d config from server\n"
-msgstr ""
+msgstr "Nak %s/ід. %d налаштування з сервера\n"
 
 #: ppp.c:536
 #, c-format
 msgid "Ack %s/id %d config from server\n"
-msgstr ""
+msgstr "Ack %s/ід. %d налаштування з сервера\n"
 
 #: ppp.c:576
 #, c-format
 msgid "Requesting calculated MTU of %d\n"
-msgstr ""
+msgstr "Запитуємо обчислений MTU %d\n"
 
 #: ppp.c:631
 #, c-format
 msgid "Sending our %s/id %d config request to server\n"
-msgstr ""
+msgstr "Надсилаємо наш %s/ід. %d запит щодо налаштування серверу\n"
 
 #: ppp.c:668
 msgid "Server rejected/nak'ed LCP MRU option\n"
-msgstr ""
+msgstr "Сервером відкинуто/nak-вано параметр MRU LCP\n"
 
 #: ppp.c:673
 msgid "Server rejected/nak'ed LCP asyncmap option\n"
-msgstr ""
+msgstr "Сервером відкинуто/nak-вано параметр asyncmap LCP\n"
 
 #: ppp.c:684
 msgid "Server rejected LCP magic option\n"
-msgstr ""
+msgstr "Сервером відкинуто параметр контрольної суми LCP\n"
 
 #: ppp.c:690
 msgid "Server rejected/nak'ed LCP PFCOMP option\n"
-msgstr ""
+msgstr "Сервером відкинуто/nak-вано параметр PFCOMP LCP\n"
 
 #: ppp.c:695
 msgid "Server rejected/nak'ed LCP ACCOMP option\n"
-msgstr ""
+msgstr "Сервером відкинуто/nak-вано параметр ACCOMP LCP\n"
 
 #: ppp.c:703
 #, c-format
 msgid "Server nak-offered IPv4 address: %s\n"
-msgstr ""
+msgstr "Сервером nak-запропоновано адресу IPv4 %s\n"
 
 #: ppp.c:707
 #, c-format
 msgid "Server rejected Legacy IP address %s\n"
-msgstr ""
+msgstr "Сервером відмовлено в обробці застарілої IP-адреси %s\n"
 
 #: ppp.c:713
 #, c-format
 msgid "Server rejected/nak'ed our IPv4 address or request: %s\n"
-msgstr ""
+msgstr "Сервером відкинуто/nak-вано нашу адресу IPv4 або запит: %s\n"
 
 #: ppp.c:729
 #, c-format
 msgid "Server nak-offered IPCP request for %s[%d] server: %s\n"
-msgstr ""
+msgstr "Сервером nak-запропоновано запит IPCP щодо сервера %s[%d]: %s\n"
 
 #: ppp.c:735
 #, c-format
 msgid "Server rejected/nak'ed IPCP request for %s[%d] server\n"
-msgstr ""
+msgstr "Сервером відкинуто/nak-вано запит IPCP щодо сервера %s[%d]\n"
 
 #: ppp.c:750
 #, c-format
 msgid "Server nak-offered IPv6 link-local address %s\n"
-msgstr ""
+msgstr "Сервером nak-запропоновано адресу link-local IPv6 %s\n"
 
 #: ppp.c:758
 msgid "Server rejected/nak'ed our IPv6 interface identifier\n"
-msgstr ""
+msgstr "Сервером відкинуто/nak-вадно наш ідентифікатор інтерфейсу IPv6\n"
 
 #: ppp.c:766
 #, c-format
 msgid "Server rejected/nak'ed %s TLV (tag %d, len %d+2)\n"
-msgstr ""
+msgstr "Сервером відкинуто/nak-вано %s TLV (мітка %d, довжина %d+2)\n"
 
 #: ppp.c:775
 #, c-format
 msgid "Received %ld extra bytes at end of Config-Reject:\n"
-msgstr ""
+msgstr "Отримано %ld зайвих байтів наприкінці Config-Reject:\n"
 
 #: ppp.c:800
 #, c-format
 msgid "Received %s/id %d %s from server\n"
-msgstr ""
+msgstr "Отримано %s/ідентифікатор %d %s з сервера\n"
 
 #: ppp.c:831
 #, c-format
 msgid "Server terminates with reason: %s\n"
-msgstr ""
+msgstr "Сервер перервав роботи з такої причини: %s\n"
 
 #: ppp.c:858
 #, c-format
 msgid "Server rejected our request to configure IPv%d\n"
-msgstr ""
+msgstr "Сервер відмовив у нашому запиті щодо налаштування IPv%d\n"
 
 #: ppp.c:1028
 #, c-format
 msgid "PPP state transition from %s to %s on %s channel\n"
-msgstr ""
+msgstr "Стан передавання PPP з %s до %s на каналі %s\n"
 
 #: ppp.c:1152
 #, c-format
 msgid "Unexpected pre-PPP packet header for encap %d.\n"
-msgstr ""
+msgstr "Неочікуваний заголовок пакета перед PPP для обгортки %d.\n"
 
 #: ppp.c:1161
 #, c-format
@@ -5374,39 +5395,42 @@ msgid ""
 "Packet is incomplete. Received %d bytes on wire (includes %d encap) but "
 "header payload_len is %d\n"
 msgstr ""
+"Пакет є неповним. Отримано %d байтів поспіль (включно із %d обгортки), але "
+"payload_len для заголовка дорівнює %d\n"
 
 #: ppp.c:1194
 msgid "Invalid PPP encapsulation\n"
-msgstr ""
+msgstr "Некоректна інкапсуляція PPP\n"
 
 #: ppp.c:1203
 #, c-format
 msgid "Packet contains %d bytes after payload. Assuming concatenated packet.\n"
 msgstr ""
+"У пакеті міститься %d байтів після вмісту. Припускаємо обрізаний пакет.\n"
 
 #: ppp.c:1253
 #, c-format
 msgid "Unexpected IPv%d packet in PPP state %s.\n"
-msgstr ""
+msgstr "Неочікуваний пакет IPv%d у стані PPP %s.\n"
 
 #: ppp.c:1258
 #, c-format
 msgid "Received IPv%d data packet of %d bytes over %s\n"
-msgstr ""
+msgstr "Отримано пакет даних IPv%d розміром %d байтів з використанням %s\n"
 
 #: ppp.c:1264
 #, c-format
 msgid "Expected %d PPP header bytes but got %ld, shifting payload.\n"
-msgstr ""
+msgstr "Мало бути %d байтів заголовка PPP, але маємо %ld, зсуваємо вміст.\n"
 
 #: ppp.c:1287
 #, c-format
 msgid "Sending Protocol-Reject for %s. Payload:\n"
-msgstr ""
+msgstr "Надсилаємо Protocol-Reject для %s. Вміст:\n"
 
 #: ppp.c:1371
 msgid "Detected dead peer!\n"
-msgstr ""
+msgstr "Виявлено непрацездатний вузол!\n"
 
 #: ppp.c:1381
 msgid "Failed to establish PPP\n"
@@ -5414,53 +5438,57 @@ msgstr ""
 
 #: ppp.c:1400
 msgid "Send PPP discard request as keepalive\n"
-msgstr ""
+msgstr "Надіслати запит щодо відкидання PPP як запит підтримання зв'язку\n"
 
 #: ppp.c:1404
 msgid "Send PPP echo request as DPD\n"
-msgstr ""
+msgstr "Надіслати луна-запит PPP як DPD\n"
 
 #: ppp.c:1470
 #, c-format
 msgid "Sending PPP %s %s packet over %s (id %d, %d bytes total)\n"
 msgstr ""
+"Надсилаємо PPP пакет %s %s з використанням %s (ід. %d, %d байтів загалом)\n"
 
 #: ppp.c:1476
 #, c-format
 msgid "Sending PPP %s packet over %s (%d bytes total)\n"
-msgstr ""
+msgstr "Надсилаємо пакет PPP %s з використанням %s (%d байтів загалом)\n"
 
 #: ppp.c:1534
 #, c-format
 msgid "PPP connect called with invalid DTLS state %d\n"
-msgstr ""
+msgstr "Викликано connect PPP із некоректним станом DTLS %d\n"
 
 #: ppp.c:1555
 msgid "DTLS tunnel connected; exiting HTTPS mainloop.\n"
 msgstr ""
+"Встановлено з'єднання із тунелем DTLS; виходимо із основного циклу HTTPS.\n"
 
 #: ppp.c:1589
 #, c-format
 msgid "Failed to connect DTLS tunnel; using HTTPS instead (state %d).\n"
 msgstr ""
+"Не вдалося встановити з'єднання із тунелем DTLS; використовуємо замість "
+"нього HTTPS (стан %d).\n"
 
 #: ppp.c:1614
 msgid "Establishing PPP tunnel over TLS failed\n"
-msgstr ""
+msgstr "Спроба встановити тунель PPP з TLS зазнала невдачі\n"
 
 #: ppp.c:1625
 #, c-format
 msgid "Invalid DTLS state %d\n"
-msgstr ""
+msgstr "Некоректний стан DTLS — %d\n"
 
 #. This should never happen
 #: ppp.c:1692
 msgid "Reset PPP failed\n"
-msgstr ""
+msgstr "Невдала спроба відновлення початкового стану PPP\n"
 
 #: ppp.c:1713
 msgid "Failed to authenticate DTLS session\n"
-msgstr ""
+msgstr "Не вдалося пройти розпізнавання для сеансу DTLS\n"
 
 #: pulse.c:235
 #, c-format
@@ -6258,7 +6286,7 @@ msgstr "Не вдалося прочитати %s\\%s або прочитані 
 #: tun-win32.c:118
 #, c-format
 msgid "%s\\ComponentId is unknown '%s'\n"
-msgstr ""
+msgstr "%s\\Невідомий ComponentId «%s»\n"
 
 #: tun-win32.c:124
 #, c-format
@@ -6298,7 +6326,7 @@ msgstr "Не вдалося відкрити %s\n"
 #: tun-win32.c:242
 #, c-format
 msgid "Opened tun device %S\n"
-msgstr ""
+msgstr "Відкрито пристрій tun %S\n"
 
 #: tun-win32.c:250
 #, c-format
@@ -6325,20 +6353,20 @@ msgstr "Не вдалося встановити стан носія TAP: %s\n"
 #: tun-win32.c:303
 #, c-format
 msgid "Ignoring non-matching interface \"%S\"\n"
-msgstr ""
+msgstr "Ігноруємо невідповідний інтерфейс «%S»\n"
 
 #: tun-win32.c:326
 msgid "Could not convert interface name to UTF-8\n"
-msgstr ""
+msgstr "Не вдалося перетворити назву інтерфейсу у кодування UTF-8\n"
 
 #: tun-win32.c:339
 #, c-format
 msgid "Using %s device '%s', index %d\n"
-msgstr ""
+msgstr "Використовуємо пристрій %s «%s», індекс %d\n"
 
 #: tun-win32.c:353
 msgid "Could not construct interface name\n"
-msgstr ""
+msgstr "Не вдалося побудувати назву інтерфейсу\n"
 
 #: tun-win32.c:379
 msgid "No Windows-TAP adapters found. Is the driver installed?\n"
@@ -6348,6 +6376,8 @@ msgstr "Не знайдено адаптерів Windows-TAP. Чи встано�
 msgid ""
 "Alternatively, specify an interface name to try creating it with Wintun\n"
 msgstr ""
+"Крім того, вкажіть назву інтерфейсу для спроби створення його за допомогою "
+"Wintun\n"
 
 #: tun-win32.c:406
 msgid "TAP device aborted connectivity. Disconnecting.\n"
@@ -6524,26 +6554,26 @@ msgstr "Не вдалося записати вхідний пакет: %s\n"
 
 #: wintun.c:75
 msgid "Could not load wintun.dll\n"
-msgstr ""
+msgstr "Не вдалося завантажити wintun.dll\n"
 
 #: wintun.c:90
 msgid "Could not resolve functions from wintun.dll\n"
-msgstr ""
+msgstr "Не вдалося визначити назви функцій з wintun.dll\n"
 
 #: wintun.c:176
 #, c-format
 msgid "Failed to set Legacy IP address on Wintun: %s\n"
-msgstr ""
+msgstr "Не вдалося встановити застарілу IP-адресу на Wintun: %s\n"
 
 #: wintun.c:188
 #, c-format
 msgid "Failed to create Wintun session: %s"
-msgstr ""
+msgstr "Не вдалося створити сеанс Wintun: %s"
 
 #: wintun.c:197
 #, c-format
 msgid "Loaded Wintun v%d.%d\n"
-msgstr ""
+msgstr "Завантажено Wintun v%d.%d\n"
 
 #: xml.c:75 xml.c:100
 #, c-format

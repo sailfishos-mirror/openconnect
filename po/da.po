@@ -5,7 +5,7 @@
 # Kim Iskov <kimiskov@gmail.com>, 2010.
 # Joe Hansen <joedalton2@yahoo.dk>, 2011, 2012.
 # Alan Mortensen <alanmortensen.am@gmail.com>, 2017-19.
-# scootergrisen, 2020.
+# scootergrisen, 2020-2021.
 #
 # Using -> Anvender (for at undgå forvirring om Bruger er navne- eller udsagnsord)
 #
@@ -14,7 +14,7 @@ msgstr ""
 "Project-Id-Version: network-manager-openconnect master\n"
 "Report-Msgid-Bugs-To: openconnect-devel@lists.infradead.org\n"
 "POT-Creation-Date: 2021-05-12 23:02+0100\n"
-"PO-Revision-Date: 2020-12-30 00:00+0200\n"
+"PO-Revision-Date: 2021-04-29 00:00+0200\n"
 "Last-Translator: scootergrisen\n"
 "Language-Team: Danish <dansk@dansk-gruppen.dk>\n"
 "Language: da\n"
@@ -395,7 +395,7 @@ msgstr "Ingen DSPREAUTH-cookie; forsøger ikke TNCC\n"
 #: auth-juniper.c:193
 #, c-format
 msgid "Trying to run TNCC/Host Checker Trojan script '%s'.\n"
-msgstr ""
+msgstr "Prøver at køre TNCC-/værtstjekker-trojanscriptet “%s”.\n"
 
 #: auth-juniper.c:242
 #, c-format
@@ -454,17 +454,19 @@ msgstr "Kunne ikke finde eller fortolke webformular på loginside\n"
 
 #: auth-juniper.c:530
 msgid "Encountered form with no 'name' or 'id'\n"
-msgstr ""
+msgstr "Stødte på formular uden “name” eller “id”\n"
 
 #: auth-juniper.c:559
 #, c-format
 msgid "Form action (%s) likely indicates that TNCC/Host Checker failed.\n"
 msgstr ""
+"Formularhandling (%s) indikerer sandsynligvis at TNCC/værtstjekker "
+"mislykkedes.\n"
 
 #: auth-juniper.c:565
 #, c-format
 msgid "Unknown form (name '%s', id '%s')\n"
-msgstr ""
+msgstr "Ukendt formular (navn “%s”, id “%s”)\n"
 
 #: auth-juniper.c:568 f5.c:162
 #, c-format
@@ -609,7 +611,7 @@ msgstr "Kunne ikke skrive midlertidig CSD-scriptfil: %s\n"
 #: auth.c:1137
 #, c-format
 msgid "Trying to run CSD Trojan script '%s'.\n"
-msgstr ""
+msgstr "Prøver at køre CSD-trojanscriptet “%s”.\n"
 
 #: auth.c:1149
 #, c-format
@@ -632,7 +634,7 @@ msgstr ""
 #: auth.c:1164
 #, c-format
 msgid "CSD script '%s' completed successfully.\n"
-msgstr ""
+msgstr "CSD-scriptet “%s” blev gennemført.\n"
 
 #: auth.c:1192
 #, c-format
@@ -1185,64 +1187,64 @@ msgstr ""
 #: f5.c:159
 #, c-format
 msgid "Unknown form ID '%s' (expected 'auth_form')\n"
-msgstr ""
+msgstr "Ukendt formular-id “%s” (forventede “auth_form”)\n"
 
 #: f5.c:242
 msgid "Failed to parse F5 profile response\n"
-msgstr ""
+msgstr "Kunne ikke fortolke svar fra F5-profil\n"
 
 #: f5.c:284
 msgid "Failed to find VPN profile parameters\n"
-msgstr ""
+msgstr "Kunne ikke finde VPN-profilparametre\n"
 
 #: f5.c:327
 msgid "Failed to parse F5 options response\n"
-msgstr ""
+msgstr "Kunne ikke fortolke svar fra F5-tilvalg\n"
 
 #: f5.c:361
 #, c-format
 msgid "Idle timeout is %d minutes\n"
-msgstr ""
+msgstr "Ventetid er %d minutter\n"
 
 #: f5.c:371
 msgid "Got default routes\n"
-msgstr ""
+msgstr "Modtog standardrute\n"
 
 #: f5.c:374
 #, c-format
 msgid "Got SplitTunneling0 value of %d\n"
-msgstr ""
+msgstr "Modtog SplitTunneling0-værdien %d\n"
 
 #: f5.c:383
 #, c-format
 msgid "Got DNS server %s\n"
-msgstr ""
+msgstr "Modtog DNS-serveren %s\n"
 
 #: f5.c:390
 #, c-format
 msgid "Got WINS/NBNS server %s\n"
-msgstr ""
+msgstr "Modtog WINS-/NBNS-serveren %s\n"
 
 #: f5.c:397 fortinet.c:362 fortinet.c:427
 #, c-format
 msgid "Got search domain %s\n"
-msgstr ""
+msgstr "Modtog søgedomænet %s\n"
 
 #: f5.c:427
 #, c-format
 msgid "Got split exclude route %s\n"
-msgstr ""
+msgstr "Modtog opdelt ekskludér-rute %s\n"
 
 #: f5.c:431
 #, c-format
 msgid "Got split include route %s\n"
-msgstr ""
+msgstr "Modtog opdelt inkludér-rute %s\n"
 
 #. XX: DTLS always uses same port as TLS?
 #: f5.c:439 fortinet.c:327
 #, c-format
 msgid "DTLS is enabled on port %d\n"
-msgstr ""
+msgstr "DTLS er aktiveret på port %d\n"
 
 #: f5.c:451
 msgid ""
@@ -1252,36 +1254,36 @@ msgstr ""
 
 #: f5.c:472 fortinet.c:493
 msgid "Failed to find VPN options\n"
-msgstr ""
+msgstr "Kunne ikke finde VPN-tilvalg\n"
 
 #: f5.c:495 fortinet.c:358
 #, c-format
 msgid "Got Legacy IP address %s\n"
-msgstr ""
+msgstr "Modtog forældet IP-adresse %s\n"
 
 #: f5.c:500 fortinet.c:419 fortinet.c:422
 #, c-format
 msgid "Got IPv6 address %s\n"
-msgstr ""
+msgstr "Modtog IPv6-adresse %s\n"
 
 #: f5.c:550
 #, c-format
 msgid "Got profile parameters '%s'\n"
-msgstr ""
+msgstr "Modtog profilparametrene “%s”\n"
 
 #: f5.c:570
 #, c-format
 msgid "Got ipv4 %d ipv6 %d hdlc %d ur_Z '%s'\n"
-msgstr ""
+msgstr "Modtog ipv4 %d ipv6 %d hdlc %d ur_Z “%s”\n"
 
 #: f5.c:599
 msgid "Error establishing F5 connection\n"
-msgstr ""
+msgstr "Fejl ved etablering af F5-forbindelse\n"
 
 #: fortinet.c:128
 #, c-format
 msgid "Got login realm '%s'\n"
-msgstr ""
+msgstr "Modtog loginrealmet “%s”\n"
 
 #: fortinet.c:309
 msgid "Failed to parse Fortinet config XML\n"
@@ -1295,12 +1297,12 @@ msgstr "Ventetid er %d minutter.\n"
 #: fortinet.c:353
 #, c-format
 msgid "Reported platform is %s\n"
-msgstr ""
+msgstr "Rapporteret platform er %s\n"
 
 #: fortinet.c:366 fortinet.c:431
 #, c-format
 msgid "Got IPv%d DNS server %s\n"
-msgstr ""
+msgstr "Modtog IPv%d DNS-serveren %s\n"
 
 #: fortinet.c:372 fortinet.c:437
 #, c-format
@@ -1319,7 +1321,7 @@ msgstr ""
 
 #: fortinet.c:535
 msgid "No cookie named SVPNCOOKIE.\n"
-msgstr ""
+msgstr "Ingen cookie ved navn SVPNCOOKIE.\n"
 
 #: fortinet.c:564
 msgid ""
@@ -1333,12 +1335,12 @@ msgstr ""
 
 #: fortinet.c:694
 msgid "Did not receive expected svrhello response.\n"
-msgstr ""
+msgstr "Modtog ikke forventet svrhello-svar.\n"
 
 #: fortinet.c:705
 #, c-format
 msgid "svrhello status was \"%.*s\" rather than \"ok\"\n"
-msgstr ""
+msgstr "svrhello-status var “%.*s” fremfor “ok”\n"
 
 #: gnutls-dtls.c:186
 msgid "Deferring DTLS resumption until CSTP generates a PSK\n"
@@ -1477,42 +1479,42 @@ msgstr "Mislykket select() for TLS"
 
 #: gnutls.c:129 openssl.c:187
 msgid "TLS/DTLS write cancelled\n"
-msgstr ""
+msgstr "TLS-/DTLS-skrivning afbrudt\n"
 
 #: gnutls.c:133
 #, c-format
 msgid "Failed to write to TLS/DTLS socket: %s\n"
-msgstr ""
+msgstr "Kunne ikke skrive til TLS-/DTLS-sokkel: %s\n"
 
 #: gnutls.c:179
 msgid "Failed select() for TLS/DTLS"
-msgstr ""
+msgstr "Mislykket select() for TLS/DTLS"
 
 #: gnutls.c:184 gnutls.c:280 openssl.c:237 openssl.c:304
 msgid "TLS/DTLS read cancelled\n"
-msgstr ""
+msgstr "TLS-/DTLS-læsning afbrudt\n"
 
 #. We've seen this with HTTP 1.0 responses followed by abrupt
 #. socket closure and no clean SSL shutdown.
 #. https://bugs.launchpad.net/bugs/1225276
 #: gnutls.c:197
 msgid "TLS/DTLS socket closed uncleanly\n"
-msgstr ""
+msgstr "TLS-/DTLS-sokkel lukkede ikke ordentligt\n"
 
 #: gnutls.c:207 gnutls.c:289
 #, c-format
 msgid "Failed to read from TLS/DTLS socket: %s\n"
-msgstr ""
+msgstr "Kunne ikke læse fra TLS-/DTLS-sokkel: %s\n"
 
 #: gnutls.c:306 openssl.c:321
 #, c-format
 msgid "Attempted to read from non-existent %s session\n"
-msgstr ""
+msgstr "Forsøgte at læse fra ikkeeksisterende %s-session\n"
 
 #: gnutls.c:318
 #, c-format
 msgid "Read error on %s session: %s\n"
-msgstr ""
+msgstr "Læsefejl på %s-session: %s\n"
 
 #: gnutls.c:330 openssl.c:346
 #, c-format
@@ -1522,7 +1524,7 @@ msgstr ""
 #: gnutls.c:364
 #, c-format
 msgid "Write error on %s session: %s\n"
-msgstr ""
+msgstr "Skrivefejl på %s-session: %s\n"
 
 #: gnutls.c:378
 msgid "Could not extract expiration time of certificate\n"
@@ -2388,7 +2390,7 @@ msgstr "Udfordring: %s\n"
 #: gpst.c:268
 #, c-format
 msgid "Response was: %s\n"
-msgstr ""
+msgstr "Svaret var: %s\n"
 
 #: gpst.c:304
 #, c-format
@@ -2550,7 +2552,7 @@ msgstr ""
 #: gpst.c:920
 #, c-format
 msgid "Trying to run HIP Trojan script '%s'.\n"
-msgstr ""
+msgstr "Prøver at køre HIP-trojanscriptet “%s”.\n"
 
 #: gpst.c:928
 msgid "Failed to create pipe for HIP script\n"
@@ -3101,11 +3103,11 @@ msgstr "Kompatibel med Pulse Connect Secure SSL VPN"
 
 #: library.c:197
 msgid "F5 BIG-IP SSL VPN"
-msgstr ""
+msgstr "F5 BIG-IP SSL VPN"
 
 #: library.c:198
 msgid "Compatible with F5 BIG-IP SSL VPN"
-msgstr ""
+msgstr "Kompatibel med F5 BIG-IP SSL VPN"
 
 #: library.c:217
 msgid "Fortinet SSL VPN"
@@ -3113,11 +3115,11 @@ msgstr ""
 
 #: library.c:218
 msgid "Compatible with FortiGate SSL VPN"
-msgstr ""
+msgstr "Kompatibel med FortiGate SSL VPN"
 
 #: library.c:237
 msgid "PPP over TLS"
-msgstr ""
+msgstr "PPP over TLS"
 
 #: library.c:238
 msgid "Unauthenticated RFC1661/RFC1662 PPP over TLS, for testing"
@@ -4784,12 +4786,12 @@ msgstr ""
 #: openssl.c:334
 #, c-format
 msgid "Read error on %s session: %d\n"
-msgstr ""
+msgstr "Læsefejl på %s-session: %d\n"
 
 #: openssl.c:369
 #, c-format
 msgid "Write error on %s session: %d\n"
-msgstr ""
+msgstr "Skrivefejl på %s-session: %d\n"
 
 #: openssl.c:442
 #, c-format
@@ -5293,7 +5295,7 @@ msgstr ""
 
 #: ppp.c:1194
 msgid "Invalid PPP encapsulation\n"
-msgstr ""
+msgstr "Ugyldig PPP-indkapsling\n"
 
 #: ppp.c:1203
 #, c-format
