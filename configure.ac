@@ -449,7 +449,10 @@ if test -n "$default_gnutls_priority"; then
    AC_DEFINE_UNQUOTED([DEFAULT_PRIO], ["$default_gnutls_priority"], [The GnuTLS priority string])
 fi
 
-tss2lib=
+AC_ARG_WITH([gnutls-tss2],
+   AS_HELP_STRING([--with-gnutls-tss2], [Specify TSS2 library (tss2-esys, ibmtss)]))
+
+tss2lib=none
 case "$ssl_library" in
     OpenSSL)
 	oldLIBS="${LIBS}"
@@ -596,7 +599,6 @@ case "$ssl_library" in
 [will still be disabled at runtime), or build with another version.])])
 	   AC_MSG_RESULT(no)
        fi
-
 	AC_CHECK_FUNC(gnutls_system_key_add_x509,
 		      [AC_DEFINE(HAVE_GNUTLS_SYSTEM_KEYS, 1, [From GnuTLS 3.4.0])], [])
 	AC_CHECK_FUNC(gnutls_pkcs11_add_provider,
@@ -606,7 +608,7 @@ case "$ssl_library" in
 					  AC_SUBST(P11KIT_PC, p11-kit-1)],
 					 [:])], [])
 	LIBS="$oldlibs -ltspi"
-	AC_MSG_CHECKING([for tss library])
+	AC_MSG_CHECKING([for Trousers tss library])
 	AC_LINK_IFELSE([AC_LANG_PROGRAM([
 					   #include <trousers/tss.h>
 					   #include <trousers/trousers.h>],[
@@ -622,25 +624,41 @@ case "$ssl_library" in
 
 	PKG_CHECK_MODULES(TASN1, [libtasn1], [have_tasn1=yes], [have_tasn1=no])
 	if test "$have_tasn1" = "yes"; then
-	   PKG_CHECK_MODULES(TSS2_ESYS, [tss2-esys tss2-mu],
+	   if test "$with_gnutls_tss2" = "yes" -o "$with_gnutls_tss2" = "tss2-esys" -o "$with_gnutls_tss2" = ""; then
+	      PKG_CHECK_MODULES(TSS2_ESYS, [tss2-esys tss2-mu],
 			     [AC_DEFINE(HAVE_TSS2, 1, [Have TSS2])
 			      AC_SUBST(TPM2_CFLAGS, ['$(TASN1_CFLAGS) $(TSS2_ESYS_CFLAGS)'])
 			      AC_SUBST(TPM2_LIBS, ['$(TASN1_LIBS) $(TSS2_ESYS_LIBS)'])
 			      tss2lib=tss2-esys],
 			     [:])
-	   if test "$tss2lib" = ""; then
-	       AC_CHECK_LIB([tss], [TSS_Create], [tss2inc=tss2
-						  tss2lib=tss],
-			    AC_CHECK_LIB([ibmtss], [TSS_Create], [tss2inc=ibmtss
-								  tss2lib=ibmtss], []))
-	       if test "$tss2lib" != ""; then
-		   AC_CHECK_HEADER($tss2inc/tss.h,
-				   [AC_DEFINE_UNQUOTED(HAVE_TSS2, $tss2inc, [TSS2 library])
-				    AC_SUBST(TSS2_LIBS, [-l$tss2lib])
-				    AC_SUBST(TPM2_CFLAGS, ['$(TASN1_CFLAGS)'])
-				    AC_SUBST(TPM2_LIBS, ['$(TASN1_LIBS) $(TSS2_LIBS)'])],
-				   [tss2lib=])
-	       fi
+	   fi
+	   if test "$tss2lib" = "none"; then
+	      if test "$with_gnutls_tss2" = "yes" -o "$with_gnutls_tss2" = "ibmtss" -o "$with_gnutls_tss2" = ""; then
+
+		 # The Fedora 'tss2-devel' package puts headers in /usr/include/ibmtss/
+		 # and the library is named libibmtss.so. The Ubuntu libtss-dev package
+		 # puts headers in /usr/include/${host}/tss2/ and the library is named
+		 # libtss.so. Neither ships a pkg-config file at the time I write this.
+		 AC_CHECK_LIB([tss], [TSS_Create], [tss2inc=tss2
+						    tss2lib=tss],
+			      AC_CHECK_LIB([ibmtss], [TSS_Create],
+					   [tss2inc=ibmtss
+					    tss2lib=ibmtss], []))
+
+		 if test "$tss2lib" != "none"; then
+		    AC_MSG_CHECKING([For <${tss2inc}/tss.h>])
+		    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#define TPM_POSIX
+		                                          #include <${tss2inc}/tss.h>
+							  ],[])],
+				      [AC_MSG_RESULT(yes)
+				       AC_DEFINE_UNQUOTED(HAVE_TSS2, $tss2inc, [TSS2 library])
+				       AC_SUBST(TSS2_LIBS, [-l$tss2lib])
+				       AC_SUBST(TPM2_CFLAGS, ['$(TASN1_CFLAGS) -DTPM_POSIX'])
+				       AC_SUBST(TPM2_LIBS, ['$(TASN1_LIBS) $(TSS2_LIBS)'])],
+				      [AC_MSG_RESULT(no)
+				       tss2lib=none])
+		 fi
+	      fi
 	   fi
 	fi
 
@@ -653,6 +671,33 @@ case "$ssl_library" in
     *)
 	# This should never happen
 	AC_MSG_ERROR([No SSL library selected])
+	;;
+esac
+
+case x"$with_gnutls_tss2" in
+    xtss2-esys)
+	if test "$tss2lib" != "tss2-esys"; then
+	   AC_MSG_ERROR([tss2-esys requested but not found])
+	fi
+	;;
+
+    xibmtss|xtss)
+	if test "$tss2lib" != "ibmtss" -a "$tss2lib" != "tss"; then
+	   AC_MSG_ERROR([ibmtss requested but not found: $tss2lib])
+	fi
+	;;
+
+    x|xno)
+	;;
+
+    xyes)
+	if test "$tss2lib" = "none" -a "$with_gnutls_tss2" = "yes"; then
+	   AC_MSG_ERROR([No TSS2 library found])
+	fi
+	;;
+
+     *)
+        AC_MSG_ERROR([Unknown value for gnutls-tss2])
 	;;
 esac
 
@@ -1235,6 +1280,9 @@ AC_DEFUN([SUMMARY],
 echo "BUILD OPTIONS:"
 SUMMARY([SSL library], [$ssl_library])
 SUMMARY([[PKCS#11 support]], [$pkcs11_support])
+if test "$ssl_library" = "GnuTLS"; then
+ SUMMARY([TSS2 library], [$tss2lib])
+fi
 SUMMARY([DTLS support], [$dtls])
 SUMMARY([ESP support], [$esp])
 SUMMARY([libproxy support], [$libproxy_pkg])
