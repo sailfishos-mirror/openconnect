@@ -35,8 +35,11 @@ USER_KEYS += $(certsdir)/ec-key-pkcs1.pem $(certsdir)/ec-key-pkcs1.der \
 	$(certsdir)/ec-key-pkcs8-pbes2-sha1.pem $(certsdir)/ec-key-pkcs8-pbes2-sha1.der \
 	$(certsdir)/ec-key-aes256-cbc-sha256.p12
 
-SWTPM_KEYS = $(certsdir)/ec-key-swtpm.pem $(certsdir)/swtpm-ec-key-tpm.pem $(certsdir)/swtpm-rsa-key-tpm.pem
-SWTPM_CERTS = $(certsdir)/swtpm-ec-cert.pem $(certsdir)/swtpm-rsa-cert.pem
+SWTPM_KEYS = $(certsdir)/ec-key-swtpm.pem $(certsdir)/swtpm-rsa-key-tpm.pem \
+	$(certsdir)/swtpm-ec-key-tpm.pem $(certsdir)/swtpm-ec-p384-key-tpm.pem
+
+SWTPM_CERTS = $(certsdir)/swtpm-ec-cert.pem $(certsdir)/swtpm-rsa-cert.pem \
+	$(certsdir)/swtpm-ec-p384-cert.pem
 
 HWTPM_KEYS =
 HWTPM_CERTS =
@@ -280,11 +283,20 @@ SWTPM_IOCTL_RUN = $(SWTPM_PRELOAD) $(SWTPM_IOCTL) --tcp 127.0.0.1:2322
 START_SWTPM := \
 	mkdir -p $(SWTPM_TMPDIR); \
 	if ! $(SWTPM_IOCTL_RUN) -g; then \
+		if [ -r $(srcdir)/swtpm-perm.state ]; then \
+			$(SWTPM_PRELOAD) $(SWTPM) socket --tpm2 \
+				--server type=tcp,port=2321 --ctrl type=tcp,port=2322 \
+				--tpmstate dir=`pwd`/$(SWTPM_TMPDIR) -d; \
+			sleep 0.5; \
+			$(SWTPM_IOCTL_RUN) --load permanent $(srcdir)/swtpm-perm.state; \
+			$(SWTPM_IOCTL_RUN) -i; \
+			$(SWTPM_IOCTL_RUN) -s; \
+		fi; \
 		$(SWTPM_PRELOAD) $(SWTPM) socket --tpm2 --server type=tcp,port=2321 --ctrl type=tcp,port=2322 \
 			--tpmstate dir=`pwd`/$(SWTPM_TMPDIR) --flags not-need-init,startup-clear -d; \
 	fi
 
-swtpm-perm.state: $(SWTPM_KEYS) $(SWTPM_CERTS)
+swtpm-perm.state: | $(SWTPM_KEYS) $(SWTPM_CERTS)
 	$(SWTPM_IOCTL_RUN) --save permanent $@
 	$(SWTPM_IOCTL_RUN) -s
 	rm -rf $(SWTPM_TMPDIR)
@@ -307,6 +319,10 @@ ec-key-hwtpm.pem: certs/ec-key-pkcs8.pem
 $(certsdir)/swtpm-ec-key-tpm.pem:
 	$(START_SWTPM)
 	$(SWTPM_PRELOAD) $(TPM2TSS_GENKEY) -t swtpm -a ecdsa $@
+
+$(certsdir)/swtpm-ec-p384-key-tpm.pem:
+	$(START_SWTPM)
+	$(SWTPM_PRELOAD) $(TPM2TSS_GENKEY) -t swtpm -c nist_p384 -a ecdsa $@
 
 hwtpm-ec-key-tpm.pem:
 	$(TPM2TSS_GENKEY) -t device -a ecdsa $@
