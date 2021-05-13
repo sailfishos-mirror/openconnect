@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: network-manager-openconnect\n"
 "Report-Msgid-Bugs-To: openconnect-devel@lists.infradead.org\n"
-"POT-Creation-Date: 2021-05-12 23:02+0100\n"
-"PO-Revision-Date: 2021-04-22 10:50+0300\n"
+"POT-Creation-Date: 2021-05-13 19:37+0100\n"
+"PO-Revision-Date: 2021-05-13 13:33+0300\n"
 "Last-Translator: Yuri Chornoivan <yurchor@ukr.net>\n"
 "Language-Team: Ukrainian <kde-i18n-uk@kde.org>\n"
 "Language: uk\n"
@@ -22,7 +22,7 @@ msgstr ""
 
 #: array.c:131
 msgid "No ANsession cookie found\n"
-msgstr ""
+msgstr "Не знайдено куки ANsession\n"
 
 #: array.c:159 http.c:423
 #, c-format
@@ -32,42 +32,42 @@ msgstr "Некоректна кука «%s»\n"
 #: array.c:365
 #, c-format
 msgid "Found DNS server %s\n"
-msgstr ""
+msgstr "Виявлено запис сервера DNS %s\n"
 
 #: array.c:392
 #, c-format
 msgid "Got search domain '%s'\n"
-msgstr ""
+msgstr "Отримано домен пошуку «%s»\n"
 
 #: array.c:479
 #, c-format
 msgid "Unknown Array config element '%s'\n"
-msgstr ""
+msgstr "Невідомий елемент налаштувань Array «%s»\n"
 
 #: array.c:518
 #, c-format
 msgid "Initial config: Speed tunnel %d, enc %d, DPD %d\n"
-msgstr ""
+msgstr "Початкове налаштовування: швидк. тунелю %d, код. %d, DPD %d\n"
 
 #: array.c:549
 msgid "Short write in Array JSON negotiation\n"
-msgstr ""
+msgstr "Недостатньо даних для запису під час узгодження Array JSON\n"
 
 #: array.c:558
 msgid "Failed to read Array JSON response\n"
-msgstr ""
+msgstr "Не вдалося прочитати відповідь сервера у форматі Array JSON\n"
 
 #: array.c:567
 msgid "Unexpected response to Array JSON request\n"
-msgstr ""
+msgstr "Неочікувана відповідь на запит у форматі Array JSON\n"
 
 #: array.c:580
 msgid "Failed to parse Array JSON response\n"
-msgstr ""
+msgstr "Не вдалося обробити відповідь у форматі Array JSON\n"
 
 #: array.c:660
 msgid "Error creating array negotiation request\n"
-msgstr ""
+msgstr "Помилка під час спроби створити запити щодо узгодження масиву\n"
 
 #: array.c:676 f5.c:666 http.c:1239 oncp.c:518 pulse.c:1369
 #, c-format
@@ -77,27 +77,28 @@ msgstr "Неочікуваний результат %d від сервера\n"
 #: array.c:699
 msgid "Error building Array DTLS negotiation packet\n"
 msgstr ""
+"Помилка під час спроби побудувати пакет узгодження у форматі Array JSON\n"
 
 #: array.c:717 array.c:764
 msgid "Short write in array negotiation\n"
-msgstr ""
+msgstr "Недостатньо даних для запису під час узгодження масиву\n"
 
 #: array.c:727
 msgid "Failed to read UDP negotiation response\n"
-msgstr ""
+msgstr "Не вдалося прочитати відповідь щодо узгодження UDP\n"
 
 #: array.c:739
 #, c-format
 msgid "DTLS enabled on port %d\n"
-msgstr ""
+msgstr "На порту %d увімкнено DTLS\n"
 
 #: array.c:751
 msgid "Refusing non-DTLS UDP tunnel\n"
-msgstr ""
+msgstr "Відмовляємо в UDP-тунелі без DTLS\n"
 
 #: array.c:773
 msgid "Failed to read ipff response\n"
-msgstr ""
+msgstr "Не вдалося прочитати відповідь ipff\n"
 
 #: array.c:826 array.c:1061 array.c:1171 cstp.c:926 dtls.c:280 dtls.c:639
 #: esp.c:161 gpst.c:1135 mainloop.c:69 oncp.c:863 ppp.c:1093 ppp.c:1657
@@ -113,7 +114,7 @@ msgstr "Отримано надто короткий пакет (%d байтів
 #: array.c:853 array.c:1198
 #, c-format
 msgid "Receive control packet of type %x:\n"
-msgstr ""
+msgstr "Отримання керівного пакета типу %x:\n"
 
 #: array.c:860 pulse.c:2661
 #, c-format
@@ -139,23 +140,23 @@ msgstr ""
 
 #: array.c:938
 msgid "TCP Dead Peer Detection detected dead peer!\n"
-msgstr ""
+msgstr "DPD TCP виявлено непрацездатний вузол!\n"
 
 #: array.c:942
 msgid "TCP reconnect failed\n"
-msgstr ""
+msgstr "Не вдалося повторно встановити з'єднання TCP\n"
 
 #: array.c:958
 msgid "Send TCP DPD\n"
-msgstr ""
+msgstr "Надсилання DPD TCP\n"
 
 #: array.c:975
 msgid "Send TCP Keepalive\n"
-msgstr ""
+msgstr "Надсилання Keepalive TCP\n"
 
 #: array.c:991
 msgid "Sending DTLS off packet\n"
-msgstr ""
+msgstr "Надсилаємо пакет вимикання DTLS\n"
 
 #: array.c:1001 cstp.c:1181 oncp.c:1194
 #, c-format
@@ -172,19 +173,20 @@ msgstr "Не вдалося отримати відповідь щодо роз�
 
 #: array.c:1085
 msgid "DTLS session established\n"
-msgstr ""
+msgstr "Встановлено сеанс DTLS\n"
 
 #: array.c:1098
 msgid "Received Legacy IP over DTLS; assuming established\n"
 msgstr ""
+"Отримано застарілий IP з використанням DTLS; припускаємо встановлення\n"
 
 #: array.c:1106
 msgid "Received IPv6 over DTLS; assuming established\n"
-msgstr ""
+msgstr "Отримано IPv6 з використанням DTLS; припускаємо встановлення\n"
 
 #: array.c:1112
 msgid "Received unknown DTLS packet\n"
-msgstr ""
+msgstr "Отримано невідомий пакет DTLS\n"
 
 #: array.c:1120 ppp.c:1723
 msgid "Error creating connect request for DTLS session\n"
@@ -1113,22 +1115,22 @@ msgstr "Отримано пакет ESP із некоректним SPI 0x%08x\n
 #: esp.c:202
 #, c-format
 msgid "Received ESP Legacy IP packet of %d bytes\n"
-msgstr ""
+msgstr "Отримано пакет застарілого IP ESP розміром %d байтів\n"
 
 #: esp.c:205
 #, c-format
 msgid "Received ESP Legacy IP packet of %d bytes (LZO-compressed)\n"
-msgstr ""
+msgstr "Отримано пакет застарілого IP ESP розміром %d байтів (стиснено LZO)\n"
 
 #: esp.c:208
 #, c-format
 msgid "Received ESP IPv6 packet of %d bytes\n"
-msgstr ""
+msgstr "Отримано пакет IPv6 ESP розміром %d байтів\n"
 
 #: esp.c:212
 #, c-format
 msgid "Received ESP packet of %d bytes with unrecognised payload type %02x\n"
-msgstr ""
+msgstr "Отримано пакет ESP у %d байтів із нерозпізнаним типом вмісту %02x\n"
 
 #: esp.c:219
 #, c-format
@@ -1186,7 +1188,7 @@ msgstr "Не вдалося надіслати пакет ESP: %s\n"
 #: esp.c:374
 #, c-format
 msgid "Sent ESP IPv%d packet of %d bytes\n"
-msgstr ""
+msgstr "Надіслано пакет IPv%d ESP розміром %d байтів\n"
 
 #: esp.c:445
 msgid "Failed to generate random keys for ESP\n"
@@ -1565,7 +1567,7 @@ msgstr "Строк дії сертифіката збігає"
 
 #: gnutls.c:384 openssl.c:1678
 msgid "Secondary client certificate has expired at"
-msgstr ""
+msgstr "Строк дії вторинного сертифіката збігає"
 
 #: gnutls.c:386 openssl.c:1683
 msgid "Client certificate expires soon at"
@@ -1573,7 +1575,7 @@ msgstr "Строк дії сертифіката клієнта збігає"
 
 #: gnutls.c:387 openssl.c:1684
 msgid "Secondary client certificate expires soon at"
-msgstr ""
+msgstr "Строк дії вторинного сертифіката клієнта збігає"
 
 #: gnutls.c:436 openssl.c:873
 #, c-format
@@ -1615,7 +1617,7 @@ msgstr "Введіть пароль PKCS#12:"
 
 #: gnutls.c:536 openssl.c:638
 msgid "Enter secondary PKCS#12 pass phrase:"
-msgstr ""
+msgstr "Введіть вторинний пароль PKCS#12:"
 
 #: gnutls.c:559
 #, c-format
@@ -1630,7 +1632,7 @@ msgstr "Не вдалося завантажити сертифікат PKCS#12:
 #: gnutls.c:572
 #, c-format
 msgid "Failed to load secondary PKCS#12 certificate: %s\n"
-msgstr ""
+msgstr "Не вдалося завантажити вторинний сертифікат PKCS#12: %s\n"
 
 #: gnutls.c:645
 #, c-format
@@ -1690,7 +1692,7 @@ msgstr "Введіть пароль до PEM:"
 
 #: gnutls.c:902 openssl.c:515
 msgid "Enter secondary PEM pass phrase:"
-msgstr ""
+msgstr "Введіть вторинний пароль до PEM:"
 
 #: gnutls.c:1001
 msgid "This binary built without system key support\n"
@@ -1728,7 +1730,7 @@ msgstr "Використовуємо файл сертифіката %s\n"
 #: gnutls.c:1084 openssl.c:934
 #, c-format
 msgid "Using secondary certificate file %s\n"
-msgstr ""
+msgstr "Використовуємо вторинний файл сертифіката %s\n"
 
 #: gnutls.c:1113
 msgid "PKCS#11 file contained no certificate\n"
@@ -1746,7 +1748,7 @@ msgstr "Спроба завантаження сертифіката зазна�
 #: gnutls.c:1145
 #, c-format
 msgid "Loading secondary certificate failed: %s\n"
-msgstr ""
+msgstr "Спроба завантаження вторинного сертифіката зазнала невдачі: %s\n"
 
 #: gnutls.c:1160
 #, c-format
@@ -1756,7 +1758,7 @@ msgstr "Використовуємо загальносистемний ключ
 #: gnutls.c:1161
 #, c-format
 msgid "Using secondary system key %s\n"
-msgstr ""
+msgstr "Використовуємо вторинний загальносистемний ключ %s\n"
 
 #: gnutls.c:1167 gnutls.c:1314
 #, c-format
@@ -1856,7 +1858,7 @@ msgstr "Не знайдено сертифіката SSL, який відпов�
 
 #: gnutls.c:1601
 msgid "No secondary certificate found to match private key\n"
-msgstr ""
+msgstr "Не знайдено вторинного сертифіката, який відповідає закритому ключу\n"
 
 #: gnutls.c:1613 openssl.c:662 openssl.c:817
 #, c-format
@@ -1866,7 +1868,7 @@ msgstr "Використовуємо клієнтський сертифікат
 #: gnutls.c:1614 openssl.c:663 openssl.c:818
 #, c-format
 msgid "Using secondary certificate '%s'\n"
-msgstr ""
+msgstr "Використовуємо вторинний сертифікат «%s»\n"
 
 #: gnutls.c:1631 gnutls.c:1641
 msgid "Failed to allocate memory for certificate\n"
@@ -2173,7 +2175,7 @@ msgstr "Введіть пінкод ключа TPM:"
 
 #: gnutls_tpm.c:245
 msgid "Enter secondary key TPM PIN:"
-msgstr ""
+msgstr "Введіть пінкод вторинного ключа TPM:"
 
 #: gnutls_tpm.c:256
 #, c-format
@@ -2188,7 +2190,7 @@ msgstr "Невідомий розмір контрольної суми EC TPM2 
 #: gnutls_tpm2.c:134 gnutls_tpm2.c:177
 #, c-format
 msgid "Not supporting EC sign algo %s\n"
-msgstr ""
+msgstr "Підтримки алгоритму підписування EC %s не передбачено\n"
 
 #: gnutls_tpm2.c:233
 #, c-format
@@ -2242,160 +2244,170 @@ msgstr "Контрольна сума TPM2 є надто великою: %d > %d
 #, c-format
 msgid "PSS encoding failed; hash size %d too large for RSA key %d\n"
 msgstr ""
+"Помилка кодування PSS; розмір хешу %d є надто великим для ключа RSA %d\n"
 
 #: gnutls_tpm2.c:583
 #, c-format
 msgid "TPMv2 RSA sign called for unknown algorithm %s\n"
-msgstr ""
+msgstr "Викликано підпис RSA TPMv2 для невідомого алгоритму %s\n"
 
-#: gnutls_tpm2_esys.c:175
+#: gnutls_tpm2_esys.c:177
 msgid "TPM2 password too long; truncating\n"
 msgstr "Пароль TPM2 є надто довгим; обрізаємо\n"
 
-#: gnutls_tpm2_esys.c:193
+#: gnutls_tpm2_esys.c:195
 msgid "owner"
 msgstr "власник"
 
-#: gnutls_tpm2_esys.c:194
+#: gnutls_tpm2_esys.c:196
 msgid "null"
 msgstr "null"
 
-#: gnutls_tpm2_esys.c:195
+#: gnutls_tpm2_esys.c:197
 msgid "endorsement"
 msgstr "схвалення"
 
-#: gnutls_tpm2_esys.c:196
+#: gnutls_tpm2_esys.c:198
 msgid "platform"
 msgstr "платформа"
 
-#: gnutls_tpm2_esys.c:200
+#: gnutls_tpm2_esys.c:202
 #, c-format
 msgid "Creating primary key under %s hierarchy.\n"
 msgstr "Створюємо основний ключ у ієрархії %s.\n"
 
-#: gnutls_tpm2_esys.c:208 gnutls_tpm2_ibm.c:265
+#: gnutls_tpm2_esys.c:210 gnutls_tpm2_ibm.c:265
 #, c-format
 msgid "Enter TPM2 %s hierarchy password:"
 msgstr "Введіть пароль до ієрархії TPM2 %s:"
 
-#: gnutls_tpm2_esys.c:216 gnutls_tpm2_esys.c:314 gnutls_tpm2_esys.c:390
+#: gnutls_tpm2_esys.c:218 gnutls_tpm2_esys.c:316 gnutls_tpm2_esys.c:392
 #, c-format
 msgid "TPM2 Esys_TR_SetAuth failed: 0x%x\n"
 msgstr "Помилка Esys_TR_SetAuth TPM2: 0x%x\n"
 
-#: gnutls_tpm2_esys.c:228
+#: gnutls_tpm2_esys.c:230
 msgid "TPM2 Esys_CreatePrimary owner auth failed\n"
 msgstr "Не вдалося пройти розпізнавання власника Esys_CreatePrimary TPM2\n"
 
-#: gnutls_tpm2_esys.c:233
+#: gnutls_tpm2_esys.c:235
 #, c-format
 msgid "TPM2 Esys_CreatePrimary failed: 0x%x\n"
 msgstr "Помилка Esys_CreatePrimary TPM2: 0x%x\n"
 
-#: gnutls_tpm2_esys.c:252
+#: gnutls_tpm2_esys.c:254
 msgid "Establishing connection with TPM.\n"
 msgstr "Встановлюємо з'єднання з TPM.\n"
 
-#: gnutls_tpm2_esys.c:257
+#: gnutls_tpm2_esys.c:259
 #, c-format
 msgid "TPM2 Esys_Initialize failed: 0x%x\n"
 msgstr "Помилка Esys_Initialize TPM2: 0x%x\n"
 
-#: gnutls_tpm2_esys.c:265
+#: gnutls_tpm2_esys.c:267
 msgid ""
 "TPM2 was already started up thus false positive failing in tpm2tss log.\n"
 msgstr ""
 "TPM2 вже було запущено, отже, маємо фальшиве спрацювання у журналі tpm2tss.\n"
 
-#: gnutls_tpm2_esys.c:268
+#: gnutls_tpm2_esys.c:270
 #, c-format
 msgid "TPM2 Esys_Startup failed: 0x%x\n"
 msgstr "Помилка Esys_Startup TPM2: 0x%x\n"
 
-#: gnutls_tpm2_esys.c:281
+#: gnutls_tpm2_esys.c:283
 #, c-format
 msgid "Esys_TR_FromTPMPublic failed for handle 0x%x: 0x%x\n"
 msgstr "Помилка Esys_TR_FromTPMPublic для обробника 0x%x: 0x%x\n"
 
-#: gnutls_tpm2_esys.c:305 gnutls_tpm2_ibm.c:284
+#: gnutls_tpm2_esys.c:307 gnutls_tpm2_ibm.c:284
 msgid "Enter TPM2 parent key password:"
 msgstr "Введіть пароль до батьківського ключа TPM2:"
 
-#: gnutls_tpm2_esys.c:306 gnutls_tpm2_ibm.c:285
+#: gnutls_tpm2_esys.c:308 gnutls_tpm2_ibm.c:285
 msgid "Enter secondary TPM2 parent key password:"
-msgstr ""
+msgstr "Введіть пароль до вторинного батьківського ключа TPM2:"
 
-#: gnutls_tpm2_esys.c:320
+#: gnutls_tpm2_esys.c:322
 #, c-format
 msgid "Loading TPM2 key blob, parent %x.\n"
 msgstr "Завантажуємо бінарний ключ TPM2, батьківський запис — %x.\n"
 
-#: gnutls_tpm2_esys.c:328
+#: gnutls_tpm2_esys.c:330
 msgid "TPM2 Esys_Load auth failed\n"
 msgstr "Не пройдено розпізнавання Esys_Load TPM2\n"
 
-#: gnutls_tpm2_esys.c:334
+#: gnutls_tpm2_esys.c:336
 #, c-format
 msgid "TPM2 Esys_Load failed: 0x%x\n"
 msgstr "Помилка Esys_Load TPM2: 0x%x\n"
 
-#: gnutls_tpm2_esys.c:344
+#: gnutls_tpm2_esys.c:346
 #, c-format
 msgid "TPM2 Esys_FlushContext for generated primary failed: 0x%x\n"
 msgstr "Помилка Esys_FlushContext TPM2 для створеного основного ключа: 0x%x\n"
 
-#: gnutls_tpm2_esys.c:378 gnutls_tpm2_ibm.c:375 gnutls_tpm2_ibm.c:475
+#: gnutls_tpm2_esys.c:380 gnutls_tpm2_ibm.c:375 gnutls_tpm2_ibm.c:475
 msgid "Enter TPM2 key password:"
 msgstr "Введіть пароль до ключа TPM2:"
 
-#: gnutls_tpm2_esys.c:379 gnutls_tpm2_ibm.c:376
+#: gnutls_tpm2_esys.c:381 gnutls_tpm2_ibm.c:376
 msgid "Enter secondary TPM2 key password:"
-msgstr ""
+msgstr "Введіть пароль до вторинного ключа TPM2:"
 
-#: gnutls_tpm2_esys.c:412
+#: gnutls_tpm2_esys.c:414
 #, c-format
 msgid "TPM2 RSA sign function called for %d bytes, algo %s\n"
-msgstr ""
+msgstr "Функцію підписування RSA TPM2 викликано для %d байтів, алгоритм %s.\n"
 
-#: gnutls_tpm2_esys.c:432
+#: gnutls_tpm2_esys.c:434
 msgid "TPM2 Esys_RSA_Decrypt auth failed\n"
 msgstr "Не пройдено розпізнавання Esys_RSA_Decrypt TPM2\n"
 
-#: gnutls_tpm2_esys.c:438 gnutls_tpm2_esys.c:529
+#: gnutls_tpm2_esys.c:440 gnutls_tpm2_esys.c:531
 #, c-format
 msgid "TPM2 failed to generate RSA signature: 0x%x\n"
 msgstr "TPM2 не вдалося створити підпис RSA: 0x%x\n"
 
-#: gnutls_tpm2_esys.c:483 gnutls_tpm2_ibm.c:419
+#: gnutls_tpm2_esys.c:485 gnutls_tpm2_ibm.c:419
 #, c-format
 msgid "TPM2 EC sign function called for %d bytes.\n"
 msgstr "Функцію підписування EC TPM2 викликано для %d байтів.\n"
 
-#: gnutls_tpm2_esys.c:503 gnutls_tpm2_ibm.c:444
+#: gnutls_tpm2_esys.c:505 gnutls_tpm2_ibm.c:444
 #, c-format
 msgid "Unknown TPM2 EC digest size %d for algo 0x%x\n"
-msgstr ""
+msgstr "Невідомий розмір контрольної суми EC TPM2 — %d для алгоритму 0x%x\n"
 
-#: gnutls_tpm2_esys.c:523
+#: gnutls_tpm2_esys.c:525
 msgid "TPM2 Esys_Sign auth failed\n"
 msgstr "Не пройдено розпізнавання Esys_Sign TPM2\n"
 
-#: gnutls_tpm2_esys.c:563 gnutls_tpm2_ibm.c:511
+#: gnutls_tpm2_esys.c:565 gnutls_tpm2_ibm.c:511
 #, c-format
 msgid "Invalid TPM2 parent handle 0x%08x\n"
 msgstr "Некоректний обробник батьківського елемента TPM2 0x%08x\n"
 
-#: gnutls_tpm2_esys.c:577 gnutls_tpm2_ibm.c:528
+#: gnutls_tpm2_esys.c:582
+msgid "Using SWTPM due to TPM_INTERFACE_TYPE environment variable\n"
+msgstr ""
+
+#: gnutls_tpm2_esys.c:587
+#, c-format
+msgid "TSS2_TctiLdr_Initialize failed for swtpm: 0x%x\n"
+msgstr ""
+
+#: gnutls_tpm2_esys.c:597 gnutls_tpm2_ibm.c:528
 #, c-format
 msgid "Failed to import TPM2 private key data: 0x%x\n"
 msgstr "Не вдалося імпортувати дані закритого ключа TPM2: 0x%x\n"
 
-#: gnutls_tpm2_esys.c:586 gnutls_tpm2_ibm.c:538
+#: gnutls_tpm2_esys.c:606 gnutls_tpm2_ibm.c:538
 #, c-format
 msgid "Failed to import TPM2 public key data: 0x%x\n"
 msgstr "Не вдалося імпортувати дані відкритого ключа TPM2: 0x%x\n"
 
-#: gnutls_tpm2_esys.c:600 gnutls_tpm2_ibm.c:549
+#: gnutls_tpm2_esys.c:620 gnutls_tpm2_ibm.c:549
 #, c-format
 msgid "Unsupported TPM2 key type %d\n"
 msgstr "Непідтримуваний тип ключа TPM2 %d\n"
@@ -2436,6 +2448,9 @@ msgid ""
 "WARNING: Config XML contains <quarantine> tag with value of \"%s\".\n"
 "    VPN connectivity may be disabled or limited.\n"
 msgstr ""
+"Попередження: налаштування у форматі XML містять теґ <quarantine> зі "
+"значенням «%s».\n"
+"    Можливість з'єднання VPN може бути вимкнено або обмежено.\n"
 
 #: gpst.c:399
 #, c-format
@@ -2464,6 +2479,8 @@ msgid ""
 "IPv6 gateway address in config XML (%s) differs from external gateway "
 "address (%s).\n"
 msgstr ""
+"Адреса шлюзу IPv6 у налаштуваннях XML (%s) відрізняється від зовнішньої "
+"адреси шлюзу (%s).\n"
 
 #: gpst.c:427
 #, c-format
@@ -2504,12 +2521,17 @@ msgid ""
 "GlobalProtect IPv6 support is experimental. Please report results to "
 "<openconnect-devel@lists.infradead.org>.\n"
 msgstr ""
+"Підтримка IPv6 у GlobalProtect є експериментальною. Будь ласка, повідомте "
+"про результати використання на адресу <openconnect-devel@lists.infradead."
+"org>.\n"
 
 #: gpst.c:597
 msgid ""
 "Did not receive ESP keys and matching gateway in GlobalProtect config; "
 "tunnel will be TLS only.\n"
 msgstr ""
+"Не отримано ключів ESP і відповідного шлюзу у налаштуваннях GlobalProtect; у "
+"тунелі буде використано лише TLS.\n"
 
 #: gpst.c:664
 msgid "ESP disabled"
@@ -2710,7 +2732,7 @@ msgstr "Надсилаємо пакет даних IPv%d розміру %d ба�
 #: gpst.c:1489
 #, c-format
 msgid "ICMPv%d probe packet (seq %d) for GlobalProtect ESP:\n"
-msgstr ""
+msgstr "Пакет зондування ICMPv%d (посл. %d) для GlobalProtect ESP:\n"
 
 #: gpst.c:1497 oncp.c:1268
 msgid "Failed to send ESP probe\n"
@@ -3180,11 +3202,11 @@ msgstr "Без розпізнавання PPP над TLS RFC1661/RFC1662, для
 
 #: library.c:247
 msgid "Array SSL VPN"
-msgstr ""
+msgstr "Array SSL VPN"
 
 #: library.c:248
 msgid "Compatible with Array Networks SSL VPN"
-msgstr ""
+msgstr "Сумісний із VPN Array Networks"
 
 #: library.c:321
 #, c-format
@@ -3763,11 +3785,11 @@ msgstr "вимкнено"
 
 #: main.c:1448
 msgid "established"
-msgstr ""
+msgstr "встановлено"
 
 #: main.c:1451
 msgid "unknown"
-msgstr ""
+msgstr "невідомий"
 
 #: main.c:1458
 #, c-format
@@ -4568,6 +4590,7 @@ msgstr "З'єднання перервано сервером (строк дії
 #: oncp.c:806
 msgid "Server terminated connection (idle timeout)\n"
 msgstr ""
+"З'єднання перервано сервером (перевищено час очікування бездіяльності)\n"
 
 #: oncp.c:810
 #, c-format
@@ -4692,7 +4715,7 @@ msgstr "Помилка SSL_set_session()\n"
 
 #: openssl-dtls.c:592
 msgid "Create DTLS dgram BIO failed"
-msgstr ""
+msgstr "Не вдалося створити DTLS dgram BIO"
 
 #: openssl-dtls.c:677
 #, c-format
@@ -4806,7 +4829,7 @@ msgstr "Вміст сертифіката X.509 не отримано у libp11\
 #: openssl-pkcs11.c:414
 #, c-format
 msgid "Using secondary PKCS#11 certificate %s\n"
-msgstr ""
+msgstr "Використовуємо вторинний сертифікат PKCS#11 %s\n"
 
 #: openssl-pkcs11.c:459
 #, c-format
@@ -4824,7 +4847,7 @@ msgstr "Сертифікат не містить відкритого ключа
 
 #: openssl-pkcs11.c:500
 msgid "Secondary certificate has no public key\n"
-msgstr ""
+msgstr "Вторинний сертифікат не містить відкритого ключа\n"
 
 #: openssl-pkcs11.c:506 openssl-pkcs11.c:530
 msgid "Certificate does not match private key\n"
@@ -4832,7 +4855,7 @@ msgstr "Сертифікат не відповідає закритому клю
 
 #: openssl-pkcs11.c:507 openssl-pkcs11.c:531
 msgid "Secondary certificate does not match private key\n"
-msgstr ""
+msgstr "Вторинний сертифікат не відповідає закритому ключу\n"
 
 #: openssl-pkcs11.c:510
 msgid "Checking EC key matches cert\n"
@@ -4854,15 +4877,15 @@ msgstr "Не вдалося знайти ключ PKCS#11 «%s»\n"
 #: openssl-pkcs11.c:650
 #, c-format
 msgid "Using secondary PKCS#11 key %s\n"
-msgstr ""
+msgstr "Використовуємо вторинний ключ PKCS#11 %s\n"
 
 #: openssl-pkcs11.c:656
 msgid "Failed to instantiate private key from PKCS#11\n"
-msgstr ""
+msgstr "Не вдалося встановити закритий ключ з PKCS#11\n"
 
 #: openssl-pkcs11.c:657
 msgid "Failed to instantiate secondary private key from PKCS#11\n"
-msgstr ""
+msgstr "Не вдалося встановити вторинний закритий ключ з PKCS#11\n"
 
 #: openssl-pkcs11.c:713 openssl-pkcs11.c:719
 msgid "This version of OpenConnect was built without PKCS#11 support\n"
@@ -4898,7 +4921,7 @@ msgstr "Пароль PEM є надто довгим (%d >= %d)\n"
 
 #: openssl.c:558
 msgid "Client certificate or key missing\n"
-msgstr ""
+msgstr "Не вистачає сертифіката або ключа клієнта\n"
 
 #: openssl.c:564 openssl.c:1027
 msgid "Loading private key failed\n"
@@ -4921,6 +4944,8 @@ msgstr ""
 #: openssl.c:650
 msgid "Parse secondary PKCS#12 failed (see above errors)\n"
 msgstr ""
+"Не вдалося обробити вторинний PKCS#12 (див. наведені вище повідомлення про "
+"помилки)\n"
 
 #: openssl.c:667
 msgid "PKCS#12 contained no certificate!\n"
@@ -4928,7 +4953,7 @@ msgstr "PKCS#12 не містить сертифіката!\n"
 
 #: openssl.c:668
 msgid "Secondary PKCS#12 contained no certificate!\n"
-msgstr ""
+msgstr "Вторинний PKCS#12 не містить сертифіката!\n"
 
 #: openssl.c:674
 msgid "PKCS#12 contained no private key!\n"
@@ -4936,7 +4961,7 @@ msgstr "PKCS#12 не містить закритого ключа!\n"
 
 #: openssl.c:675
 msgid "Secondary PKCS#12 contained no private key!\n"
-msgstr ""
+msgstr "Вторинний PKCS#12 не містить закритого ключа!\n"
 
 #: openssl.c:682
 msgid "PKCS#12"
@@ -4960,7 +4985,7 @@ msgstr "Не вдалося завантажити закритий ключ TPM
 
 #: openssl.c:740
 msgid "Failed to load secondary TPM private key\n"
-msgstr ""
+msgstr "Не вдалося завантажити вторинний закритий ключ TPM\n"
 
 #: openssl.c:794 openssl.c:943
 #, c-format
@@ -4970,7 +4995,7 @@ msgstr "Не вдалося відкрити файл сертифіката %s:
 #: openssl.c:795
 #, c-format
 msgid "Failed to open secondary certificate file %s: %s\n"
-msgstr ""
+msgstr "Не вдалося відкрити файл вторинного сертифіката %s: %s\n"
 
 #: openssl.c:805
 msgid "Loading certificate failed\n"
@@ -4985,6 +5010,8 @@ msgstr ""
 #: openssl.c:837
 msgid "Failed to process secondary supporting certs. Trying anyway...\n"
 msgstr ""
+"Не вдалося обробити вторинні підтримувані сертифікати. Виконуємо спробу "
+"попри це...\n"
 
 #: openssl.c:850
 msgid "PEM file"
@@ -5001,7 +5028,7 @@ msgstr "Не вдалося завантажити закритий ключ (п
 
 #: openssl.c:905
 msgid "Loading secondary private key failed (wrong passphrase?)\n"
-msgstr ""
+msgstr "Не вдалося завантажити вторинний закритий ключ (помилковий пароль?)\n"
 
 #: openssl.c:911
 msgid "Loading private key failed (see above errors)\n"
@@ -5012,6 +5039,8 @@ msgstr ""
 #: openssl.c:912
 msgid "Loading secondary private key failed (see above errors)\n"
 msgstr ""
+"Не вдалося завантажити вторинний закритий ключ (див. наведені вище "
+"повідомлення про помилки)\n"
 
 #: openssl.c:966
 msgid "Failed to load X509 certificate from keystore\n"
@@ -5024,15 +5053,15 @@ msgstr "Не вдалося відкрити файл закритого клю�
 
 #: openssl.c:1028
 msgid "Loading secondary private key failed\n"
-msgstr ""
+msgstr "Не вдалося завантажити вторинний закритий ключ\n"
 
 #: openssl.c:1082 openssl.c:1097
 msgid "Failed to decrypt secondary PKCS#8 certificate file\n"
-msgstr ""
+msgstr "Не вдалося розшифрувати файл вторинного сертифіката PKCS#8\n"
 
 #: openssl.c:1092
 msgid "Enter PKCS#8 secondary pass phrase:"
-msgstr ""
+msgstr "Введіть вторинний пароль PKCS#8:"
 
 #: openssl.c:1117
 msgid "Failed to convert PKCS#8 to OpenSSL EVP_PKEY\n"
@@ -5040,7 +5069,7 @@ msgstr "Не вдалося перетворити PKCS#8 на EVP_PKEY OpenSSL\
 
 #: openssl.c:1118
 msgid "Failed to convert secondary PKCS#8 to OpenSSL EVP_PKEY\n"
-msgstr ""
+msgstr "Не вдалося перетворити вторинний PKCS#8 на EVP_PKEY OpenSSL\n"
 
 #: openssl.c:1128
 #, c-format
@@ -5124,7 +5153,7 @@ msgstr "Помилка у полі notAfter клієнтського серти�
 
 #: openssl.c:1674
 msgid "Error in secondary client cert notAfter field\n"
-msgstr ""
+msgstr "Помилка у полі notAfter вторинного клієнтського сертифіката\n"
 
 #: openssl.c:1689
 msgid "<error>"
@@ -5434,7 +5463,7 @@ msgstr "Виявлено непрацездатний вузол!\n"
 
 #: ppp.c:1381
 msgid "Failed to establish PPP\n"
-msgstr ""
+msgstr "Не вдалося встановити PPP\n"
 
 #: ppp.c:1400
 msgid "Send PPP discard request as keepalive\n"
@@ -5849,7 +5878,7 @@ msgstr "Неочікуваний пакет IF-T/TLS, а мали бути на�
 
 #: pulse.c:2571
 msgid "Insufficient configuration found\n"
-msgstr ""
+msgstr "Виявлено недостатність налаштувань\n"
 
 #: pulse.c:2683
 msgid "ESP rekey failed\n"
@@ -5858,7 +5887,7 @@ msgstr "Помилка під час спроби зміни ключів ESP\n"
 #: pulse.c:2712
 #, c-format
 msgid "Pulse fatal error (reason: %ld): %s\n"
-msgstr ""
+msgstr "Критична помилка Pulse (причина: %ld): %s\n"
 
 #: pulse.c:2730
 msgid "Unknown Pulse packet\n"
