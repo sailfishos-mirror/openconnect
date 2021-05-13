@@ -59,8 +59,10 @@
 
 #include <tss2/tss2_mu.h>
 #include <tss2/tss2_esys.h>
+#include <tss2/tss2_tctildr.h>
 
 struct oc_tpm2_ctx {
+	TSS2_TCTI_CONTEXT *tcti_ctx;
 	TPM2B_PUBLIC pub;
 	TPM2B_PRIVATE priv;
 	TPM2B_DIGEST userauth;
@@ -251,7 +253,7 @@ static int init_tpm2_key(ESYS_CONTEXT **ctx, ESYS_TR *keyHandle,
 	vpn_progress(vpninfo, PRG_DEBUG,
 		     _("Establishing connection with TPM.\n"));
 
-	r = Esys_Initialize(ctx, NULL, NULL);
+	r = Esys_Initialize(ctx, certinfo->tpm2->tcti_ctx, NULL);
 	if (r) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("TPM2 Esys_Initialize failed: 0x%x\n"),
@@ -570,6 +572,24 @@ int install_tpm2_key(struct openconnect_info *vpninfo, struct cert_info *certinf
 
 	certinfo->tpm2->parent = parent;
 
+	/* This is the variable which the *IBM* TSS uses, to force it to use
+	 * the swtpm; it happens in the library automatically. To allow the
+	 * swtpm test to work on platforms where a real TPM is available,
+	 * emulate the same thing. Not really intended for production use. */
+	const char *tpm_type = getenv("TPM_INTERFACE_TYPE");
+	if (tpm_type && !strcmp(tpm_type, "socsim")) {
+		vpn_progress(vpninfo, PRG_DEBUG,
+			     _("Using SWTPM due to TPM_INTERFACE_TYPE environment variable\n"));
+
+		r = Tss2_TctiLdr_Initialize("swtpm", &certinfo->tpm2->tcti_ctx);
+		if (r) {
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("TSS2_TctiLdr_Initialize failed for swtpm: 0x%x\n"),
+				     r);
+			goto err_out;
+		}
+	}
+
 	r = Tss2_MU_TPM2B_PRIVATE_Unmarshal(privdata->data, privdata->size, NULL,
 					    &certinfo->tpm2->priv);
 	if (r) {
@@ -619,6 +639,8 @@ void release_tpm2_ctx(struct openconnect_info *vpninfo, struct cert_info *certin
 	if (certinfo->tpm2) {
 		clear_mem(certinfo->tpm2->ownerauth.buffer, sizeof(certinfo->tpm2->ownerauth.buffer));
 		clear_mem(certinfo->tpm2->userauth.buffer, sizeof(certinfo->tpm2->userauth.buffer));
+		if (certinfo->tpm2->tcti_ctx)
+			Tss2_TctiLdr_Finalize(&certinfo->tpm2->tcti_ctx);
 		free(certinfo->tpm2);
 	}
 	certinfo->tpm2 = NULL;
