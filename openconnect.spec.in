@@ -80,8 +80,13 @@ BuildRequires:	pkgconfig(libproxy-1.0)
 BuildRequires:  pkgconfig(stoken) pkgconfig(libpskc)
 %endif
 %if %{use_tss2_esys}
+BuildRequires: pkgconfig(tss2-esys) pkgconfig(tss2-tctildr) pkgconfig(tss2-mu)
 # https://bugzilla.redhat.com/show_bug.cgi?id=1638961
-BuildRequires: pkgconfig(tss2-esys) pkgconfig(tss2-tctildr) pkgconfig(tss2-mu) libgcrypt-devel swtpm swtpm-tools
+BuildRequires: libgcrypt-devel
+%if 0%{?fedora} > 32
+# Older versions of tss2-esys don't have the swtpm TCTI
+BuildRequires: swtpm swtpm-tools
+%endif
 %endif
 
 %description
