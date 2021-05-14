@@ -12,8 +12,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: network-manager-openconnect\n"
 "Report-Msgid-Bugs-To: openconnect-devel@lists.infradead.org\n"
-"POT-Creation-Date: 2021-05-12 23:02+0100\n"
-"PO-Revision-Date: 2021-03-27 16:06-0300\n"
+"POT-Creation-Date: 2021-05-13 19:37+0100\n"
+"PO-Revision-Date: 2021-05-13 16:28-0300\n"
 "Last-Translator: Enrico Nicoletto <liverig@gmail.com>\n"
 "Language-Team: Brazilian Portuguese <gnome-pt_br-list@gnome.org>\n"
 "Language: pt_BR\n"
@@ -21,12 +21,12 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Poedit 2.4.2\n"
+"X-Generator: Poedit 2.4.3\n"
 "X-Project-Style: gnome\n"
 
 #: array.c:131
 msgid "No ANsession cookie found\n"
-msgstr ""
+msgstr "Não foi localizado nenhum cookie ANsession\n"
 
 #: array.c:159 http.c:423
 #, c-format
@@ -36,42 +36,42 @@ msgstr "Cookie inválido “%s”\n"
 #: array.c:365
 #, c-format
 msgid "Found DNS server %s\n"
-msgstr ""
+msgstr "Localizado servidor DNS %s\n"
 
 #: array.c:392
 #, c-format
 msgid "Got search domain '%s'\n"
-msgstr ""
+msgstr "Obteve domínio de pesquisa %s\n"
 
 #: array.c:479
 #, c-format
 msgid "Unknown Array config element '%s'\n"
-msgstr ""
+msgstr "Elemento de configuração de vetor desconhecido “%s”\n"
 
 #: array.c:518
 #, c-format
 msgid "Initial config: Speed tunnel %d, enc %d, DPD %d\n"
-msgstr ""
+msgstr "Configuração inicial: Túnel de velocidade %d, enc %d, %d DPD\n"
 
 #: array.c:549
 msgid "Short write in Array JSON negotiation\n"
-msgstr ""
+msgstr "Escrita curta em vetor de negociação JSON\n"
 
 #: array.c:558
 msgid "Failed to read Array JSON response\n"
-msgstr ""
+msgstr "Falha ao ler resposta de vetor JSON\n"
 
 #: array.c:567
 msgid "Unexpected response to Array JSON request\n"
-msgstr ""
+msgstr "Resposta inesperada em requisição de vetor JSON:\n"
 
 #: array.c:580
 msgid "Failed to parse Array JSON response\n"
-msgstr ""
+msgstr "Falha ao analisar resposta de vetor JSON\n"
 
 #: array.c:660
 msgid "Error creating array negotiation request\n"
-msgstr ""
+msgstr "Erro ao criar requisição de negociação de vetor\n"
 
 #: array.c:676 f5.c:666 http.c:1239 oncp.c:518 pulse.c:1369
 #, c-format
@@ -80,28 +80,28 @@ msgstr "Resultado inesperado %d do servidor\n"
 
 #: array.c:699
 msgid "Error building Array DTLS negotiation packet\n"
-msgstr ""
+msgstr "Erro ao construir vetor de pacote de negociação DTLS\n"
 
 #: array.c:717 array.c:764
 msgid "Short write in array negotiation\n"
-msgstr ""
+msgstr "Escrita curta em negociação de vetor\n"
 
 #: array.c:727
 msgid "Failed to read UDP negotiation response\n"
-msgstr ""
+msgstr "Falha ao ler resposta de negociação UDP\n"
 
 #: array.c:739
 #, c-format
 msgid "DTLS enabled on port %d\n"
-msgstr ""
+msgstr "DTLS habilitado na porta %d\n"
 
 #: array.c:751
 msgid "Refusing non-DTLS UDP tunnel\n"
-msgstr ""
+msgstr "Recusando túnel UDP não-DTLS\n"
 
 #: array.c:773
 msgid "Failed to read ipff response\n"
-msgstr ""
+msgstr "Falha ao ler resposta ipff\n"
 
 #: array.c:826 array.c:1061 array.c:1171 cstp.c:926 dtls.c:280 dtls.c:639
 #: esp.c:161 gpst.c:1135 mainloop.c:69 oncp.c:863 ppp.c:1093 ppp.c:1657
@@ -117,7 +117,7 @@ msgstr "Pacote curto recebido (%d bytes)\n"
 #: array.c:853 array.c:1198
 #, c-format
 msgid "Receive control packet of type %x:\n"
-msgstr ""
+msgstr "Recebido pacote de controle do tipo %x:\n"
 
 #: array.c:860 pulse.c:2661
 #, c-format
@@ -142,23 +142,23 @@ msgstr "Re-negociação falhou; tentando novo túnel\n"
 
 #: array.c:938
 msgid "TCP Dead Peer Detection detected dead peer!\n"
-msgstr ""
+msgstr "Dead Peer Detection TCP detectou par morto!\n"
 
 #: array.c:942
 msgid "TCP reconnect failed\n"
-msgstr ""
+msgstr "Falha na reconexão TCP\n"
 
 #: array.c:958
 msgid "Send TCP DPD\n"
-msgstr ""
+msgstr "Enviar DPD TCP\n"
 
 #: array.c:975
 msgid "Send TCP Keepalive\n"
-msgstr ""
+msgstr "Enviar keepalive TCP\n"
 
 #: array.c:991
 msgid "Sending DTLS off packet\n"
-msgstr ""
+msgstr "Enviando pacote de desligamento DTLS\n"
 
 #: array.c:1001 cstp.c:1181 oncp.c:1194
 #, c-format
@@ -171,31 +171,31 @@ msgstr "Tentar nova conexão DTLS\n"
 
 #: array.c:1073 ppp.c:1669
 msgid "Failed to receive authentication response from DTLS\n"
-msgstr ""
+msgstr "Falha ao receber resposta de autenticação de DTLS\n"
 
 #: array.c:1085
 msgid "DTLS session established\n"
-msgstr ""
+msgstr "Sessão DTLS estabelecida\n"
 
 #: array.c:1098
 msgid "Received Legacy IP over DTLS; assuming established\n"
-msgstr ""
+msgstr "Recebido IP Legado sobre DTLS; presumindo estabelecido\n"
 
 #: array.c:1106
 msgid "Received IPv6 over DTLS; assuming established\n"
-msgstr ""
+msgstr "Recebido IPv6 sobre DTLS; presumindo estabelecido\n"
 
 #: array.c:1112
 msgid "Received unknown DTLS packet\n"
-msgstr ""
+msgstr "Recebido pacote DTLS desconhecido\n"
 
 #: array.c:1120 ppp.c:1723
 msgid "Error creating connect request for DTLS session\n"
-msgstr ""
+msgstr "Erro ao criar requisição de conexão para sessão DTLS\n"
 
 #: array.c:1136 ppp.c:1739
 msgid "Failed to write connect request to DTLS session\n"
-msgstr ""
+msgstr "Falha na escrita de requisição de conexão para sessão DTLS\n"
 
 #: array.c:1189 dtls.c:291
 #, c-format
@@ -259,7 +259,7 @@ msgid ""
 "Destination form field %s was specified; assuming SAML %s authentication is "
 "complete.\n"
 msgstr ""
-"Campo de formulário do destino %s foi especificado; assumindo que "
+"Campo de formulário do destino %s foi especificado; presumindo que "
 "autenticação SAML %s está completa.\n"
 
 #: auth-globalprotect.c:143
@@ -369,7 +369,7 @@ msgstr "Ignorando item de entrada de formulário desconhecido “%s”\n"
 #: auth-html.c:135
 #, c-format
 msgid "Discarding duplicate option '%s'\n"
-msgstr "Descartando opção duplicada “%s”\n"
+msgstr "Descartando parâmetro duplicado “%s”\n"
 
 #: auth-html.c:212 auth.c:437
 #, c-format
@@ -550,8 +550,8 @@ msgid ""
 "Error: Running the 'Cisco Secure Desktop' trojan on this platform is not yet "
 "implemented.\n"
 msgstr ""
-"Erro: A execução do trojan “Cisco Secure Desktop” nesta plataforma não está "
-"implementada ainda.\n"
+"Erro: A execução do trojan “Cisco Secure Desktop” nesta plataforma ainda não "
+"foi implementada.\n"
 
 #: auth.c:1025 mainloop.c:146
 #, c-format
@@ -648,7 +648,7 @@ msgid ""
 msgstr ""
 "Aviso: você está executando um código de CSD inseguro com privilégios de "
 "root\n"
-"\t Use a opção de linha de comando “--csd-user”\n"
+"\t Use o parâmetro de linha de comando “--csd-user”\n"
 
 #: auth.c:1253
 #, c-format
@@ -745,7 +745,7 @@ msgstr "Obteve resposta CONNECT: %s\n"
 
 #: cstp.c:396 cstp.c:405
 msgid "No memory for options\n"
-msgstr "Sem memória suficiente para as opções\n"
+msgstr "Sem memória suficiente para os parâmetros\n"
 
 #: cstp.c:415 http.c:608
 msgid "<elided>"
@@ -911,7 +911,7 @@ msgstr "Nenhum endereço DTLS\n"
 #. We probably didn't offer it any ciphers it liked
 #: dtls.c:118
 msgid "Server offered no DTLS cipher option\n"
-msgstr "O servidor ofereceu nenhuma opção de cifra DTLS\n"
+msgstr "O servidor ofereceu nenhum parâmetro de cifra DTLS\n"
 
 #. XXX: Theoretically, SOCKS5 proxies can do UDP too
 #: dtls.c:125
@@ -1104,22 +1104,23 @@ msgstr "Recebido pacote ESP com SPI 0x%08x inválido\n"
 #: esp.c:202
 #, c-format
 msgid "Received ESP Legacy IP packet of %d bytes\n"
-msgstr ""
+msgstr "Recebido pacote de IP Legado ESP de %d bytes\n"
 
 #: esp.c:205
 #, c-format
 msgid "Received ESP Legacy IP packet of %d bytes (LZO-compressed)\n"
-msgstr ""
+msgstr "Recebido pacote de IP Legado de ESP de %d bytes (compressão-LZO)\n"
 
 #: esp.c:208
 #, c-format
 msgid "Received ESP IPv6 packet of %d bytes\n"
-msgstr ""
+msgstr "Recebido pacote IPv6 ESP de %d bytes\n"
 
 #: esp.c:212
 #, c-format
 msgid "Received ESP packet of %d bytes with unrecognised payload type %02x\n"
 msgstr ""
+"Recebido pacote ESP de %d bytes com tipo de carga não reconhecida %02x\n"
 
 #: esp.c:219
 #, c-format
@@ -1176,7 +1177,7 @@ msgstr "Falha ao enviar pacote ESP: %s\n"
 #: esp.c:374
 #, c-format
 msgid "Sent ESP IPv%d packet of %d bytes\n"
-msgstr ""
+msgstr "Enviado pacote IPv%d ESP de %d bytes\n"
 
 #: esp.c:445
 msgid "Failed to generate random keys for ESP\n"
@@ -1190,111 +1191,115 @@ msgstr "Falha ao gerar IV inicial para ESP\n"
 msgid ""
 "WARNING: no HTML login form found; assuming username and password fields\n"
 msgstr ""
+"AVISO: não foi localizado nenhum formulário de login HTML; presumindo "
+"heurística de campos de usuário e senha\n"
 
 #: f5.c:159
 #, c-format
 msgid "Unknown form ID '%s' (expected 'auth_form')\n"
-msgstr ""
+msgstr "ID de formulário desconhecido “%s” (era esperado 'auth_form')\n"
 
 #: f5.c:242
 msgid "Failed to parse F5 profile response\n"
-msgstr ""
+msgstr "Falha ao analisar resposta do perfil F5\n"
 
 #: f5.c:284
 msgid "Failed to find VPN profile parameters\n"
-msgstr ""
+msgstr "Falha ao localizar parâmetros de perfil VPN\n"
 
 #: f5.c:327
 msgid "Failed to parse F5 options response\n"
-msgstr ""
+msgstr "Falha ao analisar resposta de parâmetros F5\n"
 
 #: f5.c:361
 #, c-format
 msgid "Idle timeout is %d minutes\n"
-msgstr ""
+msgstr "Tempo limite de ociosidade é %d minutos\n"
 
 #: f5.c:371
 msgid "Got default routes\n"
-msgstr ""
+msgstr "Obteve rotas padrão\n"
 
 #: f5.c:374
 #, c-format
 msgid "Got SplitTunneling0 value of %d\n"
-msgstr ""
+msgstr "Obteve SplitTunneling0 com valor de %d\n"
 
 #: f5.c:383
 #, c-format
 msgid "Got DNS server %s\n"
-msgstr ""
+msgstr "Obteve servidor DNS %s\n"
 
 #: f5.c:390
 #, c-format
 msgid "Got WINS/NBNS server %s\n"
-msgstr ""
+msgstr "Obteve servidor WINS/NBNS %s\n"
 
 #: f5.c:397 fortinet.c:362 fortinet.c:427
 #, c-format
 msgid "Got search domain %s\n"
-msgstr ""
+msgstr "Obteve domínio de pesquisa %s\n"
 
 #: f5.c:427
 #, c-format
 msgid "Got split exclude route %s\n"
-msgstr ""
+msgstr "Obtida rota de exclusão de split %s\n"
 
 #: f5.c:431
 #, c-format
 msgid "Got split include route %s\n"
-msgstr ""
+msgstr "Obtida rota de inclusão de split %s\n"
 
 #. XX: DTLS always uses same port as TLS?
 #: f5.c:439 fortinet.c:327
 #, c-format
 msgid "DTLS is enabled on port %d\n"
-msgstr ""
+msgstr "DTLS está habilitado na porta %d\n"
 
 #: f5.c:451
 msgid ""
 "WARNING: Server enables DTLS, but also requires HDLC. Disabling DTLS,\n"
 "    because HDLC prevents determination of efficient and consistent MTU.\n"
 msgstr ""
+"AVISO: O servidor habilita DTLS mas também requer HDLC. Desabilitando DTLS,\n"
+"    pois o HDLC impede a determinação de MTU eficiente e consistente.\n"
 
 #: f5.c:472 fortinet.c:493
 msgid "Failed to find VPN options\n"
-msgstr ""
+msgstr "Falha ao localizar parâmetros de VPN\n"
 
 #: f5.c:495 fortinet.c:358
 #, c-format
 msgid "Got Legacy IP address %s\n"
-msgstr ""
+msgstr "Obteve endereços de IP legados %s\n"
 
 #: f5.c:500 fortinet.c:419 fortinet.c:422
 #, c-format
 msgid "Got IPv6 address %s\n"
-msgstr ""
+msgstr "Obteve endereço IPv6 %s\n"
 
 #: f5.c:550
 #, c-format
 msgid "Got profile parameters '%s'\n"
-msgstr ""
+msgstr "Obteve parâmetros de perfil “%s”\n"
 
 #: f5.c:570
 #, c-format
 msgid "Got ipv4 %d ipv6 %d hdlc %d ur_Z '%s'\n"
-msgstr ""
+msgstr "Obteve ipv4 %d ipv6 %d hdlc %d ur_Z '%s'\n"
 
 #: f5.c:599
 msgid "Error establishing F5 connection\n"
-msgstr ""
+msgstr "Erro ao estabelecer conexão F5\n"
 
 #: fortinet.c:128
 #, c-format
 msgid "Got login realm '%s'\n"
-msgstr ""
+msgstr "Obteve área de autenticação “%s”\n"
 
 #: fortinet.c:309
 msgid "Failed to parse Fortinet config XML\n"
-msgstr ""
+msgstr "Falha ao analisar XML de configuração Fortinet\n"
 
 #: fortinet.c:338 gpst.c:393
 #, c-format
@@ -1304,50 +1309,54 @@ msgstr "Tempo limite de ociosidade é %d minutos.\n"
 #: fortinet.c:353
 #, c-format
 msgid "Reported platform is %s\n"
-msgstr ""
+msgstr "A plataforma relatada é %s\n"
 
 #: fortinet.c:366 fortinet.c:431
 #, c-format
 msgid "Got IPv%d DNS server %s\n"
-msgstr ""
+msgstr "Obteve IPv%d servidor DNS %s\n"
 
 #: fortinet.c:372 fortinet.c:437
 #, c-format
 msgid "WARNING: Got split-DNS domains %s (not yet implemented)\n"
 msgstr ""
+"AVISO: Obteve domínios de DNS divididos %s (ainda não foi implementado)\n"
 
 #: fortinet.c:377 fortinet.c:442
 #, c-format
 msgid "WARNING: Got split-DNS server %s (not yet implemented)\n"
 msgstr ""
+"AVISO: Obteve servidor de DNS dividido %s (ainda não foi implementado)\n"
 
 #: fortinet.c:399 fortinet.c:466
 #, c-format
 msgid "Got IPv%d route %s\n"
-msgstr ""
+msgstr "Obteve IPv%d rota %s\n"
 
 #: fortinet.c:535
 msgid "No cookie named SVPNCOOKIE.\n"
-msgstr ""
+msgstr "Não há cookie nomeado como SVPNCOOKIE.\n"
 
 #: fortinet.c:564
 msgid ""
 "Server doesn't support XML config format. Ancient HTML format is not "
 "currently implemented.\n"
 msgstr ""
+"Não há suporte ao formato de configuração XML pelo servidor. Formato antigo "
+"de HTML não foi atualmente implementado.\n"
 
 #: fortinet.c:594
 msgid "Error establishing Fortinet connection\n"
-msgstr ""
+msgstr "Erro ao estabelecer conexão Fortinet\n"
 
 #: fortinet.c:694
 msgid "Did not receive expected svrhello response.\n"
-msgstr ""
+msgstr "Não foi recebida a resposta svrhello esperada.\n"
 
 #: fortinet.c:705
 #, c-format
 msgid "svrhello status was \"%.*s\" rather than \"ok\"\n"
-msgstr ""
+msgstr "status de svrhello foi “%.*s” ao invés de “ok”\n"
 
 #: gnutls-dtls.c:186
 msgid "Deferring DTLS resumption until CSTP generates a PSK\n"
@@ -1519,22 +1528,22 @@ msgstr "Falha ao ler de socket TLS/DTLS: %s\n"
 #: gnutls.c:306 openssl.c:321
 #, c-format
 msgid "Attempted to read from non-existent %s session\n"
-msgstr ""
+msgstr "Tentativa de leitura em sessão %s inexistente\n"
 
 #: gnutls.c:318
 #, c-format
 msgid "Read error on %s session: %s\n"
-msgstr ""
+msgstr "Erro de leitura em %s sessão: %s\n"
 
 #: gnutls.c:330 openssl.c:346
 #, c-format
 msgid "Attempted to write to non-existent %s session\n"
-msgstr ""
+msgstr "Tentativa de escrita em sessão %s inexistente\n"
 
 #: gnutls.c:364
 #, c-format
 msgid "Write error on %s session: %s\n"
-msgstr ""
+msgstr "Erro de escrita em %s sessão: %s\n"
 
 #: gnutls.c:378
 msgid "Could not extract expiration time of certificate\n"
@@ -1546,15 +1555,15 @@ msgstr "Certificado do cliente expirou em"
 
 #: gnutls.c:384 openssl.c:1678
 msgid "Secondary client certificate has expired at"
-msgstr ""
+msgstr "Certificado do cliente secundário expirou em"
 
 #: gnutls.c:386 openssl.c:1683
 msgid "Client certificate expires soon at"
-msgstr "Certificado do cliente expira em breve em"
+msgstr "Certificado do cliente expira brevemente em"
 
 #: gnutls.c:387 openssl.c:1684
 msgid "Secondary client certificate expires soon at"
-msgstr ""
+msgstr "Certificado do cliente secundário expira brevemente em"
 
 #: gnutls.c:436 openssl.c:873
 #, c-format
@@ -1595,7 +1604,7 @@ msgstr "Insira a frase secreta PKCS#12:"
 
 #: gnutls.c:536 openssl.c:638
 msgid "Enter secondary PKCS#12 pass phrase:"
-msgstr ""
+msgstr "Insira a frase secreta PKCS#12 secundária:"
 
 #: gnutls.c:559
 #, c-format
@@ -1610,7 +1619,7 @@ msgstr "Falha ao ler certificado PKCS#12: %s\n"
 #: gnutls.c:572
 #, c-format
 msgid "Failed to load secondary PKCS#12 certificate: %s\n"
-msgstr ""
+msgstr "Falha ao carregar certificado PKCS#12 secundário: %s\n"
 
 #: gnutls.c:645
 #, c-format
@@ -1668,7 +1677,7 @@ msgstr "Insira a frase secreta PEM:"
 
 #: gnutls.c:902 openssl.c:515
 msgid "Enter secondary PEM pass phrase:"
-msgstr ""
+msgstr "Insira a frase secreta PEM secundária:"
 
 #: gnutls.c:1001
 msgid "This binary built without system key support\n"
@@ -1706,7 +1715,7 @@ msgstr "Usando arquivo de certificado %s\n"
 #: gnutls.c:1084 openssl.c:934
 #, c-format
 msgid "Using secondary certificate file %s\n"
-msgstr ""
+msgstr "Usando arquivo de certificado secundário %s\n"
 
 #: gnutls.c:1113
 msgid "PKCS#11 file contained no certificate\n"
@@ -1724,7 +1733,7 @@ msgstr "O carregamento de certificado falhou: %s\n"
 #: gnutls.c:1145
 #, c-format
 msgid "Loading secondary certificate failed: %s\n"
-msgstr ""
+msgstr "Falha ao carregar certificado secundário: %s\n"
 
 #: gnutls.c:1160
 #, c-format
@@ -1734,7 +1743,7 @@ msgstr "Usando chave do sistema %s\n"
 #: gnutls.c:1161
 #, c-format
 msgid "Using secondary system key %s\n"
-msgstr ""
+msgstr "Usando chave do sistema secundária %s\n"
 
 #: gnutls.c:1167 gnutls.c:1314
 #, c-format
@@ -1834,6 +1843,7 @@ msgstr "Nenhum certificado SSL encontrado para conferir a chave privada\n"
 #: gnutls.c:1601
 msgid "No secondary certificate found to match private key\n"
 msgstr ""
+"Nenhum certificado secundário encontrado para conferir a chave privada\n"
 
 #: gnutls.c:1613 openssl.c:662 openssl.c:817
 #, c-format
@@ -1843,7 +1853,7 @@ msgstr "Usando certificado “%s” do cliente\n"
 #: gnutls.c:1614 openssl.c:663 openssl.c:818
 #, c-format
 msgid "Using secondary certificate '%s'\n"
-msgstr ""
+msgstr "Usando certificado secundário “%s”\n"
 
 #: gnutls.c:1631 gnutls.c:1641
 msgid "Failed to allocate memory for certificate\n"
@@ -2038,7 +2048,7 @@ msgstr "Essa é a tentativa final antes de travar!"
 
 #: gnutls.c:2611
 msgid "Only a few tries left before locking!"
-msgstr "Somente poucas tentativas restantes antes de travar!"
+msgstr "Faltam poucas tentativas antes de travar!"
 
 #: gnutls.c:2616 openssl-pkcs11.c:211
 msgid "Enter PIN:"
@@ -2146,7 +2156,7 @@ msgstr "Insira o PIN da chave TPM:"
 
 #: gnutls_tpm.c:245
 msgid "Enter secondary key TPM PIN:"
-msgstr ""
+msgstr "Insira o PIN da chave TPM secundária:"
 
 #: gnutls_tpm.c:256
 #, c-format
@@ -2161,7 +2171,7 @@ msgstr "Digest TMP2 EC com tamanho desconhecido %d\n"
 #: gnutls_tpm2.c:134 gnutls_tpm2.c:177
 #, c-format
 msgid "Not supporting EC sign algo %s\n"
-msgstr ""
+msgstr "Não há suporte ao algoritmo de assinatura EC %s\n"
 
 #: gnutls_tpm2.c:233
 #, c-format
@@ -2215,161 +2225,172 @@ msgstr "Digest de TPM2 grande demais: %d > %d\n"
 #, c-format
 msgid "PSS encoding failed; hash size %d too large for RSA key %d\n"
 msgstr ""
+"Falha na codificação PSS; tamanho de hash %d muito largo para a chave RSA "
+"%d\n"
 
 #: gnutls_tpm2.c:583
 #, c-format
 msgid "TPMv2 RSA sign called for unknown algorithm %s\n"
-msgstr ""
+msgstr "A assinatura do TPM2 RSA solicitou algoritmo desconhecido %s\n"
 
-#: gnutls_tpm2_esys.c:175
+#: gnutls_tpm2_esys.c:177
 msgid "TPM2 password too long; truncating\n"
 msgstr "Senha de TMP2 muito longa; truncando\n"
 
-#: gnutls_tpm2_esys.c:193
+#: gnutls_tpm2_esys.c:195
 msgid "owner"
 msgstr "dono"
 
-#: gnutls_tpm2_esys.c:194
+#: gnutls_tpm2_esys.c:196
 msgid "null"
 msgstr "nulo"
 
-#: gnutls_tpm2_esys.c:195
+#: gnutls_tpm2_esys.c:197
 msgid "endorsement"
 msgstr "endosso"
 
-#: gnutls_tpm2_esys.c:196
+#: gnutls_tpm2_esys.c:198
 msgid "platform"
 msgstr "plataforma"
 
-#: gnutls_tpm2_esys.c:200
+#: gnutls_tpm2_esys.c:202
 #, c-format
 msgid "Creating primary key under %s hierarchy.\n"
 msgstr "Criando a chave primária na hierarquia %s.\n"
 
-#: gnutls_tpm2_esys.c:208 gnutls_tpm2_ibm.c:265
+#: gnutls_tpm2_esys.c:210 gnutls_tpm2_ibm.c:265
 #, c-format
 msgid "Enter TPM2 %s hierarchy password:"
 msgstr "Insira a senha de hierarquia de TPM2 %s:"
 
-#: gnutls_tpm2_esys.c:216 gnutls_tpm2_esys.c:314 gnutls_tpm2_esys.c:390
+#: gnutls_tpm2_esys.c:218 gnutls_tpm2_esys.c:316 gnutls_tpm2_esys.c:392
 #, c-format
 msgid "TPM2 Esys_TR_SetAuth failed: 0x%x\n"
 msgstr "TPM2 Esys_TR_SetAuth falhou: 0x%x\n"
 
-#: gnutls_tpm2_esys.c:228
+#: gnutls_tpm2_esys.c:230
 msgid "TPM2 Esys_CreatePrimary owner auth failed\n"
 msgstr "Autenticação de dono de TPM2 Esys_CreatePrimary falhou\n"
 
-#: gnutls_tpm2_esys.c:233
+#: gnutls_tpm2_esys.c:235
 #, c-format
 msgid "TPM2 Esys_CreatePrimary failed: 0x%x\n"
 msgstr "TPM2 Esys_CreatePrimary falhou: 0x%x\n"
 
-#: gnutls_tpm2_esys.c:252
+#: gnutls_tpm2_esys.c:254
 msgid "Establishing connection with TPM.\n"
 msgstr "Estabelecendo conexão com TPM.\n"
 
-#: gnutls_tpm2_esys.c:257
+#: gnutls_tpm2_esys.c:259
 #, c-format
 msgid "TPM2 Esys_Initialize failed: 0x%x\n"
 msgstr "TPM2 Esys_Initialize falhou: 0x%x\n"
 
-#: gnutls_tpm2_esys.c:265
+#: gnutls_tpm2_esys.c:267
 msgid ""
 "TPM2 was already started up thus false positive failing in tpm2tss log.\n"
 msgstr ""
 "O TPM2 já foi iniciado, portanto falhando com positivo falso no log "
 "tpm2tss.\n"
 
-#: gnutls_tpm2_esys.c:268
+#: gnutls_tpm2_esys.c:270
 #, c-format
 msgid "TPM2 Esys_Startup failed: 0x%x\n"
 msgstr "TPM2 Esys_Startup falhou: 0x%x\n"
 
-#: gnutls_tpm2_esys.c:281
+#: gnutls_tpm2_esys.c:283
 #, c-format
 msgid "Esys_TR_FromTPMPublic failed for handle 0x%x: 0x%x\n"
 msgstr "Esys_TR_FromTPMPublic falhou para manipulador 0x%x: 0x%x\n"
 
-#: gnutls_tpm2_esys.c:305 gnutls_tpm2_ibm.c:284
+#: gnutls_tpm2_esys.c:307 gnutls_tpm2_ibm.c:284
 msgid "Enter TPM2 parent key password:"
 msgstr "Insira a senha da chave pai TMP2:"
 
-#: gnutls_tpm2_esys.c:306 gnutls_tpm2_ibm.c:285
+#: gnutls_tpm2_esys.c:308 gnutls_tpm2_ibm.c:285
 msgid "Enter secondary TPM2 parent key password:"
-msgstr ""
+msgstr "Insira a senha da chave pai TMP2 secundária:"
 
-#: gnutls_tpm2_esys.c:320
+#: gnutls_tpm2_esys.c:322
 #, c-format
 msgid "Loading TPM2 key blob, parent %x.\n"
 msgstr "Carregando o blob de chave TPM2, pai %x.\n"
 
-#: gnutls_tpm2_esys.c:328
+#: gnutls_tpm2_esys.c:330
 msgid "TPM2 Esys_Load auth failed\n"
 msgstr "Autenticação de TPM2 Esys_Load falhou\n"
 
-#: gnutls_tpm2_esys.c:334
+#: gnutls_tpm2_esys.c:336
 #, c-format
 msgid "TPM2 Esys_Load failed: 0x%x\n"
 msgstr "TPM2 Esys_Load falhou: 0x%x\n"
 
-#: gnutls_tpm2_esys.c:344
+#: gnutls_tpm2_esys.c:346
 #, c-format
 msgid "TPM2 Esys_FlushContext for generated primary failed: 0x%x\n"
 msgstr "TPM2 Esys_FlushContext para primária gerada falhou: 0x%x\n"
 
-#: gnutls_tpm2_esys.c:378 gnutls_tpm2_ibm.c:375 gnutls_tpm2_ibm.c:475
+#: gnutls_tpm2_esys.c:380 gnutls_tpm2_ibm.c:375 gnutls_tpm2_ibm.c:475
 msgid "Enter TPM2 key password:"
 msgstr "Insira a senha da chave TMP2:"
 
-#: gnutls_tpm2_esys.c:379 gnutls_tpm2_ibm.c:376
+#: gnutls_tpm2_esys.c:381 gnutls_tpm2_ibm.c:376
 msgid "Enter secondary TPM2 key password:"
-msgstr ""
+msgstr "Insira a senha da chave TMP2 secundária:"
 
-#: gnutls_tpm2_esys.c:412
+#: gnutls_tpm2_esys.c:414
 #, c-format
 msgid "TPM2 RSA sign function called for %d bytes, algo %s\n"
-msgstr ""
+msgstr "A função de assinatura do TPM2 RSA solicitou %d bytes, algoritmo %s\n"
 
-#: gnutls_tpm2_esys.c:432
+#: gnutls_tpm2_esys.c:434
 msgid "TPM2 Esys_RSA_Decrypt auth failed\n"
 msgstr "Autenticação de TPM2 Esys_RSA_Decrypt falhou\n"
 
-#: gnutls_tpm2_esys.c:438 gnutls_tpm2_esys.c:529
+#: gnutls_tpm2_esys.c:440 gnutls_tpm2_esys.c:531
 #, c-format
 msgid "TPM2 failed to generate RSA signature: 0x%x\n"
 msgstr "TPM2 falhou em gerar assinatura RSA: 0x%x\n"
 
-#: gnutls_tpm2_esys.c:483 gnutls_tpm2_ibm.c:419
+#: gnutls_tpm2_esys.c:485 gnutls_tpm2_ibm.c:419
 #, c-format
 msgid "TPM2 EC sign function called for %d bytes.\n"
 msgstr "A função de assinatura do TPM2 EC solicitou %d bytes.\n"
 
-#: gnutls_tpm2_esys.c:503 gnutls_tpm2_ibm.c:444
+#: gnutls_tpm2_esys.c:505 gnutls_tpm2_ibm.c:444
 #, c-format
 msgid "Unknown TPM2 EC digest size %d for algo 0x%x\n"
-msgstr ""
+msgstr "Digest TMP2 EC com tamanho desconhecido %d para algoritmo 0x%x\n"
 
-#: gnutls_tpm2_esys.c:523
+#: gnutls_tpm2_esys.c:525
 msgid "TPM2 Esys_Sign auth failed\n"
 msgstr "Autenticação de TPM2 Esys_Sign falhou\n"
 
-#: gnutls_tpm2_esys.c:563 gnutls_tpm2_ibm.c:511
+#: gnutls_tpm2_esys.c:565 gnutls_tpm2_ibm.c:511
 #, c-format
 msgid "Invalid TPM2 parent handle 0x%08x\n"
 msgstr "Manipulador pai de TMP2 inválido 0x%08x\n"
 
-#: gnutls_tpm2_esys.c:577 gnutls_tpm2_ibm.c:528
+#: gnutls_tpm2_esys.c:582
+msgid "Using SWTPM due to TPM_INTERFACE_TYPE environment variable\n"
+msgstr "Usando SWTPM devido a variável de ambiente TPM_INTERFACE_TYPE\n"
+
+#: gnutls_tpm2_esys.c:587
+#, c-format
+msgid "TSS2_TctiLdr_Initialize failed for swtpm: 0x%x\n"
+msgstr "TSS2_TctiLdr_Initialize falhou para swtpm: 0x%x\n"
+
+#: gnutls_tpm2_esys.c:597 gnutls_tpm2_ibm.c:528
 #, c-format
 msgid "Failed to import TPM2 private key data: 0x%x\n"
 msgstr "Falha ao importar dados de chave privada TPM2: 0x%x\n"
 
-#: gnutls_tpm2_esys.c:586 gnutls_tpm2_ibm.c:538
+#: gnutls_tpm2_esys.c:606 gnutls_tpm2_ibm.c:538
 #, c-format
 msgid "Failed to import TPM2 public key data: 0x%x\n"
 msgstr "Falha ao importar dados de chave pública TPM2: 0x%x\n"
 
-#: gnutls_tpm2_esys.c:600 gnutls_tpm2_ibm.c:549
+#: gnutls_tpm2_esys.c:620 gnutls_tpm2_ibm.c:549
 #, c-format
 msgid "Unsupported TPM2 key type %d\n"
 msgstr "Tipo de chave TMP2 sem suporte %d\n"
@@ -2410,6 +2431,8 @@ msgid ""
 "WARNING: Config XML contains <quarantine> tag with value of \"%s\".\n"
 "    VPN connectivity may be disabled or limited.\n"
 msgstr ""
+"AVISO: O XML de Configuração contém a tag <quarantine> com valor de “%s”.\n"
+"    A conectividade da VPN pode ser desabilitada ou limitada.\n"
 
 #: gpst.c:399
 #, c-format
@@ -2437,6 +2460,8 @@ msgid ""
 "IPv6 gateway address in config XML (%s) differs from external gateway "
 "address (%s).\n"
 msgstr ""
+"Endereço IPv6 do gateway no XML de config (%s) difere do endereço externo do "
+"gateway (%s).\n"
 
 #: gpst.c:427
 #, c-format
@@ -2479,12 +2504,16 @@ msgid ""
 "GlobalProtect IPv6 support is experimental. Please report results to "
 "<openconnect-devel@lists.infradead.org>.\n"
 msgstr ""
+"O suporte a GlobalProtect IPv6 é experimental. Por favor, relate os "
+"resultados para <openconnect-devel@lists.infradead.org>.\n"
 
 #: gpst.c:597
 msgid ""
 "Did not receive ESP keys and matching gateway in GlobalProtect config; "
 "tunnel will be TLS only.\n"
 msgstr ""
+"Não foram recebidas chaves ESP e conferência do gateway na configuração "
+"GlobalProtect; túnel será apenas TLS.\n"
 
 #: gpst.c:664
 msgid "ESP disabled"
@@ -2518,7 +2547,7 @@ msgstr "Gateway desconectado imediatamente após requisição GET-tunnel.\n"
 #: gpst.c:750 ppp.c:1119
 #, c-format
 msgid "Got unexpected HTTP response: %.*s\n"
-msgstr ""
+msgstr "Obteve resposta HTTP inesperada: %.*s\n"
 
 #: gpst.c:899
 #, c-format
@@ -2554,8 +2583,8 @@ msgid ""
 "Error: Running the 'HIP Report' script on this platform is not yet "
 "implemented.\n"
 msgstr ""
-"Erro: A execução do script “HIP report” nesta plataforma não está "
-"implementada ainda.\n"
+"Erro: A execução do script “HIP report” nesta plataforma ainda não foi "
+"implementada.\n"
 
 #: gpst.c:920
 #, c-format
@@ -2684,7 +2713,7 @@ msgstr "Enviando pacote de dados IPv%d de %d bytes\n"
 #: gpst.c:1489
 #, c-format
 msgid "ICMPv%d probe packet (seq %d) for GlobalProtect ESP:\n"
-msgstr ""
+msgstr "ICMPv%d pacote de investigação (seq %d) para ESP GlobalProtect:\n"
 
 #: gpst.c:1497 oncp.c:1268
 msgid "Failed to send ESP probe\n"
@@ -2895,7 +2924,7 @@ msgstr "Erro ao obter corpo de resposta HTTP\n"
 #: http.c:758
 #, c-format
 msgid "Error in chunked decoding. Expected '', got: '%s'\n"
-msgstr ""
+msgstr "Erro na decodificação fragmentada. Esperava “”, obteve: “%s”\n"
 
 #: http.c:771
 msgid "Cannot receive HTTP 1.0 body without closing connection\n"
@@ -3109,35 +3138,35 @@ msgstr "Compatível com Pulse Connect Secure SSL VPN"
 
 #: library.c:197
 msgid "F5 BIG-IP SSL VPN"
-msgstr ""
+msgstr "F5 BIG-IP SSL VPN"
 
 #: library.c:198
 msgid "Compatible with F5 BIG-IP SSL VPN"
-msgstr ""
+msgstr "Compatível com F5 BIG-IP SSL VPN"
 
 #: library.c:217
 msgid "Fortinet SSL VPN"
-msgstr ""
+msgstr "Fortinet SSL VPN"
 
 #: library.c:218
 msgid "Compatible with FortiGate SSL VPN"
-msgstr ""
+msgstr "Compatível com FortiGate SSL VPN"
 
 #: library.c:237
 msgid "PPP over TLS"
-msgstr ""
+msgstr "PPP sobre TLS"
 
 #: library.c:238
 msgid "Unauthenticated RFC1661/RFC1662 PPP over TLS, for testing"
-msgstr ""
+msgstr "RFC1661/RFC1662 PPP sobre TLS não autenticado, para testes"
 
 #: library.c:247
 msgid "Array SSL VPN"
-msgstr ""
+msgstr "Vetor SSL VPN"
 
 #: library.c:248
 msgid "Compatible with Array Networks SSL VPN"
-msgstr ""
+msgstr "Compatível com Array Networks SSL VPN"
 
 #: library.c:321
 #, c-format
@@ -3297,7 +3326,7 @@ msgstr "Substituição hostname “%s” com “%s”\n"
 #: main.c:847
 #, c-format
 msgid "Usage:  openconnect [options] <server>\n"
-msgstr "Uso:  openconnect [opções] <servidor>\n"
+msgstr "Uso:  openconnect [parâmetros] <servidor>\n"
 
 #: main.c:848
 #, c-format
@@ -3310,7 +3339,7 @@ msgstr ""
 
 #: main.c:850
 msgid "Read options from config file"
-msgstr "Lê as opções do arquivo de configuração"
+msgstr "Lê os parâmetros do arquivo de configuração"
 
 #: main.c:851
 msgid "Report version number"
@@ -3651,17 +3680,17 @@ msgstr "Falha ao obter linha de arquivo de configuração: %s\n"
 #: main.c:1093
 #, c-format
 msgid "Unrecognised option at line %d: '%s'\n"
-msgstr "Opção não reconhecida na linha %d: “%s”\n"
+msgstr "Parâmetro não reconhecido na linha %d: “%s”\n"
 
 #: main.c:1103
 #, c-format
 msgid "Option '%s' does not take an argument at line %d\n"
-msgstr "Opção “%s” não leva um argumento na linha %d\n"
+msgstr "Parâmetro “%s” não leva um argumento na linha %d\n"
 
 #: main.c:1107
 #, c-format
 msgid "Option '%s' requires an argument at line %d\n"
-msgstr "Opção “%s” requer um argumento na linha %d\n"
+msgstr "Parâmetro “%s” requer um argumento na linha %d\n"
 
 #: main.c:1132
 #, c-format
@@ -3677,7 +3706,7 @@ msgstr "ID de usuário inválido “%d”: %s\n"
 #, c-format
 msgid "Unhandled autocomplete for option %d '--%s'. Please report.\n"
 msgstr ""
-"Não há manipulação para auto completar a opção %d “--%s”. Por favor, "
+"Não há manipulação para auto completar o parâmetro %d “--%s”. Por favor, "
 "relate.\n"
 
 #: main.c:1430 main.c:1445
@@ -3702,11 +3731,11 @@ msgstr "desabilitado"
 
 #: main.c:1448
 msgid "established"
-msgstr ""
+msgstr "estabelecido"
 
 #: main.c:1451
 msgid "unknown"
-msgstr ""
+msgstr "desconhecido"
 
 #: main.c:1458
 #, c-format
@@ -3723,6 +3752,7 @@ msgstr "A autenticação da sessão irá expirar em %s"
 msgid ""
 "RX: %<PRId64> packets (%<PRId64> B); TX: %<PRId64> packets (%<PRId64> B)\n"
 msgstr ""
+"RX: %<PRId64> pacotes (%<PRId64> B); TX: %<PRId64> pacotes (%<PRId64> B)\n"
 
 #: main.c:1485
 #, c-format
@@ -3837,7 +3867,7 @@ msgstr "Falha ao alocar memória\n"
 #: main.c:1752
 #, c-format
 msgid "Missing colon in resolve option\n"
-msgstr "Faltando dois-pontos na opção de resolução\n"
+msgstr "Faltando dois-pontos no parâmetro de resolução\n"
 
 #: main.c:1841 main.c:1850
 #, c-format
@@ -3850,7 +3880,7 @@ msgid ""
 "Disabling all HTTP connection re-use due to --no-http-keepalive option.\n"
 "If this helps, please report to <openconnect-devel@lists.infradead.org>.\n"
 msgstr ""
-"Desabilitando todo reuso de conexões HTTP por causa da opção --no-http-"
+"Desabilitando todo reuso de conexões HTTP devido ao parâmetro --no-http-"
 "keepalive.\n"
 "Se isso ajuda, por favor relate para <openconnect-devel@lists.infradead."
 "org>.\n"
@@ -3861,7 +3891,7 @@ msgid ""
 "The --no-cert-check option was insecure and has been removed.\n"
 "Fix your server's certificate or use --servercert to trust it.\n"
 msgstr ""
-"A opção --no-cert-check era insegura e foi removida.\n"
+"O parâmetro --no-cert-check era inseguro e foi removido.\n"
 "Corrija o certificado do servidor ou use --servercert para confiar nele.\n"
 
 #: main.c:1903
@@ -4052,7 +4082,7 @@ msgstr "Hash da chave do servidor: %s\n"
 #: main.c:2370
 #, c-format
 msgid "Auth choice \"%s\" matches multiple options\n"
-msgstr "Escolha de autenticação “%s” corresponde a múltiplas opções\n"
+msgstr "Escolha de autenticação “%s” corresponde a múltiplos parâmetros\n"
 
 #: main.c:2373
 #, c-format
@@ -4185,12 +4215,12 @@ msgstr "Falha ao selecionar() no ciclo principal"
 #: mtucalc.c:89
 #, c-format
 msgid "Using base_mtu of %d\n"
-msgstr ""
+msgstr "Usando base_mtu de %d\n"
 
 #: mtucalc.c:105
 #, c-format
 msgid "After removing %s/IPv%d headers, MTU of %d\n"
-msgstr ""
+msgstr "Após remover cabeçalhos %s/IPv%d, MTU de %d\n"
 
 #. MTU is now (we hope) the number of payload bytes that can fit in a UDP or
 #. * TCP packet exchanged with the VPN gateway.
@@ -4203,6 +4233,8 @@ msgid ""
 "After removing protocol specific overhead (%d unpadded, %d padded, %d "
 "blocksize), MTU of %d\n"
 msgstr ""
+"Após remover sobrecarga específica de protocolo (%d não preenchidos, %d "
+"preenchidos, %d tamanho de bloco), MTU de %d\n"
 
 #: ntlm.c:87 sspi.c:114 sspi.c:197
 #, c-format
@@ -4239,7 +4271,7 @@ msgstr "Tentando autenticação HTTP NTLMv%d ao servidor “%s”\n"
 
 #: nullppp.c:84
 msgid "Terminating because nullppp has reached network state.\n"
-msgstr ""
+msgstr "Terminando pois nullppp atingiu o estado da rede.\n"
 
 #: oath.c:104
 msgid "Invalid base32 token string\n"
@@ -4497,7 +4529,7 @@ msgstr "Servidor terminou a conexão (sessão expirou)\n"
 
 #: oncp.c:806
 msgid "Server terminated connection (idle timeout)\n"
-msgstr ""
+msgstr "Servidor terminou a conexão (tempo limite de ociosidade)\n"
 
 #: oncp.c:810
 #, c-format
@@ -4610,6 +4642,10 @@ msgid ""
 "See http://rt.openssl.org/Ticket/Display.html?id=1751\n"
 "Use the --no-dtls command line option to avoid this message\n"
 msgstr ""
+"SSL_set_session() falhou com protocolo DTLS versão 0x%x\n"
+"Você está usando uma versão do OpenSSL mais antiga do que 0.9.8m?\n"
+"Consulte http://rt.openssl.org/Ticket/Display.html?id=1751\n"
+"Use o parâmetro de linha de comando --no-dtls para evitar esta mensagem\n"
 
 #: openssl-dtls.c:576
 msgid "SSL_set_session() failed\n"
@@ -4617,7 +4653,7 @@ msgstr "SSL_set_session() falhou\n"
 
 #: openssl-dtls.c:592
 msgid "Create DTLS dgram BIO failed"
-msgstr ""
+msgstr "Falha na criação de dgram DTLS BIO"
 
 #: openssl-dtls.c:677
 #, c-format
@@ -4730,7 +4766,7 @@ msgstr "Conteúdo de certificado X.509 não obtido por libp11\n"
 #: openssl-pkcs11.c:414
 #, c-format
 msgid "Using secondary PKCS#11 certificate %s\n"
-msgstr ""
+msgstr "Usando certificado PKCS#11 secundário %s\n"
 
 #: openssl-pkcs11.c:459
 #, c-format
@@ -4748,7 +4784,7 @@ msgstr "O certificado não possui chave pública\n"
 
 #: openssl-pkcs11.c:500
 msgid "Secondary certificate has no public key\n"
-msgstr ""
+msgstr "O certificado secundário não possui chave pública\n"
 
 #: openssl-pkcs11.c:506 openssl-pkcs11.c:530
 msgid "Certificate does not match private key\n"
@@ -4756,7 +4792,7 @@ msgstr "O certificado não confere com a chave privada\n"
 
 #: openssl-pkcs11.c:507 openssl-pkcs11.c:531
 msgid "Secondary certificate does not match private key\n"
-msgstr ""
+msgstr "O certificado secundário não confere com a chave privada\n"
 
 #: openssl-pkcs11.c:510
 msgid "Checking EC key matches cert\n"
@@ -4778,15 +4814,15 @@ msgstr "Falha ao localizar chave PKCS#11 “%s”\n"
 #: openssl-pkcs11.c:650
 #, c-format
 msgid "Using secondary PKCS#11 key %s\n"
-msgstr ""
+msgstr "Usando chave secundária PKCS#11 %s\n"
 
 #: openssl-pkcs11.c:656
 msgid "Failed to instantiate private key from PKCS#11\n"
-msgstr ""
+msgstr "Falha ao instanciar chave privada de PKCS#11\n"
 
 #: openssl-pkcs11.c:657
 msgid "Failed to instantiate secondary private key from PKCS#11\n"
-msgstr ""
+msgstr "Falha ao instanciar chave privada secundária de PKCS#11\n"
 
 #: openssl-pkcs11.c:713 openssl-pkcs11.c:719
 msgid "This version of OpenConnect was built without PKCS#11 support\n"
@@ -4803,12 +4839,12 @@ msgstr "Falha ao ler de socket TLS/DTLS\n"
 #: openssl.c:334
 #, c-format
 msgid "Read error on %s session: %d\n"
-msgstr ""
+msgstr "Erro de leitura em %s sessão: %d\n"
 
 #: openssl.c:369
 #, c-format
 msgid "Write error on %s session: %d\n"
-msgstr ""
+msgstr "Erro de escrita em %s sessão: %d\n"
 
 #: openssl.c:442
 #, c-format
@@ -4822,7 +4858,7 @@ msgstr "Senha de PEM muito longa (%d >= %d)\n"
 
 #: openssl.c:558
 msgid "Client certificate or key missing\n"
-msgstr ""
+msgstr "Certificado do cliente ou chave em falta\n"
 
 #: openssl.c:564 openssl.c:1027
 msgid "Loading private key failed\n"
@@ -4843,7 +4879,7 @@ msgstr "Análise de PKCS#12 falhou (veja os erros acima)\n"
 
 #: openssl.c:650
 msgid "Parse secondary PKCS#12 failed (see above errors)\n"
-msgstr ""
+msgstr "Análise de PKCS#12 secundária falhou (veja os erros acima)\n"
 
 #: openssl.c:667
 msgid "PKCS#12 contained no certificate!\n"
@@ -4851,7 +4887,7 @@ msgstr "PKCS#12 continha nenhum certificado!\n"
 
 #: openssl.c:668
 msgid "Secondary PKCS#12 contained no certificate!\n"
-msgstr ""
+msgstr "PKCS#12 secundário continha nenhum certificado!\n"
 
 #: openssl.c:674
 msgid "PKCS#12 contained no private key!\n"
@@ -4859,7 +4895,7 @@ msgstr "PKCS#12 continha nenhuma chave privada!\n"
 
 #: openssl.c:675
 msgid "Secondary PKCS#12 contained no private key!\n"
-msgstr ""
+msgstr "PKCS#12 secundário continha nenhuma chave privada!\n"
 
 #: openssl.c:682
 msgid "PKCS#12"
@@ -4883,7 +4919,7 @@ msgstr "Falha ao carregar chave privada de TPM\n"
 
 #: openssl.c:740
 msgid "Failed to load secondary TPM private key\n"
-msgstr ""
+msgstr "Falha ao carregar chave privada secundária de TPM\n"
 
 #: openssl.c:794 openssl.c:943
 #, c-format
@@ -4893,7 +4929,7 @@ msgstr "Falha ao abrir arquivo de certificado %s: %s\n"
 #: openssl.c:795
 #, c-format
 msgid "Failed to open secondary certificate file %s: %s\n"
-msgstr ""
+msgstr "Falha ao abrir o arquivo de chave/certificado secundário %s: %s\n"
 
 #: openssl.c:805
 msgid "Loading certificate failed\n"
@@ -4907,6 +4943,9 @@ msgstr ""
 #: openssl.c:837
 msgid "Failed to process secondary supporting certs. Trying anyway...\n"
 msgstr ""
+"Falha ao processar todos os certificados secundários aceitos. Tentando mesmo "
+"assim…\n"
+"\n"
 
 #: openssl.c:850
 msgid "PEM file"
@@ -4919,19 +4958,20 @@ msgstr "Falha ao criar BIO para item da keystore “%s”\n"
 
 #: openssl.c:904
 msgid "Loading private key failed (wrong passphrase?)\n"
-msgstr "Carregamento de chave privada falhou (frase secreta incorreta?)\n"
+msgstr "Falha ao carregar chave privada (frase secreta incorreta?)\n"
 
 #: openssl.c:905
 msgid "Loading secondary private key failed (wrong passphrase?)\n"
 msgstr ""
+"Falha ao carregar chave privada secundária (frase secreta incorreta?)\n"
 
 #: openssl.c:911
 msgid "Loading private key failed (see above errors)\n"
-msgstr "Carregamento de chave privada falhou (veja os erros acima)\n"
+msgstr "Falha ao carregar chave privada (veja os erros acima)\n"
 
 #: openssl.c:912
 msgid "Loading secondary private key failed (see above errors)\n"
-msgstr ""
+msgstr "Falha ao carregar chave privada secundária (veja os erros acima)\n"
 
 #: openssl.c:966
 msgid "Failed to load X509 certificate from keystore\n"
@@ -4944,15 +4984,15 @@ msgstr "Falha ao abrir arquivo de chave privada %s: %s\n"
 
 #: openssl.c:1028
 msgid "Loading secondary private key failed\n"
-msgstr ""
+msgstr "Falha ao carregar chave privada secundária\n"
 
 #: openssl.c:1082 openssl.c:1097
 msgid "Failed to decrypt secondary PKCS#8 certificate file\n"
-msgstr ""
+msgstr "Falha ao descriptografar arquivo de certificado PKCS#8 secundário\n"
 
 #: openssl.c:1092
 msgid "Enter PKCS#8 secondary pass phrase:"
-msgstr ""
+msgstr "Insira a frase secreta PKCS#8 secundária:"
 
 #: openssl.c:1117
 msgid "Failed to convert PKCS#8 to OpenSSL EVP_PKEY\n"
@@ -4960,7 +5000,7 @@ msgstr "Falha ao converter PKCS#8 para EVP_PKEY de OpenSSL\n"
 
 #: openssl.c:1118
 msgid "Failed to convert secondary PKCS#8 to OpenSSL EVP_PKEY\n"
-msgstr ""
+msgstr "Falha ao converter PKCS#8 secundária para EVP_PKEY de OpenSSL\n"
 
 #: openssl.c:1128
 #, c-format
@@ -5045,7 +5085,7 @@ msgstr "Erro no campo notAfter do certificado do cliente\n"
 
 #: openssl.c:1674
 msgid "Error in secondary client cert notAfter field\n"
-msgstr ""
+msgstr "Erro no campo notAfter do certificado do cliente secundário\n"
 
 #: openssl.c:1689
 msgid "<error>"
@@ -5098,37 +5138,39 @@ msgstr "Falha de conexão EAP-TTLS: %d\n"
 
 #: ppp.c:113
 msgid "HDLC initial flag sequence (0x7e) is missing\n"
-msgstr ""
+msgstr "Está faltando a sequência inicial de sinalizador HDLC (0x7e)\n"
 
 #: ppp.c:131
 msgid "HDLC buffer ended without FCS and flag sequence (0x7e)\n"
-msgstr ""
+msgstr "O buffer HDLC terminou sem FCS e sequência de sinalizador (0x7e)\n"
 
 #: ppp.c:137
 #, c-format
 msgid "HDLC frame too short (%d bytes)\n"
-msgstr ""
+msgstr "Quadro HDLC muito pequeno (%d bytes)\n"
 
 #: ppp.c:149
 #, c-format
 msgid "Bad HDLC packet FCS %04x\n"
-msgstr ""
+msgstr "HDLC ruim pacote FCS %04x\n"
 
 #: ppp.c:154
 #, c-format
 msgid "Un-HDLC'ed packet (%ld bytes -> %ld), FCS=0x%04x\n"
-msgstr ""
+msgstr "Sem pacote HDLC (%ld bytes -> %ld), FCS=0x%04x\n"
 
 #: ppp.c:318
 #, c-format
 msgid "Current PPP state: %s (encap %s):\n"
-msgstr ""
+msgstr "Estado PPP atual: %s (encap %s):\n"
 
 #: ppp.c:320
 #, c-format
 msgid ""
 "    in: asyncmap=0x%08x, lcp_opts=%d, lcp_magic=0x%08x, ipv4=%s, ipv6=%s\n"
 msgstr ""
+"    entrada: asyncmap=0x%08x, lcp_opts=%d, lcp_magic=0x%08x, ipv4=%s, ipv6="
+"%s\n"
 
 #: ppp.c:328
 #, c-format
@@ -5136,176 +5178,184 @@ msgid ""
 "   out: asyncmap=0x%08x, lcp_opts=%d, lcp_magic=0x%08x, ipv4=%s, ipv6=%s, "
 "solicit_peerns=%d, got_peerns=%d\n"
 msgstr ""
+"   saída: asyncmap=0x%08x, lcp_opts=%d, lcp_magic=0x%08x, ipv4=%s, ipv6=%s, "
+"solicit_peerns=%d, got_peerns=%d\n"
 
 #: ppp.c:413
 #, c-format
 msgid "Received MRU %d from server. Nak-offering larger MRU of %d (our MTU)\n"
 msgstr ""
+"Recebido MRU %d do servidor. Nak oferece MRU maior que %d (nosso MTU)\n"
 
 #: ppp.c:419
 #, c-format
 msgid "Received MRU %d from server. Setting our MTU to match.\n"
 msgstr ""
+"Recebido MRU %d do servidor. Configurando nosso MTU para conferir.\n"
+"\n"
 
 #: ppp.c:427
 #, c-format
 msgid "Received asyncmap of 0x%08x from server\n"
-msgstr ""
+msgstr "Recebido mapeamento assíncrono de 0x%08x do servidor\n"
 
 #: ppp.c:433
 #, c-format
 msgid "Received magic number of 0x%08x from server\n"
-msgstr ""
+msgstr "Recebido número mágico de 0x%08x do servidor\n"
 
 #: ppp.c:438
 msgid "Received protocol field compression from server\n"
-msgstr ""
+msgstr "Recebido compressão de campo de protocolo do servidor\n"
 
 #: ppp.c:443
 msgid "Received address and control field compression from server\n"
-msgstr ""
+msgstr "Recebido endereço e compressão de controle de campo do servidor\n"
 
 #: ppp.c:450
 msgid "Received deprecated IP-Addresses from server, ignoring\n"
-msgstr ""
+msgstr "Recebido endereços de IP obsoletos do servidor, ignorando\n"
 
 #: ppp.c:457
 msgid "Received Van Jacobson TCP/IP compression from server\n"
-msgstr ""
+msgstr "Recebida compressão Van Jacobson de TCP/IP do servidor\n"
 
 #: ppp.c:465
 #, c-format
 msgid "Received peer IPv4 address %s from server\n"
-msgstr ""
+msgstr "Recebido par de endereço IPv4 %s do servidor\n"
 
 #: ppp.c:481
 #, c-format
 msgid "Received peer IPv6 link-local address %s from server\n"
-msgstr ""
+msgstr "Recebido par de endereço IPv6 link-local %s do servidor\n"
 
 #: ppp.c:488
 #, c-format
 msgid "Received unknown %s TLV (tag %d, len %d+2) from server:\n"
-msgstr ""
+msgstr "Recebido %s TLV desconhecido (tag %d, tamanho %d+2) do servidor:\n"
 
 #: ppp.c:515
 #, c-format
 msgid "Received %ld extra bytes at end of Config-Request:\n"
-msgstr ""
+msgstr "Recebido %ld bytes extra ao final da Config-Requisição:\n"
 
 #: ppp.c:522
 #, c-format
 msgid "Reject %s/id %d config from server\n"
-msgstr ""
+msgstr "Rejeitar %s/id %d configuração do servidor\n"
 
 #: ppp.c:530
 #, c-format
 msgid "Nak %s/id %d config from server\n"
-msgstr ""
+msgstr "Nak %s/id %d configuração do servidor\n"
 
 #: ppp.c:536
 #, c-format
 msgid "Ack %s/id %d config from server\n"
-msgstr ""
+msgstr "Ack %s/id %d configuração do servidor\n"
 
 #: ppp.c:576
 #, c-format
 msgid "Requesting calculated MTU of %d\n"
-msgstr ""
+msgstr "Solicitando MTU calculado de %d\n"
 
 #: ppp.c:631
 #, c-format
 msgid "Sending our %s/id %d config request to server\n"
-msgstr ""
+msgstr "Enviando nossa requisição de configuração %s/id %d para o servidor\n"
 
 #: ppp.c:668
 msgid "Server rejected/nak'ed LCP MRU option\n"
-msgstr ""
+msgstr "Rejeitado pelo servidor/nak de parâmetro LCP MRU\n"
 
 #: ppp.c:673
 msgid "Server rejected/nak'ed LCP asyncmap option\n"
 msgstr ""
+"Rejeitado pelo servidor/nak de parâmetro do mapeamento assíncrono LCP\n"
 
 #: ppp.c:684
 msgid "Server rejected LCP magic option\n"
-msgstr ""
+msgstr "Parâmetro mágico LCP rejeitado pelo servidor\n"
 
 #: ppp.c:690
 msgid "Server rejected/nak'ed LCP PFCOMP option\n"
-msgstr ""
+msgstr "Rejeitado pelo servidor/nak de parâmetro LCP PFCOMP\n"
 
 #: ppp.c:695
 msgid "Server rejected/nak'ed LCP ACCOMP option\n"
-msgstr ""
+msgstr "Rejeitado pelo servidor/nak de parâmetro LCP ACCOMP\n"
 
 #: ppp.c:703
 #, c-format
 msgid "Server nak-offered IPv4 address: %s\n"
-msgstr ""
+msgstr "Servidor ofereceu nak de endereço IPv4: %s\n"
 
 #: ppp.c:707
 #, c-format
 msgid "Server rejected Legacy IP address %s\n"
-msgstr ""
+msgstr "O servidor rejeitou endereço de IP legado %s\n"
 
 #: ppp.c:713
 #, c-format
 msgid "Server rejected/nak'ed our IPv4 address or request: %s\n"
-msgstr ""
+msgstr "Rejeitado pelo servidor/nak do nosso endereço IPv4 ou requisição: %s\n"
 
 #: ppp.c:729
 #, c-format
 msgid "Server nak-offered IPCP request for %s[%d] server: %s\n"
-msgstr ""
+msgstr "Servidor ofereceu nak de requisição IPCP para %s[%d] servidor: %s\n"
 
 #: ppp.c:735
 #, c-format
 msgid "Server rejected/nak'ed IPCP request for %s[%d] server\n"
-msgstr ""
+msgstr "Rejeitado pelo servidor/nak de requisição IPCP para %s[%d] servidor\n"
 
 #: ppp.c:750
 #, c-format
 msgid "Server nak-offered IPv6 link-local address %s\n"
-msgstr ""
+msgstr "Servidor ofereceu nak de endereço IPv6 link-local: %s\n"
 
 #: ppp.c:758
 msgid "Server rejected/nak'ed our IPv6 interface identifier\n"
 msgstr ""
+"Rejeitado pelo servidor/nak do nosso identificador de interface IPv6\n"
+"\n"
 
 #: ppp.c:766
 #, c-format
 msgid "Server rejected/nak'ed %s TLV (tag %d, len %d+2)\n"
-msgstr ""
+msgstr "Rejeitado pelo servidor/nak de %s TLV (tag %d, tamanho %d+2)\n"
 
 #: ppp.c:775
 #, c-format
 msgid "Received %ld extra bytes at end of Config-Reject:\n"
-msgstr ""
+msgstr "Recebido %ld bytes extra ao final do Config-Rejeitar:\n"
 
 #: ppp.c:800
 #, c-format
 msgid "Received %s/id %d %s from server\n"
-msgstr ""
+msgstr "Recebido %s/id %d %s do servidor\n"
 
 #: ppp.c:831
 #, c-format
 msgid "Server terminates with reason: %s\n"
-msgstr ""
+msgstr "Servidor terminou pelo motivo: %s\n"
 
 #: ppp.c:858
 #, c-format
 msgid "Server rejected our request to configure IPv%d\n"
-msgstr ""
+msgstr "Servidor rejeitou nossa solicitação para configurar IPv%d\n"
 
 #: ppp.c:1028
 #, c-format
 msgid "PPP state transition from %s to %s on %s channel\n"
-msgstr ""
+msgstr "Estado PPP transição de %s para %s em canal %s\n"
 
 #: ppp.c:1152
 #, c-format
 msgid "Unexpected pre-PPP packet header for encap %d.\n"
-msgstr ""
+msgstr "Cabeçalho de pacote pre-PPP inesperado para o encap %d.\n"
 
 #: ppp.c:1161
 #, c-format
@@ -5313,93 +5363,97 @@ msgid ""
 "Packet is incomplete. Received %d bytes on wire (includes %d encap) but "
 "header payload_len is %d\n"
 msgstr ""
+"O pacote está incompleto. Recebido %d bytes na rede (inclui %d encap) mas o "
+"cabeçalho de payload_len é %d\n"
 
 #: ppp.c:1194
 msgid "Invalid PPP encapsulation\n"
-msgstr ""
+msgstr "Encapsulamento de PPP inválido\n"
 
 #: ppp.c:1203
 #, c-format
 msgid "Packet contains %d bytes after payload. Assuming concatenated packet.\n"
 msgstr ""
+"O pacote contém %d bytes após a carga. Presumindo pacote concatenado.\n"
 
 #: ppp.c:1253
 #, c-format
 msgid "Unexpected IPv%d packet in PPP state %s.\n"
-msgstr ""
+msgstr "Pacote IPv%d inesperado no estado PPP %s.\n"
 
 #: ppp.c:1258
 #, c-format
 msgid "Received IPv%d data packet of %d bytes over %s\n"
-msgstr ""
+msgstr "Recebido pacote de dados IPv%d de %d bytes sobre %s\n"
 
 #: ppp.c:1264
 #, c-format
 msgid "Expected %d PPP header bytes but got %ld, shifting payload.\n"
 msgstr ""
+"Era esperado %d bytes de cabeçalho PPP mas obteve %ld, alternando carga.\n"
 
 #: ppp.c:1287
 #, c-format
 msgid "Sending Protocol-Reject for %s. Payload:\n"
-msgstr ""
+msgstr "Enviando o Rejeitar-Protocolo para %s. carga:\n"
 
 #: ppp.c:1371
 msgid "Detected dead peer!\n"
-msgstr ""
+msgstr "Detectado ponto morto!\n"
 
 #: ppp.c:1381
 msgid "Failed to establish PPP\n"
-msgstr ""
+msgstr "Falha ao estabelecer PPP\n"
 
 #: ppp.c:1400
 msgid "Send PPP discard request as keepalive\n"
-msgstr ""
+msgstr "Enviar requisição de descarte PPP como keepalive\n"
 
 #: ppp.c:1404
 msgid "Send PPP echo request as DPD\n"
-msgstr ""
+msgstr "Enviar requisição de echo PPP como DPD\n"
 
 #: ppp.c:1470
 #, c-format
 msgid "Sending PPP %s %s packet over %s (id %d, %d bytes total)\n"
-msgstr ""
+msgstr "Enviando pacote PPP %s %s sobre %s (id %d, %d total de bytes)\n"
 
 #: ppp.c:1476
 #, c-format
 msgid "Sending PPP %s packet over %s (%d bytes total)\n"
-msgstr ""
+msgstr "Enviando pacote PPP %s sobre %s (%d total de bytes)\n"
 
 #: ppp.c:1534
 #, c-format
 msgid "PPP connect called with invalid DTLS state %d\n"
-msgstr ""
+msgstr "Chamada de conexão PPP com estado DTLS inválido %d\n"
 
 #: ppp.c:1555
 msgid "DTLS tunnel connected; exiting HTTPS mainloop.\n"
-msgstr ""
+msgstr "Túnel DTLS conectado; saindo do loop principal de HTTPS.\n"
 
 #: ppp.c:1589
 #, c-format
 msgid "Failed to connect DTLS tunnel; using HTTPS instead (state %d).\n"
-msgstr ""
+msgstr "Falha ao conectar a túnel DTLS; usando HTTPS no lugar (estado %d).\n"
 
 #: ppp.c:1614
 msgid "Establishing PPP tunnel over TLS failed\n"
-msgstr ""
+msgstr "Falha ao estabelecer túnel PPP sobre TLS\n"
 
 #: ppp.c:1625
 #, c-format
 msgid "Invalid DTLS state %d\n"
-msgstr ""
+msgstr "Estado DTLS inválido %d\n"
 
 #. This should never happen
 #: ppp.c:1692
 msgid "Reset PPP failed\n"
-msgstr ""
+msgstr "Reinício de PPP falhou\n"
 
 #: ppp.c:1713
 msgid "Failed to authenticate DTLS session\n"
-msgstr ""
+msgstr "Falha ao autenticar sessão DTLS\n"
 
 #: pulse.c:235
 #, c-format
@@ -5659,11 +5713,11 @@ msgstr "Cookie de autenticação Pulse não aceito\n"
 
 #: pulse.c:1829
 msgid "Pulse realm entry\n"
-msgstr "Registro de reino Pulse\n"
+msgstr "Entrada de área Pulse\n"
 
 #: pulse.c:1835
 msgid "Pulse realm choice\n"
-msgstr "Escolha de reino Pulse\n"
+msgstr "Escolha de área Pulse\n"
 
 #: pulse.c:1842
 #, c-format
@@ -5719,7 +5773,7 @@ msgstr "Pacote de reconhecimento EAP-TTLS ruim\n"
 #: pulse.c:2117
 #, c-format
 msgid "Bad EAP-TTLS packet (len %d, left %d)\n"
-msgstr "Pacote EAP-TTLS ruim (len %d, left %d)\n"
+msgstr "Pacote EAP-TTLS ruim (tamanho %d, restante %d)\n"
 
 #: pulse.c:2274
 msgid "Unexpected Pulse config packet:\n"
@@ -5748,7 +5802,7 @@ msgstr "Pacote IF-T/TLS inesperado ao esperar a configuração.\n"
 
 #: pulse.c:2571
 msgid "Insufficient configuration found\n"
-msgstr ""
+msgstr "Localizada configuração insuficiente\n"
 
 #: pulse.c:2683
 msgid "ESP rekey failed\n"
@@ -5757,7 +5811,7 @@ msgstr "Renovação da chave ESP falhou\n"
 #: pulse.c:2712
 #, c-format
 msgid "Pulse fatal error (reason: %ld): %s\n"
-msgstr ""
+msgstr "Erro fatal do Pulse (motivo: %ld): %s\n"
 
 #: pulse.c:2730
 msgid "Unknown Pulse packet\n"
@@ -6178,7 +6232,7 @@ msgstr "Não é possível ler %s\\%s ou isso não é linha\n"
 #: tun-win32.c:118
 #, c-format
 msgid "%s\\ComponentId is unknown '%s'\n"
-msgstr ""
+msgstr "%s\\ComponentId é desconhecido “%s”\n"
 
 #: tun-win32.c:124
 #, c-format
@@ -6217,7 +6271,7 @@ msgstr "Falha ao abrir %s\n"
 #: tun-win32.c:242
 #, c-format
 msgid "Opened tun device %S\n"
-msgstr ""
+msgstr "Aberto dispositivo tun %S\n"
 
 #: tun-win32.c:250
 #, c-format
@@ -6244,20 +6298,20 @@ msgstr "Falha ao definir status de mídia TAP: %s\n"
 #: tun-win32.c:303
 #, c-format
 msgid "Ignoring non-matching interface \"%S\"\n"
-msgstr ""
+msgstr "Ignorando interface não correspondente “%S”\n"
 
 #: tun-win32.c:326
 msgid "Could not convert interface name to UTF-8\n"
-msgstr ""
+msgstr "Não foi possível converter nome de interface para UTF-8\n"
 
 #: tun-win32.c:339
 #, c-format
 msgid "Using %s device '%s', index %d\n"
-msgstr ""
+msgstr "Usando %s dispositivo “%s”, índice %d\n"
 
 #: tun-win32.c:353
 msgid "Could not construct interface name\n"
-msgstr ""
+msgstr "Não foi possível construir nome de interface\n"
 
 #: tun-win32.c:379
 msgid "No Windows-TAP adapters found. Is the driver installed?\n"
@@ -6267,6 +6321,8 @@ msgstr "Nenhum adaptador TAP do Windows encontrado. O driver está instalado?\n"
 msgid ""
 "Alternatively, specify an interface name to try creating it with Wintun\n"
 msgstr ""
+"De forma alternativa, especifique um nome de interface para tentar criá-lo "
+"com o Wintun\n"
 
 #: tun-win32.c:406
 msgid "TAP device aborted connectivity. Disconnecting.\n"
@@ -6444,26 +6500,26 @@ msgstr "Falha ao escrever pacote de entrada: %s\n"
 
 #: wintun.c:75
 msgid "Could not load wintun.dll\n"
-msgstr ""
+msgstr "Não foi possível carregar wintun.dll\n"
 
 #: wintun.c:90
 msgid "Could not resolve functions from wintun.dll\n"
-msgstr ""
+msgstr "Não foi possível solucionar as funções de wintun.dll\n"
 
 #: wintun.c:176
 #, c-format
 msgid "Failed to set Legacy IP address on Wintun: %s\n"
-msgstr ""
+msgstr "Falha ao definir endereços legados de IP no Wintun: %s\n"
 
 #: wintun.c:188
 #, c-format
 msgid "Failed to create Wintun session: %s"
-msgstr ""
+msgstr "Falha ao criar sessão Wintun: %s"
 
 #: wintun.c:197
 #, c-format
 msgid "Loaded Wintun v%d.%d\n"
-msgstr ""
+msgstr "Carregado Wintun v%d.%d\n"
 
 #: xml.c:75 xml.c:100
 #, c-format
