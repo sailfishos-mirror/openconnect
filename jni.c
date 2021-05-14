@@ -1301,6 +1301,14 @@ JNIEXPORT jstring JNICALL Java_org_infradead_libopenconnect_LibOpenConnect_getPr
 	RETURN_STRING_END
 }
 
+JNIEXPORT jstring JNICALL Java_org_infradead_libopenconnect_LibOpenConnect_getConnectUrl(
+	JNIEnv *jenv, jobject jobj)
+{
+	RETURN_STRING_START
+	buf = openconnect_get_connect_url(ctx->vpninfo);
+	RETURN_STRING_END
+}
+
 #define SET_STRING_START()			 \
 	struct libctx *ctx = getctx(jenv, jobj); \
 	const char *arg = NULL;			 \

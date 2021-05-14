@@ -41,6 +41,10 @@
        <li>Ignore failures to fetch the NC landing page if the authentication was successful.</li>
        <li>Add support for <a href="https://arraynetworks.com/products-secure-access-gateways-ag-series.html">Array Networks SSL VPN</a> (<a href="https://gitlab.com/openconnect/openconnect/-/issues/102">#102</a>)</li>
        <li>Support TLSv1.3 with TPMv2 EC and RSA keys, add test cases for swtpm and hardware TPM.</li>
+       <li>Add <tt>openconnect_get_connect_url()</tt> to simplify passing correct server information to
+       to the connecting <tt>openconnect</tt> process. <i>(NetworkManager-openconnect
+       <a href="https://gitlab.gnome.org/GNOME/NetworkManager-openconnect/-/issues/46">#46</a>,
+       <a href="https://gitlab.gnome.org/GNOME/NetworkManager-openconnect/-/issues/53">#53</a>)</i></li>
      </ul><br/>
   </li>
   <li><b><a href="ftp://ftp.infradead.org/pub/openconnect/openconnect-8.10.tar.gz">OpenConnect v8.10</a></b>

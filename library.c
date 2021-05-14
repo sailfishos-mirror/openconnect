@@ -577,6 +577,7 @@ void openconnect_vpninfo_free(struct openconnect_info *vpninfo)
 	free_split_routes(&vpninfo->ip_info);
 	free(vpninfo->hostname);
 	free(vpninfo->unique_hostname);
+	buf_free(vpninfo->connect_urlbuf);
 	free(vpninfo->urlpath);
 	free(vpninfo->redirect_url);
 	free_pass(&vpninfo->cookie);
@@ -692,6 +693,39 @@ void openconnect_vpninfo_free(struct openconnect_info *vpninfo)
 	free(vpninfo->cstp_pkt);
 	free(vpninfo->bearer_token);
 	free(vpninfo);
+}
+
+
+const char *openconnect_get_connect_url(struct openconnect_info *vpninfo)
+{
+	struct oc_text_buf *urlbuf = vpninfo->connect_urlbuf;
+
+	if (!urlbuf)
+		urlbuf = buf_alloc();
+
+	buf_append(urlbuf, "https://%s", vpninfo->hostname);
+	if (vpninfo->port != 443)
+		buf_append(urlbuf, ":%d", vpninfo->port);
+	buf_append(urlbuf, "/");
+
+	/* Other protocols don't care and just leave noise from the
+	 * authentication process in ->urlpath. Pulse does care, and
+	 * you have to *connect* to a given usergroup at the correct
+	 * path, not just authenticate.
+	 *
+	 * https://gitlab.gnome.org/GNOME/NetworkManager-openconnect/-/issues/53
+	 * https://gitlab.gnome.org/GNOME/NetworkManager-openconnect/-/merge_requests/22
+	 */
+	if (vpninfo->proto->proto == PROTO_PULSE)
+		buf_append(urlbuf, "%s", vpninfo->urlpath);
+	if (buf_error(urlbuf)) {
+		buf_free(urlbuf);
+		vpninfo->connect_urlbuf = NULL;
+		return NULL;
+	}
+
+	vpninfo->connect_urlbuf = urlbuf;
+	return urlbuf->data;
 }
 
 const char *openconnect_get_hostname(struct openconnect_info *vpninfo)

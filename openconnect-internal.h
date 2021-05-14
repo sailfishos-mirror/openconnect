@@ -493,10 +493,22 @@ struct openconnect_info {
 	struct http_auth_state proxy_auth[MAX_AUTH_TYPES];
 
 	char *localname;
-	char *hostname;
-	char *unique_hostname;
+
+	char *hostname; /* This is the original hostname (or IP address)
+			 * we were asked to connect to */
+
+	char *unique_hostname; /* This is the IP address of the actual host
+				* that we connected to; the result of the
+				* DNS lookup. We do this so that we can be
+				* sure we reconnect to the same server we
+				* authenticated to. */
 	int port;
 	char *urlpath;
+
+	/* The application might ask us to recreate a connection URL,
+	 * and we own the string so cache it for later freeing. */
+	struct oc_text_buf *connect_urlbuf;
+
 	int cert_expire_warning;
 
 	struct cert_info certinfo[1];

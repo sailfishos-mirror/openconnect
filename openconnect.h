@@ -37,6 +37,7 @@ extern "C" {
 
 /*
  * API version 5.7:
+ *  - Add openconnect_get_connect_url()
  *  - Add openconnect_set_cookie()
  *  - Add openconnect_set_allow_insecure_crypto()
  *  - Add openconnect_get_auth_expiration()
@@ -452,6 +453,77 @@ const char *openconnect_get_dtls_cipher(struct openconnect_info *);
  * in use (LZS, LZ4, ...). If no compression then NULL is returned. */
 const char *openconnect_get_cstp_compression(struct openconnect_info *);
 const char *openconnect_get_dtls_compression(struct openconnect_info *);
+
+
+/*
+ * Since authentication can run in a separate environment to the connection
+ * itself, there is a simple set of information which needs to be passed
+ * from one to the other. Basically it's just the server to connect to, and
+ * the cookie we need for authentication. And luckily, as we've added more
+ * and more protocols over the years, the "cookie" part has remained true
+ * and we haven't needed to use client certificates for the *connection*.
+ *
+ * The *server* part is a little more complex. Firstly, the certificate
+ * might not be valid and may have been accepted manually by the user,
+ * so we pass the certificate fingerprint separately, as a second piece
+ * of information.
+
+ * In the beginning, we passed the server hostname as the third piece of
+ * information, and all was well.
+ *
+ * Then we found servers on a non-standard port, so the authentication
+ * dialogs would use openconnect_get_port() and just append it (":%d")
+ * to the hostname string they passed on.
+ *
+ * Then we encountered servers with round-robin or geo-DNS, which gave
+ * different IP addresses for a given hostname, and we switched the
+ * openconnect_get_hostname() function to return the *IP* address instead,
+ * since the actual name didn't matter when it wasn't being used to check
+ * the server's certificate anyway.
+ *
+ * At some point later, openconnect_get_dnsname() was added to return the
+ * actual hostname, during the authentication phase where the cert was
+ * being presented to the user for manual acceptance. But that wasn't
+ * really important for the authentication → connection handoff.
+ *
+ * Later still, Legacy IP addresses got scarce and SNI was invented, and
+ * we started to see servers behind proxies that forward a connection
+ * based on the SNI in the incoming ClientHello. So returning just the
+ * IP address from openconnect_get_hostname() now made things break.
+ *
+ * So... we need to pass *both* the actual hostname *and* the IP address
+ * to the connecting openconnect invocation. As well as the port.
+ *
+ * In addition, the Pulse protocol introduced a new requirement for the
+ * connection. Instead of connecting to a fixed endpoint on the server,
+ * we must connect to the appropriate *path*, which varies. So in fact
+ * it isn't just the "hostname" any more, but the full URL.
+ *
+ * So, now we have openconnect_get_connect_url() which gets the full URL
+ * including the port and path, and the original hostname.
+ *
+ * Since we're now back to giving openconnect a hosthame, we need to add
+ * a '--resolve' argument to avoid the round robin DNS problem and ensure
+ * that we actually connect to the same server we authenticated to. The
+ * arguments for that can be obtained from openconnect_get_dnsname() and
+ * openconnect_get_hostname() — the latter of which, as noted, was changed
+ * years ago to return a numeric address. We end up invoking openconnect
+ * to make the connection as follows:
+ *
+ * openconnect $CONNECT_URL --servercert $FINGERPRINT --cookie $COOKIE \
+ *             --resolve $DNSNAME:$HOSTNAME
+ *
+ * ... where '$HOSTNAME', as noted, isn't actually a hostname. Sorry.
+ *
+ * In fact, what you get back from openconnect_get_hostname() is the
+ * IP literal in the form it would appear in a URL. So IPv6 addresses
+ * are wrapped in [], and that needs to be *stripped* in order to pass
+ * it to openconnect's --resolve argument. As I realise and type this,
+ * it doesn't seem particularly useful to provide yet another function
+ * that will return the non-[]-wrapped version, as we'd still need UI
+ * tools to do it themselves for backward compatibility. Sorry again :)
+ */
+const char *openconnect_get_connect_url(struct openconnect_info *);
 
 /* Returns the IP address of the exact host to which the connection
  * was made. In --cookieonly mode or in any other scenario involving

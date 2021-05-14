@@ -2097,8 +2097,21 @@ int main(int argc, char **argv)
 		/* --authenticate */
 		printf("COOKIE='%s'\n", vpninfo->cookie);
 		printf("HOST='%s'\n", openconnect_get_hostname(vpninfo));
+		printf("CONNECT_URL='%s'\n", openconnect_get_connect_url(vpninfo));
 		printf("FINGERPRINT='%s'\n",
 		       openconnect_get_peer_cert_hash(vpninfo));
+		if (vpninfo->unique_hostname) {
+			char *p = vpninfo->unique_hostname;
+			int l = strlen(p);
+
+			if (vpninfo->unique_hostname[0] == '[' &&
+			    vpninfo->unique_hostname[l-1] == ']') {
+				p++;
+				l -=2;
+			}
+			printf("RESOLVE='%s:%.*s'\n", vpninfo->hostname, l, p);
+		} else
+			printf("RESOLVE=");
 		openconnect_vpninfo_free(vpninfo);
 		exit(0);
 	} else if (cookieonly) {
