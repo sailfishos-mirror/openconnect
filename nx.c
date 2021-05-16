@@ -436,6 +436,23 @@ out:
 	return ret;
 }
 
+/* Translate platform names (derived from AnyConnect) into the values
+ * known to be emitted by SonicWall NX clients for the X-NX-Client-Platform header
+ */
+static const char *nx_client_platform(struct openconnect_info *vpninfo)
+{
+	if (!strcmp(vpninfo->platname, "linux-64") || !strcmp(vpninfo->platname, "linux"))
+		return "Linux";
+	else if (!strcmp(vpninfo->platname, "android"))
+		return "Android";
+	else if (!strcmp(vpninfo->platname, "apple-ios"))
+		return "iOS";
+	else if (!strcmp(vpninfo->platname, "mac-intel"))
+		return "MacOS";
+	else
+		return "Windows";
+}
+
 int nx_connect(struct openconnect_info *vpninfo)
 {
 	int ret = -EINVAL;
@@ -478,8 +495,7 @@ int nx_connect(struct openconnect_info *vpninfo)
 	buf_append(reqbuf, "Frame-Encode: off\r\n");
 	buf_append(reqbuf, "X-NE-PROTOCOL: 2.0\r\n");
 	buf_append(reqbuf, "Proxy-Authorization: %.*s\r\n", auth_token_len, auth_token);
-	// TODO: use set string for nx in openconnect_set_reported_os
-	buf_append(reqbuf, "X-NX-Client-Platform: Linux\r\n");
+	buf_append(reqbuf, "X-NX-Client-Platform: %s\r\n", nx_client_platform(vpninfo));
 	buf_append(reqbuf, "User-Agent: %s\r\n", vpninfo->useragent);
 	buf_append(reqbuf, "\r\n");
 	if ((ret = buf_error(reqbuf) != 0)) {
