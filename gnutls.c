@@ -1527,32 +1527,25 @@ static int load_certificate(struct openconnect_info *vpninfo, struct cert_info *
 	   match. So sign some dummy data and then check the signature against each
 	   of the available certificates until we find the right one. */
 	if (gci->pkey) {
-		unsigned i, j;
-		gnutls_digest_algorithm_t dig;
-
 		/* The TPM code may have already signed it, to test authorisation. We
 		   only sign here for PKCS#11 keys, in which case fdata might be
 		   empty too so point it at dummy data. We try multiple hashes
 		   because depending on the algorithm or device not all may be usable */
-		for (i=0;i<3;i++) {
-			switch(i) {
-				case 0:
-					dig = GNUTLS_DIG_SHA256;
-					break;
-				case 1:
-					dig = GNUTLS_DIG_SHA1;
-					break;
-				case 2:
-					dig = GNUTLS_DIG_SHA512;
-					break;
-			}
+		unsigned j;
+		gnutls_digest_algorithm_t *dig, digs[] = {
+			GNUTLS_DIG_SHA256, GNUTLS_DIG_SHA1,
+			GNUTLS_DIG_SHA512, GNUTLS_DIG_UNKNOWN
+		};
+
+		for (dig = digs; *dig != GNUTLS_DIG_UNKNOWN; dig++) {
 			if (!pkey_sig.data) {
 				if (!fdata.data) {
 					fdata.data = dummy_hash_data;
 					fdata.size = 20;
 				}
 
-				err = gnutls_privkey_sign_data(gci->pkey, dig, 0, &fdata, &pkey_sig);
+				err = gnutls_privkey_sign_data(gci->pkey, *dig, 0,
+							       &fdata, &pkey_sig);
 				if (err) {
 					vpn_progress(vpninfo, PRG_ERR,
 						     _("Error signing test data with private key: %s\n"),
@@ -1576,7 +1569,8 @@ static int load_certificate(struct openconnect_info *vpninfo, struct cert_info *
 					gnutls_pubkey_deinit(pubkey);
 					continue;
 				}
-				err = verify_signed_data(pubkey, gci->pkey, dig, &fdata, &pkey_sig);
+				err = verify_signed_data(pubkey, gci->pkey, *dig,
+							 &fdata, &pkey_sig);
 				gnutls_pubkey_deinit(pubkey);
 
 				if (err >= 0) {
