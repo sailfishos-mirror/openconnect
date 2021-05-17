@@ -85,7 +85,7 @@ char *openconnect_bin2base64(const char *prefix, const uint8_t *data, unsigned l
 	buf = buf_alloc();
 	if (prefix)
 		buf_append(buf, "%s", prefix);
-	buf_append_base64(buf, data, len);
+	buf_append_base64(buf, data, len, 0);
 
 	if (!buf_error(buf)) {
 		p = buf->data;

@@ -89,7 +89,7 @@ static int ntlm_sspi(struct openconnect_info *vpninfo, int proxy,
 	}
 
 	buf_append(buf, "%sAuthorization: NTLM ", proxy ? "Proxy-" : "");
-	buf_append_base64(buf, out_token.pvBuffer, out_token.cbBuffer);
+	buf_append_base64(buf, out_token.pvBuffer, out_token.cbBuffer, 0);
 	buf_append(buf, "\r\n");
 
 	FreeContextBuffer(out_token.pvBuffer);
@@ -971,7 +971,7 @@ static int ntlm_manual_challenge(struct openconnect_info *vpninfo, int proxy,
 		return buf_free(resp);
 
 	buf_append(hdrbuf, "%sAuthorization: NTLM ", proxy ? "Proxy-" : "");
-	buf_append_base64(hdrbuf, resp->data, resp->pos);
+	buf_append_base64(hdrbuf, resp->data, resp->pos, 0);
 	buf_append(hdrbuf, "\r\n");
 
 	buf_free(resp);

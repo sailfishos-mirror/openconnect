@@ -1324,7 +1324,7 @@ int handle_redirect(struct openconnect_info *vpninfo);
 void http_common_headers(struct openconnect_info *vpninfo, struct oc_text_buf *buf);
 
 /* http-auth.c */
-void buf_append_base64(struct oc_text_buf *buf, const void *bytes, int len);
+void buf_append_base64(struct oc_text_buf *buf, const void *bytes, int len, int line_len);
 void *openconnect_base64_decode(int *len, const char *in);
 void clear_auth_states(struct openconnect_info *vpninfo,
 		       struct http_auth_state *auth_states, int reset);

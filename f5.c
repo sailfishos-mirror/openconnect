@@ -586,7 +586,7 @@ static int f5_configure(struct openconnect_info *vpninfo)
 	buf_truncate(reqbuf);
 	buf_append(reqbuf, "GET /myvpn?sess=%s&hdlc_framing=%s&ipv4=%s&ipv6=%s&Z=%s&hostname=",
 		   sid, hdlc?"yes":"no", ipv4?"yes":"no", ipv6?"yes":"no", ur_z);
-	buf_append_base64(reqbuf, vpninfo->localname, strlen(vpninfo->localname));
+	buf_append_base64(reqbuf, vpninfo->localname, strlen(vpninfo->localname), 0);
 	buf_append(reqbuf, " HTTP/1.1\r\n");
 	struct oc_vpn_option *saved_cookies = vpninfo->cookies;
 	vpninfo->cookies = NULL; /* hide cookies */

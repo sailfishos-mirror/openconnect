@@ -110,7 +110,8 @@ static const char b64_table[] = {
 	'w', 'x', 'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '/'
 };
 
-void buf_append_base64(struct oc_text_buf *buf, const void *bytes, int len)
+void buf_append_base64(struct oc_text_buf *buf, const void *bytes, int len,
+		       int line_len)
 {
 	const unsigned char *in = bytes;
 	int hibits;
@@ -118,10 +119,28 @@ void buf_append_base64(struct oc_text_buf *buf, const void *bytes, int len)
 	if (!buf || buf->error)
 		return;
 
-	if (buf_ensure_space(buf, (4 * (len + 2) / 3) + 1))
+	unsigned int needed = (4 * (len + 2) / 3) + 1;
+	if (line_len)
+		needed += needed / line_len;
+
+	if (needed >= (unsigned)(INT_MAX - buf->pos)) {
+		buf->error = -E2BIG;
+		return;
+	}
+
+	if (buf_ensure_space(buf, needed))
 		return;
 
+	int ll = 0;
 	while (len > 0) {
+		if (line_len) {
+			ll += 4;
+			if (ll >= line_len) {
+				ll = 0;
+				buf->data[buf->pos++] = '\n';
+			}
+		}
+
 		buf->data[buf->pos++] = b64_table[in[0] >> 2];
 		hibits = (in[0] << 4) & 0x30;
 		if (len == 1) {
@@ -174,7 +193,7 @@ static int basic_authorization(struct openconnect_info *vpninfo, int proxy,
 		return buf_free(text);
 
 	buf_append(hdrbuf, "%sAuthorization: Basic ", proxy ? "Proxy-" : "");
-	buf_append_base64(hdrbuf, text->data, text->pos);
+	buf_append_base64(hdrbuf, text->data, text->pos, 0);
 	buf_append(hdrbuf, "\r\n");
 
 	memset(text->data, 0, text->pos);

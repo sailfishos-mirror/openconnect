@@ -135,7 +135,7 @@ int gssapi_authorization(struct openconnect_info *vpninfo, int proxy,
 		return in.value ? -EAGAIN : -ENOENT;
 	}
 	buf_append(hdrbuf, "%sAuthorization: Negotiate ", proxy ? "Proxy-" : "");
-	buf_append_base64(hdrbuf, out.value, out.length);
+	buf_append_base64(hdrbuf, out.value, out.length, 0);
 	buf_append(hdrbuf, "\r\n");
 
 	gss_release_buffer(&minor, &out);

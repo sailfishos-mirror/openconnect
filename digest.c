@@ -191,7 +191,7 @@ int digest_authorization(struct openconnect_info *vpninfo, int proxy,
 	if (openconnect_random(&cnonce_random, sizeof(cnonce_random)))
 		goto err;
 	cnonce = buf_alloc();
-	buf_append_base64(cnonce, cnonce_random, sizeof(cnonce_random));
+	buf_append_base64(cnonce, cnonce_random, sizeof(cnonce_random), 0);
 	if (buf_error(cnonce))
 		goto err;
 

@@ -120,7 +120,7 @@ int gssapi_authorization(struct openconnect_info *vpninfo, int proxy,
 	}
 
 	buf_append(hdrbuf, "%sAuthorization: Negotiate ", proxy ? "Proxy-" : "");
-	buf_append_base64(hdrbuf, out_token.pvBuffer, out_token.cbBuffer);
+	buf_append_base64(hdrbuf, out_token.pvBuffer, out_token.cbBuffer, 0);
 	buf_append(hdrbuf, "\r\n");
 
 	FreeContextBuffer(out_token.pvBuffer);
