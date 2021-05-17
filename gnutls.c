@@ -939,11 +939,9 @@ static void free_gtls_cert_info(struct gtls_cert_info *gci)
 {
 	gnutls_x509_crl_deinit(gci->crl);
 	gnutls_privkey_deinit(gci->pkey);
-	if (gci->certs) {
-		for (int i = 0; i < gci->nr_certs; i++)
-			gnutls_x509_crt_deinit(gci->certs[i]);
-		gnutls_free(gci->certs);
-	}
+	for (unsigned int i = 0; i < gci->nr_certs; i++)
+		gnutls_x509_crt_deinit(gci->certs[i]);
+	gnutls_free(gci->certs);
 	memset(gci, 0, sizeof(*gci));
 }
 
