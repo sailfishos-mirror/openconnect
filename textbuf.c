@@ -26,7 +26,6 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <limits.h>
-#include <arpa/inet.h>
 #include <stdarg.h>
 
 #include "openconnect-internal.h"
