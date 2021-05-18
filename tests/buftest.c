@@ -133,5 +133,6 @@ int main(void)
 	buf_append_base64(buf, testbytes, -1, 0);
 	assert(buf_error(buf) == -EINVAL);
 
+	buf_free(buf);
 	return 0;
 }
