@@ -1285,14 +1285,17 @@ int can_gen_tokencode(struct openconnect_info *vpninfo,
 		      struct oc_auth_form *form,
 		      struct oc_form_opt *opt);
 
-/* http.c */
+/* textbuf,c */
 struct oc_text_buf *buf_alloc(void);
-void dump_buf(struct openconnect_info *vpninfo, char prefix, char *buf);
-void dump_buf_hex(struct openconnect_info *vpninfo, int loglevel, char prefix, unsigned char *buf, int len);
+int buf_error(struct oc_text_buf *buf);
+int buf_free(struct oc_text_buf *buf);
+void buf_truncate(struct oc_text_buf *buf);
 int buf_ensure_space(struct oc_text_buf *buf, int len);
+void buf_append_bytes(struct oc_text_buf *buf, const void *bytes, int len);
 void  __attribute__ ((format (printf, 2, 3)))
 	buf_append(struct oc_text_buf *buf, const char *fmt, ...);
-void buf_append_bytes(struct oc_text_buf *buf, const void *bytes, int len);
+void buf_append_urlencoded(struct oc_text_buf *buf, const char *str);
+void buf_append_xmlescaped(struct oc_text_buf *buf, const char *str);
 void buf_append_be16(struct oc_text_buf *buf, uint16_t val);
 void buf_append_be32(struct oc_text_buf *buf, uint32_t val);
 void buf_append_le16(struct oc_text_buf *buf, uint16_t val);
@@ -1300,11 +1303,11 @@ void buf_append_hex(struct oc_text_buf *buf, const void *str, unsigned len);
 int buf_append_utf16le(struct oc_text_buf *buf, const char *utf8);
 int get_utf8char(const char **utf8);
 void buf_append_from_utf16le(struct oc_text_buf *buf, const void *utf16);
-void buf_truncate(struct oc_text_buf *buf);
-void buf_append_urlencoded(struct oc_text_buf *buf, const char *str);
-void buf_append_xmlescaped(struct oc_text_buf *buf, const char *str);
-int buf_error(struct oc_text_buf *buf);
-int buf_free(struct oc_text_buf *buf);
+void buf_append_base64(struct oc_text_buf *buf, const void *bytes, int len, int line_len);
+
+/* http.c */
+void dump_buf(struct openconnect_info *vpninfo, char prefix, char *buf);
+void dump_buf_hex(struct openconnect_info *vpninfo, int loglevel, char prefix, unsigned char *buf, int len);
 char *openconnect_create_useragent(const char *base);
 int process_proxy(struct openconnect_info *vpninfo, int ssl_sock);
 int internal_parse_url(const char *url, char **res_proto, char **res_host,
@@ -1324,7 +1327,6 @@ int handle_redirect(struct openconnect_info *vpninfo);
 void http_common_headers(struct openconnect_info *vpninfo, struct oc_text_buf *buf);
 
 /* http-auth.c */
-void buf_append_base64(struct oc_text_buf *buf, const void *bytes, int len, int line_len);
 void *openconnect_base64_decode(int *len, const char *in);
 void clear_auth_states(struct openconnect_info *vpninfo,
 		       struct http_auth_state *auth_states, int reset);
