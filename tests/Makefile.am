@@ -143,7 +143,7 @@ TESTS_ENVIRONMENT = srcdir="$(srcdir)" \
 	EXEEXT=$(EXEEXT) \
 	LSAN_OPTIONS=suppressions=suppressions.lsan
 
-C_TESTS = lzstest seqtest
+C_TESTS = lzstest seqtest buftest
 
 if OPENCONNECT_WIN32
 C_TESTS += list-taps

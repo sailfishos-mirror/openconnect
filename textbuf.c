@@ -19,18 +19,20 @@
 #include <config.h>
 
 #include <unistd.h>
-#include <fcntl.h>
-#include <time.h>
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stddef.h>
+#include <limits.h>
+#include <arpa/inet.h>
 #include <stdarg.h>
 
 #include "openconnect-internal.h"
 
 #define BUF_CHUNK_SIZE 4096
+#define OC_BUF_MAX ((unsigned)(16*1024*1024))
 
 struct oc_text_buf *buf_alloc(void)
 {
@@ -40,6 +42,18 @@ struct oc_text_buf *buf_alloc(void)
 int buf_error(struct oc_text_buf *buf)
 {
 	return buf ? buf->error : -ENOMEM;
+}
+
+
+void buf_truncate(struct oc_text_buf *buf)
+{
+	if (!buf)
+		return;
+
+	if (buf->data)
+		memset(buf->data, 0, buf->pos);
+
+	buf->pos = 0;
 }
 
 int buf_free(struct oc_text_buf *buf)
@@ -56,17 +70,6 @@ int buf_free(struct oc_text_buf *buf)
 	return error;
 }
 
-void buf_truncate(struct oc_text_buf *buf)
-{
-	if (!buf)
-		return;
-
-	if (buf->data)
-		memset(buf->data, 0, buf->pos);
-
-	buf->pos = 0;
-}
-
 int buf_ensure_space(struct oc_text_buf *buf, int len)
 {
 	unsigned int new_buf_len;
@@ -79,7 +82,7 @@ int buf_ensure_space(struct oc_text_buf *buf, int len)
 	if (new_buf_len <= buf->buf_len)
 		return 0;
 
-	if (new_buf_len > INT_MAX) {
+	if (new_buf_len > OC_BUF_MAX) {
 		buf->error = -E2BIG;
 		return buf->error;
 	} else {
@@ -416,11 +419,16 @@ void buf_append_base64(struct oc_text_buf *buf, const void *bytes, int len,
 	if (!buf || buf->error)
 		return;
 
+	if (len < 0) {
+		buf->error = -EINVAL;
+		return;
+	}
+
 	unsigned int needed = ((len + 2u) / 3) * 4 + 1;
 	if (line_len)
 		needed += needed / line_len;
 
-	if (needed >= (unsigned)(INT_MAX - buf->pos)) {
+	if (needed >= (unsigned)(OC_BUF_MAX - buf->pos)) {
 		buf->error = -E2BIG;
 		return;
 	}
