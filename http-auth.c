@@ -119,7 +119,7 @@ void buf_append_base64(struct oc_text_buf *buf, const void *bytes, int len,
 	if (!buf || buf->error)
 		return;
 
-	unsigned int needed = (4 * (len + 2) / 3) + 1;
+	unsigned int needed = ((len + 2u) / 3) * 4 + 1;
 	if (line_len)
 		needed += needed / line_len;
 
