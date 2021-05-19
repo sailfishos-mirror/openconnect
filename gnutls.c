@@ -937,12 +937,14 @@ struct gtls_cert_info {
 
 static void free_gtls_cert_info(struct gtls_cert_info *gci)
 {
-	gnutls_x509_crl_deinit(gci->crl);
-	gnutls_privkey_deinit(gci->pkey);
-	for (unsigned int i = 0; i < gci->nr_certs; i++)
-		gnutls_x509_crt_deinit(gci->certs[i]);
-	gnutls_free(gci->certs);
-	*gci = (struct gtls_cert_info) {0};
+	if (gci) {
+		gnutls_x509_crl_deinit(gci->crl);
+		gnutls_privkey_deinit(gci->pkey);
+		for (unsigned int i = 0; i < gci->nr_certs; i++)
+			gnutls_x509_crt_deinit(gci->certs[i]);
+		gnutls_free(gci->certs);
+		free(gci);
+	}
 }
 
 static int import_cert(gnutls_x509_crt_t *cert, const gnutls_datum_t *der)
@@ -989,7 +991,8 @@ done:
 	return ret;
 }
 
-static int load_certificate(struct openconnect_info *vpninfo, struct cert_info *certinfo, struct gtls_cert_info *gci)
+static struct gtls_cert_info *load_certificate(struct openconnect_info *vpninfo,
+					       struct cert_info *certinfo)
 {
 	gnutls_datum_t fdata;
 #if defined(HAVE_P11KIT) || defined(HAVE_TROUSERS) || defined(HAVE_TSS2) || defined(HAVE_GNUTLS_SYSTEM_KEYS)
@@ -1016,6 +1019,7 @@ static int load_certificate(struct openconnect_info *vpninfo, struct cert_info *
 	size_t key_id_size = sizeof(key_id);
 	char name[80];
 	gnutls_x509_privkey_t x509key = NULL;
+	struct gtls_cert_info *gci = NULL;
 
 	certinfo->vpninfo = vpninfo;
 	fdata.data = NULL;
@@ -1077,6 +1081,8 @@ static int load_certificate(struct openconnect_info *vpninfo, struct cert_info *
 	}
 #endif /* HAVE_PKCS11 */
 
+	gci = calloc(1, sizeof(*gci));
+
 #if defined (HAVE_P11KIT) || defined(HAVE_GNUTLS_SYSTEM_KEYS)
 	/* Load certificate(s) first... */
 	if (cert_is_p11 || cert_is_sys) {
@@ -1119,7 +1125,7 @@ static int load_certificate(struct openconnect_info *vpninfo, struct cert_info *
 	/* Load file contents */
 	ret = load_datum(vpninfo, &fdata, certinfo->cert);
 	if (ret)
-		return ret;
+		goto out;
 
 	/* Is it PKCS#12? */
 	if (!key_is_p11) {
@@ -1377,14 +1383,14 @@ static int load_certificate(struct openconnect_info *vpninfo, struct cert_info *
 #ifndef HAVE_TROUSERS
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("This version of OpenConnect was built without TPM support\n"));
-		return -EINVAL;
+		ret = -EINVAL;
 #else
 		ret = load_tpm1_key(vpninfo, certinfo, &fdata, &gci->pkey, &pkey_sig);
+#endif
 		if (ret)
 			goto out;
 
 		goto match_cert;
-#endif
 	}
 
 	/* Is it a PEM file with a TPM key blob? */
@@ -1393,14 +1399,14 @@ static int load_certificate(struct openconnect_info *vpninfo, struct cert_info *
 #ifndef HAVE_TSS2
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("This version of OpenConnect was built without TPM2 support\n"));
-		return -EINVAL;
+		ret = -EINVAL;
 #else
 		ret = load_tpm2_key(vpninfo, certinfo, &fdata, &gci->pkey, &pkey_sig);
+#endif
 		if (ret)
 			goto out;
 
 		goto match_cert;
-#endif
 	}
 
 	/* OK, try other PEM files... */
@@ -1808,9 +1814,11 @@ static int load_certificate(struct openconnect_info *vpninfo, struct cert_info *
 	if (key_url != certinfo->key)
 		free(key_url);
 #endif
-	if (ret)
+	if (ret) {
 		free_gtls_cert_info(gci);
-	return ret;
+		gci = NULL;
+	}
+	return gci;
 }
 
 /* We have to convert the array of X509 certificates to gnutls_pcert_st
@@ -1854,18 +1862,18 @@ static int assign_privkey(struct openconnect_info *vpninfo, struct gtls_cert_inf
 
 static int load_primary_certificate(struct openconnect_info *vpninfo)
 {
-	struct gtls_cert_info gci = {};
-	int err;
-	int ret = load_certificate(vpninfo, &vpninfo->certinfo[0], &gci);
-	if (ret)
-		return ret;
+	struct gtls_cert_info *gci = load_certificate(vpninfo,
+						      &vpninfo->certinfo[0]);
+	if (!gci)
+		return -EINVAL;
 
-	gnutls_x509_crt_t cert = gci.certs[0];
+	gnutls_x509_crt_t cert = gci->certs[0];
+	int err, ret;
 
 	get_cert_md5_fingerprint(vpninfo, cert, vpninfo->local_cert_md5);
 
-	if (gci.crl) {
-		err = gnutls_certificate_set_x509_crl(vpninfo->https_cred, &gci.crl, 1);
+	if (gci->crl) {
+		err = gnutls_certificate_set_x509_crl(vpninfo->https_cred, &gci->crl, 1);
 		if (err) {
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("Setting certificate revocation list failed: %s\n"),
@@ -1876,7 +1884,7 @@ static int load_primary_certificate(struct openconnect_info *vpninfo)
 	}
 
 #if GNUTLS_VERSION_NUMBER >= 0x030600
-	if (gnutls_privkey_get_pk_algorithm(gci.pkey, NULL) == GNUTLS_PK_RSA) {
+	if (gnutls_privkey_get_pk_algorithm(gci->pkey, NULL) == GNUTLS_PK_RSA) {
 		/*
 		 * For hardware RSA keys, we need to check if they can cope with PSS.
 		 * If not, disable TLSv1.3 which would make PSS mandatory.
@@ -1885,7 +1893,7 @@ static int load_primary_certificate(struct openconnect_info *vpninfo)
 		gnutls_datum_t fdata= { (void *)&gci, sizeof(gci) };
 		gnutls_datum_t pkey_sig = { NULL, 0 };
 
-		err = gnutls_privkey_sign_data2(gci.pkey, GNUTLS_SIGN_RSA_PSS_RSAE_SHA256, 0, &fdata, &pkey_sig);
+		err = gnutls_privkey_sign_data2(gci->pkey, GNUTLS_SIGN_RSA_PSS_RSAE_SHA256, 0, &fdata, &pkey_sig);
 		if (err) {
 			vpn_progress(vpninfo, PRG_INFO,
 				     _("Private key appears not to support RSA-PSS. Disabling TLSv1.3\n"));
@@ -1895,7 +1903,7 @@ static int load_primary_certificate(struct openconnect_info *vpninfo)
 		free(pkey_sig.data);
 	}
 #endif
-	err = assign_privkey(vpninfo, &gci);
+	err = assign_privkey(vpninfo, gci);
 
 	if (err) {
 		vpn_progress(vpninfo, PRG_ERR,
@@ -1906,7 +1914,7 @@ static int load_primary_certificate(struct openconnect_info *vpninfo)
 		ret = 0;
 
  out:
-	free_gtls_cert_info(&gci);
+	free_gtls_cert_info(gci);
 	return ret;
 }
 
