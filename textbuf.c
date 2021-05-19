@@ -418,7 +418,7 @@ void buf_append_base64(struct oc_text_buf *buf, const void *bytes, int len,
 	if (!buf || buf->error)
 		return;
 
-	if (len < 0) {
+	if (len < 0 || line_len < 0 || (line_len % 3)) {
 		buf->error = -EINVAL;
 		return;
 	}
