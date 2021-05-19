@@ -438,11 +438,11 @@ void buf_append_base64(struct oc_text_buf *buf, const void *bytes, int len,
 	int ll = 0;
 	while (len > 0) {
 		if (line_len) {
-			ll += 4;
 			if (ll >= line_len) {
 				ll = 0;
 				buf->data[buf->pos++] = '\n';
 			}
+			ll += 4;
 		}
 
 		buf->data[buf->pos++] = b64_table[in[0] >> 2];
