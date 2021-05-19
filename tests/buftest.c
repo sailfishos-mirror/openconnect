@@ -101,6 +101,7 @@ struct oc_text_buf {
 	int error;
 };
 
+#define BUFTEST
 #include "../textbuf.c"
 
 #define assert(x) if (!(x)) {						\
@@ -133,6 +134,20 @@ int main(void)
 	buf_append_base64(buf, testbytes, -1, 0);
 	assert(buf_error(buf) == -EINVAL);
 
+	buf->error = 0;
+	buf_truncate(buf);
+
+	int ll;
+
+	for (ll = 0; ll < 128; ll += 4) {
+		for (len = 0; len < 16384; len++) {
+			buf_truncate(buf);
+			buf_append_base64(buf, testbytes, len, ll);
+			assert(!buf_error(buf));
+			if (len > 128)
+				len += len/2;
+		}
+	}
 	buf_free(buf);
 	return 0;
 }

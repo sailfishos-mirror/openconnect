@@ -418,14 +418,17 @@ void buf_append_base64(struct oc_text_buf *buf, const void *bytes, int len,
 	if (!buf || buf->error)
 		return;
 
-	if (len < 0 || line_len < 0 || (line_len % 3)) {
+	if (len < 0 || line_len < 0 || (line_len & 3)) {
 		buf->error = -EINVAL;
 		return;
 	}
 
-	unsigned int needed = ((len + 2u) / 3) * 4 + 1;
-	if (line_len)
-		needed += needed / line_len;
+	unsigned int needed = ((len + 2u) / 3) * 4;
+
+	/* Line endings, but not for the last line if it reaches line_len */
+	if (line_len && needed)
+		needed += (needed - 1) / line_len;
+	needed++; /* Allow for the trailing NUL */
 
 	if (needed >= (unsigned)(OC_BUF_MAX - buf->pos)) {
 		buf->error = -E2BIG;
@@ -435,6 +438,9 @@ void buf_append_base64(struct oc_text_buf *buf, const void *bytes, int len,
 	if (buf_ensure_space(buf, needed))
 		return;
 
+#ifdef BUFTEST
+	int orig_len = len, orig_pos = buf->pos;
+#endif
 	int ll = 0;
 	while (len > 0) {
 		if (line_len) {
@@ -465,5 +471,12 @@ void buf_append_base64(struct oc_text_buf *buf, const void *bytes, int len,
 		in += 3;
 		len -= 3;
 	}
+#ifdef BUFTEST
+	if (buf->pos != orig_pos + needed - 1) {
+		printf("Used %d instead of calculated %d for %d bytes at line len %d\n",
+		       buf->pos - orig_pos, needed, orig_len, line_len);
+		buf->error = -EIO;
+	}
+#endif
 	buf->data[buf->pos] = 0;
 }
