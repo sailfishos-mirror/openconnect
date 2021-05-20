@@ -1496,14 +1496,14 @@ static inline uint16_t load_le16(const void *_p)
 	return p[0] | (p[1] << 8);
 }
 
-static inline void store_le16(void *_p, uint32_t d)
+static inline void store_le16(void *_p, uint16_t d)
 {
 	unsigned char *p = _p;
 	p[0] = d;
 	p[1] = d >> 8;
 }
 
-static inline void store_le32(void *_p, uint16_t d)
+static inline void store_le32(void *_p, uint32_t d)
 {
 	unsigned char *p = _p;
 	p[0] = d;
