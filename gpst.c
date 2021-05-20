@@ -1483,6 +1483,7 @@ int gpst_esp_send_probes(struct openconnect_info *vpninfo)
 			icmph->icmp_hun.ih_idseq.icd_id = htons(0x4747);
 			icmph->icmp_hun.ih_idseq.icd_seq = htons(seq);
 			memcpy(pmagic, magic_ping_payload, sizeof(magic_ping_payload)); /* required to get gateway to respond */
+			icmph->icmp_cksum = csum((uint16_t *)icmph, (ICMP_MINLEN+sizeof(magic_ping_payload))/2);
 		}
 
 		if (vpninfo->dtls_state != DTLS_ESTABLISHED) {
