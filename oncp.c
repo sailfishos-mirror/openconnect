@@ -146,8 +146,6 @@ static int process_attr(struct openconnect_info *vpninfo,
 			 data[0], data[1], data[2], data[3],
 			 data[4], data[5], data[6], data[7]);
 		vpn_progress(vpninfo, PRG_DEBUG, _("Received split include route %s\n"), buf);
-		if (!data[4] && !data[5] && !data[6] && !data[7])
-			break;
 		inc = malloc(sizeof(*inc));
 		if (inc) {
 			inc->route = add_option_dup(new_opts, "split-include", buf, -1);
@@ -168,8 +166,6 @@ static int process_attr(struct openconnect_info *vpninfo,
 			 data[0], data[1], data[2], data[3],
 			 data[4], data[5], data[6], data[7]);
 		vpn_progress(vpninfo, PRG_DEBUG, _("Received split exclude route %s\n"), buf);
-		if (!data[4] && !data[5] && !data[6] && !data[7])
-			break;
 		exc = malloc(sizeof(*exc));
 		if (exc) {
 			exc->route = add_option_dup(new_opts, "split-exclude", buf, -1);
