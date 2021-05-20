@@ -122,6 +122,24 @@ int xmlnode_get_trimmed_val(xmlNode *xml_node, const char *name, char **var)
 	return 0;
 }
 
+int xmlnode_bool_or_int_value(xmlNode *node)
+{
+	int ret = -1;
+	char *content = (char *)xmlNodeGetContent(node);
+	if (!content)
+		return -1;
+
+	if (isdigit(content[0]))
+		ret = atoi(content);
+	else if (!strcasecmp(content, "yes") || !strcasecmp(content, "on"))
+		ret = 1;
+	else if (!strcasecmp(content, "no") || !strcasecmp(content, "off"))
+		ret = 0;
+
+	free(content);
+	return ret;
+}
+
 int append_opt(struct oc_text_buf *body, const char *opt, const char *name)
 {
 	if (buf_error(body))

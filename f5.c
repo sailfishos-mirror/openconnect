@@ -460,24 +460,6 @@ static int parse_profile(struct openconnect_info *vpninfo, char *buf, int len,
 	return ret;
 }
 
-static int xmlnode_bool_or_int_value(struct openconnect_info *vpninfo, xmlNode *node)
-{
-	int ret = -1;
-	char *content = (char *)xmlNodeGetContent(node);
-	if (!content)
-		return -1;
-
-	if (isdigit(content[0]))
-		ret = atoi(content);
-	if (!strcasecmp(content, "yes") || !strcasecmp(content, "on"))
-		ret = 1;
-	if (!strcasecmp(content, "no") || !strcasecmp(content, "off"))
-		ret = 0;
-
-	free(content);
-	return ret;
-}
-
 static int parse_options(struct openconnect_info *vpninfo, char *buf, int len,
 			 char **session_id, char **ur_z, int *ipv4, int *ipv6, int *hdlc)
 {
@@ -520,27 +502,27 @@ static int parse_options(struct openconnect_info *vpninfo, char *buf, int len,
 		else if (xmlnode_is_named(xml_node, "Session_ID"))
 			*session_id = (char *)xmlNodeGetContent(xml_node);
 		else if (xmlnode_is_named(xml_node, "IPV4_0"))
-			*ipv4 = xmlnode_bool_or_int_value(vpninfo, xml_node);
+			*ipv4 = xmlnode_bool_or_int_value(xml_node);
 		else if (xmlnode_is_named(xml_node, "IPV6_0")) {
 			if (!vpninfo->disable_ipv6)
-				*ipv6 = xmlnode_bool_or_int_value(vpninfo, xml_node);
+				*ipv6 = xmlnode_bool_or_int_value(xml_node);
 		} else if (xmlnode_is_named(xml_node, "hdlc_framing"))
-			*hdlc = xmlnode_bool_or_int_value(vpninfo, xml_node);
+			*hdlc = xmlnode_bool_or_int_value(xml_node);
 		else if (xmlnode_is_named(xml_node, "idle_session_timeout")) {
-			int sec = vpninfo->idle_timeout = xmlnode_bool_or_int_value(vpninfo, xml_node);
+			int sec = vpninfo->idle_timeout = xmlnode_bool_or_int_value(xml_node);
 			vpn_progress(vpninfo, PRG_INFO, _("Idle timeout is %d minutes\n"), sec/60);
 		} else if (xmlnode_is_named(xml_node, "tunnel_dtls"))
-			dtls = xmlnode_bool_or_int_value(vpninfo, xml_node);
+			dtls = xmlnode_bool_or_int_value(xml_node);
 		else if (xmlnode_is_named(xml_node, "tunnel_port_dtls"))
-			dtls_port = xmlnode_bool_or_int_value(vpninfo, xml_node);
+			dtls_port = xmlnode_bool_or_int_value(xml_node);
 		else if (xmlnode_is_named(xml_node, "dtls_v1_2_supported"))
-			vpninfo->dtls12 = xmlnode_bool_or_int_value(vpninfo, xml_node);
+			vpninfo->dtls12 = xmlnode_bool_or_int_value(xml_node);
 		else if (xmlnode_is_named(xml_node, "UseDefaultGateway0")) {
-			default_route = xmlnode_bool_or_int_value(vpninfo, xml_node);
+			default_route = xmlnode_bool_or_int_value(xml_node);
 			if (default_route)
 				vpn_progress(vpninfo, PRG_INFO, _("Got default routes\n"));
 		} else if (xmlnode_is_named(xml_node, "SplitTunneling0")) {
-			int st = xmlnode_bool_or_int_value(vpninfo, xml_node);
+			int st = xmlnode_bool_or_int_value(xml_node);
 			vpn_progress(vpninfo, PRG_INFO, _("Got SplitTunneling0 value of %d\n"), st);
 			/* XX: Should we ignore split-{in,ex}cludes if this is zero? */
                 }
