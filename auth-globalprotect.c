@@ -421,8 +421,9 @@ static int parse_portal_xml(struct openconnect_info *vpninfo, xmlNode *xml_node,
 	 * The portal contains a ton of stuff, but basically none of it is
 	 * useful to a VPN client that wishes to give control to the client
 	 * user, as opposed to the VPN administrator.  The exceptions are the
-	 * list of gateways in policy/gateways/external/list and the interval
-	 * for HIP checks in policy/hip-collection/hip-report-interval
+	 * list of gateways in policy/gateways/external/list, the interval
+	 * for HIP checks in policy/hip-collection/hip-report-interval, and
+	 * the software version.
 	 */
 	if (xmlnode_is_named(xml_node, "policy")) {
 		for (x = xml_node->children; x; x = x->next) {
@@ -446,8 +447,21 @@ static int parse_portal_xml(struct openconnect_info *vpninfo, xmlNode *xml_node,
 						}
 					}
 				}
-			} else
+			} else {
 				xmlnode_get_val(x, "portal-name", &portal);
+
+				/* XX: (Ab)use mobile_platform_version to store the version of the software
+				 * that the server expects us to be using.
+				 *
+				 * The PAN portal and client software appear to be version-numbered together,
+				 * so this will help us avoid errors about emulating too-old client software
+				 * versions. (see #176, !131)
+				 */
+				if (!vpninfo->mobile_platform_version &&
+				    !xmlnode_get_val(x, "version", &vpninfo->mobile_platform_version))
+					vpn_progress(vpninfo, PRG_INFO, _("Portal software version is %s. We will emulate the same client version.\n"),
+						     vpninfo->mobile_platform_version);
+			}
 		}
 	}
 

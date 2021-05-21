@@ -622,12 +622,14 @@ static int gpst_get_config(struct openconnect_info *vpninfo)
 
 
 	/* submit getconfig request */
-	buf_append(request_body, "client-type=1&protocol-version=p1&app-version=5.1.5-8");
+	buf_append(request_body, "client-type=1&protocol-version=p1");
 	append_opt(request_body, "ipv6-support", vpninfo->disable_ipv6 ? "no" : "yes");
 	append_opt(request_body, "clientos", gpst_os_name(vpninfo));
 	append_opt(request_body, "os-version", vpninfo->platname);
 	append_opt(request_body, "hmac-algo", "sha1,md5,sha256");
 	append_opt(request_body, "enc-algo", "aes-128-cbc,aes-256-cbc");
+	/* we (ab)use this field to store the portal's expected client version (see auth-globalprotect.c) */
+	append_opt(request_body, "app-version", vpninfo->mobile_platform_version ? : "5.1.5-8");
 	if (old_addr || old_addr6) {
 		append_opt(request_body, "preferred-ip", old_addr);
 		append_opt(request_body, "preferred-ipv6", old_addr6);
