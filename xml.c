@@ -31,6 +31,12 @@
 
 #include "openconnect-internal.h"
 
+/* FIXME: this has been duplicated as xmlnode_get_trimmed_val in auth-common.c.
+ *
+ * However, we can't use that function here without making it a public export
+ * of libopenconnect, because config_lookup_host() is built into the openconnect
+ * application, which can invoke only the exported functions of the library.
+ */
 static char *fetch_and_trim(xmlNode *node)
 {
 	char *str = (char *)xmlNodeGetContent(node), *p;

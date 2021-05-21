@@ -1269,6 +1269,7 @@ int set_csd_user(struct openconnect_info *vpninfo);
 
 /* auth-common.c */
 int xmlnode_is_named(xmlNode *xml_node, const char *name);
+char *xmlnode_get_trimmed_val(xmlNode *node);
 int xmlnode_get_val(xmlNode *xml_node, const char *name, char **var);
 int xmlnode_get_prop(xmlNode *xml_node, const char *name, char **var);
 int xmlnode_match_prop(xmlNode *xml_node, const char *name, const char *match);

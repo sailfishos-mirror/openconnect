@@ -35,6 +35,33 @@ int xmlnode_is_named(xmlNode *xml_node, const char *name)
 	return !strcmp((char *)xml_node->name, name);
 }
 
+char *xmlnode_get_trimmed_val(xmlNode *node)
+{
+	char *str = (char *)xmlNodeGetContent(node), *p;
+	int i, len;
+
+	if (!str)
+		return NULL;
+
+	len = strlen(str);
+	for (i = len-1; i >= 0; i--) {
+		if (isspace((int)(unsigned char)str[i]))
+			str[i] = 0;
+		else
+			break;
+	}
+
+	for (p = str; isspace((int)(unsigned char)*p); p++)
+		;
+
+	if (p == str)
+		return str;
+
+	p = strdup(p);
+	free(str);
+	return p;
+}
+
 /* similar to auth.c's xmlnode_get_text, including that *var should be freed by the caller,
    but without the hackish param / %s handling that Cisco needs. */
 int xmlnode_get_val(xmlNode *xml_node, const char *name, char **var)
@@ -44,7 +71,7 @@ int xmlnode_get_val(xmlNode *xml_node, const char *name, char **var)
 	if (name && !xmlnode_is_named(xml_node, name))
 		return -EINVAL;
 
-	str = (char *)xmlNodeGetContent(xml_node);
+	str = xmlnode_get_trimmed_val(xml_node);
 	if (!str)
 		return -ENOENT;
 
