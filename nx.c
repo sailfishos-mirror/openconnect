@@ -168,6 +168,15 @@ out:
 void nx_common_headers(struct openconnect_info *vpninfo, struct oc_text_buf *buf)
 {
 	http_common_headers(vpninfo, buf);
+	/*
+	 * Apparently X-NE-SESSIONPROMPT: true seems to be needed in some rare (?)
+	 * situations, where the tunnel will come up but no packets are
+	 * transferred. See:
+	 * https://github.com/abrasive/nxBender/commit/454dedc6c72fc62eedb7be18e62c6b7ee5f82bb3
+	 *
+	 * Of all the clients tested, ONLY NetExtender for Windows sends this header...
+	 */
+	buf_append(buf, "X-NE-SESSIONPROMPT: true\r\n");
 }
 
 /*
