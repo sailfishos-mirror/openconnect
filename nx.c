@@ -168,8 +168,6 @@ out:
 void nx_common_headers(struct openconnect_info *vpninfo, struct oc_text_buf *buf)
 {
 	http_common_headers(vpninfo, buf);
-	dump_buf(vpninfo, PRG_ERR, buf->data); // TODO: XXX
-	// TODO: Is this the place to manipulate user agent (NX requires the UA to contain netextender)
 }
 
 /*
