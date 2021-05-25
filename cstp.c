@@ -334,8 +334,9 @@ static int start_cstp_connection(struct openconnect_info *vpninfo)
 		return -EINVAL;
 	}
 
-	if (strncmp(buf, "HTTP/1.1 200 ", 13)) {
-		if (!strncmp(buf, "HTTP/1.1 503 ", 13)) {
+	int status = check_http_status(buf, i);
+	if (status != 200) {
+		if (status == 503) {
 			/* "Service Unavailable. Why? */
 			const char *reason = "<unknown>";
 			while ((vpninfo->ssl_gets(vpninfo, buf, sizeof(buf)))) {
@@ -352,7 +353,7 @@ static int start_cstp_connection(struct openconnect_info *vpninfo)
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Got inappropriate HTTP CONNECT response: %s\n"),
 			     buf);
-		if (!strncmp(buf, "HTTP/1.1 401 ", 13))
+		if (status == 401)
 			return -EPERM;
 		return -EINVAL;
 	}

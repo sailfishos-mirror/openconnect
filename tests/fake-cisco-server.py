@@ -28,10 +28,6 @@ from functools import wraps
 from flask import Flask, request, abort, redirect, url_for, make_response, session
 from werkzeug.serving import WSGIRequestHandler
 
-# OpenConnect expects literal HTTP/1.1 in some of its responses from the server,
-# so the werkzeug default ("HTTP/1.0") will not work.
-WSGIRequestHandler.protocol_version = "HTTP/1.1"
-
 host, port, *cert_and_maybe_keyfile = sys.argv[1:]
 
 context = ssl.SSLContext()
@@ -45,23 +41,10 @@ app.config.update(SECRET_KEY=b'fake', DEBUG=True, HOST=host, PORT=int(port), SES
 def cookify(jsonable):
     return base64.urlsafe_b64encode(dumps(jsonable).encode())
 
-# We need to ensure that POST request bodies are consumed, even if not explicitly referenced, otherwise
-# HTTP/1.1 connections to the Flask/werkzeug development server will be out-of-sync for subsequent
-# requests (see https://mail.python.org/pipermail/flask/2021-May/001441.html)
-def ensure_body_consumed(fn):
-    @wraps(fn)
-    def wrapped(*args, **kwargs):
-        try:
-            return fn(*args, **kwargs)
-        finally:
-            request.get_data()
-    return wrapped
-
 ########################################
 
 # Respond to initial auth request (XML/POST only, for now)
 @app.route('/', methods=('POST',))
-@ensure_body_consumed
 def initial_xmlpost(usergroup=None):
     request.data
 
@@ -83,7 +66,6 @@ def initial_xmlpost(usergroup=None):
 
 
 @app.route('/+webvpn+/index.html', methods=('POST',))
-@ensure_body_consumed
 def main_auth_post():
     auth_id = session.get('auth_id')
 

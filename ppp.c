@@ -1054,7 +1054,7 @@ int check_http_status(const char *buf, int len)
 		const char *eol = memchr(buf, '\r', len) ?: memchr(buf, '\n', len);
 		const char *sp1 = memchr(buf, ' ', len);
 		const char *sp2 = sp1 ? memchr(sp1+1, ' ', len - (sp1-buf) + 1) : NULL;
-		return (sp1 && sp2 && (!eol || sp2<eol)) ? atoi(sp1+1) : 500;
+		return (sp1 && sp2 && (!eol || sp2<eol)) ? atoi(sp1+1) : -EINVAL;
 	}
 	return -EINVAL;
 }
