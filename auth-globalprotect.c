@@ -115,7 +115,14 @@ static int parse_prelogin_xml(struct openconnect_info *vpninfo, xmlNode *xml_nod
 
 	/* XX: Alt-secret form field must be specified for SAML, because we can't autodetect it */
 	if (saml_method || saml_path) {
-		if (!ctx->alt_secret) {
+		if (ctx->portal_userauthcookie)
+			vpn_progress(vpninfo, PRG_DEBUG, _("SAML authentication required; using portal-userauthcookie to continue SAML.\n"));
+		else if (ctx->portal_prelogonuserauthcookie)
+			vpn_progress(vpninfo, PRG_DEBUG, _("SAML authentication required; using portal-prelogonuserauthcookie to continue SAML.\n"));
+		else if (ctx->alt_secret)
+			vpn_progress(vpninfo, PRG_DEBUG, _("Destination form field %s was specified; assuming SAML %s authentication is complete.\n"),
+			             ctx->alt_secret, saml_method);
+		else {
 			if (saml_method && !strcmp(saml_method, "REDIRECT"))
 				vpn_progress(vpninfo, PRG_ERR,
 				             _("SAML %s authentication is required via %s\n"),
@@ -126,12 +133,10 @@ static int parse_prelogin_xml(struct openconnect_info *vpninfo, xmlNode *xml_nod
 				             saml_method);
 			vpn_progress(vpninfo, PRG_ERR,
 			             _("When SAML authentication is complete, specify destination form field by appending :field_name to login URL.\n"));
-                       /* XX: EINVAL will lead to "failure to parse response", with unnecessary/confusing extra logging output */
+			/* XX: EINVAL will lead to "failure to parse response", with unnecessary/confusing extra logging output */
 			result = -EPERM;
 			goto out;
-		} else
-			vpn_progress(vpninfo, PRG_DEBUG, _("Destination form field %s was specified; assuming SAML %s authentication is complete.\n"),
-			             saml_method, ctx->alt_secret);
+		}
 	}
 
 	/* Replace old form */
@@ -341,7 +346,7 @@ static int parse_login_xml(struct openconnect_info *vpninfo, xmlNode *xml_node, 
 		} else if (arg->check && (!value || strcmp(value, arg->check))) {
 			unknown_args++;
 			fatal_args += arg->err_missing;
-            vpn_progress(vpninfo, PRG_ERR,
+			vpn_progress(vpninfo, PRG_ERR,
 			             _("GlobalProtect login returned %s=%s (expected %s)\n"),
 			             arg->opt, value, arg->check);
 		} else if ((arg->err_missing || arg->warn_missing) && !value) {

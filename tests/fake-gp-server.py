@@ -60,29 +60,38 @@ def check_form_against_session(*fields, use_query=False, on_failure=None):
 
 ########################################
 
+if_path2name = {'global-protect':'portal', 'ssl-vpn':'gateway'}
 
 # Get parameters into the initial session setup in order to configure:
 #   gateways: list of gateway names for portal to offer (all will point to same HOST:PORT as portal)
 #   portal_2fa: if set, require challenge-based 2FA to complete /global-protect/getconfig.esp request
 #   gateway_2fa: if set, require challenge-based 2FA to complete /ssl-vpn/login.esp request
+#   portal_saml: set to 'portal-userauthcookie' or 'prelogin-cookie' to require SAML on portal (and
+#                expect the named cookie to be provided to signal SAML completion)
+#   gateway_saml: likewise, set to require SAML on gateway
 #   portal_cookie: if set (to 'portal-userauthcookie' or 'portal-prelogonuserauthcookie'), then
 #                  the portal getconfig response will include the named "cookie" field which should
 #                  be used to automatically continue login on the gateway
-@app.route('/global-protect/testconfig.esp', methods=('GET','POST',))
-@app.route('/ssl-vpn/testconfig.esp', methods=('GET','POST',))
-def testconfig():
-    gateways, portal_2fa, gw_2fa, portal_cookie = request.args.get('gateways'), request.args.get('portal_2fa'), request.args.get('gw_2fa'), request.args.get('portal_cookie')
+@app.route('/<any("global-protect", "ssl-vpn"):interface>/testconfig.esp', methods=('GET','POST',))
+def testconfig(interface):
+    gateways, portal_2fa, gw_2fa, portal_cookie, portal_saml, gateway_saml = request.args.get('gateways'), request.args.get('portal_2fa'), request.args.get('gw_2fa'), request.args.get('portal_cookie'), request.args.get('portal_saml'), request.args.get('gateway_saml')
     session.update(gateways=gateways and gateways.split(','), portal_cookie=portal_cookie,
-                   portal_2fa=portal_2fa and bool(portal_2fa), gw_2fa=gw_2fa and bool(gw_2fa))
-    prelogin = '/'.join(request.path.split('/')[:-1] + ['prelogin.esp'])
+                   portal_2fa=portal_2fa and bool(portal_2fa), gw_2fa=gw_2fa and bool(gw_2fa),
+                   portal_saml=portal_saml, gateway_saml=gateway_saml)
+    prelogin = url_for('prelogin', interface=interface)
     return redirect(prelogin)
 
 
 # Respond to initial prelogin requests
-@app.route('/global-protect/prelogin.esp', methods=('GET','POST',))
-@app.route('/ssl-vpn/prelogin.esp', methods=('GET','POST',))
-def prelogin():
-    session.update(step='%s-prelogin' % ('portal' if 'global-protect' in request.path else 'gateway'))
+@app.route('/<any("global-protect", "ssl-vpn"):interface>/prelogin.esp', methods=('GET','POST',))
+def prelogin(interface):
+    ifname = if_path2name[interface]
+    if session.get(ifname + '_saml'):
+        saml = '<saml-auth-method>REDIRECT</saml-auth-method><saml-request>{}</saml-request>'.format(
+            base64.urlsafe_b64encode(url_for('saml_form', interface=interface, _external=True).encode()).decode())
+    else:
+        saml = ''
+    session.update(step='%s-prelogin' % ifname)
     return '''
 <prelogin-response>
 <status>Success</status>
@@ -90,12 +99,18 @@ def prelogin():
 <autosubmit>false</autosubmit>
 <msg/>
 <newmsg/>
-<authentication-message>Please login to this fake VPN</authentication-message>
+<authentication-message>Please login to this fake GP VPN {ifname}</authentication-message>
 <username-label>Username</username-label>
 <password-label>Password</password-label>
-<panos-version>1</panos-version>
+<panos-version>1</panos-version>{saml}
 <region>EARTH</region>
-</prelogin-response>'''.format(request.path)
+</prelogin-response>'''.format(ifname=ifname, saml=saml)
+
+
+# Simple SAML form (not actually hooked up, for now)
+@app.route('/<any("global-protect", "ssl-vpn"):interface>/SAML_FORM')
+def saml_form(interface):
+    abort(503)
 
 
 def challenge_2fa(where):
@@ -115,14 +130,24 @@ def challenge_2fa(where):
 @app.route('/global-protect/getconfig.esp', methods=('POST',))
 def portal_config():
     portal_2fa = session.get('portal_2fa')
+    portal_saml = session.get('portal_saml')
     portal_cookie = session.get('portal_cookie')
     inputStr = request.form.get('inputStr') or None
+
     if portal_2fa and not inputStr:
         return challenge_2fa('portal')
-    if not (request.form.get('user') and request.form.get('passwd') and inputStr == session.get('inputStr')):
+
+    okay = False
+    if portal_saml and request.form.get('user') and request.form.get(portal_saml):
+        okay = True
+    elif request.form.get('user') and request.form.get('passwd') and inputStr == session.get('inputStr'):
+        okay = True
+    if not okay:
         return 'Invalid username or password', 512
 
     session.update(step='portal-config', user=request.form.get('user'), passwd=request.form.get('passwd'),
+                   # clear SAML result fields to ensure failure if blindly retried on gateway
+                   saml_user=None, saml_value=None,
                    # clear inputStr to ensure failure if same form fields are blindly retried on another challenge form:
                    inputStr=None)
     gateways = session.get('gateways') or ('Default gateway',)
@@ -144,14 +169,22 @@ def portal_config():
 @app.route('/ssl-vpn/login.esp', methods=('POST',))
 def gateway_login():
     gw_2fa = session.get('gw_2fa')
+    gateway_saml = session.get('gateway_saml')
     inputStr = request.form.get('inputStr') or None
+
     if session.get('portal_cookie') and request.form.get(session['portal_cookie']) == session.get(session['portal_cookie']):
         # a correct portal_cookie explicitly allows us to bypass other gateway login forms
         pass
     elif gw_2fa and not inputStr:
         return challenge_2fa('gateway')
-    elif not (request.form.get('user') and request.form.get('passwd') and inputStr == session.get('inputStr')):
-        return 'Invalid username or password', 512
+    else:
+        okay = False
+        if gateway_saml and request.form.get('user') and request.form.get(gateway_saml):
+            okay = True
+        elif request.form.get('user') and request.form.get('passwd') and inputStr == session.get('inputStr'):
+            okay = True
+        if not okay:
+            return 'Invalid username or password', 512
     session.update(step='gateway-login', user=request.form.get('user'), passwd=request.form.get('passwd'),
                    # clear inputStr to ensure failure if same form fields are blindly retried on another challenge form:
                    inputStr=None)
