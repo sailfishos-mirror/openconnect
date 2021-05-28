@@ -185,6 +185,7 @@ int dtls_setup(struct openconnect_info *vpninfo)
 		return 0;
 
 	if (!vpninfo->dtls_addr) {
+		vpn_progress(vpninfo, PRG_ERR, _("No DTLS address\n"));
 		vpninfo->dtls_attempt_period = 0;
 		return -EINVAL;
 	}
