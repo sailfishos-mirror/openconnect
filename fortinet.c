@@ -108,7 +108,7 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 		goto out;
 	}
 
-	ret = do_https_request(vpninfo, "GET", NULL, NULL, &resp_buf, 1);
+	ret = do_https_request(vpninfo, "GET", NULL, NULL, &resp_buf, NULL, 1);
 	free(resp_buf);
 	resp_buf = NULL;
 	if (ret < 0)
@@ -195,7 +195,7 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 		if ((ret = buf_error(req_buf)))
 		        goto out;
 		ret = do_https_request(vpninfo, "POST", "application/x-www-form-urlencoded",
-				       req_buf, &resp_buf, 0);
+				       req_buf, &resp_buf, NULL, 0);
 
 		/* If we got SVPNCOOKIE, then we're done. */
 		struct oc_vpn_option *cookie;
@@ -549,7 +549,7 @@ static int fortinet_configure(struct openconnect_info *vpninfo)
 #if 0 /* Nah... */
 	free(vpninfo->urlpath);
 	vpninfo->urlpath = strdup("remote/fortisslvpn");
-	ret = do_https_request(vpninfo, "GET", NULL, NULL, &res_buf, 0);
+	ret = do_https_request(vpninfo, "GET", NULL, NULL, &res_buf, NULL, 0);
 	if (ret < 0)
 		goto out;
 	else if (ret == 0)
@@ -562,7 +562,7 @@ static int fortinet_configure(struct openconnect_info *vpninfo)
 
 	/* Now fetch the connection options in XML format */
 	vpninfo->urlpath = strdup("remote/fortisslvpn_xml");
-	ret = do_https_request(vpninfo, "GET", NULL, NULL, &res_buf, 0);
+	ret = do_https_request(vpninfo, "GET", NULL, NULL, &res_buf, NULL, 0);
 	if (ret < 0) {
 		if (ret == -EPERM)
 			vpn_progress(vpninfo, PRG_ERR,
@@ -739,7 +739,7 @@ int fortinet_bye(struct openconnect_info *vpninfo, const char *reason)
 
 	orig_path = vpninfo->urlpath;
 	vpninfo->urlpath = strdup("remote/logout");
-	ret = do_https_request(vpninfo, "GET", NULL, NULL, &res_buf, 0);
+	ret = do_https_request(vpninfo, "GET", NULL, NULL, &res_buf, NULL, 0);
 	free(vpninfo->urlpath);
 	vpninfo->urlpath = orig_path;
 
