@@ -4,6 +4,8 @@ variables:
   CENTOS7_BUILD: openconnect-cli-centos7
   CENTOS8_BUILD: openconnect-cli-centos8
   FEDORA_BUILD: openconnect-cli-fedora
+  MINGW32_BUILD: openconnect-cli-mingw32
+  MINGW64_BUILD: openconnect-cli-mingw64
   UBUNTU_BUILD: openconnect-cli-ubuntu
 
 image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$FEDORA_BUILD
@@ -429,6 +431,7 @@ Ubuntu18.04/OpenSSL:
       - tests/*.log
 
 MinGW32/GnuTLS:
+  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$MINGW32_BUILD
   script:
   - mount -t binfmt_misc binfmt_misc /proc/sys/fs/binfmt_misc
   - echo ':DOSWin:M::MZ::/usr/bin/wine:' > /proc/sys/fs/binfmt_misc/register
@@ -451,6 +454,7 @@ MinGW32/GnuTLS:
       - openconnect-installer.exe
 
 MinGW32/OpenSSL:
+  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$MINGW32_BUILD
   script:
   - mount -t binfmt_misc binfmt_misc /proc/sys/fs/binfmt_misc
   - echo ':DOSWin:M::MZ::/usr/bin/wine:' > /proc/sys/fs/binfmt_misc/register
@@ -473,6 +477,7 @@ MinGW32/OpenSSL:
       - openconnect-installer.exe
 
 MinGW64/GnuTLS:
+  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$MINGW64_BUILD
   script:
   - dnf remove -y wine.i686
   - mount -t binfmt_misc binfmt_misc /proc/sys/fs/binfmt_misc
@@ -496,6 +501,7 @@ MinGW64/GnuTLS:
       - openconnect-installer.exe
 
 MinGW64/OpenSSL:
+  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$MINGW64_BUILD
   script:
   - dnf remove -y wine.i686
   - mount -t binfmt_misc binfmt_misc /proc/sys/fs/binfmt_misc
