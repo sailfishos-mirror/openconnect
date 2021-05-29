@@ -766,6 +766,16 @@ struct openconnect_info {
 
 	int verbose;
 	void *cbdata;
+	union {
+		struct nx_proto_data {
+			char *message;
+			int password_expiration_days;
+			char may_change_password;
+			char token_auth;
+			char saml_auth;
+			char pda;
+		} nx;
+	} proto_data;
 	openconnect_validate_peer_cert_vfn validate_peer_cert;
 	openconnect_write_new_config_vfn write_new_config;
 	openconnect_process_auth_form_vfn process_auth_form;

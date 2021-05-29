@@ -27,6 +27,39 @@
 static char const ipv4_default_route[] = "0.0.0.0/0.0.0.0";
 static char const ipv6_default_route[] = "::/0";
 
+static struct nx_proto_data *reset_nx_proto_data(struct openconnect_info *vpninfo)
+{
+	memset(&vpninfo->proto_data.nx, 0, sizeof(vpninfo->proto_data.nx));
+	vpninfo->proto_data.nx.password_expiration_days = INT_MIN;
+	return &vpninfo->proto_data.nx;
+}
+
+static int nx_header_cb(struct openconnect_info *vpninfo, char *header, char *value)
+{
+	struct nx_proto_data *nx_response = &vpninfo->proto_data.nx;
+	if (!strcmp(header, "X-NE-message")) {
+		nx_response->message = strdup(value);
+		if (!nx_response->message)
+			return 1;
+	} else if (!strcmp(header, "X-NE-pwdexpdays"))
+		nx_response->password_expiration_days = atoi(value);
+	else if (!strcmp(header, "X-NE-maychangepwd"))
+		nx_response->may_change_password = 1;
+	else if (!strcmp(header, "X-NE-tf")) {
+		if (!strcmp(value, "1"))
+			nx_response->token_auth = 1;
+	} else if (!strcmp(header, "X-NE-saml")) {
+		if (!strcmp(value, "authType:SAML"))
+			nx_response->saml_auth = 1;
+	} else if (!strcmp(header, "X-NE-pda"))
+		nx_response->pda = 1;
+	else if (!strncmp(header, "X-NE-", 5)) {
+		vpn_progress(vpninfo, PRG_INFO, _("Unknown header %s.\n"), header);
+		vpn_progress(vpninfo, PRG_INFO, _("Please report this to <openconnect-devel@lists.infradead.org>.\n"));
+	}
+	return 0;
+}
+
 static int store_cookie_if_valid(struct openconnect_info *vpninfo)
 {
 	struct oc_vpn_option *cookie;
@@ -66,17 +99,50 @@ int nx_obtain_cookie(struct openconnect_info *vpninfo)
 	while (1) {
 		char *form_buf = NULL;
 		struct oc_text_buf *url;
-
-		// TODO: error checking, refactor to get headers (error-msg is in header)
+		struct nx_proto_data *nx_response = reset_nx_proto_data(vpninfo);
 		if (resp_buf && resp_buf->pos)
 			ret = do_https_request(vpninfo, "POST", "application/x-www-form-urlencoded", resp_buf,
-					       &form_buf, NULL, 0);
-
+					       &form_buf, nx_header_cb, 0);
 		else
-			ret = do_https_request(vpninfo, "GET", NULL, NULL, &form_buf, NULL, 0);
+			ret = do_https_request(vpninfo, "GET", NULL, NULL, &form_buf, nx_header_cb, 0);
 
-		if (ret < 0)
+		/* In case of SAML, we get Content-Length: 0 and status 200,
+		 * which should not be an issue, but do_https_request errors
+		 * in this case. Not sure, if that is intended behaviour.
+		 */
+		if (ret < 0 && !nx_response->saml_auth)
 			break;
+
+		if (nx_response->token_auth) {
+			vpn_progress(vpninfo, PRG_ERR, _("NetExtender OTP authentication is not supported, yet.\n"));
+			vpn_progress(vpninfo, PRG_INFO,
+				     _("Please report this to <openconnect-devel@lists.infradead.org>.\n"));
+			ret = -EINVAL;
+			break;
+		}
+		if (nx_response->saml_auth) {
+			vpn_progress(vpninfo, PRG_ERR, _("NetExtender SAML authentication is not supported, yet.\n"));
+			vpn_progress(vpninfo, PRG_INFO,
+				     _("Please report this to <openconnect-devel@lists.infradead.org>.\n"));
+			ret = -EINVAL;
+			break;
+		}
+		if (nx_response->password_expiration_days != INT_MIN)
+			vpn_progress(vpninfo, PRG_INFO, _("Password expires in %d days.\n"),
+				     nx_response->password_expiration_days);
+		if (nx_response->may_change_password)
+			vpn_progress(vpninfo, PRG_INFO, _("Server reports that changing the password is possible.\n"));
+		if (nx_response->pda) {
+			vpn_progress(vpninfo, PRG_INFO,
+				     _("NetExtender PDA (Personal Device Authorization) is not fully supported.\n"));
+			vpn_progress(vpninfo, PRG_INFO,
+				     _("Please report this to <openconnect-devel@lists.infradead.org>.\n"));
+		}
+		if (nx_response->message) {
+			vpn_progress(vpninfo, PRG_ERR, "Message from server: %s\n", nx_response->message);
+			ret = -EINVAL;
+			break;
+		}
 
 		url = buf_alloc();
 		buf_append(url, "https://%s", vpninfo->hostname);
@@ -162,6 +228,8 @@ out:
 	buf_free(resp_buf);
 	free(vpninfo->urlpath);
 	vpninfo->urlpath = NULL;
+	free(vpninfo->proto_data.nx.message);
+	vpninfo->proto_data.nx.message = NULL;
 	return ret;
 }
 
@@ -404,7 +472,6 @@ static int nx_get_connection_info(struct openconnect_info *vpninfo)
 	vpninfo->urlpath = NULL;
 	if (ret < 0)
 		goto out;
-
 
 	if (!strstr(result_buf, "SessionId")) {
 		vpn_progress(vpninfo, PRG_ERR,
