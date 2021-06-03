@@ -153,6 +153,7 @@ public abstract class LibOpenConnect {
 	public synchronized native int setProtocol(String protocol);
 	public synchronized native int disableDTLS();
 	public synchronized native int disableIPv6();
+	public synchronized native void setCookie(String cookie);
 
 	/* connection info */
 
