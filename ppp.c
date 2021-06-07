@@ -1277,7 +1277,6 @@ static int ppp_mainloop(struct openconnect_info *vpninfo, int dtls,
 				if (this == vpninfo->cstp_pkt)
 					vpninfo->cstp_pkt = NULL;
 				work_done = 1;
-				continue;
 			}
 			break;
 
