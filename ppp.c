@@ -890,6 +890,7 @@ static int handle_state_transition(struct openconnect_info *vpninfo, int dtls,
 		 * we need to reconfigure before we can send data packets. */
 		free(vpninfo->current_ssl_pkt);
 		vpninfo->current_ssl_pkt = NULL;
+		vpninfo->partial_rec_size = 0;
 		ppp->ppp_state = PPPS_ESTABLISH;
 		/* fall through */
 
@@ -1101,13 +1102,28 @@ static int ppp_mainloop(struct openconnect_info *vpninfo, int dtls,
 		 * the payload later. */
 		rsv_hdr_size = ppp->encap_len + ppp->exp_ppp_hdr_size;
 
-		/* Load the encap header to end up with the payload where we expect it */
+		/* This should never happen here as we should complain about it
+		 * before setting ->partial_rec_size in the first place, but be
+		 * paranoid. This would mean we just read zero (or negative!) */
+		if (vpninfo->partial_rec_size >= receive_mtu + rsv_hdr_size) {
+			vpninfo->quit_reason = "Payload exceeds MTU";
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("PPP payload exceeds receive buffer\n"));
+			return -EINVAL;
+		}
+
+		/* Load the encap header to end up with the payload where we expect it. Also,
+		 * if our previous (D)TLS read contained an incomplete PPP packet, we need
+		 * to append to it. */
 		eh = this->data - rsv_hdr_size;
-		len = ssl_nonblock_read(vpninfo, dtls, eh, receive_mtu + rsv_hdr_size);
+		len = ssl_nonblock_read(vpninfo, dtls, eh + vpninfo->partial_rec_size,
+					receive_mtu + rsv_hdr_size - vpninfo->partial_rec_size);
 		if (!len)
 			break;
 		if (len < 0)
 			goto do_reconnect;
+		len += vpninfo->partial_rec_size;
+		vpninfo->partial_rec_size = 0;
 
 		/* XX: Some protocols require us to check for an HTTP response in place
 		 * of the first packet
@@ -1129,11 +1145,11 @@ static int ppp_mainloop(struct openconnect_info *vpninfo, int dtls,
 		 *   len: number of bytes-from-the-wire
 		 */
 
-		if (len < 8) {
+		if (len < (ppp->encap_len ? : 8)) {
 		short_pkt:
-			vpn_progress(vpninfo, PRG_ERR, _("Short packet received (%d bytes)\n"), len);
-			vpninfo->quit_reason = "Short packet received";
-			return 1;
+			vpn_progress(vpninfo, PRG_DEBUG, _("Short packet received (%d bytes). Waiting for more.\n"), len);
+			vpninfo->partial_rec_size = len;
+			continue;
 		}
 
 		if (vpninfo->dump_http_traffic)
@@ -1157,10 +1173,19 @@ static int ppp_mainloop(struct openconnect_info *vpninfo, int dtls,
 
 			if (len < 4 + payload_len) {
 			incomplete_pkt:
-				vpn_progress(vpninfo, PRG_ERR,
-					     _("Packet is incomplete. Received %d bytes on wire (includes %d encap) but header payload_len is %d\n"),
+				/* We've read a partial PPP packet. Save the offset for our next read. */
+				vpninfo->partial_rec_size = len;
+				if (vpninfo->partial_rec_size >= receive_mtu + rsv_hdr_size) {
+					vpninfo->quit_reason = "Payload exceeds MTU";
+					vpn_progress(vpninfo, PRG_ERR,
+						     _("PPP payload len %d exceeds receive buffer %d\n"),
+						     payload_len, receive_mtu + rsv_hdr_size);
+					dump_buf_hex(vpninfo, PRG_ERR, '<', eh, len);
+					return -EINVAL;
+				}
+				vpn_progress(vpninfo, PRG_DEBUG,
+					     _("PPP packet is incomplete. Received %d bytes on wire (includes %d encap) but header payload_len is %d. Waiting for more.\n"),
 					     len, ppp->encap_len, payload_len);
-				dump_buf_hex(vpninfo, PRG_ERR, '<', eh, len);
 				continue;
 			}
 			break;
