@@ -729,7 +729,7 @@ int oncp_connect(struct openconnect_info *vpninfo)
 	}
 	buf_free(reqbuf);
 
-	vpninfo->oncp_rec_size = 0;
+	vpninfo->partial_rec_size = 0;
 	free(vpninfo->cstp_pkt);
 	vpninfo->cstp_pkt = NULL;
 
@@ -780,7 +780,7 @@ static int oncp_record_read(struct openconnect_info *vpninfo, void *buf, int len
 {
 	int ret;
 
-	if (!vpninfo->oncp_rec_size) {
+	if (!vpninfo->partial_rec_size) {
 		unsigned char lenbuf[2];
 
 		ret = ssl_nonblock_read(vpninfo, 0, lenbuf, 2);
@@ -793,8 +793,8 @@ static int oncp_record_read(struct openconnect_info *vpninfo, void *buf, int len
 				     _("Read only 1 byte of oNCP length field\n"));
 			return -EIO;
 		}
-		vpninfo->oncp_rec_size = load_le16(lenbuf);
-		if (!vpninfo->oncp_rec_size) {
+		vpninfo->partial_rec_size = load_le16(lenbuf);
+		if (!vpninfo->partial_rec_size) {
 			ret = ssl_nonblock_read(vpninfo, 0, lenbuf, 1);
 			if (ret == 1) {
 				if (lenbuf[0] == 1) {
@@ -820,12 +820,12 @@ static int oncp_record_read(struct openconnect_info *vpninfo, void *buf, int len
 			}
 		}
 	}
-	if (len > vpninfo->oncp_rec_size)
-		len = vpninfo->oncp_rec_size;
+	if (len > vpninfo->partial_rec_size)
+		len = vpninfo->partial_rec_size;
 
 	ret = ssl_nonblock_read(vpninfo, 0, buf, len);
 	if (ret > 0)
-		vpninfo->oncp_rec_size -= ret;
+		vpninfo->partial_rec_size -= ret;
 	return ret;
 }
 

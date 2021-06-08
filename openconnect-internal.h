@@ -620,7 +620,7 @@ struct openconnect_info {
 	struct pkt *deflate_pkt;		/* For compressing outbound packets into */
 	struct pkt *pending_deflated_pkt;	/* The original packet associated with above */
 	struct pkt *current_ssl_pkt;		/* Partially sent SSL packet */
-	int oncp_rec_size;			/* For packetising incoming oNCP stream */
+	int partial_rec_size;			/* For tracking partially-received packets */
 	/* Packet buffers for receiving into */
 	struct pkt *cstp_pkt;
 	struct pkt *dtls_pkt;
