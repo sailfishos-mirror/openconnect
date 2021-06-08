@@ -1048,10 +1048,17 @@ int udp_connect(struct openconnect_info *vpninfo)
 	if (vpninfo->protect_socket)
 		vpninfo->protect_socket(vpninfo->cbdata, fd);
 
-	sndbuf = vpninfo->ip_info.mtu * 2;
+	sndbuf = vpninfo->ip_info.mtu;
+	if (!sndbuf)
+		sndbuf = 1500;
+	sndbuf *= vpninfo->max_qlen;
 	if (setsockopt(fd, SOL_SOCKET, SO_SNDBUF, (void *)&sndbuf, sizeof(sndbuf)) < 0) {
 		vpn_perror(vpninfo, "Set UDP socket send buffer");
 	}
+
+	socklen_t l = sizeof(sndbuf);
+	if (!getsockopt(fd, SOL_SOCKET, SO_SNDBUF, (void *)&sndbuf, &l))
+		vpn_progress(vpninfo, PRG_DEBUG, "UDP SO_SNDBUF: %d\n", sndbuf);
 
 	if (vpninfo->dtls_local_port) {
 		union {
