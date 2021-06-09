@@ -575,7 +575,7 @@ Android/arm64:
       - android/*-linux-android*/out/*
 
 static-analyzer/GnuTLS/Fedora:
-  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:buildenv-fedora
+  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:buildenv-fedora33
   script:
   - ./autogen.sh
   - scan-build ./configure
@@ -593,7 +593,7 @@ static-analyzer/GnuTLS/Fedora:
       - scan-build-src/*
 
 static-analyzer/OpenSSL/Fedora:
-  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:buildenv-fedora
+  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:buildenv-fedora33
   script:
   - ./autogen.sh
   - scan-build ./configure --without-gnutls --with-openssl --without-openssl-version-check
