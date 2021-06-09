@@ -7,6 +7,8 @@ variables:
   MINGW32_BUILD: openconnect-cli-mingw32
   MINGW64_BUILD: openconnect-cli-mingw64
   UBUNTU_BUILD: openconnect-cli-ubuntu
+  ANDROID_BUILD: openconnect-cli-android
+  ANDROID_TOOLCHAINDIR: /opt/android-sdk-linux_x86/toolchains
 
 image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$FEDORA_BUILD
 
@@ -523,6 +525,54 @@ MinGW64/OpenSSL:
     paths:
       - tests/*.log
       - openconnect-installer.exe
+
+Android/x86_64:
+  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$ANDROID_BUILD
+  script:
+  tags:
+  - shared
+  script:
+  - make -C android ARCH=x86_64 TOOLCHAIN=$ANDROID_TOOLCHAINDIR/'$(TRIPLET)-$(API_LEVEL)'
+  artifacts:
+    when: always
+    paths:
+      - android/*-linux-android*/out/*
+
+Android/x86:
+  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$ANDROID_BUILD
+  script:
+  tags:
+  - shared
+  script:
+  - make -C android ARCH=x86 TOOLCHAIN=$ANDROID_TOOLCHAINDIR/'$(TRIPLET)-$(API_LEVEL)'
+  artifacts:
+    when: always
+    paths:
+      - android/*-linux-android*/out/*
+
+Android/arm:
+  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$ANDROID_BUILD
+  script:
+  tags:
+  - shared
+  script:
+  - make -C android ARCH=arm TOOLCHAIN=$ANDROID_TOOLCHAINDIR/'$(TRIPLET)-$(API_LEVEL)'
+  artifacts:
+    when: always
+    paths:
+      - android/*-linux-android*/out/*
+
+Android/arm64:
+  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$ANDROID_BUILD
+  script:
+  tags:
+  - shared
+  script:
+  - make -C android ARCH=arm64 TOOLCHAIN=$ANDROID_TOOLCHAINDIR/'$(TRIPLET)-$(API_LEVEL)'
+  artifacts:
+    when: always
+    paths:
+      - android/*-linux-android*/out/*
 
 static-analyzer/GnuTLS/Fedora:
   image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:buildenv-fedora
