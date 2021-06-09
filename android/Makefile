@@ -89,9 +89,10 @@ $(TOOLCHAIN_BUILT):
 #
 # Build libxml2 with minimal configuration for OpenConnect
 #
-LIBXML2_VER := 2.9.10
+# http://xmlsoft.org/news.html
+LIBXML2_VER := 2.9.11
 LIBXML2_TAR := libxml2-$(LIBXML2_VER).tar.gz
-LIBXML2_SHA := aafee193ffb8fe0c82d4afef6ef91972cbaf5feea100edc2f262750611b4be1f
+LIBXML2_SHA := 886f696d5d5b45d780b2880645edf9e0c62a4fd6841b853e824ada4e02b4d331
 LIBXML2_SRC := sources/libxml2-$(LIBXML2_VER)
 LIBXML2_BUILD := $(TRIPLET)/libxml2
 
@@ -137,9 +138,10 @@ libxml: $(LIBXML_DEPS)
 #
 # Build GNU MP
 #
-GMP_VER := 6.2.0
+# https://gmplib.org/
+GMP_VER := 6.2.1
 GMP_TAR := gmp-$(GMP_VER).tar.xz
-GMP_SHA := 258e6cd51b3fbdfc185c716d55f82c08aff57df0c6fbd143cf6ed561267a1526
+GMP_SHA := fd4829912cddd12f84181c3451cc752be224643e87fac497b69edddadc49b4f2
 GMP_SRC := sources/gmp-$(GMP_VER)
 GMP_BUILD := $(TRIPLET)/gmp
 
@@ -171,9 +173,10 @@ gmp: $(GMP_DEPS)
 #
 # Build nettle
 #
-NETTLE_VER := 3.5.1
+# https://ftp.gnu.org/gnu/nettle/
+NETTLE_VER := 3.6
 NETTLE_TAR := nettle-$(NETTLE_VER).tar.gz
-NETTLE_SHA := 75cca1998761b02e16f2db56da52992aef622bf55a3b45ec538bc2eedadc9419
+NETTLE_SHA := d24c0d0f2abffbc8f4f34dcf114b0f131ec3774895f3555922fe2f40f3d5e3f1
 NETTLE_SRC := sources/nettle-$(NETTLE_VER)
 NETTLE_BUILD := $(TRIPLET)/nettle
 
@@ -204,9 +207,10 @@ nettle: $(NETTLE_DEPS)
 #
 # Build GnuTLS
 #
-GNUTLS_VER := 3.6.13
+# https://www.gnutls.org/download.html
+GNUTLS_VER := 3.6.16
 GNUTLS_TAR := gnutls-$(GNUTLS_VER).tar.xz
-GNUTLS_SHA := 32041df447d9f4644570cf573c9f60358e865637d69b7e59d1159b7240b52f38
+GNUTLS_SHA := 1b79b381ac283d8b054368b335c408fedcb9b7144e0c07f531e3537d4328f3b3
 GNUTLS_SRC := sources/gnutls-$(GNUTLS_VER)
 GNUTLS_BUILD := $(TRIPLET)/gnutls
 
@@ -253,6 +257,7 @@ gnutls: $(GNUTLS_DEPS)
 #
 # Build libstoken
 #
+# https://sourceforge.net/projects/stoken/files/
 STOKEN_VER := 0.92
 STOKEN_TAR := stoken-$(STOKEN_VER).tar.gz
 STOKEN_SHA := aa2b481b058e4caf068f7e747a2dcf5772bcbf278a4f89bc9efcbf82bcc9ef5a
@@ -287,9 +292,10 @@ stoken: $(STOKEN_DEPS)
 #
 # Build liboath
 #
-OATH_VER := 2.6.2
+# http://download.savannah.nongnu.org/releases/oath-toolkit/
+OATH_VER := 2.6.7
 OATH_TAR := oath-toolkit-$(OATH_VER).tar.gz
-OATH_SHA := b03446fa4b549af5ebe4d35d7aba51163442d255660558cd861ebce536824aa0
+OATH_SHA := 36eddfce8f2f36347fb257dbf878ba0303a2eaafe24eaa071d5cd302261046a9
 OATH_SRC := sources/oath-toolkit-$(OATH_VER)
 OATH_BUILD := $(TRIPLET)/oath
 
@@ -324,9 +330,10 @@ oath: $(OATH_DEPS)
 #
 # Build liblz4
 #
-LZ4_VER := 1.9.2
+# https://github.com/lz4/lz4/tags
+LZ4_VER := 1.9.3
 LZ4_TAR := lz4-v$(LZ4_VER).tar.gz
-LZ4_SHA := 658ba6191fa44c92280d4aa2c271b0f4fbc0e34d249578dd05e50e76d0e5efcc
+LZ4_SHA := 030644df4611007ff7dc962d981f390361e6c97a34e5cbc393ddfbe019ffe2c1
 LZ4_DIR := $(TRIPLET)/lz4-$(LZ4_VER)
 
 $(LZ4_TAR):
