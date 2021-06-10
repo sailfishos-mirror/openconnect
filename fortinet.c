@@ -124,7 +124,7 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 		for (realm = strchr(vpninfo->urlpath, '?'); realm && *++realm; realm=strchr(realm, '&')) {
 			if (!strncmp(realm, "realm=", 6)) {
 				const char *end = strchrnul(realm+1, '&');
-				realm = strndup(realm+6, end-realm);
+				realm = strndup(realm+6, end-realm-6);
 				vpn_progress(vpninfo, PRG_INFO, _("Got login realm '%s'\n"), realm);
 				break;
 			}

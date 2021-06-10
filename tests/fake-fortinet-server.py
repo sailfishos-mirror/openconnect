@@ -90,7 +90,7 @@ def realm(realm=None):
     session.update(step='GET-realm', want_2fa=int(request.args.get('want_2fa', 0)))
     # print(session)
     if realm:
-        return redirect(url_for('login', realm=realm))
+        return redirect(url_for('login', realm=realm, lang='en'))
     else:
         return login()
 
