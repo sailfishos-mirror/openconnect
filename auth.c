@@ -681,8 +681,18 @@ static int handle_auth_form(struct openconnect_info *vpninfo, struct oc_auth_for
 	if (!form->opts) {
 		if (form->message)
 			vpn_progress(vpninfo, PRG_INFO, "%s\n", form->message);
-		if (form->error)
-			vpn_progress(vpninfo, PRG_ERR, "%s\n", form->error);
+		if (form->error) {
+			if (!strcmp(form->error, "Certificate Validation Failure")) {
+				/* XX: Cisco servers send this ambiguous error string when the CLIENT certificate
+				 * is absent or incorrect. We rewrite it to make this clearer, while preserving
+				 * the original error as a substring.
+				 */
+				free(form->error);
+				if (!(form->error = strdup(_("Client certificate missing or incorrect (Certificate Validation Failure)"))))
+				    return -ENOMEM;
+			} else
+				vpn_progress(vpninfo, PRG_ERR, "%s\n", form->error);
+		}
 		if (!strcmp(form->auth_id, "openconnect_authentication_complete"))
 			goto justpost;
 		return -EPERM;
