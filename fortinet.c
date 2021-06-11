@@ -537,9 +537,14 @@ static int fortinet_configure(struct openconnect_info *vpninfo)
 		goto out;
 	}
 
-	/* XXX: Why do Forticlient and Openfortivpn do this anyway?
-	 * It's fetching the legacy non-XML configuration, isn't it?
-	 * Do we *actually* have to do this, before fetching the XML config?
+	/* XXX: Forticlient and Openfortivpn fetch the legacy HTTP configuration.
+	 * FortiOS 4 was the last version to send the legacy HTTP configuration.
+	 * FortiOS 5 and later send the current XML configuration.
+	 * We clearly do not need to support FortiOS 4 anymore.
+	 * 
+	 * Yet we keep this code around in order to get a sanity check about
+	 * whether the SVPNCOOKIE is still valid/alive, until we are sure we've
+	 * worked out the weirdness with reconnects.
 	 */
 #if 0 /* Nah... */
 	free(vpninfo->urlpath);
