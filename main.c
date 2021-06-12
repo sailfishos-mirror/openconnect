@@ -1617,6 +1617,29 @@ int main(int argc, char **argv)
 		  "         may allow you to establish insecure connections.\n"));
 #endif
 
+	/* Some systems have a crypto policy which completely prevents DTLSv1.0
+	 * from being used, which is entirely pointless and will just drive
+	 * users back to the crappy proprietary clients. Or drive OpenConnect
+	 * to implement its own DTLS instead of using the system crypto libs.
+	 * We're happy to conform by default to the system policy which is
+	 * carefully curated to keep up to date with developments in crypto
+	 * attacks —  but we also *need* to be able to override it and connect
+	 * anyway, when the user asks us to. Just as we *can* continue even
+	 * when the server has an invalid certificate, based on user input.
+	 * It was a massive oversight that GnuTLS implemented the system
+	 * policy *without* that basic override facility, so until/unless
+	 * it actually gets implemented properly we have to just disable it.
+	 * We can't do this from openconnect_init_ssl() since that would be
+	 * calling setenv() from a library in someone else's process. And
+	 * thankfully we don't really need to since the auth-dialogs don't
+	 * care; this is mostly for the DTLS connection.
+	 */
+#ifdef OPENCONNECT_GNUTLS
+	setenv("GNUTLS_SYSTEM_PRIORITY_FILE", DEVNULL, 0);
+#else
+	setenv("OPENSSL_CONF", DEVNULL, 0);
+#endif
+
 	openconnect_init_ssl();
 
 	vpninfo = openconnect_vpninfo_new((char *)"Open AnyConnect VPN Agent",

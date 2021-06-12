@@ -49,6 +49,15 @@
 
 #include "openconnect.h"
 
+/* Equivalent of "/dev/null" on Windows.
+ * See https://stackoverflow.com/a/44163934
+ */
+#ifdef _WIN32
+#define DEVNULL "NUL:"
+#else
+#define DEVNULL "/dev/null"
+#endif
+
 #if defined(OPENCONNECT_OPENSSL)
 #include <openssl/ssl.h>
 #include <openssl/err.h>

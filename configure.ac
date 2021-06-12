@@ -26,6 +26,7 @@ symver_getline=
 symver_asprintf=
 symver_vasprintf=
 symver_win32_strerror=
+symver_win32_setenv=
 
 # Autoconf is stupid and if the first time it needs to find the C compiler
 # is conditional (as it is here for some of the MinGW checks), it forgets
@@ -60,6 +61,7 @@ case $host_os in
     # For asprintf()
     AC_DEFINE(_GNU_SOURCE, 1, [_GNU_SOURCE])
     symver_win32_strerror="openconnect__win32_strerror;"
+    symver_win32_setenv="openconnect__win32_setenv;"
     # Win32 does have the SCard API
     system_pcsc_libs="-lwinscard"
     system_pcsc_cflags=
@@ -207,6 +209,7 @@ AC_SUBST(SYMVER_GETLINE, $symver_getline)
 AC_SUBST(SYMVER_ASPRINTF, $symver_asprintf)
 AC_SUBST(SYMVER_VASPRINTF, $symver_vasprintf)
 AC_SUBST(SYMVER_WIN32_STRERROR, $symver_win32_strerror)
+AC_SUBST(SYMVER_WIN32_SETENV, $symver_win32_setenv)
 
 AS_COMPILER_FLAGS(WFLAGS,
         "-Wall
