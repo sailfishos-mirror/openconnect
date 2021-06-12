@@ -16,6 +16,7 @@
    <li><b>OpenConnect HEAD</b>
      <ul>
        <li>Ignore failures to fetch the NC landing page if the authentication was successful.</li>
+       <li>Disable brittle "system policy" enforcement where it cannot be gracefully overridden at user request. <a href="https://bugzilla.redhat.com/show_bug.cgi?id=1960763"><i>(RH#1960763)</i></a>.</li>
      </ul><br/>
   </li>
   <li><b><a href="ftp://ftp.infradead.org/pub/openconnect/openconnect-8.10.tar.gz">OpenConnect v8.10</a></b>
