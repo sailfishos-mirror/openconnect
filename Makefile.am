@@ -219,8 +219,8 @@ tag: uncommitted-check
 	@( echo '1,/<!-- latest-release-start -->/p' ;\
 	   echo '/<!-- latest-release-end -->/,$$p' ;\
 	   echo  '/<!-- latest-release-start -->/a\' ;\
-	   echo  'The latest release is <a href="ftp://ftp.infradead.org/pub/openconnect/openconnect-$(VERSION).tar.gz">OpenConnect v$(VERSION)</a>\' ;\
-	   echo  '<i>(<a href="ftp://ftp.infradead.org/pub/openconnect/openconnect-$(VERSION).tar.gz.asc">PGP signature</a>)</i>,\' ;\
+	   echo  'The latest release is <a href="https://www.infradead.org/openconnect/download/openconnect-$(VERSION).tar.gz">OpenConnect v$(VERSION)</a>\' ;\
+	   echo  '<i>(<a href="https://www.infradead.org/openconnect/download/openconnect-$(VERSION).tar.gz.asc">PGP signature</a>)</i>,\' ;\
 	   echo 'released on $(shell date +%Y-%m-%d) with the following changelog:</p>\' ;\
 	   sed '0,/<b>OpenConnect HEAD/d;/<\/ul><br\/>/,$$d;s/$$/\\/' $(srcdir)/www/changelog.xml ;\
 	   echo '     </ul>' ) | \
@@ -230,8 +230,8 @@ tag: uncommitted-check
 	   echo '     <ul>\' ;\
 	   echo '       <li><i>No changelog entries yet</i></li>\';\
 	   echo '     </ul><br/>\' ;  echo '  </li>\' ;\
-	   echo '  <li><b><a href="ftp://ftp.infradead.org/pub/openconnect/openconnect-$(VERSION).tar.gz">OpenConnect v$(VERSION)</a></b>\' ;\
-	   echo '     <i>(<a href="ftp://ftp.infradead.org/pub/openconnect/openconnect-$(VERSION).tar.gz.asc">PGP signature</a>)</i> &#8212; $(shell date +%Y-%m-%d)' ) | \
+	   echo '  <li><b><a href="https://www.infradead.org/openconnect/download/openconnect-$(VERSION).tar.gz">OpenConnect v$(VERSION)</a></b>\' ;\
+	   echo '     <i>(<a href="https://www.infradead.org/openconnect/download/openconnect-$(VERSION).tar.gz.asc">PGP signature</a>)</i> &#8212; $(shell date +%Y-%m-%d)' ) | \
 		sed -f - -i $(srcdir)/www/changelog.xml
 	@echo '/API version [0-9]\+\.[0-9]\+:$$/s/:/ (v$(VERSION); $(shell date +%Y-%m-%d)):/' | \
 		sed -f - -i $(srcdir)/openconnect.h

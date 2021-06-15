@@ -13,14 +13,14 @@
 Name:		mingw-openconnect
 Version:	%{tagver}%{?snapver}
 Release:	0%{?dist}
-Summary:	Open client for Cisco AnyConnect VPN, Juniper Network Connect/Pulse, PAN GlobalProtect
+Summary:	Open client for SSL VPNs including Cisco AnyConnect VPN, Juniper Network Connect/Pulse, PAN GlobalProtect, Fortinet, etc.
 
 License:	LGPLv2
-URL:		http://www.infradead.org/openconnect.html
+URL:		https://www.infradead.org/openconnect.html
 %if 0%{?gitsnapshot}
 Source0:        https://github.com/openconnect/%{name}/archive/%{snapcommit}/openconnect-%{shortcommit}.tar.gz
 %else
-Source0:        ftp://ftp.infradead.org/pub/%{name}/openconnect-%{version}.tar.gz
+Source0:        https://www.infradead.org/openconnect/download/openconnect-%{version}.tar.gz
 %endif
 Source2:	gpgkey-BE07D9FD54809AB2C4B0FF5F63762CDA67E2F359.asc
 Source3:	macros.gpg
