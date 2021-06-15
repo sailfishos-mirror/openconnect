@@ -28,5 +28,5 @@ Commonly-sought documentation:
 * [Contribute](https://www.infradead.org/openconnect/contribute.html)
 * [Mailing list / Help](https://www.infradead.org/openconnect/mail.html)
 * [GUIs / Front Ends](https://www.infradead.org/openconnect/gui.html)
-* [VPN Server / ocserv](http://www.infradead.org/ocserv/)
-* [Protocol-specific details](http://www.infradead.org/openconnect/protocols.html)
+* [VPN Server / ocserv](https://www.infradead.org/ocserv/)
+* [Protocol-specific details](https://www.infradead.org/openconnect/protocols.html)

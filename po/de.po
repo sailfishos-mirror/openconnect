@@ -3235,10 +3235,10 @@ msgstr "Zuweisungsfehler für Zeichenkette aus der Standardeingabe\n"
 #, c-format
 msgid ""
 "For assistance with OpenConnect, please see the web page at\n"
-"  http://www.infradead.org/openconnect/mail.html\n"
+"  https://www.infradead.org/openconnect/mail.html\n"
 msgstr ""
 "Bitte lesen Sie für Hilfe zu OpenConnect die Webseite\n"
-" http://www.infradead.org/openconnect/mail.html\n"
+" https://www.infradead.org/openconnect/mail.html\n"
 
 #: main.c:637
 #, c-format
@@ -3928,8 +3928,8 @@ msgstr ""
 "Kein »--script«-Argument angegeben, DNS und Routing sind nicht konfiguriert\n"
 
 #: main.c:2136
-msgid "See http://www.infradead.org/openconnect/vpnc-script.html\n"
-msgstr "Siehe http://www.infradead.org/openconnect/vpnc-script.html\n"
+msgid "See https://www.infradead.org/openconnect/vpnc-script.html\n"
+msgstr "Siehe https://www.infradead.org/openconnect/vpnc-script.html\n"
 
 #: main.c:2149
 msgid "User requested reconnect\n"
@@ -6351,11 +6351,11 @@ msgstr "Binden des lokalen tun-Geräts ist gescheitert (TUNSETIFF): %s\n"
 #: tun.c:257
 msgid ""
 "To configure local networking, openconnect must be running as root\n"
-"See http://www.infradead.org/openconnect/nonroot.html for more information\n"
+"See https://www.infradead.org/openconnect/nonroot.html for more information\n"
 msgstr ""
 "Um das lokale Netzwerk zu konfigurieren, muss Openconnect mit "
 "Systemverwalterrechten ausgeführt werden.\n"
-"Weitere Informationen: http://www.infradead.org/openconnect/nonroot.html\n"
+"Weitere Informationen: https://www.infradead.org/openconnect/nonroot.html\n"
 
 #: tun.c:322
 #, c-format

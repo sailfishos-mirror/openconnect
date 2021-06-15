@@ -3179,10 +3179,10 @@ msgstr "Neuspeh dodeljvanja za nisku sa standardnog ulaza\n"
 #, c-format
 msgid ""
 "For assistance with OpenConnect, please see the web page at\n"
-"  http://www.infradead.org/openconnect/mail.html\n"
+"  https://www.infradead.org/openconnect/mail.html\n"
 msgstr ""
 "Za ispomoć sa Otvorenim povezivanjem, pogledajte veb stranicu na\n"
-"  „http://www.infradead.org/openconnect/mail.html“\n"
+"  „https://www.infradead.org/openconnect/mail.html“\n"
 
 #: main.c:637
 #, c-format
@@ -3869,8 +3869,8 @@ msgid "No --script argument provided; DNS and routing are not configured\n"
 msgstr "Nije dostavljen argument „--script“; DNS i upućivanje nisu podešeni\n"
 
 #: main.c:2136
-msgid "See http://www.infradead.org/openconnect/vpnc-script.html\n"
-msgstr "Pogledajte „http://www.infradead.org/openconnect/vpnc-script.html“\n"
+msgid "See https://www.infradead.org/openconnect/vpnc-script.html\n"
+msgstr "Pogledajte „https://www.infradead.org/openconnect/vpnc-script.html“\n"
 
 #: main.c:2149
 msgid "User requested reconnect\n"
@@ -6268,11 +6268,11 @@ msgstr "Nisam uspeo da svežem mesni tun uređaj (TUNSETIFF): %s\n"
 #: tun.c:257
 msgid ""
 "To configure local networking, openconnect must be running as root\n"
-"See http://www.infradead.org/openconnect/nonroot.html for more information\n"
+"See https://www.infradead.org/openconnect/nonroot.html for more information\n"
 msgstr ""
 "Za podešavanje mesnog umrežavanja, openkonekt mora biti pokrenut kao "
 "administrator\n"
-"Vidite „http://www.infradead.org/openconnect/nonroot.html“ za više podataka\n"
+"Vidite „https://www.infradead.org/openconnect/nonroot.html“ za više podataka\n"
 
 #: tun.c:322
 #, c-format

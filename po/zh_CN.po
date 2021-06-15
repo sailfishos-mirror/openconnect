@@ -3178,10 +3178,10 @@ msgstr "分配来自标准输入的字符串失败\n"
 #, c-format
 msgid ""
 "For assistance with OpenConnect, please see the web page at\n"
-"  http://www.infradead.org/openconnect/mail.html\n"
+"  https://www.infradead.org/openconnect/mail.html\n"
 msgstr ""
 "为了帮助 OpenConnect，请查看网页于\n"
-"  http://www.infradead.org/openconnect/mail.html\n"
+"  https://www.infradead.org/openconnect/mail.html\n"
 
 #: main.c:637
 #, c-format
@@ -3859,8 +3859,8 @@ msgid "No --script argument provided; DNS and routing are not configured\n"
 msgstr "没有提供 --script 参数；DNS 和路由未配置\n"
 
 #: main.c:2136
-msgid "See http://www.infradead.org/openconnect/vpnc-script.html\n"
-msgstr "查看 http://www.infradead.org/openconnect/vpnc-script.html\n"
+msgid "See https://www.infradead.org/openconnect/vpnc-script.html\n"
+msgstr "查看 https://www.infradead.org/openconnect/vpnc-script.html\n"
 
 #: main.c:2149
 msgid "User requested reconnect\n"
@@ -6263,10 +6263,10 @@ msgstr "绑定本地 tun 设备（TUNSETIFF）失败：%s\n"
 #: tun.c:257
 msgid ""
 "To configure local networking, openconnect must be running as root\n"
-"See http://www.infradead.org/openconnect/nonroot.html for more information\n"
+"See https://www.infradead.org/openconnect/nonroot.html for more information\n"
 msgstr ""
 "为了配置本地网络，openconnect 必须以 root 权限运行\n"
-"查看 See http://www.infradead.org/openconnect/nonroot.html 来获取更多信息\n"
+"查看 See https://www.infradead.org/openconnect/nonroot.html 来获取更多信息\n"
 
 #: tun.c:322
 #, c-format

@@ -50,7 +50,7 @@ static int gnutls_pin_callback(void *priv, int attempt, const char *uri,
 
 /* GnuTLS 2.x lacked this. But GNUTLS_E_UNEXPECTED_PACKET_LENGTH basically
  * does the same thing.
- * http://lists.infradead.org/pipermail/openconnect-devel/2014-March/001726.html
+ * https://lists.infradead.org/pipermail/openconnect-devel/2014-March/001726.html
  */
 #ifndef GNUTLS_E_PREMATURE_TERMINATION
 #define GNUTLS_E_PREMATURE_TERMINATION GNUTLS_E_UNEXPECTED_PACKET_LENGTH

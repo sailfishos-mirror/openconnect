@@ -3178,10 +3178,10 @@ msgstr "Falha na alocação da cadeia de stdin\n"
 #, c-format
 msgid ""
 "For assistance with OpenConnect, please see the web page at\n"
-"  http://www.infradead.org/openconnect/mail.html\n"
+"  https://www.infradead.org/openconnect/mail.html\n"
 msgstr ""
 "Para assistência do OpenConnect, por favor, veja a página web em\n"
-"  http://www.infradead.org/openconnect/mail.html\n"
+"  https://www.infradead.org/openconnect/mail.html\n"
 
 #: main.c:637
 #, c-format
@@ -3859,8 +3859,8 @@ msgstr ""
 "Sem argumento --script indicado; DNS e routing não estão configurados\n"
 
 #: main.c:2136
-msgid "See http://www.infradead.org/openconnect/vpnc-script.html\n"
-msgstr "Veja http://www.infradead.org/openconnect/vpnc-script.html\n"
+msgid "See https://www.infradead.org/openconnect/vpnc-script.html\n"
+msgstr "Veja https://www.infradead.org/openconnect/vpnc-script.html\n"
 
 #: main.c:2149
 msgid "User requested reconnect\n"
@@ -6255,10 +6255,10 @@ msgstr "Falha ao abrir dispositivo tun: %s\n"
 #: tun.c:257
 msgid ""
 "To configure local networking, openconnect must be running as root\n"
-"See http://www.infradead.org/openconnect/nonroot.html for more information\n"
+"See https://www.infradead.org/openconnect/nonroot.html for more information\n"
 msgstr ""
 "Para configurar a rede local, o openconnect tem de ser executado como root.\n"
-"Veja http://www.infradead.org/openconnect/nonroot.html para mais informação\n"
+"Veja https://www.infradead.org/openconnect/nonroot.html para mais informação\n"
 
 #: tun.c:322
 #, c-format

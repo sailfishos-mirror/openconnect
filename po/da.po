@@ -3234,10 +3234,10 @@ msgstr "Allokeringsfejl for streng fra stdin\n"
 #, c-format
 msgid ""
 "For assistance with OpenConnect, please see the web page at\n"
-"  http://www.infradead.org/openconnect/mail.html\n"
+"  https://www.infradead.org/openconnect/mail.html\n"
 msgstr ""
 "Hjælp til OpenConnect kan findes på hjemmesiden\n"
-"  http://www.infradead.org/openconnect/mail.html\n"
+"  https://www.infradead.org/openconnect/mail.html\n"
 
 #: main.c:637
 #, c-format
@@ -3929,8 +3929,8 @@ msgstr ""
 "Intet argument til --script angivet; DNS og routing er ikke konfigurerede\n"
 
 #: main.c:2136
-msgid "See http://www.infradead.org/openconnect/vpnc-script.html\n"
-msgstr "Se http://www.infradead.org/openconnect/vpnc-script.html\n"
+msgid "See https://www.infradead.org/openconnect/vpnc-script.html\n"
+msgstr "Se https://www.infradead.org/openconnect/vpnc-script.html\n"
 
 #: main.c:2149
 msgid "User requested reconnect\n"
@@ -6339,11 +6339,11 @@ msgstr "Kunne ikke tildele lokal tun-enhed (TUNSETIFF): %s\n"
 #: tun.c:257
 msgid ""
 "To configure local networking, openconnect must be running as root\n"
-"See http://www.infradead.org/openconnect/nonroot.html for more information\n"
+"See https://www.infradead.org/openconnect/nonroot.html for more information\n"
 msgstr ""
 "For at konfigurere lokalt netværk skal openconnect køre som administrator "
 "(root)\n"
-"Se http://www.infradead.org/openconnect/nonroot.html for yderligere "
+"Se https://www.infradead.org/openconnect/nonroot.html for yderligere "
 "information\n"
 
 #: tun.c:322

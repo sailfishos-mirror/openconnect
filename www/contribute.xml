@@ -67,7 +67,7 @@ languages other than English. All contributions will be gratefully received.</p>
 Translations can be contributed by joining the GNOME team as described on their
 <a href="https://wiki.gnome.org/TranslationProject">TranslationProject</a>
 wiki page, or simply by editing one of the language files in the <tt><a
-href="http://git.infradead.org/users/dwmw2/openconnect.git/tree/HEAD:/po">po/</a></tt>
+href="https://git.infradead.org/users/dwmw2/openconnect.git/tree/HEAD:/po">po/</a></tt>
 directory and sending the resulting patch (or file) to the <a
 href="mail.html">mailing list</a>.</p>
 

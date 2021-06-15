@@ -331,7 +331,7 @@ service are unlikely to work correctly. The script is expected to be
 compatible with the
 .B vpnc\-script
 which is shipped with the "vpnc" VPN client. See
-.I http://www.infradead.org/openconnect/vpnc-script.html
+.I https://www.infradead.org/openconnect/vpnc-script.html
 for more information. This version of OpenConnect is configured to
 use \fB@DEFAULT_VPNCSCRIPT@\fR by default.
 
@@ -468,7 +468,7 @@ compatibility issues with the code which falls back to the old method
 automatically. It causes OpenConnect to behave more like older
 versions (4.08 and below) did. If you find that you need to use this
 option, then you have found a bug in OpenConnect. Please see
-http://www.infradead.org/openconnect/mail.html and report this to the
+https://www.infradead.org/openconnect/mail.html and report this to the
 developers.
 .TP
 .B \-\-allow\-insecure\-crypto
@@ -506,7 +506,7 @@ for experimental support for Fortinet Fortigate, and
 for experimental support for Array Networks SSL VPN.
 
 See
-.I http://www.infradead.org/openconnect/protocols.html
+.I https://www.infradead.org/openconnect/protocols.html
 for details on features and deficiencies of the individual
 protocols.
 

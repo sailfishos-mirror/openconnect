@@ -11,7 +11,7 @@
     	<h1>Changelog</h1>
 
 <p>For full changelog entries including the latest development, see
-<a href="http://git.infradead.org/users/dwmw2/openconnect.git">gitweb</a>.</p>
+<a href="https://git.infradead.org/users/dwmw2/openconnect.git">gitweb</a>.</p>
 <ul>
    <li><b>OpenConnect HEAD</b>
      <ul>
@@ -328,7 +328,7 @@
        <li>Add <a href="http://tools.ietf.org/html/rfc4226">RFC4226</a> HOTP token support.</li>
        <li>Tolerate servers closing connection uncleanly after HTTP/1.0 response <a href="https://bugs.launchpad.net/bugs/1225276"><i>(Ubuntu #1225276)</i></a>.</li>
        <li>Add support for IPv6 split tunnel configuration.</li>
-       <li>Add Windows support with MinGW <i>(tested with both IPv6 and Legacy IP with latest <a href="http://git.infradead.org/users/dwmw2/vpnc-scripts.git/blob_plain/HEAD:/vpnc-script-win.js">vpnc-script-win.js</a>)</i></li>
+       <li>Add Windows support with MinGW <i>(tested with both IPv6 and Legacy IP with latest <a href="https://git.infradead.org/users/dwmw2/vpnc-scripts.git/blob_plain/HEAD:/vpnc-script-win.js">vpnc-script-win.js</a>)</i></li>
        <li>Change library API to support updating the auth form when the authgroup is changed <a href="https://bugs.launchpad.net/bugs/1229195"><i>(Ubuntu #1229195)</i></a>.</li>
        <li>Change <tt>--os mac</tt> to <tt>--os mac-intel</tt>, to match the identifier used by Cisco clients.</li>
        <li>Add new API functions to support invoking the VPN mainloop directly from an application.</li>

@@ -3203,10 +3203,10 @@ msgstr "Lefoglalási hiba a szabványos bemenetről érkező szöveghez\n"
 #, c-format
 msgid ""
 "For assistance with OpenConnect, please see the web page at\n"
-"  http://www.infradead.org/openconnect/mail.html\n"
+"  https://www.infradead.org/openconnect/mail.html\n"
 msgstr ""
 "Ha segítségre van szüksége az OpenConnect programhoz, tekintse meg a\n"
-"  http://www.infradead.org/openconnect/mail.html címen lévő oldalt.\n"
+"  https://www.infradead.org/openconnect/mail.html címen lévő oldalt.\n"
 
 #: main.c:637
 #, c-format
@@ -3891,8 +3891,8 @@ msgstr ""
 "Nincs --script argumentum megadva; a DNS és az útválasztás nincs beállítva\n"
 
 #: main.c:2136
-msgid "See http://www.infradead.org/openconnect/vpnc-script.html\n"
-msgstr "Lásd: http://www.infradead.org/openconnect/vpnc-script.html\n"
+msgid "See https://www.infradead.org/openconnect/vpnc-script.html\n"
+msgstr "Lásd: https://www.infradead.org/openconnect/vpnc-script.html\n"
 
 #: main.c:2149
 msgid "User requested reconnect\n"
@@ -6300,12 +6300,12 @@ msgstr "Nem sikerült kötni a helyi tun eszközt (TUNSETIFF): %s\n"
 #: tun.c:257
 msgid ""
 "To configure local networking, openconnect must be running as root\n"
-"See http://www.infradead.org/openconnect/nonroot.html for more information\n"
+"See https://www.infradead.org/openconnect/nonroot.html for more information\n"
 msgstr ""
 "A helyi hálózatkezelés beállításához az openconnect programot "
 "rendszergazdaként kell futtatni\n"
 "További információkért nézze meg a következő oldalt:\n"
-"http://www.infradead.org/openconnect/nonroot.html oldalt\n"
+"https://www.infradead.org/openconnect/nonroot.html oldalt\n"
 
 #: tun.c:322
 #, c-format

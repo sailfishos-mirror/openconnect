@@ -3208,10 +3208,10 @@ msgstr "Kegagalan alokasi bagi string dari stdin\n"
 #, c-format
 msgid ""
 "For assistance with OpenConnect, please see the web page at\n"
-"  http://www.infradead.org/openconnect/mail.html\n"
+"  https://www.infradead.org/openconnect/mail.html\n"
 msgstr ""
 "Untuk bantuan atas OpenConnect, harap lihat halaman web di\n"
-" http://www.infradead.org/openconnect/mail.html\n"
+" https://www.infradead.org/openconnect/mail.html\n"
 
 #: main.c:637
 #, c-format
@@ -3900,8 +3900,8 @@ msgid "No --script argument provided; DNS and routing are not configured\n"
 msgstr "Tak ada argumen --script yang diberikan; DNS dan routing tak ditata\n"
 
 #: main.c:2136
-msgid "See http://www.infradead.org/openconnect/vpnc-script.html\n"
-msgstr "Lihat http://www.infradead.org/openconnect/vpnc-script.html\n"
+msgid "See https://www.infradead.org/openconnect/vpnc-script.html\n"
+msgstr "Lihat https://www.infradead.org/openconnect/vpnc-script.html\n"
 
 #: main.c:2149
 msgid "User requested reconnect\n"
@@ -6311,11 +6311,11 @@ msgstr "Gagal mengikat perangkat tun lokal (TUNSETIFF): %s\n"
 #: tun.c:257
 msgid ""
 "To configure local networking, openconnect must be running as root\n"
-"See http://www.infradead.org/openconnect/nonroot.html for more information\n"
+"See https://www.infradead.org/openconnect/nonroot.html for more information\n"
 msgstr ""
 "Untuk mengatur konfigurasi jejaring lokal, openconnect mesti dijalankan "
 "sebagai root\n"
-"Lihat http://www.infradead.org/openconnect/nonroot.html untuk informasi "
+"Lihat https://www.infradead.org/openconnect/nonroot.html untuk informasi "
 "lebih lanjut\n"
 
 #: tun.c:322

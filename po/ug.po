@@ -3160,10 +3160,10 @@ msgstr "stdin دىن ھەرپ تىزىقىنى تەقسىملىيەلمىدى\n"
 #, c-format
 msgid ""
 "For assistance with OpenConnect, please see the web page at\n"
-"  http://www.infradead.org/openconnect/mail.html\n"
+"  https://www.infradead.org/openconnect/mail.html\n"
 msgstr ""
 "OpenConnect ھەققىدىكى ياردەمنى تۆۋەندىكى تورتۇرادىن كۆرۈڭ\n"
-"http://www.infradead.org/openconnect/mail.html\n"
+"https://www.infradead.org/openconnect/mail.html\n"
 
 #: main.c:637
 #, c-format
@@ -3837,8 +3837,8 @@ msgstr ""
 "ھېچقانداق --script ئۆزگەرگۈچى تەمىنلەنمىگەن؛ DNS ۋە يېتەكلىگۈچ سەپلەنمىگەن\n"
 
 #: main.c:2136
-msgid "See http://www.infradead.org/openconnect/vpnc-script.html\n"
-msgstr "http://www.infradead.org/openconnect/vpnc-script.html نى كۆرۈڭ\n"
+msgid "See https://www.infradead.org/openconnect/vpnc-script.html\n"
+msgstr "https://www.infradead.org/openconnect/vpnc-script.html نى كۆرۈڭ\n"
 
 #: main.c:2149
 msgid "User requested reconnect\n"
@@ -6218,7 +6218,7 @@ msgstr ""
 #: tun.c:257
 msgid ""
 "To configure local networking, openconnect must be running as root\n"
-"See http://www.infradead.org/openconnect/nonroot.html for more information\n"
+"See https://www.infradead.org/openconnect/nonroot.html for more information\n"
 msgstr ""
 
 #: tun.c:322

@@ -3157,10 +3157,10 @@ msgstr "Alokacija neuspjela za string iz stdin\n"
 #, c-format
 msgid ""
 "For assistance with OpenConnect, please see the web page at\n"
-"  http://www.infradead.org/openconnect/mail.html\n"
+"  https://www.infradead.org/openconnect/mail.html\n"
 msgstr ""
 "Za pomoć pri OtvorenojKonekciji, molimo pogledajte web stranicu\n"
-"  http://www.infradead.org/openconnect/mail.html\n"
+"  https://www.infradead.org/openconnect/mail.html\n"
 
 #: main.c:637
 #, c-format
@@ -3835,8 +3835,8 @@ msgstr ""
 "Nije obezjbeđen --script argument; DNS i usmjeravanje nije konfigurisano\n"
 
 #: main.c:2136
-msgid "See http://www.infradead.org/openconnect/vpnc-script.html\n"
-msgstr "Pogledaj http://www.infradead.org/openconnect/vpnc-script.html\n"
+msgid "See https://www.infradead.org/openconnect/vpnc-script.html\n"
+msgstr "Pogledaj https://www.infradead.org/openconnect/vpnc-script.html\n"
 
 #: main.c:2149
 msgid "User requested reconnect\n"
@@ -6225,10 +6225,10 @@ msgstr "Neuspjelo povezivanje lokalnog tun uređaja (TUNSETIFF): %s\n"
 #: tun.c:257
 msgid ""
 "To configure local networking, openconnect must be running as root\n"
-"See http://www.infradead.org/openconnect/nonroot.html for more information\n"
+"See https://www.infradead.org/openconnect/nonroot.html for more information\n"
 msgstr ""
 "Za konfiguraciju lokalne mreže, openconnect mora biti pokrenut kao root\n"
-"Vidi http://www.infradead.org/openconnect/nonroot.html za više informacija\n"
+"Vidi https://www.infradead.org/openconnect/nonroot.html za više informacija\n"
 
 #: tun.c:322
 #, c-format

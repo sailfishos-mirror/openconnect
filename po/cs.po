@@ -3196,10 +3196,10 @@ msgstr "Nezdařila se alokace řetězce ze standardního vstupu\n"
 #, c-format
 msgid ""
 "For assistance with OpenConnect, please see the web page at\n"
-"  http://www.infradead.org/openconnect/mail.html\n"
+"  https://www.infradead.org/openconnect/mail.html\n"
 msgstr ""
 "Pro pomoc s OpenConnect se prosím obraťte na webové stránky\n"
-"  http://www.infradead.org/openconnect/mail.html\n"
+"  https://www.infradead.org/openconnect/mail.html\n"
 
 #: main.c:637
 #, c-format
@@ -3883,8 +3883,8 @@ msgid "No --script argument provided; DNS and routing are not configured\n"
 msgstr "Neposkytnut žádný argument  --script; DNS a nasměrování nenastaveno\n"
 
 #: main.c:2136
-msgid "See http://www.infradead.org/openconnect/vpnc-script.html\n"
-msgstr "Více na http://www.infradead.org/openconnect/vpnc-script.html\n"
+msgid "See https://www.infradead.org/openconnect/vpnc-script.html\n"
+msgstr "Více na https://www.infradead.org/openconnect/vpnc-script.html\n"
 
 #: main.c:2149
 msgid "User requested reconnect\n"
@@ -6275,11 +6275,11 @@ msgstr "Nepodařilo se otevřít zařízení tun (TUNSETIFF): %s\n"
 #: tun.c:257
 msgid ""
 "To configure local networking, openconnect must be running as root\n"
-"See http://www.infradead.org/openconnect/nonroot.html for more information\n"
+"See https://www.infradead.org/openconnect/nonroot.html for more information\n"
 msgstr ""
 "Pro konfiguraci prostředků místních sítí musí být openconnect spuštěn s "
 "právy uživatele root\n"
-"Více informací viz http://www.infradead.org/openconnect/nonroot.html for "
+"Více informací viz https://www.infradead.org/openconnect/nonroot.html for "
 "more information\n"
 
 #: tun.c:322

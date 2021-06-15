@@ -3293,10 +3293,10 @@ msgstr "Assignació errònia de la cadena de l'entrada estàndard\n"
 #, c-format
 msgid ""
 "For assistance with OpenConnect, please see the web page at\n"
-"  http://www.infradead.org/openconnect/mail.html\n"
+"  https://www.infradead.org/openconnect/mail.html\n"
 msgstr ""
 "Per assistència amb OpenConnect, consulteu la pàgina web a\n"
-"  http://www.infradead.org/openconnect/mail.html\n"
+"  https://www.infradead.org/openconnect/mail.html\n"
 
 #: main.c:637
 #, c-format
@@ -3989,8 +3989,8 @@ msgstr ""
 "Cap argument --script proporcionat; DNS i encaminament no estan configurats\n"
 
 #: main.c:2136
-msgid "See http://www.infradead.org/openconnect/vpnc-script.html\n"
-msgstr "Consulteu http://www.infradead.org/openconnect/vpnc-script.html\n"
+msgid "See https://www.infradead.org/openconnect/vpnc-script.html\n"
+msgstr "Consulteu https://www.infradead.org/openconnect/vpnc-script.html\n"
 
 #: main.c:2149
 msgid "User requested reconnect\n"
@@ -6436,11 +6436,11 @@ msgstr ""
 #: tun.c:257
 msgid ""
 "To configure local networking, openconnect must be running as root\n"
-"See http://www.infradead.org/openconnect/nonroot.html for more information\n"
+"See https://www.infradead.org/openconnect/nonroot.html for more information\n"
 msgstr ""
 "Per a configurar la xarxa local, openconnect cal que sigui executat com a "
 "root\n"
-"Consulteu http://www.infradead.org/openconnect/nonroot.html per més "
+"Consulteu https://www.infradead.org/openconnect/nonroot.html per més "
 "informació\n"
 
 #: tun.c:322

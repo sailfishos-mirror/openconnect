@@ -3216,10 +3216,10 @@ msgstr "stdin'den gelen karakter dizisi için yer tahsis etme hatası\n"
 #, c-format
 msgid ""
 "For assistance with OpenConnect, please see the web page at\n"
-"  http://www.infradead.org/openconnect/mail.html\n"
+"  https://www.infradead.org/openconnect/mail.html\n"
 msgstr ""
 "OpenConnect konusunda yardım için, lütfen\n"
-"  http://www.infradead.org/openconnect/mail.html adresindeki web\n"
+"  https://www.infradead.org/openconnect/mail.html adresindeki web\n"
 "sayfasına bakın\n"
 
 #: main.c:637
@@ -3911,8 +3911,8 @@ msgstr ""
 "Hiçbir --script değişkeni verilmemiş; DNS ve yönlendirme yapılandırılmamış\n"
 
 #: main.c:2136
-msgid "See http://www.infradead.org/openconnect/vpnc-script.html\n"
-msgstr "http://www.infradead.org/openconnect/vpnc-script.html adresine bakın\n"
+msgid "See https://www.infradead.org/openconnect/vpnc-script.html\n"
+msgstr "https://www.infradead.org/openconnect/vpnc-script.html adresine bakın\n"
 
 #: main.c:2149
 msgid "User requested reconnect\n"
@@ -6311,10 +6311,10 @@ msgstr ""
 #: tun.c:257
 msgid ""
 "To configure local networking, openconnect must be running as root\n"
-"See http://www.infradead.org/openconnect/nonroot.html for more information\n"
+"See https://www.infradead.org/openconnect/nonroot.html for more information\n"
 msgstr ""
 "Yerel ağı yapılandırmak için openconnect kök olarak çalıştırılmalıdır\n"
-"Daha çok bilgi için http://www.infradead.org/openconnect/nonroot.html\n"
+"Daha çok bilgi için https://www.infradead.org/openconnect/nonroot.html\n"
 
 #: tun.c:322
 #, c-format

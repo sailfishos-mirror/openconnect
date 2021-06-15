@@ -3199,10 +3199,10 @@ msgstr "Toewijzen mislukt voor tekenreeks vanaf stdin\n"
 #, c-format
 msgid ""
 "For assistance with OpenConnect, please see the web page at\n"
-"  http://www.infradead.org/openconnect/mail.html\n"
+"  https://www.infradead.org/openconnect/mail.html\n"
 msgstr ""
 "Voor hulp bij OpenConnect, bezoek de website op/n\n"
-"  http://www.infradead.org/openconnect/mail.html/n\n"
+"  https://www.infradead.org/openconnect/mail.html/n\n"
 
 #: main.c:637
 #, c-format
@@ -3888,8 +3888,8 @@ msgstr ""
 "geconfigureerd\n"
 
 #: main.c:2136
-msgid "See http://www.infradead.org/openconnect/vpnc-script.html\n"
-msgstr "Bekijk http://www.infradead.org/openconnect/vpnc-script.html\n"
+msgid "See https://www.infradead.org/openconnect/vpnc-script.html\n"
+msgstr "Bekijk https://www.infradead.org/openconnect/vpnc-script.html\n"
 
 #: main.c:2149
 msgid "User requested reconnect\n"
@@ -6288,11 +6288,11 @@ msgstr "Binden van lokaal tun-apparaat mislukt (TUNSETIFF): %s\n"
 #: tun.c:257
 msgid ""
 "To configure local networking, openconnect must be running as root\n"
-"See http://www.infradead.org/openconnect/nonroot.html for more information\n"
+"See https://www.infradead.org/openconnect/nonroot.html for more information\n"
 msgstr ""
 "Om lokale netwerken te configureren, moet openconnect worden uitgevoerd als "
 "root\n"
-"Bekijk http://www.infradead.org/openconnect/nonroot.html voor meer "
+"Bekijk https://www.infradead.org/openconnect/nonroot.html voor meer "
 "informatie\n"
 
 #: tun.c:322

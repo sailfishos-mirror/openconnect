@@ -3146,7 +3146,7 @@ msgstr ""
 #, c-format
 msgid ""
 "For assistance with OpenConnect, please see the web page at\n"
-"  http://www.infradead.org/openconnect/mail.html\n"
+"  https://www.infradead.org/openconnect/mail.html\n"
 msgstr ""
 
 #: main.c:637
@@ -3814,7 +3814,7 @@ msgid "No --script argument provided; DNS and routing are not configured\n"
 msgstr ""
 
 #: main.c:2136
-msgid "See http://www.infradead.org/openconnect/vpnc-script.html\n"
+msgid "See https://www.infradead.org/openconnect/vpnc-script.html\n"
 msgstr ""
 
 #: main.c:2149
@@ -6191,7 +6191,7 @@ msgstr ""
 #: tun.c:257
 msgid ""
 "To configure local networking, openconnect must be running as root\n"
-"See http://www.infradead.org/openconnect/nonroot.html for more information\n"
+"See https://www.infradead.org/openconnect/nonroot.html for more information\n"
 msgstr ""
 
 #: tun.c:322

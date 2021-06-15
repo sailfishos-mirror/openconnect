@@ -344,7 +344,7 @@ openconnect.nsi: version.c
 	fi; \
 	( echo "VIProductVersion \"$$PROD_VERSION\""; \
 	  echo "VIAddVersionKey ProductVersion \"$$VERSION\""; \
-	  echo "VIAddVersionKey Comments \"OpenConnect multi-protocol VPN client for Windows (command-line version, built with $$TLS_LIBRARY). For more information, visit http://www.infradead.org/openconnect/\""; \
+	  echo "VIAddVersionKey Comments \"OpenConnect multi-protocol VPN client for Windows (command-line version, built with $$TLS_LIBRARY). For more information, visit https://www.infradead.org/openconnect/\""; \
 	  echo "!include $(srcdir)/openconnect.nsi.in" ) > $@
 
 AM_V_MAKENSIS = $(am__v_MAKENSIS_$(V))
