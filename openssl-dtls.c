@@ -842,6 +842,8 @@ void gather_dtls_ciphers(struct openconnect_info *vpninfo, struct oc_text_buf *b
 		return;
 	}
 
+	int aes128_gcm = 0, aes256_gcm = 0;
+
 	ciphers = SSL_get1_supported_ciphers(ssl);
 	for (i = 0; i < sk_SSL_CIPHER_num(ciphers); i++) {
 		const SSL_CIPHER *ciph = sk_SSL_CIPHER_value(ciphers, i);
@@ -857,7 +859,15 @@ void gather_dtls_ciphers(struct openconnect_info *vpninfo, struct oc_text_buf *b
 			buf_append(buf12, "%s%s",
 				   (buf_error(buf12) || !buf12->pos) ? "" : ":",
 				   name);
+			/* The OC-specific names for the DTLSv1.2 AES-GCM ciphersuites
+			 * need to be added to the X-DTLS-CipherSuite: header too. */
+			if (!strcmp(name, "AES128-GCM-SHA256")) {
+				aes128_gcm = 1;
+			} else if (!strcmp(name, "AES256-GCM-SHA384")) {
+				aes256_gcm = 1;
+			}
 		}
+
 	}
 	sk_SSL_CIPHER_free(ciphers);
 	SSL_free(ssl);
@@ -866,6 +876,10 @@ void gather_dtls_ciphers(struct openconnect_info *vpninfo, struct oc_text_buf *b
 	/* All DTLSv1 suites are also supported in DTLSv1.2 */
 	if (!buf_error(buf))
 		buf_append(buf12, ":%s", buf->data);
+	if (aes128_gcm)
+		buf_append(buf, ":OC-DTLS1_2-AES128-GCM");
+	if (aes256_gcm)
+		buf_append(buf, ":OC-DTLS1_2-AES256-GCM");
 #ifndef OPENSSL_NO_PSK
 	buf_append(buf, ":PSK-NEGOTIATE");
 #endif
