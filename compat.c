@@ -268,7 +268,7 @@ char *openconnect__win32_strerror(DWORD err)
 	return msgutf8;
 }
 
-int openconnect__win32_sock_init()
+int openconnect__win32_sock_init(void)
 {
 	WSADATA data;
 	if (WSAStartup (MAKEWORD(1, 1), &data) != 0) {
