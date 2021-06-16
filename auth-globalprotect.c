@@ -431,7 +431,7 @@ static int parse_portal_xml(struct openconnect_info *vpninfo, xmlNode *xml_node,
 					if (xmlnode_is_named(x2, "external"))
 						for (x3 = x2->children; x3; x3 = x3->next)
 							if (xmlnode_is_named(x3, "list"))
-							    gateways = x3;
+								gateways = x3;
 			} else if (xmlnode_is_named(x, "hip-collection")) {
 				for (x2 = x->children; x2; x2 = x2->next) {
 					if (!xmlnode_get_val(x2, "hip-report-interval", &hip_interval)) {
@@ -656,7 +656,7 @@ static int gpst_login(struct openconnect_info *vpninfo, int portal, struct login
 					goto replay_form;
 				}
 			} else
-			  break;
+				break;
 		}
 	}
 

@@ -375,7 +375,7 @@ static int process_attr(struct openconnect_info *vpninfo, struct oc_vpn_option *
 		if (!attrlen)
 			goto badlen;
 		if (!data[attrlen-1])
-		    attrlen--;
+			attrlen--;
 		vpn_progress(vpninfo, PRG_DEBUG, _("Received DNS search domain %.*s\n"),
 			     attrlen, (char *)data);
 		new_ip_info->domain = add_option_dup(new_opts, "search", (char *)data, attrlen);

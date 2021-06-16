@@ -343,14 +343,14 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 		} else if (xmlnode_is_named(xml_node, "fos")) {
 			char platform[80], *p = platform, *e = platform + 80;
 			if (!xmlnode_get_prop(xml_node, "platform", &s)) {
-			    p+=snprintf(p, e-p, "%s", s);
-			    if (!xmlnode_get_prop(xml_node, "major", &s))  p+=snprintf(p, e-p, " v%s", s);
-			    if (!xmlnode_get_prop(xml_node, "minor", &s))  p+=snprintf(p, e-p, ".%s", s);
-			    if (!xmlnode_get_prop(xml_node, "patch", &s))  p+=snprintf(p, e-p, ".%s", s);
-			    if (!xmlnode_get_prop(xml_node, "build", &s))  p+=snprintf(p, e-p, " build %s", s);
-			    if (!xmlnode_get_prop(xml_node, "branch", &s))    snprintf(p, e-p, " branch %s", s);
-			    vpn_progress(vpninfo, PRG_INFO,
-					 _("Reported platform is %s\n"), platform);
+				p+=snprintf(p, e-p, "%s", s);
+				if (!xmlnode_get_prop(xml_node, "major", &s))  p+=snprintf(p, e-p, " v%s", s);
+				if (!xmlnode_get_prop(xml_node, "minor", &s))  p+=snprintf(p, e-p, ".%s", s);
+				if (!xmlnode_get_prop(xml_node, "patch", &s))  p+=snprintf(p, e-p, ".%s", s);
+				if (!xmlnode_get_prop(xml_node, "build", &s))  p+=snprintf(p, e-p, " build %s", s);
+				if (!xmlnode_get_prop(xml_node, "branch", &s))    snprintf(p, e-p, " branch %s", s);
+				vpn_progress(vpninfo, PRG_INFO,
+					     _("Reported platform is %s\n"), platform);
 			}
 		} else if (xmlnode_is_named(xml_node, "ipv4")) {
 			for (x = xml_node->children; x; x=x->next) {

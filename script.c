@@ -347,8 +347,8 @@ void prepare_script_env(struct openconnect_info *vpninfo)
 	if (vpninfo->ip_info.netmask6 && !vpninfo->ip_info.addr6) {
 		char *slash = strchr(vpninfo->ip_info.netmask6, '/');
 		if (slash)
-                       script_setenv(vpninfo, "INTERNAL_IP6_ADDRESS", vpninfo->ip_info.netmask6,
-				     slash - vpninfo->ip_info.netmask6, 0);
+			script_setenv(vpninfo, "INTERNAL_IP6_ADDRESS", vpninfo->ip_info.netmask6,
+				      slash - vpninfo->ip_info.netmask6, 0);
 	}
 
 	if (vpninfo->ip_info.dns[0])
