@@ -5,7 +5,7 @@
 	<VAR match="VAR_SEL_VPNCSCRIPT" replace="selected" />
 	<PARSE file="menu1.xml" />
 	<PARSE file="menu2-started.xml" />
-	
+
 	<INCLUDE file="inc/content.tmpl" />
 
 <h1>Install a <tt>vpnc-script</tt>.</h1>
@@ -21,7 +21,7 @@ You may already have a <tt>vpnc-script</tt> installed on your system,
 perhaps in a location such as <tt>/etc/vpnc/vpnc-script</tt>.</p>
 
 <p>If you don't already have it, you can get a current version from <a
-href="https://git.infradead.org/users/dwmw2/vpnc-scripts.git/blob_plain/HEAD:/vpnc-script">here</a>.
+href="https://gitlab.com/openconnect/vpnc-scripts/raw/master/vpnc-script">here</a>.
 Even if you already have a copy from vpnc, you may wish to install this updated
 version which has support for IPv6, and for running on Solaris and on newer Linux
 kernels amongst other bug fixes.</p>
@@ -54,7 +54,7 @@ as the <tt>openconnect.exe</tt> executable, and will execute it with the
 host (<tt>CScript.exe</tt>)</a>.</p>
 
 <p>The current version of this script can be found <a
-href="https://git.infradead.org/users/dwmw2/vpnc-scripts.git/blob_plain/HEAD:/vpnc-script-win.js">here</a>.</p>
+href="https://gitlab.com/openconnect/vpnc-scripts/raw/master/vpnc-script-win.js">here</a>.</p>
 
 <p>Note that although the script is basically functional for
 configuring both IPv6 and Legacy IP, it does not fully tear down the
@@ -63,4 +63,3 @@ interface.</p>
 
 	<INCLUDE file="inc/footer.tmpl" />
 </PAGE>
-
