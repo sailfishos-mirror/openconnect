@@ -457,14 +457,19 @@ int openconnect_setup_tun_fd(struct openconnect_info *vpninfo, int tun_fd)
 
 	vpninfo->tun_fd = tun_fd;
 
-	monitor_fd_new(vpninfo, tun);
-	monitor_read_fd(vpninfo, tun);
-
 	if (set_sock_nonblock(tun_fd)) {
 		vpn_progress(vpninfo, PRG_ERR, _("Failed to make tun socket nonblocking: %s\n"),
 			     strerror(errno));
 		return -EIO;
 	}
+
+#ifdef HAVE_VHOST
+	if (!setup_vhost(vpninfo, tun_fd))
+		return 0;
+#endif
+
+	monitor_fd_new(vpninfo, tun);
+	monitor_read_fd(vpninfo, tun);
 
 	return 0;
 }
@@ -590,6 +595,10 @@ void os_shutdown_tun(struct openconnect_info *vpninfo)
 		}
 #endif
 	}
+
+#ifdef HAVE_VHOST
+	shutdown_vhost(vpninfo);
+#endif
 
 	if (vpninfo->vpnc_script)
 		close(vpninfo->tun_fd);

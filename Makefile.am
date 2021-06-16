@@ -65,13 +65,17 @@ lib_srcs_yubikey = yubikey.c
 lib_srcs_stoken = stoken.c
 lib_srcs_esp = esp.c esp-seqno.c
 lib_srcs_dtls = dtls.c
+lib_srcs_vhost = vhost.c
 
 POTFILES = $(openconnect_SOURCES) gnutls-esp.c gnutls-dtls.c openssl-esp.c openssl-dtls.c \
 	   $(lib_srcs_esp) $(lib_srcs_dtls) gnutls_tpm2_esys.c gnutls_tpm2_ibm.c \
 	   $(lib_srcs_openssl) $(lib_srcs_gnutls) $(library_srcs) \
 	   $(lib_srcs_win32) $(lib_srcs_posix) $(lib_srcs_gssapi) $(lib_srcs_iconv) \
-	   $(lib_srcs_yubikey) $(lib_srcs_stoken) $(lib_srcs_oidc)
+	   $(lib_srcs_yubikey) $(lib_srcs_stoken) $(lib_srcs_oidc) $(lib_srcs_vhost)
 
+if OPENCONNECT_VHOST
+library_srcs += $(lib_srcs_vhost)
+endif
 if OPENCONNECT_LIBPCSCLITE
 library_srcs += $(lib_srcs_yubikey)
 endif

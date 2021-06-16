@@ -67,6 +67,9 @@ struct openconnect_info *openconnect_vpninfo_new(const char *useragent,
 		vpninfo->ic_legacy_to_utf8 = (iconv_t)-1;
 	}
 #endif
+#ifdef HAVE_VHOST
+	vpninfo->vhost_fd = vpninfo->vhost_call_fd = vpninfo->vhost_kick_fd = -1;
+#endif
 #ifndef _WIN32
 	vpninfo->tun_fd = -1;
 #endif

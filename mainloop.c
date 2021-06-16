@@ -47,18 +47,10 @@ int queue_new_packet(struct openconnect_info *vpninfo,
 
 /* This is here because it's generic and hence can't live in either of the
    tun*.c files for specific platforms */
-int tun_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
+int tun_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable, int did_work)
 {
 	struct pkt *this;
 	int work_done = 0;
-
-	if (!tun_is_up(vpninfo)) {
-		/* no tun yet; clear any queued packets */
-		while ((this = dequeue_packet(&vpninfo->incoming_queue)))
-			free_pkt(vpninfo, this);
-
-		return 0;
-	}
 
 	if (readable && read_fd_monitored(vpninfo, tun)) {
 		struct pkt *out_pkt = vpninfo->tun_pkt;
@@ -182,6 +174,10 @@ int openconnect_mainloop(struct openconnect_info *vpninfo,
 {
 	int ret = 0;
 	int tun_r = 1, udp_r = 1, tcp_r = 1;
+#ifdef HAVE_VHOST
+	int vhost_r = 0;
+#endif
+
 	vpninfo->reconnect_timeout = reconnect_timeout;
 	vpninfo->reconnect_interval = reconnect_interval;
 
@@ -234,9 +230,25 @@ int openconnect_mainloop(struct openconnect_info *vpninfo,
 			break;
 		did_work += ret;
 
+
 		/* Tun must be last because it will set/clear its bit
 		   in the select_rfds according to the queue length */
-		did_work += tun_mainloop(vpninfo, &timeout, tun_r);
+		if (!tun_is_up(vpninfo)) {
+			struct pkt *this;
+			/* no tun yet; clear any queued packets */
+			while ((this = dequeue_packet(&vpninfo->incoming_queue)))
+				free_pkt(vpninfo, this);
+#ifdef HAVE_VHOST
+		} else if (vpninfo->vhost_fd != -1) {
+			did_work += vhost_tun_mainloop(vpninfo, &timeout, vhost_r, did_work);
+			/* If it returns zero *then* it will have read the eventfd
+			 * and there's no need to do so again until we poll again. */
+			if (!did_work)
+				vhost_r = 0;
+#endif
+		} else {
+			did_work += tun_mainloop(vpninfo, &timeout, tun_r, did_work);
+		}
 		if (vpninfo->quit_reason)
 			break;
 
@@ -340,9 +352,15 @@ int openconnect_mainloop(struct openconnect_info *vpninfo,
 				update_epoll_fd(vpninfo, ssl);
 				update_epoll_fd(vpninfo, cmd);
 				update_epoll_fd(vpninfo, dtls);
+#ifdef HAVE_VHOST
+				update_epoll_fd(vpninfo, vhost_call);
+#endif
 			}
 
 			tun_r = udp_r = tcp_r = 0;
+#ifdef HAVE_VHOST
+			vhost_r = 0;
+#endif
 
 			int nfds = epoll_wait(vpninfo->epoll_fd, evs, 5, timeout);
 			if (nfds < 0) {
@@ -361,6 +379,10 @@ int openconnect_mainloop(struct openconnect_info *vpninfo,
 						tcp_r = 1;
 					else if (evs[nfds].data.fd == vpninfo->dtls_fd)
 						udp_r = 1;
+#ifdef HAVE_VHOST
+					else if (evs[nfds].data.fd == vpninfo->vhost_call_fd)
+						vhost_r = 1;
+#endif
 				}
 			}
 			continue;
@@ -379,7 +401,10 @@ int openconnect_mainloop(struct openconnect_info *vpninfo,
 			vpn_perror(vpninfo, _("Failed select() in mainloop"));
 			break;
 		}
-
+#ifdef HAVE_VHOST
+		if (vpninfo->vhost_call_fd >= 0)
+			vhost_r = FD_ISSET(vpninfo->vhost_call_fd, &rfds);
+#endif
 		if (vpninfo->tun_fd >= 0)
 			tun_r = FD_ISSET(vpninfo->tun_fd, &rfds);
 		if (vpninfo->dtls_fd >= 0)

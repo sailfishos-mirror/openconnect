@@ -321,7 +321,31 @@ Less output
 .B \-Q,\-\-queue\-len=LEN
 Set packet queue limit to
 .I LEN
-pkts
+packets. The default is 10. A high value may allow better overall bandwidth
+but at a cost of latency. If you run Voice over IP or other interactive
+traffic over the VPN, you don't want those packets to be queued behind
+thousands of other large packets which are part of a bulk transfer.
+
+This option sets the maximum inbound and outbound packet queue sizes
+in OpenConnect itself, which control how many packets will be sent and
+received in a single batch, as well as affecting other buffering such
+as the socket send buffer (SO_SNDBUF) for network connections and the
+OS tunnel device.
+
+Ultimately, the right size for a queue is "just enough packets that it
+never quite gets empty before more are pushed to it". Any higher than
+that is simply introducing bufferbloat and additional latency with no
+benefit. With the default of 10, we are able to saturate a single
+Gigabit Ethernet from modest hardware, which is more than enough for
+most VPN users.
+
+If OpenConnect is built with vhost-net support, it will only be used
+if the queue length is set to 16 or more. This is because vhost-net
+introduces a small amount of additional latency, but improves total
+bandwidth quite considerably for those operating at high traffic
+rates. Thus it makes sense to use it when the user has indicated a
+preference for bandwidth over latency, by increasing the queue size.
+
 .TP
 .B \-s,\-\-script=SCRIPT
 Invoke

@@ -152,6 +152,20 @@
 #define IPPROTO_IPIP 0x04
 #endif
 
+#ifdef HAVE_VHOST
+#include <linux/virtio_net.h>
+#include <linux/vhost.h>
+
+struct oc_vring {
+	struct vring_desc *desc;
+	struct vring_avail *avail;
+	struct vring_used *used;
+	uint16_t seen_used;
+};
+
+#endif
+
+
 /****************************************************************************/
 
 struct pkt {
@@ -190,9 +204,18 @@ struct pkt {
 			uint16_t proto;
 			unsigned char hdr[18];
 		} ppp;
+#ifdef HAVE_VHOST
+		struct {
+			unsigned char pad[12];
+			struct virtio_net_hdr_mrg_rxbuf h;
+		} virtio;
+#endif
 	};
 	unsigned char data[];
 };
+
+#define pkt_offset(field) ((intptr_t)&((struct pkt *)NULL)->field)
+#define pkt_from_hdr(addr, field) ((struct pkt *) ((intptr_t)(addr) - pkt_offset(field) ))
 
 #define REKEY_NONE      0
 #define REKEY_TUNNEL    1
@@ -653,6 +676,9 @@ struct openconnect_info {
 	int epoll_fd;
 	int epoll_update;
 	uint32_t tun_epoll, ssl_epoll, dtls_epoll, cmd_epoll;
+#ifdef HAVE_VHOST
+	uint32_t vhost_call_epoll;
+#endif
 #endif
 #endif
 
@@ -660,6 +686,11 @@ struct openconnect_info {
 	int ip_fd;
 	int ip6_fd;
 #endif
+#ifdef HAVE_VHOST
+	int vhost_ring_size;
+	int vhost_fd, vhost_call_fd, vhost_kick_fd;
+	struct oc_vring tx_vring, rx_vring;
+	#endif
 #ifdef _WIN32
 	HMODULE wintun;
 	wchar_t *ifname_w;
@@ -783,9 +814,10 @@ static inline struct pkt *dequeue_packet(struct pkt_q *q)
 	struct pkt *ret = q->head;
 
 	if (ret) {
-		q->head = ret->next;
+		struct pkt *next = ret->next;
 		if (!--q->count)
 			q->tail = &q->head;
+		q->head = next;
 	}
 	return ret;
 }
@@ -1119,6 +1151,11 @@ void free_split_routes(struct oc_ip_info *ip_info);
 int install_vpn_opts(struct openconnect_info *vpninfo, struct oc_vpn_option *opt,
 		     struct oc_ip_info *ip_info);
 
+/* vhost.h */
+int setup_vhost(struct openconnect_info *vpninfo, int tun_fd);
+void shutdown_vhost(struct openconnect_info *vpninfo);
+int vhost_tun_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable, int did_work);
+
 /* tun.c / tun-win32.c */
 void os_shutdown_tun(struct openconnect_info *vpninfo);
 int os_read_tun(struct openconnect_info *vpninfo, struct pkt *pkt);
@@ -1363,7 +1400,7 @@ int openconnect_install_ctx_verify(struct openconnect_info *vpninfo,
 #endif
 
 /* mainloop.c */
-int tun_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable);
+int tun_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable, int did_work);
 int queue_new_packet(struct openconnect_info *vpninfo,
 		     struct pkt_q *q, void *buf, int len);
 int keepalive_action(struct keepalive_info *ka, int *timeout);

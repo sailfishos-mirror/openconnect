@@ -34,8 +34,14 @@ symver_win32_setenv=
 AC_PROG_CC
 AC_PROG_CC_C99
 
+have_vhost=no
 case $host_os in
  *linux* | *gnu* | *nacl*)
+    case $host_cpu in
+	x86_64|amd64)
+	    have_vhost=yes
+	    ;;
+    esac
     AC_MSG_NOTICE([Applying feature macros for GNU build])
     AC_DEFINE(_GNU_SOURCE, 1, [_GNU_SOURCE])
     ;;
@@ -1170,6 +1176,40 @@ AC_CHECK_HEADER([if_tun.h],
 AC_CHECK_HEADER([net/if_utun.h], AC_DEFINE([HAVE_NET_UTUN_H], 1, [Have net/if_utun.h]), ,
 		[#include <sys/types.h>])
 
+AC_ARG_ENABLE([vhost-net],
+	AS_HELP_STRING([--enable-vhost-net],
+		       [Build vhost-net support for tun device acceleration [default=no]]),
+	[have_vhost=$enableval])
+
+if test "$have_vhost" = "yes"; then
+   AC_MSG_CHECKING([for vhost-net support])
+   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
+		#include <linux/if_tun.h>
+		#include <linux/virtio_net.h>
+		#include <linux/vhost.h>
+		#include <sys/eventfd.h>
+
+		struct foo {
+			struct vring_desc desc;
+			struct vring_avail avail;
+			struct vring_used used;
+			struct virtio_net_hdr_mrg_rxbuf h;
+		};
+	],[
+		(void)eventfd(0, EFD_CLOEXEC|EFD_NONBLOCK);
+		(void)VHOST_NET_F_VIRTIO_NET_HDR;
+		(void)VIRTIO_F_VERSION_1;
+		(void)TUNSETSNDBUF;
+		__sync_synchronize();
+	])],
+	[have_vhost=yes
+	 AC_DEFINE([HAVE_VHOST], 1, [Have vhost])
+	 AC_MSG_RESULT([yes])],
+	[have_vhost=no
+	 AC_MSG_RESULT([no])])
+fi
+AM_CONDITIONAL(OPENCONNECT_VHOST, [test "$have_vhost" = "yes"])
+
 AC_CHECK_HEADER([alloca.h], AC_DEFINE([HAVE_ALLOCA_H], 1, [Have alloca.h]))
 
 AC_CHECK_HEADER([endian.h],
@@ -1318,6 +1358,7 @@ SUMMARY([libproxy support], [$libproxy_pkg])
 SUMMARY([RSA SecurID support], [$libstoken_pkg])
 SUMMARY([PSKC OATH file support], [$libpskc_pkg])
 SUMMARY([GSSAPI support], [$linked_gssapi])
+SUMMARY([vhost-net support], [$have_vhost])
 SUMMARY([Yubikey support], [$libpcsclite_pkg])
 SUMMARY([JSON parser], [$json])
 SUMMARY([LZ4 compression], [$lz4_pkg])
