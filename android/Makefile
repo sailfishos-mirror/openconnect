@@ -292,7 +292,7 @@ stoken: $(STOKEN_DEPS)
 #
 # Build liboath
 #
-# http://download.savannah.nongnu.org/releases/oath-toolkit/
+# https://download.savannah.nongnu.org/releases/oath-toolkit/
 OATH_VER := 2.6.7
 OATH_TAR := oath-toolkit-$(OATH_VER).tar.gz
 OATH_SHA := 36eddfce8f2f36347fb257dbf878ba0303a2eaafe24eaa071d5cd302261046a9

@@ -127,7 +127,7 @@ static int cancellable_connect(struct openconnect_info *vpninfo, int sockfd,
 		 !vpninfo->got_pause_cmd);
 
 	/* Check whether connect() succeeded or failed by using
-	   getpeername(). See http://cr.yp.to/docs/connect.html */
+	   getpeername(). See https://cr.yp.to/docs/connect.html */
 	if (!getpeername(sockfd, (void *)&peer, &peerlen))
 		return 0;
 

@@ -14,15 +14,15 @@
 
 <p>Support for OpenConnect in NetworkManager has been integrated into
 GNOME git and is released alongside NetworkManager's other VPN modules:
-<a href="http://ftp.gnome.org/pub/GNOME/sources/NetworkManager-openconnect/">
-http://ftp.gnome.org/pub/GNOME/sources/NetworkManager-openconnect/</a>.</p>
+<a href="https://download.gnome.org/sources/NetworkManager-openconnect/">
+https://download.gnome.org/sources/NetworkManager-openconnect/</a>.</p>
 
 <p>OpenConnect is also supported in KDE Plasma NM as well as the older
 widget-based NetworkManagement applet.</p>
 
 <h2>ConnMan</h2>
 
-<p><a href="http://connman.net/">ConnMan</a> has core OpenConnect functionality
+<p><a href="https://01.org/connman">ConnMan</a> has core OpenConnect functionality
 as from version 0.48, and the corresponding support is also in the
 <a href="http://meego.gitorious.org/meego-netbook-ux/meego-panel-networks">meego-panel-networks</a>
 user interface. Other ConnMan UI front ends may lack VPN support.</p>

@@ -278,7 +278,7 @@ static int select_yubioath_applet(struct openconnect_info *vpninfo,
 			if (pin) {
 				/* Try working around pre-KitKat PBKDF2 bug discussed at
 				 * http://forum.yubico.com/viewtopic.php?f=26&t=1601#p6807 and
-				 * http://android-developers.blogspot.se/2013/12/changes-to-secretkeyfactory-api-in.html */
+				 * https://android-developers.googleblog.com/2013/12/changes-to-secretkeyfactory-api-in.html */
 				const char *in;
 				char *out;
 

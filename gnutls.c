@@ -381,7 +381,7 @@ static int check_certificate_expiry(struct openconnect_info *vpninfo, struct cer
 		/*
 		 * Windows doesn't have gmtime_r but apparently its gmtime()
 		 * *is* thread-safe because it uses a per-thread static buffer.
-		 * cf. http://sourceforge.net/p/mingw/bugs/1625/
+		 * cf. https://sourceforge.net/p/mingw/bugs/1625/
 		 *
 		 * We also explicitly say 'GMT' because %Z would give us the
 		 * Microsoft stupidity "GMT Standard Time". Which is not only
@@ -2310,7 +2310,7 @@ int openconnect_open_https(struct openconnect_info *vpninfo)
 	* is specified.
 	*
 	* Discussion:
-	* http://www.ietf.org/mail-archive/web/tls/current/msg10423.html
+	* https://www.ietf.org/mail-archive/web/tls/current/msg10423.html
 	*
 	* GnuTLS commits:
 	* b6d29bb1737f96ac44a8ef9cc9fe7f9837e20465
