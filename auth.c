@@ -1479,8 +1479,13 @@ newgroup:
 			buf_truncate(request_body);
 			result = prepare_multicert_response(vpninfo, cert_rq, form_buf,
 				  request_body);
-			if (result < 0)
-				goto fail;
+			/**
+			 * We are the error is due to certificate load failure.
+			 */
+			if (result < 0) {
+				(void) xmlpost_initial_req(vpninfo, request_body, 1);
+				goto out;
+			}
 			continue;
 		}
 		if (form && form->action) {
@@ -1900,42 +1905,45 @@ int prepare_multicert_response(struct openconnect_info *vpninfo,
 		/* This is a fail safe; we should never get here */
 		vpn_progress(vpninfo, PRG_ERR,
 		 _("Multiple-certificate authentication requires a second certificate; none were configured.\n"));
-		goto error;
+		ret = -EINVAL;
+		goto done;
 	}
 
 	if (!cert_rq.hashes) {
 		vpn_progress(vpninfo, PRG_ERR,
 		 _("Multiple-certificate authentication signature hash algorithm negotiation failed.\n"));
-		goto error;
+		ret = -EIO;
+		goto done;
 	}
 
 	ret = multicert_compute_response(vpninfo, cert_rq.hashes,
 					 (unsigned char *) challenge, strlen(challenge),
 					 &cert, &signature);
 	if (ret < 0)
-		goto error;
+		goto done;
 
 	format = multicert_cert_format_get_name(cert.format);
 	hash = multicert_signhash_get_name(signature.algorithm);
 	if (!format || !hash) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Failed to translate to text.\n"));
-		goto error;
+		ret = -EINVAL;
+		goto done;
 	}
 
-	if (to_base64(&certtext, BUF_DATA(cert.data), BUF_SIZE(cert.data)) < 0 ||
-	    to_base64(&signtext, BUF_DATA(signature.data), BUF_SIZE(signature.data)) < 0) {
+	if ((ret = to_base64(&certtext, BUF_DATA(cert.data), BUF_SIZE(cert.data))) < 0 ||
+	    (ret = to_base64(&signtext, BUF_DATA(signature.data), BUF_SIZE(signature.data))) < 0) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Error encoding the challenge response.\n"));
 
-error:
-		ret = xmlpost_initial_req(vpninfo, body, 1);
-	} else {
-		ret = post_multicert_response(vpninfo, XCAST(format),
-					      XCAST(BUF_DATA(certtext)), XCAST(hash),
-					      XCAST(BUF_DATA(signtext)), body);
+		goto done;
 	}
 
+	ret = post_multicert_response(vpninfo, XCAST(format),
+				      XCAST(BUF_DATA(certtext)), XCAST(hash),
+				      XCAST(BUF_DATA(signtext)), body);
+
+done:
 	buf_free(certtext);
 	buf_free(signtext);
 	buf_free(cert.data);
