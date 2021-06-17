@@ -417,10 +417,13 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 							goto out;
 						}
 						vpn_progress(vpninfo, PRG_INFO, _("Got IPv6 address %s\n"), a);
-						new_ip_info.netmask6 = add_option_steal(&new_opts, "ipaddr6", &a);
+						if (!vpninfo->disable_ipv6)
+							new_ip_info.netmask6 = add_option_steal(&new_opts, "ipaddr6", &a);
+						free(a);
 					} else {
 						vpn_progress(vpninfo, PRG_INFO, _("Got IPv6 address %s\n"), s);
-						new_ip_info.addr6 = add_option_steal(&new_opts, "ipaddr6", &s);
+						if (!vpninfo->disable_ipv6)
+							new_ip_info.addr6 = add_option_steal(&new_opts, "ipaddr6", &s);
 					}
 				} else if (xmlnode_is_named(x, "dns")) {
 					if (!xmlnode_get_prop(x, "domain", &s) && s && *s) {
@@ -541,7 +544,7 @@ static int fortinet_configure(struct openconnect_info *vpninfo)
 	 * FortiOS 4 was the last version to send the legacy HTTP configuration.
 	 * FortiOS 5 and later send the current XML configuration.
 	 * We clearly do not need to support FortiOS 4 anymore.
-	 * 
+	 *
 	 * Yet we keep this code around in order to get a sanity check about
 	 * whether the SVPNCOOKIE is still valid/alive, until we are sure we've
 	 * worked out the weirdness with reconnects.

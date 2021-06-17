@@ -283,12 +283,13 @@ static int process_attr(struct openconnect_info *vpninfo, struct oc_vpn_option *
 				     _("Failed to handle IPv6 address\n"));
 			return -EINVAL;
 		}
-		new_ip_info->addr6 = add_option_dup(new_opts, "ip6addr", buf, -1);
+		if (!vpninfo->disable_ipv6) {
+			new_ip_info->addr6 = add_option_dup(new_opts, "ip6addr", buf, -1);
 
-		i = strlen(buf);
-		snprintf(buf + i, sizeof(buf) - i, "/%d", data[16]);
-		new_ip_info->netmask6 = add_option_dup(new_opts, "ip6netmask", buf, -1);
-
+			i = strlen(buf);
+			snprintf(buf + i, sizeof(buf) - i, "/%d", data[16]);
+			new_ip_info->netmask6 = add_option_dup(new_opts, "ip6netmask", buf, -1);
+		}
 		vpn_progress(vpninfo, PRG_DEBUG, _("Received internal IPv6 address %s\n"), buf);
 		break;
 
