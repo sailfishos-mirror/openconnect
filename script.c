@@ -345,10 +345,15 @@ void prepare_script_env(struct openconnect_info *vpninfo)
 	/* The 'netmask6' is actually the address *and* netmask. From which we
 	 * obtain just the address on its own, if we don't have it separately */
 	if (vpninfo->ip_info.netmask6 && !vpninfo->ip_info.addr6) {
-		char *slash = strchr(vpninfo->ip_info.netmask6, '/');
-		if (slash)
-                       script_setenv(vpninfo, "INTERNAL_IP6_ADDRESS", vpninfo->ip_info.netmask6,
-				     slash - vpninfo->ip_info.netmask6, 0);
+		char *slash = strchr(vpninfo->ip_info.netmask6, '/') ? : vpninfo->ip_info.netmask6;
+		script_setenv(vpninfo, "INTERNAL_IP6_ADDRESS", vpninfo->ip_info.netmask6,
+			      slash - vpninfo->ip_info.netmask6, 0);
+	}
+	/* Likewise, if we have only 'addr6', we set 'netmask6' to addr6 + "/128" */
+	else if (vpninfo->ip_info.addr6 && !vpninfo->ip_info.netmask6) {
+		char netmask6[INET6_ADDRSTRLEN + 4];
+		snprintf(netmask6, sizeof(netmask6), "%s/128", vpninfo->ip_info.addr6);
+		script_setenv(vpninfo, "INTERNAL_IP6_NETMASK", netmask6, 0, 0);
 	}
 
 	if (vpninfo->ip_info.dns[0])
