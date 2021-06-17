@@ -68,7 +68,7 @@ EXTRA_DIST = certs/ca.pem certs/ca-key.pem certs/user-cert.pem $(USER_KEYS) $(US
 	softhsm2.conf.in softhsm ns.sh configs/test-dtls-psk.config \
 	scripts/vpnc-script scripts/vpnc-script-detect-disconnect \
 	suppressions.lsan fake-fortinet-server.py fake-f5-server.py fake-juniper-server.py \
-	fake-juniper-sso-server.py fake-tncc.py fake-gp-server.py
+	fake-juniper-sso-server.py fake-tncc.py fake-gp-server.py fake-cisco-server.py
 
 dist_check_SCRIPTS = autocompletion
 TESTS = autocompletion
@@ -85,7 +85,8 @@ endif
 
 dist_check_SCRIPTS += auth-username-pass auth-certificate auth-nonascii cert-fingerprint \
 	id-test obsolete-server-crypto pfs auth-swtpm auth-hwtpm fortinet-auth-and-config \
-	f5-auth-and-config juniper-auth juniper-sso-auth gp-auth-and-config auth-pkcs11
+	f5-auth-and-config juniper-auth juniper-sso-auth gp-auth-and-config auth-pkcs11 \
+	auth-multicert
 
 if HAVE_CWRAP
 TESTS += auth-username-pass auth-certificate auth-nonascii cert-fingerprint id-test \
@@ -106,7 +107,7 @@ auth-hwtpm: $(HWTPM_CERTS) $(HWTPM_KEYS)
 endif
 
 if HAVE_PYTHON36_FLASK
-TESTS += fortinet-auth-and-config f5-auth-and-config juniper-auth juniper-sso-auth gp-auth-and-config
+TESTS += fortinet-auth-and-config f5-auth-and-config juniper-auth juniper-sso-auth gp-auth-and-config auth-multicert
 endif
 
 if TEST_PKCS11
