@@ -258,6 +258,7 @@ int ppp_reset(struct openconnect_info *vpninfo)
 	ppp->ppp_state = PPPS_DEAD;
 	ppp->out_asyncmap = 0;
 	ppp->out_lcp_opts = BIT_MRU | BIT_MAGIC | BIT_PFCOMP | BIT_ACCOMP | BIT_MRU_COAX;
+	ppp->check_http_response = 0;
 
 	switch (ppp->encap) {
 	case PPP_ENCAP_F5:
@@ -268,7 +269,6 @@ int ppp_reset(struct openconnect_info *vpninfo)
 		/* XX: Fortinet server rejects asyncmap and header compression. Don't blame me. */
 		ppp->out_lcp_opts &= ~(BIT_PFCOMP | BIT_ACCOMP);
 		ppp->encap_len = 6;
-		ppp->check_http_response = 1;
 		break;
 
 	case PPP_ENCAP_F5_HDLC:
