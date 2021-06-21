@@ -37,7 +37,8 @@
 
 #define XCAST(x) ((const xmlChar *)(x))
 
-static struct oc_auth_form *plain_auth_form(void) {
+static struct oc_auth_form *plain_auth_form(void)
+{
 	struct oc_auth_form *form;
 	struct oc_form_opt *opt, *opt2;
 

@@ -190,7 +190,8 @@ static const char *lcp_names[] = {
 	"Discard-Request",
 };
 
-inline static const char *proto_names(uint16_t proto) {
+inline static const char *proto_names(uint16_t proto)
+{
 	static char unknown[21];
 
 	switch (proto) {
@@ -1036,7 +1037,8 @@ static int handle_state_transition(struct openconnect_info *vpninfo, int dtls,
 	return ret;
 }
 
-static inline void add_ppp_header(struct pkt *p, struct oc_ppp *ppp, int proto) {
+static inline void add_ppp_header(struct pkt *p, struct oc_ppp *ppp, int proto)
+{
 	unsigned char *ph = p->data;
 	/* XX: store PPP header, in reverse */
 	*--ph = proto & 0xff;

@@ -1511,7 +1511,8 @@ static void print_connection_stats(void *_vpninfo, const struct oc_stats *stats)
 }
 
 #ifndef _WIN32
-static int background_self(struct openconnect_info *vpninfo, char *pidfile) {
+static int background_self(struct openconnect_info *vpninfo, char *pidfile)
+{
 	FILE *fp = NULL;
 	int pid;
 
@@ -1550,7 +1551,8 @@ static int background_self(struct openconnect_info *vpninfo, char *pidfile) {
 }
 #endif /* _WIN32 */
 
-static void fully_up_cb(void *_vpninfo) {
+static void fully_up_cb(void *_vpninfo)
+{
 	struct openconnect_info *vpninfo = _vpninfo;
 
 	print_connection_info(vpninfo);
