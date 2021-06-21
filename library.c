@@ -544,6 +544,12 @@ int install_vpn_opts(struct openconnect_info *vpninfo, struct oc_vpn_option *opt
 
 static void free_certinfo(struct cert_info *certinfo)
 {
+	/**
+	 * Ensure resources are released
+	 */
+
+	unload_certificate(certinfo, 1);
+
 	/* These are const in openconnect itself, but for consistency of
 	   the library API we do take ownership of the strings we're given,
 	   and thus we have to free them too. */
