@@ -642,7 +642,7 @@ static int parse_xml_response(struct openconnect_info *vpninfo,
 		} else if (xmlnode_is_named(xml_node, "cert-authenticated")) {
 			/**
 			 * cert-authenticated indicates that the certificate for the
-			 * TLS session is valid. Thus, remove flag for CERT1 request.
+			 * TLS session is valid.
 			 */
 			if (cert_rq)
 				cert_rq->state |= CERT1_AUTHENTICATED;
@@ -1475,17 +1475,37 @@ newgroup:
 				goto fail;
 			continue;
 		} else if (cert_rq.state&CERT2_REQUESTED) {
+
 			free_auth_form(form); form = NULL;
 			buf_truncate(request_body);
-			result = prepare_multicert_response(vpninfo, cert_rq, form_buf,
-				  request_body);
-			/**
-			 * We are the error is due to certificate load failure.
-			 */
+
+			/** load the second certificate */
+			struct cert_info *certinfo = &vpninfo->certinfo[1];
+			if (!certinfo->cert) {
+				/* This is a fail safe; we should never get here */
+				vpn_progress(vpninfo, PRG_ERR,
+				_("Multiple-certificate authentication requires a second certificate; none were configured.\n"));
+				result = -EINVAL;
+				(void) xmlpost_initial_req(vpninfo, request_body, 1);
+				goto out;
+			}
+
+			result = load_certificate(vpninfo, certinfo, MULTICERT_COMPAT);
 			if (result < 0) {
 				(void) xmlpost_initial_req(vpninfo, request_body, 1);
 				goto out;
 			}
+
+			result = prepare_multicert_response(vpninfo, cert_rq, form_buf,
+				  request_body);
+
+			unload_certificate(certinfo, 1);
+
+			if (result < 0) {
+				(void) xmlpost_initial_req(vpninfo, request_body, 0);
+				goto fail;
+			}
+
 			continue;
 		}
 		if (form && form->action) {
@@ -1791,7 +1811,7 @@ void parse_multicert_request(struct openconnect_info *vpninfo,
 {
 	xmlNodePtr child;
 	char *content;
-	multicert_signhash_algorithm_t hash;
+	openconnect_hash_type hash;
 	unsigned int oldhashes = 0;
 
 	/* node is a multiple-client-cert-request element */
@@ -1806,9 +1826,9 @@ void parse_multicert_request(struct openconnect_info *vpninfo,
 		if (content == NULL)
 			continue;
 
-		hash = multicert_signhash_get_id(content);
+		hash = multicert_hash_get_id(content);
 		/* hash was not found */
-		if (hash == MULTICERT_SIGNHASH_UNKNOWN) {
+		if (hash == OPENCONNECT_HASH_UNKNOWN) {
 			vpn_progress(vpninfo, PRG_INFO,
 			    _("Unsupported hash algorithm '%s' requested.\n"),
 			    (char*) content);
@@ -1816,7 +1836,7 @@ void parse_multicert_request(struct openconnect_info *vpninfo,
 		}
 
 		oldhashes = cert_rq->hashes;
-		cert_rq->hashes |= MULTICERT_SIGNHASH_FLAG(hash);
+		cert_rq->hashes |= MULTICERT_HASH_FLAG(hash);
 		if (oldhashes == cert_rq->hashes)
 			vpn_progress(vpninfo, PRG_INFO,
 			   _("Duplicate hash algorithm '%s' requested.\n"),
@@ -1830,12 +1850,12 @@ void parse_multicert_request(struct openconnect_info *vpninfo,
 #define BUF_DATA(bp) ((bp)->data)
 #define BUF_SIZE(bp) ((bp)->pos)
 
-static int post_multicert_response(struct openconnect_info *vpninfo,
-				   const xmlChar *format, const xmlChar *cert,
-				   const xmlChar *hash, const xmlChar *signature,
+static int post_multicert_response(struct openconnect_info *vpninfo, const xmlChar *cert,
+				   openconnect_hash_type hash, const xmlChar *signature,
 				   struct oc_text_buf *body)
 {
 	static const xmlChar *strnull = XCAST("(null)");
+	const xmlChar *hashname;
 	xmlDocPtr doc;
 	xmlNodePtr root, auth, node, chain;
 	
@@ -1874,13 +1894,14 @@ static int post_multicert_response(struct openconnect_info *vpninfo,
 		goto bad;
 
 	node = xmlNewTextChild(chain, NULL, XCAST("client-cert"), cert ? cert : strnull);
-	if (!node || !xmlNewProp(node, XCAST("cert-format"), format ? format : strnull))
+	if (!node || !xmlNewProp(node, XCAST("cert-format"), XCAST("pkcs7")))
 		goto bad;
 
+	hashname = XCAST(multicert_hash_get_name(hash));
 	node = xmlNewTextChild(chain, NULL,
 			       XCAST("client-cert-auth-signature"),
 			       signature ? signature : strnull);
-	if (!node || !xmlNewProp(node, XCAST("hash-algorithm-chosen"), hash ? hash : strnull))
+	if (!node || !xmlNewProp(node, XCAST("hash-algorithm-chosen"), hashname ? hashname : strnull))
 		goto bad;
 
 	return xmlpost_complete(doc, body);
@@ -1895,19 +1916,12 @@ int prepare_multicert_response(struct openconnect_info *vpninfo,
 		       struct cert_request cert_rq, const char *challenge,
 		       struct oc_text_buf *body)
 {
-	struct multicert_client_cert cert = { 0 };
-	struct multicert_client_signature signature = { 0 };
-	struct oc_text_buf *certtext = NULL, *signtext = NULL;
-	const char *format, *hash;
+	struct cert_info *certinfo = &vpninfo->certinfo[1];
+	struct oc_text_buf *certdata = NULL, *certtext = NULL;
+	struct oc_text_buf *signdata = NULL, *signtext = NULL;
+	openconnect_hash_type hash;
 	int ret;
 
-	if (!vpninfo->certinfo[1].cert) {
-		/* This is a fail safe; we should never get here */
-		vpn_progress(vpninfo, PRG_ERR,
-		 _("Multiple-certificate authentication requires a second certificate; none were configured.\n"));
-		ret = -EINVAL;
-		goto done;
-	}
 
 	if (!cert_rq.hashes) {
 		vpn_progress(vpninfo, PRG_ERR,
@@ -1916,37 +1930,40 @@ int prepare_multicert_response(struct openconnect_info *vpninfo,
 		goto done;
 	}
 
-	ret = multicert_compute_response(vpninfo, cert_rq.hashes,
-					 (unsigned char *) challenge, strlen(challenge),
-					 &cert, &signature);
-	if (ret < 0)
-		goto done;
+	ret = export_certificate_pkcs7(vpninfo, certinfo, CERT_FORMAT_ASN1, &certdata);
 
-	format = multicert_cert_format_get_name(cert.format);
-	hash = multicert_signhash_get_name(signature.algorithm);
-	if (!format || !hash) {
+	if (ret >= 0)
+		ret = to_base64(&certtext,
+				BUF_DATA(certdata),
+				BUF_SIZE(certdata));
+
+	if (ret < 0) {
 		vpn_progress(vpninfo, PRG_ERR,
-			     _("Failed to translate to text.\n"));
-		ret = -EINVAL;
+			     _("Error exporting multiple-certificate signer's certificate chain.\n"));
 		goto done;
 	}
 
-	if ((ret = to_base64(&certtext, BUF_DATA(cert.data), BUF_SIZE(cert.data))) < 0 ||
-	    (ret = to_base64(&signtext, BUF_DATA(signature.data), BUF_SIZE(signature.data))) < 0) {
+	ret = multicert_sign_data(vpninfo, certinfo, cert_rq.hashes,
+				  challenge, strlen(challenge),
+				  &signdata);
+	if (ret < 0)
+		goto done;
+
+	hash = ret;
+
+	if ((ret = to_base64(&signtext, BUF_DATA(signdata), BUF_SIZE(signdata))) < 0) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Error encoding the challenge response.\n"));
 
 		goto done;
 	}
 
-	ret = post_multicert_response(vpninfo, XCAST(format),
-				      XCAST(BUF_DATA(certtext)), XCAST(hash),
-				      XCAST(BUF_DATA(signtext)), body);
+	ret = post_multicert_response(vpninfo, XCAST(BUF_DATA(certtext)),
+				      hash, XCAST(BUF_DATA(signtext)),
+				      body);
 
 done:
-	buf_free(certtext);
-	buf_free(signtext);
-	buf_free(cert.data);
-	buf_free(signature.data);
+	buf_free(certdata); buf_free(certtext);
+	buf_free(signdata); buf_free(signtext);
 	return ret;
 }
