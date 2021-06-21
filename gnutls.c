@@ -926,14 +926,31 @@ struct gtls_cert_info {
 	unsigned int nr_certs;
 };
 
-static void free_gtls_cert_info(struct gtls_cert_info *gci)
+void unload_certificate(struct cert_info *certinfo, int final)
 {
-	gnutls_x509_crl_deinit(gci->crl);
-	gnutls_privkey_deinit(gci->pkey);
-	for (size_t i = 0, end = gci->nr_certs; i < end; i++)
-		gnutls_x509_crt_deinit(gci->certs[i]);
-	gnutls_free(gci->certs);
-	*gci = (struct gtls_cert_info) {0};
+	if (!certinfo)
+		return;
+
+	if (certinfo->priv_info) {
+		struct gtls_cert_info *gci = certinfo->priv_info;
+
+		certinfo->priv_info = NULL;
+		gnutls_x509_crl_deinit(gci->crl);
+		gnutls_privkey_deinit(gci->pkey);
+		for (size_t i = 0, end = gci->nr_certs; i < end; i++)
+			gnutls_x509_crt_deinit(gci->certs[i]);
+		gnutls_free(gci->certs);
+		free(gci);
+	}
+
+	if (final) {
+#if defined(OPENCONNECT_GNUTLS) && defined(HAVE_TROUSERS)
+		release_tpm1_ctx(certinfo->vpninfo, certinfo);
+#endif
+#if defined(OPENCONNECT_GNUTLS) && defined(HAVE_TSS2)
+		release_tpm2_ctx(certinfo->vpninfo, certinfo);
+#endif
+	}
 }
 
 static int import_cert(gnutls_x509_crt_t *cert, const gnutls_datum_t *der)
@@ -980,7 +997,9 @@ done:
 	return ret;
 }
 
-static int load_certificate(struct openconnect_info *vpninfo, struct cert_info *certinfo, struct gtls_cert_info *gci)
+static int check_multicert_compat(struct openconnect_info *vpninfo, struct cert_info *certinfo);
+
+int load_certificate(struct openconnect_info *vpninfo, struct cert_info *certinfo, int flags)
 {
 	gnutls_datum_t fdata;
 #if defined(HAVE_P11KIT) || defined(HAVE_TROUSERS) || defined(HAVE_TSS2) || defined(HAVE_GNUTLS_SYSTEM_KEYS)
@@ -1007,6 +1026,7 @@ static int load_certificate(struct openconnect_info *vpninfo, struct cert_info *
 	size_t key_id_size = sizeof(key_id);
 	char name[80];
 	gnutls_x509_privkey_t x509key = NULL;
+	struct gtls_cert_info *gci = NULL;
 
 	certinfo->vpninfo = vpninfo;
 	fdata.data = NULL;
@@ -1067,6 +1087,12 @@ static int load_certificate(struct openconnect_info *vpninfo, struct cert_info *
 		p11_kit_uri_free(uri);
 	}
 #endif /* HAVE_PKCS11 */
+
+	certinfo->priv_info = gci = calloc(1, sizeof *gci);
+	if (!gci) {
+		ret = -ENOMEM;
+		goto out;
+	}
 
 #if defined (HAVE_P11KIT) || defined(HAVE_GNUTLS_SYSTEM_KEYS)
 	/* Load certificate(s) first... */
@@ -1763,6 +1789,9 @@ static int load_certificate(struct openconnect_info *vpninfo, struct cert_info *
 
 	ret = 0;
 
+	if ((flags & MULTICERT_COMPAT))
+		(void) check_multicert_compat(vpninfo, certinfo);
+
 	/* OK, now we've checked the cert expiry and warned the user if it's
 	   going to expire soon, and we've built up as much of a trust chain
 	   in gci->certs[] as we can find, to help the server work around
@@ -1800,7 +1829,7 @@ static int load_certificate(struct openconnect_info *vpninfo, struct cert_info *
 		free(key_url);
 #endif
 	if (ret)
-		free_gtls_cert_info(gci);
+		unload_certificate(certinfo, 1);
 	return ret;
 }
 
@@ -1845,18 +1874,21 @@ static int assign_privkey(struct openconnect_info *vpninfo, struct gtls_cert_inf
 
 static int load_primary_certificate(struct openconnect_info *vpninfo)
 {
-	struct gtls_cert_info gci = {0};
-	int err;
-	int ret = load_certificate(vpninfo, &vpninfo->certinfo[0], &gci);
+	struct cert_info *certinfo = &vpninfo->certinfo[0];
+	int ret, err;
+
+	ret = load_certificate(vpninfo, certinfo, 0);
 	if (ret)
 		return ret;
 
-	gnutls_x509_crt_t cert = gci.certs[0];
+	struct gtls_cert_info *gci = certinfo->priv_info;
+
+	gnutls_x509_crt_t cert = gci->certs[0];
 
 	get_cert_md5_fingerprint(vpninfo, cert, vpninfo->local_cert_md5);
 
-	if (gci.crl) {
-		err = gnutls_certificate_set_x509_crl(vpninfo->https_cred, &gci.crl, 1);
+	if (gci->crl) {
+		err = gnutls_certificate_set_x509_crl(vpninfo->https_cred, &gci->crl, 1);
 		if (err) {
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("Setting certificate revocation list failed: %s\n"),
@@ -1867,16 +1899,16 @@ static int load_primary_certificate(struct openconnect_info *vpninfo)
 	}
 
 #if GNUTLS_VERSION_NUMBER >= 0x030600
-	if (gnutls_privkey_get_pk_algorithm(gci.pkey, NULL) == GNUTLS_PK_RSA) {
+	if (gnutls_privkey_get_pk_algorithm(gci->pkey, NULL) == GNUTLS_PK_RSA) {
 		/*
 		 * For hardware RSA keys, we need to check if they can cope with PSS.
 		 * If not, disable TLSv1.3 which would make PSS mandatory.
 		 * https://bugzilla.redhat.com/show_bug.cgi?id=1663058
 		 */
-		gnutls_datum_t fdata= { (void *)&gci, sizeof(gci) };
+		gnutls_datum_t fdata= { (void *)gci, sizeof *gci };
 		gnutls_datum_t pkey_sig = { NULL, 0 };
 
-		err = gnutls_privkey_sign_data2(gci.pkey, GNUTLS_SIGN_RSA_PSS_RSAE_SHA256, 0, &fdata, &pkey_sig);
+		err = gnutls_privkey_sign_data2(gci->pkey, GNUTLS_SIGN_RSA_PSS_RSAE_SHA256, 0, &fdata, &pkey_sig);
 		if (err) {
 			vpn_progress(vpninfo, PRG_INFO,
 				     _("Private key appears not to support RSA-PSS. Disabling TLSv1.3\n"));
@@ -1886,7 +1918,7 @@ static int load_primary_certificate(struct openconnect_info *vpninfo)
 		free(pkey_sig.data);
 	}
 #endif
-	err = assign_privkey(vpninfo, &gci);
+	err = assign_privkey(vpninfo, gci);
 
 	if (err) {
 		vpn_progress(vpninfo, PRG_ERR,
@@ -1897,7 +1929,7 @@ static int load_primary_certificate(struct openconnect_info *vpninfo)
 		ret = 0;
 
  out:
-	free_gtls_cert_info(&gci);
+	unload_certificate(certinfo, ret < 0);
 	return ret;
 }
 
@@ -2480,12 +2512,7 @@ void openconnect_close_https(struct openconnect_info *vpninfo, int final)
 	if (final && vpninfo->https_cred) {
 		gnutls_certificate_free_credentials(vpninfo->https_cred);
 		vpninfo->https_cred = NULL;
-#ifdef HAVE_TROUSERS
-		release_tpm1_ctx(vpninfo, &vpninfo->certinfo[0]);
-#endif
-#ifdef HAVE_TSS2
-		release_tpm2_ctx(vpninfo, &vpninfo->certinfo[0]);
-#endif
+		unload_certificate(&vpninfo->certinfo[0], 1);
 	}
 }
 
@@ -2801,22 +2828,7 @@ void destroy_eap_ttls(struct openconnect_info *vpninfo, void *sess)
 /**
   * multiple-client certificate authentication
   */
-static int debug_log(struct openconnect_info *vpninfo,
-		     const char *file, int line, const char *func,
-		     int err, const char *msg, ...)
-{
-	vpn_progress(vpninfo, PRG_DEBUG,
-		     "%s %s[%s]:%d: %s.\n",
-		     _(msg), file, func, line,
-		     gnutls_strerror(err));
-	return err;
-}
-
-#define debug(Err,Msg) (((Err)<0)?                                     \
-			debug_log((vpninfo),__FILE__,__LINE__,__func__,(Err),(Msg)): \
-			(Err))
-
-static int err_to_application_error(int err)
+static int app_error(int err)
 {
 	if (err >= 0)
 		return 0;
@@ -2860,8 +2872,8 @@ fail:
 	return GNUTLS_E_MEMORY_ERROR;
 }
 
-static int check_key_purpose(struct openconnect_info *vpninfo,
-			     struct gtls_cert_info *gci)
+static int check_multicert_compat(struct openconnect_info *vpninfo,
+				  struct cert_info *certinfo)
 {
 #ifndef GNUTLS_KP_ANY
 #  define GNUTLS_KP_ANY			"2.5.29.37.0"
@@ -2875,20 +2887,50 @@ static int check_key_purpose(struct openconnect_info *vpninfo,
 
 #define MAX_OID 128
 	char oid[MAX_OID];
+	struct gtls_cert_info *gci = certinfo->priv_info;
 	gnutls_x509_crt_t crt;
 	unsigned int usage = 0, critical;
-	size_t kp, oidsize;
+	gnutls_pk_algorithm_t pk;
+	size_t kp;
 	int err;
 
 	/**
+	 * Multiple certificate authentication protocol parameterizes the
+	 * digest independently of the pk algorithm. Warn if the signature
+	 * algorithm doesn't operate this way. Warn if this isn't so.
+	 */
+
+	crt = gci->certs[0];
+	pk = gnutls_x509_crt_get_pk_algorithm(crt, NULL);
+	switch (pk) {
+	default:
+		vpn_progress(vpninfo, PRG_INFO,
+			     _("Certificate maybe multiple certificate authentication incompatible.\n"));
+		break;
+	case GNUTLS_PK_RSA:
+#if GNUTLS_VERSION_NUMBER >= 0x030600
+	case GNUTLS_PK_RSA_PSS:
+#endif
+	case GNUTLS_PK_DSA:
+#if GNUTLS_VERSION_NUMBER >= 0x030500
+	case GNUTLS_PK_ECDSA:
+#else
+	case GNUTLS_PK_EC:
+#endif
+		break;
+	}
+
+	/**
+	 * Now check if the certificate supports client authentication.
+	 *
 	 * extendedKeyUsage of either any, clientAuth, or msSmartcardLogin
 	 * satisfy authentication purposes.
 	 */
-	crt = gci->certs[0];
+
 	for (kp = 0; ; kp++) {
-		oidsize = sizeof oid;
+		size_t oid_size = sizeof oid;
 		err = gnutls_x509_crt_get_key_purpose_oid(crt, kp,
-							  oid, &oidsize,
+							  oid, &oid_size,
 							  &critical);
 		if (err == GNUTLS_E_REQUESTED_DATA_NOT_AVAILABLE) {
 			/* EOF */
@@ -2898,10 +2940,11 @@ static int check_key_purpose(struct openconnect_info *vpninfo,
 			 * The oids we are concerned with have length less than
 		         * MAX_OID
 		         */
-			debug(err, "gnutls_x509_crt_get_key_purpose_oid");
 			continue;
 		} else if (err < 0) {
-			debug(err, "gnutls_x509_crt_get_key_purpose_oid");
+			vpn_progress(vpninfo, PRG_DEBUG,
+				     _("gnutls_x509_crt_get_key_purpose_oid: %s.\n"),
+				     gnutls_strerror(err));
 			return -1;
 		}
 
@@ -2921,8 +2964,11 @@ static int check_key_purpose(struct openconnect_info *vpninfo,
 		 * both satisfy authenticatio.n
 		 */
 		err = gnutls_x509_crt_get_key_usage(crt, &usage, &critical);
-		if (err < 0 && err != GNUTLS_E_REQUESTED_DATA_NOT_AVAILABLE)
-			debug(err, "gnutls_x509_crt_get_key_usage");
+		if (err < 0 && err != GNUTLS_E_REQUESTED_DATA_NOT_AVAILABLE) {
+			vpn_progress(vpninfo, PRG_DEBUG,
+				     _("gnutls_X509_crt_get_key_usage: %s.\n"),
+				     gnutls_strerror(err));
+		}
 		if (err < 0)
 			usage = 0;
 
@@ -2952,24 +2998,28 @@ static int check_key_purpose(struct openconnect_info *vpninfo,
 	return 1;
 }
 
-static int export_cert(struct openconnect_info *vpninfo,
-		       struct multicert_client_cert *cert,
-		       struct gtls_cert_info *gci)
+int export_certificate_pkcs7(struct openconnect_info *vpninfo,
+			     struct cert_info *certinfo,
+			     cert_format_t format,
+			     struct oc_text_buf **pp7b)
 {
-	gnutls_pkcs7_t pkcs7 = NULL;
-	gnutls_datum_t data = { 0 };
-	struct oc_text_buf *buf;
-	size_t i, ncerts;
+	struct gtls_cert_info *gci = certinfo->priv_info;
+	gnutls_pkcs7_t pkcs7;
+	gnutls_datum_t data;
+	gnutls_x509_crt_fmt_t certform;
 	int err;
 
-	if (!(cert && gci)) {
+	if (!gci) {
 		vpn_progress(vpninfo, PRG_ERR,
-			     _("Precondition failed %s[%s]:%d.\n"),
+			     _("Precondition failed %s[%s]:%d\n"),
 			     __FILE__, __func__, __LINE__);
-		return GNUTLS_E_INVALID_REQUEST;
+		return -EINVAL;
 	}
 
-	/** Note! The PKCS7 structure produced by GnuTLS and this code is
+	*pp7b = NULL;
+
+	/**
+	 * Note! The PKCS7 structure produced by GnuTLS and this code is
 	 * different from protocol captures in three ways:
 	 *
 	 * x: The root certificate is not added.
@@ -2979,185 +3029,145 @@ static int export_cert(struct openconnect_info *vpninfo,
 	 * data (1 2 840 113549 1 7 1) and zero-length * OCTET STRING.
 	 *
 	 * x: Certificates are ordered in ASN.1 canonical order instead of the
-	 * order added by the programmer. The practical consequence is the
-	 * server must identity the user certificate (a certificate for which
-	 * basicConstraints CA:TRUE is false) and reconstruct the certificate
-	 * path.
+	 * order added. The practical consequence is the server must identity
+	 * the user certificate (a certificate for which basicConstraints
+	 * CA:TRUE is false) and reconstruct the certificate path.
 	 *
-	 * Testing has not shown that these items are meaningful, but the future
-	 * will tell.
+	 * Testing has not shown that these differences are meaningful, but the
+	 * future will tell.
 	 */
 
 	err = gnutls_pkcs7_init(&pkcs7);
 	if (err < 0)
-		return err;
+		goto error;
 
-	for (i = 0, ncerts = gci->nr_certs; i < ncerts; i++) {
+	for (size_t i = 0, ncerts = gci->nr_certs; i < ncerts; i++) {
 		err = gnutls_pkcs7_set_crt(pkcs7, gci->certs[i]);
 		if (err < 0)
-			goto out;
+			goto error;
 	}
 
-	err = gnutls_pkcs7_export2(pkcs7, GNUTLS_X509_FMT_DER, &data);
+	if (format == CERT_FORMAT_ASN1) {
+		certform = GNUTLS_X509_FMT_DER;
+	} else if (format == CERT_FORMAT_PEM) {
+		certform = GNUTLS_X509_FMT_PEM;
+	} else {
+		err = GNUTLS_E_INVALID_REQUEST;
+		goto error;
+	}
+
+	err = gnutls_pkcs7_export2(pkcs7, certform, &data);
 	if (err < 0)
-		goto out;
+		goto error;
 
-	err = to_text_buf(&buf, &data);
-	if (err < 0)
-		goto out;
-
-	cert->format = MULTICERT_CERT_FORMAT_PKCS7;
-	cert->data = buf;
-
-	err = 0;
-
-out:
+	err = to_text_buf(pp7b, &data);
 	gnutls_free(data.data);
+	if (err < 0) {
+error:
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Failed to generate the PKCS#7 structure: %s.\n"),
+			     gnutls_strerror(err));
+	}
+
 	gnutls_pkcs7_deinit(pkcs7);
-	return err;
+	return app_error(err);
 }
 
-static int do_sign_challenge(struct oc_text_buf **signature,
-			     gnutls_privkey_t key,
-			     gnutls_pk_algorithm_t pk,
-			     gnutls_digest_algorithm_t hash,
-			     const gnutls_datum_t *data)
+int multicert_sign_data(struct openconnect_info *vpninfo,
+			struct cert_info *certinfo,
+			unsigned int hashes,
+			const void *data, size_t len,
+			struct oc_text_buf **psig)
 {
-	gnutls_sign_algorithm_t sign;
-	gnutls_datum_t tmp;
-	int err;
-
-	*signature = NULL;
-
-	sign = gnutls_pk_to_sign(pk, hash);
-
-#if GNUTLS_VERSION_NUMBER >= 0x030600
-	err = gnutls_privkey_sign_data2(key,
-					sign,
-					/* flag */ 0, data, &tmp);
-#else
-	err = gnutls_privkey_sign_data(key,
-				       gnutls_sign_get_hash_algorithm(sign),
-				       /* flag */ 0, data, &tmp);
-#endif
-	if (err < 0)
-		return err;
-
-	err = to_text_buf(signature, &tmp);
-	gnutls_free(tmp.data);
-
-	return err;
-}
-
-static int sign_challenge(struct openconnect_info *vpninfo,
-			  struct multicert_client_signature *signature,
-			  struct gtls_cert_info *gci,
-			  unsigned int hashes,
-			  const gnutls_datum_t *data)
-{
-	const struct {
-		multicert_signhash_algorithm_t id;
+	static const struct {
+		openconnect_hash_type id;
 		gnutls_digest_algorithm_t hash;
-	} algorithm_map[] = {
-		{ MULTICERT_SIGNHASH_SHA512, GNUTLS_DIG_SHA512 },
-		{ MULTICERT_SIGNHASH_SHA384, GNUTLS_DIG_SHA384 },
-		{ MULTICERT_SIGNHASH_SHA256, GNUTLS_DIG_SHA256 },
-		{ MULTICERT_SIGNHASH_UNKNOWN, GNUTLS_DIG_UNKNOWN },
+	} hash_map[] = {
+		{ OPENCONNECT_HASH_SHA512, GNUTLS_DIG_SHA512 },
+		{ OPENCONNECT_HASH_SHA384, GNUTLS_DIG_SHA384 },
+		{ OPENCONNECT_HASH_SHA256, GNUTLS_DIG_SHA256 },
+		{ OPENCONNECT_HASH_UNKNOWN, GNUTLS_DIG_UNKNOWN },
 	};
-	struct oc_text_buf *sign_data = NULL;
-	multicert_signhash_algorithm_t hash;
+	gnutls_datum_t datum = { (void *) data, len };
+	gnutls_datum_t sign_data = { 0 };
+	struct gtls_cert_info *gci = certinfo->priv_info;
+	struct oc_text_buf *sig_buf = NULL;
+	openconnect_hash_type hash;
 	gnutls_pk_algorithm_t pk;
-	size_t i;
-	int err;
+	gnutls_sign_algorithm_t sign;
+	int ret, err;
 
-	if (!(signature && data && gci
-	      && (hashes & (MULTICERT_SIGNHASH_FLAG(MULTICERT_SIGNHASH_MAX+1)-1)))) {
+	if (!(gci && data && len && psig)) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Precondition failed %s[%s]:%d.\n"),
 			     __FILE__, __func__, __LINE__);
-		return GNUTLS_E_INVALID_REQUEST;
+		return -EINVAL;
 	}
-
-	if (hashes & ~(MULTICERT_SIGNHASH_FLAG(MULTICERT_SIGNHASH_MAX+1)-1))
-		vpn_progress(vpninfo, PRG_DEBUG,
-			     _("Unsupported hashes specified in hashset %x. Do we need to recompile?.\n"),
-			     (hashes & ~(MULTICERT_SIGNHASH_FLAG(MULTICERT_SIGNHASH_MAX+1)-1)));
 
 	err = gnutls_x509_crt_get_pk_algorithm(gci->certs[0], NULL);
 	if (err < 0)
-		return err;
+		goto error;
 
 	pk = err;
 
-	for (i = 0;
-	     (hash = algorithm_map[i].id) != MULTICERT_SIGNHASH_UNKNOWN;
+	/**
+	 * Sign data using hashes with decreasing hash size as
+	 * Anyconnect prefers SHA2-512.
+	 */
+	for (size_t i = 0;
+	     (hash = hash_map[i].id) != OPENCONNECT_HASH_UNKNOWN;
 	     i++) {
-		if ((hashes & MULTICERT_SIGNHASH_FLAG(hash)) == 0)
+		if ((hashes & MULTICERT_HASH_FLAG(hash)) == 0)
 			continue;
 
-		err = do_sign_challenge(&sign_data, gci->pkey,
-					pk, algorithm_map[i].hash,
-					data);
+		sign = gnutls_pk_to_sign(pk, hash_map[i].hash);
 
-		debug(err, "do_sign_challenge");
+#if GNUTLS_VERSION_NUMBER >= 0x030600
+		err = gnutls_privkey_sign_data2(gci->pkey,
+						sign,
+					/* flag */ 0, &datum, &sign_data);
+#else
+		err = gnutls_privkey_sign_data(gci->pkey,
+				       gnutls_sign_get_hash_algorithm(sign),
+				       /* flag */ 0, &datum, &sign_data);
+#endif
 
-		if (err != GNUTLS_E_INVALID_REQUEST &&
-		    err != GNUTLS_E_CONSTRAINT_ERROR)
-			break;
+		if (err < 0) {
+			vpn_progress(vpninfo, PRG_DEBUG,
+				     _("gnutls_privkey_sign_data: %s.\n"),
+				     gnutls_strerror(err));
+
+			if (err == GNUTLS_E_INVALID_REQUEST || err == GNUTLS_E_CONSTRAINT_ERROR)
+				continue;
+
+			goto error;
+		}
+
+		err = to_text_buf(&sig_buf, &sign_data);
+		gnutls_free(sign_data.data);
+
+		break;
 	}
 
-	if (hash == MULTICERT_SIGNHASH_UNKNOWN)
+	/**
+	 * Since we tested for compatibility when we loaded the certificate,
+	 * this condition is unlikely to happen.
+	 */
+	if (hash == OPENCONNECT_HASH_UNKNOWN)
 		err = GNUTLS_E_UNSUPPORTED_SIGNATURE_ALGORITHM;
 
-	if (err < 0)
-		return err;
-
-	signature->algorithm = hash;
-	signature->data = sign_data;
-
-	return 0;
-}
-
-int multicert_compute_response(struct openconnect_info *vpninfo,
-			       unsigned int hashes,
-			       const unsigned char *chdata, size_t chdata_len,
-			       struct multicert_client_cert *psigner,
-			       struct multicert_client_signature *psignature)
-{
-	const gnutls_datum_t data = { (void *)chdata, chdata_len };
-	struct gtls_cert_info gci = { 0 };
-	struct multicert_client_cert signer = { 0 };
-	struct multicert_client_signature signature = { 0 };
-	int ret, err;
-
-	ret = load_certificate(vpninfo, &vpninfo->certinfo[1], &gci);
-	if (ret) /* The error will already have been reported */
-		return -EINVAL;
-
-	check_key_purpose(vpninfo, &gci);
-
-	err = export_cert(vpninfo, &signer, &gci);
 	if (err < 0) {
+error:
 		vpn_progress(vpninfo, PRG_ERR,
-			     _("Error exporting multiple-certificate signer's certificate chain: (%d) %s.\n"),
-			     err, gnutls_strerror(err));
-		goto cleanup;
+			     _("Failed to sign data with second certificate: %s.\n"),
+			     gnutls_strerror(err));
+		ret = app_error(err);
+		goto done;
 	}
 
-	err = sign_challenge(vpninfo, &signature, &gci, hashes, &data);
-	if (err < 0) {
-		vpn_progress(vpninfo, PRG_ERR,
-			     _("Error signing multiple-certificate challenge: (%d) %s.\n"),
-			     err, gnutls_strerror(err));
-		goto cleanup;
-	}
+	*psig = sig_buf;
+	ret = hash;
 
-	*psigner = signer; signer.data = NULL;
-	*psignature = signature; signature.data = NULL;
-	err = 0;
-
-cleanup:
-	buf_free(signer.data); buf_free(signature.data);
-	free_gtls_cert_info(&gci);
-	return err_to_application_error(err);
+done:
+	return ret;
 }
