@@ -541,7 +541,7 @@ static int fortinet_configure(struct openconnect_info *vpninfo)
 	 * FortiOS 4 was the last version to send the legacy HTTP configuration.
 	 * FortiOS 5 and later send the current XML configuration.
 	 * We clearly do not need to support FortiOS 4 anymore.
-	 * 
+	 *
 	 * Yet we keep this code around in order to get a sanity check about
 	 * whether the SVPNCOOKIE is still valid/alive, until we are sure we've
 	 * worked out the weirdness with reconnects.

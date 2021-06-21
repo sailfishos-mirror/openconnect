@@ -47,7 +47,7 @@
 	  If you are posting debugging output from openconnect to the mailing list, do <em>not</em> include a line which looks like this:
 	  <br/><tt>Set-Cookie: webvpn=835278264@921600@1221512527@6B9EC24DEB2F59E242F75B424D42F223D0912984;PATH=/</tt><br/>
 	  That HTTP cookie is all that's needed to grant access to the VPN session you just logged in to &#8212;
-	  it's almost as bad as giving your password away. Version 2.26 or later of OpenConnect will 
+	  it's almost as bad as giving your password away. Version 2.26 or later of OpenConnect will
 	  automatically filter this out of the debugging output for you.
 	</p>
 	<p>For Juniper VPN, the equivalent is a <tt>DSID</tt> cookie, which is not yet filtered

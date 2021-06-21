@@ -132,7 +132,7 @@ perhaps even Google Summer of Code projects.</p>
 
 <h2>Other enhancements</h2>
 
-One of the main other improvements that would be welcome, is implementing a full WebView in the graphical clients. Currently for protocols like Juniper, OpenConnect screen-scrapes the HTML pages used for login, and attempts to make sense of them. This is The main thing that would be 
+One of the main other improvements that would be welcome, is implementing a full WebView in the graphical clients. Currently for protocols like Juniper, OpenConnect screen-scrapes the HTML pages used for login, and attempts to make sense of them. This is The main thing that would be
 Other items on the TODO list include:
 
 <ul>
