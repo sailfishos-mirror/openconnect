@@ -208,6 +208,7 @@ enum {
 	OPT_PROTOCOL,
 	OPT_PASSTOS,
 	OPT_VERSION,
+	OPT_SERVER,
 };
 
 #ifdef __sun__
@@ -300,6 +301,7 @@ static const struct option long_options[] = {
 #elif defined(OPENCONNECT_OPENSSL)
 	OPTION("openssl-ciphers", 1, OPT_CIPHERSUITES),
 #endif
+	OPTION("server", 1, OPT_SERVER),
 	OPTION(NULL, 0, 0)
 };
 
@@ -881,6 +883,7 @@ static void usage(void)
 	printf("      --cafile=FILE               %s\n", _("Cert file for server verification"));
 
 	printf("\n%s:\n", _("Internet connectivity"));
+	printf("      --server=SERVER             %s\n", _("Set VPN server"));
 	printf("  -P, --proxy=URL                 %s\n", _("Set proxy server"));
 	printf("      --proxy-auth=METHODS        %s\n", _("Set proxy authentication methods"));
 	printf("      --no-proxy                  %s\n", _("Disable proxy"));
@@ -1364,6 +1367,10 @@ static int autocomplete(int argc, char **argv)
 					autocomplete_special("FILENAME", comp_opt, prefixlen, NULL);
 					break;
 				}
+				break;
+
+			case OPT_SERVER: /* --server */
+				autocomplete_special("HOSTNAME", comp_opt, prefixlen, NULL);
 				break;
 
 			case 'i': /* --interface */
@@ -2025,6 +2032,10 @@ int main(int argc, char **argv)
 
 			vpninfo->ciphersuite_config = dup_config_arg();
 			break;
+		case OPT_SERVER:
+			if (openconnect_parse_url(vpninfo, config_arg))
+				exit(1);
+			break;
 		default:
 			usage();
 		}
@@ -2033,10 +2044,10 @@ int main(int argc, char **argv)
 	if (gai_overrides)
 		openconnect_override_getaddrinfo(vpninfo, gai_override_cb);
 
-	if (optind < argc - 1) {
+	if (optind < argc - (vpninfo->hostname ? 0 : 1)) {
 		fprintf(stderr, _("Too many arguments on command line\n"));
 		usage();
-	} else if (optind > argc - 1) {
+	} else if (optind > argc - (vpninfo->hostname ? 0 : 1)) {
 		fprintf(stderr, _("No server specified\n"));
 		usage();
 	}

@@ -70,7 +70,7 @@ openconnect \- Multi-protocol VPN client, for Cisco AnyConnect VPNs and others
 .OP \-\-version\-string string
 .OP \-\-local-hostname string
 .OP \-\-os string
-.B [https://]\fIserver\fB[:\fIport\fB][/\fIgroup\fB]
+.B [\-\-server] [https://]\fIhost\fB[:\fIport\fB][/\fIgroup\fB]
 .YS
 
 .SH DESCRIPTION
@@ -345,6 +345,19 @@ Pass traffic to 'script' program over a UNIX socket, instead of to a kernel
 tun/tap device. This allows the VPN IP traffic to be handled entirely in
 userspace, for example by a program which uses lwIP to provide SOCKS access
 into the VPN.
+.TP
+.B \-\-server=[https://]\fIHOST\fB[:\fIPORT\fB][/\fIGROUP\fB]
+Define the VPN server as a simple
+.I HOST
+or as an URL containing the
+. I HOST
+and optionally the
+.I PORT
+number and the login 
+.I GROUP
+or realm.
+
+As an alternative, define the VPN server as non-option command line argument.
 .TP
 .B \-u,\-\-user=NAME
 Set login username to
