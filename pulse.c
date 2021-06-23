@@ -1760,6 +1760,7 @@ static int pulse_authenticate(struct openconnect_info *vpninfo, int connecting)
 							goto auth_unknown;
 						/* Precisely one byte, which is j2_code. OK. */
 					} else if (j2_code == J2_PASSFAIL) {
+					j2_passfail:
 						/*
 						  < 0000:  00 00 55 97 00 00 00 05  00 00 00 84 00 00 01 fa  |..U.............|
 						  < 0010:  00 0a 4c 01 01 05 00 70  fe 00 0a 4c 00 00 00 01  |..L....p...L....|
@@ -1787,6 +1788,25 @@ static int pulse_authenticate(struct openconnect_info *vpninfo, int connecting)
 						     _("Pulse server requested Host Checker; not yet supported\n"
 						       "Try Juniper mode (--protocol=nc)\n"));
 					goto bad_eap;
+
+				case 5: /* Some other kind of Juniper/2: password request?
+					 * See https://gitlab.com/openconnect/openconnect/-/issues/255
+					 *
+					 * Contains this field, which *would* match 'case 2' above, except
+					 * for 2 -> 5, and extra bytes at the end.
+					 * AVP 79: 01 01 00 12 fe 00 0a 4c 00 00 00 [05] 01 [00 11 5d bf 60]
+					 */
+					j2_found = 1;
+					j2_code = avp_c[12];
+					if (j2_code == J2_PASSREQ || j2_code == J2_PASSRETRY || j2_code == J2_PASSCHANGE) {
+						if (avp_len > 13) {
+							vpn_progress(vpninfo, PRG_INFO,
+								     _("Mystery bytes following AVP 79 case 5:"));
+							dump_buf_hex(vpninfo, PRG_INFO, '?', (uint8_t *)avp_c + 13, avp_len - 13);
+						}
+					} else if (j2_code == J2_PASSFAIL)
+						goto j2_passfail;
+					break;
 
 				default:
 					goto auth_unknown;
