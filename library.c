@@ -1046,6 +1046,7 @@ OPENCONNECT_CMD_SOCKET openconnect_setup_cmd_pipe(struct openconnect_info *vpnin
 	}
 	vpninfo->cmd_fd = pipefd[0];
 	vpninfo->cmd_fd_write = pipefd[1];
+	vpninfo->need_poll_cmd_fd = 1;
 	return vpninfo->cmd_fd_write;
 }
 

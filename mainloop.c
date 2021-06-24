@@ -238,7 +238,9 @@ int openconnect_mainloop(struct openconnect_info *vpninfo,
 		if (vpninfo->quit_reason)
 			break;
 
-		poll_cmd_fd(vpninfo, 0);
+		if (vpninfo->need_poll_cmd_fd)
+			poll_cmd_fd(vpninfo, 0);
+
 		if (vpninfo->got_cancel_cmd) {
 			if (vpninfo->delay_close != NO_DELAY_CLOSE) {
 				if (vpninfo->delay_close == DELAY_CLOSE_IMMEDIATE_CALLBACK) {

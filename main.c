@@ -109,6 +109,7 @@ static int authgroup_set;
 static int last_form_empty;
 
 static int sig_cmd_fd;
+static struct openconnect_info *sig_vpninfo;
 
 static void add_form_field(char *field);
 
@@ -799,6 +800,8 @@ static void handle_signal(int sig)
 	if (write(sig_cmd_fd, &cmd, 1) < 0) {
 	/* suppress warn_unused_result */
 	}
+	if (sig_vpninfo)
+		sig_vpninfo->need_poll_cmd_fd = 1;
 }
 #else /* _WIN32 */
 static const char *default_vpncscript;
@@ -1520,6 +1523,7 @@ static int background_self(struct openconnect_info *vpninfo, char *pidfile) {
 		if (!fp) {
 			fprintf(stderr, _("Failed to open '%s' for write: %s\n"),
 				pidfile, strerror(errno));
+			sig_vpninfo = NULL;
 			openconnect_vpninfo_free(vpninfo);
 			exit(1);
 		}
@@ -1536,6 +1540,7 @@ static int background_self(struct openconnect_info *vpninfo, char *pidfile) {
 		vpn_progress(vpninfo, PRG_INFO,
 			     _("Continuing in background; pid %d\n"),
 			     pid);
+		sig_vpninfo = NULL;
 		openconnect_vpninfo_free(vpninfo);
 		exit(0);
 	}
@@ -2084,11 +2089,13 @@ int main(int argc, char **argv)
 	sigaction(SIGUSR2, &sa, NULL);
 #endif /* !_WIN32 */
 
+	sig_vpninfo = vpninfo;
 	sig_cmd_fd = openconnect_setup_cmd_pipe(vpninfo);
 	if (sig_cmd_fd < 0) {
 		fprintf(stderr, _("Error opening cmd pipe\n"));
 		exit(1);
 	}
+	vpninfo->cmd_fd_internal = 1;
 
 	if (vpninfo->certinfo[0].key && do_passphrase_from_fsid)
 		openconnect_passphrase_from_fsid(vpninfo);
@@ -2142,12 +2149,14 @@ int main(int argc, char **argv)
 			printf("RESOLVE='%s:%.*s'\n", vpninfo->hostname, l, p);
 		} else
 			printf("RESOLVE=");
+		sig_vpninfo = NULL;
 		openconnect_vpninfo_free(vpninfo);
 		exit(0);
 	} else if (cookieonly) {
 		printf("%s\n", vpninfo->cookie);
 		if (cookieonly == 1) {
 			/* We use cookieonly=2 for 'print it and continue' */
+			sig_vpninfo = NULL;
 			openconnect_vpninfo_free(vpninfo);
 			exit(0);
 		}
@@ -2240,6 +2249,7 @@ int main(int argc, char **argv)
 		break;
 	}
 
+	sig_vpninfo = NULL;
 	openconnect_vpninfo_free(vpninfo);
 	exit(ret);
 }

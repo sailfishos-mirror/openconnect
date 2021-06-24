@@ -730,6 +730,12 @@ struct openconnect_info {
 	int dtls_pass_tos;
 	int dtls_tos_proto, dtls_tos_optname;
 
+	/* An optimisation for the case where our own code is the only
+	 * thing that *could* write to the cmd_fd, to avoid constantly
+	 * polling on it while we're busy shovelling packets. */
+	int need_poll_cmd_fd;
+	int cmd_fd_internal;
+
 	int cmd_fd;
 	int cmd_fd_write;
 	int got_cancel_cmd;
