@@ -488,8 +488,10 @@ const char *openconnect_get_dtls_compression(struct openconnect_info *);
  *
  * Later still, Legacy IP addresses got scarce and SNI was invented, and
  * we started to see servers behind proxies that forward a connection
- * based on the SNI in the incoming ClientHello. So returning just the
- * IP address from openconnect_get_hostname() now made things break.
+ * based on the SNI in the incoming ClientHello (TLS layer), or based on
+ * the 'Host' header in the initial connection-phase request (HTTP[S]
+ * layer). So returning just the IP address from openconnect_get_hostname()
+ * now made things break.
  *
  * So... we need to pass *both* the actual hostname *and* the IP address
  * to the connecting openconnect invocation. As well as the port.
