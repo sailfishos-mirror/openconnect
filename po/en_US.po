@@ -4,13 +4,14 @@
 #
 # Translators:
 # Margie Foster <margie@linux.intel.com>, 2011-2012
+# Dimitri Papadopoulos Orfanos, 2021
 msgid ""
 msgstr ""
 "Project-Id-Version: openconnect\n"
 "Report-Msgid-Bugs-To: openconnect-devel@lists.infradead.org\n"
 "POT-Creation-Date: 2021-05-12 23:02+0100\n"
-"PO-Revision-Date: 2014-02-19 09:05+0000\n"
-"Last-Translator: David Woodhouse <dwmw2@infradead.org>\n"
+"PO-Revision-Date: 2021-06-26 22:35+0200\n"
+"Last-Translator: Dimitri Papadopoulos Orfanos\n"
 "Language-Team: English (United States) (http://www.transifex.com/projects/p/"
 "meego/language/en_US/)\n"
 "Language: en_US\n"
@@ -1082,7 +1083,7 @@ msgstr ""
 #: esp.c:212
 #, c-format
 msgid "Received ESP packet of %d bytes with unrecognised payload type %02x\n"
-msgstr ""
+msgstr "Received ESP packet of %d bytes with unrecognized payload type %02x\n"
 
 #: esp.c:219
 #, c-format
@@ -1414,7 +1415,7 @@ msgstr ""
 #: gnutls-esp.c:56
 #, c-format
 msgid "Failed to initialise ESP cipher: %s\n"
-msgstr ""
+msgstr "Failed to initialize ESP cipher: %s\n"
 
 #: gnutls-esp.c:66
 #, c-format
@@ -1572,7 +1573,7 @@ msgstr ""
 #: gnutls.c:645
 #, c-format
 msgid "Could not initialise MD5 hash: %s\n"
-msgstr ""
+msgstr "Could not initialize MD5 hash: %s\n"
 
 #: gnutls.c:655
 #, c-format
@@ -1608,7 +1609,7 @@ msgstr ""
 #: gnutls.c:831
 #, c-format
 msgid "Failed to initialise cipher for decrypting PEM file: %s\n"
-msgstr ""
+msgstr "Failed to initialize cipher for decrypting PEM file: %s\n"
 
 #: gnutls.c:842
 #, c-format
@@ -3558,7 +3559,7 @@ msgstr ""
 #: main.c:1093
 #, c-format
 msgid "Unrecognised option at line %d: '%s'\n"
-msgstr ""
+msgstr "Unrecognized option at line %d: '%s'\n"
 
 #: main.c:1103
 #, c-format
@@ -4393,7 +4394,7 @@ msgstr ""
 
 #: oncp.c:940
 msgid "Unrecognised data packet\n"
-msgstr ""
+msgstr "Unrecognized data packet\n"
 
 #: oncp.c:998
 #, c-format
@@ -4514,7 +4515,7 @@ msgstr "DTLS handshake failed: %d\n"
 
 #: openssl-esp.c:86
 msgid "Failed to initialise ESP cipher:\n"
-msgstr ""
+msgstr "Failed to initialize ESP cipher:\n"
 
 #: openssl-esp.c:100
 msgid "Failed to initialize ESP HMAC\n"
@@ -6359,7 +6360,7 @@ msgstr ""
 
 #: yubikey.c:185 yubikey.c:424
 msgid "Unrecognised response from ykneo-oath applet\n"
-msgstr ""
+msgstr "Unrecognized response from ykneo-oath applet\n"
 
 #: yubikey.c:201
 #, c-format
@@ -6451,4 +6452,4 @@ msgstr ""
 
 #: yubikey.c:627
 msgid "Unrecognised response from Yubikey when generating tokencode\n"
-msgstr ""
+msgstr "Unrecognized response from Yubikey when generating tokencode\n"
