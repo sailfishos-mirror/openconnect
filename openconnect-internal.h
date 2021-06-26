@@ -379,6 +379,8 @@ struct cert_info {
 	char *cert;
 	char *key;
 	char *password;
+
+	void *priv_info;
 #if defined(OPENCONNECT_GNUTLS) && defined(HAVE_TROUSERS)
 	struct oc_tpm1_ctx *tpm1;
 #endif
@@ -1132,47 +1134,39 @@ OPENCONNECT_CMD_SOCKET dumb_socketpair(OPENCONNECT_CMD_SOCKET socks[2], int make
     } while (0)
 
 /****************************************************************************/
+typedef enum {
+	MULTICERT_COMPAT = (1<<0),
+} cert_flag_t;
+
+typedef enum {
+	CERT_FORMAT_ASN1 = 0,
+	CERT_FORMAT_PEM = 1,
+} cert_format_t;
+
+typedef enum {
+	OPENCONNECT_HASH_UNKNOWN = 0,
+#define OPENCONNECT_HASH_NONE OPENCONNECT_HASH_NONE
+	OPENCONNECT_HASH_SHA256 = 1,
+#define OPENCONNECT_HASH_SHA256 OPENCONNECT_HASH_SHA256
+	OPENCONNECT_HASH_SHA384 = 2,
+#define OPENCONNECT_HASH_SHA384 OPENCONNECT_HASH_SHA384
+	OPENCONNECT_HASH_SHA512 = 3,
+#define OPENCONNECT_HASH_SHA512 OPENCONNECT_HASH_SHA512
+	OPENCONNECT_HASH_MAX = OPENCONNECT_HASH_SHA512
+} openconnect_hash_type;
+
+int load_certificate(struct openconnect_info *, struct cert_info *, int flags);
+void unload_certificate(struct cert_info *, int final);
+int export_certificate_pkcs7(struct openconnect_info *, struct cert_info *, cert_format_t format, struct oc_text_buf **);
 
 /* multiple certificate authentication */
-typedef enum {
-	MULTICERT_SIGNHASH_UNKNOWN = 0,
-#define MULTICERT_SIGNHASH_NONE MULTICERT_SIGNHASH_NONE
-	MULTICERT_SIGNHASH_SHA256 = 1,
-#define MULTICERT_SIGNHASH_SHA256 MULTICERT_SIGNHASH_SHA256
-	MULTICERT_SIGNHASH_SHA384 = 2,
-#define MULTICERT_SIGNHASH_SHA384 MULTICERT_SIGNHASH_SHA384
-	MULTICERT_SIGNHASH_SHA512 = 3,
-#define MULTICERT_SIGNHASH_SHA512 MULTICERT_SIGNHASH_SHA512
-	MULTICERT_SIGNHASH_MAX = MULTICERT_SIGNHASH_SHA512
-} multicert_signhash_algorithm_t;
+#define MULTICERT_HASH_FLAG(v)	((v)?(1<<((v)-1)):0)
 
-#define MULTICERT_SIGNHASH_FLAG(v)	((v)?(1<<((v)-1)):0)
+int multicert_sign_data(struct openconnect_info *, struct cert_info *certinfo, unsigned int hashes,
+			const void *data, size_t datalen, struct oc_text_buf **signature);
 
-typedef enum {
-	MULTICERT_CERT_FORMAT_UNKNOWN = 0,
-#define MULTICERT_CERT_FORMAT_UNKNOWN MULTICERT_CERT_FORMAT_UNKNOWN
-	MULTICERT_CERT_FORMAT_PKCS7 = 1,
-#define MULTICERT_CERT_FORMAT_PKCS7 MULTICERT_CERT_FORMAT_PKCS7
-	MULTICERT_CERT_FORMAT_MAX = MULTICERT_CERT_FORMAT_PKCS7
-} multicert_cert_format_t;
-
-struct multicert_client_cert
-{
-	multicert_cert_format_t format;
-	struct oc_text_buf *data;
-};
-
-struct multicert_client_signature
-{
-	multicert_signhash_algorithm_t algorithm;
-	struct oc_text_buf *data;
-};
-
-/* multicert.c */
-const char *multicert_signhash_get_name(int id);
-multicert_signhash_algorithm_t multicert_signhash_get_id(const char *name);
-const char *multicert_cert_format_get_name(int id);
-multicert_cert_format_t multicert_cert_format_get_id(const char *name);
+const char *multicert_hash_get_name(int id);
+openconnect_hash_type multicert_hash_get_id(const char *name);
 
 /* iconv.c */
 #ifdef HAVE_ICONV
@@ -1432,11 +1426,6 @@ int openconnect_hash_yubikey_password(struct openconnect_info *vpninfo,
 				      const char *password, int pwlen,
 				      const void *ident, int id_len);
 int hotp_hmac(struct openconnect_info *vpninfo, const void *challenge);
-int multicert_compute_response(struct openconnect_info *vpninfo,
-			       unsigned int digests,
-			       const unsigned char *chdata, size_t chdata_len,
-			       struct multicert_client_cert *ccert,
-			       struct multicert_client_signature *csignature);
 #if defined(OPENCONNECT_OPENSSL)
 #define openconnect_https_connected(_v) ((_v)->https_ssl)
 #elif defined (OPENCONNECT_GNUTLS)
