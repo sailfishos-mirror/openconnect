@@ -951,6 +951,34 @@ int openconnect_set_client_cert(struct openconnect_info *vpninfo,
 	return 0;
 }
 
+int openconnect_set_mca_cert(struct openconnect_info *vpninfo,
+			     const char *cert, const char *key)
+{
+	UTF8CHECK(cert);
+	UTF8CHECK(key);
+
+	/* Avoid freeing it twice if it's the same */
+	if (vpninfo->certinfo[1].key == vpninfo->certinfo[1].cert)
+		vpninfo->certinfo[1].key = NULL;
+
+	STRDUP(vpninfo->certinfo[1].cert, cert);
+
+	if (key) {
+		STRDUP(vpninfo->certinfo[1].key, key);
+	} else {
+		vpninfo->certinfo[1].key = vpninfo->certinfo[1].cert;
+	}
+
+	return 0;
+}
+
+int openconnect_set_mca_key_password(struct openconnect_info *vpninfo, const char *pass)
+{
+	STRDUP(vpninfo->certinfo[1].password, pass);
+
+	return 0;
+}
+
 int openconnect_get_port(struct openconnect_info *vpninfo)
 {
 	return vpninfo->port;

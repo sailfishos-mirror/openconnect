@@ -607,6 +607,14 @@ int openconnect_set_mobile_info(struct openconnect_info *vpninfo,
 int openconnect_set_client_cert(struct openconnect_info *, const char *cert,
 				const char *sslkey);
 int openconnect_set_key_password(struct openconnect_info *vpninfo, const char *pass);
+/**
+ * Multiple certificate authentication (MCA): the client cert _and_ the
+ * mca_cert are used for authentication. The mca_cert is used to sign a
+ * challenge sent by the server.
+ */
+int openconnect_set_mca_cert(struct openconnect_info *, const char *cert,
+			     const char *key);
+int openconnect_set_mca_key_password(struct openconnect_info *vpninfo, const char *pass);
 const char *openconnect_get_ifname(struct openconnect_info *);
 void openconnect_set_reqmtu(struct openconnect_info *, int reqmtu);
 void openconnect_set_dpd(struct openconnect_info *, int min_seconds);
