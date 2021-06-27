@@ -462,7 +462,7 @@ However, Cisco's support team has failed to give any competent
 response to the bug report and we don't know under what other
 circumstances their bug might manifest itself. So this option exists
 to disable ALL re\-use of HTTP sessions and cause a new connection to be
-made for each request. If your server seems not to be recognising your
+made for each request. If your server seems not to be recognizing your
 certificate, try this option. If it makes a difference, please report
 this information to the
 .B openconnect\-devel@lists.infradead.org
