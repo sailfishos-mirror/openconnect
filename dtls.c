@@ -22,7 +22,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <string.h>
-#include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
 #ifndef _WIN32
