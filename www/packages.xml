@@ -53,7 +53,7 @@
   </li>
   <li><h2>FreeBSD</h2>
     <p>
-      An <tt>openconnect</tt> <a href="http://www.freebsd.org/cgi/cvsweb.cgi/ports/security/openconnect/">port</a> is available for FreeBSD.
+      An <tt>openconnect</tt> <a href="https://www.freebsd.org/cgi/cvsweb.cgi/ports/security/openconnect/">port</a> is available for FreeBSD.
     </p>
   </li>
   <li><h2>OpenBSD</h2>

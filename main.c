@@ -140,7 +140,7 @@ static void __attribute__ ((format(printf, 3, 4)))
 #elif defined(_WIN32) || defined(__native_client__)
 /*
  * FIXME: Perhaps we could implement syslog_progress() using these APIs:
- * http://msdn.microsoft.com/en-us/library/windows/desktop/aa364148%28v=vs.85%29.aspx
+ * https://docs.microsoft.com/en-us/windows/win32/etw/tracing-events
  */
 #else /* !__ANDROID__ && !_WIN32 && !__native_client__ */
 #include <syslog.h>

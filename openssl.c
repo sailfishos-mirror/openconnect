@@ -1920,7 +1920,7 @@ int openconnect_open_https(struct openconnect_info *vpninfo)
 	 * packets by silently disabling extensions such as SNI.
 	 *
 	 * Discussion:
-	 * http://www.ietf.org/mail-archive/web/tls/current/msg10423.html
+	 * https://www.ietf.org/mail-archive/web/tls/current/msg10423.html
 	 *
 	 * OpenSSL commits:
 	 * 4fcdd66fff5fea0cfa1055c6680a76a4303f28a2

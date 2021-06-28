@@ -28,7 +28,7 @@ hopefully assist you in working it out.</p>
 <h2>Identifying the token</h2>
 <p>In order to use a PKCS#11 token with OpenConnect, first it must be installed
 appropriately in the system's
-<a href="http://p11-glue.freedesktop.org/doc/p11-kit/config.html">p11-kit configuration</a>.
+<a href="https://p11-glue.github.io/p11-glue/p11-kit/manual/config.html">p11-kit configuration</a>.
 You shouldn't need to worry about this; it should automatically be the case for
 properly packaged software on any modern operating system.</p>
 
@@ -40,7 +40,7 @@ the OpenSC module with p11-kit by creating a file such as
 
 <p>In order to query the available PKCS#11 modules, and the certificates
 stored therein, the best tool to use is the
-<a href="http://www.gnutls.org/manual/html_node/p11tool-Invocation.html">p11tool</a>
+<a href="https://www.gnutls.org/manual/html_node/p11tool-Invocation.html">p11tool</a>
 distributed with GnuTLS. In Fedora it's in the <tt>gnutls-utils</tt> package.</p>
 
 <p>First identify the PKCS#11 modules which are available by using the <tt>--list-tokens</tt> option:</p>

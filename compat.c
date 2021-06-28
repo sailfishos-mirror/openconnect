@@ -301,7 +301,7 @@ int openconnect__win32_inet_pton(int af, const char *src, void *dst)
 	 * inet_aton() (and WSAStringToAddress()) will support, but
 	 * which inet_pton() should not. Not to mention the fact that
 	 * Wine's implementation will even succeed for strings like
-	 * "2001::1" (http://bugs.winehq.org/show_bug.cgi?id=36991) */
+	 * "2001::1" (https://bugs.winehq.org/show_bug.cgi?id=36991) */
 	if (af == AF_INET) {
 		char canon[16];
 		unsigned char *a = (unsigned char *)&sa.s4.sin_addr;
@@ -417,7 +417,7 @@ OPENCONNECT_CMD_SOCKET dumb_socketpair(OPENCONNECT_CMD_SOCKET socks[2], int make
         if  (getsockname(listener, &a.addr, &addrlen) == SOCKET_ERROR)
             break;
         // win32 getsockname may only set the port number, p=0.0005.
-        // ( http://msdn.microsoft.com/library/ms738543.aspx ):
+        // ( https://docs.microsoft.com/en-us/windows/win32/api/winsock/nf-winsock-getsockname ):
         a.inaddr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
         a.inaddr.sin_family = AF_INET;
 

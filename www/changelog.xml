@@ -241,7 +241,7 @@
      <ul>
        <li>Fix alignment issue which broke LZS compression on ARM etc.</li>
        <li>Support HTTP authentication to servers, not just proxies.</li>
-       <li>Work around Yubikey <a href="http://forum.yubico.com/viewtopic.php?f=26&amp;t=1601#p6807">issue</a> with non-ASCII passphrase set on pre-KitKat Android.</li>
+       <li>Work around Yubikey <a href="https://forum.yubico.com/viewtopic.php?f=26&amp;t=1601#p6807">issue</a> with non-ASCII passphrase set on pre-KitKat Android.</li>
        <li>Add SHA256/SHA512 support for OATH.</li>
        <li>Remove liboath dependency.</li>
        <li>Support DTLS v1.2 and AES-GCM with OpenSSL 1.0.2.</li>
@@ -296,7 +296,7 @@
        <li>Support <tt>utun</tt> driver on OS X.</li>
        <li>Change library API so string ownership is never transferred.</li>
        <li>Support new NDIS6 TAP-Windows driver shipped with OpenVPN 2.3.4.</li>
-       <li>Support using PSKC <i>(<a href="http://tools.ietf.org/html/rfc6030">RFC6030</a>)</i> token files for HOTP/TOTP tokens.</li>
+       <li>Support using PSKC <i>(<a href="https://tools.ietf.org/html/rfc6030">RFC6030</a>)</i> token files for HOTP/TOTP tokens.</li>
        <li>Support for updating HOTP token storage when token is used.</li>
        <li>Support for reading OTP token data from a file.</li>
        <li>Add full <a href="charset.html">character set handling</a> for legacy non-UTF8 systems <i>(including Windows)</i>.</li>
@@ -326,7 +326,7 @@
   <li><b><a href="https://www.infradead.org/openconnect/download/openconnect-5.99.tar.gz">OpenConnect v5.99</a></b>
      <i>(<a href="https://www.infradead.org/openconnect/download/openconnect-5.99.tar.gz.asc">PGP signature</a>)</i> &#8212; 2014-03-05
      <ul>
-       <li>Add <a href="http://tools.ietf.org/html/rfc4226">RFC4226</a> HOTP token support.</li>
+       <li>Add <a href="https://tools.ietf.org/html/rfc4226">RFC4226</a> HOTP token support.</li>
        <li>Tolerate servers closing connection uncleanly after HTTP/1.0 response <a href="https://bugs.launchpad.net/bugs/1225276"><i>(Ubuntu #1225276)</i></a>.</li>
        <li>Add support for IPv6 split tunnel configuration.</li>
        <li>Add Windows support with MinGW <i>(tested with both IPv6 and Legacy IP with latest <a href="https://git.infradead.org/users/dwmw2/vpnc-scripts.git/blob_plain/HEAD:/vpnc-script-win.js">vpnc-script-win.js</a>)</i></li>
@@ -377,7 +377,7 @@
        <li>Use original URL when falling back to non-XML POST mode.</li>
        <li>Add <tt>--no-xmlpost</tt> option to revert to older, compatible behaviour.</li>
        <li>Close connection before falling back to non-xmlpost mode <a href="https://bugzilla.redhat.com/show_bug.cgi?id=964650"><i>(RH#964650)</i></a>.</li>
-       <li>Improve error handling when server closes connection <a href="http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=708928"><i>(Debian #708928)</i></a>.</li>
+       <li>Improve error handling when server closes connection <a href="https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=708928"><i>(Debian #708928)</i></a>.</li>
      </ul><br/>
   </li>
   <li><b><a href="https://www.infradead.org/openconnect/download/openconnect-5.00.tar.gz">OpenConnect v5.00</a></b>
@@ -388,7 +388,7 @@
        <li>Fix compatibility issues with XML POST authentication.</li>
        <li>Fix memory leaks on <tt>realloc()</tt> failure.</li>
        <li>Fix certificate validation problem caused by hostname canonicalisation.</li>
-       <li>Add <a href="http://tools.ietf.org/html/rfc6238">RFC6238</a> TOTP token support using <a href="http://www.nongnu.org/oath-toolkit/">liboath</a>.</li>
+       <li>Add <a href="https://tools.ietf.org/html/rfc6238">RFC6238</a> TOTP token support using <a href="https://www.nongnu.org/oath-toolkit/">liboath</a>.</li>
        <li>Replace <tt>--stoken</tt> option with more generic <tt>--token-mode</tt> and <tt>--token-secret</tt> options.</li>
      </ul><br/>
   </li>
@@ -397,7 +397,7 @@
      <ul>
        <li>Add <tt>--os</tt> switch to report a different OS type to the gateway.</li>
        <li>Support new XML POST format.</li>
-       <li>Add SecurID token support using <a href="http://stoken.sourceforge.net/">libstoken</a>.</li>
+       <li>Add SecurID token support using <a href="http://stoken.sf.net/">libstoken</a>.</li>
      </ul><br/>
   </li>
   <li><b><a href="https://www.infradead.org/openconnect/download/openconnect-4.08.tar.gz">OpenConnect v4.08</a></b>
@@ -616,7 +616,7 @@
   <li><b><a href="https://www.infradead.org/openconnect/download/openconnect-3.00.tar.gz">OpenConnect v3.00</a></b> &#8212; 2011-03-09
      <ul>
        <li>Create libopenconnect.a for GUI authentication dialog to use.</li>
-       <li>Remove auth-dialog, which now lives in the <a href="http://git.gnome.org/browse/network-manager-openconnect/">network-manager-openconnect</a> package.</li>
+       <li>Remove auth-dialog, which now lives in the <a href="https://gitlab.gnome.org/GNOME/NetworkManager-openconnect">network-manager-openconnect</a> package.</li>
        <li>Cope with more entries in authentication forms.</li>
        <li>Add <tt>--csd-wrapper</tt> option to wrap CSD trojan.</li>
        <li>Report error and abort if CA file cannot be opened.</li>

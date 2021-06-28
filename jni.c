@@ -75,7 +75,7 @@ static jstring dup_to_jstring(JNIEnv *jenv, const char *in)
 	/*
 	 * Many implementations of NewStringUTF() will return NULL on
 	 * NULL input, but that isn't guaranteed:
-	 * http://gcc.gnu.org/bugzilla/show_bug.cgi?id=35979
+	 * https://gcc.gnu.org/bugzilla/show_bug.cgi?id=35979
 	 */
 	return in ? (*jenv)->NewStringUTF(jenv, in) : NULL;
 }
