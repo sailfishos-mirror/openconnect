@@ -1240,7 +1240,7 @@ int do_gen_hotp_code(struct openconnect_info *vpninfo,
 		     struct oc_auth_form *form,
 		     struct oc_form_opt *opt);
 
-int set_oidc_token(struct openconnect_info *vpninfo, 
+int set_oidc_token(struct openconnect_info *vpninfo,
 		     const char *token_str);
 
 /* stoken.c */

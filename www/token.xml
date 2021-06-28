@@ -30,7 +30,7 @@ argument, and the precise form it takes is dependent on the type of
 token as described below.</p>
 <p>For the <tt>openconnect</tt> command line program, if the first character of
 the <tt>--token-secret</tt> value is / or @, the argument is interpreted as a
-filename. The secret data will be loaded from <i>(and potentially saved back 
+filename. The secret data will be loaded from <i>(and potentially saved back
 to, in the case of HOTP tokens)</i> the specifed file.</p>
 
 <p>In each case, the automatic token generation will be tried twice before it
@@ -46,7 +46,7 @@ in which it is not appropriate, please <a href="mail.html">let us know</a>.</p>
 <p>If no <tt>--token-secret</tt> argument is provided in SecurID mode, the
 default <tt>.stokenrc</tt> file from the user's home directory will be used.
 For the NetworkManager integration, this is a separate choice for the token
-type — the UI has separate choices for <i>"RSA SecurID - read from ~/.stokenrc"</i> vs. 
+type — the UI has separate choices for <i>"RSA SecurID - read from ~/.stokenrc"</i> vs.
 <i>"RSA SecurID - manually entered"</i>.</p>
 
 <p>If a token is provided — either directly on the command line, as the contents
@@ -126,13 +126,13 @@ They may be specified in one of the following forms:</p>
   <li><b>sha256:0x53656372657453656372657421</b></li>
   <li><b>sha512:0x53656372657453656372657421</b><br/>
   This is the hexadecimal form which <i>(without the leading <tt>0x</tt>)</i> is
-  accepted by default by the 
+  accepted by default by the
   <tt><a href="https://www.nongnu.org/oath-toolkit/oathtool.1.html">oathtool</a></tt>
   program.</li>
   <li><b>base32:KNSWG4TFORJWKY3SMV2CC===</b></li>
   <li><b>sha256:base32:KNSWG4TFORJWKY3SMV2CC===</b></li>
   <li><b>sha512:base32:KNSWG4TFORJWKY3SMV2CC===</b><br/>
-  This is the base32 form which is accepted by the 
+  This is the base32 form which is accepted by the
   <tt><a href="https://www.nongnu.org/oath-toolkit/oathtool.1.html">oathtool</a></tt>
   program with its <tt>-b</tt> option..</li>
   <li><b>&amp;lt;?xml version=...</b><br/>

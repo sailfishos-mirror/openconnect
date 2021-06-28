@@ -1,7 +1,7 @@
 body {
     background: white;
     font-family: 'Raleway', Sans, Arial, Helvetica, Geneva, Swiss, SunSans-Regular;
-    font-size: 12px; 
+    font-size: 12px;
 }
 
 #logo {
@@ -56,9 +56,9 @@ body {
 }
 
 #menu1 .nonsel a:hover span {
-    color: Black;    
-    text-decoration: underline; 
-    background: url(../images/rightsel.png) top right no-repeat transparent;    
+    color: Black;
+    text-decoration: underline;
+    background: url(../images/rightsel.png) top right no-repeat transparent;
 }
 
 #menu1 .sel a {
@@ -67,7 +67,7 @@ body {
     padding-top: 0.2em;
     background: url(../images/leftsel.png) top left no-repeat #e6e6e6;
     margin-top: 0.2em;
-    margin-left: 5px;    
+    margin-left: 5px;
     height: 2em;
     text-decoration: none;
 }
@@ -106,9 +106,9 @@ body {
 }
 
 #menu2 .nonsel a:hover span {
-    color: Black;    
-    text-decoration: underline; 
-    background: url(../images/rightsel2.png) top right no-repeat transparent;    
+    color: Black;
+    text-decoration: underline;
+    background: url(../images/rightsel2.png) top right no-repeat transparent;
 }
 
 #menu2 .sel a {
@@ -116,7 +116,7 @@ body {
     float: left;
     padding: 0.2em 1em 0 1em;
     margin-top: 0.2em;
-    margin-left: 0px;    
+    margin-left: 0px;
     height: 2em;
     text-decoration: none;
 }
@@ -130,13 +130,13 @@ body {
     padding-left: 20px;
     padding-right: 120px;	
     padding-bottom: 20px;	
-    font-size: 14px; 
+    font-size: 14px;
 }
 
 #text {
     margin: 0;
     border-color: #e6e6e6;
-    font-size: 14px; 
+    font-size: 14px;
     background: #ffffff;
 }
 
