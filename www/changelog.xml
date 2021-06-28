@@ -241,7 +241,7 @@
      <ul>
        <li>Fix alignment issue which broke LZS compression on ARM etc.</li>
        <li>Support HTTP authentication to servers, not just proxies.</li>
-       <li>Work around Yubikey <a href="https://forum.yubico.com/viewtopic.php?f=26&amp;t=1601#p6807">issue</a> with non-ASCII passphrase set on pre-KitKat Android.</li>
+       <li>Work around Yubikey <a href="https://forum.yubico.com/viewtopica454-3.html?f=26&amp;t=1601">issue</a> with non-ASCII passphrase set on pre-KitKat Android.</li>
        <li>Add SHA256/SHA512 support for OATH.</li>
        <li>Remove liboath dependency.</li>
        <li>Support DTLS v1.2 and AES-GCM with OpenSSL 1.0.2.</li>
