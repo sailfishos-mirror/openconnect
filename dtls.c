@@ -275,7 +275,7 @@ int dtls_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		unsigned char *buf;
 
 		if (!vpninfo->dtls_pkt) {
-			vpninfo->dtls_pkt = malloc(sizeof(struct pkt) + len);
+			vpninfo->dtls_pkt = alloc_pkt(vpninfo, len);
 			if (!vpninfo->dtls_pkt) {
 				vpn_progress(vpninfo, PRG_ERR, _("Allocation failed\n"));
 				break;
@@ -448,7 +448,7 @@ int dtls_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		vpn_progress(vpninfo, PRG_TRACE,
 			     _("Sent DTLS packet of %d bytes; DTLS send returned %d\n"),
 			     this->len, ret);
-		free(this);
+		free_pkt(vpninfo, this);
 	}
 
 	return work_done;

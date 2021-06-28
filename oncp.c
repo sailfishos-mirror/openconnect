@@ -730,7 +730,7 @@ int oncp_connect(struct openconnect_info *vpninfo)
 	buf_free(reqbuf);
 
 	vpninfo->partial_rec_size = 0;
-	free(vpninfo->cstp_pkt);
+	free_pkt(vpninfo, vpninfo->cstp_pkt);
 	vpninfo->cstp_pkt = NULL;
 
 	return ret;
@@ -858,7 +858,7 @@ int oncp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 
 		len = receive_mtu + vpninfo->pkt_trailer;
 		if (!vpninfo->cstp_pkt) {
-			vpninfo->cstp_pkt = malloc(sizeof(struct pkt) + len);
+			vpninfo->cstp_pkt = alloc_pkt(vpninfo, len);
 			if (!vpninfo->cstp_pkt) {
 				vpn_progress(vpninfo, PRG_ERR, _("Allocation failed\n"));
 				break;
@@ -1080,7 +1080,7 @@ int oncp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		}
 		/* Don't free the 'special' packets */
 		if (vpninfo->current_ssl_pkt == vpninfo->deflate_pkt) {
-			free(vpninfo->pending_deflated_pkt);
+			free_pkt(vpninfo, vpninfo->pending_deflated_pkt);
 			vpninfo->pending_deflated_pkt = NULL;
 		} else if (vpninfo->current_ssl_pkt == &esp_enable_pkt) {
 			/* Only set the ESP state to connected and actually start
@@ -1091,7 +1091,7 @@ int oncp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			vpninfo->dtls_state = DTLS_ESTABLISHED;
 			work_done = 1;
 		} else {
-			free(vpninfo->current_ssl_pkt);
+			free_pkt(vpninfo, vpninfo->current_ssl_pkt);
 		}
 		vpninfo->current_ssl_pkt = NULL;
 	}
@@ -1254,7 +1254,7 @@ int oncp_esp_send_probes(struct openconnect_info *vpninfo)
 		monitor_except_fd(vpninfo, dtls);
 	}
 
-	pkt = malloc(sizeof(*pkt) + 1 + vpninfo->pkt_trailer);
+	pkt = alloc_pkt(vpninfo, 1 + vpninfo->pkt_trailer);
 	if (!pkt)
 		return -ENOMEM;
 
@@ -1267,7 +1267,7 @@ int oncp_esp_send_probes(struct openconnect_info *vpninfo)
 		    send(vpninfo->dtls_fd, (void *)&pkt->esp, pktlen, 0) < 0)
 			vpn_progress(vpninfo, PRG_DEBUG, _("Failed to send ESP probe\n"));
 	}
-	free(pkt);
+	free_pkt(vpninfo, pkt);
 
 	vpninfo->dtls_times.last_tx = time(&vpninfo->new_dtls_started);
 

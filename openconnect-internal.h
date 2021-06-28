@@ -388,6 +388,17 @@ static inline void init_pkt_queue(struct pkt_q *q)
 	q->tail = &q->head;
 }
 
+
+static inline struct pkt *alloc_pkt(struct openconnect_info *vpninfo, int len)
+{
+	return malloc(sizeof(struct pkt) + len);
+}
+
+static inline void free_pkt(struct openconnect_info *vpninfo, struct pkt *pkt)
+{
+	free(pkt);
+}
+
 #define TLS_OVERHEAD 5 /* packet + header */
 #define DTLS_OVERHEAD (1 /* packet + header */ + 13 /* DTLS header */ + \
 	 20 /* biggest supported MAC (SHA1) */ +  32 /* biggest supported IV (AES-256) */ + \

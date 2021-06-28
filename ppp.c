@@ -888,7 +888,7 @@ static int handle_state_transition(struct openconnect_info *vpninfo, int dtls,
 
 		/* Drop any failed outgoing packet from previous connection;
 		 * we need to reconfigure before we can send data packets. */
-		free(vpninfo->current_ssl_pkt);
+		free_pkt(vpninfo, vpninfo->current_ssl_pkt);
 		vpninfo->current_ssl_pkt = NULL;
 		vpninfo->partial_rec_size = 0;
 		ppp->ppp_state = PPPS_ESTABLISH;
@@ -1089,7 +1089,7 @@ static int ppp_mainloop(struct openconnect_info *vpninfo, int dtls,
 		int len, payload_len, next_len;
 
 		if (!vpninfo->cstp_pkt) {
-			vpninfo->cstp_pkt = malloc(sizeof(struct pkt) + receive_mtu);
+			vpninfo->cstp_pkt = alloc_pkt(vpninfo, receive_mtu);
 			if (!vpninfo->cstp_pkt) {
 				vpn_progress(vpninfo, PRG_ERR, _("Allocation failed\n"));
 				break;
@@ -1333,7 +1333,7 @@ static int ppp_mainloop(struct openconnect_info *vpninfo, int dtls,
 			 * full sized packet so it can remain in vpninfo->cstp_pkt and be reused
 			 * for receiving the next packet, if it's something other than data and
 			 * doesn't get queued and freed. */
-			this = vpninfo->cstp_pkt = malloc(sizeof(struct pkt) + receive_mtu);
+			this = vpninfo->cstp_pkt = alloc_pkt(vpninfo, receive_mtu);
 			if (!this)
 				return -ENOMEM;
 			eh = this->data - rsv_hdr_size;
@@ -1384,7 +1384,7 @@ static int ppp_mainloop(struct openconnect_info *vpninfo, int dtls,
 			return 1;
 		}
 
-		free(this);
+		free_pkt(vpninfo, this);
 		vpninfo->current_ssl_pkt = NULL;
 	}
 
@@ -1469,7 +1469,7 @@ static int ppp_mainloop(struct openconnect_info *vpninfo, int dtls,
 						 proto == PPP_LCP ? ASYNCMAP_LCP : ppp->out_asyncmap);
 			if (!this)
 				return 1; /* XX */
-			free(vpninfo->current_ssl_pkt);
+			free_pkt(vpninfo, vpninfo->current_ssl_pkt);
 			vpninfo->current_ssl_pkt = this;
 		}
 
@@ -1676,7 +1676,7 @@ int ppp_udp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readabl
 			 * may be in active use while we attempt to connect DTLS.
 			 * So use vpninfo->dtls_pkt for this. */
 			if (!vpninfo->dtls_pkt)
-				vpninfo->dtls_pkt = malloc(sizeof(struct pkt) + receive_mtu);
+				vpninfo->dtls_pkt = alloc_pkt(vpninfo, receive_mtu);
 			if (!vpninfo->dtls_pkt) {
 				vpn_progress(vpninfo, PRG_ERR, _("Allocation failed\n"));
 				dtls_close(vpninfo);
@@ -1707,7 +1707,7 @@ int ppp_udp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readabl
 			} else if (ret > 0) {
 				vpninfo->dtls_state = DTLS_ESTABLISHED;
 				vpninfo->dtls_pkt = NULL;
-				free(this);
+				free_pkt(vpninfo, this);
 
 				/* We are going to take over the PPP now; reset the TCP one */
 				ret = ppp_reset(vpninfo);

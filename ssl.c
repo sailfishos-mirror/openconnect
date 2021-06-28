@@ -1131,9 +1131,9 @@ int ssl_reconnect(struct openconnect_info *vpninfo)
 	timeout = vpninfo->reconnect_timeout;
 	interval = vpninfo->reconnect_interval;
 
-	free(vpninfo->dtls_pkt);
+	free_pkt(vpninfo, vpninfo->dtls_pkt);
 	vpninfo->dtls_pkt = NULL;
-	free(vpninfo->tun_pkt);
+	free_pkt(vpninfo, vpninfo->tun_pkt);
 	vpninfo->tun_pkt = NULL;
 
 	while (1) {

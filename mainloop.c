@@ -53,7 +53,7 @@ int tun_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 	if (!tun_is_up(vpninfo)) {
 		/* no tun yet; clear any queued packets */
 		while ((this = dequeue_packet(&vpninfo->incoming_queue)))
-			free(this);
+			free_pkt(vpninfo, this);
 
 		return 0;
 	}
@@ -64,7 +64,7 @@ int tun_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			int len = vpninfo->ip_info.mtu;
 
 			if (!out_pkt) {
-				out_pkt = malloc(sizeof(struct pkt) + len + vpninfo->pkt_trailer);
+				out_pkt = alloc_pkt(vpninfo, len + vpninfo->pkt_trailer);
 				if (!out_pkt) {
 					vpn_progress(vpninfo, PRG_ERR, _("Allocation failed\n"));
 					break;
@@ -104,7 +104,7 @@ int tun_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		vpninfo->stats.rx_pkts++;
 		vpninfo->stats.rx_bytes += this->len;
 
-		free(this);
+		free_pkt(vpninfo, this);
 	}
 	/* Work is not done if we just got rid of packets off the queue */
 	return work_done;

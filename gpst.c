@@ -1128,7 +1128,7 @@ int gpst_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		int len, payload_len;
 
 		if (!vpninfo->cstp_pkt) {
-			vpninfo->cstp_pkt = malloc(sizeof(struct pkt) + receive_mtu);
+			vpninfo->cstp_pkt = alloc_pkt(vpninfo, receive_mtu);
 			if (!vpninfo->cstp_pkt) {
 				vpn_progress(vpninfo, PRG_ERR, _("Allocation failed\n"));
 				break;
@@ -1239,7 +1239,7 @@ int gpst_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		}
 		/* Don't free the 'special' packets */
 		if (vpninfo->current_ssl_pkt != &dpd_pkt)
-			free(vpninfo->current_ssl_pkt);
+			free_pkt(vpninfo, vpninfo->current_ssl_pkt);
 
 		vpninfo->current_ssl_pkt = NULL;
 	}
@@ -1379,14 +1379,14 @@ int gpst_esp_send_probes(struct openconnect_info *vpninfo)
 		plen = sizeof(struct ip6_hdr) + icmplen;
 	else
 		plen = sizeof(struct ip) + icmplen;
-	struct pkt *pkt = malloc(sizeof(*pkt) + plen + vpninfo->pkt_trailer);
+	struct pkt *pkt = alloc_pkt(vpninfo, plen + vpninfo->pkt_trailer);
 	if (!pkt)
 		return -ENOMEM;
 
 	if (vpninfo->dtls_fd == -1) {
 		int fd = udp_connect(vpninfo);
 		if (fd < 0) {
-			free(pkt);
+			free_pkt(vpninfo, pkt);
 			return fd;
 		}
 		/* We are not connected until we get an ESP packet back */
@@ -1496,7 +1496,7 @@ int gpst_esp_send_probes(struct openconnect_info *vpninfo)
 			vpn_progress(vpninfo, PRG_DEBUG, _("Failed to send ESP probe\n"));
 	}
 
-	free(pkt);
+	free_pkt(vpninfo, pkt);
 
 	vpninfo->dtls_times.last_tx = time(&vpninfo->new_dtls_started);
 

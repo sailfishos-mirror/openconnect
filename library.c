@@ -687,10 +687,10 @@ void openconnect_vpninfo_free(struct openconnect_info *vpninfo)
 	inflateEnd(&vpninfo->inflate_strm);
 	deflateEnd(&vpninfo->deflate_strm);
 
-	free(vpninfo->deflate_pkt);
-	free(vpninfo->tun_pkt);
-	free(vpninfo->dtls_pkt);
-	free(vpninfo->cstp_pkt);
+	free_pkt(vpninfo, vpninfo->deflate_pkt);
+	free_pkt(vpninfo, vpninfo->tun_pkt);
+	free_pkt(vpninfo, vpninfo->dtls_pkt);
+	free_pkt(vpninfo, vpninfo->cstp_pkt);
 	free(vpninfo->bearer_token);
 	free(vpninfo);
 }

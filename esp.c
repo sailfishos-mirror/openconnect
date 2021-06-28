@@ -156,7 +156,7 @@ int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		struct pkt *pkt;
 
 		if (!vpninfo->dtls_pkt) {
-			vpninfo->dtls_pkt = malloc(sizeof(struct pkt) + len);
+			vpninfo->dtls_pkt = alloc_pkt(vpninfo, len);
 			if (!vpninfo->dtls_pkt) {
 				vpn_progress(vpninfo, PRG_ERR, _("Allocation failed\n"));
 				break;
@@ -244,7 +244,7 @@ int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			}
 		}
 		if (pkt->data[len - 1] == 0x05) {
-			struct pkt *newpkt = malloc(sizeof(*pkt) + receive_mtu + vpninfo->pkt_trailer);
+			struct pkt *newpkt = alloc_pkt(vpninfo, receive_mtu + vpninfo->pkt_trailer);
 			int newlen = receive_mtu;
 			if (!newpkt) {
 				vpn_progress(vpninfo, PRG_ERR,
@@ -255,7 +255,7 @@ int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 					    pkt->data, &pkt->len) || pkt->len) {
 				vpn_progress(vpninfo, PRG_ERR,
 					     _("LZO decompression of ESP packet failed\n"));
-				free(newpkt);
+				free_pkt(vpninfo, newpkt);
 				continue;
 			}
 			newpkt->len = receive_mtu - newlen;
@@ -344,7 +344,7 @@ int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			len = construct_esp_packet(vpninfo, this, 0);
 			if (len < 0) {
 				/* Should we disable ESP? */
-				free(this);
+				free_pkt(vpninfo, this);
 				work_done = 1;
 				continue;
 			}
@@ -378,7 +378,7 @@ int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			unmonitor_write_fd(vpninfo, dtls);
 			vpninfo->deflate_pkt = NULL;
 		}
-		free(this);
+		free_pkt(vpninfo, this);
 		work_done = 1;
 	}
 
@@ -399,7 +399,7 @@ void esp_close(struct openconnect_info *vpninfo)
 	if (vpninfo->dtls_state > DTLS_DISABLED)
 		vpninfo->dtls_state = DTLS_SLEEPING;
 	if (vpninfo->deflate_pkt) {
-		free(vpninfo->deflate_pkt);
+		free_pkt(vpninfo, vpninfo->deflate_pkt);
 		vpninfo->deflate_pkt = NULL;
 	}
 }

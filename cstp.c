@@ -715,8 +715,8 @@ int cstp_connect(struct openconnect_info *vpninfo)
 
 	/* If *any* compression is enabled, we'll need a deflate_pkt to compress into */
 	if (deflate_bufsize > vpninfo->deflate_pkt_size) {
-		free(vpninfo->deflate_pkt);
-		vpninfo->deflate_pkt = malloc(sizeof(struct pkt) + deflate_bufsize);
+		free_pkt(vpninfo, vpninfo->deflate_pkt);
+		vpninfo->deflate_pkt = alloc_pkt(vpninfo, deflate_bufsize);
 		if (!vpninfo->deflate_pkt) {
 			vpninfo->deflate_pkt_size = 0;
 			vpn_progress(vpninfo, PRG_ERR,
@@ -921,7 +921,7 @@ int cstp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		int len, payload_len;
 
 		if (!vpninfo->cstp_pkt) {
-			vpninfo->cstp_pkt = malloc(sizeof(struct pkt) + receive_mtu);
+			vpninfo->cstp_pkt = alloc_pkt(vpninfo, receive_mtu);
 			if (!vpninfo->cstp_pkt) {
 				vpn_progress(vpninfo, PRG_ERR, _("Allocation failed\n"));
 				break;
@@ -1071,12 +1071,12 @@ int cstp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		}
 		/* Don't free the 'special' packets */
 		if (vpninfo->current_ssl_pkt == vpninfo->deflate_pkt) {
-			free(vpninfo->pending_deflated_pkt);
+			free_pkt(vpninfo, vpninfo->pending_deflated_pkt);
 			vpninfo->pending_deflated_pkt = NULL;
 		} else if (vpninfo->current_ssl_pkt != &dpd_pkt &&
 			 vpninfo->current_ssl_pkt != &dpd_resp_pkt &&
 			 vpninfo->current_ssl_pkt != &keepalive_pkt)
-			free(vpninfo->current_ssl_pkt);
+			free_pkt(vpninfo, vpninfo->current_ssl_pkt);
 
 		vpninfo->current_ssl_pkt = NULL;
 	}
