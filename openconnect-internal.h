@@ -142,6 +142,7 @@
 /****************************************************************************/
 
 struct pkt {
+	int alloc_len;
 	int len;
 	struct pkt *next;
 	union {
@@ -386,17 +387,6 @@ static inline int queue_packet(struct pkt_q *q, struct pkt *p)
 static inline void init_pkt_queue(struct pkt_q *q)
 {
 	q->tail = &q->head;
-}
-
-
-static inline struct pkt *alloc_pkt(struct openconnect_info *vpninfo, int len)
-{
-	return malloc(sizeof(struct pkt) + len);
-}
-
-static inline void free_pkt(struct openconnect_info *vpninfo, struct pkt *pkt)
-{
-	free(pkt);
 }
 
 #define TLS_OVERHEAD 5 /* packet + header */
@@ -753,6 +743,7 @@ struct openconnect_info {
 	int got_pause_cmd;
 	char cancel_type;
 
+	struct pkt_q free_queue;
 	struct pkt_q incoming_queue;
 	struct pkt_q outgoing_queue;
 	struct pkt_q tcp_control_queue;		/* Control packets to be sent via TCP */
@@ -797,6 +788,35 @@ struct openconnect_info {
 	int (*ssl_gets)(struct openconnect_info *vpninfo, char *buf, size_t len);
 	int (*ssl_write)(struct openconnect_info *vpninfo, char *buf, size_t len);
 };
+
+
+static inline struct pkt *alloc_pkt(struct openconnect_info *vpninfo, int len)
+{
+	int alloc_len = sizeof(struct pkt) + len;
+
+	if (vpninfo->free_queue.head &&
+	    vpninfo->free_queue.head->alloc_len >= alloc_len)
+		return dequeue_packet(&vpninfo->free_queue);
+
+	if (alloc_len < 2048)
+		alloc_len = 2048;
+
+	struct pkt *pkt = malloc(alloc_len);
+	if (pkt)
+		pkt->alloc_len = alloc_len;
+	return pkt;
+}
+
+static inline void free_pkt(struct openconnect_info *vpninfo, struct pkt *pkt)
+{
+	if (!pkt)
+		return;
+
+	if (vpninfo->free_queue.count < vpninfo->max_qlen * 2)
+		requeue_packet(&vpninfo->free_queue, pkt);
+	else
+		free(pkt);
+}
 
 #ifdef _WIN32
 #define monitor_read_fd(_v, _n) _v->_n##_monitored |= FD_READ
@@ -1232,7 +1252,8 @@ int openconnect_install_ctx_verify(struct openconnect_info *vpninfo,
 
 /* mainloop.c */
 int tun_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable);
-int queue_new_packet(struct pkt_q *q, void *buf, int len);
+int queue_new_packet(struct openconnect_info *vpninfo,
+		     struct pkt_q *q, void *buf, int len);
 int keepalive_action(struct keepalive_info *ka, int *timeout);
 int ka_stalled_action(struct keepalive_info *ka, int *timeout);
 int ka_check_deadline(int *timeout, time_t now, time_t due);

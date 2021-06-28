@@ -30,9 +30,10 @@
 
 #include "openconnect-internal.h"
 
-int queue_new_packet(struct pkt_q *q, void *buf, int len)
+int queue_new_packet(struct openconnect_info *vpninfo,
+		     struct pkt_q *q, void *buf, int len)
 {
-	struct pkt *new = malloc(sizeof(struct pkt) + len);
+	struct pkt *new = alloc_pkt(vpninfo, len);
 	if (!new)
 		return -ENOMEM;
 

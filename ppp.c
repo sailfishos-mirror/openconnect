@@ -76,7 +76,7 @@ static struct pkt *hdlc_into_new_pkt(struct openconnect_info *vpninfo, struct pk
 	/* Every byte in payload and 2-byte FCS potentially expands to two bytes,
 	 * plus 2 for flag (0x7e) at start and end. We know that we will output
 	 * at least 4 bytes so we can stash those in the header. */
-	struct pkt *p = malloc(sizeof(struct pkt) + len*2 + 2);
+	struct pkt *p = alloc_pkt(vpninfo, len*2 + 2);
 	if (!p)
 		return NULL;
 
@@ -360,10 +360,10 @@ static int buf_append_ppp_tlv_be32(struct oc_text_buf *buf, int tag, uint32_t va
 	return buf_append_ppp_tlv(buf, tag, 4, &val_be);
 }
 
-static int queue_config_packet(struct openconnect_info *vpninfo,
-				uint16_t proto, int id, int code, int len, const void *payload)
+static int queue_config_packet(struct openconnect_info *vpninfo, uint16_t proto,
+			       int id, int code, int len, const void *payload)
 {
-	struct pkt *p = malloc(sizeof(struct pkt) + len + 4);
+	struct pkt *p = alloc_pkt(vpninfo, len + 4);
 
 	if (!p)
 		return -ENOMEM;

@@ -371,12 +371,16 @@ static const struct pkt esp_enable_pkt = {
 
 static int queue_esp_control(struct openconnect_info *vpninfo, int enable)
 {
-	struct pkt *new = malloc(sizeof(*new) + 13);
+	struct pkt *new = alloc_pkt(vpninfo, esp_enable_pkt.len);
 	if (!new)
 		return -ENOMEM;
 
-	memcpy(new, &esp_enable_pkt, sizeof(*new) + 13);
+	new->oncp = esp_enable_pkt.oncp;
+	new->len = esp_enable_pkt.len;
+
+	memcpy(new->data, esp_enable_pkt.data, esp_enable_pkt.len);
 	new->data[12] = enable;
+
 	queue_packet(&vpninfo->tcp_control_queue, new);
 	return 0;
 }
@@ -963,7 +967,8 @@ int oncp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			}
 
 			/* OK, we have a whole packet, and we have stuff after it */
-			queue_new_packet(&vpninfo->incoming_queue, vpninfo->cstp_pkt->data, iplen);
+			queue_new_packet(vpninfo, &vpninfo->incoming_queue,
+					 vpninfo->cstp_pkt->data, iplen);
 			kmplen -= iplen;
 			if (kmplen) {
 				/* Still data packets to come in this KMP300 */

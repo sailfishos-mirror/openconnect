@@ -69,6 +69,7 @@ struct openconnect_info *openconnect_vpninfo_new(const char *useragent,
 #ifndef _WIN32
 	vpninfo->tun_fd = -1;
 #endif
+	init_pkt_queue(&vpninfo->free_queue);
 	init_pkt_queue(&vpninfo->incoming_queue);
 	init_pkt_queue(&vpninfo->outgoing_queue);
 	init_pkt_queue(&vpninfo->tcp_control_queue);
@@ -691,6 +692,10 @@ void openconnect_vpninfo_free(struct openconnect_info *vpninfo)
 	free_pkt(vpninfo, vpninfo->tun_pkt);
 	free_pkt(vpninfo, vpninfo->dtls_pkt);
 	free_pkt(vpninfo, vpninfo->cstp_pkt);
+	struct pkt *pkt;
+	while ((pkt = dequeue_packet(&vpninfo->free_queue)))
+		free(pkt);
+
 	free(vpninfo->bearer_token);
 	free(vpninfo);
 }

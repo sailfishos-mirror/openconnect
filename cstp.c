@@ -761,7 +761,7 @@ int decompress_and_queue_packet(struct openconnect_info *vpninfo, int compr_type
 	   negotiated MTU after decompression. We reserve some extra
 	   space to handle that */
 	int receive_mtu = MAX(16384, vpninfo->ip_info.mtu);
-	struct pkt *new = malloc(sizeof(struct pkt) + receive_mtu);
+	struct pkt *new = alloc_pkt(vpninfo, receive_mtu);
 	const char *comprname = "";
 
 	if (!new)
