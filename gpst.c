@@ -54,8 +54,6 @@
 # include <linux/tcp.h>
 #endif
 
-#include <assert.h>
-
 #include "openconnect-internal.h"
 
 /*
