@@ -18,6 +18,8 @@
 
 #include <config.h>
 
+#include "openconnect-internal.h"
+
 #include <unistd.h>
 #include <string.h>
 #include <ctype.h>
@@ -27,8 +29,6 @@
 #include <stddef.h>
 #include <limits.h>
 #include <stdarg.h>
-
-#include "openconnect-internal.h"
 
 #define BUF_CHUNK_SIZE 4096
 #define OC_BUF_MAX ((unsigned)(16*1024*1024))

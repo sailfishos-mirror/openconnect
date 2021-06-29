@@ -17,13 +17,15 @@
 
 #include <config.h>
 
+#include "openconnect-internal.h"
+
+#include <openssl/rand.h>
+
+#include <sys/types.h>
+
 #include <errno.h>
 #include <string.h>
-#include <sys/types.h>
 #include <ctype.h>
-
-#include "openconnect-internal.h"
-#include <openssl/rand.h>
 
 #ifdef HAVE_LIBP11 /* And p11-kit */
 

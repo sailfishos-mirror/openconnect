@@ -18,16 +18,8 @@
 
 #include <config.h>
 
-#include <unistd.h>
-#include <fcntl.h>
-#include <time.h>
-#include <string.h>
-#include <ctype.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <sys/types.h>
-#include <stdarg.h>
+#include "openconnect-internal.h"
+
 #ifdef HAVE_LZ4
 #include <lz4.h>
 #ifndef HAVE_LZ4_COMPRESS_DEFAULT
@@ -35,12 +27,21 @@
 #endif
 #endif
 
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/types.h>
 #if defined(__linux__)
 /* For TCP_INFO */
 # include <linux/tcp.h>
 #endif
 
-#include "openconnect-internal.h"
+#include <time.h>
+#include <string.h>
+#include <ctype.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdarg.h>
 
 /*
  * Data packets are encapsulated in the SSL stream as follows:

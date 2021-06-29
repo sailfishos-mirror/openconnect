@@ -17,9 +17,10 @@
  * Lesser General Public License for more details.
  */
 
-#include "config.h"
+#include <config.h>
 
 #include "openconnect-internal.h"
+
 #include "gnutls.h"
 
 #include <stdio.h>

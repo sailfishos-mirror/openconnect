@@ -18,14 +18,14 @@
 
 #include <config.h>
 
+#include "openconnect-internal.h"
+
+#include <stoken.h>
+
 #include <ctype.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include <stoken.h>
-
-#include "openconnect-internal.h"
 
 #ifndef STOKEN_CHECK_VER
 #define STOKEN_CHECK_VER(x,y) 0
@@ -333,4 +333,3 @@ int do_gen_stoken_code(struct openconnect_info *vpninfo,
 		return -ENOMEM;
 	return 0;
 }
-

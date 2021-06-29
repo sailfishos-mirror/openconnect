@@ -17,15 +17,17 @@
 
 #include <config.h>
 
+#include "openconnect-internal.h"
+
+#include "lzo.h"
+
+#include <unistd.h>
+
 #include <stdio.h>
 #include <stdint.h>
-#include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
-
-#include "openconnect-internal.h"
-#include "lzo.h"
 
 int print_esp_keys(struct openconnect_info *vpninfo, const char *name, struct esp *esp)
 {

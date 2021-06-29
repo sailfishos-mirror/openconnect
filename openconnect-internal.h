@@ -22,41 +22,18 @@
 
 #define __OPENCONNECT_PRIVATE__
 
+/*
+ * We need to include <winsock2.h> or <winsock.h> before openconnect.h.
+ * Indeed openconnect.h is specifically intended not to be self-sufficient,
+ * so that end-users can choose between <winsock.h> and <winsock2.h>.
+ */
 #ifdef _WIN32
 #include <winsock2.h>
-#include <ws2tcpip.h>
-#ifndef SECURITY_WIN32
-#define SECURITY_WIN32 1
-#endif
-#include <security.h>
-
-#ifndef _Out_cap_c_
-#define _Out_cap_c_(sz)
-#endif
-#ifndef _Ret_bytecount_
-#define _Ret_bytecount_(sz)
-#endif
-#include "wintun.h"
-#else
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/select.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <fcntl.h>
 #endif
 
 #include "openconnect.h"
 
-/* Equivalent of "/dev/null" on Windows.
- * See https://stackoverflow.com/a/44163934
- */
-#ifdef _WIN32
-#define DEVNULL "NUL:"
-#else
-#define DEVNULL "/dev/null"
-#endif
+#include "json.h"
 
 #if defined(OPENCONNECT_OPENSSL)
 #include <openssl/ssl.h>
@@ -67,7 +44,7 @@
 #else
 #define method_const
 #endif
-#endif /* OPENSSL */
+#endif
 
 #if defined(OPENCONNECT_GNUTLS)
 #include <gnutls/gnutls.h>
@@ -80,14 +57,6 @@
 #include <langinfo.h>
 #include <iconv.h>
 #endif
-
-#include <zlib.h>
-#include <stdint.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <string.h>
-#include <errno.h>
 
 #ifdef LIBPROXY_HDR
 #include LIBPROXY_HDR
@@ -122,8 +91,47 @@
 #define N_(s) s
 
 #include <libxml/tree.h>
+#include <zlib.h>
 
-#include <json.h>
+#ifdef _WIN32
+#ifndef _Out_cap_c_
+#define _Out_cap_c_(sz)
+#endif
+#ifndef _Ret_bytecount_
+#define _Ret_bytecount_(sz)
+#endif
+#include "wintun.h"
+
+#include <ws2tcpip.h>
+#ifndef SECURITY_WIN32
+#define SECURITY_WIN32 1
+#endif
+#include <security.h>
+#else
+#include <sys/socket.h>
+#include <sys/select.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <fcntl.h>
+#endif
+
+#include <unistd.h>
+#include <sys/time.h>
+#include <sys/types.h>
+
+#include <stdint.h>
+#include <string.h>
+#include <errno.h>
+
+/* Equivalent of "/dev/null" on Windows.
+ * See https://stackoverflow.com/a/44163934
+ */
+#ifdef _WIN32
+#define DEVNULL "NUL:"
+#else
+#define DEVNULL "/dev/null"
+#endif
 
 #define SHA512_SIZE 64
 #define SHA384_SIZE 48
@@ -314,86 +322,6 @@ struct http_auth_state {
 	};
 };
 
-struct vpn_proto {
-	const char *name;
-	const char *pretty_name;
-	const char *description;
-	const char *secure_cookie;
-	const char *udp_protocol;
-	int proto;
-	unsigned int flags;
-	int (*vpn_close_session)(struct openconnect_info *vpninfo, const char *reason);
-
-	/* This does the full authentication, calling back as appropriate */
-	int (*obtain_cookie)(struct openconnect_info *vpninfo);
-
-	/* Establish the TCP connection (and obtain configuration) */
-	int (*tcp_connect)(struct openconnect_info *vpninfo);
-
-	int (*tcp_mainloop)(struct openconnect_info *vpninfo, int *timeout, int readable);
-
-	/* Add headers common to each HTTP request */
-	void (*add_http_headers)(struct openconnect_info *vpninfo, struct oc_text_buf *buf);
-
-	/* Set up the UDP (DTLS) connection. Doesn't actually *start* it. */
-	int (*udp_setup)(struct openconnect_info *vpninfo);
-
-	/* This will actually complete the UDP connection setup/handshake on the wire,
-	   as well as transporting packets */
-	int (*udp_mainloop)(struct openconnect_info *vpninfo, int *timeout, int readable);
-
-	/* Close the connection but leave the session setup so it restarts */
-	void (*udp_close)(struct openconnect_info *vpninfo);
-
-	/* Close and destroy the (UDP) session */
-	void (*udp_shutdown)(struct openconnect_info *vpninfo);
-
-	/* Send probe packets to start or maintain the (UDP) session */
-	int (*udp_send_probes)(struct openconnect_info *vpninfo);
-
-	/* Catch probe packet confirming the (UDP) session */
-	int (*udp_catch_probe)(struct openconnect_info *vpninfo, struct pkt *p);
-};
-
-struct pkt_q {
-	struct pkt *head;
-	struct pkt **tail;
-	int count;
-};
-
-static inline struct pkt *dequeue_packet(struct pkt_q *q)
-{
-	struct pkt *ret = q->head;
-
-	if (ret) {
-		q->head = ret->next;
-		if (!--q->count)
-			q->tail = &q->head;
-	}
-	return ret;
-}
-
-static inline void requeue_packet(struct pkt_q *q, struct pkt *p)
-{
-	p->next = q->head;
-	q->head = p;
-	if (!q->count++)
-		q->tail = &p->next;
-}
-
-static inline int queue_packet(struct pkt_q *q, struct pkt *p)
-{
-	*(q->tail) = p;
-	p->next = NULL;
-	q->tail = &p->next;
-	return ++q->count;
-}
-
-static inline void init_pkt_queue(struct pkt_q *q)
-{
-	q->tail = &q->head;
-}
-
 #define TLS_OVERHEAD 5 /* packet + header */
 #define DTLS_OVERHEAD (1 /* packet + header */ + 13 /* DTLS header */ + \
 	 20 /* biggest supported MAC (SHA1) */ +  32 /* biggest supported IV (AES-256) */ + \
@@ -419,6 +347,8 @@ struct oc_pcsc_ctx;
 struct oc_tpm1_ctx;
 struct oc_tpm2_ctx;
 
+struct openconnect_info;
+
 struct cert_info {
 	struct openconnect_info *vpninfo;
 	char *cert;
@@ -431,6 +361,14 @@ struct cert_info {
 	struct oc_tpm2_ctx *tpm2;
 #endif
 };
+
+struct pkt_q {
+	struct pkt *head;
+	struct pkt **tail;
+	int count;
+};
+
+struct vpn_proto;
 
 struct openconnect_info {
 	const struct vpn_proto *proto;
@@ -799,6 +737,79 @@ struct openconnect_info {
 	int (*ssl_write)(struct openconnect_info *vpninfo, char *buf, size_t len);
 };
 
+struct vpn_proto {
+	const char *name;
+	const char *pretty_name;
+	const char *description;
+	const char *secure_cookie;
+	const char *udp_protocol;
+	int proto;
+	unsigned int flags;
+	int (*vpn_close_session)(struct openconnect_info *vpninfo, const char *reason);
+
+	/* This does the full authentication, calling back as appropriate */
+	int (*obtain_cookie)(struct openconnect_info *vpninfo);
+
+	/* Establish the TCP connection (and obtain configuration) */
+	int (*tcp_connect)(struct openconnect_info *vpninfo);
+
+	int (*tcp_mainloop)(struct openconnect_info *vpninfo, int *timeout, int readable);
+
+	/* Add headers common to each HTTP request */
+	void (*add_http_headers)(struct openconnect_info *vpninfo, struct oc_text_buf *buf);
+
+	/* Set up the UDP (DTLS) connection. Doesn't actually *start* it. */
+	int (*udp_setup)(struct openconnect_info *vpninfo);
+
+	/* This will actually complete the UDP connection setup/handshake on the wire,
+	   as well as transporting packets */
+	int (*udp_mainloop)(struct openconnect_info *vpninfo, int *timeout, int readable);
+
+	/* Close the connection but leave the session setup so it restarts */
+	void (*udp_close)(struct openconnect_info *vpninfo);
+
+	/* Close and destroy the (UDP) session */
+	void (*udp_shutdown)(struct openconnect_info *vpninfo);
+
+	/* Send probe packets to start or maintain the (UDP) session */
+	int (*udp_send_probes)(struct openconnect_info *vpninfo);
+
+	/* Catch probe packet confirming the (UDP) session */
+	int (*udp_catch_probe)(struct openconnect_info *vpninfo, struct pkt *p);
+};
+
+static inline struct pkt *dequeue_packet(struct pkt_q *q)
+{
+	struct pkt *ret = q->head;
+
+	if (ret) {
+		q->head = ret->next;
+		if (!--q->count)
+			q->tail = &q->head;
+	}
+	return ret;
+}
+
+static inline void requeue_packet(struct pkt_q *q, struct pkt *p)
+{
+	p->next = q->head;
+	q->head = p;
+	if (!q->count++)
+		q->tail = &p->next;
+}
+
+static inline int queue_packet(struct pkt_q *q, struct pkt *p)
+{
+	*(q->tail) = p;
+	p->next = NULL;
+	q->tail = &p->next;
+	return ++q->count;
+}
+
+static inline void init_pkt_queue(struct pkt_q *q)
+{
+	q->tail = &q->head;
+}
 
 static inline struct pkt *alloc_pkt(struct openconnect_info *vpninfo, int len)
 {

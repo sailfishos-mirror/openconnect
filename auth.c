@@ -18,13 +18,13 @@
 
 #include <config.h>
 
-#include <stdio.h>
+#include "openconnect-internal.h"
+
+#include <libxml/parser.h>
+#include <libxml/tree.h>
+
 #include <unistd.h>
 #include <fcntl.h>
-#include <time.h>
-#include <string.h>
-#include <ctype.h>
-#include <errno.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #ifndef _WIN32
@@ -33,10 +33,11 @@
 #include <grp.h>
 #endif
 
-#include <libxml/parser.h>
-#include <libxml/tree.h>
-
-#include "openconnect-internal.h"
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <ctype.h>
+#include <errno.h>
 
 static int xmlpost_append_form_opts(struct openconnect_info *vpninfo,
 				    struct oc_auth_form *form, struct oc_text_buf *body);

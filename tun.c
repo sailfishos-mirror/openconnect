@@ -17,12 +17,12 @@
 
 #include <config.h>
 
+#include "openconnect-internal.h"
+
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <string.h>
 #include <fcntl.h>
-#include <unistd.h>
-#include <signal.h>
 #include <sys/wait.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
@@ -31,17 +31,17 @@
 #include <netinet/ip.h>
 #include <net/if.h>
 #include <arpa/inet.h>
-#include <errno.h>
-#include <ctype.h>
-#include <stdio.h>
-#include <stdlib.h>
 #if defined(__APPLE__) && defined(HAVE_NET_UTUN_H)
 #include <sys/kern_control.h>
 #include <sys/sys_domain.h>
 #include <net/if_utun.h>
 #endif
-
-#include "openconnect-internal.h"
+#include <errno.h>
+#include <ctype.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 /*
  * If an if_tun.h include file was found anywhere (by the Makefile), it's

@@ -22,25 +22,25 @@
 
 #include <config.h>
 
+#include "openconnect-internal.h"
+
+#include <libxml/HTMLparser.h>
+#include <libxml/HTMLtree.h>
+
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/types.h>
+#ifndef _WIN32
+#include <sys/wait.h>
+#endif
+
 #include <time.h>
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <sys/types.h>
 #include <stdarg.h>
-#include <sys/types.h>
-#ifndef _WIN32
-#include <sys/wait.h>
-#endif
-
-#include <libxml/HTMLparser.h>
-#include <libxml/HTMLtree.h>
-
-#include "openconnect-internal.h"
 
 /* XX: This is actually a lot of duplication with the CSTP version. */
 void oncp_common_headers(struct openconnect_info *vpninfo, struct oc_text_buf *buf)

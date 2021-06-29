@@ -16,8 +16,8 @@
 #ifndef __OPENCONNECT_WIN32_IPICMP_H__
 #define __OPENCONNECT_WIN32_IPICMP_H__
 
-#include <stdint.h>
 #include <ws2tcpip.h>
+#include <stdint.h>
 
 /* IPv4 header and flags used in gpst.c */
 

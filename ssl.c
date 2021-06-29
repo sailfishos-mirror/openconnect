@@ -17,17 +17,13 @@
 
 #include <config.h>
 
+#include "openconnect-internal.h"
+
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <unistd.h>
 #include <inttypes.h>
 #include <fcntl.h>
-#include <string.h>
-#include <stdio.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <time.h>
 #if defined(__linux__) || defined(__ANDROID__)
 #include <sys/vfs.h>
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__OpenBSD__) || defined(__APPLE__)
@@ -45,11 +41,16 @@
 #include <sys/socket.h>
 #endif
 
-#include "openconnect-internal.h"
-
 #ifdef ANDROID_KEYSTORE
 #include <sys/un.h>
 #endif
+
+#include <string.h>
+#include <stdio.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <stdarg.h>
+#include <time.h>
 
 /* OSX < 1.6 doesn't have AI_NUMERICSERV */
 #ifndef AI_NUMERICSERV

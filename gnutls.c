@@ -17,15 +17,9 @@
 
 #include <config.h>
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <string.h>
-#include <ctype.h>
-#include <stdio.h>
-#include <errno.h>
-#include <stdarg.h>
-#include <stdlib.h>
+#include "openconnect-internal.h"
+
+#include "gnutls.h"
 
 #include <gnutls/gnutls.h>
 #include <gnutls/x509.h>
@@ -39,14 +33,22 @@
 #include <p11-kit/pin.h>
 #endif
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
+#include <string.h>
+#include <ctype.h>
+#include <stdio.h>
+#include <errno.h>
+#include <stdarg.h>
+#include <stdlib.h>
+
 #if defined(HAVE_P11KIT) || defined(HAVE_GNUTLS_SYSTEM_KEYS)
 static int gnutls_pin_callback(void *priv, int attempt, const char *uri,
 			       const char *token_label, unsigned int flags,
 			       char *pin, size_t pin_max);
 #endif /* HAVE_P11KIT || HAVE_GNUTLS_SYSTEM_KEYS */
-
-#include "gnutls.h"
-#include "openconnect-internal.h"
 
 /* GnuTLS 2.x lacked this. But GNUTLS_E_UNEXPECTED_PACKET_LENGTH basically
  * does the same thing.

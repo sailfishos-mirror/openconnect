@@ -17,8 +17,11 @@
 
 #include <config.h>
 
+#include "openconnect-internal.h"
+
 #include <unistd.h>
 #include <fcntl.h>
+
 #include <time.h>
 #include <string.h>
 #include <ctype.h>
@@ -26,8 +29,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
-
-#include "openconnect-internal.h"
 
 static int basic_authorization(struct openconnect_info *vpninfo, int proxy,
 			       struct http_auth_state *auth_state,

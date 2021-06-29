@@ -18,8 +18,13 @@
 
 #include <config.h>
 
+#include "openconnect-internal.h"
+
+#include <libxml/uri.h>
+
 #include <unistd.h>
 #include <fcntl.h>
+
 #include <time.h>
 #include <string.h>
 #include <ctype.h>
@@ -27,10 +32,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
-
-#include <libxml/uri.h>
-
-#include "openconnect-internal.h"
 
 static int proxy_write(struct openconnect_info *vpninfo, char *buf, size_t len);
 static int proxy_read(struct openconnect_info *vpninfo, char *buf, size_t len);

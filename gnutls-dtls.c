@@ -18,21 +18,22 @@
 
 #include <config.h>
 
-#include <errno.h>
-#include <sys/types.h>
+#include "gnutls.h"
+
+#include <gnutls/dtls.h>
+
 #include <unistd.h>
 #include <fcntl.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
+#include <sys/types.h>
 #ifndef _WIN32
 #include <netinet/in.h>
 #include <sys/socket.h>
 #endif
 
-
-#include <gnutls/dtls.h>
-#include "gnutls.h"
+#include <errno.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 #if GNUTLS_VERSION_NUMBER < 0x030400
 # define GNUTLS_CIPHER_CHACHA20_POLY1305 23

@@ -18,12 +18,11 @@
 
 #include <config.h>
 
-#include <string.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <ctype.h>
+#include "openconnect-internal.h"
+
+#if defined(OPENCONNECT_GNUTLS)
+#include "gnutls.h"
+#endif
 
 #ifdef HAVE_LIBSTOKEN
 #include <stoken.h>
@@ -32,15 +31,17 @@
 #include <libxml/tree.h>
 #include <zlib.h>
 
-#include "openconnect-internal.h"
-
-#if defined(OPENCONNECT_GNUTLS)
-#include "gnutls.h"
-#endif
-
 #if defined(OPENCONNECT_OPENSSL)
 #include <openssl/bio.h>
 #endif
+
+#include <unistd.h>
+#include <fcntl.h>
+
+#include <string.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <ctype.h>
 
 struct openconnect_info *openconnect_vpninfo_new(const char *useragent,
 						 openconnect_validate_peer_cert_vfn validate_peer_cert,

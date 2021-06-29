@@ -17,10 +17,10 @@
 
 #include <config.h>
 
+#include "openconnect-internal.h"
+
 #include <errno.h>
 #include <string.h>
-
-#include "openconnect-internal.h"
 
 static void print_gss_err(struct openconnect_info *vpninfo, const char *where,
 			  gss_OID mech, OM_uint32 err_maj, OM_uint32 err_min)

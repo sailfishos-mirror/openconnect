@@ -18,11 +18,11 @@
 #ifndef __OPENCONNECT_GNUTLS_H__
 #define __OPENCONNECT_GNUTLS_H__
 
+#include "openconnect-internal.h"
+
 #include <gnutls/gnutls.h>
 #include <gnutls/pkcs12.h>
 #include <gnutls/abstract.h>
-
-#include "openconnect-internal.h"
 
 int load_tpm1_key(struct openconnect_info *vpninfo, struct cert_info *certinfo,
 		  gnutls_datum_t *fdata, gnutls_privkey_t *pkey, gnutls_datum_t *pkey_sig);

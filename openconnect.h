@@ -20,9 +20,9 @@
 #ifndef __OPENCONNECT_H__
 #define __OPENCONNECT_H__
 
-#include <stdint.h>
 #include <sys/types.h>
-#include <unistd.h>
+
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {

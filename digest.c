@@ -17,11 +17,11 @@
 
 #include <config.h>
 
+#include "openconnect-internal.h"
+
 #include <errno.h>
 #include <string.h>
 #include <ctype.h>
-
-#include "openconnect-internal.h"
 
 #define ALGO_MD5	0
 #define ALGO_MD5_SESS	1

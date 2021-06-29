@@ -17,18 +17,19 @@
 
 #include <config.h>
 
-#include <errno.h>
-#include <limits.h>
-#include <stdlib.h>
+#include "openconnect-internal.h"
+
 #include <unistd.h>
-#include <string.h>
 #ifndef _WIN32
 /* for setgroups() */
 # include <sys/types.h>
 # include <grp.h>
 #endif
 
-#include "openconnect-internal.h"
+#include <errno.h>
+#include <limits.h>
+#include <stdlib.h>
+#include <string.h>
 
 int queue_new_packet(struct openconnect_info *vpninfo,
 		     struct pkt_q *q, void *buf, int len)

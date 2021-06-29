@@ -18,18 +18,20 @@
 
 #include <config.h>
 
-#include <stdio.h>
-#include <stdlib.h>
+#include "openconnect-internal.h"
+
+#include <libxml/parser.h>
+#include <libxml/tree.h>
+
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/types.h>
-#include <libxml/parser.h>
-#include <libxml/tree.h>
+
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
-
-#include "openconnect-internal.h"
+#include <stdio.h>
+#include <stdlib.h>
 
 static char *fetch_and_trim(xmlNode *node)
 {

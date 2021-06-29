@@ -17,11 +17,12 @@
 
 #include <config.h>
 
+#include "openconnect-internal.h"
+
 #include <iconv.h>
+
 #include <errno.h>
 #include <string.h>
-
-#include "openconnect-internal.h"
 
 static char *convert_str(struct openconnect_info *vpninfo, iconv_t ic,
 			 char *instr)

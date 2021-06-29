@@ -17,19 +17,20 @@
 
 #include <config.h>
 
-#include <errno.h>
-#include <sys/types.h>
+#include "openconnect-internal.h"
+
 #include <unistd.h>
+#include <sys/types.h>
 #include <fcntl.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
 #ifndef _WIN32
 #include <netinet/in.h>
 #include <sys/socket.h>
 #endif
 
-#include "openconnect-internal.h"
+#include <errno.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 /*
  * The master-secret is generated randomly by the client. The server
