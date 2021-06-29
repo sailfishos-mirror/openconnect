@@ -392,6 +392,23 @@ static inline int process_ring(struct openconnect_info *vpninfo, int tx, uint64_
 			this = dequeue_packet(&vpninfo->incoming_queue);
 			if (!this)
 				break;
+
+			/* If only a few packets on the queue, just send them
+			 * directly. The latency is much better. We benefit from
+			 * vhost-net TX when we're overloaded and want to use all
+			 * our CPU on the RX and crypto; there's not a lot of point
+			 * otherwise. */
+			if (!*kick && vpninfo->incoming_queue.count < vpninfo->max_qlen / 2 &&
+			    next_avail == (&ring->used->flags)[2 + (vpninfo->vhost_ring_size * 4)]) {
+				if (!os_write_tun(vpninfo, this)) {
+					vpninfo->stats.rx_pkts++;
+					vpninfo->stats.rx_bytes += this->len;
+
+					free_pkt(vpninfo, this);
+					continue;
+				}
+				/* Failed! Pretend it never happened; queue for vhost */
+			}
 			memset(&this->virtio.h, 0, sizeof(this->virtio.h));
 		} else {
 			int len = vpninfo->ip_info.mtu;
