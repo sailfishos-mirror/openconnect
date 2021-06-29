@@ -2614,8 +2614,7 @@ static int process_auth_form_cb(void *_vpninfo,
 			if (username &&
 			    (!strncasecmp(opt->name, "user", 4) ||
 			     !strncasecmp(opt->name, "uname", 5))) {
-				opt->_value = username;
-				username = NULL;
+				opt->_value = strdup(username);
 			} else {
 				opt->_value = saved_form_field(vpninfo, form->auth_id, opt->name);
 				if (!opt->_value)
