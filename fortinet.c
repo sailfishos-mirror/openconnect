@@ -417,10 +417,13 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 							goto out;
 						}
 						vpn_progress(vpninfo, PRG_INFO, _("Got IPv6 address %s\n"), a);
-						new_ip_info.netmask6 = add_option_steal(&new_opts, "ipaddr6", &a);
+						if (!vpninfo->disable_ipv6)
+							new_ip_info.netmask6 = add_option_steal(&new_opts, "ipaddr6", &a);
+						free(a);
 					} else {
 						vpn_progress(vpninfo, PRG_INFO, _("Got IPv6 address %s\n"), s);
-						new_ip_info.addr6 = add_option_steal(&new_opts, "ipaddr6", &s);
+						if (!vpninfo->disable_ipv6)
+							new_ip_info.addr6 = add_option_steal(&new_opts, "ipaddr6", &s);
 					}
 				} else if (xmlnode_is_named(x, "dns")) {
 					if (!xmlnode_get_prop(x, "domain", &s) && s && *s) {
