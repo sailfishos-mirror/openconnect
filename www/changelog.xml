@@ -46,6 +46,7 @@
        <a href="https://gitlab.gnome.org/GNOME/NetworkManager-openconnect/-/issues/46">#46</a>,
        <a href="https://gitlab.gnome.org/GNOME/NetworkManager-openconnect/-/issues/53">#53</a>)</i></li>
        <li>Disable brittle "system policy" enforcement where it cannot be gracefully overridden at user request. <a href="https://bugzilla.redhat.com/show_bug.cgi?id=1960763"><i>(RH#1960763)</i></a>.</li>
+       <li>Pass "portal cookie" fields from GlobalProtect portal to gateway to avoid repetition of password- or SAML-based login (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/199">!199</a>)</li>
      </ul><br/>
   </li>
   <li><b><a href="https://www.infradead.org/openconnect/download/openconnect-8.10.tar.gz">OpenConnect v8.10</a></b>

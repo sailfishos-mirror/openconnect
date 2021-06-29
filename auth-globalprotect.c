@@ -28,6 +28,8 @@
 struct login_context {
 	char *username;				/* Username that has already succeeded in some form */
 	char *alt_secret;			/* Alternative secret (DO NOT FREE) */
+	char *portal_userauthcookie;		/* portal-userauthcookie (from global-protect/getconfig.esp) */
+	char *portal_prelogonuserauthcookie;	/* portal-prelogonuserauthcookie (from global-protect/getconfig.esp) */
 	struct oc_auth_form *form;
 };
 
@@ -113,7 +115,14 @@ static int parse_prelogin_xml(struct openconnect_info *vpninfo, xmlNode *xml_nod
 
 	/* XX: Alt-secret form field must be specified for SAML, because we can't autodetect it */
 	if (saml_method || saml_path) {
-		if (!ctx->alt_secret) {
+		if (ctx->portal_userauthcookie)
+			vpn_progress(vpninfo, PRG_DEBUG, _("SAML authentication required; using portal-userauthcookie to continue SAML.\n"));
+		else if (ctx->portal_prelogonuserauthcookie)
+			vpn_progress(vpninfo, PRG_DEBUG, _("SAML authentication required; using portal-prelogonuserauthcookie to continue SAML.\n"));
+		else if (ctx->alt_secret)
+			vpn_progress(vpninfo, PRG_DEBUG, _("Destination form field %s was specified; assuming SAML %s authentication is complete.\n"),
+			             ctx->alt_secret, saml_method);
+		else {
 			if (saml_method && !strcmp(saml_method, "REDIRECT"))
 				vpn_progress(vpninfo, PRG_ERR,
 				             _("SAML %s authentication is required via %s\n"),
@@ -124,12 +133,10 @@ static int parse_prelogin_xml(struct openconnect_info *vpninfo, xmlNode *xml_nod
 				             saml_method);
 			vpn_progress(vpninfo, PRG_ERR,
 			             _("When SAML authentication is complete, specify destination form field by appending :field_name to login URL.\n"));
-                       /* XX: EINVAL will lead to "failure to parse response", with unnecessary/confusing extra logging output */
+			/* XX: EINVAL will lead to "failure to parse response", with unnecessary/confusing extra logging output */
 			result = -EPERM;
 			goto out;
-		} else
-			vpn_progress(vpninfo, PRG_DEBUG, _("Destination form field %s was specified; assuming SAML %s authentication is complete.\n"),
-			             saml_method, ctx->alt_secret);
+		}
 	}
 
 	/* Replace old form */
@@ -339,7 +346,7 @@ static int parse_login_xml(struct openconnect_info *vpninfo, xmlNode *xml_node, 
 		} else if (arg->check && (!value || strcmp(value, arg->check))) {
 			unknown_args++;
 			fatal_args += arg->err_missing;
-            vpn_progress(vpninfo, PRG_ERR,
+			vpn_progress(vpninfo, PRG_ERR,
 			             _("GlobalProtect login returned %s=%s (expected %s)\n"),
 			             arg->opt, value, arg->check);
 		} else if ((arg->err_missing || arg->warn_missing) && !value) {
@@ -392,6 +399,7 @@ err_out:
  */
 static int parse_portal_xml(struct openconnect_info *vpninfo, xmlNode *xml_node, void *cb_data)
 {
+	struct login_context *ctx = cb_data;
 	struct oc_auth_form *form;
 	xmlNode *x, *x2, *x3, *gateways = NULL;
 	struct oc_form_opt_select *opt;
@@ -446,8 +454,21 @@ static int parse_portal_xml(struct openconnect_info *vpninfo, xmlNode *xml_node,
 						}
 					}
 				}
-			} else
+			} else {
 				xmlnode_get_val(x, "portal-name", &portal);
+				if (!xmlnode_get_val(x, "portal-userauthcookie", &ctx->portal_userauthcookie)) {
+					if (!*ctx->portal_userauthcookie || !strcmp(ctx->portal_userauthcookie, "empty")) {
+						free(ctx->portal_userauthcookie);
+						ctx->portal_userauthcookie = NULL;
+					}
+				}
+				if (!xmlnode_get_val(x, "portal-prelogonuserauthcookie", &ctx->portal_prelogonuserauthcookie)) {
+					if (!*ctx->portal_prelogonuserauthcookie || !strcmp(ctx->portal_prelogonuserauthcookie, "empty")) {
+						free(ctx->portal_prelogonuserauthcookie);
+						ctx->portal_prelogonuserauthcookie = NULL;
+					}
+				}
+			}
 		}
 	}
 
@@ -609,6 +630,11 @@ static int gpst_login(struct openconnect_info *vpninfo, int portal, struct login
 		append_opt(request_body, "os-version", vpninfo->platname);
 		append_opt(request_body, "server", vpninfo->hostname);
 		append_opt(request_body, "computer", vpninfo->localname);
+		if (ctx->portal_userauthcookie)
+			append_opt(request_body, "portal-userauthcookie", ctx->portal_userauthcookie);
+		if (ctx->portal_prelogonuserauthcookie)
+			append_opt(request_body, "portal-prelogonuserauthcookie", ctx->portal_prelogonuserauthcookie);
+
 		if (vpninfo->ip_info.addr)
 			append_opt(request_body, "preferred-ip", vpninfo->ip_info.addr);
 		if (vpninfo->ip_info.addr6)
@@ -646,11 +672,13 @@ static int gpst_login(struct openconnect_info *vpninfo, int portal, struct login
 				/* New form is already populated from the challenge */
 				goto got_form;
 			} else if (portal && result == 0) {
-				/* Portal login succeeded; blindly retry same credentials on gateway,
-				 * unless it was a challenge auth form or alt-secret form.
+				/* Portal login succeeded; blindly retry same credentials on gateway if:
+				 *      (a) we received a cookie that should allow automatic retry
+				 *   OR (b) portal form was neither challenge auth nor alt-secret (SAML)
 				 */
 				portal = 0;
-				if (strcmp(ctx->form->auth_id, "_challenge") && !ctx->alt_secret) {
+				if (ctx->portal_userauthcookie || ctx->portal_prelogonuserauthcookie ||
+				    (strcmp(ctx->form->auth_id, "_challenge") && !ctx->alt_secret)) {
 					blind_retry = 1;
 					goto replay_form;
 				}
@@ -667,7 +695,7 @@ out:
 
 int gpst_obtain_cookie(struct openconnect_info *vpninfo)
 {
-	struct login_context ctx = { .username=NULL, .alt_secret=NULL, .form=NULL };
+	struct login_context ctx = { .username=NULL, .alt_secret=NULL, .portal_userauthcookie=NULL, .portal_prelogonuserauthcookie=NULL, .form=NULL };
 	int result;
 
 	/* An alternate password/secret field may be specified in the "URL path" (or --usergroup).
@@ -698,6 +726,8 @@ int gpst_obtain_cookie(struct openconnect_info *vpninfo)
 	}
 	free(ctx.username);
 	free(ctx.alt_secret);
+	free(ctx.portal_userauthcookie);
+	free(ctx.portal_prelogonuserauthcookie);
 	free_auth_form(ctx.form);
 	return result;
 }
