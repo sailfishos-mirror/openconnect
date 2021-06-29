@@ -778,14 +778,17 @@ static int https_socket_closed(struct openconnect_info *vpninfo)
  *  request_body_type:  Content type for a POST (e.g. text/html).  Can be NULL.
  *  request_body:       POST content
  *  form_buf:           Callee-allocated buffer for server content
+ *  header_cb:          Callback executed on every header line
+ *                      If HTTP authentication is needed, the callback specified needs to call http_auth_hdrs.
+ *  fetch_redirect:
  *
  * Return value:
  *  < 0, on error
  *  >=0, on success, indicating the length of the data in *form_buf
  */
-int do_https_request(struct openconnect_info *vpninfo, const char *method,
-		     const char *request_body_type, struct oc_text_buf *request_body,
-		     char **form_buf, int fetch_redirect)
+int do_https_request(struct openconnect_info *vpninfo, const char *method, const char *request_body_type,
+		     struct oc_text_buf *request_body, char **form_buf,
+		     int (*header_cb)(struct openconnect_info *, char *, char *), int fetch_redirect)
 {
 	struct oc_text_buf *buf;
 	int result;
@@ -793,6 +796,9 @@ int do_https_request(struct openconnect_info *vpninfo, const char *method,
 	int rlen, pad;
 	int i, auth = 0;
 	int max_redirects = 10;
+
+	if (!header_cb)
+		header_cb = http_auth_hdrs;
 
 	if (request_body_type && buf_error(request_body))
 		return buf_error(request_body);
@@ -902,7 +908,7 @@ int do_https_request(struct openconnect_info *vpninfo, const char *method,
 		}
 	}
 
-	result = process_http_response(vpninfo, 0, http_auth_hdrs, buf);
+	result = process_http_response(vpninfo, 0, header_cb, buf);
 	if (result < 0) {
 		if (rq_retry) {
 			openconnect_close_https(vpninfo, 0);

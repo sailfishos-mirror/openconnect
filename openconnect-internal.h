@@ -1351,9 +1351,9 @@ int process_proxy(struct openconnect_info *vpninfo, int ssl_sock);
 int internal_parse_url(const char *url, char **res_proto, char **res_host,
 		       int *res_port, char **res_path, int default_port);
 char *internal_get_url(struct openconnect_info *vpninfo);
-int do_https_request(struct openconnect_info *vpninfo, const char *method,
-		     const char *request_body_type, struct oc_text_buf *request_body,
-		     char **form_buf, int fetch_redirect);
+int do_https_request(struct openconnect_info *vpninfo, const char *method, const char *request_body_type,
+		     struct oc_text_buf *request_body, char **form_buf,
+		     int (*header_cb)(struct openconnect_info *, char *, char *), int fetch_redirect);
 int http_add_cookie(struct openconnect_info *vpninfo, const char *option,
 		    const char *value, int replace);
 int internal_split_cookies(struct openconnect_info *vpninfo, int replace, const char *def_cookie);

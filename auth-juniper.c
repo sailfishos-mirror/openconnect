@@ -466,12 +466,10 @@ int oncp_obtain_cookie(struct openconnect_info *vpninfo)
 	        char *url;
 
 		if (resp_buf && resp_buf->pos)
-			ret = do_https_request(vpninfo, "POST",
-					       "application/x-www-form-urlencoded",
-					       resp_buf, &form_buf, 2);
+			ret = do_https_request(vpninfo, "POST", "application/x-www-form-urlencoded", resp_buf,
+					       &form_buf, NULL, 2);
 		else
-			ret = do_https_request(vpninfo, "GET", NULL, NULL,
-					       &form_buf, 2);
+			ret = do_https_request(vpninfo, "GET", NULL, NULL, &form_buf, NULL, 2);
 
 		/* After login, the server will redirect the "browser" to a landing page.
 		 * https://kb.pulsesecure.net/articles/Pulse_Security_Advisories/SA44784

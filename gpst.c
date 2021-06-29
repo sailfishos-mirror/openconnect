@@ -637,8 +637,7 @@ static int gpst_get_config(struct openconnect_info *vpninfo)
 
 	orig_path = vpninfo->urlpath;
 	vpninfo->urlpath = strdup("ssl-vpn/getconfig.esp");
-	result = do_https_request(vpninfo, method, request_body_type, request_body,
-				  &xml_buf, 0);
+	result = do_https_request(vpninfo, method, request_body_type, request_body, &xml_buf, NULL, 0);
 	free(vpninfo->urlpath);
 	vpninfo->urlpath = orig_path;
 
@@ -868,8 +867,7 @@ static int check_or_submit_hip_report(struct openconnect_info *vpninfo, const ch
 
 	orig_path = vpninfo->urlpath;
 	vpninfo->urlpath = strdup(report ? "ssl-vpn/hipreport.esp" : "ssl-vpn/hipreportcheck.esp");
-	result = do_https_request(vpninfo, method, request_body_type, request_body,
-				  &xml_buf, 0);
+	result = do_https_request(vpninfo, method, request_body_type, request_body, &xml_buf, NULL, 0);
 	free(vpninfo->urlpath);
 	vpninfo->urlpath = orig_path;
 
