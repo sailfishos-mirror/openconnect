@@ -928,6 +928,8 @@ if test "$libpcsclite_pkg" = "yes"; then
 fi
 AM_CONDITIONAL(OPENCONNECT_LIBPCSCLITE, [test "$libpcsclite_pkg" = "yes"])
 
+AC_CHECK_FUNC(epoll_create1, [AC_DEFINE(HAVE_EPOLL, 1, [Have epoll])], [])
+
 AC_ARG_WITH([libpskc],
 	AS_HELP_STRING([--without-libpskc],
 	[Build without libpskc library [default=auto]]))

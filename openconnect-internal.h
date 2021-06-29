@@ -87,6 +87,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <string.h>
+#include <errno.h>
 
 #ifdef LIBPROXY_HDR
 #include LIBPROXY_HDR
@@ -106,6 +107,10 @@
 
 #ifdef HAVE_LIBP11
 #include <libp11.h>
+#endif
+
+#ifdef HAVE_EPOLL
+#include <sys/epoll.h>
 #endif
 
 #ifdef ENABLE_NLS
@@ -706,6 +711,11 @@ struct openconnect_info {
 	fd_set _select_rfds;
 	fd_set _select_wfds;
 	fd_set _select_efds;
+#ifdef HAVE_EPOLL
+	int epoll_fd;
+	int epoll_update;
+	uint32_t tun_epoll, ssl_epoll, dtls_epoll, cmd_epoll;
+#endif
 #endif
 
 #ifdef __sun__
@@ -818,6 +828,12 @@ static inline void free_pkt(struct openconnect_info *vpninfo, struct pkt *pkt)
 		free(pkt);
 }
 
+#define vpn_progress(_v, lvl, ...) do {					\
+	if ((_v)->verbose >= (lvl))					\
+		(_v)->progress((_v)->cbdata, lvl, __VA_ARGS__);	\
+	} while(0)
+#define vpn_perror(vpninfo, msg) vpn_progress((vpninfo), PRG_ERR, "%s: %s\n", (msg), strerror(errno))
+
 #ifdef _WIN32
 #define monitor_read_fd(_v, _n) _v->_n##_monitored |= FD_READ
 #define monitor_write_fd(_v, _n) _v->_n##_monitored |= FD_WRITE
@@ -830,17 +846,82 @@ static inline void free_pkt(struct openconnect_info *vpninfo, struct pkt *pkt)
 #define read_fd_monitored(_v, _n) (_v->_n##_monitored & FD_READ)
 
 #else
-#define monitor_read_fd(_v, _n) FD_SET(_v-> _n##_fd, &vpninfo->_select_rfds)
-#define unmonitor_read_fd(_v, _n) FD_CLR(_v-> _n##_fd, &vpninfo->_select_rfds)
-#define monitor_write_fd(_v, _n) FD_SET(_v-> _n##_fd, &vpninfo->_select_wfds)
-#define unmonitor_write_fd(_v, _n) FD_CLR(_v-> _n##_fd, &vpninfo->_select_wfds)
-#define monitor_except_fd(_v, _n) FD_SET(_v-> _n##_fd, &vpninfo->_select_efds)
-#define unmonitor_except_fd(_v, _n) FD_CLR(_v-> _n##_fd, &vpninfo->_select_efds)
 
-#define monitor_fd_new(_v, _n) do { \
-		if (_v->_select_nfds <= vpninfo->_n##_fd) \
-			vpninfo->_select_nfds = vpninfo->_n##_fd + 1; \
-	} while (0)
+
+#ifdef HAVE_EPOLL
+static inline void __sync_epoll_fd(struct openconnect_info *vpninfo, int fd, uint32_t *fd_evts)
+{
+	if (vpninfo->epoll_fd >= 0 && fd >= 0) {
+		struct epoll_event ev = { 0 };
+		ev.data.fd = fd;
+		if (FD_ISSET(fd, &vpninfo->_select_rfds))
+			ev.events |= EPOLLIN;
+		if (FD_ISSET(fd, &vpninfo->_select_wfds))
+			ev.events |= EPOLLOUT;
+		if (ev.events != *fd_evts) {
+			if (epoll_ctl(vpninfo->epoll_fd, EPOLL_CTL_MOD, fd, &ev)) {
+				vpn_perror(vpninfo, "EPOLL_CTL_MOD");
+				close(vpninfo->epoll_fd);
+				vpninfo->epoll_fd = -1;
+			}
+			*fd_evts = ev.events;
+		}
+	}
+}
+#define update_epoll_fd(_v, _n) __sync_epoll_fd(_v, _v->_n##_fd, &_v->_n##_epoll)
+#endif
+
+static inline void __monitor_fd(struct openconnect_info *vpninfo,
+				int fd, fd_set *set)
+{
+	if (fd < 0 || FD_ISSET(fd, set))
+		return;
+
+	FD_SET(fd, set);
+#ifdef HAVE_EPOLL
+	vpninfo->epoll_update = 1;
+#endif
+}
+
+static inline void __unmonitor_fd(struct openconnect_info *vpninfo,
+				  int fd, fd_set *set)
+{
+	if (fd < 0 || !FD_ISSET(fd, set))
+		return;
+
+	FD_CLR(fd, set);
+#ifdef HAVE_EPOLL
+	vpninfo->epoll_update = 1;
+#endif
+}
+
+#define monitor_read_fd(_v, _n) __monitor_fd(_v, _v->_n##_fd, &_v->_select_rfds)
+#define unmonitor_read_fd(_v, _n) __unmonitor_fd(_v, _v->_n##_fd, &_v->_select_rfds)
+#define monitor_write_fd(_v, _n) __monitor_fd(_v, _v->_n##_fd, &_v->_select_wfds)
+#define unmonitor_write_fd(_v, _n) __unmonitor_fd(_v, _v->_n##_fd, &_v->_select_wfds)
+#define monitor_except_fd(_v, _n) __monitor_fd(_v, _v->_n##_fd, &_v->_select_efds)
+#define unmonitor_except_fd(_v, _n) __unmonitor_fd(_v, _v->_n##_fd, &_v->_select_efds)
+
+static inline void __monitor_fd_new(struct openconnect_info *vpninfo,
+				    int fd)
+{
+	if (vpninfo->_select_nfds <= fd)
+		vpninfo->_select_nfds = fd + 1;
+#ifdef HAVE_EPOLL
+	if (vpninfo->epoll_fd >= 0) {
+		struct epoll_event ev = { 0 };
+		ev.data.fd = fd;
+		if (epoll_ctl(vpninfo->epoll_fd, EPOLL_CTL_ADD, fd, &ev)) {
+			vpn_perror(vpninfo, "EPOLL_CTL_ADD");
+			close(vpninfo->epoll_fd);
+			vpninfo->epoll_fd = -1;
+		}
+	}
+#endif
+}
+
+
+#define monitor_fd_new(_v, _n) __monitor_fd_new(_v, _v->_n##_fd)
 
 #define read_fd_monitored(_v, _n) FD_ISSET(_v->_n##_fd, &_v->_select_rfds)
 #endif
@@ -871,12 +952,6 @@ static inline void free_pkt(struct openconnect_info *vpninfo, struct pkt *pkt)
 #define MAX_HMAC_SIZE		32	/* SHA256 */
 #define MAX_IV_SIZE		16
 #define MAX_ESP_PAD		17	/* Including the next-header field */
-
-#define vpn_progress(_v, lvl, ...) do {					\
-	if ((_v)->verbose >= (lvl))					\
-		(_v)->progress((_v)->cbdata, lvl, __VA_ARGS__);	\
-	} while(0)
-#define vpn_perror(vpninfo, msg) vpn_progress((vpninfo), PRG_ERR, "%s: %s\n", (msg), strerror(errno))
 
 /****************************************************************************/
 /* Oh Solaris how we hate thee! */
