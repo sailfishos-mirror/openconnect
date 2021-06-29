@@ -318,6 +318,49 @@ int openconnect_mainloop(struct openconnect_info *vpninfo,
 			free(errstr);
 		}
 #else
+#ifdef HAVE_EPOLL
+		if (vpninfo->epoll_fd >= 0) {
+			struct epoll_event evs[5];
+
+			/* During busy periods, monitor_read_fd() and unmonitor_read_fd()
+			 * may get called multiple times as we go round and round the
+			 * loop and queues get full then have space again. In the past
+			 * with the select() loop, that was only a bitflip in the fd_set
+			 * and didn't cost much. With epoll() it's actually a system
+			 * call, so don't do it every time. Wait until we're about to
+			 * sleep, and *then* ensure that we call epoll_ctl() to sync the
+			 * set of events that we care about, if it's changed. */
+			if (vpninfo->epoll_update) {
+				update_epoll_fd(vpninfo, tun);
+				update_epoll_fd(vpninfo, ssl);
+				update_epoll_fd(vpninfo, cmd);
+				update_epoll_fd(vpninfo, dtls);
+			}
+
+			tun_r = udp_r = tcp_r = 0;
+
+			int nfds = epoll_wait(vpninfo->epoll_fd, evs, 5, timeout);
+			if (nfds < 0) {
+				if (errno != EINTR) {
+					ret = -errno;
+					vpn_perror(vpninfo, _("Failed epoll_wait() in mainloop"));
+					break;
+				}
+				nfds = 0;
+			}
+			while (nfds--) {
+				if (evs[nfds].events & EPOLLIN) {
+					if (evs[nfds].data.fd == vpninfo->tun_fd)
+						tun_r = 1;
+					else if (evs[nfds].data.fd == vpninfo->ssl_fd)
+						tcp_r = 1;
+					else if (evs[nfds].data.fd == vpninfo->dtls_fd)
+						udp_r = 1;
+				}
+			}
+			continue;
+		}
+#endif
 		memcpy(&rfds, &vpninfo->_select_rfds, sizeof(rfds));
 		memcpy(&wfds, &vpninfo->_select_wfds, sizeof(wfds));
 		memcpy(&efds, &vpninfo->_select_efds, sizeof(efds));

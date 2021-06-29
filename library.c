@@ -95,7 +95,9 @@ struct openconnect_info *openconnect_vpninfo_new(const char *useragent,
 	vpninfo->proxy_auth[AUTH_TYPE_BASIC].state = AUTH_DEFAULT_DISABLED;
 	vpninfo->http_auth[AUTH_TYPE_BASIC].state = AUTH_DEFAULT_DISABLED;
 	openconnect_set_reported_os(vpninfo, NULL);
-
+#ifdef HAVE_EPOLL
+	vpninfo->epoll_fd = epoll_create1(EPOLL_CLOEXEC);
+#endif
 	if (!vpninfo->localname || !vpninfo->useragent)
 		goto err;
 
@@ -687,6 +689,11 @@ void openconnect_vpninfo_free(struct openconnect_info *vpninfo)
 	/* These check strm->state so they are safe to call multiple times */
 	inflateEnd(&vpninfo->inflate_strm);
 	deflateEnd(&vpninfo->deflate_strm);
+
+#ifdef HAVE_EPOLL
+	if (vpninfo->epoll_fd >= 0)
+		close(vpninfo->epoll_fd);
+#endif
 
 	free_pkt(vpninfo, vpninfo->deflate_pkt);
 	free_pkt(vpninfo, vpninfo->tun_pkt);
