@@ -665,6 +665,7 @@ int fortinet_connect(struct openconnect_info *vpninfo)
 	 *
 	 * Don't blame me. I didn't design this.
 	 */
+	vpninfo->ppp->check_http_response = 1;
 
 	/* Trigger the first PPP negotiations and ensure the PPP state
 	 * is PPPS_ESTABLISH so that ppp_tcp_mainloop() knows we've started. */

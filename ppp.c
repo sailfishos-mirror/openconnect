@@ -258,27 +258,20 @@ int ppp_reset(struct openconnect_info *vpninfo)
 	ppp->ppp_state = PPPS_DEAD;
 	ppp->out_asyncmap = 0;
 	ppp->out_lcp_opts = BIT_MRU | BIT_MAGIC | BIT_PFCOMP | BIT_ACCOMP | BIT_MRU_COAX;
+	ppp->check_http_response = 0;
 
 	switch (ppp->encap) {
 	case PPP_ENCAP_F5:
-		/* XX: F5 server cancels our IP address allocation if we PPP-terminate */
-		ppp->no_terminate_on_pause = 1;
 		ppp->encap_len = 4;
 		break;
 
 	case PPP_ENCAP_FORTINET:
 		/* XX: Fortinet server rejects asyncmap and header compression. Don't blame me. */
-		ppp->no_terminate_on_pause = 1;
 		ppp->out_lcp_opts &= ~(BIT_PFCOMP | BIT_ACCOMP);
 		ppp->encap_len = 6;
-		ppp->check_http_response = 1;
 		break;
 
 	case PPP_ENCAP_F5_HDLC:
-		/* XX: F5 server cancels our IP address allocation if we PPP-terminate */
-		ppp->no_terminate_on_pause = 1;
-		/* fall through */
-
 	case PPP_ENCAP_RFC1662_HDLC:
 		ppp->encap_len = 0;
 		ppp->hdlc = 1;
@@ -974,11 +967,11 @@ static int handle_state_transition(struct openconnect_info *vpninfo, int dtls,
 		/* XX: When we pause and reconnect, we expect the auth cookie/session (external to the
 		 * PPP layer) to remain valid, and to negotiate the same IP addresses on reconnection.
 		 *
-		 * However, some servers cancel our session or cancel our IP address allocation if we
+		 * However, most servers cancel our session or cancel our IP address allocation if we
 		 * TERMINATE at the PPP layer, so we shouldn't do it when pausing.
 		 */
 		if (vpninfo->got_cancel_cmd ||
-		    (vpninfo->got_pause_cmd && !ppp->no_terminate_on_pause))
+		    (vpninfo->got_pause_cmd && ppp->terminate_on_pause))
 			ppp->ppp_state = PPPS_TERMINATE;
 		else
 			break;
