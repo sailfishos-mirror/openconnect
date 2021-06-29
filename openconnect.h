@@ -488,8 +488,10 @@ const char *openconnect_get_dtls_compression(struct openconnect_info *);
  *
  * Later still, Legacy IP addresses got scarce and SNI was invented, and
  * we started to see servers behind proxies that forward a connection
- * based on the SNI in the incoming ClientHello. So returning just the
- * IP address from openconnect_get_hostname() now made things break.
+ * based on the SNI in the incoming ClientHello (TLS layer), or based on
+ * the 'Host' header in the initial connection-phase request (HTTP[S]
+ * layer). So returning just the IP address from openconnect_get_hostname()
+ * now made things break.
  *
  * So... we need to pass *both* the actual hostname *and* the IP address
  * to the connecting openconnect invocation. As well as the port.
@@ -502,7 +504,7 @@ const char *openconnect_get_dtls_compression(struct openconnect_info *);
  * So, now we have openconnect_get_connect_url() which gets the full URL
  * including the port and path, and the original hostname.
  *
- * Since we're now back to giving openconnect a hosthame, we need to add
+ * Since we're now back to giving openconnect a hostname, we need to add
  * a '--resolve' argument to avoid the round robin DNS problem and ensure
  * that we actually connect to the same server we authenticated to. The
  * arguments for that can be obtained from openconnect_get_dnsname() and
@@ -513,7 +515,8 @@ const char *openconnect_get_dtls_compression(struct openconnect_info *);
  * openconnect $CONNECT_URL --servercert $FINGERPRINT --cookie $COOKIE \
  *             --resolve $DNSNAME:$HOSTNAME
  *
- * ... where '$HOSTNAME', as noted, isn't actually a hostname. Sorry.
+ * ... where '$HOSTNAME', as returned by openconnect_get_hostname(),
+ * isn't actually a hostname (as noted above). Sorry.
  *
  * In fact, what you get back from openconnect_get_hostname() is the
  * IP literal in the form it would appear in a URL. So IPv6 addresses
