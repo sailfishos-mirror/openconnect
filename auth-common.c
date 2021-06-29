@@ -74,7 +74,7 @@ int xmlnode_match_prop(xmlNode *xml_node, const char *name, const char *match)
 		return -ENOENT;
 
 	if (strcmp(str, match))
-	    ret = -EEXIST;
+		ret = -EEXIST;
 
 	free(str);
 	return ret;

@@ -52,7 +52,7 @@ typedef int (*X509_STORE_CTX_get_issuer_fn)(X509 **issuer,
 
 static char tls_library_version[32] = "";
 
-const char *openconnect_get_tls_library_version()
+const char *openconnect_get_tls_library_version(void)
 {
 	if (!*tls_library_version) {
 		strncpy(tls_library_version, SSLeay_version(SSLEAY_VERSION), sizeof(tls_library_version));
@@ -61,7 +61,7 @@ const char *openconnect_get_tls_library_version()
 	return tls_library_version;
 }
 
-int can_enable_insecure_crypto()
+int can_enable_insecure_crypto(void)
 {
 	if (EVP_des_ede3_cbc() == NULL ||
 	    EVP_rc4() == NULL)

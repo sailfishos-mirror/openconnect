@@ -65,7 +65,7 @@
 #endif
 #endif
 
-static inline int connect_pending()
+static inline int connect_pending(void)
 {
 #ifdef _WIN32
 	return WSAGetLastError() == WSAEWOULDBLOCK;

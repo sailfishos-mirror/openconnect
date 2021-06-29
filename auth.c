@@ -89,7 +89,7 @@ static int parse_auth_choice(struct openconnect_info *vpninfo, struct oc_auth_fo
 
 	/* Return early when there is a <select/> tag with no children */
 	if (max_choices == 0) {
-	    return 0;
+		return 0;
 	}
 
 	opt = calloc(1, sizeof(*opt));
@@ -689,7 +689,7 @@ static int handle_auth_form(struct openconnect_info *vpninfo, struct oc_auth_for
 				 */
 				free(form->error);
 				if (!(form->error = strdup(_("Client certificate missing or incorrect (Certificate Validation Failure)"))))
-				    return -ENOMEM;
+					return -ENOMEM;
 			} else
 				vpn_progress(vpninfo, PRG_ERR, "%s\n", form->error);
 		}
@@ -935,8 +935,8 @@ static int cstp_can_gen_tokencode(struct openconnect_info *vpninfo,
 #endif
 	/* Otherwise it's an OATH token of some kind. */
 	if (!strcmp(opt->name, "secondary_password") ||
-        (form->auth_id && !strcmp(form->auth_id, "challenge")))
-	  return can_gen_tokencode(vpninfo, form, opt);
+	    (form->auth_id && !strcmp(form->auth_id, "challenge")))
+		return can_gen_tokencode(vpninfo, form, opt);
 
 	return -EINVAL;
 }

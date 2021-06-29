@@ -1013,7 +1013,7 @@ static inline char *__dup_config_arg(char **argv, char *config_arg)
 	char *res;
 
 	if (config_file || is_arg_utf8(config_arg))
-	    return xstrdup(config_arg);
+		return xstrdup(config_arg);
 
 	res = convert_arg_to_utf8(argv, config_arg);
 	/* Force a copy, even if conversion failed */
@@ -1511,7 +1511,8 @@ static void print_connection_stats(void *_vpninfo, const struct oc_stats *stats)
 }
 
 #ifndef _WIN32
-static int background_self(struct openconnect_info *vpninfo, char *pidfile) {
+static int background_self(struct openconnect_info *vpninfo, char *pidfile)
+{
 	FILE *fp = NULL;
 	int pid;
 
@@ -1550,7 +1551,8 @@ static int background_self(struct openconnect_info *vpninfo, char *pidfile) {
 }
 #endif /* _WIN32 */
 
-static void fully_up_cb(void *_vpninfo) {
+static void fully_up_cb(void *_vpninfo)
+{
 	struct openconnect_info *vpninfo = _vpninfo;
 
 	print_connection_info(vpninfo);
@@ -2330,9 +2332,9 @@ static int validate_peer_cert(void *_vpninfo, const char *reason)
 			if (!err)
 				return 0;
 			else if (err < 0) {
-				 vpn_progress(vpninfo, PRG_ERR,
-					      _("Could not check server's certificate against %s\n"),
-					      this->fingerprint);
+				vpn_progress(vpninfo, PRG_ERR,
+					     _("Could not check server's certificate against %s\n"),
+					     this->fingerprint);
 			}
 		}
 	}
@@ -2666,7 +2668,7 @@ static int lock_token(void *tokdata)
 	/* FIXME: Actually lock the file */
 	err = openconnect_read_file(vpninfo, token_filename, &file_token);
 	if (err < 0)
-	    return err;
+		return err;
 
 	err = openconnect_set_token_mode(vpninfo, vpninfo->token_mode, file_token);
 	free(file_token);
