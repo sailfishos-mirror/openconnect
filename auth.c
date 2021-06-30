@@ -1683,71 +1683,54 @@ out:
  * "user" certificate. The machine certificate is used to establish
  * the TLS session. The user certificate is used to sign a challenge.
  *
- * An example XML exchange follows:
- * CLIENT
- * <?xml version="1.0" encoding="UTF-8"?>
- * <config-auth client="vpn" type="init" aggregate-auth-version="2">
- * <version who="vpn">4.4.01054</version>
- * <device-id device-type="VMware, Inc. VMware Virtual Platform" platform-version="10.0.14393 #snip#  win</device-id>
- * <mac-address-list>
- * <mac-address>00-0c-29-e4-f5-bd</mac-address></mac-address-list>
- * <group-select>ANYCONNECT-MCA</group-select>
- * <group-access>https://10.197.223.81/MCA</group-access>
- * <capabilities>
- * <auth-method>single-sign-on</auth-method>
- * <auth-method>multiple-cert</auth-method></capabilities>
- * </config-auth>
+ * An example XML exchange follows. For brevity, tags and attributes whose
+ * values are irrelevant (e.g. <opaque>) or well-understood from other auth
+ * types are omitted:
  *
- * SERVER
- * <?xml version="1.0" encoding="UTF-8"?>
- * <config-auth client="vpn" type="auth-request" aggregate-auth-version="2">
- * <opaque is-for="sg">
- * <tunnel-group>ANYCONNECT-MCA</tunnel-group>
- * <aggauth-handle>136775778</aggauth-handle>
- * <auth-method>multiple-cert</auth-method>
- * <auth-method>single-sign-on</auth-method>
- * <config-hash>1506879881148</config-hash>
- * </opaque>
- * <multiple-client-cert-request>
- * <hash-algorithm>sha256</hash-algorithm>
- * <hash-algorithm>sha384</hash-algorithm>
- * <hash-algorithm>sha512</hash-algorithm>
- * </multiple-client-cert-request>
- * <random>FA4003BD87436B227####snip####C138A08FF724F0100015B863F750914839EE79C86DFE8F0B9A0199E2</random>
- * <cert-authenticated></cert-authenticated>
- * </config-auth>
+ * CLIENT's initial request should include multiple-cert in capabilities:
  *
- * CLIENT
- * <?xml version="1.0" encoding="UTF-8"?>
- * <config-auth client="vpn" type="auth-reply" aggregate-auth-version="2">
- * <version who="vpn">4.4.01054</version>
- * <device-id device-type="VMware, Inc. VMware Virtual Platform" platform-version="10.0.14393 ##snip##   win</device-id>
- * <mac-address-list>
- * <mac-address>00-0c-29-e4-f5-bd</mac-address></mac-address-list>
- * <session-token></session-token>
- * <session-id></session-id>
- * <opaque is-for="sg">
+ *   <config-auth client="vpn" type="init">
+ *     <capabilities>
+ *       <auth-method>multiple-cert</auth-method>
+ *     </capabilities>
+ *   </config-auth>
  *
- * <tunnel-group>ANYCONNECT-MCA</tunnel-group>
- * <aggauth-handle>608423386</aggauth-handle>
- * <auth-method>multiple-cert</auth-method>
- * <auth-method>single-sign-on</auth-method>
- * <config-hash>1506879881148</config-hash></opaque>
- * <auth>
- * <client-cert-chain cert-store="1M">
- * <client-cert-sent-via-protocol></client-cert-sent-via-protocol></client-cert-chain>
- * <client-cert-chain cert-store="1U">
- * <client-cert cert-format="pkcs7">MIIG+AYJKoZIhvcNAQcCoIIG6TCCBuU
- * yTCCAzwwggIkAgkApaQuJKNF4RowDQYJKoZIhvcNAQELBQAwWTELMAkGA1UEBhMC
- * #Snip#
- * gSCx8Luo9V76nPjDI8PORurSFVWL9jiGJH0rLakYoGv
- * </client-cert>
- * <client-cert-auth-signature hash-algorithm-chosen="sha512">FIYur1Dzb4VPThVZtYwxSsCVRBUin/8MwWK+G5u2Phr4fJ
- * #snip#
- * EYt4G2hQ4hySySYqD4L4iV91uCT5b5Bmr5HZmSqKehg0zrDBjqxx7CLMSf2pSmQnjMwi6D0ygT=</client-cert-auth-signature>
- * </client-cert-chain>
- * </auth>
- * </config-auth>
+ * SERVER's response should include <multiple-client-cert-request> with list
+ * of hash algorithms, and empty <cert-authenticated> tag:
+ *
+ *   <config-auth client="vpn" type="auth-request">
+ *     <multiple-client-cert-request>
+ *       <hash-algorithm>sha256</hash-algorithm>
+ *       <hash-algorithm>sha384</hash-algorithm>
+ *       <hash-algorithm>sha512</hash-algorithm>
+ *     </multiple-client-cert-request>
+ *
+ *     <!-- Ensures that the client has signed this specific request in subsequent reply -->
+ *     <random>FA4003BD87436B227...C138A08FF724F0100015B863F750914839EE79C86DFE8F0B9A0199E2</random>
+ *
+ *     <!-- Appears to indicate that "machine" cert was accepted -->
+ *     <cert-authenticated/>
+ *   </config-auth>
+ *
+ * CLIENT's second request should include the "user" certificate (and any
+ * required intermediates) in PKCS7 format, along with a signature of the
+ * complete XML body of the server's prior response:
+ *
+ *   <config-auth client="vpn" type="auth-reply">
+ *     <auth>
+ *       <client-cert-chain cert-store="1M">
+ *         <client-cert-sent-via-protocol/>
+ *       </client-cert-chain>
+ *       <client-cert-chain cert-store="1U">
+ *         <client-cert cert-format="pkcs7">
+ *           <!-- PKCS7 "user" certificate and intermediate (base64-encoded) -->
+ *         </client-cert>
+ *         <client-cert-auth-signature hash-algorithm-chosen="sha512">
+ *           <!-- signature on server's prior response with private key of "user" certificate -->
+ *         </client-cert-auth-signature>
+ *       </client-cert-chain>
+ *     </auth>
+ *   </config-auth>
  */
 static int to_base64(struct oc_text_buf **result,
 		     const void *data, size_t data_len)
