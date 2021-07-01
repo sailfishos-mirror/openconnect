@@ -17,13 +17,13 @@
 
 #include <config.h>
 
-#include <ctype.h>
-#include <errno.h>
+#include "openconnect-internal.h"
 
 #include <libxml/parser.h>
 #include <libxml/tree.h>
 
-#include "openconnect-internal.h"
+#include <ctype.h>
+#include <errno.h>
 
 struct login_context {
 	char *username;				/* Username that has already succeeded in some form */

@@ -17,12 +17,12 @@
 
 #include <config.h>
 
+#include "openconnect-internal.h"
+
 #include <ctype.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "openconnect-internal.h"
 
 int set_oidc_token(struct openconnect_info *vpninfo, const char *token_str)
 {
@@ -52,5 +52,3 @@ int set_oidc_token(struct openconnect_info *vpninfo, const char *token_str)
 	vpninfo->token_mode = OC_TOKEN_MODE_OIDC;
 	return 0;
 }
-
-

@@ -17,23 +17,24 @@
 
 #include <config.h>
 
+#include "openconnect-internal.h"
+
+#include "ppp.h"
+
+#include <libxml/parser.h>
+#include <libxml/tree.h>
+
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/types.h>
+
 #include <time.h>
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <sys/types.h>
 #include <stdarg.h>
-#include <sys/types.h>
-
-#include <libxml/parser.h>
-#include <libxml/tree.h>
-
-#include "openconnect-internal.h"
-#include "ppp.h"
 
 /* clthello/svrhello strings for Fortinet DTLS initialization.
  * NB: C string literals implicitly add a final \0 (which is correct for these).

@@ -16,6 +16,7 @@
  */
 
 #include <config.h>
+
 #include "openconnect-internal.h"
 
 #if defined(__linux__)

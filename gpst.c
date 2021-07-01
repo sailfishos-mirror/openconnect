@@ -17,30 +17,22 @@
 
 #include <config.h>
 
-#include <unistd.h>
-#include <fcntl.h>
-#include <time.h>
-#include <string.h>
-#include <ctype.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <sys/types.h>
-#ifndef _WIN32
-#include <sys/wait.h>
-#endif
-#include <stdarg.h>
+#include "openconnect-internal.h"
+
 #ifdef HAVE_LZ4
 #include <lz4.h>
 #endif
 
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/types.h>
 #ifdef _WIN32
 #include "win32-ipicmp.h"
 #else
+#include <sys/wait.h>
 /* The BSDs require the first two headers before netinet/ip.h
  * (Linux and macOS already #include them within netinet/ip.h)
  */
-#include <sys/types.h>
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
@@ -54,7 +46,13 @@
 # include <linux/tcp.h>
 #endif
 
-#include "openconnect-internal.h"
+#include <time.h>
+#include <string.h>
+#include <ctype.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdarg.h>
 
 /*
  * Data packets are encapsulated in the SSL stream as follows:

@@ -17,6 +17,8 @@
 
 #include <config.h>
 
+#include "openconnect-internal.h"
+
 #include <string.h>
 #include <stdarg.h>
 #include <stdlib.h>
@@ -40,8 +42,6 @@ errno_t _putenv_s(
 );
 #endif
 #endif
-
-#include "openconnect-internal.h"
 
 #ifdef HAVE_SUNOS_BROKEN_TIME
 /*

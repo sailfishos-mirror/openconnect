@@ -17,17 +17,12 @@
 
 #include <config.h>
 
+#include "openconnect-internal.h"
+
 #include <unistd.h>
 #include <fcntl.h>
-#include <time.h>
-#include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <ctype.h>
 #ifdef HAVE_ALLOCA_H
 #include <alloca.h>
 #endif
@@ -35,7 +30,13 @@
 #include <sys/wait.h>
 #endif
 
-#include "openconnect-internal.h"
+#include <time.h>
+#include <string.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdarg.h>
+#include <ctype.h>
 
 #define NTLM_SSO_REQ		2	/* SSO type1 packet sent */
 #define NTLM_MANUAL		3	/* SSO challenge/response sent or skipped; manual next */

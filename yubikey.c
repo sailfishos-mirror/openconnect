@@ -17,12 +17,12 @@
 
 #include <config.h>
 
+#include "openconnect-internal.h"
+
 #include <ctype.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "openconnect-internal.h"
 
 #define NAME_TAG	0x71
 #define NAME_LIST_TAG	0x72

@@ -17,10 +17,10 @@
 
 #include <config.h>
 
-#include <errno.h>
-
 #include "openconnect-internal.h"
 #include "ppp.h"
+
+#include <errno.h>
 
 static const uint16_t fcstab[256] = {
 	0x0000, 0x1189, 0x2312, 0x329b, 0x4624, 0x57ad, 0x6536, 0x74bf,

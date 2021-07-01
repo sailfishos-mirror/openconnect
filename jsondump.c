@@ -17,13 +17,13 @@
 
 #include <config.h>
 
-#include <string.h>
-#include <ctype.h>
-#include <errno.h>
+#include "openconnect-internal.h"
 
 #include "json.h"
 
-#include "openconnect-internal.h"
+#include <string.h>
+#include <ctype.h>
+#include <errno.h>
 
 /*
  * Copyright (C) 2015 Mirko Pasqualetti  All rights reserved.
@@ -150,4 +150,3 @@ void dump_json(struct openconnect_info *vpninfo, int lvl, json_value *value)
 	dump_json_value(vpninfo, lvl, buf, value, 0);
 	buf_free(buf);
 }
-

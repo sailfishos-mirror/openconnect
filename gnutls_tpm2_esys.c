@@ -48,18 +48,19 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  ******************************************************************************/
 
-#include "config.h"
+#include <config.h>
 
 #include "openconnect-internal.h"
-#include "gnutls.h"
 
-#include <errno.h>
-#include <stdio.h>
-#include <string.h>
+#include "gnutls.h"
 
 #include <tss2/tss2_mu.h>
 #include <tss2/tss2_esys.h>
 #include <tss2/tss2_tctildr.h>
+
+#include <errno.h>
+#include <stdio.h>
+#include <string.h>
 
 struct oc_tpm2_ctx {
 	TSS2_TCTI_CONTEXT *tcti_ctx;

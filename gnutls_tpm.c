@@ -22,13 +22,14 @@
 
 #include <config.h>
 
-#include <errno.h>
-#include <string.h>
-
-#include <gnutls/gnutls.h>
 #include "openconnect-internal.h"
 
 #include "gnutls.h"
+
+#include <gnutls/gnutls.h>
+
+#include <errno.h>
+#include <string.h>
 
 #ifdef HAVE_TROUSERS
 #include <trousers/tss.h>

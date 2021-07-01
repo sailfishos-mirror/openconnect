@@ -15,17 +15,19 @@
 
 #include <config.h>
 
+#include "openconnect.h"
+
+#include <jni.h>
+
+#include <unistd.h>
+#include <sys/types.h>
+
 #include <errno.h>
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <sys/types.h>
-
-#include <jni.h>
-#include "openconnect.h"
 
 struct libctx {
 	JNIEnv *jenv;

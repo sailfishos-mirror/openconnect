@@ -17,23 +17,24 @@
 
 #include <config.h>
 
+#include "openconnect-internal.h"
+
+#include "ppp.h"
+
+#include <libxml/HTMLparser.h>
+#include <libxml/HTMLtree.h>
+
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/types.h>
+
 #include <time.h>
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <sys/types.h>
 #include <stdarg.h>
-#include <sys/types.h>
-
-#include <libxml/HTMLparser.h>
-#include <libxml/HTMLtree.h>
-
-#include "openconnect-internal.h"
-#include "ppp.h"
 
 #define XCAST(x) ((const xmlChar *)(x))
 

@@ -19,14 +19,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-#include <string.h>
-#include <limits.h>
-
 //#include "avutil.h"
 //#include "avassert.h"
 //#include "common.h"
 //#include "intreadwrite.h"
 #include "lzo.h"
+
+#include <string.h>
+#include <limits.h>
 
 /// Define if we may write up to 12 bytes beyond the output buffer.
 #define OUTBUF_PADDED 1

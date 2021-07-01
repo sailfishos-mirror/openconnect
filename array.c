@@ -17,25 +17,19 @@
 
 #include <config.h>
 
+#include "openconnect-internal.h"
+
+#include "json.h"
+
 #include <unistd.h>
 #include <fcntl.h>
-#include <time.h>
-#include <string.h>
-#include <ctype.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <stdio.h>
 #include <sys/types.h>
-#include <stdarg.h>
-#include <sys/types.h>
-
 #ifdef _WIN32
 #include "win32-ipicmp.h"
 #else
 /* The BSDs require the first two headers before netinet/ip.h
  * (Linux and macOS already #include them within netinet/ip.h)
  */
-#include <sys/types.h>
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
@@ -44,9 +38,13 @@
 #include <netinet/icmp6.h>
 #endif
 
-#include "json.h"
-
-#include "openconnect-internal.h"
+#include <time.h>
+#include <string.h>
+#include <ctype.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdarg.h>
 
 static struct oc_auth_form *plain_auth_form(void)
 {
@@ -1309,4 +1307,3 @@ int array_bye(struct openconnect_info *vpninfo, const char *reason)
 	free(res_buf);
 	return ret;
 }
-

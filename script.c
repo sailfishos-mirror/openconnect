@@ -17,20 +17,21 @@
 
 #include <config.h>
 
+#include "openconnect-internal.h"
+
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <string.h>
 #include <fcntl.h>
-#include <unistd.h>
 #ifndef _WIN32
 #include <sys/wait.h>
 #endif
+
 #include <errno.h>
 #include <ctype.h>
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-#include "openconnect-internal.h"
 
 int script_setenv(struct openconnect_info *vpninfo,
 		  const char *opt, const char *val, int trunc, int append)

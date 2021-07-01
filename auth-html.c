@@ -17,12 +17,12 @@
 
 #include <config.h>
 
-#include <errno.h>
+#include "openconnect-internal.h"
 
 #include <libxml/HTMLparser.h>
 #include <libxml/HTMLtree.h>
 
-#include "openconnect-internal.h"
+#include <errno.h>
 
 xmlNodePtr htmlnode_next(xmlNodePtr top, xmlNodePtr node)
 {

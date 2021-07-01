@@ -17,11 +17,6 @@
 
 #include <config.h>
 
-#include <errno.h>
-#include <string.h>
-#include <sys/types.h>
-#include <ctype.h>
-
 #include "openconnect-internal.h"
 
 #include <openssl/crypto.h>
@@ -36,6 +31,12 @@
 #include <openssl/bio.h>
 #include <openssl/ui.h>
 #include <openssl/rsa.h>
+
+#include <sys/types.h>
+
+#include <errno.h>
+#include <string.h>
+#include <ctype.h>
 
 #if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 #define X509_up_ref(x) 	CRYPTO_add(&(x)->references, 1, CRYPTO_LOCK_X509)

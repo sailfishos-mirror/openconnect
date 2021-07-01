@@ -17,6 +17,8 @@
 
 #include <config.h>
 
+#include "openconnect-internal.h"
+
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <winioctl.h>
@@ -27,8 +29,6 @@
 
 #include <errno.h>
 #include <stdio.h>
-
-#include "openconnect-internal.h"
 
 static WINTUN_CREATE_ADAPTER_FUNC WintunCreateAdapter;
 static WINTUN_DELETE_ADAPTER_FUNC WintunDeleteAdapter;

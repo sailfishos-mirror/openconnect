@@ -17,11 +17,11 @@
 
 #include <config.h>
 
+#include "openconnect-internal.h"
+
 #include <errno.h>
 #include <string.h>
 #include <stdint.h>
-
-#include "openconnect-internal.h"
 
 #define GET_BITS(bits)							\
 do {									\

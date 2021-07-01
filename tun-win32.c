@@ -17,6 +17,8 @@
 
 #include <config.h>
 
+#include "openconnect-internal.h"
+
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <winioctl.h>
@@ -24,8 +26,6 @@
 
 #include <errno.h>
 #include <stdio.h>
-
-#include "openconnect-internal.h"
 
 /*
  * TAP-Windows support inspired by http://i3.cs.berkeley.edu/ (v0.2) with

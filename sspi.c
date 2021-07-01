@@ -17,11 +17,10 @@
 
 #include <config.h>
 
-#include <errno.h>
-#include <string.h>
-
 #include "openconnect-internal.h"
 
+#include <errno.h>
+#include <string.h>
 
 static int sspi_setup(struct openconnect_info *vpninfo, struct http_auth_state *auth_state, const char *service, int proxy)
 {
