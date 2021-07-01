@@ -273,6 +273,10 @@ int dtls_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		int len = MAX(16384, vpninfo->ip_info.mtu);
 		unsigned char *buf;
 
+		if (vpninfo->incoming_queue.count >= vpninfo->max_qlen) {
+			work_done = 1;
+			break;
+		}
 		if (!vpninfo->dtls_pkt) {
 			vpninfo->dtls_pkt = alloc_pkt(vpninfo, len);
 			if (!vpninfo->dtls_pkt) {
