@@ -145,7 +145,6 @@ public abstract class LibOpenConnect {
 	public synchronized native int setTokenMode(int tokenMode, String tokenString);
 	public synchronized native void setCSDWrapper(String wrapper, String TMPDIR, String PATH);
 	public synchronized native void setXMLPost(boolean isEnabled);
-	public synchronized native void setClientCert(String cert, String sslKey);
 	public synchronized native void setReqMTU(int mtu);
 	public synchronized native void setPFS(boolean isEnabled);
 	public synchronized native int setAllowInsecureCrypto(boolean isEnabled);
@@ -154,6 +153,13 @@ public abstract class LibOpenConnect {
 	public synchronized native int disableDTLS();
 	public synchronized native int disableIPv6();
 	public synchronized native void setCookie(String cookie);
+
+	/* client certificate(s) and private keys */
+
+	public synchronized native int setClientCert(String cert, String sslKey);
+	public synchronized native int setKeyPassword(String password);
+	public synchronized native int setMCACert(String cert, String sslKey);
+	public synchronized native int setMCAKeyPassword(String password);
 
 	/* connection info */
 
@@ -173,7 +179,7 @@ public abstract class LibOpenConnect {
 	public synchronized native int getIdleTimeout();
 	public synchronized native Instant getAuthExpiration();
 
-	/* certificate info */
+	/* peer certificate info */
 
 	public synchronized native int checkPeerCertHash(String hash);
 	public synchronized native String getPeerCertHash();
