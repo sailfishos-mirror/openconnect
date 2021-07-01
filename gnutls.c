@@ -2473,9 +2473,7 @@ void openconnect_close_https(struct openconnect_info *vpninfo, int final)
 		vpninfo->https_sess = NULL;
 	}
 	if (vpninfo->ssl_fd != -1) {
-		unmonitor_read_fd(vpninfo, ssl);
-		unmonitor_write_fd(vpninfo, ssl);
-		unmonitor_except_fd(vpninfo, ssl);
+		unmonitor_fd(vpninfo, ssl);
 		closesocket(vpninfo->ssl_fd);
 		vpninfo->ssl_fd = -1;
 	}

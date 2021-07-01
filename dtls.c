@@ -154,9 +154,7 @@ void dtls_close(struct openconnect_info *vpninfo)
 {
 	if (vpninfo->dtls_ssl) {
 		dtls_ssl_free(vpninfo);
-		unmonitor_read_fd(vpninfo, dtls);
-		unmonitor_write_fd(vpninfo, dtls);
-		unmonitor_except_fd(vpninfo, dtls);
+		unmonitor_fd(vpninfo, dtls);
 		closesocket(vpninfo->dtls_fd);
 		vpninfo->dtls_ssl = NULL;
 		vpninfo->dtls_fd = -1;

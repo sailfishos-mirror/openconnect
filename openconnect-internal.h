@@ -856,8 +856,11 @@ static inline void free_pkt(struct openconnect_info *vpninfo, struct pkt *pkt)
 #define monitor_fd_new(_v, _n) do { if (!_v->_n##_event) _v->_n##_event = CreateEvent(NULL, FALSE, FALSE, NULL); } while (0)
 #define read_fd_monitored(_v, _n) (_v->_n##_monitored & FD_READ)
 
-#else
+#define __unmonitor_fd(_v, _n) do { CloseHandle(_v->_n##_event); \
+		_v->_n##_event = (HANDLE)0;			 \
+	} while(0)
 
+#else
 
 #ifdef HAVE_EPOLL
 static inline void __sync_epoll_fd(struct openconnect_info *vpninfo, int fd, uint32_t *fd_evts)
@@ -880,10 +883,27 @@ static inline void __sync_epoll_fd(struct openconnect_info *vpninfo, int fd, uin
 	}
 }
 #define update_epoll_fd(_v, _n) __sync_epoll_fd(_v, _v->_n##_fd, &_v->_n##_epoll)
+
+static inline void __remove_epoll_fd(struct openconnect_info *vpninfo, int fd)
+{
+	struct epoll_event ev = { 0 };
+	if (vpninfo->epoll_fd >= 0 &&
+	    epoll_ctl(vpninfo->epoll_fd, EPOLL_CTL_DEL, fd, &ev) < 0)
+		vpn_perror(vpninfo, "EPOLL_CTL_DEL");
+	/* No other action on error; if it truly matters we'll bail
+	 * later and fall back to select() */
+}
+
+#define __unmonitor_fd(_v, _n) do {		    \
+		__remove_epoll_fd(_v, _v->_n##_fd); \
+		_v->_n##_epoll = 0; } while(0)
+
+#else /* !HAVE_POLL */
+#define __unmonitor_fd(_v, _n) do { } while(0)
 #endif
 
-static inline void __monitor_fd(struct openconnect_info *vpninfo,
-				int fd, fd_set *set)
+static inline void __monitor_fd_event(struct openconnect_info *vpninfo,
+				      int fd, fd_set *set)
 {
 	if (fd < 0 || FD_ISSET(fd, set))
 		return;
@@ -894,8 +914,8 @@ static inline void __monitor_fd(struct openconnect_info *vpninfo,
 #endif
 }
 
-static inline void __unmonitor_fd(struct openconnect_info *vpninfo,
-				  int fd, fd_set *set)
+static inline void __unmonitor_fd_event(struct openconnect_info *vpninfo,
+					int fd, fd_set *set)
 {
 	if (fd < 0 || !FD_ISSET(fd, set))
 		return;
@@ -906,12 +926,12 @@ static inline void __unmonitor_fd(struct openconnect_info *vpninfo,
 #endif
 }
 
-#define monitor_read_fd(_v, _n) __monitor_fd(_v, _v->_n##_fd, &_v->_select_rfds)
-#define unmonitor_read_fd(_v, _n) __unmonitor_fd(_v, _v->_n##_fd, &_v->_select_rfds)
-#define monitor_write_fd(_v, _n) __monitor_fd(_v, _v->_n##_fd, &_v->_select_wfds)
-#define unmonitor_write_fd(_v, _n) __unmonitor_fd(_v, _v->_n##_fd, &_v->_select_wfds)
-#define monitor_except_fd(_v, _n) __monitor_fd(_v, _v->_n##_fd, &_v->_select_efds)
-#define unmonitor_except_fd(_v, _n) __unmonitor_fd(_v, _v->_n##_fd, &_v->_select_efds)
+#define monitor_read_fd(_v, _n) __monitor_fd_event(_v, _v->_n##_fd, &_v->_select_rfds)
+#define unmonitor_read_fd(_v, _n) __unmonitor_fd_event(_v, _v->_n##_fd, &_v->_select_rfds)
+#define monitor_write_fd(_v, _n) __monitor_fd_event(_v, _v->_n##_fd, &_v->_select_wfds)
+#define unmonitor_write_fd(_v, _n) __unmonitor_fd_event(_v, _v->_n##_fd, &_v->_select_wfds)
+#define monitor_except_fd(_v, _n) __monitor_fd_event(_v, _v->_n##_fd, &_v->_select_efds)
+#define unmonitor_except_fd(_v, _n) __unmonitor_fd_event(_v, _v->_n##_fd, &_v->_select_efds)
 
 static inline void __monitor_fd_new(struct openconnect_info *vpninfo,
 				    int fd)
@@ -931,11 +951,17 @@ static inline void __monitor_fd_new(struct openconnect_info *vpninfo,
 #endif
 }
 
-
 #define monitor_fd_new(_v, _n) __monitor_fd_new(_v, _v->_n##_fd)
-
 #define read_fd_monitored(_v, _n) FD_ISSET(_v->_n##_fd, &_v->_select_rfds)
-#endif
+#endif /* !WIN32 */
+
+/* This is for all platforms */
+#define unmonitor_fd(_v, _n) do {		\
+		unmonitor_read_fd(_v, _n);	\
+		unmonitor_write_fd(_v, _n);	\
+		unmonitor_except_fd(_v, _n);	\
+		__unmonitor_fd(_v, _n);		\
+	} while(0)
 
 /* Key material for DTLS-PSK */
 #define PSK_LABEL "EXPORTER-openconnect-psk"

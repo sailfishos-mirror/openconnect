@@ -453,7 +453,7 @@ int openconnect_setup_tun_fd(struct openconnect_info *vpninfo, int tun_fd)
 	set_fd_cloexec(tun_fd);
 
 	if (vpninfo->tun_fd != -1)
-		unmonitor_read_fd(vpninfo, tun);
+		unmonitor_fd(vpninfo, tun);
 
 	vpninfo->tun_fd = tun_fd;
 

@@ -285,6 +285,10 @@ int openconnect_mainloop(struct openconnect_info *vpninfo,
 
 				vpninfo->got_pause_cmd = 0;
 				vpn_progress(vpninfo, PRG_INFO, _("Caller paused the connection\n"));
+
+				if (vpninfo->cmd_fd >= 0)
+					unmonitor_fd(vpninfo, cmd);
+
 				return 0;
 			}
 		}
@@ -390,6 +394,10 @@ int openconnect_mainloop(struct openconnect_info *vpninfo,
 
 	if (tun_is_up(vpninfo))
 		os_shutdown_tun(vpninfo);
+
+	if (vpninfo->cmd_fd >= 0)
+		unmonitor_fd(vpninfo, cmd);
+
 	return ret < 0 ? ret : -EIO;
 }
 
