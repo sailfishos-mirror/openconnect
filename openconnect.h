@@ -43,6 +43,7 @@ extern "C" {
  *  - Add openconnect_get_auth_expiration()
  *  - Add openconnect_disable_dtls()
  *  - Make openconnect_disable_ipv6() return int
+ *  - Add openconnect_set_mca_cert() and openconnect_set_mca_key_password()
  *
  * API version 5.6 (v8.06; 2020-03-31):
  *  - Add openconnect_set_trojan_interval()
