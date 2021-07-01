@@ -51,6 +51,7 @@
        <li>Disable brittle "system policy" enforcement where it cannot be gracefully overridden at user request. <a href="https://bugzilla.redhat.com/show_bug.cgi?id=1960763"><i>(RH#1960763)</i></a>.</li>
        <li>Pass "portal cookie" fields from GlobalProtect portal to gateway to avoid repetition of password- or SAML-based login (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/199">!199</a>)</li>
        <li>With <tt>--user</tt>, enter username supplied via command-line into all authentication forms, not just the first. (<a href="https://gitlab.com/openconnect/openconnect/-/issues/267">#267</a>, <a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/220">!220</a>).</li>
+       <li>Support <a href="https://www.cisco.com/c/en/us/support/docs/security/anyconnect-secure-mobility-client-v4x/212483-configure-asa-as-the-ssl-gateway-for-any.html">Cisco's multiple-certificate authentication</a> (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/194">!194</a>).</li>
      </ul><br/>
   </li>
   <li><b><a href="https://www.infradead.org/openconnect/download/openconnect-8.10.tar.gz">OpenConnect v8.10</a></b>
