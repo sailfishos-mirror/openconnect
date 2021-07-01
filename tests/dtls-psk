@@ -181,4 +181,14 @@ if test $? != 0;then
 	exit 1
 fi
 
+echo " * ping remote address after reconnect"
+
+kill -USR2 $(cat ${CLIPID})
+
+${CMDNS2} nuttcp -1
+
+${CMDNS1} ping -c 3 ${VPNADDR}
+
+sleep 2
+
 exit 0
