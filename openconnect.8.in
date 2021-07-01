@@ -134,22 +134,34 @@ Save the pid to
 .I PIDFILE
 when backgrounding
 .TP
-.B \-c,\-\-certificate=CERT
+.B \-c,\-\-certificate=CERT [,\-\-mca-certificate=CERT]
 Use SSL client certificate
 .I CERT
 which may be either a file name or, if OpenConnect has been built with an appropriate
 version of GnuTLS, a PKCS#11 URL.
+
+The
+.B \-\-mca-certificate
+option sets the secondary certificate for multi-certificate authentication (according
+to Cisco's terminology, the SSL client certificate is called the "machine" certificate,
+and the second certificate is called the "user" certificate).
 .TP
 .B \-e,\-\-cert\-expire\-warning=DAYS
 Give a warning when SSL client certificate has
 .I DAYS
 left before expiry
 .TP
-.B \-k,\-\-sslkey=KEY
+.B \-k,\-\-sslkey=KEY [,\-\-mca\-key=KEY]
 Use SSL private key
 .I KEY
 which may be either a file name or, if OpenConnect has been built with an appropriate
 version of GnuTLS, a PKCS#11 URL.
+
+The
+.B \-\-mca\-key
+option sets the private key for the secondary certificate (see
+.B \-\-mca\-certificate
+).
 .TP
 .B \-C,\-\-cookie=COOKIE
 Use authentication cookie
@@ -273,8 +285,13 @@ as the path MTU between client and server on the unencrypted network. Newer
 servers will automatically calculate the MTU to be used on the tunnel from
 this value.
 .TP
-.B \-p,\-\-key\-password=PASS
+.B \-p,\-\-key\-password=PASS [,\-\-mca\-key\-password=PASS]
 Provide passphrase for certificate file, or SRK (System Root Key) PIN for TPM
+
+.B \-\-mca\-key\-password
+provides the passphrase for the secondary certificate (see
+.B \-\-mca\-certificate
+).
 .TP
 .B \-P,\-\-proxy=PROXYURL
 Use HTTP or SOCKS proxy for connection. A username and password can be provided
