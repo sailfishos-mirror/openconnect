@@ -1544,6 +1544,8 @@ static int background_self(struct openconnect_info *vpninfo, char *pidfile)
 			     _("Continuing in background; pid %d\n"),
 			     pid);
 		sig_vpninfo = NULL;
+		/* Don't invoke EPOLL_CTL_DEL; it'll mess up the real one */
+		vpninfo->epoll_fd = -1;
 		openconnect_vpninfo_free(vpninfo);
 		exit(0);
 	}
