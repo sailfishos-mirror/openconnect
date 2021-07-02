@@ -291,6 +291,43 @@ void shutdown_vhost(struct openconnect_info *vpninfo)
 	free_vring(vpninfo, &vpninfo->tx_vring);
 }
 
+/* used_event is the uint16_t element after the end of the
+ * avail ring:
+ *
+ *	struct virtq_avail {
+ *		le16 flags;
+ *		le16 idx;
+ *		le16 ring[ Queue Size ];
+ *		le16 used_event;
+ *	};
+ */
+
+#define USED_EVENT(v, r) ((r)->avail->ring[(v)->vhost_ring_size])
+
+/* avail_event is the uint16_t element after the end of the
+ * used ring, which is slightly less trivial to reference
+ * than the used_event:
+ *
+ *	struct virtq_used_elem {
+ *		le32 id;
+ *		le32 len;
+ *	};
+ *
+ *	struct virtq_used {
+ *		le16 flags;
+ *		le16 idx;
+ *		struct virtq_used_elem ring[ Queue Size ];
+ *		le16 avail_event;
+ *	};
+ *
+ * So if we thought of it as an array of 16-bit values, 'flags' would
+ * be at element [0], 'idx' at [1], the ring would start at [2], the
+ * *second* element of the ring would be at [ 2 + 4 ] since each element
+ * is as big as four 16-bit values, and thus avail_event would be at
+ *  [2 + 4 * RING_SIZE ]
+ */
+#define AVAIL_EVENT(v, r) ((&(r)->used->flags)[2 + ((v)->vhost_ring_size * 4)])
+
 static void dump_vring(struct openconnect_info *vpninfo, struct oc_vring *ring)
 {
 	vpn_progress(vpninfo, PRG_ERR,
@@ -300,12 +337,13 @@ static void dump_vring(struct openconnect_info *vpninfo, struct oc_vring *ring)
 
 	vpn_progress(vpninfo, PRG_ERR, "#   ADDR         AVAIL         USED\n");
 
+	/* Not an off-by-one; it's dumping avail_event and used_event too. */
 	for (int i = 0; i < vpninfo->vhost_ring_size + 1; i++)
 		vpn_progress(vpninfo, PRG_ERR,
 			     "%d %p %x %x\n", i,
 			     (void *)vio64(ring->desc[i].addr),
 			     vio16(ring->avail->ring[i]),
-			     vio16(ring->used->ring[i].id));
+			     vio32(ring->used->ring[i].id));
 }
 
 /* With thanks to Eugenio Pérez Martin <eperezma@redhat.com> for writing
@@ -399,7 +437,7 @@ static inline int process_ring(struct openconnect_info *vpninfo, int tx, uint64_
 			 * our CPU on the RX and crypto; there's not a lot of point
 			 * otherwise. */
 			if (!*kick && vpninfo->incoming_queue.count < vpninfo->max_qlen / 2 &&
-			    next_avail == (&ring->used->flags)[2 + (vpninfo->vhost_ring_size * 4)]) {
+			    next_avail == AVAIL_EVENT(vpninfo, ring)) {
 				if (!os_write_tun(vpninfo, this)) {
 					vpninfo->stats.rx_pkts++;
 					vpninfo->stats.rx_bytes += this->len;
@@ -442,7 +480,7 @@ static inline int process_ring(struct openconnect_info *vpninfo, int tx, uint64_
 
 		ring->avail->idx = vio16(++next_avail);
 		barrier();
-		uint16_t avail_event = (&ring->used->flags)[2 + (vpninfo->vhost_ring_size * 4)];
+		uint16_t avail_event = AVAIL_EVENT(vpninfo, ring);
 		barrier();
 		if (avail_event == vio16(next_avail-1))
 			*kick = 1;
@@ -462,9 +500,8 @@ static int set_ring_wake(struct openconnect_info *vpninfo, int tx)
 	struct oc_vring *ring = tx ? &vpninfo->tx_vring : &vpninfo->rx_vring;
 	uint16_t wake_idx = vio16(ring->seen_used);
 
-	/* Ask it to wake us if the used idx moves on. Note: used_event
-	 * is at the end of the *avail* ring, and vice versa. */
-	ring->avail->ring[vpninfo->vhost_ring_size] = wake_idx;
+	/* Ask it to wake us if the used idx moves on. */
+	USED_EVENT(vpninfo, ring) = wake_idx;
 	barrier();
 
 	/* If it already did, loop again immediately */
