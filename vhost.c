@@ -114,7 +114,6 @@ static int setup_vring(struct openconnect_info *vpninfo, int idx)
 		ret = -errno;
 		vpn_progress(vpninfo, PRG_ERR, _("Failed to set vring #%d call eventfd: %s\n"),
 			     idx, strerror(-ret));
-		close(vpninfo->vhost_fd);
 		return ret;
 	}
 
@@ -123,12 +122,12 @@ static int setup_vring(struct openconnect_info *vpninfo, int idx)
 		ret = -errno;
 		vpn_progress(vpninfo, PRG_ERR, _("Failed to set vring #%d kick eventfd: %s\n"),
 			     idx, strerror(-ret));
-		close(vpninfo->vhost_fd);
 		return ret;
 	}
 
 	return 0;
 }
+
 #define OC_VHOST_NET_FEATURES ((1ULL << VHOST_NET_F_VIRTIO_NET_HDR) |	\
 			       (1ULL << VIRTIO_F_VERSION_1) |		\
 			       (1ULL << VIRTIO_RING_F_EVENT_IDX))
