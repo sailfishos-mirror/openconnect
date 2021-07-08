@@ -530,7 +530,11 @@ int vhost_tun_mainloop(struct openconnect_info *vpninfo, int *timeout, int reada
 
 	if (kick) {
 		barrier();
-		write(vpninfo->vhost_kick_fd, &kick, sizeof(kick));
+		if (write(vpninfo->vhost_kick_fd, &kick, sizeof(kick)) != sizeof(kick)) {
+			/* Can never happen */
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("Failed to kick vhost-net eventfd\n"));
+		}
 		vpn_progress(vpninfo, PRG_TRACE,
 			     _("Kick vhost ring\n"));
 		did_work = 1;
@@ -542,7 +546,11 @@ int vhost_tun_mainloop(struct openconnect_info *vpninfo, int *timeout, int reada
 	 * again. */
 	if (!did_work && readable) {
 		uint64_t evt;
-		read(vpninfo->vhost_call_fd, &evt, sizeof(evt));
+		if (read(vpninfo->vhost_call_fd, &evt, sizeof(evt)) != sizeof(evt)) {
+			/* Can never happen */
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("Failed to read vhost-net call eventfd\n"));
+		}
 	}
 
 	/* If we aren't going to have one more turn around the mainloop,
