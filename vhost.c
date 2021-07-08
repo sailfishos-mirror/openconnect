@@ -547,9 +547,7 @@ int vhost_tun_mainloop(struct openconnect_info *vpninfo, int *timeout, int reada
 	if (!did_work && readable) {
 		uint64_t evt;
 		if (read(vpninfo->vhost_call_fd, &evt, sizeof(evt)) != sizeof(evt)) {
-			/* Can never happen */
-			vpn_progress(vpninfo, PRG_ERR,
-				     _("Failed to read vhost-net call eventfd\n"));
+			/* Do nothing */
 		}
 	}
 
