@@ -457,7 +457,7 @@ static inline int process_ring(struct openconnect_info *vpninfo, int tx, uint64_
 
 		if (!tx)
 			ring->desc[desc].flags = vio16(VRING_DESC_F_WRITE);
-		ring->desc[desc].addr = vio64((uint64_t)&this->virtio.h);
+		ring->desc[desc].addr = vio64((uint64_t)this + pkt_offset(virtio.h));
 		ring->desc[desc].len = vio32(this->len + sizeof(this->virtio.h));
 		barrier();
 
