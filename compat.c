@@ -408,7 +408,7 @@ OPENCONNECT_CMD_SOCKET dumb_socketpair(OPENCONNECT_CMD_SOCKET socks[2], int make
     socks[0] = socks[1] = -1;
     do {
         if (setsockopt(listener, SOL_SOCKET, SO_REUSEADDR,
-               (char*) &reuse, (socklen_t) sizeof(reuse)) == -1)
+               (char *) &reuse, (socklen_t) sizeof(reuse)) == -1)
             break;
         if  (bind(listener, &a.addr, sizeof(a.inaddr)) == SOCKET_ERROR)
             break;
