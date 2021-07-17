@@ -2782,7 +2782,7 @@ int pulse_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 				return work_done;
 			default:
 				/* This should never happen */
-				;
+				break;
 			}
 #else
 			return work_done;
@@ -2871,7 +2871,7 @@ int pulse_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 
 		vpn_progress(vpninfo, PRG_DEBUG, _("Send CSTP Keepalive\n"));
 
-		vpninfo->current_ssl_pkt = (struct pkt *)&keepalive_pkt;
+		vpninfo->current/volatile/src/openconnect/pulse.c_ssl_pkt = (struct pkt *)&keepalive_pkt;
 		goto handle_outgoing;
 
 	case KA_NONE:
