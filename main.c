@@ -85,9 +85,9 @@ static int verbose = PRG_INFO;
 static int timestamp;
 #ifndef _WIN32
 static int background;
-static int use_syslog = 0;
-int wrote_pid = 0;
-static char *pidfile = NULL;
+static int use_syslog; /* static variable initialised to 0 */
+static int wrote_pid; /* static variable initialised to 0 */
+static char *pidfile; /* static variable initialised to NULL */
 #endif
 static int do_passphrase_from_fsid;
 static int non_inter;
@@ -971,8 +971,8 @@ static void usage(void)
 }
 
 
-static FILE *config_file = NULL;
-static int config_line_num = 0;
+static FILE *config_file; /* static variable initialised to NULL */
+static int config_line_num;  /* static variable initialised to 0 */
 
 static char *xstrdup(const char *arg)
 {
@@ -1027,8 +1027,8 @@ static inline char *__dup_config_arg(char **argv, char *config_arg)
 static int next_option(int argc, char **argv, char **config_arg)
 {
 	/* These get re-used */
-	static char *line_buf = NULL;
-	static size_t line_size = 0;
+	static char *line_buf; /* static variable initialised to NULL */
+	static size_t line_size; /* static variable initialised to 0 */
 
 	ssize_t llen;
 	int opt, optlen = 0;
@@ -2507,7 +2507,7 @@ struct form_field {
 	char *opt_id;
 	char *value;
 };
-static struct form_field *form_fields = NULL;
+static struct form_field *form_fields; /* static variable initialised to NULL */
 
 static void add_form_field(char *arg)
 {
