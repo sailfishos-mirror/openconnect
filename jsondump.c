@@ -114,28 +114,28 @@ static void dump_json_value(struct openconnect_info *vpninfo, int lvl,
 		print_depth_shift(buf, depth);
 	}
 	switch (value->type) {
-		case json_none:
-		default:
-			buf_append(buf, "none\n");
-			break;
-		case json_object:
-			dump_json_object(vpninfo, lvl, buf, value, depth+1);
-			return;
-		case json_array:
-			dump_json_array(vpninfo, lvl, buf, value, depth+1);
-			return;
-		case json_integer:
-			buf_append(buf, "int: %10" PRId64 "\n", value->u.integer);
-			break;
-		case json_double:
-			buf_append(buf, "double: %f\n", value->u.dbl);
-			break;
-		case json_string:
-			buf_append(buf, "string: %s\n", value->u.string.ptr);
-			break;
-		case json_boolean:
-			buf_append(buf, "bool: %d\n", value->u.boolean);
-			break;
+	case json_none:
+	default:
+		buf_append(buf, "none\n");
+		break;
+	case json_object:
+		dump_json_object(vpninfo, lvl, buf, value, depth+1);
+		return;
+	case json_array:
+		dump_json_array(vpninfo, lvl, buf, value, depth+1);
+		return;
+	case json_integer:
+		buf_append(buf, "int: %10" PRId64 "\n", value->u.integer);
+		break;
+	case json_double:
+		buf_append(buf, "double: %f\n", value->u.dbl);
+		break;
+	case json_string:
+		buf_append(buf, "string: %s\n", value->u.string.ptr);
+		break;
+	case json_boolean:
+		buf_append(buf, "bool: %d\n", value->u.boolean);
+		break;
 	}
 	print_buf(vpninfo, lvl, buf);
 

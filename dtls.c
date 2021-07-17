@@ -206,17 +206,17 @@ int udp_tos_update(struct openconnect_info *vpninfo, struct pkt *pkt)
 
 	/* Extract TOS field from IP header (IPv4 and IPv6 differ) */
 	switch(pkt->data[0] >> 4) {
-		case 4:
-			tos = pkt->data[1];
-			break;
-		case 6:
-			tos = (load_be16(pkt->data) >> 4) & 0xff;
-			break;
-		default:
-			vpn_progress(vpninfo, PRG_ERR,
-				     _("Unknown packet (len %d) received: %02x %02x %02x %02x...\n"),
-				     pkt->len, pkt->data[0], pkt->data[1], pkt->data[2], pkt->data[3]);
-			return -EINVAL;
+	case 4:
+		tos = pkt->data[1];
+		break;
+	case 6:
+		tos = (load_be16(pkt->data) >> 4) & 0xff;
+		break;
+	default:
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Unknown packet (len %d) received: %02x %02x %02x %02x...\n"),
+			     pkt->len, pkt->data[0], pkt->data[1], pkt->data[2], pkt->data[3]);
+		return -EINVAL;
 	}
 
 	/* set the actual value */

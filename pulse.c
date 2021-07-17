@@ -1689,27 +1689,26 @@ static int pulse_authenticate(struct openconnect_info *vpninfo, int connecting)
 			val = load_be32(avp_p);
 
 			switch (val) {
-		case 1: /* Prompt for both username and password. */
-			prompt_flags = PROMPT_PASSWORD | PROMPT_USERNAME;
-			break;
-		case 3: /* Prompt for password.*/
-		case 15:
-			prompt_flags = PROMPT_PASSWORD;
-			break;
-		case 5: /* Prompt for username.*/
-			prompt_flags = PROMPT_USERNAME;
-			break;
-
-		default:
-			/* It does no harm to submit both, as anything unwanted is ignored. */
-			vpn_progress(vpninfo, PRG_ERR,
-				     _("Unknown D73 prompt value 0x%x. Will prompt for both username and password.\n"),
-				     val);
-			vpn_progress(vpninfo, PRG_ERR,
-				     _("Please report this value and the behaviour of the official client.\n"));
-			prompt_flags = PROMPT_PASSWORD | PROMPT_USERNAME;
-			break;
-		}
+			case 1: /* Prompt for both username and password. */
+				prompt_flags = PROMPT_PASSWORD | PROMPT_USERNAME;
+				break;
+			case 3: /* Prompt for password.*/
+			case 15:
+				prompt_flags = PROMPT_PASSWORD;
+				break;
+			case 5: /* Prompt for username.*/
+				prompt_flags = PROMPT_USERNAME;
+				break;
+			default:
+				/* It does no harm to submit both, as anything unwanted is ignored. */
+				vpn_progress(vpninfo, PRG_ERR,
+				             _("Unknown D73 prompt value 0x%x. Will prompt for both username and password.\n"),
+				             val);
+				vpn_progress(vpninfo, PRG_ERR,
+				             _("Please report this value and the behaviour of the official client.\n"));
+				prompt_flags = PROMPT_PASSWORD | PROMPT_USERNAME;
+				break;
+			}
 		} else if (avp_vendor == VENDOR_JUNIPER2 && avp_code == 0xd7b) {
 			free(signin_prompt);
 			signin_prompt = strndup(avp_p, avp_len);
