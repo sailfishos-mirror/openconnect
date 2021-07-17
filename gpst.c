@@ -687,7 +687,7 @@ static int gpst_connect(struct openconnect_info *vpninfo)
 {
 	int ret;
 	struct oc_text_buf *reqbuf;
-	const char start_tunnel[12] = "START_TUNNEL"; /* NOT zero-terminated */
+	static const char start_tunnel[12] = "START_TUNNEL"; /* NOT zero-terminated */
 	char buf[256];
 
 	/* We do NOT actually start the HTTPS tunnel if ESP is enabled and we received
