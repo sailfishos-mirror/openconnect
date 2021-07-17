@@ -382,8 +382,8 @@ WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH 
 OPENCONNECT_CMD_SOCKET dumb_socketpair(OPENCONNECT_CMD_SOCKET socks[2], int make_overlapped)
 {
     union {
-       struct sockaddr_in inaddr;
-       struct sockaddr addr;
+        struct sockaddr_in inaddr;
+        struct sockaddr addr;
     } a;
     OPENCONNECT_CMD_SOCKET listener;
     int e;
@@ -392,8 +392,8 @@ OPENCONNECT_CMD_SOCKET dumb_socketpair(OPENCONNECT_CMD_SOCKET socks[2], int make
     int reuse = 1;
 
     if (socks == 0) {
-      WSASetLastError(WSAEINVAL);
-      return SOCKET_ERROR;
+        WSASetLastError(WSAEINVAL);
+        return SOCKET_ERROR;
     }
 
     listener = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -410,11 +410,11 @@ OPENCONNECT_CMD_SOCKET dumb_socketpair(OPENCONNECT_CMD_SOCKET socks[2], int make
         if (setsockopt(listener, SOL_SOCKET, SO_REUSEADDR,
                (char *) &reuse, (socklen_t) sizeof(reuse)) == -1)
             break;
-        if  (bind(listener, &a.addr, sizeof(a.inaddr)) == SOCKET_ERROR)
+        if (bind(listener, &a.addr, sizeof(a.inaddr)) == SOCKET_ERROR)
             break;
 
         memset(&a, 0, sizeof(a));
-        if  (getsockname(listener, &a.addr, &addrlen) == SOCKET_ERROR)
+        if (getsockname(listener, &a.addr, &addrlen) == SOCKET_ERROR)
             break;
         // win32 getsockname may only set the port number, p=0.0005.
         // ( https://docs.microsoft.com/en-us/windows/win32/api/winsock/nf-winsock-getsockname ):
