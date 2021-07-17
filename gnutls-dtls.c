@@ -102,7 +102,7 @@ void gather_dtls_ciphers(struct openconnect_info *vpninfo, struct oc_text_buf *b
 {
 	int i, first = 1;
 
-	for (i = 0; i < sizeof(gnutls_dtls_ciphers) / sizeof(gnutls_dtls_ciphers[0]); i++) {
+	for (i = 0; i < ARRAY_SIZE(gnutls_dtls_ciphers); i++) {
 		if (!gnutls_dtls_ciphers[i].cisco_dtls12 &&
 		    gnutls_check_version(gnutls_dtls_ciphers[i].min_gnutls_version)) {
 			buf_append(buf, "%s%s", first ? "" : ":",
@@ -140,7 +140,7 @@ void gather_dtls_ciphers(struct openconnect_info *vpninfo, struct oc_text_buf *b
 			break;
 
 		if (gnutls_cipher_suite_info(idx, NULL, NULL, &cipher, &mac, NULL) != NULL) {
-			for (i = 0; i < sizeof(gnutls_dtls_ciphers)/sizeof(gnutls_dtls_ciphers[0]); i++) {
+			for (i = 0; i < ARRAY_SIZE(gnutls_dtls_ciphers); i++) {
 				if (used & (1 << i))
 					continue;
 				if (gnutls_dtls_ciphers[i].mac == mac && gnutls_dtls_ciphers[i].cipher == cipher) {
@@ -284,7 +284,7 @@ static int start_dtls_resume_handshake(struct openconnect_info *vpninfo, gnutls_
 	int err;
 	int cipher;
 
-	for (cipher = 0; cipher < sizeof(gnutls_dtls_ciphers)/sizeof(gnutls_dtls_ciphers[0]); cipher++) {
+	for (cipher = 0; cipher < ARRAY_SIZE(gnutls_dtls_ciphers); cipher++) {
 		if (gnutls_dtls_ciphers[cipher].cisco_dtls12 != vpninfo->dtls12 ||
 		    gnutls_check_version(gnutls_dtls_ciphers[cipher].min_gnutls_version) == NULL)
 			continue;

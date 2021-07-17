@@ -1194,7 +1194,7 @@ static int process_socks_proxy(struct openconnect_info *vpninfo)
 	}
 	if (buf[1]) {
 		unsigned char err = buf[1];
-		if (err < sizeof(socks_errors) / sizeof(socks_errors[0]))
+		if (err < ARRAY_SIZE(socks_errors))
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("SOCKS proxy error %02x: %s\n"),
 				     err, _(socks_errors[err]));
