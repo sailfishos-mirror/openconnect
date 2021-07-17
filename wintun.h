@@ -179,8 +179,7 @@ typedef DWORD(WINAPI *WINTUN_GET_RUNNING_DRIVER_VERSION_FUNC)(void);
 /**
  * Determines the level of logging, passed to WINTUN_LOGGER_CALLBACK.
  */
-typedef enum
-{
+typedef enum {
     WINTUN_LOG_INFO, /**< Informational */
     WINTUN_LOG_WARN, /**< Warning */
     WINTUN_LOG_ERR   /**< Error */
