@@ -190,7 +190,7 @@ static const char *lcp_names[] = {
 	"Discard-Request",
 };
 
-inline static const char *proto_names(uint16_t proto)
+static inline const char *proto_names(uint16_t proto)
 {
 	static char unknown[21];
 
