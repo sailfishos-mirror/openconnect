@@ -852,7 +852,6 @@ JNIEXPORT void JNICALL Java_org_infradead_libopenconnect_LibOpenConnect_setClien
 
 	release_cstring(ctx->jenv, jcert, cert);
 	release_cstring(ctx->jenv, jsslkey, sslkey);
-	return;
 }
 
 /* special handling: multiple string arguments */
