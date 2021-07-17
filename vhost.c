@@ -552,7 +552,7 @@ int vhost_tun_mainloop(struct openconnect_info *vpninfo, int *timeout, int reada
 	}
 
 	/* If we aren't going to have one more turn around the mainloop,
-	 * set the wake event indices. And if we find the the rings have
+	 * set the wake event indices. And if we find the rings have
 	 * moved on while we're doing that, take one more turn around
 	 * the mainloop... */
 	return did_work || set_ring_wake(vpninfo, 1) || set_ring_wake(vpninfo, 0);

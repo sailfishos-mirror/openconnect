@@ -1361,7 +1361,7 @@ int gpst_esp_send_probes(struct openconnect_info *vpninfo)
 	 *    "monitor\x00\x00pan ha 0123456789:;<=>? !\"#$%&\'()*+,-./\x10\x11\x12\x13\x14\x15\x16\x17";
 	 *
 	 * 2) The ping packets are addressed to the IP supplied in the
-	 *    config XML as as <gw-address>. In most cases, this is the
+	 *    config XML as <gw-address>. In most cases, this is the
 	 *    same as the *external* IP address of the VPN gateway
 	 *    (vpninfo->ip_info.gateway_addr), but in some cases it is a
 	 *    separate address.
