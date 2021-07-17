@@ -1571,29 +1571,35 @@ static inline int strprefix_match(const char *str, int len, const char *match)
 }
 
 #define STRDUP(res, arg) \
-	if (res != arg) {					\
-		free(res);					\
-		if (arg) {					\
-			res = strdup(arg);			\
-			if (res == NULL) return -ENOMEM;	\
-		} else res = NULL;				\
+	do {								\
+		if (res != arg) {					\
+			free(res);					\
+			if (arg) {					\
+				res = strdup(arg);			\
+				if (res == NULL) return -ENOMEM;	\
+			} else res = NULL;				\
+		}							\
 	} while(0)
 
 #define UTF8CHECK(arg) \
-	if ((arg) && buf_append_utf16le(NULL, (arg))) { \
-		vpn_progress(vpninfo, PRG_ERR,				\
-			     _("ERROR: %s() called with invalid UTF-8 for '%s' argument\n"),\
-			     __func__, #arg);				\
-		return -EILSEQ;						\
-	}
+	do {								\
+		if ((arg) && buf_append_utf16le(NULL, (arg))) {		\
+			vpn_progress(vpninfo, PRG_ERR,			\
+			             _("ERROR: %s() called with invalid UTF-8 for '%s' argument\n"),\
+			             __func__, #arg);			\
+			return -EILSEQ;					\
+		}							\
+	} while(0)
 
 #define UTF8CHECK_VOID(arg) \
-	if ((arg) && buf_append_utf16le(NULL, (arg))) { \
-		vpn_progress(vpninfo, PRG_ERR,				\
-			     _("ERROR: %s() called with invalid UTF-8 for '%s' argument\n"),\
-			     __func__, #arg);				\
-		return;							\
-	}
+	do {								\
+		if ((arg) && buf_append_utf16le(NULL, (arg))) {		\
+			vpn_progress(vpninfo, PRG_ERR,			\
+			             _("ERROR: %s() called with invalid UTF-8 for '%s' argument\n"),\
+			             __func__, #arg);			\
+			return;						\
+		}							\
+	} while(0)
 
 /* Let's stop open-coding big-endian and little-endian loads/stores.
  *
