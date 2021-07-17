@@ -51,7 +51,7 @@ static void throw_excep(JNIEnv *jenv, const char *exc, int line)
 		(*jenv)->ThrowNew(jenv, excep, msg);
 }
 
-#define OOM(jenv)	do { throw_excep(jenv, "java/lang/OutOfMemoryError", __LINE__); } while (0)
+#define OOM(jenv)	throw_excep(jenv, "java/lang/OutOfMemoryError", __LINE__)
 
 static struct libctx *getctx(JNIEnv *jenv, jobject jobj)
 {
