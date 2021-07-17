@@ -935,8 +935,8 @@ FILE *openconnect_fopen_utf8(struct openconnect_info *vpninfo, const char *fname
 		/* This should never happen, but if we forget and start using other
 		   modes without implementing proper mode->flags conversion, complain! */
 		vpn_progress(vpninfo, PRG_ERR,
-			     _("openconnect_fopen_utf8() used with unsupported mode '%s'\n"),
-			     mode);
+			     _("%s() used with unsupported mode '%s'\n"),
+			     __func__, mode);
 		return NULL;
 	}
 
