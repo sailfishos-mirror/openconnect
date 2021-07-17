@@ -499,7 +499,7 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 			     _("Response was:%s\n"), buf);
 	}
  out:
- 	xmlFreeDoc(xml_doc);
+	xmlFreeDoc(xml_doc);
 	buf_free(domains);
 	free(s);
 	free(s2);

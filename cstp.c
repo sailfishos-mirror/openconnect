@@ -433,7 +433,7 @@ static int start_cstp_connection(struct openconnect_info *vpninfo)
 				if (vsize != 32) {
 					vpn_progress(vpninfo, PRG_ERR,
 					     _("X-DTLS-Session-ID not 64 characters; is: \"%s\"\n"),
-					     	colon);
+					     colon);
 					vpninfo->dtls_attempt_period = 0;
 					ret = -EINVAL;
 					goto err;
@@ -451,7 +451,7 @@ static int start_cstp_connection(struct openconnect_info *vpninfo)
 				if (vsize <= 0) {
 					vpn_progress(vpninfo, PRG_ERR,
 					     _("X-DTLS-Session-ID is invalid; is: \"%s\"\n"),
-					     	colon);
+					     colon);
 					vpninfo->dtls_attempt_period = 0;
 					ret = -EINVAL;
 					goto err;
