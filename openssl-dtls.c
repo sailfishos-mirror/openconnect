@@ -772,8 +772,8 @@ int dtls_try_handshake(struct openconnect_info *vpninfo, int *timeout)
 		}
 
 		static int badossl_bitched = 0;
-		if (((OPENSSL_VERSION_NUMBER >= 0x100000b0L && OPENSSL_VERSION_NUMBER <= 0x100000c0L) || \
-		     (OPENSSL_VERSION_NUMBER >= 0x10001040L && OPENSSL_VERSION_NUMBER <= 0x10001060L) || \
+		if (((OPENSSL_VERSION_NUMBER >= 0x100000b0L && OPENSSL_VERSION_NUMBER <= 0x100000c0L) ||
+		     (OPENSSL_VERSION_NUMBER >= 0x10001040L && OPENSSL_VERSION_NUMBER <= 0x10001060L) ||
 		     OPENSSL_VERSION_NUMBER == 0x10002000L) && !badossl_bitched) {
 			badossl_bitched = 1;
 			vpn_progress(vpninfo, PRG_ERR, _("DTLS handshake timed out\n"));
