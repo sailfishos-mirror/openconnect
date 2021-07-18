@@ -37,7 +37,7 @@ do {									\
 	if (srclen < 2)							\
 		return -EINVAL;						\
 	/* Explicit comparison with 8 to optimise it into a tautology	\
-	 * in the the bits == 9 case, because the compiler doesn't	\
+	 * in the bits == 9 case, because the compiler doesn't
 	 * know that bits_left can never be larger than 8. */		\
 	if (bits >= 8 || bits >= bits_left) {				\
 		/* We need *all* the bits that are left in the current	\

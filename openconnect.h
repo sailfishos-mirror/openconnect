@@ -392,7 +392,7 @@ int openconnect_set_csd_environ(struct openconnect_info *vpninfo,
 /* This string is static, valid only while the connection lasts. If you
  * are going to cache this to remember which certs the user has accepted,
  * make sure you also store the host/port for which it was accepted and
- * don't just accept this cert from *anywhere*. Also use use the check
+ * don't just accept this cert from *anywhere*. Also use the check
  * function below instead of manually comparing. When this function
  * returns a string which *doesn't* match the previously-stored hash
  * matched with openconnect_check_peer_cert_hash(), you should store
