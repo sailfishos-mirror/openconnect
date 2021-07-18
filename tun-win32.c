@@ -242,7 +242,7 @@ static intptr_t open_tuntap(struct openconnect_info *vpninfo, char *guid, wchar_
 	vpn_progress(vpninfo, PRG_DEBUG, _("Opened tun device %S\n"), wname);
 
 	if (!DeviceIoControl(tun_fh, TAP_IOCTL_GET_VERSION,
-			     data, sizeof(&data), data, sizeof(data),
+			     data, sizeof(data), data, sizeof(data),
 			     &len, NULL)) {
 		char *errstr = openconnect__win32_strerror(GetLastError());
 
