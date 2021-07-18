@@ -1124,6 +1124,15 @@ static int next_option(int argc, char **argv, char **config_arg)
 
 }
 
+static void assert_nonnull_config_arg(const char *opt, const char *config_arg)
+{
+	if (!config_arg) { /* Should never happen */
+		fprintf(stderr, _("Internal error; option '%s' unexpectedly yielded null config_arg\n"),
+			opt);
+		exit(1); /* Shut static analyzer up */
+	}
+}
+
 #ifndef _WIN32
 static void get_uids(const char *config_arg, uid_t *uid, gid_t *gid)
 {
@@ -1697,9 +1706,11 @@ int main(int argc, char **argv)
 			vpninfo->use_tun_script = 1;
 			break;
 		case 'U':
+			assert_nonnull_config_arg("U", config_arg);
 			get_uids(config_arg, &vpninfo->uid, &vpninfo->gid);
 			break;
 		case OPT_CSD_USER:
+			assert_nonnull_config_arg("csd-user", config_arg);
 			get_uids(config_arg, &vpninfo->uid_csd, &vpninfo->gid_csd);
 			vpninfo->uid_csd_given = 1;
 			break;
@@ -1737,6 +1748,7 @@ int main(int argc, char **argv)
 			/* The next option will come from the file... */
 			break;
 		case OPT_COMPRESSION:
+			assert_nonnull_config_arg("compression", config_arg);
 			if (!strcmp(config_arg, "none") ||
 			    !strcmp(config_arg, "off"))
 				openconnect_set_compression_mode(vpninfo, OC_COMPRESSION_MODE_NONE);
@@ -1784,6 +1796,7 @@ int main(int argc, char **argv)
 			allowed_fingerprints++;
 			break;
 		case OPT_RESOLVE:
+			assert_nonnull_config_arg("resolve", config_arg);
 			ip = strchr(config_arg, ':');
 			if (!ip) {
 				fprintf(stderr, _("Missing colon in resolve option\n"));
@@ -1833,6 +1846,7 @@ int main(int argc, char **argv)
 			non_inter = 1;
 			break;
 		case OPT_RECONNECT_TIMEOUT:
+			assert_nonnull_config_arg("reconnect-timeout", config_arg);
 			reconnect_timeout = atoi(config_arg);
 			break;
 		case OPT_DTLS_CIPHERS:
@@ -1851,6 +1865,7 @@ int main(int argc, char **argv)
 			vpninfo->certinfo[0].cert = dup_config_arg();
 			break;
 		case 'e':
+			assert_nonnull_config_arg("e", config_arg);
 			vpninfo->cert_expire_warning = 86400 * atoi(config_arg);
 			break;
 		case 'k':
@@ -1873,6 +1888,7 @@ int main(int argc, char **argv)
 			vpninfo->ifname = dup_config_arg();
 			break;
 		case 'm': {
+			assert_nonnull_config_arg("m", config_arg);
 			int mtu = atol(config_arg);
 			if (mtu < 576) {
 				fprintf(stderr, _("MTU %d too small\n"), mtu);
@@ -1882,6 +1898,7 @@ int main(int argc, char **argv)
 			break;
 		}
 		case OPT_BASEMTU:
+			assert_nonnull_config_arg("base-mtu", config_arg);
 			vpninfo->basemtu = atol(config_arg);
 			if (vpninfo->basemtu < 576) {
 				fprintf(stderr, _("MTU %d too small\n"), vpninfo->basemtu);
@@ -1935,6 +1952,7 @@ int main(int argc, char **argv)
 			openconnect_disable_ipv6(vpninfo);
 			break;
 		case 'Q':
+			assert_nonnull_config_arg("Q", config_arg);
 			vpninfo->max_qlen = atol(config_arg);
 			if (!vpninfo->max_qlen) {
 				fprintf(stderr, _("Queue length zero not permitted; using 1\n"));
@@ -1974,15 +1992,19 @@ int main(int argc, char **argv)
 			openconnect_set_localname(vpninfo, config_arg);
 			break;
 		case OPT_FORCE_DPD:
+			assert_nonnull_config_arg("force-dpd", config_arg);
 			openconnect_set_dpd(vpninfo, atoi(config_arg));
 			break;
 		case OPT_FORCE_TROJAN:
+			assert_nonnull_config_arg("force-trojan", config_arg);
 			openconnect_set_trojan_interval(vpninfo, atoi(config_arg));
 			break;
 		case OPT_DTLS_LOCAL_PORT:
+			assert_nonnull_config_arg("dtls-local-port", config_arg);
 			vpninfo->dtls_local_port = atoi(config_arg);
 			break;
 		case OPT_TOKEN_MODE:
+			assert_nonnull_config_arg("token-mode", config_arg);
 			if (strcasecmp(config_arg, "rsa") == 0) {
 				token_mode = OC_TOKEN_MODE_STOKEN;
 			} else if (strcasecmp(config_arg, "totp") == 0) {
@@ -2003,6 +2025,7 @@ int main(int argc, char **argv)
 			token_str = keep_config_arg();
 			break;
 		case OPT_OS:
+			assert_nonnull_config_arg("os", config_arg);
 			if (openconnect_set_reported_os(vpninfo, config_arg)) {
 				fprintf(stderr, _("Invalid OS identity \"%s\"\n"),
 					config_arg);
@@ -2024,6 +2047,7 @@ int main(int argc, char **argv)
 			break;
 #ifdef OPENCONNECT_GNUTLS
 		case OPT_GNUTLS_DEBUG:
+			assert_nonnull_config_arg("gnutls-debug", config_arg);
 			gnutls_global_set_log_level(atoi(config_arg));
 			gnutls_global_set_log_function(oc_gnutls_log_func);
 			break;
