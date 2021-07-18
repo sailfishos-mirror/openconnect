@@ -141,10 +141,10 @@
 
 /* FreeBSD provides this in <sys/param.h>  */
 #ifndef MAX
-#define MAX(x,y) ((x)>(y))?(x):(y)
+#define MAX(x,y) (((x)>(y))?(x):(y))
 #endif
 #ifndef MIN
-#define MIN(x,y) ((x)<(y))?(x):(y)
+#define MIN(x,y) (((x)<(y))?(x):(y))
 #endif
 
 /* At least MinGW headers seem not to provide IPPROTO_IPIP */
@@ -880,12 +880,12 @@ static inline void free_pkt(struct openconnect_info *vpninfo, struct pkt *pkt)
 #define vpn_perror(vpninfo, msg) vpn_progress((vpninfo), PRG_ERR, "%s: %s\n", (msg), strerror(errno))
 
 #ifdef _WIN32
-#define monitor_read_fd(_v, _n) _v->_n##_monitored |= FD_READ
-#define monitor_write_fd(_v, _n) _v->_n##_monitored |= FD_WRITE
-#define monitor_except_fd(_v, _n) _v->_n##_monitored |= FD_CLOSE
-#define unmonitor_read_fd(_v, _n) _v->_n##_monitored &= ~FD_READ
-#define unmonitor_write_fd(_v, _n) _v->_n##_monitored &= ~FD_WRITE
-#define unmonitor_except_fd(_v, _n) _v->_n##_monitored &= ~FD_CLOSE
+#define monitor_read_fd(_v, _n) (_v->_n##_monitored |= FD_READ)
+#define monitor_write_fd(_v, _n) (_v->_n##_monitored |= FD_WRITE)
+#define monitor_except_fd(_v, _n) (_v->_n##_monitored |= FD_CLOSE)
+#define unmonitor_read_fd(_v, _n) (_v->_n##_monitored &= ~FD_READ)
+#define unmonitor_write_fd(_v, _n) (_v->_n##_monitored &= ~FD_WRITE)
+#define unmonitor_except_fd(_v, _n) (_v->_n##_monitored &= ~FD_CLOSE)
 
 #define monitor_fd_new(_v, _n) do { if (!_v->_n##_event) _v->_n##_event = CreateEvent(NULL, FALSE, FALSE, NULL); } while (0)
 #define read_fd_monitored(_v, _n) (_v->_n##_monitored & FD_READ)
@@ -999,7 +999,7 @@ static inline void __monitor_fd_new(struct openconnect_info *vpninfo,
 
 /* Key material for DTLS-PSK */
 #define PSK_LABEL "EXPORTER-openconnect-psk"
-#define PSK_LABEL_SIZE sizeof(PSK_LABEL)-1
+#define PSK_LABEL_SIZE (sizeof(PSK_LABEL) - 1)
 #define PSK_KEY_SIZE 32
 
 /* Packet types */
