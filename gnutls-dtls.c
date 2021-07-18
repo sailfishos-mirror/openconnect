@@ -238,7 +238,7 @@ static int start_dtls_psk_handshake(struct openconnect_info *vpninfo, gnutls_ses
 	 * the RFC5705 context, the output is identical with gnutls_prf(). The
 	 * latter is available in much earlier versions of gnutls. */
 	err = gnutls_prf(vpninfo->https_sess, PSK_LABEL_SIZE, PSK_LABEL,
-			 0, 0, 0, PSK_KEY_SIZE, (char*)vpninfo->dtls_secret);
+			 0, 0, 0, PSK_KEY_SIZE, (char *)vpninfo->dtls_secret);
 	if (err < 0) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Failed to generate DTLS key: %s\n"),

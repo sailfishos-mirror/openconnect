@@ -883,7 +883,7 @@ int compress_packet(struct openconnect_info *vpninfo, int compr_type, struct pkt
 		if (this->len < 40)
 			return -EFBIG;
 
-		ret = LZ4_compress_default((void*)this->data, (void*)vpninfo->deflate_pkt->data,
+		ret = LZ4_compress_default((void *)this->data, (void *)vpninfo->deflate_pkt->data,
 					   this->len, this->len);
 		if (ret <= 0) {
 			if (ret == 0)
