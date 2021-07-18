@@ -2736,7 +2736,7 @@ static int ttls_pull_timeout_func(gnutls_transport_ptr_t t, unsigned int ms)
 {
 	struct openconnect_info *vpninfo = t;
 
-	vpn_progress(vpninfo, PRG_TRACE, _("ttls_pull_timeout_func %dms\n"), ms);
+	vpn_progress(vpninfo, PRG_TRACE, _("%s %dms\n"), __func__, ms);
 	return 0;
 }
 
