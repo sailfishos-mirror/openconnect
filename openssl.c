@@ -39,7 +39,7 @@
 #include <ctype.h>
 
 #if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
-#define X509_up_ref(x) 	CRYPTO_add(&(x)->references, 1, CRYPTO_LOCK_X509)
+#define X509_up_ref(x) CRYPTO_add(&(x)->references, 1, CRYPTO_LOCK_X509)
 #define X509_get0_notAfter(x) X509_get_notAfter(x)
 #define EVP_MD_CTX_new EVP_MD_CTX_create
 #define EVP_MD_CTX_free EVP_MD_CTX_destroy

@@ -475,7 +475,7 @@ static int parse_options(struct openconnect_info *vpninfo, char *buf, int len,
 			     _("Response was:%s\n"), buf);
 		ret = -EINVAL;
 	}
- 	xmlFreeDoc(xml_doc);
+	xmlFreeDoc(xml_doc);
 	free(s);
 	return ret;
 }
