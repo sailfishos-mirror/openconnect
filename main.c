@@ -952,12 +952,12 @@ static void usage(void)
 	printf("      --version-string=STRING     %s\n", _("reported version string during authentication"));
 	printf("                                  (%s %s)\n", _("default:"), openconnect_version_str);
 
-#ifndef _WIN32
 	printf("\n%s:\n", _("Trojan binary (CSD) execution"));
+#ifndef _WIN32
 	printf("      --csd-user=USER             %s\n", _("Drop privileges during trojan execution"));
 	printf("      --csd-wrapper=SCRIPT        %s\n", _("Run SCRIPT instead of trojan binary"));
-	printf("      --force-trojan=INTERVAL     %s\n", _("Set minimum interval for rerunning trojan (in seconds)"));
 #endif
+	printf("      --force-trojan=INTERVAL     %s\n", _("Set minimum interval between trojan runs (in seconds)"));
 
 	printf("\n%s:\n", _("Server bugs"));
 	printf("      --no-http-keepalive         %s\n", _("Disable HTTP connection re-use"));
