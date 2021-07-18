@@ -140,7 +140,7 @@ int gen_authorization_hdr(struct openconnect_info *vpninfo, int proxy,
 	int ret;
 	int i;
 
-	for (i = 0; i < sizeof(auth_methods) / sizeof(auth_methods[0]); i++) {
+	for (i = 0; i < ARRAY_SIZE(auth_methods); i++) {
 		struct http_auth_state *auth_state;
 		if (proxy)
 			auth_state = &vpninfo->proxy_auth[auth_methods[i].state_index];
@@ -218,7 +218,7 @@ int proxy_auth_hdrs(struct openconnect_info *vpninfo, char *hdr, char *val)
 	if (strcasecmp(hdr, "Proxy-Authenticate"))
 		return 0;
 
-	for (i = 0; i < sizeof(auth_methods) / sizeof(auth_methods[0]); i++) {
+	for (i = 0; i < ARRAY_SIZE(auth_methods); i++) {
 		/* Return once we've found a match */
 		if (handle_auth_proto(vpninfo, vpninfo->proxy_auth, &auth_methods[i], val))
 			return 0;
@@ -240,7 +240,7 @@ int http_auth_hdrs(struct openconnect_info *vpninfo, char *hdr, char *val)
 	if (strcasecmp(hdr, "WWW-Authenticate"))
 		return 0;
 
-	for (i = 0; i < sizeof(auth_methods) / sizeof(auth_methods[0]); i++) {
+	for (i = 0; i < ARRAY_SIZE(auth_methods); i++) {
 		/* Return once we've found a match */
 		if (handle_auth_proto(vpninfo, vpninfo->http_auth, &auth_methods[i], val))
 			return 0;
@@ -254,7 +254,7 @@ void clear_auth_states(struct openconnect_info *vpninfo,
 {
 	int i;
 
-	for (i = 0; i < sizeof(auth_methods) / sizeof(auth_methods[0]); i++) {
+	for (i = 0; i < ARRAY_SIZE(auth_methods); i++) {
 		struct http_auth_state *auth = &auth_states[auth_methods[i].state_index];
 
 		/* The 'reset' argument is set when we're connected successfully,
@@ -280,7 +280,7 @@ static int set_authmethods(struct openconnect_info *vpninfo, struct http_auth_st
 	int i, len;
 	const char *p;
 
-	for (i = 0; i < sizeof(auth_methods) / sizeof(auth_methods[0]); i++)
+	for (i = 0; i < ARRAY_SIZE(auth_methods); i++)
 		auth_states[auth_methods[i].state_index].state = AUTH_DISABLED;
 
 	while (methods) {
@@ -291,7 +291,7 @@ static int set_authmethods(struct openconnect_info *vpninfo, struct http_auth_st
 		} else
 			len = strlen(methods);
 
-		for (i = 0; i < sizeof(auth_methods) / sizeof(auth_methods[0]); i++) {
+		for (i = 0; i < ARRAY_SIZE(auth_methods); i++) {
 			if (strprefix_match(methods, len, auth_methods[i].name) ||
 			    (auth_methods[i].state_index == AUTH_TYPE_GSSAPI &&
 			     strprefix_match(methods, len, "gssapi"))) {
