@@ -39,20 +39,17 @@ struct ip {
 
 /* IPv6 header used in gpst.c */
 
-struct ip6_hdr
-  {
-    union
-      {
-	struct ip6_hdrctl
-	  {
+struct ip6_hdr {
+    union {
+	struct ip6_hdrctl {
 	    uint32_t ip6_un1_flow;   /* 4 bits version, 8 bits TC,
 					20 bits flow-ID */
 	    uint16_t ip6_un1_plen;   /* payload length */
 	    uint8_t  ip6_un1_nxt;    /* next header */
 	    uint8_t  ip6_un1_hlim;   /* hop limit */
-	  } ip6_un1;
+	} ip6_un1;
 	uint8_t ip6_un2_vfc;       /* 4 bits version, top 4 bits tclass */
-      } ip6_ctlun;
+    } ip6_ctlun;
     struct in6_addr ip6_src;      /* source address */
     struct in6_addr ip6_dst;      /* destination address */
   };
@@ -91,53 +88,44 @@ struct ip6_hdr
 #define	icmp_mask	icmp_dun.id_mask
 #define	icmp_data	icmp_dun.id_data
 
-struct icmp_ra_addr
-{
+struct icmp_ra_addr {
   uint32_t ira_addr;
   uint32_t ira_preference;
 };
 
-struct icmp
-{
+struct icmp {
   uint8_t  icmp_type;	/* type of message, see below */
   uint8_t  icmp_code;	/* type sub code */
   uint16_t icmp_cksum;	/* ones complement checksum of struct */
-  union
-  {
+  union {
     u_char ih_pptr;		/* ICMP_PARAMPROB */
     struct in_addr ih_gwaddr;	/* gateway address */
-    struct ih_idseq		/* echo datagram */
-    {
+    struct ih_idseq {		/* echo datagram */
       uint16_t icd_id;
       uint16_t icd_seq;
     } ih_idseq;
     uint32_t ih_void;
 
     /* ICMP_UNREACH_NEEDFRAG -- Path MTU Discovery (RFC1191) */
-    struct ih_pmtu
-    {
+    struct ih_pmtu {
       uint16_t ipm_void;
       uint16_t ipm_nextmtu;
     } ih_pmtu;
 
-    struct ih_rtradv
-    {
+    struct ih_rtradv {
       uint8_t irt_num_addrs;
       uint8_t irt_wpa;
       uint16_t irt_lifetime;
     } ih_rtradv;
   } icmp_hun;
 
-  union
-  {
-    struct
-    {
+  union {
+    struct {
       uint32_t its_otime;
       uint32_t its_rtime;
       uint32_t its_ttime;
     } id_ts;
-    struct
-    {
+    struct {
       struct ip idi_ip;
       /* options and then 64 bits of data */
     } id_ip;
@@ -153,13 +141,11 @@ struct icmp
 #define ICMP6_ECHO_REQUEST	128
 #define ICMP6_ECHO_REPLY	129
 
-struct icmp6_hdr
-  {
+struct icmp6_hdr {
     uint8_t     icmp6_type;   /* type field */
     uint8_t     icmp6_code;   /* code field */
     uint16_t    icmp6_cksum;  /* checksum field */
-    union
-      {
+    union {
 	uint32_t  icmp6_un_data32[1]; /* type-specific field */
 	uint16_t  icmp6_un_data16[2]; /* type-specific field */
 	uint8_t   icmp6_un_data8[4];  /* type-specific field */
