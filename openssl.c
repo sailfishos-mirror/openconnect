@@ -1472,7 +1472,7 @@ static int match_cert_hostname(struct openconnect_info *vpninfo, X509 *peer_cert
 /* Before OpenSSL 1.1 we could do this directly. And needed to. */
 #ifndef SSL_CTX_get_extra_chain_certs_only
 #define SSL_CTX_get_extra_chain_certs_only(ctx, st) \
-	do { *(st) = (ctx)->extra_certs; } while(0)
+	(void)(*(st) = (ctx)->extra_certs)
 #endif
 
 static void workaround_openssl_certchain_bug(struct openconnect_info *vpninfo,

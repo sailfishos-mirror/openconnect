@@ -55,7 +55,7 @@ static const unsigned char send_remaining[] = { 0x00, SEND_REMAINING_INS, 0x00, 
 #define free_scard_error(str) free(str)
 #else
 #define scard_error(st) ((char *)pcsc_stringify_error(st))
-#define free_scard_error(str) do { ; } while (0)
+#define free_scard_error(str)
 
 #endif
 
