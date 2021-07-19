@@ -318,15 +318,13 @@ static int tncc_preauth(struct openconnect_info *vpninfo)
 			goto respfail;
 		if (len > 0)
 			vpn_progress(vpninfo, PRG_DEBUG,
-				     _("Unexpected non-empty line from TNCC "
-				       "after DSPREAUTH cookie: '%s'\n"),
+				     _("Unexpected non-empty line from TNCC after DSPREAUTH cookie: '%s'\n"),
 				     recvbuf);
 	} while (len && (count++ < 10));
 
 	if (len > 0) {
 		vpn_progress(vpninfo, PRG_ERR,
-			     _("Too many non-empty lines from TNCC after "
-			       "DSPREAUTH cookie\n"));
+			     _("Too many non-empty lines from TNCC after DSPREAUTH cookie\n"));
 		goto respfail;
 	}
 

@@ -1200,8 +1200,7 @@ static int run_csd_script(struct openconnect_info *vpninfo, char *buf, int bufle
                 if (set_csd_user(vpninfo) < 0)
                         exit(1);
                 if (getuid() == 0 && !vpninfo->csd_wrapper) {
-                        fprintf(stderr, _("Warning: you are running insecure "
-                                          "CSD code with root privileges\n"
+                        fprintf(stderr, _("Warning: you are running insecure CSD code with root privileges\n"
                                           "\t Use command line option \"--csd-user\"\n"));
                 }
                 /*
