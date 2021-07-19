@@ -893,7 +893,7 @@ int array_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 				return work_done;
 			default:
 				/* This should never happen */
-				;
+				break;
 			}
 		}
 

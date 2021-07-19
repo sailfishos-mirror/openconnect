@@ -1367,7 +1367,7 @@ static int ppp_mainloop(struct openconnect_info *vpninfo, int dtls,
 			default:
 				/* This can never happen because ka_stalled_action()
 				 * always returns one of the above. */
-				;
+				break;
 			}
 		}
 
