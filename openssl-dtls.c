@@ -771,7 +771,7 @@ int dtls_try_handshake(struct openconnect_info *vpninfo, int *timeout)
 			return 0;
 		}
 
-		static int badossl_bitched = 0;
+		static int badossl_bitched; /* static variable initialised to 0 */
 		if (((OPENSSL_VERSION_NUMBER >= 0x100000b0L && OPENSSL_VERSION_NUMBER <= 0x100000c0L) ||
 		     (OPENSSL_VERSION_NUMBER >= 0x10001040L && OPENSSL_VERSION_NUMBER <= 0x10001060L) ||
 		     OPENSSL_VERSION_NUMBER == 0x10002000L) && !badossl_bitched) {

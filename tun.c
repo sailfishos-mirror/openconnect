@@ -543,7 +543,7 @@ int os_write_tun(struct openconnect_info *vpninfo, struct pkt *pkt)
 		else if (iph->ip_v == 4)
 			type = AF_INET;
 		else {
-			static int complained = 0;
+			static int complained; /* static variable initialised to 0 */
 			if (!complained) {
 				complained = 1;
 				vpn_progress(vpninfo, PRG_ERR,
