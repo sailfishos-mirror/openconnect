@@ -491,7 +491,19 @@ static int oc_pss_mgf1_pad(struct openconnect_info *vpninfo, gnutls_digest_algor
 
 	emBuf[emLen - 1] = 0xbc;
 
-	/* Now the MGF1 function as definsed in RFC3447 Appendix B, although
+	/* Although gnutls_hash_output() is supposed to reset the context,
+	 * it doesn't actually seem to work at least for SHA384; the later
+	 * gnutls_hash_copy() ends up wrong somehow, and gives incorrect
+	 * output. Unless we completely destroy the context and make a
+	 * new one. https://gitlab.com/gnutls/gnutls/-/issues/1257 */
+	gnutls_hash_deinit(hashctx, NULL);
+	err = gnutls_hash_init(&hashctx, dig);
+	if (err) {
+		hashctx = NULL;
+		goto out;
+	}
+
+	/* Now the MGF1 function as defined in RFC3447 Appendix B, although
 	 * it's somewhat easier to read in NIST SP 800-56B §7.2.2.2.
 	 *
 	 * We repeatedly hash (M' || C) where C is an incrementing 32-bit
