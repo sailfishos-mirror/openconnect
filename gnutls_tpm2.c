@@ -110,8 +110,13 @@ static int rsa_key_info(gnutls_privkey_t key, unsigned int flags, void *_certinf
 	if (flags & GNUTLS_PRIVKEY_INFO_PK_ALGO)
 		return GNUTLS_PK_RSA;
 
+	if (flags & GNUTLS_PRIVKEY_INFO_SIGN_ALGO)
+		return GNUTLS_SIGN_RSA_RAW;
+
+	int bits = tpm2_rsa_key_bits(vpninfo, certinfo);
+
 	if (flags & GNUTLS_PRIVKEY_INFO_PK_ALGO_BITS)
-		return tpm2_rsa_key_bits(vpninfo, certinfo);
+		return bits;
 
 	if (flags & GNUTLS_PRIVKEY_INFO_HAVE_SIGN_ALGO) {
 		gnutls_sign_algorithm_t algo = GNUTLS_FLAGS_TO_SIGN_ALGO(flags);
@@ -123,14 +128,24 @@ static int rsa_key_info(gnutls_privkey_t key, unsigned int flags, void *_certinf
 		case GNUTLS_SIGN_RSA_SHA512:
 			return 1;
 
+		/* Only support RSA-PSS for a given hash if the key is large
+		 * enough, since RFC8446 mandates that the salt length MUST
+		 * equal the digest output length. So we need 2N + 2 bytes. */
 		case GNUTLS_SIGN_RSA_PSS_SHA256:
 		case GNUTLS_SIGN_RSA_PSS_RSAE_SHA256:
+			if (bits >= (SHA256_SIZE * 16) + 16)
+				return 1;
+			/* Fall through */
 		case GNUTLS_SIGN_RSA_PSS_SHA384:
 		case GNUTLS_SIGN_RSA_PSS_RSAE_SHA384:
+			if (bits >= (SHA384_SIZE * 16) + 16)
+				return 1;
+			/* Fall through */
 		case GNUTLS_SIGN_RSA_PSS_SHA512:
 		case GNUTLS_SIGN_RSA_PSS_RSAE_SHA512:
-			return 1;
-
+			if (bits >= (SHA512_SIZE * 16) + 16)
+				return 1;
+			/* Fall through */
 		default:
 			vpn_progress(vpninfo, PRG_DEBUG,
 				     _("Not supporting EC sign algo %s\n"),
@@ -138,9 +153,6 @@ static int rsa_key_info(gnutls_privkey_t key, unsigned int flags, void *_certinf
 			return 0;
 		}
 	}
-
-	if (flags & GNUTLS_PRIVKEY_INFO_SIGN_ALGO)
-		return GNUTLS_SIGN_RSA_RAW;
 
 	return -1;
 }
@@ -461,16 +473,29 @@ static int oc_pss_mgf1_pad(struct openconnect_info *vpninfo, gnutls_digest_algor
 	 * Better still, could GnuTLS just do this all for us and we only
 	 * do a raw signature — really raw, unlike GNUTLS_SIGN_RSA_RAW
 	 * which AIUI is actually padded. */
-	if (mHash->size > emLen - 2) {
+
+	/* Actually, RFC8446 §4.2.3 mandates that the salt length MUST be
+	 * equal to the length of the output of the digest algorithm. So
+	 * truncating is it *wrong*.
+	 *
+	 *  • https://gitlab.com/gnutls/gnutls/-/issues/1258
+	 *  • https://github.com/openssl/openssl/issues/16167
+	 */
+	int sLen = mHash->size;
+	if (sLen + mHash->size > emLen - 2) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("PSS encoding failed; hash size %d too large for RSA key %d\n"),
 			     mHash->size, emLen);
 		return GNUTLS_E_PK_SIGN_FAILED;
 	}
 
-	int sLen = mHash->size;
-	if (sLen + mHash->size > emLen - 2)
-		sLen = emLen - 2 - mHash->size;
+	/*
+	 * We don't truncate salt since RFC8446 forbids it for TLSv1.3 and
+	 * that's all we are using it for.
+	 *
+	 * if (sLen + mHash->size > emLen - 2)
+	 *	sLen = emLen - 2 - mHash->size;
+	 */
 
 	char salt[SHA512_SIZE];
 	if (sLen) {
