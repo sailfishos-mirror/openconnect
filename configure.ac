@@ -734,8 +734,8 @@ fi
 
 AM_CONDITIONAL(TEST_HWTPM, [ test "$test_hwtpm" = "yes" ])
 AM_CONDITIONAL(TEST_SWTPM, [ test "$SWTPM_IOCTL" != "" ])
-AM_CONDITIONAL(TEST_TPM2_IMPORT, [ test "$TPM2TSS_GENKEY" != "" ])
-AM_CONDITIONAL(TEST_TPM2_CREATE, [ test "$CREATE_TPM2_KEY" != "" ])
+AM_CONDITIONAL(TEST_TPM2_CREATE, [ test "$TPM2TSS_GENKEY" != "" ])
+AM_CONDITIONAL(TEST_TPM2_IMPORT, [ test "$CREATE_TPM2_KEY" != "" ])
 
 test_pkcs11=
 if test "$pkcs11_support" != ""; then
