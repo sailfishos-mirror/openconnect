@@ -1554,7 +1554,9 @@ static int background_self(struct openconnect_info *vpninfo, char *pidfile)
 			     pid);
 		sig_vpninfo = NULL;
 		/* Don't invoke EPOLL_CTL_DEL; it'll mess up the real one */
+#ifdef HAVE_EPOLL
 		vpninfo->epoll_fd = -1;
+#endif
 		openconnect_vpninfo_free(vpninfo);
 		exit(0);
 	}
