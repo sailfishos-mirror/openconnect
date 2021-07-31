@@ -29,7 +29,7 @@ CERT=$certdir/server-cert.pem
 KEY=$certdir/server-key.pem
 FAKE_TOKEN="--token-mode=totp --token-secret=ABCD"
 
-echo "Testing Juniper SSO auth against fake server ... "
+echo "Testing Juniper SSO auth against fake server ..."
 
 ${srcdir}/fake-juniper-sso-server.py $ADDRESS 1443 $CERT $KEY >/dev/null 2>&1 &
 PID=$!

@@ -25,7 +25,7 @@ top_builddir=${top_builddir:-..}
 
 . `dirname $0`/common.sh
 
-echo "Testing certificate auth... "
+echo "Testing certificate auth..."
 
 launch_simple_sr_server -d 1 -f -c configs/test-user-pass.config
 PID=$!

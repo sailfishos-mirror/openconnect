@@ -27,7 +27,7 @@ top_builddir=${top_builddir:-..}
 
 swtpm_list=${swtpm_list:-`echo ${certdir}/swtpm*-key-tpm.pem`}
 
-echo "Testing TPMv2 auth with swtpm... "
+echo "Testing TPMv2 auth with swtpm..."
 
 launch_simple_sr_server -d 1 -f -c configs/test-user-cert.config
 PID=$!
