@@ -293,12 +293,14 @@ static EVP_MD_CTX *handshake_md5;
 static EVP_MD_CTX *handshake_sha1;
 
 #if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
-static inline HMAC_CTX *HMAC_CTX_new(void) {
+static inline HMAC_CTX *HMAC_CTX_new(void)
+{
     HMAC_CTX *ret = malloc(sizeof(*ret));
     HMAC_CTX_init(ret);
     return ret;
 }
-static inline void HMAC_CTX_free(HMAC_CTX *ctx) {
+static inline void HMAC_CTX_free(HMAC_CTX *ctx)
+{
     HMAC_CTX_cleanup(ctx);
     free(ctx);
 }

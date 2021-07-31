@@ -351,7 +351,7 @@ intptr_t os_setup_tun(struct openconnect_info *vpninfo)
 	do {
 		sc.sc_unit = unit_nr + 1;
 
-		if (!connect(tun_fd, (struct sockaddr * )&sc, sizeof(sc))) {
+		if (!connect(tun_fd, (struct sockaddr *)&sc, sizeof(sc))) {
 			if (!vpninfo->ifname &&
 			    asprintf(&vpninfo->ifname, "utun%d", unit_nr) == -1) {
 				vpn_progress(vpninfo, PRG_ERR,

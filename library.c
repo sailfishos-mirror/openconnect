@@ -1356,7 +1356,7 @@ static const char *compr_name_map[] = {
 	[COMPR_LZO] = "LZO",
 };
 
-const char *openconnect_get_cstp_compression(struct openconnect_info * vpninfo)
+const char *openconnect_get_cstp_compression(struct openconnect_info *vpninfo)
 {
 	if (vpninfo->cstp_compr <= 0 || vpninfo->cstp_compr > COMPR_MAX)
 		return NULL;
@@ -1364,7 +1364,7 @@ const char *openconnect_get_cstp_compression(struct openconnect_info * vpninfo)
 	return compr_name_map[vpninfo->cstp_compr];
 }
 
-const char *openconnect_get_dtls_compression(struct openconnect_info * vpninfo)
+const char *openconnect_get_dtls_compression(struct openconnect_info *vpninfo)
 {
 	if (vpninfo->dtls_compr <= 0 || vpninfo->dtls_compr > COMPR_MAX)
 		return NULL;

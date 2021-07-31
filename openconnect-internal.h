@@ -1333,7 +1333,7 @@ int lzs_decompress(unsigned char *dst, int dstlen, const unsigned char *src, int
 int lzs_compress(unsigned char *dst, int dstlen, const unsigned char *src, int srclen);
 
 /* ssl.c */
-unsigned string_is_hostname(const char* str);
+unsigned string_is_hostname(const char *str);
 int connect_https_socket(struct openconnect_info *vpninfo);
 int __attribute__ ((format(printf, 4, 5)))
     request_passphrase(struct openconnect_info *vpninfo, const char *label,
