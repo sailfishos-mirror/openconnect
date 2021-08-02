@@ -715,8 +715,12 @@ AM_CONDITIONAL(OPENCONNECT_TSS2_IBM, [ test "$tss2lib" = "ibmtss" -o "$tss2lib" 
 
 AC_PATH_PROG(SWTPM, swtpm)
 SWTPM_IOCTL=""
+TPM2_STARTUP=""
+TSSTARTUP=""
 if test "$SWTPM" != ""; then
     AC_PATH_PROG(SWTPM_IOCTL, swtpm_ioctl)
+    AC_PATH_PROG(TPM2_STARTUP, tpm2_startup)
+    AC_PATH_PROG(TSSTARTUP, tsstartup)
 fi
 
 # The Intel/TCG TSS can only *create* keys
@@ -733,7 +737,7 @@ if test "$test_hwtpm" = "yes" -a "$TPM2TSS_GENKEY$CREATE_TPM2_KEY" = ""; then
 fi
 
 AM_CONDITIONAL(TEST_HWTPM, [ test "$test_hwtpm" = "yes" ])
-AM_CONDITIONAL(TEST_SWTPM, [ test "$SWTPM_IOCTL" != "" ])
+AM_CONDITIONAL(TEST_SWTPM, [ test "$SWTPM_IOCTL" != "" -a \( "$TPM2_STARTUP" != "" -o "$TSSTARTUP" != "" \) ])
 AM_CONDITIONAL(TEST_TPM2_CREATE, [ test "$TPM2TSS_GENKEY" != "" ])
 AM_CONDITIONAL(TEST_TPM2_IMPORT, [ test "$CREATE_TPM2_KEY" != "" ])
 
