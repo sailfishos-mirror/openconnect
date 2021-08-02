@@ -78,9 +78,9 @@ if HAVE_NETNS
 TESTS += dtls-psk sigterm
 endif
 
-dist_check_SCRIPTS += ppp-over-tls
+dist_check_SCRIPTS += ppp-over-tls ppp-over-tls-sync
 if TEST_PPP
-TESTS += ppp-over-tls
+TESTS += ppp-over-tls ppp-over-tls-sync
 endif
 
 dist_check_SCRIPTS += auth-username-pass auth-certificate auth-nonascii cert-fingerprint \

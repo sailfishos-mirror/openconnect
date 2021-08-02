@@ -28,7 +28,8 @@ CentOS7/GnuTLS:
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
-  - make VERBOSE=1 XFAIL_TESTS="auth-nonascii" -j4 check
+# ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
+  - make VERBOSE=1 XFAIL_TESTS="auth-nonascii ppp-over-tls-sync" -j4 check
   tags:
   - shared
   except:
@@ -57,7 +58,8 @@ CentOS7/OpenSSL:
   - mv /etc/ppp /etc/ppp.DISABLED
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
 # dtls-psk: communication with ocserv fails for undetermined reasons marking as xfail until issue is identified
-  - make VERBOSE=1 XFAIL_TESTS="auth-nonascii dtls-psk" -j4 check
+# ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
+  - make VERBOSE=1 XFAIL_TESTS="auth-nonascii dtls-psk ppp-over-tls-sync" -j4 check
   tags:
   - shared
   except:
@@ -82,7 +84,8 @@ CentOS8/GnuTLS:
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
-  - make VERBOSE=1 XFAIL_TESTS="auth-nonascii" -j4 check
+# ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
+  - make VERBOSE=1 XFAIL_TESTS="auth-nonascii ppp-over-tls-sync" -j4 check
   tags:
   - shared
   except:
@@ -108,7 +111,8 @@ CentOS8/OpenSSL:
   - mv /etc/ppp /etc/ppp.DISABLED
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
 # obsolete-server-crypto: OpenSSL 1.1.0 disables 3DES and RC4 by default (https://www.openssl.org/blog/blog/2016/08/24/sweet32/)
-  - make VERBOSE=1 XFAIL_TESTS="auth-nonascii obsolete-server-crypto" -j4 check
+# ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
+  - make VERBOSE=1 XFAIL_TESTS="auth-nonascii obsolete-server-crypto ppp-over-tls-sync" -j4 check
   tags:
   - shared
   except:
@@ -131,7 +135,8 @@ CentOS6/OpenSSL:
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
-  - make VERBOSE=1 XFAIL_TESTS="bad_dtls_test auth-nonascii" -j4 check
+# ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
+  - make VERBOSE=1 XFAIL_TESTS="bad_dtls_test auth-nonascii ppp-over-tls-sync" -j4 check
   tags:
   - shared
   except:
@@ -296,7 +301,8 @@ Fedora/GnuTLS:
 # obsolete-server-crypto: system-wide crypto policy prevents --allow-insecure-crypto from working, and the
 #   library-reinitialization hack does not reliably work (https://gitlab.com/openconnect/openconnect/-/issues/243#note_576194663)
 #   XFAIL until we get a solution for https://bugzilla.redhat.com/show_bug.cgi?id=1960763
-  - make VERBOSE=1 OPENSSL_ia32cap=~0x4000000000000000 XFAIL_TESTS="obsolete-server-crypto" -j4 check
+# ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
+  - make VERBOSE=1 OPENSSL_ia32cap=~0x4000000000000000 XFAIL_TESTS="obsolete-server-crypto ppp-over-tls-sync" -j4 check
   tags:
   - shared
   except:
@@ -329,7 +335,8 @@ Fedora/GnuTLS/ibmtss:
 # obsolete-server-crypto: system-wide crypto policy prevents --allow-insecure-crypto from working, and the
 #   library-reinitialization hack does not reliably work (https://gitlab.com/openconnect/openconnect/-/issues/243#note_576194663)
 #   XFAIL until we get a solution for https://bugzilla.redhat.com/show_bug.cgi?id=1960763
-  - make VERBOSE=1 OPENSSL_ia32cap=~0x4000000000000000 XFAIL_TESTS="obsolete-server-crypto" -j4 check
+# ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
+  - make VERBOSE=1 OPENSSL_ia32cap=~0x4000000000000000 XFAIL_TESTS="obsolete-server-crypto ppp-over-tls-sync" -j4 check
   tags:
   - shared
   except:
@@ -361,7 +368,8 @@ Fedora/GnuTLS/clang:
 # obsolete-server-crypto: system-wide crypto policy prevents --allow-insecure-crypto from working, and the
 #   library-reinitialization hack does not reliably work (https://gitlab.com/openconnect/openconnect/-/issues/243#note_576194663)
 #   XFAIL until we get a solution for https://bugzilla.redhat.com/show_bug.cgi?id=1960763
-  - make VERBOSE=1 OPENSSL_ia32cap=~0x4000000000000000 XFAIL_TESTS="obsolete-server-crypto" -j4 check
+# ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
+  - make VERBOSE=1 OPENSSL_ia32cap=~0x4000000000000000 XFAIL_TESTS="obsolete-server-crypto ppp-over-tls-sync" -j4 check
   tags:
   - shared
   except:
@@ -394,6 +402,8 @@ Fedora/OpenSSL:
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
 # obsolete-server-crypto: OpenSSL 1.1.0 disables 3DES and RC4 by default (https://www.openssl.org/blog/blog/2016/08/24/sweet32/)
   - make VERBOSE=1 XFAIL_TESTS="obsolete-server-crypto" -j4 check
+# ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
+  - make VERBOSE=1 XFAIL_TESTS="obsolete-server-crypto ppp-over-tls-sync" -j4 check
   tags:
   - shared
   except:
@@ -425,6 +435,8 @@ Fedora/OpenSSL/clang:
   - mv /etc/ppp /etc/ppp.DISABLED
 # obsolete-server-crypto: OpenSSL 1.1.0 disables 3DES and RC4 by default (https://www.openssl.org/blog/blog/2016/08/24/sweet32/)
   - make VERBOSE=1 XFAIL_TESTS="obsolete-server-crypto" -j4 check
+# ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
+  - make VERBOSE=1 XFAIL_TESTS="obsolete-server-crypto ppp-over-tls-sync" -j4 check
   tags:
   - shared
   except:
@@ -453,7 +465,8 @@ Ubuntu18.04/GnuTLS:
 # cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
   - sysctl net.ipv6.conf.all.disable_ipv6=0
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
-  - make VERBOSE=1 XFAIL_TESTS="auth-nonascii" -j4 check
+# ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
+  - make VERBOSE=1 XFAIL_TESTS="auth-nonascii ppp-over-tls-sync" -j4 check
   tags:
   - shared
   except:
@@ -482,7 +495,8 @@ Ubuntu18.04/OpenSSL:
   - sysctl net.ipv6.conf.all.disable_ipv6=0
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
 # obsolete-server-crypto: OpenSSL 1.1.0 disables 3DES and RC4 by default (https://www.openssl.org/blog/blog/2016/08/24/sweet32/)
-  - make VERBOSE=1 XFAIL_TESTS="auth-nonascii obsolete-server-crypto" -j4 check
+# ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
+  - make VERBOSE=1 XFAIL_TESTS="auth-nonascii obsolete-server-crypto ppp-over-tls-sync" -j4 check
   tags:
   - shared
   except:
