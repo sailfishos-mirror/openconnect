@@ -78,9 +78,9 @@ if HAVE_NETNS
 TESTS += dtls-psk sigterm
 endif
 
-dist_check_SCRIPTS += ppp-over-tls
+dist_check_SCRIPTS += ppp-over-tls ppp-over-tls-sync
 if TEST_PPP
-TESTS += ppp-over-tls
+TESTS += ppp-over-tls ppp-over-tls-sync
 endif
 
 dist_check_SCRIPTS += auth-username-pass auth-certificate auth-nonascii cert-fingerprint \
@@ -189,61 +189,61 @@ $(certsdir)/ec-key-pkcs1.pem:
 	$(OPENSSL) ecparam -genkey -out $@ -name prime256v1
 
 # Even in OpenSSL 1.1, this creates the old encrypted PEM format.
-$(certsdir)/user-key-pkcs1-aes128.pem: certs/user-key-pkcs1.pem
+$(certsdir)/user-key-pkcs1-aes128.pem: | certs/user-key-pkcs1.pem
 	$(OPENSSL) rsa $(OSSLARGS) -aes128
 
-$(certsdir)/dsa-key-pkcs1-aes128.pem: certs/dsa-key-pkcs1.pem
+$(certsdir)/dsa-key-pkcs1-aes128.pem: | certs/dsa-key-pkcs1.pem
 	$(OPENSSL) dsa $(OSSLARGS) -aes128
 
-$(certsdir)/ec-key-pkcs1-aes128.pem: certs/ec-key-pkcs1.pem
+$(certsdir)/ec-key-pkcs1-aes128.pem: | certs/ec-key-pkcs1.pem
 	$(OPENSSL) ec $(OSSLARGS) -aes128
 
 # Plain unencrypted PKCS#8
-%-key-pkcs8.pem: %-key-pkcs1.pem
+%-key-pkcs8.pem: | %-key-pkcs1.pem
 	$(OPENSSL) pkcs8 $(OSSLARGS) -topk8 -nocrypt
 
-%-key-pkcs8-pbes1-sha1-3des.pem: %-key-pkcs8.pem
+%-key-pkcs8-pbes1-sha1-3des.pem: | %-key-pkcs8.pem
 	$(OPENSSL) pkcs8 $(OSSLARGS) -topk8 -v1 pbeWithSHA1And3-KeyTripleDES-CBC
 
 # This is the default created by OpenSSL 1.0.2 with -topk8
-%-key-pkcs8-pbes1-md5-des.pem: %-key-pkcs8.pem
+%-key-pkcs8-pbes1-md5-des.pem: | %-key-pkcs8.pem
 	$(OPENSSL) pkcs8 $(OSSLARGS) -topk8 -v1 pbeWithMD5AndDES-CBC
 
-%-key-pkcs8-pbes2-sha1.pem: %-key-pkcs8.pem
+%-key-pkcs8-pbes2-sha1.pem: | %-key-pkcs8.pem
 	$(OPENSSL) pkcs8 $(OSSLARGS) -topk8 -v2 aes256 -v2prf hmacWithSHA1
 
 # This is the default created by OpenSSL 1.1 with -topk8
-%-key-pkcs8-pbes2-sha256.pem: %-key-pkcs8.pem
+%-key-pkcs8-pbes2-sha256.pem: | %-key-pkcs8.pem
 	$(OPENSSL) pkcs8 $(OSSLARGS) -topk8 -v2 aes256 -v2prf hmacWithSHA256
 
-%-key-sha1-3des-sha1.p12: %-key-pkcs8.pem %-cert.pem
+%-key-sha1-3des-sha1.p12: | %-key-pkcs8.pem %-cert.pem
 	KEYFILE="$<"; $(OPENSSL) pkcs12 $(OSSLARGSP12) -export -macalg SHA1 \
 		-certpbe pbeWithSHA1And3-KeyTripleDES-CBC -keypbe pbeWithSHA1And3-KeyTripleDES-CBC
 
-%-key-sha1-3des-sha256.p12: %-key-pkcs8.pem %-cert.pem
+%-key-sha1-3des-sha256.p12: | %-key-pkcs8.pem %-cert.pem
 	KEYFILE="$<"; $(OPENSSL) pkcs12 $(OSSLARGSP12) -export -macalg SHA256 \
 		-certpbe pbeWithSHA1And3-KeyTripleDES-CBC -keypbe pbeWithSHA1And3-KeyTripleDES-CBC
 
-%-key-md5-des-sha1.p12: %-key-pkcs8.pem %-cert.pem
+%-key-md5-des-sha1.p12: | %-key-pkcs8.pem %-cert.pem
 	KEYFILE="$<"; $(OPENSSL) pkcs12 $(OSSLARGSP12) -export -macalg SHA1 \
 		-certpbe pbeWithMD5AndDES-CBC -keypbe pbeWithMD5AndDES-CBC
 
-%-key-aes256-cbc-sha256.p12: %-key-pkcs8.pem %-cert.pem
+%-key-aes256-cbc-sha256.p12: | %-key-pkcs8.pem %-cert.pem
 	KEYFILE="$<"; $(OPENSSL) pkcs12 $(OSSLARGSP12) -export -macalg SHA256 \
 		-certpbe AES-256-CBC -keypbe AES-256-CBC
 
 # NB: Needs OpenSSL 1.1 or newer
-%-key-nonascii-password.p12: %-key-pkcs8.pem %-cert.pem
+%-key-nonascii-password.p12: | %-key-pkcs8.pem %-cert.pem
 	LC_ALL=en_GB.UTF-8 PASSWORD="$$(cat $(srcdir)/pass-UTF-8)" KEYFILE="$<" ; \
 	$(OPENSSL) pkcs12 $(OSSLARGSP12) -export -macalg SHA256 \
 		-certpbe AES-256-CBC -keypbe AES-256-CBC
 
 # This one makes GnuTLS behave strangely...
-%-key-aes256-cbc-md5-des-sha256.p12: %-key-pkcs8.pem %-cert.pem
+%-key-aes256-cbc-md5-des-sha256.p12: | %-key-pkcs8.pem %-cert.pem
 	KEYFILE="$<"; $(OPENSSL) pkcs12 $(OSSLARGSP12) -export -macalg SHA256 \
 		-certpbe AES-256-CBC -keypbe pbeWithMD5AndDES-CBC
 
-%.der: %.pem
+%.der: | %.pem
 	sed -e '0,/^-----BEGIN.*KEY-----/d' -e '/^-----END.*KEY-----/,$$d' $< | base64 -d > $@
 
 $(certsdir)/server-cert.pem:
@@ -308,11 +308,11 @@ swtpm-perm.state: | $(SWTPM_KEYS) $(SWTPM_CERTS)
 # files are committed to git. Which is why it doesn't matter that it needs
 # the swtpm to have been started manually.
 
-$(certsdir)/ec-key-swtpm.pem: certs/ec-key-pkcs8.pem
+$(certsdir)/ec-key-swtpm.pem: | certs/ec-key-pkcs8.pem
 	$(START_SWTPM)
 	$(SWTPM_PRELOAD) $(CREATE_TPM2_KEY) -w $< $@
 
-ec-key-hwtpm.pem: certs/ec-key-pkcs8.pem
+ec-key-hwtpm.pem: | certs/ec-key-pkcs8.pem
 	TPM_INTERFACE_TYPE=dev $(CREATE_TPM2_KEY) -w $< $@
 
 # These are *different* keys generated inside the TPM, hence a different prefix.
@@ -334,19 +334,19 @@ $(certsdir)/swtpm-rsa-key-tpm.pem:
 hwtpm-rsa-key-tpm.pem:
 	$(TPM2TSS_GENKEY) -t device -a rsa -s 2048 $@
 
-$(certsdir)/swtpm-%-cert.csr: $(certsdir)/swtpm-%-key-tpm.pem
+$(certsdir)/swtpm-%-cert.csr: | $(certsdir)/swtpm-%-key-tpm.pem
 	$(SWTPM_PRELOAD) $(OPENSSL) req -new -config $(srcdir)/configs/user-cert.prm -engine tpm2tss -keyform ENGINE -key $< -out $@
 
-hwtpm-%-cert.csr: hwtpm-%-key-tpm.pem
+hwtpm-%-cert.csr: | hwtpm-%-key-tpm.pem
 	TPM2TSSENGINE_TCTI=device $(OPENSSL) req -new -config $(srcdir)/configs/user-cert.prm -engine tpm2tss -keyform ENGINE -key $< -out $@
 
-%-cert.csr: %-key-hwtpm.pem
+%-cert.csr: | %-key-hwtpm.pem
 	TPM2TSSENGINE_TCTI=device $(OPENSSL) req -new -config $(srcdir)/configs/user-cert.prm -engine tpm2tss -keyform ENGINE -key $< -out $@
 
-%-cert.csr: %-key-pkcs8.pem
+%-cert.csr: | %-key-pkcs8.pem
 	$(OPENSSL) req -new -config $(srcdir)/configs/user-cert.prm -key $< -out $@
 
-%.pem: %.csr
+%.pem: | %.csr
 	$(OPENSSL) x509 -days 3650 -CA $(certsdir)/ca.pem -CAkey $(certsdir)/ca-key.pem \
 		-set_serial $(shell date +%s) -req -out $@ -in $<
 

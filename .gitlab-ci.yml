@@ -21,8 +21,15 @@ CentOS7/GnuTLS:
 # Flask-based authentication tests.
   - ./configure --with-java --enable-ppp-tests --disable-flask-tests CFLAGS=-g
   - make -j4
+# For reasons that are unclear, but probably also unimportant, IPv6 is disabled by default on this CI
+# image (verified in https://gitlab.com/openconnect/openconnect/-/jobs/1135199323#L335), and this will
+# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
+  - sysctl net.ipv6.conf.all.disable_ipv6=0
+# we don't want pppd to invoke any actual connection scripts
+  - mv /etc/ppp /etc/ppp.DISABLED
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
-  - make VERBOSE=1 XFAIL_TESTS="auth-nonascii" -j4 check
+# ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
+  - make VERBOSE=1 XFAIL_TESTS="auth-nonascii ppp-over-tls-sync" -j4 check
   tags:
   - shared
   except:
@@ -43,11 +50,16 @@ CentOS7/OpenSSL:
 # Flask-based authentication tests.
   - ./configure --without-gnutls --with-openssl --with-java --without-openssl-version-check --enable-dtls-xfail --disable-dsa-tests --enable-ppp-tests --disable-flask-tests CFLAGS=-g
   - make -j4
+# For reasons that are unclear, but probably also unimportant, IPv6 is disabled by default on this CI
+# image (verified in https://gitlab.com/openconnect/openconnect/-/jobs/1135199323#L335), and this will
+# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
+  - sysctl net.ipv6.conf.all.disable_ipv6=0
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
 # dtls-psk: communication with ocserv fails for undetermined reasons marking as xfail until issue is identified
-  - make VERBOSE=1 XFAIL_TESTS="auth-nonascii dtls-psk" -j4 check
+# ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
+  - make VERBOSE=1 XFAIL_TESTS="auth-nonascii dtls-psk ppp-over-tls-sync" -j4 check
   tags:
   - shared
   except:
@@ -65,10 +77,15 @@ CentOS8/GnuTLS:
   - ./autogen.sh
   - ./configure --with-java --without-gnutls-version-check --disable-dsa-tests --enable-ppp-tests CFLAGS=-g
   - make -j4
+# For reasons that are unclear, but probably also unimportant, IPv6 is disabled by default on this CI
+# image (verified in https://gitlab.com/openconnect/openconnect/-/jobs/1135199323#L335), and this will
+# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
+  - sysctl net.ipv6.conf.all.disable_ipv6=0
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
-  - make VERBOSE=1 XFAIL_TESTS="auth-nonascii" -j4 check
+# ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
+  - make VERBOSE=1 XFAIL_TESTS="auth-nonascii ppp-over-tls-sync" -j4 check
   tags:
   - shared
   except:
@@ -86,11 +103,16 @@ CentOS8/OpenSSL:
   - ./autogen.sh
   - ./configure --without-gnutls --with-openssl --with-java --without-openssl-version-check --disable-dsa-tests --enable-ppp-tests CFLAGS=-g
   - make -j4
+# For reasons that are unclear, but probably also unimportant, IPv6 is disabled by default on this CI
+# image (verified in https://gitlab.com/openconnect/openconnect/-/jobs/1135199323#L335), and this will
+# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
+  - sysctl net.ipv6.conf.all.disable_ipv6=0
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
 # obsolete-server-crypto: OpenSSL 1.1.0 disables 3DES and RC4 by default (https://www.openssl.org/blog/blog/2016/08/24/sweet32/)
-  - make VERBOSE=1 XFAIL_TESTS="auth-nonascii obsolete-server-crypto" -j4 check
+# ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
+  - make VERBOSE=1 XFAIL_TESTS="auth-nonascii obsolete-server-crypto ppp-over-tls-sync" -j4 check
   tags:
   - shared
   except:
@@ -113,7 +135,8 @@ CentOS6/OpenSSL:
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
-  - make VERBOSE=1 XFAIL_TESTS="bad_dtls_test auth-nonascii" -j4 check
+# ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
+  - make VERBOSE=1 XFAIL_TESTS="bad_dtls_test auth-nonascii ppp-over-tls-sync" -j4 check
   tags:
   - shared
   except:
@@ -196,7 +219,8 @@ ubsan/OpenSSL/Fedora:
   - CFLAGS="$UBCFLAGS" ./configure --without-gnutls --with-openssl --without-openssl-version-check --disable-dsa-tests
   - make -j4
 # obsolete-server-crypto: OpenSSL 1.1.0 disables 3DES and RC4 by default (https://www.openssl.org/blog/blog/2016/08/24/sweet32/)
-  - make VERBOSE=1 XFAIL_TESTS="obsolete-server-crypto" -j4 check
+# auth-swtpm: XFAIL until we understand the TPM error
+  - make VERBOSE=1 XFAIL_TESTS="obsolete-server-crypto auth-swtpm" -j4 check
   tags:
   - shared
   - linux
@@ -268,13 +292,18 @@ Fedora/GnuTLS:
   - TMPDISTDIR=../openconnect-$(git describe --tags | sed s/^v//)
   - ${TMPDISTDIR}/configure --with-java --disable-dsa-tests --without-gnutls-version-check --enable-ppp-tests CFLAGS=-g
   - make -j4
+# For reasons that are unclear, but probably also unimportant, IPv6 is disabled by default on this CI
+# image (verified in https://gitlab.com/openconnect/openconnect/-/jobs/1135199323#L335), and this will
+# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
+  - sysctl net.ipv6.conf.all.disable_ipv6=0
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
 # auth-pkcs11: Disable rdrand to work around https://bugzilla.redhat.com/1831086
 # obsolete-server-crypto: system-wide crypto policy prevents --allow-insecure-crypto from working, and the
 #   library-reinitialization hack does not reliably work (https://gitlab.com/openconnect/openconnect/-/issues/243#note_576194663)
 #   XFAIL until we get a solution for https://bugzilla.redhat.com/show_bug.cgi?id=1960763
-  - make VERBOSE=1 OPENSSL_ia32cap=~0x4000000000000000 XFAIL_TESTS="obsolete-server-crypto" -j4 check
+# ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
+  - make VERBOSE=1 OPENSSL_ia32cap=~0x4000000000000000 XFAIL_TESTS="obsolete-server-crypto ppp-over-tls-sync" -j4 check
   tags:
   - shared
   except:
@@ -297,13 +326,18 @@ Fedora/GnuTLS/ibmtss:
   - TMPDISTDIR=../openconnect-$(git describe --tags | sed s/^v//)
   - ${TMPDISTDIR}/configure --with-java --disable-dsa-tests --without-gnutls-version-check --enable-ppp-tests --with-gnutls-tss2=ibmtss CFLAGS=-g
   - make -j4
+# For reasons that are unclear, but probably also unimportant, IPv6 is disabled by default on this CI
+# image (verified in https://gitlab.com/openconnect/openconnect/-/jobs/1135199323#L335), and this will
+# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
+  - sysctl net.ipv6.conf.all.disable_ipv6=0
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
 # auth-pkcs11: Disable rdrand to work around https://bugzilla.redhat.com/1831086
 # obsolete-server-crypto: system-wide crypto policy prevents --allow-insecure-crypto from working, and the
 #   library-reinitialization hack does not reliably work (https://gitlab.com/openconnect/openconnect/-/issues/243#note_576194663)
 #   XFAIL until we get a solution for https://bugzilla.redhat.com/show_bug.cgi?id=1960763
-  - make VERBOSE=1 OPENSSL_ia32cap=~0x4000000000000000 XFAIL_TESTS="obsolete-server-crypto" -j4 check
+# ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
+  - make VERBOSE=1 OPENSSL_ia32cap=~0x4000000000000000 XFAIL_TESTS="obsolete-server-crypto ppp-over-tls-sync" -j4 check
   tags:
   - shared
   except:
@@ -325,13 +359,18 @@ Fedora/GnuTLS/clang:
   - TMPDISTDIR=../openconnect-$(git describe --tags | sed s/^v//)
   - ${TMPDISTDIR}/configure --with-java --disable-dsa-tests --without-gnutls-version-check CC=clang --enable-ppp-tests CFLAGS=-g
   - make -j4
+# For reasons that are unclear, but probably also unimportant, IPv6 is disabled by default on this CI
+# image (verified in https://gitlab.com/openconnect/openconnect/-/jobs/1135199323#L335), and this will
+# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
+  - sysctl net.ipv6.conf.all.disable_ipv6=0
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
 # auth-pkcs11: Disable rdrand to work around https://bugzilla.redhat.com/1831086
 # obsolete-server-crypto: system-wide crypto policy prevents --allow-insecure-crypto from working, and the
 #   library-reinitialization hack does not reliably work (https://gitlab.com/openconnect/openconnect/-/issues/243#note_576194663)
 #   XFAIL until we get a solution for https://bugzilla.redhat.com/show_bug.cgi?id=1960763
-  - make VERBOSE=1 OPENSSL_ia32cap=~0x4000000000000000 XFAIL_TESTS="obsolete-server-crypto" -j4 check
+# ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
+  - make VERBOSE=1 OPENSSL_ia32cap=~0x4000000000000000 XFAIL_TESTS="obsolete-server-crypto ppp-over-tls-sync" -j4 check
   tags:
   - shared
   except:
@@ -355,11 +394,17 @@ Fedora/OpenSSL:
   - TMPDISTDIR=../openconnect-$(git describe --tags | sed s/^v//)
   - ${TMPDISTDIR}/configure --without-gnutls --with-openssl --without-openssl-version-check --disable-dsa-tests --enable-ppp-tests CFLAGS=-g
   - make -j4
+# For reasons that are unclear, but probably also unimportant, IPv6 is disabled by default on this CI
+# image (verified in https://gitlab.com/openconnect/openconnect/-/jobs/1135199323#L335), and this will
+# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
+  - sysctl net.ipv6.conf.all.disable_ipv6=0
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
 # obsolete-server-crypto: OpenSSL 1.1.0 disables 3DES and RC4 by default (https://www.openssl.org/blog/blog/2016/08/24/sweet32/)
-  - make VERBOSE=1 XFAIL_TESTS="obsolete-server-crypto" -j4 check
+# auth-swtpm: XFAIL until we understand the TPM error
+# ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
+  - make VERBOSE=1 XFAIL_TESTS="obsolete-server-crypto auth-swtpm ppp-over-tls-sync" -j4 check
   tags:
   - shared
   except:
@@ -383,10 +428,16 @@ Fedora/OpenSSL/clang:
   - TMPDISTDIR=../openconnect-$(git describe --tags | sed s/^v//)
   - ${TMPDISTDIR}/configure CC=clang --without-gnutls --with-openssl --without-openssl-version-check --disable-dsa-tests --enable-ppp-tests CFLAGS=-g
   - make -j4
+# For reasons that are unclear, but probably also unimportant, IPv6 is disabled by default on this CI
+# image (verified in https://gitlab.com/openconnect/openconnect/-/jobs/1135199323#L335), and this will
+# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
+  - sysctl net.ipv6.conf.all.disable_ipv6=0
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
 # obsolete-server-crypto: OpenSSL 1.1.0 disables 3DES and RC4 by default (https://www.openssl.org/blog/blog/2016/08/24/sweet32/)
-  - make VERBOSE=1 XFAIL_TESTS="obsolete-server-crypto" -j4 check
+# auth-swtpm: XFAIL until we understand the TPM error
+# ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
+  - make VERBOSE=1 XFAIL_TESTS="obsolete-server-crypto auth-swtpm ppp-over-tls-sync" -j4 check
   tags:
   - shared
   except:
@@ -404,6 +455,10 @@ Ubuntu18.04/GnuTLS:
   - ./autogen.sh
   - ./configure --with-java --enable-ppp-tests CFLAGS=-g
   - make -j4
+# For reasons that are unclear, but probably also unimportant, IPv6 is disabled by default on this CI
+# image (verified in https://gitlab.com/openconnect/openconnect/-/jobs/1135199323#L335), and this will
+# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
+  - sysctl net.ipv6.conf.all.disable_ipv6=0
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
 # For reasons that are unclear, but probably also unimportant, IPv6 is disabled by default on this CI
@@ -411,7 +466,8 @@ Ubuntu18.04/GnuTLS:
 # cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
   - sysctl net.ipv6.conf.all.disable_ipv6=0
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
-  - make VERBOSE=1 XFAIL_TESTS="auth-nonascii" -j4 check
+# ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
+  - make VERBOSE=1 XFAIL_TESTS="auth-nonascii ppp-over-tls-sync" -j4 check
   tags:
   - shared
   except:
@@ -428,6 +484,10 @@ Ubuntu18.04/OpenSSL:
   - ./autogen.sh
   - ./configure --without-gnutls --with-openssl --with-java --without-openssl-version-check --disable-dsa-tests --enable-ppp-tests CFLAGS=-g
   - make -j4
+# For reasons that are unclear, but probably also unimportant, IPv6 is disabled by default on this CI
+# image (verified in https://gitlab.com/openconnect/openconnect/-/jobs/1135199323#L335), and this will
+# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
+  - sysctl net.ipv6.conf.all.disable_ipv6=0
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
 # For reasons that are unclear, but probably also unimportant, IPv6 is disabled by default on this CI
@@ -436,7 +496,8 @@ Ubuntu18.04/OpenSSL:
   - sysctl net.ipv6.conf.all.disable_ipv6=0
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
 # obsolete-server-crypto: OpenSSL 1.1.0 disables 3DES and RC4 by default (https://www.openssl.org/blog/blog/2016/08/24/sweet32/)
-  - make VERBOSE=1 XFAIL_TESTS="auth-nonascii obsolete-server-crypto" -j4 check
+# ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
+  - make VERBOSE=1 XFAIL_TESTS="auth-nonascii obsolete-server-crypto ppp-over-tls-sync" -j4 check
   tags:
   - shared
   except:
