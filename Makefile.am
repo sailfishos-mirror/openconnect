@@ -295,8 +295,8 @@ file-list.txt: Makefile.dlldeps openconnect$(EXEEXT) libopenconnect.la $(WINTUN_
 
 # Wintun Layer 3 TUN driver for Windows 7 and newer
 # (see https://wintun.net)
-WINTUNDRIVER = wintun-0.10.2.zip
-WINTUNSHA256 = fcd9f62f1bd5a550fcb9c21fbb5d6a556214753ccbbd1a3ebad4d318ec9dcbef
+WINTUNDRIVER = wintun-0.13.zip
+WINTUNSHA256 = 34afe7d0de1fdb781af3defc0a75fd8c97daa756279b42dd6be6a1bd8ccdc7f0
 
 $(WINTUNDRIVER):
 	curl https://www.wintun.net/builds/$(WINTUNDRIVER) -o $@
