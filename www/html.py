@@ -223,7 +223,6 @@ except getopt.GetoptError as ex:
 	print (ex.msg)
 	usage()
 	sys.exit(1)
-	pass
 
 for option, value in options:
 	if option == '-d':
@@ -233,8 +232,6 @@ for option, value in options:
 	elif option == '-h':
 		usage()
 		sys.exit(0)
-		pass
-	pass
 
 # Handle special case VAR_ORIGIN
 idx = len(replace)
@@ -246,7 +243,6 @@ if not arguments:
 	print ("No source file specified")
 	usage()
 	sys.exit(1)
-	pass
 
 if writefile > 0:
 	fname = arguments[0].split('.')[0]
