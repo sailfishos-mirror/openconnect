@@ -80,6 +80,7 @@ def placeMenu(topic, link, mode):
 class docHandler(xml.sax.ContentHandler):
 
 	def __init__(self):
+		xml.sax.ContentHandler.__init__(self)
 		self.content = ""
 		return
     
