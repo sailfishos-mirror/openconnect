@@ -45,7 +45,7 @@ on the command line.</p>
 
 <h2>Install vpnc-script</h2>
  <p>OpenConnect should be given a default <a href="vpnc-script.html">vpnc-script</a>
- for network configuration (routing and DNS) at compile-time. This can be overriden
+ for network configuration (routing and DNS) at compile-time. This can be overridden
  at runtime (with <tt>--script</tt>).</p>
  <p>The <tt>configure</tt> script will check whether <tt>/etc/vpnc/vpnc-script</tt>
  exists and can be executed, and will fail if not. If you don't already have

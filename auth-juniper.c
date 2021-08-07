@@ -63,7 +63,7 @@ static int oncp_can_gen_tokencode(struct openconnect_info *vpninfo,
 	if (opt->type == OC_FORM_OPT_PASSWORD &&
 	    (!strcmp(form->auth_id, "frmLogin") ||
 	     !strcmp(form->auth_id, "loginForm"))) {
-		/* XX: The first occurence of a password input field in frmLogin is likely to be a password,
+		/* XX: The first occurrence of a password input field in frmLogin is likely to be a password,
 		 * not token, input. However, if we have already added a password input field to this form,
 		 * then a second one is likely to hold a token.
 		 */

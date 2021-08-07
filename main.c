@@ -1435,7 +1435,7 @@ static int autocomplete(int argc, char **argv)
 		}
 	}
 
-	/* Ths only non-option argument we accept as a hostname */
+	/* The only non-option argument we accept is the hostname */
 	printf("HOSTNAME\n");
 	return 0;
 }

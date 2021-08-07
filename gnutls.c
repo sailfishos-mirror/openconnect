@@ -2336,8 +2336,8 @@ int openconnect_open_https(struct openconnect_info *vpninfo)
 		 *
 		 * Likewise, GnuTLS 3.6.0 and onward remove 3DES-CBC from NORMAL,
 		 * but some ancient servers can't do anything better. This (and ARCFOUR-128)
-		 * should not be reenabled by default due to serious security flaws, so adding as an
-		 * option, --allow-insecure-crypto. Yay ancient, unpatched servers.
+		 * should not be re-enabled by default due to serious security flaws, so adding as
+		 * an option, --allow-insecure-crypto. Yay ancient, unpatched servers.
 		 * - GnuTLS commit that removed: 66f2a0a271bcc10e8fb68771f9349a3d3ecf6dda
 		 * - Old server requiring 3DES-CBC: https://gitlab.com/openconnect/openconnect/-/issues/145
 		 */

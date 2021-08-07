@@ -1608,7 +1608,7 @@ static inline int strprefix_match(const char *str, int len, const char *match)
  * or not. Then there are three cases to handle:
  *  - For big-endian loads/stores, just use htons() et al.
  *  - For little-endian when we *know* the CPU is LE, just load/store
- *  - For little-endian otherwise, do the data acess byte-wise
+ *  - For little-endian otherwise, do the data access byte-wise
  */
 struct oc_packed_uint32_t {
 	uint32_t d;

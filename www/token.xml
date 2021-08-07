@@ -31,7 +31,7 @@ token as described below.</p>
 <p>For the <tt>openconnect</tt> command line program, if the first character of
 the <tt>--token-secret</tt> value is / or @, the argument is interpreted as a
 filename. The secret data will be loaded from <i>(and potentially saved back
-to, in the case of HOTP tokens)</i> the specifed file.</p>
+to, in the case of HOTP tokens)</i> the specified file.</p>
 
 <p>In each case, the automatic token generation will be tried twice before it
 is automatically disabled and the user asked to enter tokencodes manually.</p>

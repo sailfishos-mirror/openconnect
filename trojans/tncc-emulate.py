@@ -32,11 +32,11 @@
 # Environment variables that may need customization (excerpted from
 # https://github.com/russdill/juniper-vpn-py/blame/master/README.host_checker):
 #
-# TNCC_DEVICE_ID: May need to be overriden to match a known value from a computer
+# TNCC_DEVICE_ID: May need to be overridden to match a known value from a computer
 #   running the official client software (on Windows, obtained from the registry key
 #   \HKEY_CURRENT_USER\Software\Juniper Networks\Device Id)
 #
-# TNCC_USER_AGENT: May need to be overriden to match a known value from a computer
+# TNCC_USER_AGENT: May need to be overridden to match a known value from a computer
 #   running the official Windows client software. For historical reasons, the default
 #   value is 'Neoteris NC Http'; the value 'DSClient; PulseLinux' is known to be sent
 #   by the official Pulse Linux client.
