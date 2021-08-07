@@ -823,7 +823,7 @@ int do_https_request(struct openconnect_info *vpninfo, const char *method, const
 	 * A long time ago, I *wanted* to use an HTTP client library like cURL
 	 * for this. But we need a *lot* of control over the underlying SSL
 	 * transport, and we also have to do horrid tricks like the Juniper NC
-	 * 'GET' request that actaully behaves like a 'CONNECT'.
+	 * 'GET' request that actually behaves like a 'CONNECT'.
 	 *
 	 * So the world gained Yet Another HTTP Implementation. Sorry.
 	 *

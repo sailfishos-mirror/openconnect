@@ -254,7 +254,7 @@ static int challenge_cb(struct openconnect_info *vpninfo, char *prompt, char *in
  *
  * Extracts the relevant arguments from the XML (<jnlp><application-desc><argument>...</argument></application-desc></jnlp>)
  * and uses them to build a query string fragment which is usable for subsequent requests.
- * This query string fragement is saved as vpninfo->cookie.
+ * This query string fragment is saved as vpninfo->cookie.
  *
  */
 struct gp_login_arg {

@@ -258,7 +258,7 @@ static int start_cstp_connection(struct openconnect_info *vpninfo)
 	}
 #ifdef HAVE_DTLS
 	if (vpninfo->dtls_state != DTLS_DISABLED) {
-		/* The X-DTLS-Master-Secret is only used for the legacy protocol negotation
+		/* The X-DTLS-Master-Secret is only used for the legacy protocol negotiation
 		 * which required the client to send explicitly the secret. In the PSK-NEGOTIATE
 		 * method, the master secret is implicitly agreed on */
 		buf_append(reqbuf, "X-DTLS-Master-Secret: ");

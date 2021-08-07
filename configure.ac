@@ -361,7 +361,7 @@ AC_ARG_WITH([system-cafile],
 	    AS_HELP_STRING([--with-system-cafile],
 			   [Location of the default system CA certificate file for old (<3.0.20) GnuTLS versions]))
 
-# We will use GnuTLS by default if it's present. We used to suppport
+# We will use GnuTLS by default if it's present. We used to support
 # using GnuTLS for the TLS connections and OpenSSL for DTLS, but none
 # of the reasons for that make sense any more.
 
