@@ -60,7 +60,6 @@
 import sys
 import os
 import logging
-from io import StringIO
 from http.cookiejar import Cookie, CookieJar
 import struct
 import ssl
