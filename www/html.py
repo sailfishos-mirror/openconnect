@@ -9,15 +9,8 @@
 # published by the Free Software Foundation.
 #
 
-import os
 import sys
 import getopt
-import pprint
-import shutil
-import string
-import smtplib
-import socket
-import time
 import xml.sax
 import codecs
 
