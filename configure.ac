@@ -1,9 +1,9 @@
 AC_INIT(openconnect, 8.10)
+AC_LANG([C])
 AC_CONFIG_HEADERS([config.h])
 m4_ifdef([AC_CONFIG_MACRO_DIRS], [AC_CONFIG_MACRO_DIRS([m4])])
 
 PKG_PROG_PKG_CONFIG
-AC_LANG_C
 AC_CANONICAL_HOST
 AM_MAINTAINER_MODE([enable])
 AM_INIT_AUTOMAKE([foreign tar-ustar subdir-objects])
