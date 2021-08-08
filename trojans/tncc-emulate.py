@@ -613,8 +613,8 @@ class tncc_server(object):
                 resp.append(str(self.tncc.interval))
             self.sock.send(('\n'.join(resp) + '\n\n').encode('ascii'))
         elif cmd == 'setcookie':
-            cookie = self.tncc.get_cookie(args['Cookie'],
-                                          self.tncc.find_cookie('DSSIGNIN'))
+            self.tncc.get_cookie(args['Cookie'],
+                                 self.tncc.find_cookie('DSSIGNIN'))
         else:
             logging.warning('Unknown command %r' % cmd)
 
@@ -629,6 +629,7 @@ def fingerprint_checking_SSLSocket(_fingerprint):
             pin_sha256 = base64.b64encode(hashlib.sha256(pubkey).digest()).decode()
             if pin_sha256 != self.fingerprint:
                 raise Exception("Server fingerprint %s does not match expected pin-sha256:%s" % (pin_sha256, self.fingerprint))
+            return res
     return SSLSocket
 
 if __name__ == "__main__":
