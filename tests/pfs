@@ -31,7 +31,7 @@ top_builddir=${top_builddir:-..}
 # CAN connect if it is not specified.
 ########################################
 
-echo "Testing against server without PFS... "
+echo "Testing against server without PFS..."
 
 # Need to disable TLS 1.3 here because GnuTLS v3.6.13 is allowing non-RSA KX with TLS 1.3, even with -KX-ALL
 # But can't use -VERS-TLS1.3 here, because it's not known to earlier versions of GnuTLS.

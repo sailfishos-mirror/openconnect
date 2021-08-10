@@ -30,7 +30,7 @@ top_builddir=${top_builddir:-..}
 # crypto UNLESS --allow-insecure-crypto is specified.
 ########################################
 
-echo "Testing against server with insecure crypto (3DES and RC4 only)... "
+echo "Testing against server with insecure crypto (3DES and RC4 only)..."
 
 # Run servers
 PORT=4568

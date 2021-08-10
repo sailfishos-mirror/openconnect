@@ -28,7 +28,7 @@ FINGERPRINT="--servercert=d66b507ae074d03b02eafca40d35f87dd81049d3"
 CERT=$certdir/server-cert.pem
 KEY=$certdir/server-key.pem
 
-echo "Testing F5 auth against fake server ... "
+echo "Testing F5 auth against fake server ..."
 
 OCSERV=${srcdir}/fake-f5-server.py
 launch_simple_sr_server $ADDRESS 443 $CERT $KEY > /dev/null 2>&1

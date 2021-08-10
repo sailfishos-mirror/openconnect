@@ -42,7 +42,7 @@ if test "$(id -u)" != "0";then
 	exit 77
 fi
 
-echo "Testing ocserv connection with DTLS-PSK... "
+echo "Testing ocserv connection with DTLS-PSK..."
 
 function finish {
   set +e

@@ -27,7 +27,7 @@ top_builddir=${top_builddir:-..}
 
 key_list=${key_list:-`echo ${certdir}/*-key-*.{pem,der,p12}`}
 
-echo "Testing certificate auth... "
+echo "Testing certificate auth..."
 
 launch_simple_sr_server -d 1 -f -c configs/test-user-cert.config
 PID=$!
@@ -38,7 +38,7 @@ for KEY in ${key_list}; do
     if [ "${KEY%%.p12}" != "${KEY}" ]; then
 	CERTARGS="-c ${KEY} --key-password password"
     else
-	CERTARGS="--sslkey ${KEY} --key-password password -c ${KEY%-key-*}-cert.pem "
+	CERTARGS="--sslkey ${KEY} --key-password password -c ${KEY%-key-*}-cert.pem"
     fi
     ( echo "test" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT -q $ADDRESS:443 -u test $CERTARGS --servercert=d66b507ae074d03b02eafca40d35f87dd81049d3 --cookieonly --passwd-on-stdin ) ||
 	fail $PID "Could not connect with key ${KEY##*/}!"

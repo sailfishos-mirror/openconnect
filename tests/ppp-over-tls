@@ -45,7 +45,7 @@ IPV6_SUCCESS_1="rcvd [IPV6CP ConfAck "
 IPV6_SUCCESS_2="sent [IPV6CP ConfAck "
 TIMEOUT_3S_IDLE="idle 3"
 
-echo "Testing PPP with 'HDLC-like framing' (RFC1662)... "
+echo "Testing PPP with 'HDLC-like framing' (RFC1662)..."
 
 echo -n "Starting PPP peer (HDLC/RFC1662, IPv4+IPv6, DNS, extraneous VJ and CCP)... "
 start=$(date +%s)
