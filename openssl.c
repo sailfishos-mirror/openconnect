@@ -612,6 +612,9 @@ static int load_pkcs12_certificate(struct openconnect_info *vpninfo, struct cert
 		unsigned long err = ERR_peek_error();
 
 		if (ERR_GET_LIB(err) == ERR_LIB_PKCS12 &&
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
+		    ERR_GET_FUNC(err) == PKCS12_F_PKCS12_PARSE &&
+#endif
 		    ERR_GET_REASON(err) == PKCS12_R_MAC_VERIFY_FAILURE) {
 			if (pass)
 				vpn_progress(vpninfo, PRG_ERR,
@@ -880,8 +883,14 @@ static int is_pem_password_error(struct openconnect_info *vpninfo, struct cert_i
 
 	openconnect_report_ssl_errors(vpninfo);
 
+#ifndef EVP_F_EVP_DECRYPTFINAL_EX
+#define EVP_F_EVP_DECRYPTFINAL_EX EVP_F_EVP_DECRYPTFINAL
+#endif
 	/* If the user fat-fingered the passphrase, try again */
 	if (ERR_GET_LIB(err) == ERR_LIB_EVP &&
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
+	    ERR_GET_FUNC(err) == EVP_F_EVP_DECRYPTFINAL_EX &&
+#endif
 	    ERR_GET_REASON(err) == EVP_R_BAD_DECRYPT) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     certinfo_string(certinfo, _("Loading private key failed (wrong passphrase?)\n"),
@@ -1055,6 +1064,9 @@ static int load_certificate(struct openconnect_info *vpninfo, struct cert_info *
 				unsigned long err = ERR_peek_error();
 
 				if (ERR_GET_LIB(err) == ERR_LIB_EVP &&
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
+				    ERR_GET_FUNC(err) == EVP_F_EVP_DECRYPTFINAL_EX &&
+#endif
 				    ERR_GET_REASON(err) == EVP_R_BAD_DECRYPT) {
 					ERR_clear_error();
 
