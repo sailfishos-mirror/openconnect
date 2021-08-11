@@ -9,15 +9,8 @@
 # published by the Free Software Foundation.
 #
 
-import os
 import sys
 import getopt
-import pprint
-import shutil
-import string
-import smtplib
-import socket
-import time
 import xml.sax
 import codecs
 
@@ -87,6 +80,7 @@ def placeMenu(topic, link, mode):
 class docHandler(xml.sax.ContentHandler):
 
 	def __init__(self):
+		super().__init__()
 		self.content = ""
 		return
     
@@ -223,7 +217,6 @@ except getopt.GetoptError as ex:
 	print (ex.msg)
 	usage()
 	sys.exit(1)
-	pass
 
 for option, value in options:
 	if option == '-d':
@@ -233,8 +226,6 @@ for option, value in options:
 	elif option == '-h':
 		usage()
 		sys.exit(0)
-		pass
-	pass
 
 # Handle special case VAR_ORIGIN
 idx = len(replace)
@@ -246,7 +237,6 @@ if not arguments:
 	print ("No source file specified")
 	usage()
 	sys.exit(1)
-	pass
 
 if writefile > 0:
 	fname = arguments[0].split('.')[0]
