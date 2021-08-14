@@ -34,8 +34,8 @@
 #include TSSINCLUDE(RSA_Decrypt_fp.h)
 #include TSSINCLUDE(Sign_fp.h)
 
-#define KEY_AUTH_FAILED		0x9a2
-#define PARENT_AUTH_FAILED	0x98e
+#define rc_is_key_auth_failed(rc) (((rc) & 0xff) == TPM_RC_BAD_AUTH)
+#define rc_is_parent_auth_failed(rc) (((rc) & 0xff) == TPM_RC_AUTH_FAIL)
 
 struct oc_tpm2_ctx {
 	TPM2B_PUBLIC pub;
@@ -257,7 +257,7 @@ static TPM_HANDLE tpm2_load_key(struct openconnect_info *vpninfo, struct cert_in
 	} else {
 	reauth_srk:
 		rc = tpm2_load_srk(vpninfo, tssContext, &in.parentHandle, pass, certinfo->tpm2->parent, certinfo->tpm2->legacy_srk);
-		if (rc == KEY_AUTH_FAILED) {
+		if (rc_is_key_auth_failed(rc)) {
 			free_pass(&pass);
 			if (!request_passphrase(vpninfo,
 						certinfo_string(certinfo, "openconnect_tpm2_hierarchy",
@@ -295,7 +295,7 @@ static TPM_HANDLE tpm2_load_key(struct openconnect_info *vpninfo, struct cert_in
 			 TPM_CC_Load,
 			 session, pass, 0,
 			 TPM_RH_NULL, NULL, 0);
-	if (rc == PARENT_AUTH_FAILED) {
+	if (rc_is_parent_auth_failed(rc)) {
 		free_pass(&pass);
 		goto reauth_parent;
 	}
@@ -367,7 +367,7 @@ int tpm2_rsa_sign_hash_fn(gnutls_privkey_t key, gnutls_sign_algorithm_t algo,
 			 TPM_CC_RSA_Decrypt,
 			 authHandle, pass, TPMA_SESSION_DECRYPT,
 			 TPM_RH_NULL, NULL, 0);
-	if (rc == KEY_AUTH_FAILED) {
+	if (rc_is_key_auth_failed(rc)) {
 		free_pass(&pass);
 		if (!request_passphrase(vpninfo,
 					certinfo_string(certinfo, "openconnect_tpm2_key",
@@ -470,7 +470,7 @@ int tpm2_ec_sign_hash_fn(gnutls_privkey_t key, gnutls_sign_algorithm_t algo,
 			 TPM_CC_Sign,
 			 authHandle, pass, TPMA_SESSION_DECRYPT,
 			 TPM_RH_NULL, NULL, 0);
-	if (rc == KEY_AUTH_FAILED) {
+	if (rc_is_key_auth_failed(rc)) {
 		free_pass(&pass);
 		if (!request_passphrase(vpninfo, "openconnect_tpm2_key",
 					&pass, _("Enter TPM2 key password:")))
