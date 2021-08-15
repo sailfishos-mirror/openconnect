@@ -295,7 +295,7 @@ static int init_tpm2_key(ESYS_CONTEXT **ctx, ESYS_TR *keyHandle,
 					    &pub, NULL, NULL);
 			if (!r && !(pub->publicArea.objectAttributes & TPMA_OBJECT_NODA))
 				certinfo->tpm2->need_ownerauth = 1;
-			free(pub);
+			Esys_Free(pub);
 		}
 	reauth:
 		if (certinfo->tpm2->need_ownerauth) {
@@ -451,8 +451,7 @@ int tpm2_rsa_sign_hash_fn(gnutls_privkey_t key, gnutls_sign_algorithm_t algo,
 
 	ret = 0;
  out:
-	if (tsig)
-		free(tsig);
+	Esys_Free(tsig);
 
 	if (key_handle != ESYS_TR_NONE)
 		Esys_FlushContext(ectx, key_handle);
@@ -540,7 +539,7 @@ int tpm2_ec_sign_hash_fn(gnutls_privkey_t key, gnutls_sign_algorithm_t algo,
 
 	ret = gnutls_encode_rs_value(sig, &sig_r, &sig_s);
  out:
-	free(tsig);
+	Esys_Free(tsig);
 
 	if (key_handle != ESYS_TR_NONE)
 		Esys_FlushContext(ectx, key_handle);
