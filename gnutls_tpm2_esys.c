@@ -75,7 +75,7 @@ struct oc_tpm2_ctx {
 	unsigned int parent;
 };
 
-static TPM2B_PUBLIC primaryTemplate = {
+static const TPM2B_PUBLIC primaryTemplate = {
 	.publicArea = {
 		.type = TPM2_ALG_ECC,
 		.nameAlg = TPM2_ALG_SHA256,
@@ -112,7 +112,7 @@ static TPM2B_PUBLIC primaryTemplate = {
 	}
 };
 
-static TPM2B_PUBLIC primaryTemplate_legacy = {
+static const TPM2B_PUBLIC primaryTemplate_legacy = {
 	.publicArea = {
 		.type = TPM2_ALG_ECC,
 		.nameAlg = TPM2_ALG_SHA256,
@@ -147,7 +147,7 @@ static TPM2B_PUBLIC primaryTemplate_legacy = {
 	}
 };
 
-static TPM2B_SENSITIVE_CREATE primarySensitive = {
+static const TPM2B_SENSITIVE_CREATE primarySensitive = {
 	.sensitive = {
 		.userAuth = {
 			.size = 0,
@@ -157,10 +157,10 @@ static TPM2B_SENSITIVE_CREATE primarySensitive = {
 		}
 	}
 };
-static TPM2B_DATA allOutsideInfo = {
+static const TPM2B_DATA allOutsideInfo = {
 	.size = 0,
 };
-static TPML_PCR_SELECTION allCreationPCR = {
+static const TPML_PCR_SELECTION allCreationPCR = {
 	.count = 0,
 };
 
