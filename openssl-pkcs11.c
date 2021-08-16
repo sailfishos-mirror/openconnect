@@ -258,8 +258,12 @@ static int slot_login(struct openconnect_info *vpninfo, struct cert_info *certin
 	ret = PKCS11_login(slot, 0, cache ? cache->pin : NULL);
 	if (ret) {
 		unsigned long err = ERR_peek_error();
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
 		if (ERR_GET_LIB(err) == ERR_LIB_PKCS11 &&
 		    ERR_GET_FUNC(err) == PKCS11_F_PKCS11_LOGIN)
+#else
+		if (ERR_GET_LIB(err) == ERR_LIB_PKCS11)
+#endif
 			err = ERR_GET_REASON(err);
 		else
 			err = CKR_OK; /* Anything we don't explicitly match */
