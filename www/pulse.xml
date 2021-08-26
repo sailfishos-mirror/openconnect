@@ -42,10 +42,7 @@ implemented for Pulse mode. The Juniper support may suffice for some users.</p>
 <h2>Connectivity</h2>
 
 <p>Once authentication is complete, the VPN connection can be
-established. Both Legacy IP and IPv6 should be working, although
-test reports from someone with an IPv6-capable server would be greatly
-appreciated as the freely available demo Virtual Appliance does not
-support IPv6.</p>
+established. Both Legacy IP and IPv6 should be working.</p>
 
 	<INCLUDE file="inc/footer.tmpl" />
 </PAGE>
