@@ -159,9 +159,9 @@ if test "$with_vpnc_script" = "yes" || test "$with_vpnc_script" = ""; then
       fi
    fi
 elif test "$with_vpnc_script" = "no"; then
-   AC_ERROR([You cannot disable vpnc-script.]
-   [OpenConnect will not function correctly without it.]
-   [See https://www.infradead.org/openconnect/vpnc-script.html])
+   AC_MSG_ERROR(You cannot disable vpnc-script.
+   OpenConnect will not function correctly without it.
+   See https://www.infradead.org/openconnect/vpnc-script.html)
 elif test "$have_win" = "yes"; then
    # Oh Windows how we hate thee. If user specifies a vpnc-script and it contains
    # backslashes, double them all up to survive escaping.
@@ -278,7 +278,7 @@ if test "$have_win" = yes; then
 	        AC_DEFINE(HAVE_LOCALTIME_S, 1, [Have localtime_s() function])],
 	       [AC_MSG_RESULT([no])])
 else
-   AC_CHECK_FUNC(socket, [], AC_CHECK_LIB(socket, socket, [], AC_ERROR(Cannot find socket() function)))
+   AC_CHECK_FUNC(socket, [], AC_CHECK_LIB(socket, socket, [], AC_MSG_ERROR(Cannot find socket() function)))
 fi
 
 have_inet_aton=yes
@@ -321,7 +321,7 @@ LIBINTL=
 if test "$USE_NLS" = "yes"; then
    AC_PATH_PROG(MSGFMT, msgfmt)
    if test "$MSGFMT" = ""; then
-      AC_ERROR([msgfmt could not be found. Try configuring with --disable-nls])
+      AC_MSG_ERROR(msgfmt could not be found. Try configuring with --disable-nls)
    fi
 fi
 LIBINTL=
@@ -392,7 +392,7 @@ if test "$with_gnutls" = "yes" || test "$with_gnutls" = ""; then
 	    ssl_library=GnuTLS
 	fi], [:])
 elif test "$with_gnutls" != "no"; then
-    AC_ERROR([Values other than 'yes' or 'no' for --with-gnutls are not supported])
+    AC_MSG_ERROR(Values other than 'yes' or 'no' for --with-gnutls are not supported)
 fi
 
 # Do we need to look for OpenSSL?
@@ -416,7 +416,7 @@ if test "$ssl_library" = ""; then
 			 AC_SUBST([OPENSSL_CFLAGS], [])]
 			 AC_SUBST([openssl_pc_libs], [$OPENSSL_LIBS]),
 			[AC_MSG_RESULT(no)
-			 AC_ERROR([Could not build against OpenSSL])])
+			 AC_MSG_ERROR(Could not build against OpenSSL)])
 	     LIBS="$oldLIBS"])
 	ssl_library=OpenSSL
 	PKG_CHECK_MODULES(P11KIT, p11-kit-1,
@@ -437,7 +437,7 @@ if test "$ssl_library" = ""; then
 		  -r "${with_openssl}/ssl/.libs/libssl.a"; then
 	    OPENSSL_LIBS="${with_openssl}/ssl/.libs/libssl.a ${with_openssl}/crypto/.libs/libcrypto.a -ldl -lz -pthread"
 	else
-	    AC_ERROR([Could not find OpenSSL libraries in ${with_openssl}]);
+	    AC_MSG_ERROR(Could not find OpenSSL libraries in ${with_openssl});
 	fi
 	AC_SUBST(OPENSSL_CFLAGS)
 	AC_SUBST(OPENSSL_LIBS)
@@ -491,10 +491,10 @@ case "$ssl_library" in
 				])],
 			  [],
 			  [AC_MSG_RESULT(yes)
-			   AC_ERROR([This version of OpenSSL is known to be broken with Cisco DTLS.]
-[See http://rt.openssl.org/Ticket/Display.html?id=2984&user=guest&pass=guest]
-[Add --without-openssl-version-check to configure args to avoid this check, or]
-[perhaps consider building with GnuTLS instead.])])
+			   AC_MSG_ERROR(This version of OpenSSL is known to be broken with Cisco DTLS.
+See http://rt.openssl.org/Ticket/Display.html?id=2984&user=guest&pass=guest
+Add --without-openssl-version-check to configure args to avoid this check, or
+perhaps consider building with GnuTLS instead.)])
 	    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <openssl/opensslv.h>],[#if \
 				    (OPENSSL_VERSION_NUMBER == 0x1000200fL)
 				#error Bad OpenSSL
@@ -502,11 +502,11 @@ case "$ssl_library" in
 				])],
 			  [],
 			  [AC_MSG_RESULT(yes)
-			   AC_ERROR([This version of OpenSSL is known to be broken with Cisco DTLS.]
-[See http://rt.openssl.org/Ticket/Display.html?id=3703&user=guest&pass=guest]
-[and http://rt.openssl.org/Ticket/Display.html?id=3711&user=guest&pass=guest]
-[Add --without-openssl-version-check to configure args to avoid this check, or]
-[perhaps consider building with GnuTLS instead.])])
+			   AC_MSG_ERROR(This version of OpenSSL is known to be broken with Cisco DTLS.
+See http://rt.openssl.org/Ticket/Display.html?id=3703&user=guest&pass=guest
+and http://rt.openssl.org/Ticket/Display.html?id=3711&user=guest&pass=guest
+Add --without-openssl-version-check to configure args to avoid this check, or
+perhaps consider building with GnuTLS instead.)])
 	    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <openssl/opensslv.h>],[#if \
 				    ((OPENSSL_VERSION_NUMBER >= 0x10001110L && OPENSSL_VERSION_NUMBER <= 0x10001150L) || \
 				     (OPENSSL_VERSION_NUMBER >= 0x10002050L && OPENSSL_VERSION_NUMBER <= 0x10002090L))
@@ -515,10 +515,10 @@ case "$ssl_library" in
 				])],
 			  [],
 			  [AC_MSG_RESULT(yes)
-			   AC_ERROR([This version of OpenSSL is known to be broken with Cisco DTLS.]
-[See http://rt.openssl.org/Ticket/Display.html?id=4631&user=guest&pass=guest]
-[Add --without-openssl-version-check to configure args to avoid this check, or]
-[perhaps consider building with GnuTLS instead.])])
+			   AC_MSG_ERROR(This version of OpenSSL is known to be broken with Cisco DTLS.
+See http://rt.openssl.org/Ticket/Display.html?id=4631&user=guest&pass=guest
+Add --without-openssl-version-check to configure args to avoid this check, or
+perhaps consider building with GnuTLS instead.)])
 	    AC_MSG_RESULT(no)
 	fi
 
@@ -852,7 +852,7 @@ AS_IF([test "$with_builtin_json" != "no"  && test "$json" = "" ],
       ])
 
 AS_IF([test "$json" = ""],
-    AC_ERROR([No json-parser package found and --without-builtin-json specified])
+    AC_MSG_ERROR(No json-parser package found and --without-builtin-json specified)
     )
 
 AM_CONDITIONAL(BUILTIN_JSON, [test "$json" = "builtin"])
@@ -870,7 +870,7 @@ PKG_CHECK_MODULES(ZLIB, zlib, [AC_SUBST(ZLIB_PC, [zlib])],
 		   AC_SUBST([ZLIB_LIBS], [-lz])
 		   AC_SUBST([ZLIB_CFLAGS], [])],
   		  [AC_MSG_RESULT(no)
-		   AC_ERROR([Could not build against zlib])])
+		   AC_MSG_ERROR(Could not build against zlib)])
 		  LIBS="$oldLIBS"])
 
 AC_ARG_WITH([libproxy],
