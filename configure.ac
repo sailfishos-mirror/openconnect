@@ -820,7 +820,7 @@ fi
 AC_PROG_EGREP
 
 # Needs to happen after we default to static/shared libraries based on OpenSSL
-AC_PROG_LIBTOOL
+LT_INIT
 if test "$use_openbsd_libtool" = "true" && test -x /usr/bin/libtool; then
 	echo using OpenBSD libtool
 	LIBTOOL=/usr/bin/libtool
