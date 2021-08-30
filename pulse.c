@@ -395,7 +395,7 @@ static int process_attr(struct openconnect_info *vpninfo, struct oc_vpn_option *
 		vpn_progress(vpninfo, PRG_DEBUG, _("Received internal gateway address %s\n"), buf);
 		/* Hm, what are we supposed to do with this? It's a tunnel;
 		   having a gateway is meaningless. */
-		add_option_dup(new_opts, "ipaddr", buf, -1);
+		add_option_dup(new_opts, "gateway", buf, -1);
 		break;
 
 	case 0x4010: {
@@ -491,6 +491,21 @@ static int process_attr(struct openconnect_info *vpninfo, struct oc_vpn_option *
 			     data[0]);
 		break;
 
+	case 0x401e:
+		if (attrlen != 16)
+			goto badlen;
+		if (!inet_ntop(AF_INET6, data, buf, sizeof(buf))) {
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("Failed to handle IPv6 address\n"));
+			return -EINVAL;
+		}
+
+		vpn_progress(vpninfo, PRG_DEBUG, _("Received internal gateway IPv6 address %s\n"), buf);
+		/* Hm, what are we supposed to do with this? It's a tunnel;
+		   having a gateway is meaningless. */
+		add_option_dup(new_opts, "gateway6", buf, -1);
+		break;
+
 	/* 0x4022: disable proxy
 	   0x400a: preserve proxy
 	   0x4008: proxy (string)
@@ -500,7 +515,6 @@ static int process_attr(struct openconnect_info *vpninfo, struct oc_vpn_option *
 	   0x401f:  tunnel routes with subnet access (also 4001 set)
 	   0x4020: Enforce IPv4
 	   0x4021: Enforce IPv6
-	   0x401e: Server IPv6 address
 	*/
 
 	default:
