@@ -580,36 +580,35 @@ static int fortinet_configure(struct openconnect_info *vpninfo)
 		goto out;
 	}
 
-	/* XXX: Forticlient and Openfortivpn fetch the legacy HTTP configuration.
-	 * FortiOS 4 was the last version to send the legacy HTTP configuration.
-	 * FortiOS 5 and later send the current XML configuration.
-	 * We clearly do not need to support FortiOS 4 anymore.
-	 *
-	 * Yet we keep this code around in order to get a sanity check about
-	 * whether the SVPNCOOKIE is still valid/alive, until we are sure we've
-	 * worked out the weirdness with reconnects.
-	 */
-#if 0 /* Nah... */
-	free(vpninfo->urlpath);
-	vpninfo->urlpath = strdup("remote/fortisslvpn");
-	ret = do_https_request(vpninfo, "GET", NULL, NULL, &res_buf, NULL, 0);
-	if (ret < 0)
-		goto out;
-	else if (ret == 0)
-		goto invalid_cookie;
-	/* We don't care what it returned as long as it was successful */
-	free(res_buf);
-	res_buf = NULL;
-#endif
 	free(vpninfo->urlpath);
 
-	/* Now fetch the connection options in XML format */
+	/* Fetch the connection options in XML format */
 	vpninfo->urlpath = strdup("remote/fortisslvpn_xml");
 	ret = do_https_request(vpninfo, "GET", NULL, NULL, &res_buf, NULL, 0);
 	if (ret < 0) {
-		if (ret == -EPERM)
-			vpn_progress(vpninfo, PRG_ERR,
-				     _("Server doesn't support XML config format. Ancient HTML format is not currently implemented.\n"));
+		if (ret == -EPERM) {
+			/* XXX: Forticlient and Openfortivpn fetch the legacy HTTP configuration.
+			 * FortiOS 4 was the last version to send the legacy HTTP configuration.
+			 * FortiOS 5 and later send the current XML configuration.
+			 * We clearly do not need to support FortiOS 4 anymore.
+			 *
+			 * Yet we keep this code around in order to get a sanity check about
+			 * whether the SVPNCOOKIE is still valid/alive, until we are sure we've
+			 * worked out the weirdness with reconnects.
+			 */
+			vpninfo->urlpath = strdup("remote/fortisslvpn");
+			int ret2 = do_https_request(vpninfo, "GET", NULL, NULL, &res_buf, NULL, 0);
+			if (ret2 == 0)
+				vpn_progress(vpninfo, PRG_ERR,
+					     _("Ancient Fortinet server (<v5?) only support ancient HTML config, which is not implemented by OpenConnect.\n"));
+			else
+				vpn_progress(vpninfo, PRG_ERR,
+					     _("Fortinet server is rejecting request for connection options. This\n"
+					       "has been observed after reconnection in some cases. Please report to\n"
+					       "<openconnect-devel@lists.infradead.org>, or see the discussions on\n"
+					       "https://gitlab.com/openconnect/openconnect/-/issues/297 and\n"
+					       "https://gitlab.com/openconnect/openconnect/-/issues/298.\n"));
+		}
 		goto out;
 	} else if (ret == 0) {
 		/* This is normally a redirect to /remote/login, which
