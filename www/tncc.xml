@@ -60,7 +60,7 @@ the <tt>trojans/</tt> subdirectory:</p>
   from russdill/juniper-vpn-py on GitHub</a>.)</p></li>
 </ul>
 
-<p>With either of these sripts, it may also be necessary to pass a Mozilla-compatible user agent string:</p>
+<p>With either of these scripts, it may also be necessary to pass a Mozilla-compatible user agent string:</p>
 <pre>
   ./openconnect --protocol=nc --useragent 'Mozilla/5.0 (Linux) Firefox' --csd-wrapper=trojans/tncc-wrapper.py vpn.example.com
 </pre>
