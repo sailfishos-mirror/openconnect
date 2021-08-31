@@ -45,7 +45,7 @@ list</a> so that we can add support to OpenConnect.</p>
 
 <h2>Quirks and Issues</h2>
 
-<p>Prior to server version FortiOS 6.2.1, the Fortinet protocol appears <i>not</i> to allow its
+<p>FortiGate server versions prior to v6.2.1 do <i>not</i> allow the
 post-authentication cookie (as output by <tt>--authenticate</tt>) to
 be used to reestablish a dropped connection. This means that if the
 client loses its connection to the gateway (for example, due to a

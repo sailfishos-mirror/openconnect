@@ -212,7 +212,8 @@ def xml_config():
               <dtls-config heartbeat-interval="10" heartbeat-fail-count="10" heartbeat-idle-timeout="10" client-hello-timeout="10"/>
               <tunnel-method value="ppp"/>
               <tunnel-method value="tun"/>
-              <fos platform="FakeFortigate" major="1" minor="2" patch="3" build="4567" branch="4567"/>
+              <fos platform="FakeFortigate" major="1" minor="2" patch="3" build="4567" branch="4567" mr_num="??"/>
+              <auth-ses tun-connect-without-reauth="1" check-src-ip="0" tun-user-ses-timeout="240"/>
               <ipv4>
                 <dns ip="1.1.1.1"/>
                 <dns ip="8.8.8.8" domain="foo.com"/>

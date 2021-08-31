@@ -398,7 +398,7 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 						     _("Server reports that reconnect-after-drop is allowed within %d seconds, %s\n"),
 						     dropped_session_cleanup,
 						     check_ip_src ? _("but only from the same source IP address") : _("even if source IP address changes"));
-				} else if (reconnect_after_drop == 0)
+				} else
 					vpn_progress(vpninfo, PRG_ERR,
 						     _("Server reports that reconnect-after-drop is not allowed. OpenConnect will not\n"
 						       "be able to reconnect if dead peer is detected. If reconnection DOES work,\n"
@@ -412,7 +412,8 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 				if (!xmlnode_get_prop(xml_node, "minor", &s))  p+=snprintf(p, e-p, ".%s", s);
 				if (!xmlnode_get_prop(xml_node, "patch", &s))  p+=snprintf(p, e-p, ".%s", s);
 				if (!xmlnode_get_prop(xml_node, "build", &s))  p+=snprintf(p, e-p, " build %s", s);
-				if (!xmlnode_get_prop(xml_node, "branch", &s))    snprintf(p, e-p, " branch %s", s);
+				if (!xmlnode_get_prop(xml_node, "branch", &s)) p+=snprintf(p, e-p, " branch %s", s);
+				if (!xmlnode_get_prop(xml_node, "mr_num", &s))    snprintf(p, e-p, " mr_num %s", s);
 				vpn_progress(vpninfo, PRG_INFO,
 					     _("Reported platform is %s\n"), platform);
 			}
@@ -542,6 +543,13 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 				}
 			}
 		}
+	}
+
+	if (reconnect_after_drop < 0) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("WARNING: Fortinet server does not specifically enable or disable reconnection\n"
+			       "    without reauthentication. If automatic reconnection does work, please\n"
+			       "    report results to <openconnect-devel@lists.infradead.org>\n"));
 	}
 
 	if (reconnect_after_drop == -1)
