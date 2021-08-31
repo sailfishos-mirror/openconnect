@@ -51,7 +51,7 @@
 #define DTLS1_BAD_VER 0x100
 #endif
 
-/* PACKET functions lifted from OpenSSL 1.1's ssl/packet_locl.h. Permisson
+/* PACKET functions lifted from OpenSSL 1.1's ssl/packet_locl.h. Permission
  * requested in https://github.com/openssl/openssl/pull/1296 for reuse here
  * as an OpenConnect test case. */
 /*
