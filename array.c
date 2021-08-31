@@ -142,10 +142,10 @@ static int parse_cookie(struct openconnect_info *vpninfo)
 {
 	char *p = vpninfo->cookie;
 
-	/* We currently expect the "cookie" to be contain multiple cookies:
+	/* We currently expect the "cookie" to contain multiple cookies:
 	 * DSSignInUrl=/; DSID=xxx; DSFirstAccess=xxx; DSLastAccess=xxx
 	 * Process those into vpninfo->cookies unless we already had them
-	 * (in which case they'll may be newer. */
+	 * (in which case they may be newer). */
 	while (p && *p) {
 		char *semicolon = strchr(p, ';');
 		char *equals;

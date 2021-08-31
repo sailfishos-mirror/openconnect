@@ -421,7 +421,7 @@ static int gpst_parse_config_xml(struct openconnect_info *vpninfo, xmlNode *xml_
 		} else if (!xmlnode_get_val(xml_node, "connected-gw-ip", &s)) {
 			if (vpninfo->ip_info.gateway_addr && strcmp(s, vpninfo->ip_info.gateway_addr))
 				vpn_progress(vpninfo, PRG_DEBUG, _("Config XML <connected-gw-ip> address (%s) differs from external\n"
-				                                   "gateway address (%s). Please report any this to\n"
+				                                   "gateway address (%s). Please report this to\n"
 								   "<openconnect-devel@lists.infradead.org>, including any problems\n"
 								   "with ESP or other apparent loss of connectivity or performance.\n"),
 					     s, vpninfo->ip_info.gateway_addr);
