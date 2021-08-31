@@ -921,9 +921,11 @@ static inline void __sync_epoll_fd(struct openconnect_info *vpninfo, int fd, uin
 static inline void __remove_epoll_fd(struct openconnect_info *vpninfo, int fd)
 {
 	struct epoll_event ev = { 0 };
-	if (vpninfo->epoll_fd >= 0 &&
-	    epoll_ctl(vpninfo->epoll_fd, EPOLL_CTL_DEL, fd, &ev) < 0)
-		vpn_perror(vpninfo, "EPOLL_CTL_DEL");
+	if (vpninfo->epoll_fd >= 0) {
+		if (epoll_ctl(vpninfo->epoll_fd, EPOLL_CTL_DEL, fd, &ev) < 0)
+			vpn_perror(vpninfo, "EPOLL_CTL_DEL");
+		vpninfo->epoll_fd = -1;
+	}
 	/* No other action on error; if it truly matters we'll bail
 	 * later and fall back to select() */
 }
