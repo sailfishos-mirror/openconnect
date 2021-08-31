@@ -490,24 +490,7 @@ static int process_attr(struct openconnect_info *vpninfo, struct oc_vpn_option *
 		vpn_progress(vpninfo, PRG_DEBUG, _("ESP only: %d\n"),
 			     data[0]);
 		break;
-#if 0
-	case GRP_ATTR(7, 1):
-		if (attrlen != 4)
-			goto badlen;
-		memcpy(&vpninfo->esp_out.spi, data, 4);
-		vpn_progress(vpninfo, PRG_DEBUG, _("ESP SPI (outbound): %x\n"),
-			     load_be32(data));
-		break;
 
-	case GRP_ATTR(7, 2):
-		if (attrlen != 0x40)
-			goto badlen;
-		/* data contains enc_key and hmac_key concatenated */
-		memcpy(vpninfo->esp_out.enc_key, data, 0x40);
-		vpn_progress(vpninfo, PRG_DEBUG, _("%d bytes of ESP secrets\n"),
-			     attrlen);
-		break;
-#endif
 	/* 0x4022: disable proxy
 	   0x400a: preserve proxy
 	   0x4008: proxy (string)
@@ -518,7 +501,6 @@ static int process_attr(struct openconnect_info *vpninfo, struct oc_vpn_option *
 	   0x4020: Enforce IPv4
 	   0x4021: Enforce IPv6
 	   0x401e: Server IPv6 address
-	   0x000f: IPv6 netmask?
 	*/
 
 	default:
