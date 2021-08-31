@@ -1045,7 +1045,7 @@ int udp_sockaddr(struct openconnect_info *vpninfo, int port)
 
 int udp_connect(struct openconnect_info *vpninfo)
 {
-	int fd, sndbuf;
+	int fd, sndbuf, actual_sndbuf;
 
 	fd = socket(vpninfo->peer_addr->sa_family, SOCK_DGRAM, IPPROTO_UDP);
 	if (fd < 0) {
@@ -1063,9 +1063,13 @@ int udp_connect(struct openconnect_info *vpninfo)
 		vpn_perror(vpninfo, "Set UDP socket send buffer");
 	}
 
-	socklen_t l = sizeof(sndbuf);
-	if (!getsockopt(fd, SOL_SOCKET, SO_SNDBUF, (void *)&sndbuf, &l))
-		vpn_progress(vpninfo, PRG_DEBUG, "UDP SO_SNDBUF: %d\n", sndbuf);
+	socklen_t l = sizeof(actual_sndbuf);
+	if (!getsockopt(fd, SOL_SOCKET, SO_SNDBUF, (void *)&actual_sndbuf, &l) &&
+	    actual_sndbuf != sndbuf)
+		vpn_progress(vpninfo,
+			     actual_sndbuf < sndbuf ? PRG_ERR : PRG_DEBUG,
+			     "Tried to set UDP socket send buffer to %d, but got %d\n",
+			     sndbuf, actual_sndbuf);
 
 	if (vpninfo->dtls_local_port) {
 		union {
