@@ -636,7 +636,7 @@ static int fortinet_configure(struct openconnect_info *vpninfo)
 			 */
 			vpninfo->urlpath = strdup("remote/fortisslvpn");
 			int ret2 = do_https_request(vpninfo, "GET", NULL, NULL, &res_buf, NULL, HTTP_NO_FLAGS);
-			if (ret2 == 0)
+			if (ret2 > 0)
 				vpn_progress(vpninfo, PRG_ERR,
 					     _("Ancient Fortinet server (<v5?) only supports ancient HTML config, which is not implemented by OpenConnect.\n"));
 			else
@@ -649,16 +649,17 @@ static int fortinet_configure(struct openconnect_info *vpninfo)
 		}
 		goto out;
 	} else if (ret == 0) {
-		/* This is normally a redirect to /remote/login, which
-		 * indicates that the auth session/cookie is no longer valid.
+		/* A redirect to /remote/login also indicates that the auth session/cookie
+		 * is no longer valid, and appears to occur only on older FortiGate
+		 * versions.
 		 *
 		 * XX: See do_https_request() for why ret==0 can only happen
 		 * if there was a successful-but-unfetched redirect.
 		 */
-#if 0
-	invalid_cookie:
-#endif
-		ret = -EPERM;
+		if (vpninfo->urlpath && !strncmp(vpninfo->urlpath, "remote/login", 12))
+			ret = -EPERM;
+		else
+			ret = -EINVAL;
 		goto out;
 	}
 
