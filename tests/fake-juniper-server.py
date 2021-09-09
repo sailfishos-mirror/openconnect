@@ -24,9 +24,7 @@
 
 import sys
 import ssl
-import random
 import base64
-import time
 from json import dumps
 from functools import wraps
 from flask import Flask, request, abort, redirect, url_for, make_response, session
@@ -39,10 +37,12 @@ context.load_cert_chain(*cert_and_maybe_keyfile)
 app = Flask(__name__)
 app.config.update(SECRET_KEY=b'fake', DEBUG=True, HOST=host, PORT=int(port), SESSION_COOKIE_NAME='fake')
 
+
 ########################################
 
 def cookify(jsonable):
     return base64.urlsafe_b64encode(dumps(jsonable).encode())
+
 
 def require_DSID(fn):
     @wraps(fn)
@@ -52,6 +52,7 @@ def require_DSID(fn):
             return redirect(url_for('get_policy'))
         return fn(*args, **kwargs)
     return wrapped
+
 
 def check_form_against_session(*fields, use_query=False):
     def inner(fn):
@@ -117,7 +118,7 @@ def frmLogin_post():
     token_form = session.get('token_form')
     roles = session.get('roles')
     if realms:
-        assert 0 <= int(request.form.get('realm',-1)) < len(realms)
+        assert 0 <= int(request.form.get('realm', -1)) < len(realms)
     session.update(step='POST-login', username=request.form.get('username'),
                    password=request.form.get('password'),
                    realm=request.form.get('realm'))
@@ -168,7 +169,7 @@ def frmSelectRoles():
 def frmSelectRoles_AFTER():
     roles = session.get('roles')
     assert roles
-    assert 0 <= int(request.args.get('role',-1)) < len(roles)
+    assert 0 <= int(request.args.get('role', -1)) < len(roles)
     session.update(step='AFTER-frmSelectRoles', role=request.form.get('role'))
     resp = redirect(url_for('webtop'))
     resp.set_cookie('DSID', cookify(dict(session)))
