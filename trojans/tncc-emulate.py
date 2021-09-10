@@ -75,7 +75,8 @@ import xml.etree.ElementTree
 
 import mechanize
 try:
-    import asn1crypto.pem, asn1crypto.x509
+    import asn1crypto.pem
+    import asn1crypto.x509
 except ImportError:
     asn1crypto = None
 try:
@@ -103,10 +104,12 @@ def decode_0013(buf, indent):
         ret[cmd].append(out)
     return ret
 
+
 # 0012 - u32
 def decode_0012(buf, indent):
     logging.debug('%scmd 0012 (u32) %d bytes', indent, len(buf))
     return struct.unpack(">I", buf)
+
 
 # 0016 - zlib compressed message
 def decode_0016(buf, indent):
@@ -120,6 +123,7 @@ def decode_0016(buf, indent):
         ret[cmd].append(out)
     return ret
 
+
 # 0ce4 - encapsulation
 def decode_0ce4(buf, indent):
     logging.debug('%scmd 0ce4 (encapsulation) %d bytes', indent, len(buf))
@@ -130,6 +134,7 @@ def decode_0ce4(buf, indent):
         ret[cmd].append(out)
     return ret
 
+
 # 0ce5 - string without hex prefixer
 def decode_0ce5(buf, indent):
     s = struct.unpack(str(len(buf)) + "s", buf)[0]
@@ -137,6 +142,7 @@ def decode_0ce5(buf, indent):
     s = s.rstrip(b'\0')
     logging.debug('%s', s)
     return s
+
 
 # 0ce7 - string with hex prefixer
 def decode_0ce7(buf, indent):
@@ -151,6 +157,7 @@ def decode_0ce7(buf, indent):
     logging.debug('%s', s)
     return (id, s)
 
+
 # 0cf0 - encapsulation
 def decode_0cf0(buf, indent):
     logging.debug('%scmd 0cf0 (encapsulation) %d bytes', indent, len(buf))
@@ -158,6 +165,7 @@ def decode_0cf0(buf, indent):
     cmd, _, out = decode_packet(buf, indent + "  ")
     ret[cmd] = out
     return ret
+
 
 # 0cf1 - string without hex prefixer
 def decode_0cf1(buf, indent):
@@ -167,11 +175,13 @@ def decode_0cf1(buf, indent):
     logging.debug('%s', s)
     return s
 
+
 # 0cf3 - u32
 def decode_0cf3(buf, indent):
     ret = struct.unpack(">I", buf)
     logging.debug('%scmd 0cf3 (u32) %d bytes - %d', indent, len(buf), ret[0])
     return ret
+
 
 def decode_packet(buf, indent=""):
     cmd, _1, _2, length, _3 = struct.unpack(">IBBHI", buf[:12])
@@ -207,6 +217,7 @@ def decode_packet(buf, indent=""):
 
     return length, cmd, data
 
+
 def encode_packet(cmd, align, buf):
     align = 4
     orig_len = len(buf)
@@ -215,40 +226,49 @@ def encode_packet(cmd, align, buf):
 
     return struct.pack(">IBBHI", cmd, 0xc0, 0x00, orig_len + 12, 0x0000583) + buf
 
+
 # 0013 - Message
 def encode_0013(buf):
     return encode_packet(0x0013, 4, buf)
+
 
 # 0012 - u32
 def encode_0012(i):
     return encode_packet(0x0012, 1, struct.pack("<I", i))
 
+
 # 0ce4 - encapsulation
 def encode_0ce4(buf):
     return encode_packet(0x0ce4, 4, buf)
+
 
 # 0ce5 - string without hex prefixer
 def encode_0ce5(s):
     return encode_packet(0x0ce5, 1, struct.pack(str(len(s)) + "s", s))
 
+
 # 0ce7 - string with hex prefixer
 def encode_0ce7(s, prefix):
     s += b'\0'
     return encode_packet(0x0ce7, 1, struct.pack(">I" + str(len(s)) + "sx",
-                                prefix, s))
+                         prefix, s))
+
 
 # 0cf0 - encapsulation
 def encode_0cf0(buf):
     return encode_packet(0x0cf0, 4, buf)
+
 
 # 0cf1 - string without hex prefixer
 def encode_0cf1(s):
     s += b'\0'
     return encode_packet(0x0ce5, 1, struct.pack(str(len(s)) + "s", s))
 
+
 # 0cf3 - u32
 def encode_0cf3(i):
     return encode_packet(0x0013, 1, struct.pack("<I", i))
+
 
 class x509cert(object):
 
@@ -272,6 +292,7 @@ class x509cert(object):
         self.not_before = tbs['validity']['not_before'].native.astimezone(datetime.timezone.utc).replace(tzinfo=None)
         self.not_after = tbs['validity']['not_after'].native.astimezone(datetime.timezone.utc).replace(tzinfo=None)
         self.subject = self.decode_names(tbs['subject'])
+
 
 class tncc(object):
     def __init__(self, vpn_host, device_id=None, funk=None, platform=None, hostname=None, mac_addrs=[], certs=[], interval=None, user_agent=None):
@@ -300,7 +321,7 @@ class tncc(object):
 
         # Follows refresh 0 but not hangs on refresh > 0
         self.br.set_handle_refresh(mechanize._http.HTTPRefreshProcessor(),
-                              max_time=1)
+                                   max_time=1)
 
         # Want debugging messages?
         if debug:
@@ -319,10 +340,10 @@ class tncc(object):
 
     def set_cookie(self, name, value):
         cookie = Cookie(version=0, name=name, value=value,
-                port=None, port_specified=False, domain=self.vpn_host,
-                domain_specified=True, domain_initial_dot=False, path=self.path,
-                path_specified=True, secure=True, expires=None, discard=True,
-                comment=None, comment_url=None, rest=None, rfc2109=False)
+                        port=None, port_specified=False, domain=self.vpn_host,
+                        domain_specified=True, domain_initial_dot=False, path=self.path,
+                        path_specified=True, secure=True, expires=None, discard=True,
+                        comment=None, comment_url=None, rest=None, rfc2109=False)
         self.cj.set_cookie(cookie)
 
     def parse_response(self):
@@ -349,6 +370,7 @@ class tncc(object):
         # The decompressed data is HTMLish, decode it. The value="" of each
         # tag is the data we want.
         objs = []
+
         class ParamHTMLParser(HTMLParser.HTMLParser):
             def handle_starttag(self, tag, attrs):
                 if tag.lower() == 'param':
@@ -365,6 +387,7 @@ class tncc(object):
                                 except ValueError:
                                     pass
                             objs.append(d)
+
         p = ParamHTMLParser()
         p.feed(msg_data)
         p.close()
@@ -400,10 +423,10 @@ class tncc(object):
 
         msg += add_attr('Platform', self.platform)
         if self.hostname:
-            msg += add_attr(self.hostname, 'NETBIOSName') # Reversed
+            msg += add_attr(self.hostname, 'NETBIOSName')  # Reversed
 
         for mac in self.mac_addrs:
-            msg += add_attr(mac, 'MACAddress') # Reversed
+            msg += add_attr(mac, 'MACAddress')  # Reversed
 
         msg += "</ClientAttributes>  </FunkMessage>"
 
@@ -447,7 +470,7 @@ class tncc(object):
 
         msg = ''
         for policy_key, policy_val in policy_blocks.items():
-            v = ''.join([ '%s=%s;' % (k, v) for k, v in policy_val.items()])
+            v = ''.join(['%s=%s;' % (k, v) for k, v in policy_val.items()])
             msg += '<parameter name="%s" value="%s">' % (policy_key, v)
 
         return encode_0ce7(msg.encode(), 0xa4c18)
@@ -507,7 +530,7 @@ class tncc(object):
         if self.deviceid:
             post_attrs['deviceid'] = self.deviceid
 
-        post_data = ''.join([ '%s=%s;' % (k, v) for k, v in post_attrs.items()])
+        post_data = ''.join(['%s=%s;' % (k, v) for k, v in post_attrs.items()])
         self.r = self.br.open('https://' + self.vpn_host + self.path + 'hc/tnchcupdate.cgi', post_data)
 
         # Parse the data returned into a key/value dict
@@ -516,8 +539,8 @@ class tncc(object):
         if 'interval' in response:
             m = int(response['interval'])
             logging.debug('Got interval of %d minutes' % m)
-            if self.interval is None or self.interval > m*60:
-                self.interval = m*60
+            if self.interval is None or self.interval > m * 60:
+                self.interval = m * 60
 
         # msg has the stuff we want, it's base64 encoded
         logging.debug('Receiving packet -')
@@ -583,11 +606,12 @@ class tncc(object):
             'firsttime': '1'
         }
 
-        post_data = ''.join([ '%s=%s;' % (k, v) for k, v in post_attrs.items()])
+        post_data = ''.join(['%s=%s;' % (k, v) for k, v in post_attrs.items()])
         self.r = self.br.open('https://' + self.vpn_host + self.path + 'hc/tnchcupdate.cgi', post_data)
 
         # We have a new DSPREAUTH cookie
         return self.find_cookie('DSPREAUTH')
+
 
 class tncc_server(object):
     def __init__(self, s, t):
@@ -618,9 +642,11 @@ class tncc_server(object):
         else:
             logging.warning('Unknown command %r' % cmd)
 
+
 def fingerprint_checking_SSLSocket(_fingerprint):
     class SSLSocket(ssl.SSLSocket):
         fingerprint = _fingerprint
+
         def do_handshake(self, *args, **kw):
             res = super().do_handshake(*args, **kw)
             der_bytes = self.getpeercert(True)
@@ -630,7 +656,9 @@ def fingerprint_checking_SSLSocket(_fingerprint):
             if pin_sha256 != self.fingerprint:
                 raise Exception("Server fingerprint %s does not match expected pin-sha256:%s" % (pin_sha256, self.fingerprint))
             return res
+
     return SSLSocket
+
 
 if __name__ == "__main__":
     vpn_host = sys.argv[1]

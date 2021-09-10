@@ -19,10 +19,10 @@ p.add_argument('-v', '--verbose', default=0, action='count')
 p.add_argument('endpoint', help='Fortinet server (or complete URL, e.g. https://forti.vpn.com/remote/login)')
 p.add_argument('extra', nargs='*', help='Extra field to pass to include in the login query string (e.g. "foo=bar")')
 g = p.add_argument_group('Login credentials')
-g.add_argument('-u','--username', help='Username (will prompt if unspecified)')
-g.add_argument('-p','--password', help='Password (will prompt if unspecified)')
-g.add_argument('-r','--realm', default='', help='Realm (empty if unspecified)')
-g.add_argument('-c','--cert', help='PEM file containing client certificate (and optionally private key)')
+g.add_argument('-u', '--username', help='Username (will prompt if unspecified)')
+g.add_argument('-p', '--password', help='Password (will prompt if unspecified)')
+g.add_argument('-r', '--realm', default='', help='Realm (empty if unspecified)')
+g.add_argument('-c', '--cert', help='PEM file containing client certificate (and optionally private key)')
 g.add_argument('--key', help='PEM file containing client private key (if not included in same file as certificate)')
 p.add_argument('--no-verify', dest='verify', action='store_false', default=True, help='Ignore invalid server certificate')
 args = p.parse_args()
@@ -52,13 +52,13 @@ print("Initial GET /remote/login to populate cookies...", file=stderr)
 res = s.get(endpoint.geturl(), allow_redirects=False)
 
 # Send login credentials
-if args.username == None:
+if args.username is None:
     args.username = raw_input('Username: ')
-if args.password == None:
+if args.password is None:
     args.password = getpass.getpass('Password: ')
-data=dict(username=args.username, credential=args.password, realm=args.realm,
-	  ajax=1, redir='%2Fremote%2Findex', just_logged_in=1,
-          **extra)
+data = dict(username=args.username, credential=args.password, realm=args.realm,
+            ajax=1, redir='%2Fremote%2Findex', just_logged_in=1,
+            **extra)
 print("POST /remote/logincheck to submit login credentials...", file=stderr)
 res = s.post(endpoint._replace(path='/remote/logincheck').geturl(), data=data)
 
@@ -66,11 +66,11 @@ res.raise_for_status()
 
 # Build openconnect --cookie argument from the result:
 url = urlparse(res.url)
-if any(c.name=='SVPNCOOKIE' and c.value for c in s.cookies):
-    cookie = next(c.value for c in s.cookies if c.name=='SVPNCOOKIE')
+if any(c.name == 'SVPNCOOKIE' and c.value for c in s.cookies):
+    cookie = next(c.value for c in s.cookies if c.name == 'SVPNCOOKIE')
     if args.verbose:
         if cert:
-            cert_and_key = ' \\\n        ' + ' '.join('%s "%s"' % (opt, quote(fn)) for opt, fn in zip(('-c','-k'), cert) if fn)
+            cert_and_key = ' \\\n        ' + ' '.join('%s "%s"' % (opt, quote(fn)) for opt, fn in zip(('-c', '-k'), cert) if fn)
         else:
             cert_and_key = ''
 

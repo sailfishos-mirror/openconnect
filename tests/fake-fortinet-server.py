@@ -54,10 +54,12 @@ context.load_cert_chain(*cert_and_maybe_keyfile)
 app = Flask(__name__)
 app.config.update(SECRET_KEY=b'fake', DEBUG=True, HOST=host, PORT=int(port), SESSION_COOKIE_NAME='fake')
 
+
 ########################################
 
 def cookify(jsonable):
     return base64.urlsafe_b64encode(dumps(jsonable).encode())
+
 
 def require_SVPNCOOKIE(fn):
     @wraps(fn)
@@ -67,6 +69,7 @@ def require_SVPNCOOKIE(fn):
             return redirect(url_for('login'))
         return fn(*args, **kwargs)
     return wrapped
+
 
 def check_form_against_session(*fields):
     def inner(fn):

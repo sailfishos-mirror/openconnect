@@ -16,16 +16,14 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>
-#!/usr/bin/env python3
 
 import sys
 import ssl
 from random import randint
 import base64
-import time
 from json import dumps
 from functools import wraps
-from flask import Flask, request, abort, redirect, url_for, make_response, session
+from flask import Flask, request, abort, redirect, url_for, session
 
 host, port, *cert_and_maybe_keyfile = sys.argv[1:]
 
@@ -35,10 +33,12 @@ context.load_cert_chain(*cert_and_maybe_keyfile)
 app = Flask(__name__)
 app.config.update(SECRET_KEY=b'fake', DEBUG=True, HOST=host, PORT=int(port), SESSION_COOKIE_NAME='fake')
 
+
 ########################################
 
 def cookify(jsonable):
     return base64.urlsafe_b64encode(dumps(jsonable).encode())
+
 
 def check_form_against_session(*fields, use_query=False, on_failure=None):
     def inner(fn):
@@ -60,7 +60,8 @@ def check_form_against_session(*fields, use_query=False, on_failure=None):
 
 ########################################
 
-if_path2name = {'global-protect':'portal', 'ssl-vpn':'gateway'}
+
+if_path2name = {'global-protect': 'portal', 'ssl-vpn': 'gateway'}
 
 # Get parameters into the initial session setup in order to configure:
 #   gateways: list of gateway names for portal to offer (all will point to same HOST:PORT as portal)

@@ -32,10 +32,12 @@ context.load_cert_chain(*cert_and_maybe_keyfile)
 
 app = Flask(__name__)
 
+
 @app.route("/")
 def root():
     # Step 0. Step 11.
     return redirect(url_for("welcome"))
+
 
 @app.route("/dana-na/auth/url_default/welcome.cgi")
 def welcome():
@@ -52,6 +54,7 @@ def welcome():
     # Step 15.
     return redirect(url_for("login", loginmode="mode_postAuth"))
 
+
 @app.route("/dana-na/auth/url_default/login.cgi")
 def login():
     if request.cookies.get("DSASSERTREF") != "assert_ref":
@@ -66,6 +69,7 @@ def login():
     resp = redirect(url_for("starter0"))
     resp.set_cookie("DSID", "dsid")
     return resp
+
 
 @app.route("/adfs/ls/", methods=["GET", "POST"])
 def ls():
@@ -146,6 +150,7 @@ def ls():
             <input type="submit" value="Submit">
         </form>""")
 
+
 @app.route("/data-na/auth/saml-consumer0.cgi", methods=["POST"])
 def saml_consumer0():
     # Step 9: in reality, this is hosted on a different domain than the
@@ -169,9 +174,11 @@ def saml_consumer():
     resp.set_cookie("DSASSERTREF", "assert_ref")
     return resp
 
+
 @app.route("/dana/home/starter0.cgi")
 def starter0():
     # Need to provide a form to make the parser happy.
     return "<form></form>The DSID is in your cookie jar."
+
 
 app.run(host=host, port=int(port), ssl_context=context)
