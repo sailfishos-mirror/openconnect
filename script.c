@@ -23,7 +23,10 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#ifndef _WIN32
+#ifdef _WIN32
+#include <process.h>
+#define getpid _getpid
+#else
 #include <sys/wait.h>
 #endif
 
@@ -302,6 +305,7 @@ void prepare_script_env(struct openconnect_info *vpninfo)
 	script_setenv(vpninfo, "CISCO_SPLIT_EXC", NULL, 0, 0);
 
 	script_setenv_int(vpninfo, "INTERNAL_IP4_MTU", vpninfo->ip_info.mtu);
+	script_setenv_int(vpninfo, "VPNPID", (int)getpid());
 
 	if (vpninfo->idle_timeout)
 		script_setenv_int(vpninfo, "IDLE_TIMEOUT", vpninfo->idle_timeout);
