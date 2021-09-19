@@ -205,7 +205,7 @@ char *openconnect__strndup(const char *s, size_t n)
 #ifndef HAVE_STRCHRNUL
 const char *openconnect__strchrnul(const char *s, int c)
 {
-	while (*s && *s++ != c);
+	while (*s && *s != c) s++;
 	return s;
 }
 #endif
