@@ -504,11 +504,11 @@ class tncc(object):
         else:
             try:
                 self.cj.set_cookie(dspreauth)
-            except:
+            except Exception:
                 self.set_cookie('DSPREAUTH', dspreauth)
             try:
                 self.cj.set_cookie(dssignin)
-            except:
+            except Exception:
                 self.set_cookie('DSSIGNIN', dssignin)
 
         inner = self.gen_policy_request()
@@ -580,7 +580,7 @@ class tncc(object):
                             else:
                                 logging.warning('Unknown DN type %s', str(dn_name))
                                 raise Exception()
-                        except:
+                        except Exception:
                             fail = True
                             break
                     if fail:
@@ -683,7 +683,7 @@ if __name__ == "__main__":
                     mac = netifaces.ifaddresses(iface)[netifaces.AF_LINK][0]['addr']
                     assert mac != '00:00:00:00:00:00'
                     mac_addrs.append(mac)
-                except:
+                except Exception:
                     pass
 
     hostname = os.environ.get('TNCC_HOSTNAME', socket.gethostname())

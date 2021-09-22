@@ -53,7 +53,7 @@ class Tncc:
         try:
             if zipfile.ZipFile(self.tncc_jar, 'r').testzip() is not None:
                 raise Exception()
-        except:
+        except Exception:
             print('Downloading tncc.jar...')
             os.makedirs(os.path.expanduser(TNCC_DIRECTORY), exist_ok=True)
             urllib.request.urlretrieve('https://' + self.vpn_host
@@ -65,7 +65,7 @@ class Tncc:
                     jar.getinfo(name.replace('.', '/') + '.class')
                     self.class_name = name
                     break
-                except:
+                except Exception:
                     pass
             else:
                 raise Exception('Could not find class name for', self.tncc_jar)
