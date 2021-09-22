@@ -94,15 +94,18 @@ MSG_FUNK_PLATFORM = 0x58301
 MSG_FUNK = 0xa4c01
 
 
-# 0013 - Message
-def decode_0013(buf, indent):
-    logging.debug('%scmd 0013 (Message) %d bytes', indent, len(buf))
+def _decode_helper(buf, indent):
     ret = collections.defaultdict(list)
     while (len(buf) >= 12):
         length, cmd, out = decode_packet(buf, indent + "  ")
         buf = buf[length:]
         ret[cmd].append(out)
     return ret
+
+# 0013 - Message
+def decode_0013(buf, indent):
+    logging.debug('%scmd 0013 (Message) %d bytes', indent, len(buf))
+    return _decode_helper(buf, indent)
 
 
 # 0012 - u32
@@ -116,23 +119,13 @@ def decode_0016(buf, indent):
     logging.debug('%scmd 0016 (compressed message) %d bytes', indent, len(buf))
     _, compressed = struct.unpack(">I" + str(len(buf) - 4) + "s", buf)
     buf = zlib.decompress(compressed)
-    ret = collections.defaultdict(list)
-    while (len(buf) >= 12):
-        length, cmd, out = decode_packet(buf, indent + "  ")
-        buf = buf[length:]
-        ret[cmd].append(out)
-    return ret
+    return _decode_helper(buf, indent)
 
 
 # 0ce4 - encapsulation
 def decode_0ce4(buf, indent):
     logging.debug('%scmd 0ce4 (encapsulation) %d bytes', indent, len(buf))
-    ret = collections.defaultdict(list)
-    while (len(buf) >= 12):
-        length, cmd, out = decode_packet(buf, indent + "  ")
-        buf = buf[length:]
-        ret[cmd].append(out)
-    return ret
+    return _decode_helper(buf, indent)
 
 
 # 0ce5 - string without hex prefixer
@@ -193,24 +186,20 @@ def decode_packet(buf, indent=""):
     if length % 4:
         length += 4 - (length % 4)
 
-    if cmd == 0x0013:
-        data = decode_0013(data, indent)
-    elif cmd == 0x0012:
-        data = decode_0012(data, indent)
-    elif cmd == 0x0016:
-        data = decode_0016(data, indent)
-    elif cmd == 0x0ce4:
-        data = decode_0ce4(data, indent)
-    elif cmd == 0x0ce5:
-        data = decode_0ce5(data, indent)
-    elif cmd == 0x0ce7:
-        data = decode_0ce7(data, indent)
-    elif cmd == 0x0cf0:
-        data = decode_0cf0(data, indent)
-    elif cmd == 0x0cf1:
-        data = decode_0cf1(data, indent)
-    elif cmd == 0x0cf3:
-        data = decode_0cf3(data, indent)
+    decode_function = {
+        0x0012: decode_0012,
+        0x0013: decode_0013,
+        0x0016: decode_0016,
+        0x0ce4: decode_0ce4,
+        0x0ce5: decode_0ce5,
+        0x0ce7: decode_0ce7,
+        0x0cf0: decode_0cf0,
+        0x0cf1: decode_0cf1,
+        0x0cf3: decode_0cf3,
+    }
+
+    if cmd in decode_function:
+        data = decode_function[cmd](data, indent)
     else:
         logging.debug('%scmd %04x(%02x:%02x) is unknown, length %d', indent, cmd, _1, _2, length)
         data = None
