@@ -5,7 +5,7 @@
 	<VAR match="VAR_SEL_BUILDING" replace="selected" />
 	<PARSE file="menu1.xml" />
 	<PARSE file="menu2-started.xml" />
-	
+
 	<INCLUDE file="inc/content.tmpl" />
 
     	<h1>Building OpenConnect</h1>
@@ -118,8 +118,11 @@ require additional kernel modules to be installed.</p>
 <p>Solaris/OpenIndiana users will need the <a href="http://www.whiteboard.ne.jp/~admin2/tuntap/">Solaris TAP driver</a>.
 Note that for IPv6 support, the Solaris tun/tap driver from 16th Nov 2009 or newer is required.</p>
 
-<p>On Windows, version 9.9 or later of the <a href="https://community.openvpn.net/openvpn/wiki/ManagingWindowsTAPDrivers">TAP-Windows driver</a> from the <a href="https://openvpn.net/">OpenVPN project</a> is required. The easiest way to install the driver is to use the Windows installer from the <a href="https://openvpn.net/index.php/download/community-downloads.html">Community Downloads page</a>. The 64-bit installer contains signed drivers suitable for use on Windows 7 and later versions.</p>
+<p>On Windows, OpenConnect can use either the
+<a href="https://community.openvpn.net/openvpn/wiki/GettingTapWindows">TAP-Windows driver from OpenVPN</a> (version 9.9 or
+later; requires Windows 2003 or newer) or the <a href="https://www.wintun.net">Wintun layer-3 driver from Wireguard</a>
+(requires Windows 7 or newer). The more modern Wintun driver is included in the OpenConnect installer, starting
+with OpenConnect v9.00.</p>
 
 	<INCLUDE file="inc/footer.tmpl" />
 </PAGE>
-

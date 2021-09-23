@@ -551,7 +551,7 @@ int script_config_tun(struct openconnect_info *vpninfo, const char *reason)
 	char *cmd;
 	PROCESS_INFORMATION pi;
 	STARTUPINFOW si;
-	DWORD cpflags;
+	DWORD cpflags, exit_status;
 
 	if (!vpninfo->vpnc_script || vpninfo->script_tun)
 		return 0;
@@ -589,11 +589,28 @@ int script_config_tun(struct openconnect_info *vpninfo, const char *reason)
 	if (CreateProcessW(NULL, script_w, NULL, NULL, FALSE, cpflags,
 			   script_env, NULL, &si, &pi)) {
 		ret = WaitForSingleObject(pi.hProcess,10000);
+		if (!GetExitCodeProcess(pi.hProcess, &exit_status)) {
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("Failed to get script exit status: %s"),
+				     openconnect__win32_strerror(GetLastError()));
+			ret = -EIO;
+		} else if (exit_status > 0 && exit_status != STILL_ACTIVE) {
+			/* STILL_ACTIVE == 259. That means that a perfectly normal positive integer return value overlaps with
+			 * an exceptional condition. Don't blame me. I didn't design this.
+			 * https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getexitcodeprocess#remarks
+			 */
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("Script '%s' returned error %ld\n"),
+				     vpninfo->vpnc_script, exit_status);
+			ret = -EIO;
+		}
 		CloseHandle(pi.hThread);
 		CloseHandle(pi.hProcess);
-		if (ret == WAIT_TIMEOUT)
+		if (ret == WAIT_TIMEOUT || exit_status == STILL_ACTIVE) {
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("Script did not complete within 10 seconds."));
 			ret = -ETIMEDOUT;
-		else
+		} else if (ret != -EIO)
 			ret = 0;
 	} else {
 		ret = -EIO;
