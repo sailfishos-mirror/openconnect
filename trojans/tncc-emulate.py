@@ -295,15 +295,21 @@ class x509cert(object):
 
 
 class tncc(object):
-    def __init__(self, vpn_host, device_id=None, funk=None, platform=None, hostname=None, mac_addrs=[], certs=[], interval=None, user_agent=None):
+    def __init__(self, vpn_host, device_id=None, funk=None, platform=None, hostname=None, mac_addrs=None, certs=None, interval=None, user_agent=None):
         self.vpn_host = vpn_host
         self.path = '/dana-na/'
 
         self.funk = funk
         self.platform = platform
         self.hostname = hostname
-        self.mac_addrs = mac_addrs
-        self.avail_certs = certs
+        if mac_addrs is None:
+            self.mac_addrs = []
+        else:
+            self.mac_addrs = mac_addrs
+        if certs is None:
+            self.avail_certs = []
+        else:
+            self.avail_certs = certs
         self.interval = interval
 
         self.deviceid = device_id
