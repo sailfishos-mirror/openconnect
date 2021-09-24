@@ -270,7 +270,7 @@ def encode_0cf3(i):
     return encode_packet(0x0013, 1, struct.pack("<I", i))
 
 
-class x509cert(object):
+class x509cert:
 
     @staticmethod
     def decode_names(names):
@@ -294,7 +294,7 @@ class x509cert(object):
         self.subject = self.decode_names(tbs['subject'])
 
 
-class tncc(object):
+class tncc:
     def __init__(self, vpn_host, device_id=None, funk=None, platform=None, hostname=None, mac_addrs=None, certs=None, interval=None, user_agent=None):
         self.vpn_host = vpn_host
         self.path = '/dana-na/'
@@ -623,7 +623,7 @@ class tncc(object):
         return self.find_cookie('DSPREAUTH')
 
 
-class tncc_server(object):
+class tncc_server:
     def __init__(self, s, t):
         self.sock = s
         self.tncc = t
