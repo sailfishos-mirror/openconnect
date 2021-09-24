@@ -168,9 +168,6 @@ class docHandler(xml.sax.ContentHandler):
 
 # error handler
 class errHandler(xml.sax.ErrorHandler):
-    def __init__(self):
-        return
-
     def error(self, exception):
         sys.stderr.write("%s\n" % exception)
 
