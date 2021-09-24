@@ -1,4 +1,3 @@
-
 SUBDIRS = tests
 # We kind of want openconnect to be built before we try to test it
 check-recursive: openconnect$(EXEEXT)
@@ -295,8 +294,8 @@ file-list.txt: Makefile.dlldeps openconnect$(EXEEXT) libopenconnect.la $(WINTUN_
 
 # Wintun Layer 3 TUN driver for Windows 7 and newer
 # (see https://wintun.net)
-WINTUNDRIVER = wintun-0.10.2.zip
-WINTUNSHA256 = fcd9f62f1bd5a550fcb9c21fbb5d6a556214753ccbbd1a3ebad4d318ec9dcbef
+WINTUNDRIVER = wintun-0.13.zip
+WINTUNSHA256 = 34afe7d0de1fdb781af3defc0a75fd8c97daa756279b42dd6be6a1bd8ccdc7f0
 
 $(WINTUNDRIVER):
 	curl https://www.wintun.net/builds/$(WINTUNDRIVER) -o $@
@@ -305,9 +304,12 @@ $(WINTUNDRIVER):
 	echo $(WINTUNSHA256) $< | sha256sum -c
 	unzip -DD -o -j -d .libs $< wintun/bin/$(WINTUN_ARCH)/wintun.dll
 
-# Latest vpnc-script-win.js
+# Latest vpnc-script-win.js, annotated with a header documenting the
+# exact source revision.
 vpnc-script-win.js:
-	curl https://gitlab.com/openconnect/vpnc-scripts/raw/master/vpnc-script-win.js -o $@
+	curl 'https://gitlab.com/api/v4/projects/openconnect%2Fvpnc-scripts/repository/commits?path=vpnc-script-win.js&branch=master' | \
+	    jq -r '.[0] | "// This script matches the version found at " + (.web_url | sub("/commit/"; "/blob/")) + "/vpnc-script-win.js\n// Updated on " + .authored_date[:10] + " by " + .author_name + " <" + .author_email + "> (\"" + .title + "\")\n//"' > $@
+	curl https://gitlab.com/openconnect/vpnc-scripts/raw/master/vpnc-script-win.js >> $@
 
 # Let make find the file in VPATH
 file-list-%.txt: %
