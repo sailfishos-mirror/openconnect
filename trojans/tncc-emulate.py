@@ -161,7 +161,7 @@ def decode_0ce7(buf, indent):
 # 0cf0 - encapsulation
 def decode_0cf0(buf, indent):
     logging.debug('%scmd 0cf0 (encapsulation) %d bytes', indent, len(buf))
-    ret = dict()
+    ret = {}
     cmd, _, out = decode_packet(buf, indent + "  ")
     ret[cmd] = out
     return ret
@@ -274,7 +274,7 @@ class x509cert:
 
     @staticmethod
     def decode_names(names):
-        ret = dict()
+        ret = {}
         for name in names.chosen:
             for attr in name:
                 type_dotted = attr['type'].dotted    # dotted-quad value (e.g. '2.5.4.10' = organization)
@@ -353,8 +353,8 @@ class tncc:
         self.cj.set_cookie(cookie)
 
     def parse_response(self):
-        # Read in key/token fields in HTTP response
-        response = dict()
+        # Read in key/token fields in HTTP responsedict
+        response = {}
         last_key = ''
         for line in self.r.readlines():
             line = line.strip().decode()
@@ -385,7 +385,7 @@ class tncc:
                         if key.lower() == 'value':
                             # It's made up of a bunch of key=value pairs separated
                             # by semicolons
-                            d = dict()
+                            d = {}
                             for field in value.split(';'):
                                 field = field.strip()
                                 try:
