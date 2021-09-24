@@ -548,7 +548,7 @@ class tncc(object):
 
         if 'interval' in response:
             m = int(response['interval'])
-            logging.debug('Got interval of %d minutes' % m)
+            logging.debug('Got interval of %d minutes', m)
             if self.interval is None or self.interval > m * 60:
                 self.interval = m * 60
 
@@ -650,7 +650,7 @@ class tncc_server(object):
             self.tncc.get_cookie(args['Cookie'],
                                  self.tncc.find_cookie('DSSIGNIN'))
         else:
-            logging.warning('Unknown command %r' % cmd)
+            logging.warning('Unknown command %r', cmd)
 
 
 def fingerprint_checking_SSLSocket(_fingerprint):
