@@ -608,7 +608,7 @@ int script_config_tun(struct openconnect_info *vpninfo, const char *reason)
 		CloseHandle(pi.hProcess);
 		if (ret == WAIT_TIMEOUT || exit_status == STILL_ACTIVE) {
 			vpn_progress(vpninfo, PRG_ERR,
-				     _("Script did not complete within 10 seconds."));
+				     _("Script did not complete within 10 seconds.\n"));
 			ret = -ETIMEDOUT;
 		} else if (ret != -EIO)
 			ret = 0;
