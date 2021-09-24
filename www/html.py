@@ -14,12 +14,7 @@ import getopt
 import xml.sax
 import codecs
 
-if sys.version_info >= (3, 0):
-    sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())
-else:
-    reload(sys)
-    sys.setdefaultencoding('utf-8')
-    sys.stdout = codecs.getwriter("utf-8")(sys.stdout)
+sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())
 
 lookupdir = ''
 
@@ -31,7 +26,6 @@ def usage():
     print("  -d DIR    use DIR as base directory for opening files")
     print("  -f        write output to file.html (default is stdout)")
     print("  -h        help")
-    return
 
 
 # Headerfields
@@ -87,7 +81,6 @@ class docHandler(xml.sax.ContentHandler):
     def __init__(self):
         super().__init__()
         self.content = ""
-        return
 
     def startElement(self, name, attrs):
         self.element = name
@@ -175,9 +168,6 @@ class docHandler(xml.sax.ContentHandler):
 
 # error handler
 class errHandler(xml.sax.ErrorHandler):
-    def __init__(self):
-        return
-
     def error(self, exception):
         sys.stderr.write("%s\n" % exception)
 
@@ -218,7 +208,6 @@ writefile = 0
 try:
     (options, arguments) = getopt.getopt(sys.argv[1:], 'fhd:')
 except getopt.GetoptError as ex:
-    print
     print("ERROR:")
     print(ex.msg)
     usage()

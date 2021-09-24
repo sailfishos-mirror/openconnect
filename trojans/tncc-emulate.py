@@ -270,7 +270,7 @@ def encode_0cf3(i):
     return encode_packet(0x0013, 1, struct.pack("<I", i))
 
 
-class x509cert(object):
+class x509cert:
 
     @staticmethod
     def decode_names(names):
@@ -294,16 +294,22 @@ class x509cert(object):
         self.subject = self.decode_names(tbs['subject'])
 
 
-class tncc(object):
-    def __init__(self, vpn_host, device_id=None, funk=None, platform=None, hostname=None, mac_addrs=[], certs=[], interval=None, user_agent=None):
+class tncc:
+    def __init__(self, vpn_host, device_id=None, funk=None, platform=None, hostname=None, mac_addrs=None, certs=None, interval=None, user_agent=None):
         self.vpn_host = vpn_host
         self.path = '/dana-na/'
 
         self.funk = funk
         self.platform = platform
         self.hostname = hostname
-        self.mac_addrs = mac_addrs
-        self.avail_certs = certs
+        if mac_addrs is None:
+            self.mac_addrs = []
+        else:
+            self.mac_addrs = mac_addrs
+        if certs is None:
+            self.avail_certs = []
+        else:
+            self.avail_certs = certs
         self.interval = interval
 
         self.deviceid = device_id
@@ -353,7 +359,7 @@ class tncc(object):
         for line in self.r.readlines():
             line = line.strip().decode()
             # Note that msg is too long and gets wrapped, handle it special
-            if last_key == 'msg' and len(line):
+            if last_key == 'msg' and line:
                 response['msg'] += line
             else:
                 key = ''
@@ -366,7 +372,8 @@ class tncc(object):
         logging.debug('Parsed response:\n\t%s', '\n\t'.join('%r: %r,' % pair for pair in response.items()))
         return response
 
-    def parse_policy_response(self, msg_data):
+    @staticmethod
+    def parse_policy_response(msg_data):
         # The decompressed data is HTMLish, decode it. The value="" of each
         # tag is the data we want.
         objs = []
@@ -393,11 +400,12 @@ class tncc(object):
         p.close()
         return objs
 
-    def parse_funk_response(self, msg_data):
+    @staticmethod
+    def parse_funk_response(msg_data):
         e = xml.etree.ElementTree.fromstring(msg_data)
-        req_certs = dict()
+        req_certs = {}
         for cert in e.find('AttributeRequest').findall('CertData'):
-            dns = dict()
+            dns = {}
             cert_id = cert.attrib['Id']
             for attr in cert.findall('Attribute'):
                 name = attr.attrib['Name']
@@ -449,7 +457,8 @@ class tncc(object):
 
         return encode_0ce7(msg.encode(), MSG_FUNK)
 
-    def gen_policy_request(self):
+    @staticmethod
+    def gen_policy_request():
         policy_blocks = collections.OrderedDict({
             'policy_request': {
                 'message_version': '3'
@@ -475,7 +484,8 @@ class tncc(object):
 
         return encode_0ce7(msg.encode(), 0xa4c18)
 
-    def gen_policy_response(self, policy_objs):
+    @staticmethod
+    def gen_policy_response(policy_objs):
         # Make a set of policies
         policies = set()
         for entry in policy_objs:
@@ -538,7 +548,7 @@ class tncc(object):
 
         if 'interval' in response:
             m = int(response['interval'])
-            logging.debug('Got interval of %d minutes' % m)
+            logging.debug('Got interval of %d minutes', m)
             if self.interval is None or self.interval > m * 60:
                 self.interval = m * 60
 
@@ -552,7 +562,7 @@ class tncc(object):
 
         # Pull the data out of the 'value' key in the htmlish stuff returned
         policy_objs = []
-        req_certs = dict()
+        req_certs = {}
         for str_id, sub_str in sub_strings:
             if str_id == MSG_POLICY:
                 policy_objs += self.parse_policy_response(sub_str.decode())
@@ -568,7 +578,7 @@ class tncc(object):
                             logging.debug('\t%s %s', key, val)
 
         # Try to locate the required certificates
-        certs = dict()
+        certs = {}
         for cert_id, req_dns in req_certs.items():
             for cert in self.avail_certs:
                 fail = False
@@ -613,21 +623,21 @@ class tncc(object):
         return self.find_cookie('DSPREAUTH')
 
 
-class tncc_server(object):
+class tncc_server:
     def __init__(self, s, t):
         self.sock = s
         self.tncc = t
 
     def process_cmd(self):
         buf = self.sock.recv(1024).decode('ascii')
-        if not len(buf):
+        if not buf:
             sys.exit(0)
         cmd, buf = buf.split('\n', 1)
         cmd = cmd.strip()
-        args = dict()
+        args = {}
         for n in buf.split('\n'):
             n = n.strip()
-            if len(n):
+            if n:
                 key, val = n.strip().split('=', 1)
                 args[key] = val
         if cmd == 'start':
@@ -640,7 +650,7 @@ class tncc_server(object):
             self.tncc.get_cookie(args['Cookie'],
                                  self.tncc.find_cookie('DSSIGNIN'))
         else:
-            logging.warning('Unknown command %r' % cmd)
+            logging.warning('Unknown command %r', cmd)
 
 
 def fingerprint_checking_SSLSocket(_fingerprint):
