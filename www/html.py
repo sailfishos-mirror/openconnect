@@ -218,7 +218,6 @@ writefile = 0
 try:
     (options, arguments) = getopt.getopt(sys.argv[1:], 'fhd:')
 except getopt.GetoptError as ex:
-    print
     print("ERROR:")
     print(ex.msg)
     usage()
