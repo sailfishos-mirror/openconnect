@@ -353,7 +353,7 @@ class tncc(object):
         for line in self.r.readlines():
             line = line.strip().decode()
             # Note that msg is too long and gets wrapped, handle it special
-            if last_key == 'msg' and len(line):
+            if last_key == 'msg' and line:
                 response['msg'] += line
             else:
                 key = ''
@@ -620,14 +620,14 @@ class tncc_server(object):
 
     def process_cmd(self):
         buf = self.sock.recv(1024).decode('ascii')
-        if not len(buf):
+        if not buf:
             sys.exit(0)
         cmd, buf = buf.split('\n', 1)
         cmd = cmd.strip()
         args = dict()
         for n in buf.split('\n'):
             n = n.strip()
-            if len(n):
+            if n:
                 key, val = n.strip().split('=', 1)
                 args[key] = val
         if cmd == 'start':
