@@ -372,7 +372,8 @@ class tncc(object):
         logging.debug('Parsed response:\n\t%s', '\n\t'.join('%r: %r,' % pair for pair in response.items()))
         return response
 
-    def parse_policy_response(self, msg_data):
+    @staticmethod
+    def parse_policy_response(msg_data):
         # The decompressed data is HTMLish, decode it. The value="" of each
         # tag is the data we want.
         objs = []
@@ -399,7 +400,8 @@ class tncc(object):
         p.close()
         return objs
 
-    def parse_funk_response(self, msg_data):
+    @staticmethod
+    def parse_funk_response(msg_data):
         e = xml.etree.ElementTree.fromstring(msg_data)
         req_certs = {}
         for cert in e.find('AttributeRequest').findall('CertData'):
@@ -455,7 +457,8 @@ class tncc(object):
 
         return encode_0ce7(msg.encode(), MSG_FUNK)
 
-    def gen_policy_request(self):
+    @staticmethod
+    def gen_policy_request():
         policy_blocks = collections.OrderedDict({
             'policy_request': {
                 'message_version': '3'
@@ -481,7 +484,8 @@ class tncc(object):
 
         return encode_0ce7(msg.encode(), 0xa4c18)
 
-    def gen_policy_response(self, policy_objs):
+    @staticmethod
+    def gen_policy_response(policy_objs):
         # Make a set of policies
         policies = set()
         for entry in policy_objs:
