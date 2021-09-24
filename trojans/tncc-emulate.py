@@ -395,9 +395,9 @@ class tncc(object):
 
     def parse_funk_response(self, msg_data):
         e = xml.etree.ElementTree.fromstring(msg_data)
-        req_certs = dict()
+        req_certs = {}
         for cert in e.find('AttributeRequest').findall('CertData'):
-            dns = dict()
+            dns = {}
             cert_id = cert.attrib['Id']
             for attr in cert.findall('Attribute'):
                 name = attr.attrib['Name']
@@ -552,7 +552,7 @@ class tncc(object):
 
         # Pull the data out of the 'value' key in the htmlish stuff returned
         policy_objs = []
-        req_certs = dict()
+        req_certs = {}
         for str_id, sub_str in sub_strings:
             if str_id == MSG_POLICY:
                 policy_objs += self.parse_policy_response(sub_str.decode())
@@ -568,7 +568,7 @@ class tncc(object):
                             logging.debug('\t%s %s', key, val)
 
         # Try to locate the required certificates
-        certs = dict()
+        certs = {}
         for cert_id, req_dns in req_certs.items():
             for cert in self.avail_certs:
                 fail = False
@@ -624,7 +624,7 @@ class tncc_server(object):
             sys.exit(0)
         cmd, buf = buf.split('\n', 1)
         cmd = cmd.strip()
-        args = dict()
+        args = {}
         for n in buf.split('\n'):
             n = n.strip()
             if n:
