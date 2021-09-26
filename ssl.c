@@ -1104,7 +1104,7 @@ int udp_connect(struct openconnect_info *vpninfo)
 	}
 
 	if (connect(fd, vpninfo->dtls_addr, vpninfo->peer_addrlen)) {
-		vpn_perror(vpninfo, _("Connect UDP socket\n"));
+		vpn_perror(vpninfo, _("Connect UDP socket"));
 		closesocket(fd);
 		return -EINVAL;
 	}
