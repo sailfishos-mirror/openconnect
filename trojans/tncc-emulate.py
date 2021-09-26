@@ -499,10 +499,8 @@ class tncc:
             msg += '\npolicy:%s\nstatus:' % policy
             if 'Unsupported' in policy or 'Deny' in policy:
                 msg += 'NOTOK\nerror:Unknown error'
-            elif 'Required' in policy:
-                msg += 'OK\n'
             else:
-                # Default action
+                # Default action, including 'Required'
                 msg += 'OK\n'
 
         return encode_0ce7(msg.encode(), MSG_POLICY)
