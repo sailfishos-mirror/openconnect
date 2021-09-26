@@ -277,9 +277,9 @@ class x509cert:
         ret = dict()
         for name in names.chosen:
             for attr in name:
-                type = attr['type'].dotted    # dotted-quad value (e.g. '2.5.4.10' = organization)
-                value = attr['value'].native  # literal string value (e.g. 'Bigcorp Inc.')
-                ret.setdefault(type, []).append(value)
+                type_dotted = attr['type'].dotted    # dotted-quad value (e.g. '2.5.4.10' = organization)
+                value_native = attr['value'].native  # literal string value (e.g. 'Bigcorp Inc.')
+                ret.setdefault(type_dotted, []).append(value_native)
         return ret
 
     def __init__(self, cert_file):
