@@ -655,8 +655,8 @@ def fingerprint_checking_SSLSocket(_fingerprint):
     class SSLSocket(ssl.SSLSocket):
         fingerprint = _fingerprint
 
-        def do_handshake(self, *args, **kw):
-            res = super().do_handshake(*args, **kw)
+        def do_handshake(self):
+            res = super().do_handshake()
             der_bytes = self.getpeercert(True)
             cert = asn1crypto.x509.Certificate.load(der_bytes)
             pubkey = cert.public_key.dump()

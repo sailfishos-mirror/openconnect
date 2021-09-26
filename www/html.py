@@ -137,8 +137,8 @@ class docHandler(xml.sax.ContentHandler):
                     writeHtml(" " + name + "=\"" + attrs.get(name) + "\"")
             writeHtml(" />" if name == "br" else ">")
 
-    def characters(self, ch):
-        self.content += ch
+    def characters(self, content):
+        self.content += content
 
     def endElement(self, name):
 
