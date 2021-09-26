@@ -72,8 +72,8 @@ else:
 
 # Build openconnect --cookie argument from the result:
 url = urlparse(res.url)
-if any(c.name == 'MRHSession' for c in s.cookies) and url.path.startswith('/vdesk/'):
-    cookie = next(c.value for c in s.cookies if c.name == 'MRHSession')
+cookie = next((c.value for c in s.cookies if c.name == 'MRHSession'), None)
+if cookie and url.path.startswith('/vdesk/'):
     if args.verbose:
         if cert:
             cert_and_key = ' \\\n        ' + ' '.join('%s "%s"' % (opt, quote(fn)) for opt, fn in zip(('-c', '-k'), cert) if fn)
