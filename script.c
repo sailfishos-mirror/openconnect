@@ -591,7 +591,7 @@ int script_config_tun(struct openconnect_info *vpninfo, const char *reason)
 		ret = WaitForSingleObject(pi.hProcess,10000);
 		if (!GetExitCodeProcess(pi.hProcess, &exit_status)) {
 			vpn_progress(vpninfo, PRG_ERR,
-				     _("Failed to get script exit status: %s"),
+				     _("Failed to get script exit status: %s\n"),
 				     openconnect__win32_strerror(GetLastError()));
 			ret = -EIO;
 		} else if (exit_status > 0 && exit_status != STILL_ACTIVE) {

@@ -106,7 +106,7 @@ static int link_proto(struct openconnect_info *vpninfo, int unit_nr,
 
 	ip_fd = open(devname, O_RDWR);
 	if (ip_fd < 0) {
-		vpn_progress(vpninfo, PRG_ERR, _("Can't open %s: %s"),
+		vpn_progress(vpninfo, PRG_ERR, _("Can't open %s: %s\n"),
 			     devname, strerror(errno));
 		close(tun2_fd);
 		return -1;
