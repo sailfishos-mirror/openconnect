@@ -1,18 +1,12 @@
 #!/usr/bin/python3
 
-from __future__ import print_function
 from sys import stderr, version_info
 import requests
 import argparse
 import getpass
 from shlex import quote
-if (version_info >= (3, 0)):
-    from urllib.parse import urlparse, urlencode
-    raw_input = input
-    import http.client as httplib
-else:
-    from urlparse import urlparse
-    import httplib
+from urllib.parse import urlparse, urlencode
+import http.client as httplib
 
 p = argparse.ArgumentParser()
 p.add_argument('-v', '--verbose', default=0, action='count')
@@ -53,7 +47,7 @@ res = s.get(endpoint.geturl(), allow_redirects=False)
 
 # Send login credentials
 if args.username is None:
-    args.username = raw_input('Username: ')
+    args.username = input('Username: ')
 if args.password is None:
     args.password = getpass.getpass('Password: ')
 data = dict(username=args.username, credential=args.password, realm=args.realm,
