@@ -624,6 +624,15 @@ static int gpst_login(struct openconnect_info *vpninfo, int portal, struct login
 		if (result)
 			goto out;
 
+		/* Coming back from SAML we might have been redirected */
+		if (vpninfo->redirect_url) {
+			result = handle_redirect(vpninfo);
+			free(vpninfo->redirect_url);
+			vpninfo->redirect_url = NULL;
+			if (result)
+				goto out;
+		}
+
 	replay_form:
 		/* generate token code if specified */
 		result = do_gen_tokencode(vpninfo, ctx->form);
