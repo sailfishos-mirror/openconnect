@@ -62,6 +62,10 @@ certificate, and receive an authcookie.  The username, authcookie, and a
 couple other bits of information obtained at login are combined into the
 OpenConnect cookie.</p>
 
+<p>Some servers are configured to authenticate through SAML for
+multi-factor authentication. Support for this is provided in
+combination with network-manager-openconnect.</p>
+
 <h3>Tunnel configuration</h3>
 
 <p>To connect to the secure tunnel, the cookie is used to read routing and
