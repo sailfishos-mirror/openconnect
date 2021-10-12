@@ -111,7 +111,12 @@ static int parse_prelogin_xml(struct openconnect_info *vpninfo, xmlNode *xml_nod
 				goto out;
 			}
 			saml_path[len] = '\0';
-			vpninfo->sso_login = saml_path;
+			vpninfo->sso_login = strdup(saml_path);
+			prompt = strdup("SAML REDIRECT authentication in progress");
+			if (!vpninfo->sso_login || !prompt) {
+				result = -ENOMEM;
+				goto out;
+			}
 		} else if (!strcmp(saml_method, "POST")) {
 			const char *prefix = "data:text/html;base64,";
 			saml_path = s;
@@ -122,7 +127,12 @@ static int parse_prelogin_xml(struct openconnect_info *vpninfo, xmlNode *xml_nod
 			}
 			memmove(saml_path + strlen(prefix), saml_path, strlen(saml_path) + 1);
 			memcpy(saml_path, prefix, strlen(prefix));
-			vpninfo->sso_login = saml_path;
+			vpninfo->sso_login = strdup(saml_path);
+			prompt = strdup("SAML REDIRECT authentication in progress");
+			if (!vpninfo->sso_login || !prompt) {
+				result = -ENOMEM;
+				goto out;
+			}
 		} else {
 			vpn_progress(vpninfo, PRG_ERR, "Unknown SAML method %s\n", saml_method);
 			result = -EINVAL;
@@ -151,6 +161,8 @@ static int parse_prelogin_xml(struct openconnect_info *vpninfo, xmlNode *xml_nod
 	if (!opt)
 		goto nomem;
 	opt->name = strdup("user");
+	if (!opt->name)
+		goto nomem;
 	if (asprintf(&opt->label, "%s: ", username_label ? : _("Username")) == 0)
 		goto nomem;
 	if (!ctx->username)
@@ -166,6 +178,8 @@ static int parse_prelogin_xml(struct openconnect_info *vpninfo, xmlNode *xml_nod
 	if (!opt2)
 		goto nomem;
 	opt2->name = strdup(ctx->alt_secret ? : "passwd");
+	if (!opt2->name)
+		goto nomem;
 	if (asprintf(&opt2->label, "%s: ", ctx->alt_secret ? : password_label ? : _("Password")) == 0)
 		goto nomem;
 
