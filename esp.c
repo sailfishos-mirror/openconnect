@@ -315,11 +315,10 @@ int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 				break;
 			ip_version = this->data[0] >> 4;
 
-			if (vpninfo->proto->proto == PROTO_NC ||
-			    vpninfo->proto->proto == PROTO_PULSE) {
+			if (vpninfo->proto->proto == PROTO_PULSE) {
 				uint8_t dontsend;
 
-				/* Pulse/NC can only accept ESP of the same protocol as the one
+				/* Pulse can only accept ESP of the same protocol as the one
 				 * you connected to it with. The other has to go over IF-T/TLS. */
 				if (vpninfo->dtls_addr->sa_family == AF_INET6)
 					dontsend = 4;
@@ -334,6 +333,15 @@ int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 					work_done = 1;
 					continue;
 				}
+			} else if (vpninfo->proto->proto == PROTO_NC &&
+				   vpninfo->dtls_addr->sa_family == AF_INET6) {
+				/* Juniper/NC cannot do ESP-over-IPv6, and it cannot send
+				 * tunneled IPv6 packets at all; they just get dropped.
+				 * It shouldn't even send any ESP options/keys when connecting
+				 * to the server via IPv6. This should never happen.
+				 */
+				vpninfo->quit_reason = "Juniper/NC ESP tunnel over IPv6 should never happen.";
+				return 1;
 			}
 
 			/* XX: Must precede in-place encryption of the packet, because

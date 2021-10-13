@@ -476,13 +476,29 @@ void free_optlist(struct oc_vpn_option *opt)
 int install_vpn_opts(struct openconnect_info *vpninfo, struct oc_vpn_option *opt,
 		     struct oc_ip_info *ip_info)
 {
-	/* F5 doesn't get its IP address until it actually establishes the
-	 * PPP connection. */
-	if (vpninfo->proto->proto != PROTO_F5 && !ip_info->addr &&
-	    !ip_info->addr6 && !ip_info->netmask6) {
-		vpn_progress(vpninfo, PRG_ERR,
-			     _("No IP address received. Aborting\n"));
-		return -EINVAL;
+	/* XX: remove protocol-specific exceptions here, once we can test them
+	 * with F5 reconnections in addition to Juniper reconnections. See:
+	 * https://gitlab.com/openconnect/openconnect/-/merge_requests/293#note_702388182
+	 */
+	if (!ip_info->addr && !ip_info->addr6 && !ip_info->netmask6) {
+		if (vpninfo->proto->proto == PROTO_F5) {
+			/* F5 doesn't get its IP address until it actually establishes the
+			 * PPP connection. */
+		} else if (vpninfo->proto->proto == PROTO_NC && vpninfo->ip_info.addr) {
+			/* Juniper doesn't necessarily resend the Legacy IP address in the
+			 * event of a rekey/reconnection. */
+			ip_info->addr = add_option_dup(&opt, "ipaddr", vpninfo->ip_info.addr, -1);
+			if (!ip_info->netmask && vpninfo->ip_info.netmask)
+				ip_info->netmask = add_option_dup(&opt, "netmask", vpninfo->ip_info.netmask, -1);
+			vpn_progress(vpninfo, PRG_DEBUG,
+				     _("No IP address received with Juniper rekey/reconnection.\n"));
+			goto after_ip_checks;
+		} else {
+			/* For all other protocols, not receiving any IP address is an error */
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("No IP address received. Aborting\n"));
+			return -EINVAL;
+		}
 	}
 
 	if (vpninfo->ip_info.addr) {
@@ -519,6 +535,7 @@ int install_vpn_opts(struct openconnect_info *vpninfo, struct oc_vpn_option *opt
 		}
 	}
 
+ after_ip_checks:
 	/* Preserve gateway_addr and MTU if they were set */
 	ip_info->gateway_addr = vpninfo->ip_info.gateway_addr;
 	if (!ip_info->mtu)
