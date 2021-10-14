@@ -479,14 +479,20 @@ int install_vpn_opts(struct openconnect_info *vpninfo, struct oc_vpn_option *opt
 	/* XX: Some PPP-based protocols don't get their IP address(es)
 	 * until they actually establish the PPP connection, which is
 	 * after we first call install_vpn_opts. */
-	if (!allow_no_ip && !ip_info->addr && !ip_info->addr6 && !ip_info->netmask6) {
+	if (!allow_no_ip && !ip_info->addr && !ip_info->addr6 && !ip_info->netmask6
+	    && !vpninfo->ip_info.addr && !vpninfo->ip_info.addr6 && !vpninfo->ip_info.netmask6) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("No IP address received. Aborting\n"));
 		return -EINVAL;
 	}
 
 	if (vpninfo->ip_info.addr) {
-		if (!ip_info->addr || strcmp(ip_info->addr, vpninfo->ip_info.addr)) {
+		if (!ip_info->addr) {
+			vpn_progress(vpninfo, PRG_DEBUG,
+				     _("Reconnect gave no Legacy IP address; reusing %s\n"),
+				     vpninfo->ip_info.addr);
+			ip_info->addr = add_option_dup(&opt, "ipaddr", vpninfo->ip_info.addr, -1);
+		} else (strcmp(ip_info->addr, vpninfo->ip_info.addr)) {
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("Reconnect gave different Legacy IP address (%s != %s)\n"),
 				     ip_info->addr, vpninfo->ip_info.addr);
@@ -495,7 +501,12 @@ int install_vpn_opts(struct openconnect_info *vpninfo, struct oc_vpn_option *opt
 		}
 	}
 	if (vpninfo->ip_info.netmask) {
-		if (!ip_info->netmask || strcmp(ip_info->netmask, vpninfo->ip_info.netmask)) {
+		if (!ip_info->netmask) {
+			vpn_progress(vpninfo, PRG_DEBUG,
+				     _("Reconnect gave no Legacy IP netmask; reusing %s\n"),
+				     vpninfo->ip_info.netmask);
+			ip_info->addr = add_option_dup(&opt, "netmask", vpninfo->ip_info.netmask, -1);
+		} else if (strcmp(ip_info->netmask, vpninfo->ip_info.netmask)) {
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("Reconnect gave different Legacy IP netmask (%s != %s)\n"),
 				     ip_info->netmask, vpninfo->ip_info.netmask);
@@ -503,7 +514,12 @@ int install_vpn_opts(struct openconnect_info *vpninfo, struct oc_vpn_option *opt
 		}
 	}
 	if (vpninfo->ip_info.addr6) {
-		if (!ip_info->addr6 || strcmp(ip_info->addr6, vpninfo->ip_info.addr6)) {
+		if (!ip_info->addr6) {
+			vpn_progress(vpninfo, PRG_DEBUG,
+				     _("Reconnect gave no IPv6 address; reusing %s\n"),
+				     vpninfo->ip_info.addr6);
+			ip_info->addr6 = add_option_dup(&opt, "ipaddr6", vpninfo->ip_info.addr6, -1);
+		} else if (strcmp(ip_info->addr6, vpninfo->ip_info.addr6)) {
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("Reconnect gave different IPv6 address (%s != %s)\n"),
 				     ip_info->addr6, vpninfo->ip_info.addr6);
@@ -511,7 +527,12 @@ int install_vpn_opts(struct openconnect_info *vpninfo, struct oc_vpn_option *opt
 		}
 	}
 	if (vpninfo->ip_info.netmask6) {
-		if (!ip_info->netmask6 || strcmp(ip_info->netmask6, vpninfo->ip_info.netmask6)) {
+		if (!ip_info->netmask6) {
+			vpn_progress(vpninfo, PRG_DEBUG,
+				     _("Reconnect gave no IPv6 address; reusing %s\n"),
+				     vpninfo->ip_info.netmask6);
+			ip_info->netmask6 = add_option_dup(&opt, "netmask6", vpninfo->ip_info.netmask6, -1);
+		} else if (strcmp(ip_info->netmask6, vpninfo->ip_info.netmask6)) {
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("Reconnect gave different IPv6 netmask (%s != %s)\n"),
 				     ip_info->netmask6, vpninfo->ip_info.netmask6);
