@@ -413,8 +413,8 @@ file-list.txt: Makefile.dlldeps openconnect$(EXEEXT) libopenconnect.la $(WINTUN_
 
 # Wintun Layer 3 TUN driver for Windows 7 and newer
 # (see https://wintun.net)
-WINTUNDRIVER = wintun-0.13.zip
-WINTUNSHA256 = 34afe7d0de1fdb781af3defc0a75fd8c97daa756279b42dd6be6a1bd8ccdc7f0
+WINTUNDRIVER = wintun-0.14.1.zip
+WINTUNSHA256 = 07c256185d6ee3652e09fa55c0b673e2624b565e02c4b9091c79ca7d2f24ef51
 
 # OpenVPN TAP driver for Windows Vista/2003 and newer
 # (see https://community.openvpn.net/openvpn/wiki/GettingTapWindows)

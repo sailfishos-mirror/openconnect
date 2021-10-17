@@ -100,9 +100,6 @@
 #ifndef _Ret_bytecount_
 #define _Ret_bytecount_(sz)
 #endif
-#ifndef _Post_maybenull_
-#define _Post_maybenull_
-#endif
 #include "wintun.h"
 
 #include <ws2tcpip.h>
