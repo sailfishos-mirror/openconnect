@@ -298,7 +298,7 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 	xmlDocPtr xml_doc;
 	int ret = 0, n_dns = 0, default_route = 1;
 	char *s = NULL, *s2 = NULL;
-	int heartbeat_interval = -1, reconnect_after_drop = -1;
+	int reconnect_after_drop = -1;
 	struct oc_text_buf *domains = NULL;
 
 	if (!buf || !len)
@@ -338,9 +338,11 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 		else if (xmlnode_is_named(xml_node, "idle-timeout") && !xmlnode_get_prop(xml_node, "val", &s)) {
 			int sec = vpninfo->idle_timeout = atoi(s);
 			vpn_progress(vpninfo, PRG_INFO, _("Idle timeout is %d minutes.\n"), sec/60);
-		} else if (xmlnode_is_named(xml_node, "dtls-config") && !xmlnode_get_prop(xml_node, "heartbeat-interval", &s))
-			heartbeat_interval = atoi(s);
-		else if (xmlnode_is_named(xml_node, "auth-ses")) {
+		} else if (xmlnode_is_named(xml_node, "dtls-config") && !xmlnode_get_prop(xml_node, "heartbeat-interval", &s)) {
+			int sec = atoi(s);
+			if (sec && (!vpninfo->dtls_times.dpd || sec < vpninfo->dtls_times.dpd))
+				vpninfo->dtls_times.dpd = vpninfo->ssl_times.dpd = sec;
+		} else if (xmlnode_is_named(xml_node, "auth-ses")) {
 			/* These settings were apparently added in v6.2.1 of the Fortigate server,
 			 * (see https://docs.fortinet.com/document/fortigate/6.2.1/cli-reference/281620/vpn-ssl-settings)
 			 * and seem to control the possibility of reconnecting after a dropped connection.
@@ -358,15 +360,12 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 						     _("Server reports that reconnect-after-drop is allowed within %d seconds, %s\n"),
 						     dropped_session_cleanup,
 						     check_ip_src ? _("but only from the same source IP address") : _("even if source IP address changes"));
-				} else if (reconnect_after_drop == 0) {
+				} else if (reconnect_after_drop == 0)
 					vpn_progress(vpninfo, PRG_ERR,
-						     _("Server reports that reconnect-after-drop is not allowed.\n"));
-				}
-			} else
-				vpn_progress(vpninfo, PRG_ERR,
-					     _("Contents of <auth-ses> tag are unexpected.\n"));
-			vpn_progress(vpninfo, PRG_ERR,
-				     _("Please report whether Fortinet reconnect-after-drop works to <openconnect-devel@lists.infradead.org>\n"));
+						     _("Server reports that reconnect-after-drop is not allowed. OpenConnect will not\n"
+						       "be able to reconnect if dead peer is detected. If reconnection DOES work,\n"
+						       "please report to <openconnect-devel@lists.infradead.org>\n"));
+			}
 		} else if (xmlnode_is_named(xml_node, "fos")) {
 			char platform[80], *p = platform, *e = platform + 80;
 			if (!xmlnode_get_prop(xml_node, "platform", &s)) {
@@ -507,18 +506,11 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 		}
 	}
 
-	if (heartbeat_interval > 0) {
-		/* Ignore server's heartbeat/DPD interval unless server actually allows
-		 * reconnect-after-drop (without reauthentication).
-		 */
-		if (reconnect_after_drop > 0) {
-			if (!vpninfo->dtls_times.dpd || heartbeat_interval < vpninfo->dtls_times.dpd)
-				vpninfo->dtls_times.dpd = vpninfo->ssl_times.dpd = heartbeat_interval;
-		} else
-			vpn_progress(vpninfo, PRG_ERR,
-				     _("Ignoring server's heartbeat/DPD interval of %d seconds, because reconnect-after-drop is not allowed.\n"),
-				     heartbeat_interval);
-	}
+	if (reconnect_after_drop == -1)
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Server did not send <auth-ses tun-connect-without-reauth=\"0/1\"/>. OpenConnect will\n"
+			       "probably not be able to reconnect if dead peer is detected. If reconnection DOES,\n"
+			       "work please report to <openconnect-devel@lists.infradead.org>\n"));
 
 	if (default_route && new_ip_info.addr)
 		new_ip_info.netmask = add_option_dup(&new_opts, "full-netmask", "0.0.0.0", -1);
@@ -600,7 +592,7 @@ static int fortinet_configure(struct openconnect_info *vpninfo)
 			int ret2 = do_https_request(vpninfo, "GET", NULL, NULL, &res_buf, NULL, 0);
 			if (ret2 == 0)
 				vpn_progress(vpninfo, PRG_ERR,
-					     _("Ancient Fortinet server (<v5?) only support ancient HTML config, which is not implemented by OpenConnect.\n"));
+					     _("Ancient Fortinet server (<v5?) only supports ancient HTML config, which is not implemented by OpenConnect.\n"));
 			else
 				vpn_progress(vpninfo, PRG_ERR,
 					     _("Fortinet server is rejecting request for connection options. This\n"
