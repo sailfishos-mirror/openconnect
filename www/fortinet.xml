@@ -39,18 +39,22 @@ authentication). If you have access to a Fortinet VPN which uses other types of
 authentication, please send information to <a href="mail.html">the mailing
 list</a> so that we add support to OpenConnect.</p>
 
-<p>The Fortinet protocol appears <i>not</i> to allow its
+<p>Prior to server version FortiOS 6.2.1, the Fortinet protocol appears <i>not</i> to allow its
 post-authentication cookie (as output by <tt>--authenticate</tt>) to
 be used to reestablish a dropped connection. This means that if the
 client loses its connection to the gateway (for example, due to a
 network outage, or after roaming to a different physical adapter) a
 new authentication will <i>always</i> be required. This is a substantial
 design flaw which is not present in any of the other protocols
-supported by OpenConnect; if you have access to a Fortinet VPN which
-<i>can</i> automatically reconnect after a dropped connection,
-please send information to <a href="mail.html">the mailing list</a>
-so we can understand it better, and whether we can support this feature
-on other Fortinet VPNs.</p>
+supported by OpenConnect.</p>
+
+<p>Starting with FortiOS 6.2.1, an optional server-side
+setting (<a href="https://docs.fortinet.com/document/fortigate/6.2.1/cli-reference/281620/vpn-ssl-settings"><tt>tun-connect-without-reauth</tt></a>)
+appears intended to support reconnection, but still doesn't work very well
+(see <a href="https://gitlab.com/openconnect/openconnect/-/issues/297#note_669164202">discussion on issue #297</a>).
+Please send reports on success and failure with Fortinet reconnection
+to <a href="mail.html">the mailing list</a>
+so we can understand it better.</p>
 
 	<INCLUDE file="inc/footer.tmpl" />
 </PAGE>
