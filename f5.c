@@ -113,9 +113,9 @@ int f5_obtain_cookie(struct openconnect_info *vpninfo)
 		if (req_buf && req_buf->pos)
 			ret = do_https_request(vpninfo, "POST",
 					       "application/x-www-form-urlencoded",
-					       req_buf, &resp_buf, NULL, 2);
+					       req_buf, &resp_buf, NULL, HTTP_REDIRECT_TO_GET);
 		else
-			ret = do_https_request(vpninfo, "GET", NULL, NULL, &resp_buf, NULL, 2);
+			ret = do_https_request(vpninfo, "GET", NULL, NULL, &resp_buf, NULL, HTTP_REDIRECT_TO_GET);
 
 		if (!check_cookie_success(vpninfo)) {
 			free(resp_buf);
@@ -539,7 +539,7 @@ static int f5_configure(struct openconnect_info *vpninfo)
 
 	free(vpninfo->urlpath);
 	vpninfo->urlpath = strdup("vdesk/vpn/index.php3?outform=xml&client_version=2.0");
-	ret = do_https_request(vpninfo, "GET", NULL, NULL, &res_buf, NULL, 0);
+	ret = do_https_request(vpninfo, "GET", NULL, NULL, &res_buf, NULL, HTTP_NO_FLAGS);
 	if (ret < 0)
 		goto out;
 
@@ -559,7 +559,7 @@ static int f5_configure(struct openconnect_info *vpninfo)
 		ret = -ENOMEM;
 		goto out;
 	}
-	ret = do_https_request(vpninfo, "GET", NULL, NULL, &res_buf, NULL, 0);
+	ret = do_https_request(vpninfo, "GET", NULL, NULL, &res_buf, NULL, HTTP_NO_FLAGS);
 	if (ret < 0)
 		goto out;
 
@@ -694,7 +694,7 @@ int f5_bye(struct openconnect_info *vpninfo, const char *reason)
 
 	orig_path = vpninfo->urlpath;
 	vpninfo->urlpath = strdup("vdesk/hangup.php3?hangup_error=1"); /* redirect segfaults without strdup */
-	ret = do_https_request(vpninfo, "GET", NULL, NULL, &res_buf, NULL, 0);
+	ret = do_https_request(vpninfo, "GET", NULL, NULL, &res_buf, NULL, HTTP_NO_FLAGS);
 	free(vpninfo->urlpath);
 	vpninfo->urlpath = orig_path;
 

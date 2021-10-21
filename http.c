@@ -781,7 +781,9 @@ static int https_socket_closed(struct openconnect_info *vpninfo)
  *  form_buf:           Callee-allocated buffer for server content
  *  header_cb:          Callback executed on every header line
  *                      If HTTP authentication is needed, the callback specified needs to call http_auth_hdrs.
- *  fetch_redirect:
+ *  flags (bitfield):   HTTP_REDIRECT: follow redirects;
+ *                      HTTP_REDIRECT_TO_GET: follow redirects, but change POST to GET;
+ *                      HTTP_BODY_ON_ERR: return server content in form_buf even on error
  *
  * Return value:
  *  < 0, on error
@@ -789,7 +791,7 @@ static int https_socket_closed(struct openconnect_info *vpninfo)
  */
 int do_https_request(struct openconnect_info *vpninfo, const char *method, const char *request_body_type,
 		     struct oc_text_buf *request_body, char **form_buf,
-		     int (*header_cb)(struct openconnect_info *, char *, char *), int fetch_redirect)
+		     int (*header_cb)(struct openconnect_info *, char *, char *), int flags)
 {
 	struct oc_text_buf *buf;
 	int result;
@@ -932,10 +934,10 @@ int do_https_request(struct openconnect_info *vpninfo, const char *method, const
 	if (result != 200 && vpninfo->redirect_url) {
 		result = handle_redirect(vpninfo);
 		if (result == 0) {
-			if (!fetch_redirect)
+			if (!(flags & (HTTP_REDIRECT | HTTP_REDIRECT_TO_GET)))
 				goto out;
-			if (fetch_redirect == 2) {
-				/* Juniper requires we GET after a redirected POST */
+			if (flags & HTTP_REDIRECT_TO_GET) {
+				/* Some protocols require a GET after a redirected POST */
 				method = "GET";
 				request_body_type = NULL;
 			}
@@ -955,12 +957,14 @@ int do_https_request(struct openconnect_info *vpninfo, const char *method, const
 			result = -EACCES;
 		else
 			result = -EINVAL;
-		goto out;
-	}
+
+		if (!buf->pos || !(flags & HTTP_BODY_ON_ERROR))
+			goto out;
+	} else
+		result = buf->pos;
 
 	*form_buf = buf->data;
 	buf->data = NULL;
-	result = buf->pos;
 
  out:
 	buf_free(buf);

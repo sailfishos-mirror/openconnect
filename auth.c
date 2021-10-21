@@ -1362,7 +1362,7 @@ newgroup:
 		}
 
 		request_body_type = vpninfo->xmlpost ? "application/xml; charset=utf-8" : "application/x-www-form-urlencoded";
-		result = do_https_request(vpninfo, method, request_body_type, request_body, &form_buf, NULL, 0);
+		result = do_https_request(vpninfo, method, request_body_type, request_body, &form_buf, NULL, HTTP_NO_FLAGS);
 		if (vpninfo->got_cancel_cmd) {
 			result = 1;
 			goto out;
@@ -1441,7 +1441,7 @@ newgroup:
 			vpninfo->csd_stuburl = NULL;
 			handle_redirect(vpninfo);
 
-			buflen = do_https_request(vpninfo, "GET", NULL, NULL, &form_buf, NULL, 0);
+			buflen = do_https_request(vpninfo, "GET", NULL, NULL, &form_buf, NULL, HTTP_NO_FLAGS);
 			if (buflen <= 0) {
 				if (vpninfo->csd_wrapper) {
 					vpn_progress(vpninfo, PRG_ERR,
@@ -1464,7 +1464,7 @@ newgroup:
 
 		/* vpninfo->urlpath now points to the wait page */
 		while (1) {
-			result = do_https_request(vpninfo, "GET", NULL, NULL, &form_buf, NULL, 0);
+			result = do_https_request(vpninfo, "GET", NULL, NULL, &form_buf, NULL, HTTP_NO_FLAGS);
 			if (result <= 0)
 				break;
 
@@ -1487,7 +1487,7 @@ newgroup:
 
 		result = do_https_request(vpninfo,
 					  vpninfo->xmlpost ? "POST" : "GET",
-					  request_body_type, request_body, &form_buf, NULL, 1);
+					  request_body_type, request_body, &form_buf, NULL, HTTP_REDIRECT);
 		if (result < 0)
 			goto out;
 
