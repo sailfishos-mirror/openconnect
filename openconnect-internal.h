@@ -302,6 +302,11 @@ struct oc_text_buf {
 #define RECONNECT_INTERVAL_MIN	10
 #define RECONNECT_INTERVAL_MAX	100
 
+#define HTTP_NO_FLAGS		0
+#define HTTP_REDIRECT		1
+#define HTTP_REDIRECT_TO_GET	2
+#define HTTP_BODY_ON_ERROR	4
+
 #define REDIR_TYPE_NONE		0
 #define REDIR_TYPE_NEWHOST	1
 #define REDIR_TYPE_LOCAL	2
@@ -1507,7 +1512,7 @@ int internal_parse_url(const char *url, char **res_proto, char **res_host,
 char *internal_get_url(struct openconnect_info *vpninfo);
 int do_https_request(struct openconnect_info *vpninfo, const char *method, const char *request_body_type,
 		     struct oc_text_buf *request_body, char **form_buf,
-		     int (*header_cb)(struct openconnect_info *, char *, char *), int fetch_redirect);
+		     int (*header_cb)(struct openconnect_info *, char *, char *), int flags);
 int http_add_cookie(struct openconnect_info *vpninfo, const char *option,
 		    const char *value, int replace);
 int internal_split_cookies(struct openconnect_info *vpninfo, int replace, const char *def_cookie);

@@ -112,7 +112,7 @@ int array_obtain_cookie(struct openconnect_info *vpninfo)
 	char *resp_buf = NULL;
 	ret = do_https_request(vpninfo, "POST",
 			       "application/x-www-form-urlencoded",
-			       req_buf, &resp_buf, NULL, 2);
+			       req_buf, &resp_buf, NULL, HTTP_REDIRECT_TO_GET);
 	free(resp_buf);
 	if (ret <= 0)
 		goto out;
@@ -1295,7 +1295,7 @@ int array_bye(struct openconnect_info *vpninfo, const char *reason)
 
 	orig_path = vpninfo->urlpath;
 	vpninfo->urlpath = strdup("prx/000/http/localhost/logout"); /* redirect segfaults without strdup */
-	ret = do_https_request(vpninfo, "GET", NULL, NULL, &res_buf, NULL, 0);
+	ret = do_https_request(vpninfo, "GET", NULL, NULL, &res_buf, NULL, HTTP_NO_FLAGS);
 	free(vpninfo->urlpath);
 	vpninfo->urlpath = orig_path;
 

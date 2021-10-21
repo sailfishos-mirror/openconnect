@@ -109,7 +109,7 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 		goto out;
 	}
 
-	ret = do_https_request(vpninfo, "GET", NULL, NULL, &resp_buf, NULL, 1);
+	ret = do_https_request(vpninfo, "GET", NULL, NULL, &resp_buf, NULL, HTTP_REDIRECT);
 	free(resp_buf);
 	resp_buf = NULL;
 	if (ret < 0)
@@ -196,7 +196,7 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 		if ((ret = buf_error(req_buf)))
 		        goto out;
 		ret = do_https_request(vpninfo, "POST", "application/x-www-form-urlencoded",
-				       req_buf, &resp_buf, NULL, 0);
+				       req_buf, &resp_buf, NULL, HTTP_NO_FLAGS);
 
 		/* If we got SVPNCOOKIE, then we're done. */
 		struct oc_vpn_option *cookie;
@@ -576,7 +576,7 @@ static int fortinet_configure(struct openconnect_info *vpninfo)
 
 	/* Fetch the connection options in XML format */
 	vpninfo->urlpath = strdup("remote/fortisslvpn_xml");
-	ret = do_https_request(vpninfo, "GET", NULL, NULL, &res_buf, NULL, 0);
+	ret = do_https_request(vpninfo, "GET", NULL, NULL, &res_buf, NULL, HTTP_NO_FLAGS);
 	if (ret < 0) {
 		if (ret == -EPERM) {
 			/* XXX: Forticlient and Openfortivpn fetch the legacy HTTP configuration.
@@ -589,7 +589,7 @@ static int fortinet_configure(struct openconnect_info *vpninfo)
 			 * worked out the weirdness with reconnects.
 			 */
 			vpninfo->urlpath = strdup("remote/fortisslvpn");
-			int ret2 = do_https_request(vpninfo, "GET", NULL, NULL, &res_buf, NULL, 0);
+			int ret2 = do_https_request(vpninfo, "GET", NULL, NULL, &res_buf, NULL, HTTP_NO_FLAGS);
 			if (ret2 == 0)
 				vpn_progress(vpninfo, PRG_ERR,
 					     _("Ancient Fortinet server (<v5?) only supports ancient HTML config, which is not implemented by OpenConnect.\n"));
@@ -774,7 +774,7 @@ int fortinet_bye(struct openconnect_info *vpninfo, const char *reason)
 
 	orig_path = vpninfo->urlpath;
 	vpninfo->urlpath = strdup("remote/logout");
-	ret = do_https_request(vpninfo, "GET", NULL, NULL, &res_buf, NULL, 0);
+	ret = do_https_request(vpninfo, "GET", NULL, NULL, &res_buf, NULL, HTTP_NO_FLAGS);
 	free(vpninfo->urlpath);
 	vpninfo->urlpath = orig_path;
 

@@ -596,7 +596,7 @@ static int gpst_login(struct openconnect_info *vpninfo, int portal, struct login
 			}
 		}
 		/* submit prelogin request to get form */
-		result = do_https_request(vpninfo, "POST", NULL, NULL, &xml_buf, NULL, 1);
+		result = do_https_request(vpninfo, "POST", NULL, NULL, &xml_buf, NULL, HTTP_REDIRECT);
 		if (!keep_urlpath) {
 			free(vpninfo->urlpath);
 			vpninfo->urlpath = orig_path;
@@ -647,7 +647,7 @@ static int gpst_login(struct openconnect_info *vpninfo, int portal, struct login
 
 		orig_path = vpninfo->urlpath;
 		vpninfo->urlpath = strdup(portal ? "global-protect/getconfig.esp" : "ssl-vpn/login.esp");
-		result = do_https_request(vpninfo, "POST", request_body_type, request_body, &xml_buf, NULL, 0);
+		result = do_https_request(vpninfo, "POST", request_body_type, request_body, &xml_buf, NULL, HTTP_NO_FLAGS);
 		free(vpninfo->urlpath);
 		vpninfo->urlpath = orig_path;
 
@@ -763,7 +763,7 @@ int gpst_bye(struct openconnect_info *vpninfo, const char *reason)
 	orig_path = vpninfo->urlpath;
 	vpninfo->urlpath = strdup("ssl-vpn/logout.esp");
 	openconnect_close_https(vpninfo, 0);
-	result = do_https_request(vpninfo, method, request_body_type, request_body, &xml_buf, NULL, 0);
+	result = do_https_request(vpninfo, method, request_body_type, request_body, &xml_buf, NULL, HTTP_NO_FLAGS);
 	free(vpninfo->urlpath);
 	vpninfo->urlpath = orig_path;
 
