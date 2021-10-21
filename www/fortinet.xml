@@ -29,15 +29,21 @@ TCP is very suboptimal</a>, OpenConnect tries to always use PPP-over-DTLS,
 and will only fall over to the PPP-over-TLS tunnel if that fails, or if
 disabled via the <tt>--no-dtls</tt> argument.</p>
 
-<h2>Quirks and Issues</h2>
+<h2>Authentication</h2>
 
-<p>In terms of authentication for Fortinet VPNs, OpenConnect currently supports
+<p>OpenConnect currently supports
 basic username/password, optional TLS client certificate, and optional multifactor
-authentication token entry via the "tokeninfo" challenge/response mechanism (which
-appears to be the most common mechanism by which Fortinet VPNs support multifactor
-authentication). If you have access to a Fortinet VPN which uses other types of
+authentication token entry via the two known challenge/response mechanisms:
+plaintext/"tokeninfo"
+(<a href="https://gitlab.com/openconnect/openconnect/-/issues/225">issue #225</a>)
+and HTML forms
+(<a href="https://gitlab.com/openconnect/openconnect/-/issues/332">issue #332</a>).</p>
+
+<p>If you have access to a Fortinet VPN which uses other types of
 authentication, please send information to <a href="mail.html">the mailing
-list</a> so that we add support to OpenConnect.</p>
+list</a> so that we can add support to OpenConnect.</p>
+
+<h2>Quirks and Issues</h2>
 
 <p>Prior to server version FortiOS 6.2.1, the Fortinet protocol appears <i>not</i> to allow its
 post-authentication cookie (as output by <tt>--authenticate</tt>) to

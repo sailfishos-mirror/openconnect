@@ -21,8 +21,8 @@
 
 #include "ppp.h"
 
-#include <libxml/parser.h>
-#include <libxml/tree.h>
+#include <libxml/HTMLparser.h>
+#include <libxml/HTMLtree.h>
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -101,7 +101,7 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 	struct oc_text_buf *req_buf = NULL;
 	struct oc_auth_form *form = NULL;
 	struct oc_form_opt *opt, *opt2;
-	char *resp_buf = NULL, *realm = NULL;
+	char *resp_buf = NULL, *realm = NULL, *tokeninfo_fields = NULL;
 
 	req_buf = buf_alloc();
 	if (buf_error(req_buf)) {
@@ -110,8 +110,6 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 	}
 
 	ret = do_https_request(vpninfo, "GET", NULL, NULL, &resp_buf, NULL, HTTP_REDIRECT);
-	free(resp_buf);
-	resp_buf = NULL;
 	if (ret < 0)
 		goto out;
 
@@ -135,9 +133,10 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 	/* XX: Fortinet HTML forms *seem* like they should be about as easy to follow
 	 * as Juniper HTML forms, but some redirects use Javascript EXCLUSIVELY (no
 	 * 'Location' header). Also, a failed login returns the misleading HTTP status
-	 * "405 Method Not Allowed", rather than 403/401.
+	 * "405 Method Not Allowed", rather than 403/401, and HTTP status 401 is used to
+	 * signal an HTML-form-based mode of presenting a 2FA challenge.
 	 *
-	 * So we just build a static form (username and password).
+	 * So we just build a static form (username and password) to start.
 	 */
 	form = calloc(1, sizeof(*form));
 	if (!form) {
@@ -183,20 +182,27 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 		append_form_opts(vpninfo, form, req_buf);
 		buf_append(req_buf, "&realm=%s", realm ?: ""); /* XX: already URL-escaped */
 
-		if (!form->action) {
+		if (!tokeninfo_fields) {
 			/* "normal" form (fields 'username', 'credential') */
 			buf_append(req_buf, "&ajax=1&just_logged_in=1");
 		} else {
 			/* 2FA form (fields 'username', 'code', and a bunch of values
 			 * from the previous response which we mindlessly parrot back)
 			 */
-			buf_append(req_buf, "&code2=&%s", form->action);
+			buf_append(req_buf, "&code2=&%s", tokeninfo_fields);
+			free(tokeninfo_fields);
+			tokeninfo_fields = NULL;
 		}
 
 		if ((ret = buf_error(req_buf)))
 		        goto out;
+
+		/* XX: Disable HTTP auth, because Fortinet uses 401 status to indicate HTML-type 2FA challenge */
+		int try_http_auth = vpninfo->try_http_auth;
+		vpninfo->try_http_auth = 0;
 		ret = do_https_request(vpninfo, "POST", "application/x-www-form-urlencoded",
-				       req_buf, &resp_buf, NULL, HTTP_NO_FLAGS);
+				       req_buf, &resp_buf, NULL, HTTP_BODY_ON_ERROR);
+		vpninfo->try_http_auth = try_http_auth;
 
 		/* If we got SVPNCOOKIE, then we're done. */
 		struct oc_vpn_option *cookie;
@@ -210,11 +216,11 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 			}
 		}
 
-		/* XX: We got 200 status, but no SVPNCOOKIE. 2FA? */
+		/* XX: We got 200 status, but no SVPNCOOKIE. tokeninfo-type 2FA? */
 		if (ret > 0 &&
 		    !strncmp(resp_buf, "ret=", 4) && strstr(resp_buf, ",tokeninfo=")) {
 			const char *prompt;
-			struct oc_text_buf *action_buf = buf_alloc();
+			struct oc_text_buf *tokeninfo_buf = buf_alloc();
 
 			/* Hide 'username' field */
 			opt->type = OC_FORM_OPT_HIDDEN;
@@ -237,13 +243,13 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 				goto nomem;
 
 			/* Save a bunch of values to parrot back */
-			filter_opts(action_buf, resp_buf, "reqid,polid,grp,portal,peer,magic", 1);
-			if ((ret = buf_error(action_buf)))
+			filter_opts(tokeninfo_buf, resp_buf, "reqid,polid,grp,portal,peer,magic", 1);
+			if ((ret = buf_error(tokeninfo_buf)))
 				goto out;
-			free(form->action);
-			form->action = action_buf->data;
-			action_buf->data = NULL;
-			buf_free(action_buf);
+			free(tokeninfo_fields);
+			tokeninfo_fields = tokeninfo_buf->data;
+			tokeninfo_buf->data = NULL;
+			buf_free(tokeninfo_buf);
 
 			if ((prompt = strstr(resp_buf, ",chal_msg="))) {
 				const char *end = strchrnul(prompt, ',');
@@ -252,13 +258,45 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 				form->message = strndup(prompt, end-prompt);
 			}
 		}
+		/* XX: We got 401 response with HTML body. HTML-type 2FA? */
+		else if (ret == -EPERM && resp_buf) {
+			xmlDocPtr doc = NULL;
+			xmlNode *node;
+			char *url = internal_get_url(vpninfo);
+
+			if (!url)
+				goto nomem;
+
+			/* XX: HTML body should contain a "normal" HTML form with hidden fields
+			 * including 'username', 'magic', 'reqid', 'grpid' (similar to the tokeninfo-type
+			 * 2FA bove), and a password field named 'credential'.
+			 */
+			doc = htmlReadMemory(resp_buf, strlen(resp_buf), url, NULL,
+					     HTML_PARSE_RECOVER|HTML_PARSE_NOERROR|HTML_PARSE_NOWARNING|HTML_PARSE_NONET);
+			free(url);
+
+			node = find_form_node(doc);
+			if (node) {
+				free_auth_form(form);
+				form = parse_form_node(vpninfo, node, NULL, can_gen_tokencode);
+				if (!form)
+					goto no_html_form;
+			} else {
+			no_html_form:
+				xmlFreeDoc(doc);
+				ret = -EINVAL;
+				goto out;
+			}
+		}
 	}
 
  out:
 	free(realm);
-	free(resp_buf);
+	if (resp_buf)
+		free(resp_buf);
 	if (form)
 		free_auth_form(form);
+	free(tokeninfo_fields);
 	buf_free(req_buf);
 	return ret;
 }
