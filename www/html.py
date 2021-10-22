@@ -46,7 +46,7 @@ def replaceVars(line):
     while cnt < len(replace):
         if line.find(replace[cnt]) >= 0:
             line = line.replace(replace[cnt], replace[cnt+1])
-        cnt = cnt + 2
+        cnt += 2
     return line
 
 
@@ -137,7 +137,7 @@ class docHandler(xml.sax.ContentHandler):
             writeHtml(">")
 
     def characters(self, ch):
-        self.content = self.content + ch
+        self.content += ch
 
     def endElement(self, name):
 
@@ -235,7 +235,7 @@ if not arguments:
 
 if writefile > 0:
     fname = arguments[0].split('.')[0]
-    fname = fname + ".html"
+    fname += ".html"
     fdout = codecs.open(fname, 'w', 'utf-8')
 
 parseConfig(arguments[0])
