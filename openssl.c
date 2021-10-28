@@ -1968,7 +1968,9 @@ int openconnect_open_https(struct openconnect_info *vpninfo)
 	 * cd6bd5ffda616822b52104fee0c4c7d623fd4f53
 	 */
 #if OPENSSL_VERSION_NUMBER >= 0x10001070 && !defined(LIBRESSL_VERSION_NUMBER)
-	if (string_is_hostname(vpninfo->hostname))
+	if (vpninfo->sni)
+		SSL_set_tlsext_host_name(https_ssl, vpninfo->sni);
+	else if (string_is_hostname(vpninfo->hostname))
 		SSL_set_tlsext_host_name(https_ssl, vpninfo->hostname);
 #endif
 	SSL_set_verify(https_ssl, SSL_VERIFY_PEER, NULL);

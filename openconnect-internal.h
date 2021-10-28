@@ -488,8 +488,16 @@ struct openconnect_info {
 				* DNS lookup. We do this so that we can be
 				* sure we reconnect to the same server we
 				* authenticated to. */
+
 	int port;
 	char *urlpath;
+
+	char *sni; /* This is the hostname that we present as the TLS
+		    * Server Name Indication, unencrypted in the TLS handshake,
+		    * in place of the true/original hostname. This is useful
+		    * for Domain Fronting, by which some filtered or censored
+		    * Internet connections can be bypassed.
+		    */
 
 	/* The application might ask us to recreate a connection URL,
 	 * and we own the string so cache it for later freeing. */

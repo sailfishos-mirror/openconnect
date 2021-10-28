@@ -2345,7 +2345,11 @@ int openconnect_open_https(struct openconnect_info *vpninfo)
 	 *
 	 * See comments above regarding COMPAT and DUMBFW.
 	 */
-	if (string_is_hostname(vpninfo->hostname))
+	if (vpninfo->sni)
+		gnutls_server_name_set(vpninfo->https_sess, GNUTLS_NAME_DNS,
+				       vpninfo->sni,
+				       strlen(vpninfo->sni));
+	else if (string_is_hostname(vpninfo->hostname))
 		gnutls_server_name_set(vpninfo->https_sess, GNUTLS_NAME_DNS,
 				       vpninfo->hostname,
 				       strlen(vpninfo->hostname));

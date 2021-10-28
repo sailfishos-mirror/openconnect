@@ -667,6 +667,7 @@ void openconnect_vpninfo_free(struct openconnect_info *vpninfo)
 	free_split_routes(&vpninfo->ip_info);
 	free(vpninfo->hostname);
 	free(vpninfo->unique_hostname);
+	free(vpninfo->sni);
 	buf_free(vpninfo->connect_urlbuf);
 	free(vpninfo->urlpath);
 	free(vpninfo->redirect_url);

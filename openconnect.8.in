@@ -65,6 +65,7 @@ openconnect \- Multi-protocol VPN client, for Cisco AnyConnect VPNs and others
 .OP \-\-token\-secret {secret\fR[\fI,counter\fR]|@\fIfile\fR}
 .OP \-\-reconnect\-timeout seconds
 .OP \-\-resolve host:ip
+.OP \-\-sni host
 .OP \-\-servercert sha1
 .OP \-\-useragent string
 .OP \-\-version\-string string
@@ -754,6 +755,19 @@ to
 .IR IP
 instead of using the normal resolver to look it up.
 .TAG opt-servercert
+.TP
+.B \-\-sni=HOST
+When creating new TLS connections, always present the hostname
+.IR HOST
+as the SNI (Server Name Indication) in place of the correct hostname,
+which will still be sent in the HTTP 'Host:' header. This may be
+useful for Domain Fronting, by which some filtered or censored
+Internet connections can be bypassed.
+
+Note that sending different values for the SNI and 'Host:' header
+violates HTTP standards, is prevented by many cloud hosting providers,
+and will cause the server to send a certificate for the wrong domain
+name (thus requiring the use of \-\-servercert).
 .TP
 .B \-\-servercert=HASH
 Accept server's SSL certificate only if it matches the provided fingerprint.
