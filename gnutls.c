@@ -2062,6 +2062,64 @@ void openconnect_free_peer_cert_chain(struct openconnect_info *vpninfo,
 	free(chain);
 }
 
+/* Wrapper for gnutls_x509_crt_check_hostname, which additionally
+ * handles IP addresses:
+ *
+ * - Legacy IP or IPv6 literals (not handled by GnuTLS <3.3.6)
+ * - IPv6 literals in URI form with surrounding [] (not handled as-is by any version of GnuTLS)
+ */
+static int crt_check_hostname_or_ip(gnutls_x509_crt_t cert, char *hostname)
+{
+	int i, ret;
+	unsigned char addrbuf[sizeof(struct in6_addr)];
+	unsigned char certaddr[sizeof(struct in6_addr)];
+	size_t addrlen = 0, certaddrlen;
+
+	ret = gnutls_x509_crt_check_hostname(cert, hostname);
+	if (ret)
+		return ret;
+
+	/* gnutls_x509_crt_check_hostname() doesn't cope with IPv6 literals
+	   in URI form with surrounding [] so we must check for ourselves. */
+	if (hostname[0] == '[' &&
+	    hostname[strlen(hostname)-1] == ']') {
+		char *p = &hostname[strlen(hostname)-1];
+		*p = 0;
+		if (inet_pton(AF_INET6, hostname + 1, addrbuf) > 0)
+			addrlen = 16;
+		*p = ']';
+	}
+#if GNUTLS_VERSION_NUMBER < 0x030306
+	/* And before 3.3.6 it didn't check IP addresses at all. */
+	else if (inet_pton(AF_INET, hostname, addrbuf) > 0)
+		addrlen = 4;
+	else if (inet_pton(AF_INET6, hostname, addrbuf) > 0)
+		addrlen = 16;
+#endif
+
+	if (!addrlen) {
+		/* hostname was not a bare IP address. No match */
+		return 0;
+	}
+
+	for (i = 0; ; i++) {
+		certaddrlen = sizeof(certaddr);
+		ret = gnutls_x509_crt_get_subject_alt_name(cert, i, certaddr,
+							   &certaddrlen, NULL);
+		/* If this happens, it wasn't an IP address. */
+		if (ret == GNUTLS_E_SHORT_MEMORY_BUFFER)
+			continue;
+		if (ret < 0)
+			break;
+		if (ret != GNUTLS_SAN_IPADDRESS)
+			continue;
+		/* Matching IP address. Return success */
+		if (certaddrlen == addrlen && !memcmp(addrbuf, certaddr, addrlen))
+			return 1;
+	}
+	return 0;
+}
+
 static int verify_peer(gnutls_session_t session)
 {
 	struct openconnect_info *vpninfo = gnutls_session_get_ptr(session);
@@ -2142,52 +2200,11 @@ static int verify_peer(gnutls_session_t session)
 	if (reason)
 		goto done;
 
-	if (!gnutls_x509_crt_check_hostname(cert, vpninfo->hostname)) {
-		int i, ret;
-		unsigned char addrbuf[sizeof(struct in6_addr)];
-		unsigned char certaddr[sizeof(struct in6_addr)];
-		size_t addrlen = 0, certaddrlen;
-
-		/* gnutls_x509_crt_check_hostname() doesn't cope with IPv6 literals
-		   in URI form with surrounding [] so we must check for ourselves. */
-		if (vpninfo->hostname[0] == '[' &&
-		    vpninfo->hostname[strlen(vpninfo->hostname)-1] == ']') {
-			char *p = &vpninfo->hostname[strlen(vpninfo->hostname)-1];
-			*p = 0;
-			if (inet_pton(AF_INET6, vpninfo->hostname + 1, addrbuf) > 0)
-				addrlen = 16;
-			*p = ']';
-		}
-#if GNUTLS_VERSION_NUMBER < 0x030306
-		/* And before 3.3.6 it didn't check IP addresses at all. */
-		else if (inet_pton(AF_INET, vpninfo->hostname, addrbuf) > 0)
-			addrlen = 4;
-		else if (inet_pton(AF_INET6, vpninfo->hostname, addrbuf) > 0)
-			addrlen = 16;
-#endif
-
-		if (!addrlen) {
-			/* vpninfo->hostname was not a bare IP address. Nothing to do */
-			goto badhost;
-		}
-
-		for (i = 0; ; i++) {
-			certaddrlen = sizeof(certaddr);
-			ret = gnutls_x509_crt_get_subject_alt_name(cert, i, certaddr,
-								   &certaddrlen, NULL);
-			/* If this happens, it wasn't an IP address. */
-			if (ret == GNUTLS_E_SHORT_MEMORY_BUFFER)
-				continue;
-			if (ret < 0)
-				break;
-			if (ret != GNUTLS_SAN_IPADDRESS)
-				continue;
-			if (certaddrlen == addrlen && !memcmp(addrbuf, certaddr, addrlen))
-				goto done;
-		}
-	badhost:
+	if (vpninfo->sni) {
+		if (!crt_check_hostname_or_ip(cert, vpninfo->sni))
+			reason = _("certificate does not match SNI");
+	} else if (!crt_check_hostname_or_ip(cert, vpninfo->hostname))
 		reason = _("certificate does not match hostname");
-	}
  done:
 	if (reason) {
 		vpn_progress(vpninfo, PRG_INFO,
