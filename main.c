@@ -1484,7 +1484,7 @@ static void print_connection_info(struct openconnect_info *vpninfo)
 		     vpninfo->proto->udp_protocol ? : "UDP", udp_compr ? " + " : "", udp_compr ? : "",
 		     dtls_state);
 	if (vpninfo->auth_expiration != 0)
-		vpn_progress(vpninfo, PRG_INFO, _("Session authentication will expire at %s"),
+		vpn_progress(vpninfo, PRG_INFO, _("Session authentication will expire at %s\n"),
 			     ctime(&vpninfo->auth_expiration));
 }
 

@@ -297,7 +297,7 @@ static int check_hmac_algo(struct openconnect_info *v, const char *s)
 	if (!strcmp(s, "sha1"))	  return HMAC_SHA1;
 	if (!strcmp(s, "md5"))    return HMAC_MD5;
 	if (!strcmp(s, "sha256")) return HMAC_SHA256;
-	vpn_progress(v, PRG_ERR, _("Unknown ESP MAC algorithm: %s"), s);
+	vpn_progress(v, PRG_ERR, _("Unknown ESP MAC algorithm: %s\n"), s);
 	return -ENOENT;
 }
 
@@ -305,7 +305,7 @@ static int check_enc_algo(struct openconnect_info *v, const char *s)
 {
 	if (!strcmp(s, "aes128") || !strcmp(s, "aes-128-cbc")) return ENC_AES_128_CBC;
 	if (!strcmp(s, "aes-256-cbc"))                         return ENC_AES_256_CBC;
-	vpn_progress(v, PRG_ERR, _("Unknown ESP encryption algorithm: %s"), s);
+	vpn_progress(v, PRG_ERR, _("Unknown ESP encryption algorithm: %s\n"), s);
 	return -ENOENT;
 }
 

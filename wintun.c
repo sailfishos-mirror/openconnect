@@ -143,7 +143,7 @@ intptr_t open_wintun(struct openconnect_info *vpninfo, char *guid, wchar_t *wnam
 	vpninfo->wintun_session = WintunStartSession(vpninfo->wintun_adapter, 0x400000);
 	if (!vpninfo->wintun_session) {
 		char *errstr = openconnect__win32_strerror(GetLastError());
-		vpn_progress(vpninfo, PRG_ERR, _("Failed to create Wintun session: %s"),
+		vpn_progress(vpninfo, PRG_ERR, _("Failed to create Wintun session: %s\n"),
 			     errstr);
 		free(errstr);
 

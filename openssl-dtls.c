@@ -589,7 +589,7 @@ int start_dtls_handshake(struct openconnect_info *vpninfo, int dtls_fd)
 	if (!dtls_bio || !BIO_ctrl(dtls_bio, BIO_CTRL_DGRAM_SET_CONNECTED,
 				  0, (char *)vpninfo->dtls_addr)) {
 		vpn_progress(vpninfo, PRG_ERR,
-			     _("Create DTLS dgram BIO failed"));
+			     _("Create DTLS dgram BIO failed\n"));
 
 		if (dtls_bio)
 			BIO_free(dtls_bio);
@@ -711,7 +711,7 @@ int dtls_try_handshake(struct openconnect_info *vpninfo, int *timeout)
 		   version, warn about it. */
 		if (SSLeay() < 0x1000005fL) {
 			vpn_progress(vpninfo, PRG_ERR,
-				     _("Your OpenSSL is older than the one you built against, so DTLS may fail!"));
+				     _("Your OpenSSL is older than the one you built against, so DTLS may fail!\n"));
 		}
 #elif defined(HAVE_DTLS1_STOP_TIMER)
 		/*
