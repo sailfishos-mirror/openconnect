@@ -120,21 +120,13 @@ class docHandler(xml.sax.ContentHandler):
             idx = len(replace)
             replace[idx:] = [repl]
 
-        elif name == "br":
-            writeHtml("<br")
-            if attrs.getLength() > 0:
-                names = attrs.getNames()
-                for name in names:
-                    writeHtml(" " + name + "=\"" + attrs.get(name) + "\"")
-            writeHtml(" />")
-
         else:
             writeHtml("<" + name)
             if attrs.getLength() > 0:
                 names = attrs.getNames()
                 for name in names:
                     writeHtml(" " + name + "=\"" + attrs.get(name) + "\"")
-            writeHtml(">")
+            writeHtml(" />" if name == "br" else ">")
 
     def characters(self, ch):
         self.content += ch
