@@ -245,7 +245,7 @@ def getconfig():
     return '''<response>{}<ssl-tunnel-url>/ssl-tunnel-connect.sslvpn</ssl-tunnel-url></response>'''.format(addrs)
 
 
-# Respond to gateway getconfig request
+# Respond to gateway hipreportcheck request
 @app.route('/ssl-vpn/hipreportcheck.esp', methods=('POST',))
 @check_form_against_session('user', 'portal', 'domain', 'authcookie', 'computer')
 def hipcheck():

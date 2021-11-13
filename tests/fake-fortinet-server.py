@@ -27,7 +27,7 @@
 #    POST /remote/logincheck (with username and credential fields)
 #      No 2FA)   Completes the login
 #      With 2FA) Returns a 2FA challenge
-#    POST /remote/logincheck (with username, code, and challenge response fields)
+#    POST /remote/logincheck (with username and 2FA response fields)
 #
 # It does not actually validate the credentials in any way, but attempts to
 # verify their consistency from one request to the next, by saving their

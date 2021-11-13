@@ -76,6 +76,10 @@ def check_form_against_session(*fields, use_query=False):
 #   token/2FA form name (can be frmLogin, for 2-password-in-one-form option)]
 @app.route('/')
 def root():
+    # We don't support the Junos/Pulse protocol (which starts with this request)
+    if request.headers.get('Upgrade') == 'IF-T/TLS 1.0' and request.headers.get('Content-Type') == 'EAP':
+        return abort(501)
+
     realms = request.args.get('realms')
     roles = request.args.get('roles')
     confirm = bool(request.args.get('confirm'))
