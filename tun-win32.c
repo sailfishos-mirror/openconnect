@@ -464,9 +464,15 @@ static intptr_t open_tun(struct openconnect_info *vpninfo, int adapter_type, cha
 
 	get_adapter_index(vpninfo, guid);
 
-	vpn_progress(vpninfo, PRG_INFO, _("Using %s device '%s', index %d\n"),
+	vpn_progress(vpninfo, adapter_type ? PRG_ERR : PRG_INFO,
+		     _("Using %s device '%s', index %d\n"),
 		     adapter_type ? "Wintun" : "TAP-Windows",
 		     vpninfo->ifname, vpninfo->tun_idx);
+	if (adapter_type == ADAPTER_WINTUN)
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("WARNING: Support for Wintun is experimental and may be unstable. If you\n"
+			       "  encounter problems, install the TAP-Windows driver instead. See\n"
+			       "  https://www.infradead.org/openconnect/building.html\n"));
 
 	return ret;
 }

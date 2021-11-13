@@ -111,6 +111,8 @@ it still doesn't build, please send the full output in a plain-text mail to the
 
 <h2>TUN/TAP driver</h2>
 
+<h3>Mac OS</h3>
+
 <p>Mac OS X users with OS X 10.6 or older, or using OpenConnect 6.00 or older,
 will also need to install the <a href="http://tuntaposx.sourceforge.net/">Mac OS X tun/tap driver</a>.
 Newer versions of OpenConnect will use the <tt>utun</tt> device on OS X which does not
@@ -118,11 +120,19 @@ require additional kernel modules to be installed.</p>
 <p>Solaris/OpenIndiana users will need the <a href="http://www.whiteboard.ne.jp/~admin2/tuntap/">Solaris TAP driver</a>.
 Note that for IPv6 support, the Solaris tun/tap driver from 16th Nov 2009 or newer is required.</p>
 
-<p>On Windows, OpenConnect can use either the
+<h3>Windows</h3>
+
+<p>On Windows, OpenConnect uses the
 <a href="https://community.openvpn.net/openvpn/wiki/GettingTapWindows">TAP-Windows driver from OpenVPN</a> (version 9.9 or
-later; requires Windows 2003 or newer) or the <a href="https://www.wintun.net">Wintun layer-3 driver from Wireguard</a>
-(requires Windows 7 or newer). The more modern Wintun driver is included in the OpenConnect installer, starting
-with OpenConnect v9.00.</p>
+later; requires Windows 2003 or newer). This driver is only available for the 32-bit and 64-bit x86
+architectures.</p>
+
+<p>OpenConnect v9.00 also contains <b><i>experimental</i></b> support for the
+<a href="https://www.wintun.net">Wintun layer-3 driver from Wireguard</a>
+(requires Windows 7 or newer). This is a more modern driver, and supports 32-bit and 64-bit ARM
+architectures as well, however it does not yet appear to be fully stable
+(see <a href="https://gitlab.com/openconnect/openconnect/-/issues/338">issue #338</a>).
+OpenConnect v9.00 will only attempt to use Wintun if TAP-Windows is unavailable.</p>
 
 	<INCLUDE file="inc/footer.tmpl" />
 </PAGE>

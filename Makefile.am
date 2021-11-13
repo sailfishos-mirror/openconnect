@@ -297,6 +297,20 @@ file-list.txt: Makefile.dlldeps openconnect$(EXEEXT) libopenconnect.la $(WINTUN_
 WINTUNDRIVER = wintun-0.13.zip
 WINTUNSHA256 = 34afe7d0de1fdb781af3defc0a75fd8c97daa756279b42dd6be6a1bd8ccdc7f0
 
+# OpenVPN TAP driver for Windows Vista/2003 and newer
+# (see https://community.openvpn.net/openvpn/wiki/GettingTapWindows)
+# XX: Newer releases exist, but are split between Win7+ and Win10+ versions.
+TAPDRIVER = tap-windows-9.21.2.exe
+TAPSHA256 = 645bee92ba4e9f32ddfdd9f8519dc1b9f9ff0b0a8e87e342f08d39da77e499a9
+
+$(TAPDRIVER):
+	curl https://build.openvpn.net/downloads/releases/tap-windows-9.21.2.exe -o $@
+
+# Validate file and also let make find it in VPATH
+file-list-$(TAPDRIVER).txt: $(TAPDRIVER)
+	echo $(TAPSHA256) $< | sha256sum -c
+	echo $< > $@
+
 $(WINTUNDRIVER):
 	curl https://www.wintun.net/builds/$(WINTUNDRIVER) -o $@
 
@@ -318,10 +332,10 @@ file-list-%.txt: %
 # Rather than trying to get clever in NSIS and iterate over lists,
 # just emit raw snippets to be included separately in the install
 # and uninstall sections.
-instfiles.nsh: file-list.txt file-list-vpnc-script-win.js.txt
+instfiles.nsh: file-list.txt file-list-vpnc-script-win.js.txt file-list-$(TAPDRIVER).txt
 	$(AM_V_GEN) cat $^ | while read FILE; do echo "File \"$${FILE}\"" ; done > $@
 
-uninstfiles.nsh: file-list.txt file-list-vpnc-script-win.js.txt
+uninstfiles.nsh: file-list.txt file-list-vpnc-script-win.js.txt file-list-$(TAPDRIVER).txt
 	$(AM_V_GEN) cat $^ | while read FILE; do echo "Delete /rebootok \"\$$INSTDIR\\\\$${FILE##*/}\"" ; done > $@
 
 # Theoretically makensis can define symbols with the -D command line
