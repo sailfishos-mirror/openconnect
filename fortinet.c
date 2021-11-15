@@ -378,7 +378,7 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 			vpn_progress(vpninfo, PRG_INFO, _("Idle timeout is %d minutes.\n"), sec/60);
 		} else if (xmlnode_is_named(xml_node, "dtls-config") && !xmlnode_get_prop(xml_node, "heartbeat-interval", &s)) {
 			int sec = atoi(s);
-			if (sec && (!vpninfo->dtls_times.dpd || sec < vpninfo->dtls_times.dpd))
+			if (sec && !vpninfo->dtls_times.dpd)
 				vpninfo->dtls_times.dpd = vpninfo->ssl_times.dpd = sec;
 		} else if (xmlnode_is_named(xml_node, "auth-ses")) {
 			/* These settings were apparently added in v6.2.1 of the Fortigate server,

@@ -486,7 +486,7 @@ static int start_cstp_connection(struct openconnect_info *vpninfo)
 				vpninfo->dtls_times.keepalive = atol(colon);
 			} else if (!strcmp(buf + i, "DPD")) {
 				int j = atol(colon);
-				if (j && (!vpninfo->dtls_times.dpd || j < vpninfo->dtls_times.dpd))
+				if (j && !vpninfo->dtls_times.dpd)
 					vpninfo->dtls_times.dpd = j;
 			} else if (!strcmp(buf + i, "Rekey-Method")) {
 				if (!strcmp(colon, "new-tunnel"))
@@ -524,7 +524,7 @@ static int start_cstp_connection(struct openconnect_info *vpninfo)
 			vpninfo->idle_timeout = atol(colon);
 		} else if (!strcmp(buf + 7, "DPD")) {
 			int j = atol(colon);
-			if (j && (!vpninfo->ssl_times.dpd || j < vpninfo->ssl_times.dpd))
+			if (j && !vpninfo->ssl_times.dpd)
 				vpninfo->ssl_times.dpd = j;
 		} else if (!strcmp(buf + 7, "Rekey-Time")) {
 			vpninfo->ssl_times.rekey = atol(colon);

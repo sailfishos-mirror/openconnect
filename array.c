@@ -522,9 +522,9 @@ static int parse_speed_tunnel(struct openconnect_info *vpninfo,
 
 	/* We don't support DPD yet...*/
 	if (dpd) {
-		if (!vpninfo->ssl_times.dpd || vpninfo->ssl_times.dpd > dpd)
+		if (!vpninfo->ssl_times.dpd)
 			vpninfo->ssl_times.dpd = dpd;
-		if (!vpninfo->dtls_times.dpd || vpninfo->dtls_times.dpd > dpd)
+		if (!vpninfo->dtls_times.dpd)
 			vpninfo->dtls_times.dpd = dpd;
 	}
 
