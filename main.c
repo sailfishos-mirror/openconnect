@@ -939,7 +939,7 @@ static void usage(void)
 	printf("      --base-mtu=MTU              %s\n", _("Indicate path MTU to/from server"));
 	printf("  -d, --deflate                   %s\n", _("Enable stateful compression (default is stateless only)"));
 	printf("  -D, --no-deflate                %s\n", _("Disable all compression"));
-	printf("      --force-dpd=INTERVAL        %s\n", _("Set minimum Dead Peer Detection interval (in seconds)"));
+	printf("      --force-dpd=INTERVAL        %s\n", _("Set Dead Peer Detection interval (in seconds)"));
 	printf("      --pfs                       %s\n", _("Require perfect forward secrecy"));
 	printf("      --no-dtls                   %s\n", _("Disable DTLS and ESP"));
 	printf("      --dtls-ciphers=LIST         %s\n", _("OpenSSL ciphers to support for DTLS"));
