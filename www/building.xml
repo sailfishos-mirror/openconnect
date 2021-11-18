@@ -51,8 +51,8 @@ on the command line.</p>
  exists and can be executed, and will fail if not. If you don't already have
  a copy then you should install one. It might be in a separate <tt>vpnc-script</tt>
  package for your operating system, it might be part of their <tt>vpnc</tt> package,
- and there's one linked from from the <a href="vpnc-script.html">vpnc-script page</a>,
- if you need to download it manually. Install it as <tt>/etc/vpnc/vpnc-script</tt>.</p>
+ and there's one linked from the <a href="vpnc-script.html">vpnc-script page</a>, if
+ you need to download it manually. Install it as <tt>/etc/vpnc/vpnc-script</tt>.</p>
 
 <p>If you do not want to use the standard location, you can configure OpenConnect to
  use a different location by default. When running the <tt>./configure</tt> script
