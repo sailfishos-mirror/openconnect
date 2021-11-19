@@ -38,6 +38,15 @@
 
 #define XCAST(x) ((const xmlChar *)(x))
 
+/* XX: some F5 VPNs simply do not have a static HTML form to parse, but
+ * only a mess of JavaScript which creates a dynamic form that's
+ * functionally equivalent to the following:
+ *
+ * <form id="auth_form" method="post">
+ *   <input type="text" name="username"/>
+ *   <input type="password" name="password"/>
+ * </form>
+ */
 static struct oc_auth_form *plain_auth_form(void)
 {
 	struct oc_auth_form *form;
@@ -49,6 +58,9 @@ static struct oc_auth_form *plain_auth_form(void)
 		free_auth_form(form);
 		return NULL;
 	}
+	if ((form->auth_id = strdup("auth_form")) == NULL)
+		goto nomem;
+
 	opt = form->opts = calloc(1, sizeof(*opt));
 	if (!opt)
 		goto nomem;
