@@ -133,8 +133,9 @@ class docHandler(xml.sax.ContentHandler):
             writeHtml("<" + name)
             if attrs.getLength() > 0:
                 names = attrs.getNames()
-                for name in names:
-                    writeHtml(" " + name + "=\"" + attrs.get(name) + "\"")
+                for n in names:
+                    v = attrs.get(n)
+                    writeHtml(" " + n + "=\"" + v + "\"")
             writeHtml(" />" if name == "br" else ">")
 
     def characters(self, content):
