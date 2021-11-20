@@ -570,16 +570,17 @@ class tncc:
             for cert in self.avail_certs:
                 fail = False
                 for dn_name, dn_vals in req_dns.items():
-                    for name, val in dn_vals.items():
-                        try:
-                            if dn_name == 'IssuerDN':
-                                assert val in cert.issuer[name]
-                            else:
-                                logging.warning('Unknown DN type %s', str(dn_name))
-                                raise Exception()
-                        except Exception:
-                            fail = True
-                            break
+                    if dn_name == 'IssuerDN':
+                        for name, val in dn_vals.items():
+                            if (
+                                name not in cert.issuer
+                                or val not in cert.issuer[name]
+                            ):
+                                fail = True
+                                break
+                    else:
+                        logging.warning('Unknown DN type %s', str(dn_name))
+                        fail = True
                     if fail:
                         break
                 if not fail:
@@ -678,10 +679,11 @@ if __name__ == "__main__":
             for iface in netifaces.interfaces():
                 try:
                     mac = netifaces.ifaddresses(iface)[netifaces.AF_LINK][0]['addr']
-                    assert mac != '00:00:00:00:00:00'
-                    mac_addrs.append(mac)
-                except Exception:
+                except (IndexError, KeyError):
                     pass
+                else:
+                    if mac != '00:00:00:00:00:00':
+                        mac_addrs.append(mac)
 
     hostname = os.environ.get('TNCC_HOSTNAME', socket.gethostname())
 
