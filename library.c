@@ -1532,6 +1532,10 @@ int process_auth_form(struct openconnect_info *vpninfo, struct oc_auth_form *for
 		vpn_progress(vpninfo, PRG_ERR, _("No form handler; cannot authenticate.\n"));
 		return OC_FORM_RESULT_ERR;
 	}
+	if (!form->auth_id) {
+		vpn_progress(vpninfo, PRG_ERR, _("No form ID. This is a bug in OpenConnect's authentication code.\n"));
+		return OC_FORM_RESULT_ERR;
+	}
 
 retry:
 	auth_choice = NULL;

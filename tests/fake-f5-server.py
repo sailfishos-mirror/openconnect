@@ -84,9 +84,12 @@ def check_form_against_session(*fields, use_query=False):
 # [Save list of domains/authgroups in the session for use later]
 @app.route('/')
 def root():
-    domains, mock_dtls = request.args.get('domains'), request.args.get('mock_dtls')
+    domains, mock_dtls, no_html_login_form = request.args.get('domains'), request.args.get('mock_dtls'), request.args.get('no_html_login_form')
+    assert not (domains and no_html_login_form), \
+        f'combination of domains and no_html_login_form is not allow specified'
     session.update(step='initial-GET', domains=domains and domains.split(','),
-                   mock_dtls=mock_dtls and bool(mock_dtls))
+                   mock_dtls=mock_dtls and bool(mock_dtls),
+                   no_html_login_form = no_html_login_form and bool(no_html_login_form))
     # print(session)
     return redirect(url_for('get_policy'))
 
@@ -95,6 +98,10 @@ def root():
 @app.route('/my.policy')
 def get_policy():
     session.update(step='GET-login-form')
+    no_html_login_form = session.get('no_html_login_form')
+    if no_html_login_form:
+        return '''<html><body>It would be nice if F5 login pages consistently used actual HTML forms</body></html>'''
+
     domains = session.get('domains')
     sel = ''
     if domains:

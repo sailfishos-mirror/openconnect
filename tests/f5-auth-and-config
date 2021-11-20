@@ -35,6 +35,12 @@ launch_simple_sr_server $ADDRESS 443 $CERT $KEY > /dev/null 2>&1
 PID=$!
 wait_server $PID 1
 
+echo -n "Authenticating with username/password in the absence of an HTML login form... "
+( echo "test" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT --protocol=f5 -q $ADDRESS:443/?no_html_login_form=1 -u test $FINGERPRINT --cookieonly >/dev/null 2>&1) ||
+    fail $PID "Could not receive cookie from fake F5 server"
+
+echo ok
+
 echo -n "Authenticating with username/password... "
 ( echo "test" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT --protocol=f5 -q $ADDRESS:443 -u test $FINGERPRINT --cookieonly >/dev/null 2>&1) ||
     fail $PID "Could not receive cookie from fake F5 server"
