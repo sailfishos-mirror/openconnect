@@ -52,9 +52,9 @@ static WINTUN_SEND_PACKET_FUNC WintunSendPacket;
 static struct openconnect_info *logger_vpninfo;
 
 #define WINTUN_POOL_NAME L"OpenConnect"
-#define WINTUN_RING_SIZE 0x400000
+#define WINTUN_RING_CAPACITY 0x400000 /* 4 MiB */
 
-static CALLBACK void wintun_log_fn(WINTUN_LOGGER_LEVEL wlvl, const WCHAR *wmsg)
+static void CALLBACK wintun_log_fn(WINTUN_LOGGER_LEVEL wlvl, const WCHAR *wmsg)
 {
 	int lvl = (wlvl == WINTUN_LOG_INFO) ? PRG_INFO : PRG_ERR;
 
@@ -74,8 +74,8 @@ static int init_wintun(struct openconnect_info *vpninfo)
 			vpn_progress(vpninfo, PRG_DEBUG, _("Could not load wintun.dll\n"));
 			return -ENOENT;
 		}
-#define Resolve(Name) ((Name = (void *)GetProcAddress(vpninfo->wintun, #Name)) == NULL)
 
+#define Resolve(Name) ((Name = (void *)GetProcAddress(vpninfo->wintun, #Name)) == NULL)
 		if (Resolve(WintunCreateAdapter) || Resolve(WintunDeleteAdapter) ||
 		    Resolve(WintunDeletePoolDriver) || Resolve(WintunEnumAdapters) ||
 		    Resolve(WintunFreeAdapter) || Resolve(WintunOpenAdapter) ||
@@ -85,7 +85,7 @@ static int init_wintun(struct openconnect_info *vpninfo)
 		    Resolve(WintunEndSession) || Resolve(WintunGetReadWaitEvent) ||
 		    Resolve(WintunReceivePacket) || Resolve(WintunReleaseReceivePacket) ||
 		    Resolve(WintunAllocateSendPacket) || Resolve(WintunSendPacket)) {
-
+#undef Resolve
 			vpn_progress(vpninfo, PRG_ERR, _("Could not resolve functions from wintun.dll\n"));
 			FreeLibrary(vpninfo->wintun);
 			vpninfo->wintun = NULL;
@@ -139,7 +139,12 @@ intptr_t open_wintun(struct openconnect_info *vpninfo, char *guid, wchar_t *wnam
 		}
 	}
 
-	vpninfo->wintun_session = WintunStartSession(vpninfo->wintun_adapter, 0x400000);
+	DWORD ver = WintunGetRunningDriverVersion();
+	vpn_progress(vpninfo, PRG_DEBUG, _("Loaded Wintun v%u.%u\n"),
+		     (ver >> 16) & 0xff, ver & 0xff);
+
+	vpninfo->wintun_session = WintunStartSession(vpninfo->wintun_adapter,
+	                                             WINTUN_RING_CAPACITY);
 	if (!vpninfo->wintun_session) {
 		char *errstr = openconnect__win32_strerror(GetLastError());
 		vpn_progress(vpninfo, PRG_ERR, _("Failed to create Wintun session: %s\n"),
@@ -149,10 +154,6 @@ intptr_t open_wintun(struct openconnect_info *vpninfo, char *guid, wchar_t *wnam
 		ret = OPEN_TUN_HARDFAIL;
 		goto out;
 	}
-
-	DWORD ver = WintunGetRunningDriverVersion();
-	vpn_progress(vpninfo, PRG_DEBUG, _("Loaded Wintun v%d.%d\n"),
-		     (int)ver >> 16, (int)ver & 0xff);
 
 	return 1;
  out:
@@ -193,8 +194,8 @@ void os_shutdown_wintun(struct openconnect_info *vpninfo)
 		vpninfo->wintun_session = NULL;
 	}
 	if (vpninfo->wintun_adapter) {
-		BOOL rr;
-		WintunDeleteAdapter(vpninfo->wintun_adapter, FALSE, &rr);
+		WintunDeleteAdapter(vpninfo->wintun_adapter, FALSE, NULL);
+		WintunFreeAdapter(vpninfo->wintun_adapter);
 		vpninfo->wintun_adapter = NULL;
 	}
 	logger_vpninfo = NULL;
