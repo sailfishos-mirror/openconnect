@@ -166,25 +166,46 @@ int os_read_wintun(struct openconnect_info *vpninfo, struct pkt *pkt)
 	DWORD tun_len;
 	BYTE *tun_pkt = WintunReceivePacket(vpninfo->wintun_session,
 					    &tun_len);
-	if (tun_pkt && tun_len < pkt->len) {
+	if (!tun_pkt) {
+		DWORD err = GetLastError();
+		if (err != ERROR_NO_MORE_ITEMS) {
+			const char *errstr = openconnect__win32_strerror(err);
+			vpn_progress(vpninfo, PRG_ERR, _("Could not retrieve packet from Wintun adapter '%S': %s\n"),
+				     vpninfo->ifname_w, errstr);
+			free(errstr);
+		}
+		return -1;
+	}
+
+	int ret = 0;
+	if (tun_len <= pkt->len) {
 		memcpy(pkt->data, tun_pkt, tun_len);
 		pkt->len = tun_len;
-		WintunReleaseReceivePacket(vpninfo->wintun_session, tun_pkt);
-		return 0;
+	} else {
+		vpn_progress(vpninfo, PRG_ERR, _("Drop oversized packet retrieved from Wintun adapter '%S' (%ld > %d)\n"),
+			     vpninfo->ifname_w, tun_len, pkt->len);
+		ret = -1;
 	}
-	return -1;
+	WintunReleaseReceivePacket(vpninfo->wintun_session, tun_pkt);
+	return ret;
 }
 
 int os_write_wintun(struct openconnect_info *vpninfo, struct pkt *pkt)
 {
 	BYTE *tun_pkt = WintunAllocateSendPacket(vpninfo->wintun_session,
 						 pkt->len);
-	if (tun_pkt) {
-		memcpy(tun_pkt, pkt->data, pkt->len);
-		WintunSendPacket(vpninfo->wintun_session, tun_pkt);
-		return 0;
+	if (!tun_pkt) {
+		DWORD err = GetLastError();
+		const char *errstr = openconnect__win32_strerror(err);
+		vpn_progress(vpninfo, PRG_ERR, _("Could not send packet through Wintun adapter '%S': %s\n"),
+			     vpninfo->ifname_w, errstr);
+		free(errstr);
+		return -1;
 	}
-	return -1;
+
+	memcpy(tun_pkt, pkt->data, pkt->len);
+	WintunSendPacket(vpninfo->wintun_session, tun_pkt);
+	return 0;
 }
 
 void os_shutdown_wintun(struct openconnect_info *vpninfo)
