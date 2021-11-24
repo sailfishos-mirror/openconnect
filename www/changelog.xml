@@ -54,6 +54,7 @@
        <li>Pass "portal cookie" fields from GlobalProtect portal to gateway to avoid repetition of password- or SAML-based login (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/199">!199</a>)</li>
        <li>With <tt>--user</tt>, enter username supplied via command-line into all authentication forms, not just the first. (<a href="https://gitlab.com/openconnect/openconnect/-/issues/267">#267</a>, <a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/220">!220</a>).</li>
        <li>Fix a subtle bug which has prevented ESP rekey and ESP-to-TLS fallback from working reliably with the Juniper/oNCP protocol since v8.04. (<a href="https://gitlab.com/openconnect/openconnect/-/issues/322">#322</a>, <a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/293">!293</a>).</li>
+       <li>Fix a bug in <tt>csd-wrapper.sh</tt> which has prevented it from correctly downloading compressed Trojan binaries since at least v8.00. (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/305">!305</a>)</li>
      </ul><br/>
   </li>
   <li><b><a href="https://www.infradead.org/openconnect/download/openconnect-8.10.tar.gz">OpenConnect v8.10</a></b>
