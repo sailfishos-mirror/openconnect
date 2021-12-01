@@ -93,6 +93,7 @@ Section "Uninstall"
   RMDir "$SMPROGRAMS\OpenConnect"
 
   !include uninstfiles.nsh
+  Delete /rebootok "$INSTDIR\Online Documentation.url"
   Delete /rebootok "$INSTDIR\Uninstall OpenConnect.exe"
   RMDir "$INSTDIR"
 SectionEnd
