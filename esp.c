@@ -82,10 +82,13 @@ int esp_setup(struct openconnect_info *vpninfo)
 	    vpninfo->dtls_state == DTLS_NOSECRET)
 		return -EINVAL;
 
-	if (vpninfo->esp_ssl_fallback)
-		vpninfo->dtls_times.dpd = vpninfo->esp_ssl_fallback;
-	else
-		vpninfo->dtls_times.dpd = vpninfo->dtls_attempt_period;
+	/* XX: set ESP DPD interval if not already set */
+	if (!vpninfo->dtls_times.dpd) {
+		if (vpninfo->esp_ssl_fallback)
+			vpninfo->dtls_times.dpd = vpninfo->esp_ssl_fallback;
+		else
+			vpninfo->dtls_times.dpd = vpninfo->dtls_attempt_period;
+	}
 
 	print_esp_keys(vpninfo, _("incoming"), &vpninfo->esp_in[vpninfo->current_esp_in]);
 	print_esp_keys(vpninfo, _("outgoing"), &vpninfo->esp_out);

@@ -185,7 +185,14 @@ compression can be disabled by setting the mode to
 .B \-\-force\-dpd=INTERVAL
 Use
 .I INTERVAL
-as minimum Dead Peer Detection interval (in seconds) for CSTP and DTLS, forcing use of DPD even when the server doesn't request it.
+as Dead Peer Detection interval (in seconds). This will cause the client to use
+DPD at the specified interval even if the server hasn't requested it, or at a
+different interval from the one requested by the server.
+
+DPD mechanisms vary by protocol and by transport (TLS or DTLS/ESP), but are all
+functionally similar: they enable either the VPN client or the VPN server to
+transmit a signal to the peer, requesting an immediate reply which can be used
+to confirm that the link between the two peers is still working.
 .TP
 .B \-g,\-\-usergroup=GROUP
 Use
