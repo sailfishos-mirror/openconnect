@@ -1,8 +1,9 @@
 AC_INIT(openconnect, 8.10)
+AC_LANG([C])
 AC_CONFIG_HEADERS([config.h])
+m4_ifdef([AC_CONFIG_MACRO_DIRS], [AC_CONFIG_MACRO_DIRS([m4])])
 
 PKG_PROG_PKG_CONFIG
-AC_LANG_C
 AC_CANONICAL_HOST
 AM_MAINTAINER_MODE([enable])
 AM_INIT_AUTOMAKE([foreign tar-ustar subdir-objects])
@@ -819,7 +820,7 @@ fi
 AC_PROG_EGREP
 
 # Needs to happen after we default to static/shared libraries based on OpenSSL
-AC_PROG_LIBTOOL
+LT_INIT
 if test "$use_openbsd_libtool" = "true" && test -x /usr/bin/libtool; then
 	echo using OpenBSD libtool
 	LIBTOOL=/usr/bin/libtool
