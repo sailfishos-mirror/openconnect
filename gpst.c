@@ -612,8 +612,6 @@ static int gpst_get_config(struct openconnect_info *vpninfo)
 	struct oc_text_buf *request_body = buf_alloc();
 	const char *old_addr = vpninfo->ip_info.addr;
 	const char *old_addr6 = vpninfo->ip_info.addr6;
-	const char *request_body_type = "application/x-www-form-urlencoded";
-	const char *method = "POST";
 	char *xml_buf = NULL;
 
 
@@ -635,7 +633,7 @@ static int gpst_get_config(struct openconnect_info *vpninfo)
 
 	orig_path = vpninfo->urlpath;
 	vpninfo->urlpath = strdup("ssl-vpn/getconfig.esp");
-	result = do_https_request(vpninfo, method, request_body_type, request_body, &xml_buf, NULL, HTTP_NO_FLAGS);
+	result = do_https_request(vpninfo, "POST", "application/x-www-form-urlencoded", request_body, &xml_buf, NULL, HTTP_NO_FLAGS);
 	free(vpninfo->urlpath);
 	vpninfo->urlpath = orig_path;
 
@@ -840,8 +838,6 @@ static int check_or_submit_hip_report(struct openconnect_info *vpninfo, const ch
 	int result;
 
 	struct oc_text_buf *request_body = buf_alloc();
-	const char *request_body_type = "application/x-www-form-urlencoded";
-	const char *method = "POST";
 	char *xml_buf=NULL, *orig_path;
 
 	/* cookie gives us these fields: authcookie, portal, user, domain, computer, and (maybe the unnecessary) preferred-ip/ipv6 */
@@ -865,7 +861,7 @@ static int check_or_submit_hip_report(struct openconnect_info *vpninfo, const ch
 
 	orig_path = vpninfo->urlpath;
 	vpninfo->urlpath = strdup(report ? "ssl-vpn/hipreport.esp" : "ssl-vpn/hipreportcheck.esp");
-	result = do_https_request(vpninfo, method, request_body_type, request_body, &xml_buf, NULL, HTTP_NO_FLAGS);
+	result = do_https_request(vpninfo, "POST", "application/x-www-form-urlencoded", request_body, &xml_buf, NULL, HTTP_NO_FLAGS);
 	free(vpninfo->urlpath);
 	vpninfo->urlpath = orig_path;
 

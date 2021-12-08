@@ -998,7 +998,7 @@ static int proxy_read(struct openconnect_info *vpninfo, char *buf, size_t len)
 	return cancellable_recv(vpninfo, vpninfo->proxy_fd, buf, len);
 }
 
-static const char *socks_errors[] = {
+static const char * const socks_errors[] = {
 	N_("request granted"),
 	N_("general failure"),
 	N_("connection not allowed by ruleset"),

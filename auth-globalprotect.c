@@ -604,7 +604,6 @@ static int gpst_login(struct openconnect_info *vpninfo, int portal, struct login
 {
 	int result, blind_retry = 0;
 	struct oc_text_buf *request_body = buf_alloc();
-	const char *request_body_type = "application/x-www-form-urlencoded";
 	char *xml_buf = NULL, *orig_path;
 
 	/* Ask the user to fill in the auth form; repeat as necessary */
@@ -685,7 +684,7 @@ static int gpst_login(struct openconnect_info *vpninfo, int portal, struct login
 
 		orig_path = vpninfo->urlpath;
 		vpninfo->urlpath = strdup(portal ? "global-protect/getconfig.esp" : "ssl-vpn/login.esp");
-		result = do_https_request(vpninfo, "POST", request_body_type, request_body, &xml_buf, NULL, HTTP_NO_FLAGS);
+		result = do_https_request(vpninfo, "POST", "application/x-www-form-urlencoded", request_body, &xml_buf, NULL, HTTP_NO_FLAGS);
 		free(vpninfo->urlpath);
 		vpninfo->urlpath = orig_path;
 
@@ -775,8 +774,6 @@ int gpst_bye(struct openconnect_info *vpninfo, const char *reason)
 	char *orig_path;
 	int result;
 	struct oc_text_buf *request_body = buf_alloc();
-	const char *request_body_type = "application/x-www-form-urlencoded";
-	const char *method = "POST";
 	char *xml_buf = NULL;
 
 	/* In order to logout successfully, the client must send not only
@@ -801,7 +798,7 @@ int gpst_bye(struct openconnect_info *vpninfo, const char *reason)
 	orig_path = vpninfo->urlpath;
 	vpninfo->urlpath = strdup("ssl-vpn/logout.esp");
 	openconnect_close_https(vpninfo, 0);
-	result = do_https_request(vpninfo, method, request_body_type, request_body, &xml_buf, NULL, HTTP_NO_FLAGS);
+	result = do_https_request(vpninfo, "POST", "application/x-www-form-urlencoded", request_body, &xml_buf, NULL, HTTP_NO_FLAGS);
 	free(vpninfo->urlpath);
 	vpninfo->urlpath = orig_path;
 
