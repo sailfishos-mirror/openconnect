@@ -368,7 +368,8 @@ class tncc:
         objs = []
 
         class ParamHTMLParser(HTMLParser.HTMLParser):
-            def handle_starttag(self, tag, attrs):
+            @staticmethod
+            def handle_starttag(tag, attrs):
                 if tag.lower() == 'param':
                     for key, value in attrs:
                         if key.lower() == 'value':
