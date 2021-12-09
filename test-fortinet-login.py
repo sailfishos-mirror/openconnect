@@ -1,11 +1,11 @@
 #!/usr/bin/python3
 
-from sys import stderr, version_info
+from sys import stderr
 import requests
 import argparse
 import getpass
 from shlex import quote
-from urllib.parse import urlparse, urlencode
+from urllib.parse import urlparse
 import http.client as httplib
 
 p = argparse.ArgumentParser()

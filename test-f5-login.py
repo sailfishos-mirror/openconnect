@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
-from sys import stderr, version_info
-from urllib.parse import urlparse, urlencode
+from sys import stderr
+from urllib.parse import urlparse
 import http.client as httplib
 import requests
 import argparse
