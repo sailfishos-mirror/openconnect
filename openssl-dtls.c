@@ -511,7 +511,7 @@ int start_dtls_handshake(struct openconnect_info *vpninfo, int dtls_fd)
 		for (i = 0; i < sk_SSL_CIPHER_num(ciphers); i++) {
 			ssl_ciph = sk_SSL_CIPHER_value(ciphers, i);
 			/* For PSK-NEGOTIATE just use the first one we find */
-			if (!dtlsver || !strcmp(SSL_CIPHER_get_name(ssl_ciph), cipher))
+			if (!strcmp(SSL_CIPHER_get_name(ssl_ciph), cipher))
 				break;
 		}
 
