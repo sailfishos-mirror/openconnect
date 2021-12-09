@@ -99,7 +99,7 @@ int openconnect__vasprintf(char **strp, const char *fmt, va_list ap)
 		res = NULL;
 		goto err;
 	}
-	if (len >= 0 && len < 160)
+	if (len < 160)
 		goto out;
 
 	free(res);
