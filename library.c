@@ -382,9 +382,20 @@ int openconnect_set_reported_os(struct openconnect_info *vpninfo,
 
 	if (!os) {
 #if defined(__APPLE__)
+#  include <TargetConditionals.h>
+#  if TARGET_OS_IOS
+		/* We need to use Apple's boolean "target" defines to distinguish iOS from
+		 * desktop MacOS. See  https://stackoverflow.com/a/5920028 and
+		 * https://github.com/mstg/iOS-full-sdk/blob/master/iPhoneOS9.3.sdk/usr/include/TargetConditionals.h#L64-L71
+		 */
+		os = "apple-ios";
+#  else
 		os = "mac-intel";
+#  endif
 #elif defined(__ANDROID__)
 		os = "android";
+#elif defined(_WIN32)
+		os = "win";
 #else
 		os = sizeof(long) > 4 ? "linux-64" : "linux";
 #endif
