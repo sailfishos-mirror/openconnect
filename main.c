@@ -948,7 +948,8 @@ static void usage(void)
 	printf("\n%s:\n", _("Local system information"));
 	printf("      --useragent=STRING          %s\n", _("HTTP header User-Agent: field"));
 	printf("      --local-hostname=STRING     %s\n", _("Local hostname to advertise to server"));
-	printf("      --os=STRING                 %s\n", _("OS type (linux,linux-64,win,...) to report"));
+	printf("      --os=STRING                 %s\n", _("OS type to report. Allowed values are the following:"));
+	printf("                                  %s\n", _("linux, linux-64, win, mac-intel, android, apple-ios"));
 	printf("      --version-string=STRING     %s\n", _("reported version string during authentication"));
 	printf("                                  (%s %s)\n", _("default:"), openconnect_version_str);
 
@@ -2029,7 +2030,8 @@ int main(int argc, char **argv)
 		case OPT_OS:
 			assert_nonnull_config_arg("os", config_arg);
 			if (openconnect_set_reported_os(vpninfo, config_arg)) {
-				fprintf(stderr, _("Invalid OS identity \"%s\"\n"),
+				fprintf(stderr, _("Invalid OS identity \"%s\"\n"
+						  "Allowed values: linux, linux-64, win, mac-intel, android, apple-ios\n"),
 					config_arg);
 				exit(1);
 			}
