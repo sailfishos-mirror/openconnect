@@ -378,6 +378,8 @@ int openconnect_make_cstp_connection(struct openconnect_info *vpninfo)
 int openconnect_set_reported_os(struct openconnect_info *vpninfo,
 				const char *os)
 {
+	const char *allowed[] = {"linux", "linux-64", "win", "mac-intel", "android", "apple-ios"};
+
 	if (!os) {
 #if defined(__APPLE__)
 		os = "mac-intel";
@@ -388,8 +390,13 @@ int openconnect_set_reported_os(struct openconnect_info *vpninfo,
 #endif
 	}
 
-	STRDUP(vpninfo->platname, os);
-	return 0;
+	for (int i = 0; i < ARRAY_SIZE(allowed); i++) {
+		if (!strcmp(os, allowed[i])) {
+			STRDUP(vpninfo->platname, os);
+			return 0;
+		}
+	}
+	return -EINVAL;
 }
 
 int openconnect_set_mobile_info(struct openconnect_info *vpninfo,
