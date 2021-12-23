@@ -876,6 +876,12 @@ static BOOL WINAPI console_ctrl_handler(DWORD dwCtrlType)
 }
 #endif
 
+static void print_default_vpncscript(void)
+{
+	printf("%s %s\n", _("Default vpnc-script (override with --script):"),
+	       default_vpncscript);
+}
+
 static struct oc_vpn_option *gai_overrides;
 
 static int gai_override_cb(void *cbdata, const char *node,
@@ -2024,6 +2030,7 @@ int main(int argc, char **argv)
 			printf(_("OpenConnect version %s\n"), openconnect_version_str);
 			print_build_opts();
 			print_supported_protocols();
+			print_default_vpncscript();
 			exit(0);
 		case 'x':
 			vpninfo->xmlconfig = keep_config_arg();
