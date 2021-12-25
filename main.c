@@ -2186,7 +2186,15 @@ int main(int argc, char **argv)
 	sig_vpninfo = vpninfo;
 	sig_cmd_fd = openconnect_setup_cmd_pipe(vpninfo);
 	if (sig_cmd_fd < 0) {
-		fprintf(stderr, _("Error opening cmd pipe\n"));
+#ifdef _WIN32
+		char *errstr = openconnect__win32_strerror(GetLastError());
+#else
+		const char *errstr = strerror(errno);
+#endif /* _WIN32 */
+		fprintf(stderr, _("Error opening cmd pipe: %s\n"), errstr);
+#ifdef _WIN32
+		free(errstr);
+#endif /* _WIN32 */
 		exit(1);
 	}
 	vpninfo->cmd_fd_internal = 1;
