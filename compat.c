@@ -320,7 +320,7 @@ int openconnect__win32_inet_pton(int af, const char *src, void *dst)
 	}
 }
 
-/* https://github.com/ncm/selectable-socketpair
+/* https://github.com/ncm/selectable-socketpair/blob/master/socketpair.c
 
 Copyright 2007, 2010 by Nathan C. Myers <ncm@cantrip.org>
 Redistribution and use in source and binary forms, with or without modification,
@@ -348,6 +348,11 @@ WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH 
  */
 
 /* Changes:
+ * 2014-02-12: merge David Woodhouse, Ger Hobbelt improvements
+ *     git.infradead.org/users/dwmw2/openconnect.git/commitdiff/bdeefa54
+ *     github.com/GerHobbelt/selectable-socketpair
+ *   always init the socks[] to -1/INVALID_SOCKET on error, both on Win32/64
+ *   and UNIX/other platforms
  * 2013-07-18: Change to BSD 3-clause license
  * 2010-03-31:
  *   set addr to 127.0.0.1 because win32 getsockname does not always set it.
@@ -367,7 +372,7 @@ WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH 
 
 #include <string.h>
 
-# include <winsock2.h>
+# include <ws2tcpip.h>  /* socklen_t, et al (MSVC20xx) */
 # include <windows.h>
 # include <io.h>
 
@@ -379,7 +384,7 @@ WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH 
  *   sockets must be closed with closesocket() regardless.
  */
 
-OPENCONNECT_CMD_SOCKET dumb_socketpair(OPENCONNECT_CMD_SOCKET socks[2], int make_overlapped)
+int dumb_socketpair(OPENCONNECT_CMD_SOCKET socks[2], int make_overlapped)
 {
     union {
         struct sockaddr_in inaddr;
@@ -395,6 +400,7 @@ OPENCONNECT_CMD_SOCKET dumb_socketpair(OPENCONNECT_CMD_SOCKET socks[2], int make
         WSASetLastError(WSAEINVAL);
         return SOCKET_ERROR;
     }
+    socks[0] = socks[1] = -1;
 
     listener = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (listener == INVALID_SOCKET)
@@ -405,8 +411,7 @@ OPENCONNECT_CMD_SOCKET dumb_socketpair(OPENCONNECT_CMD_SOCKET socks[2], int make
     a.inaddr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
     a.inaddr.sin_port = 0;
 
-    socks[0] = socks[1] = -1;
-    do {
+    for (;;) {
         if (setsockopt(listener, SOL_SOCKET, SO_REUSEADDR,
                (char *) &reuse, (socklen_t) sizeof(reuse)) == -1)
             break;
@@ -417,7 +422,7 @@ OPENCONNECT_CMD_SOCKET dumb_socketpair(OPENCONNECT_CMD_SOCKET socks[2], int make
         if (getsockname(listener, &a.addr, &addrlen) == SOCKET_ERROR)
             break;
         // win32 getsockname may only set the port number, p=0.0005.
-        // ( https://docs.microsoft.com/en-us/windows/win32/api/winsock/nf-winsock-getsockname ):
+        // ( https://docs.microsoft.com/windows/win32/api/winsock/nf-winsock-getsockname ):
         a.inaddr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
         a.inaddr.sin_family = AF_INET;
 
@@ -437,13 +442,14 @@ OPENCONNECT_CMD_SOCKET dumb_socketpair(OPENCONNECT_CMD_SOCKET socks[2], int make
         closesocket(listener);
         return 0;
 
-    } while (0);
+    }
 
     e = WSAGetLastError();
     closesocket(listener);
     closesocket(socks[0]);
     closesocket(socks[1]);
     WSASetLastError(e);
+    socks[0] = socks[1] = -1;
     return SOCKET_ERROR;
 }
-#endif /* _WIN32 */
+#endif
