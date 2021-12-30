@@ -383,7 +383,7 @@ static char *convert_arg_to_utf8(char **argv, char *arg)
 		argv_w = CommandLineToArgvW(GetCommandLineW(), &argc_w);
 		if (!argv_w) {
 			char *errstr = openconnect__win32_strerror(GetLastError());
-			fprintf(stderr, _("CommandLineToArgvW() failed: %s\n"),
+			fprintf(stderr, _("CommandLineToArgv() failed: %s\n"),
 				errstr);
 			free(errstr);
 			exit(1);
@@ -464,7 +464,7 @@ static void read_stdin(char **string, int hidden, int allow_fail)
 		/* Not a console; maybe reading from a piped stdin? */
 		if (!fgetws(wbuf, ARRAY_SIZE(wbuf), stdin)) {
 			char *errstr = openconnect__win32_strerror(GetLastError());
-			fprintf(stderr, _("fgetws() failed: %s\n"), errstr);
+			fprintf(stderr, _("fgetws (stdin): %s\n"), errstr);
 			free(errstr);
 			*string = NULL;
 			return;
