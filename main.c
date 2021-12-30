@@ -463,9 +463,7 @@ static void read_stdin(char **string, int hidden, int allow_fail)
 	} else {
 		/* Not a console; maybe reading from a piped stdin? */
 		if (!fgetws(wbuf, ARRAY_SIZE(wbuf), stdin)) {
-			char *errstr = openconnect__win32_strerror(GetLastError());
-			fprintf(stderr, _("fgetws (stdin): %s\n"), errstr);
-			free(errstr);
+			perror(_("fgetws (stdin)"));
 			*string = NULL;
 			return;
 		}
@@ -491,7 +489,7 @@ static void read_stdin(char **string, int hidden, int allow_fail)
 	}
 	buf = malloc(nr_read);
 	if (!buf) {
-		fprintf(stderr, _("Allocation failure for string from stdin\n"));
+		perror(_("Allocation failure for string from stdin"));
 		exit(1);
 	}
 
@@ -1599,7 +1597,7 @@ static int background_self(struct openconnect_info *vpninfo, char *pidfile)
 	}
 	pid = fork();
 	if (pid == -1) {
-		vpn_perror(vpninfo, "Failed to continue in background\n");
+		vpn_perror(vpninfo, _("Failed to continue in background"));
 		exit(1);
 	} else if (pid > 0) {
 		if (fp) {
