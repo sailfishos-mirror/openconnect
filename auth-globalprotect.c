@@ -95,53 +95,71 @@ static int parse_prelogin_xml(struct openconnect_info *vpninfo, xmlNode *xml_nod
 	}
 
 	if (saml_method && s) {
-		if (!strcmp(saml_method, "REDIRECT")) {
-			int len;
-			saml_path = openconnect_base64_decode(&len, s);
-			if (len < 0) {
-				vpn_progress(vpninfo, PRG_ERR, "Could not decode SAML request as base64: %s\n", s);
+		/* Allow the legacy workflow (no GUI setting up open_webview) to keep working */
+		if (!vpninfo->open_webview && ctx->portal_userauthcookie)
+			vpn_progress(vpninfo, PRG_DEBUG, _("SAML authentication required; using portal-userauthcookie to continue SAML.\n"));
+		else if (!vpninfo->open_webview && ctx->portal_prelogonuserauthcookie)
+			vpn_progress(vpninfo, PRG_DEBUG, _("SAML authentication required; using portal-prelogonuserauthcookie to continue SAML.\n"));
+		else if (!vpninfo->open_webview && ctx->alt_secret)
+			vpn_progress(vpninfo, PRG_DEBUG, _("Destination form field %s was specified; assuming SAML %s authentication is complete.\n"),
+			             ctx->alt_secret, saml_method);
+		else {
+			if (!strcmp(saml_method, "REDIRECT")) {
+				int len;
+				saml_path = openconnect_base64_decode(&len, s);
+				if (len < 0) {
+					vpn_progress(vpninfo, PRG_ERR, "Could not decode SAML request as base64: %s\n", s);
+					free(s);
+					result = -EINVAL;
+					goto out;
+				}
 				free(s);
+				realloc_inplace(saml_path, len+1);
+				if (!saml_path) {
+					result = -ENOMEM;
+					goto out;
+				}
+				saml_path[len] = '\0';
+				vpninfo->sso_login = strdup(saml_path);
+				prompt = strdup("SAML REDIRECT authentication in progress");
+				if (!vpninfo->sso_login || !prompt) {
+					result = -ENOMEM;
+					goto out;
+				}
+			} else if (!strcmp(saml_method, "POST")) {
+				const char *prefix = "data:text/html;base64,";
+				saml_path = s;
+				realloc_inplace(saml_path, strlen(saml_path)+strlen(prefix)+1);
+				if (!saml_path) {
+					result = -ENOMEM;
+					goto out;
+				}
+				memmove(saml_path + strlen(prefix), saml_path, strlen(saml_path) + 1);
+				memcpy(saml_path, prefix, strlen(prefix));
+				vpninfo->sso_login = strdup(saml_path);
+				prompt = strdup("SAML REDIRECT authentication in progress");
+				if (!vpninfo->sso_login || !prompt) {
+					result = -ENOMEM;
+					goto out;
+				}
+			} else {
+				vpn_progress(vpninfo, PRG_ERR, "Unknown SAML method %s\n", saml_method);
 				result = -EINVAL;
 				goto out;
 			}
-			free(s);
-			realloc_inplace(saml_path, len+1);
-			if (!saml_path) {
-				result = -ENOMEM;
-				goto out;
-			}
-			saml_path[len] = '\0';
-			vpninfo->sso_login = strdup(saml_path);
-			prompt = strdup("SAML REDIRECT authentication in progress");
-			if (!vpninfo->sso_login || !prompt) {
-				result = -ENOMEM;
-				goto out;
-			}
-		} else if (!strcmp(saml_method, "POST")) {
-			const char *prefix = "data:text/html;base64,";
-			saml_path = s;
-			realloc_inplace(saml_path, strlen(saml_path)+strlen(prefix)+1);
-			if (!saml_path) {
-				result = -ENOMEM;
-				goto out;
-			}
-			memmove(saml_path + strlen(prefix), saml_path, strlen(saml_path) + 1);
-			memcpy(saml_path, prefix, strlen(prefix));
-			vpninfo->sso_login = strdup(saml_path);
-			prompt = strdup("SAML REDIRECT authentication in progress");
-			if (!vpninfo->sso_login || !prompt) {
-				result = -ENOMEM;
-				goto out;
-			}
-		} else {
-			vpn_progress(vpninfo, PRG_ERR, "Unknown SAML method %s\n", saml_method);
-			result = -EINVAL;
-			goto out;
-		}
 
-		vpn_progress(vpninfo, PRG_INFO,
-			     _("SAML %s authentication is required via %s\n"),
-			     saml_method, saml_path);
+			vpn_progress(vpninfo, PRG_INFO,
+					_("SAML %s authentication is required via %s\n"),
+					saml_method, saml_path);
+
+			/* Legacy flow (when not called by n-m-oc) */
+			if (!vpninfo->open_webview) {
+				vpn_progress(vpninfo,
+					PRG_ERR, _("When SAML authentication is complete, specify destination form field by appending :field_name to login URL.\n"));
+				result = -EINVAL;
+				goto out;
+			}
+		}
 	}
 
 	/* Replace old form */
