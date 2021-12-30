@@ -1254,12 +1254,13 @@ int cstp_sso_detect_done(struct openconnect_info *vpninfo,
 {
 	int i;
 
+	/* Note that, at least with some backends (eg: Google's), empty cookies might be set */
 	for (i=0; result->cookies[i] != NULL; i+=2) {
 		const char *cname = result->cookies[i], *cval = result->cookies[i+1];
-		if (!strcmp(vpninfo->sso_token_cookie, cname)) {
+		if (!strcmp(vpninfo->sso_token_cookie, cname) && cval && cval[0] != '\0') {
 			vpninfo->sso_cookie_value = strdup(cval);
 			break;
-		} else if (!strcmp(vpninfo->sso_error_cookie, cname)) {
+		} else if (!strcmp(vpninfo->sso_error_cookie, cname) && cval && cval[0] != '\0') {
 			/* XX: or should we combine both the error cookie name and its value? */
 			vpninfo->quit_reason = strdup(cval);
 			return -EINVAL;
