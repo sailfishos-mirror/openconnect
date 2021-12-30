@@ -1254,10 +1254,6 @@ int cstp_sso_detect_done(struct openconnect_info *vpninfo,
 {
 	int i;
 
-	/* If we're not at the final URI, tell the webview to keep going */
-	if (strcmp(result->uri, vpninfo->sso_login_final))
-		return -EAGAIN;
-
 	for (i=0; result->cookies[i] != NULL; i+=2) {
 		const char *cname = result->cookies[i], *cval = result->cookies[i+1];
 		if (!strcmp(vpninfo->sso_token_cookie, cname)) {
@@ -1269,6 +1265,11 @@ int cstp_sso_detect_done(struct openconnect_info *vpninfo,
 			return -EINVAL;
 		}
 	}
+
+	/* If we're not at the final URI, tell the webview to keep going.
+	 * Note that we might find the cookie at any time, not only on the last page. */
+	if (strcmp(result->uri, vpninfo->sso_login_final))
+		return -EAGAIN;
 
 	/* Tell the webview to terminate */
 	return 0;
