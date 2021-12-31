@@ -406,6 +406,7 @@ int dumb_socketpair(OPENCONNECT_CMD_SOCKET socks[2], int make_overlapped)
     OPENCONNECT_CMD_SOCKET listener;
     int e, ii;
     int domain = AF_UNIX;
+    const char *dname = "AF_UNIX";
     socklen_t addrlen = sizeof(a.unaddr);
     DWORD flags = (make_overlapped ? WSA_FLAG_OVERLAPPED : 0);
     int reuse = 1;
@@ -420,6 +421,9 @@ int dumb_socketpair(OPENCONNECT_CMD_SOCKET socks[2], int make_overlapped)
         listener = socket(domain, SOCK_STREAM, domain == AF_INET ? IPPROTO_TCP : 0);
         if (listener == INVALID_SOCKET)
             goto fallback;
+
+        fprintf(stderr, _("Successfully created %s listener socket %d\n"),
+                dname, listener);
 
         memset(&a, 0, sizeof(a));
         if (domain == AF_UNIX) {
@@ -474,6 +478,8 @@ int dumb_socketpair(OPENCONNECT_CMD_SOCKET socks[2], int make_overlapped)
                 if (bind(listener, &a.addr, addrlen) != SOCKET_ERROR)
                     break;
             }
+	    fprintf(stderr, _("Successfully bound AF_UNIX listener socket %d to path %s\n"),
+		    listener, a.unaddr.sun_path);
         } else {
             a.inaddr.sin_family = AF_INET;
             a.inaddr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
@@ -485,6 +491,8 @@ int dumb_socketpair(OPENCONNECT_CMD_SOCKET socks[2], int make_overlapped)
 
             if (bind(listener, &a.addr, addrlen) == SOCKET_ERROR)
                 goto fallback;
+            fprintf(stderr, _("Successfully bound AF_INET listener socket %d to 127.0.0.1:%d\n"),
+                    listener, a.inaddr.sin_port);
 
             memset(&a, 0, sizeof(a));
             if (getsockname(listener, &a.addr, &addrlen) == SOCKET_ERROR)
@@ -499,17 +507,27 @@ int dumb_socketpair(OPENCONNECT_CMD_SOCKET socks[2], int make_overlapped)
         if (listen(listener, 1) == SOCKET_ERROR)
             goto fallback;
 
+        fprintf(stderr, _("Successfully listened on %s listener socket %d\n"),
+                dname, listener);
         socks[0] = WSASocket(domain, SOCK_STREAM, 0, NULL, 0, flags);
         if (socks[0] == INVALID_SOCKET)
             goto fallback;
+        fprintf(stderr, _("Successfully created %s socket socks[0]=%d with WSASocket\n"),
+                dname, socks[0]);
         if (connect(socks[0], &a.addr, addrlen) == SOCKET_ERROR)
             goto fallback;
+        fprintf(stderr, _("Successfully connected %s socket socks[0]=%d to listener\n"),
+                dname, socks[0]);
 
         socks[1] = accept(listener, NULL, NULL);
         if (socks[1] == INVALID_SOCKET)
             goto fallback;
+        fprintf(stderr, _("Successfully accepted %s socket socks[1]=%d on listener\n"),
+                dname, socks[1]);
 
         closesocket(listener);
+        fprintf(stderr, _("Successfully created %s socketpair {%d, %d}\n"),
+                dname, socks[0], socks[1]);
         return 0;
 
     fallback:
@@ -520,6 +538,7 @@ int dumb_socketpair(OPENCONNECT_CMD_SOCKET socks[2], int make_overlapped)
          * or if setting up AF_UNIX socket fails in any other way.
          */
         domain = AF_INET;
+        dname = "AF_INET";
         addrlen = sizeof(a.inaddr);
 
         e = WSAGetLastError();
