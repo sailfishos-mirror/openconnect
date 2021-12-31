@@ -376,6 +376,17 @@ WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH 
 # include <windows.h>
 # include <io.h>
 
+#ifdef HAVE_AFUNIX_H
+#include <afunix.h>
+#else
+#define UNIX_PATH_MAX 108
+struct sockaddr_un
+{
+    ADDRESS_FAMILY sun_family;     /* AF_UNIX */
+    char sun_path[UNIX_PATH_MAX];  /* pathname */
+} SOCKADDR_UN, *PSOCKADDR_UN;;
+#endif /* HAS_AFUNIX_H */
+
 /* dumb_socketpair:
  *   If make_overlapped is nonzero, both sockets created will be usable for
  *   "overlapped" operations via WSASend etc.  If make_overlapped is zero,
@@ -387,12 +398,14 @@ WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH 
 int dumb_socketpair(OPENCONNECT_CMD_SOCKET socks[2], int make_overlapped)
 {
     union {
+        struct sockaddr_un unaddr;
         struct sockaddr_in inaddr;
         struct sockaddr addr;
     } a;
     OPENCONNECT_CMD_SOCKET listener;
     int e;
-    socklen_t addrlen = sizeof(a.inaddr);
+    int domain = AF_UNIX;
+    socklen_t addrlen = sizeof(a.unaddr);
     DWORD flags = (make_overlapped ? WSA_FLAG_OVERLAPPED : 0);
     int reuse = 1;
 
@@ -402,37 +415,63 @@ int dumb_socketpair(OPENCONNECT_CMD_SOCKET socks[2], int make_overlapped)
     }
     socks[0] = socks[1] = -1;
 
-    listener = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (listener == INVALID_SOCKET)
-        return SOCKET_ERROR;
+    listener = socket(domain, SOCK_STREAM, 0);
+    if (listener == INVALID_SOCKET) {
+        /* AF_UNIX/SOCK_STREAM became available in Windows 10:
+         * https://devblogs.microsoft.com/commandline/af_unix-comes-to-windows
+         *
+         * We need to fallback to AF_INET on earlier versions of Windows.
+         */
+        domain = AF_INET;
+        addrlen = sizeof(a.inaddr);
+        listener = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+        if (listener == INVALID_SOCKET)
+            return SOCKET_ERROR;
+    }
 
     memset(&a, 0, sizeof(a));
-    a.inaddr.sin_family = AF_INET;
-    a.inaddr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-    a.inaddr.sin_port = 0;
+    if (domain == AF_UNIX) {
+        /* XX: Abstract sockets (filesystem-independent) don't work, contrary to
+         * the claims of the aforementioned blog post:
+         * https://github.com/microsoft/WSL/issues/4240#issuecomment-549663217
+         *
+         * So we must use a named path, and that comes with all the attendant
+         * problems of permissions and collisions.
+         */
+        a.unaddr.sun_family = AF_UNIX;
+        snprintf(a.unaddr.sun_path, UNIX_PATH_MAX, "./openconnect-%ld.cmdsock", GetCurrentProcessId());
+    } else {
+        a.inaddr.sin_family = AF_INET;
+        a.inaddr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+        a.inaddr.sin_port = 0;
+    }
 
     for (;;) {
-        if (setsockopt(listener, SOL_SOCKET, SO_REUSEADDR,
-               (char *) &reuse, (socklen_t) sizeof(reuse)) == -1)
-            break;
-        if (bind(listener, &a.addr, sizeof(a.inaddr)) == SOCKET_ERROR)
+        if (domain == AF_INET &&
+            setsockopt(listener, SOL_SOCKET, SO_REUSEADDR,
+                       (char *) &reuse, (socklen_t) sizeof(reuse)) == -1)
+                break;
+        if (bind(listener, &a.addr, addrlen) == SOCKET_ERROR)
             break;
 
-        memset(&a, 0, sizeof(a));
-        if (getsockname(listener, &a.addr, &addrlen) == SOCKET_ERROR)
-            break;
-        // win32 getsockname may only set the port number, p=0.0005.
-        // ( https://docs.microsoft.com/windows/win32/api/winsock/nf-winsock-getsockname ):
-        a.inaddr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-        a.inaddr.sin_family = AF_INET;
+        if (domain == AF_INET) {
+            memset(&a, 0, sizeof(a));
+            if (getsockname(listener, &a.addr, &addrlen) == SOCKET_ERROR)
+                break;
+
+            // win32 getsockname may only set the port number, p=0.0005.
+            // ( https://docs.microsoft.com/windows/win32/api/winsock/nf-winsock-getsockname ):
+            a.inaddr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+            a.inaddr.sin_family = AF_INET;
+        }
 
         if (listen(listener, 1) == SOCKET_ERROR)
             break;
 
-        socks[0] = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, flags);
+        socks[0] = WSASocket(domain, SOCK_STREAM, 0, NULL, 0, flags);
         if (socks[0] == INVALID_SOCKET)
             break;
-        if (connect(socks[0], &a.addr, sizeof(a.inaddr)) == SOCKET_ERROR)
+        if (connect(socks[0], &a.addr, addrlen) == SOCKET_ERROR)
             break;
 
         socks[1] = accept(listener, NULL, NULL);

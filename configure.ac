@@ -91,6 +91,10 @@ case $host_os in
     esac
     AC_SUBST(WINTUN_ARCH, "$wintun_arch")
 
+    # Per https://github.com/MisterDA/ocaml/commit/5855ce5ffd931a2802d5b9a5b2987ab0b276fd0a,
+    # "The header file <afunix.h> declares the `struct sockaddr_un` type, but hasn't been picked by mingw-w64."
+    AC_CHECK_HEADER([afunix.h], AC_DEFINE([HAVE_AF_UNIX_H], 1, [MinGW has afunix.h]))
+
     # MINGW_HAS_SECURE_API may only work on newer MinGW:
     # https://stackoverflow.com/a/51977723
     AC_DEFINE(MINGW_HAS_SECURE_API, 1, [Try to make getenv_s and _putenv_s available])
