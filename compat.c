@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <ctype.h>
+#include <inttypes.h>
 
 #ifdef _WIN32
 #include <sec_api/stdlib_s.h> /* errno_t, size_t */
@@ -436,10 +437,26 @@ int dumb_socketpair(OPENCONNECT_CMD_SOCKET socks[2], int make_overlapped)
          * https://github.com/microsoft/WSL/issues/4240#issuecomment-549663217
          *
          * So we must use a named path, and that comes with all the attendant
-         * problems of permissions and collisions.
+         * problems of permissions and collisions. Generating a path in the
+         * temporary directory, combining current high-res time and PID, seems
+         * like a less-bad option.
          */
+        LARGE_INTEGER ticks;
+        DWORD n = GetTempPath(UNIX_PATH_MAX, a.unaddr.sun_path);
+        /* If temp dir is too long, give up and just use current directory. */
+        if (n >= UNIX_PATH_MAX - 8)
+            n = 0;
+        /* GetTempFileName could be used here.
+         * (https://docs.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-gettempfilenamea)
+         * However it only adds 16 bits of time-based random bits,
+         * fails if there isn't room for a 14-character filename, and
+         * seems to offers no other apparent advantages. So we will
+         * use high-res timer ticks and PID for filename.
+         */
+        QueryPerformanceCounter(&ticks);
+        snprintf(a.unaddr.sun_path + n, UNIX_PATH_MAX - n,
+                 "%"PRIx64"-%"PRId32".$$$", ticks.QuadPart, GetCurrentProcessId());
         a.unaddr.sun_family = AF_UNIX;
-        snprintf(a.unaddr.sun_path, UNIX_PATH_MAX, "./openconnect-%ld.cmdsock", GetCurrentProcessId());
     } else {
         a.inaddr.sin_family = AF_INET;
         a.inaddr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
