@@ -133,26 +133,21 @@ static int setup_tun_device(struct openconnect_info *vpninfo)
 
 #if !defined(_WIN32) && !defined(__native_client__)
 	if (vpninfo->uid != getuid()) {
-		int e;
-
 		if (setgid(vpninfo->gid)) {
-			e = errno;
 			vpn_progress(vpninfo, PRG_ERR, _("Failed to set gid %ld: %s\n"),
-				     (long)vpninfo->gid, strerror(e));
+				     (long)vpninfo->gid, strerror(errno));
 			return -EPERM;
 		}
 
 		if (setgroups(1, &vpninfo->gid)) {
-			e = errno;
 			vpn_progress(vpninfo, PRG_ERR, _("Failed to set groups to %ld: %s\n"),
-				     (long)vpninfo->gid, strerror(e));
+				     (long)vpninfo->gid, strerror(errno));
 			return -EPERM;
 		}
 
 		if (setuid(vpninfo->uid)) {
-			e = errno;
 			vpn_progress(vpninfo, PRG_ERR, _("Failed to set uid %ld: %s\n"),
-				     (long)vpninfo->uid, strerror(e));
+				     (long)vpninfo->uid, strerror(errno));
 			return -EPERM;
 		}
 	}

@@ -1193,15 +1193,13 @@ static void get_uids(const char *config_arg, uid_t *uid, gid_t *gid)
 {
 	char *strend;
 	struct passwd *pw;
-	int e;
 
 	*uid = strtol(config_arg, &strend, 0);
 	if (strend[0]) {
 		pw = getpwnam(config_arg);
 		if (!pw) {
-			e = errno;
 			fprintf(stderr, _("Invalid user \"%s\": %s\n"),
-				config_arg, strerror(e));
+				config_arg, strerror(errno));
 			exit(1);
 		}
 		*uid = pw->pw_uid;
@@ -1209,9 +1207,8 @@ static void get_uids(const char *config_arg, uid_t *uid, gid_t *gid)
 	} else {
 		pw = getpwuid(*uid);
 		if (!pw) {
-			e = errno;
 			fprintf(stderr, _("Invalid user ID \"%d\": %s\n"),
-				(int)*uid, strerror(e));
+				(int)*uid, strerror(errno));
 			exit(1);
 		}
 		*gid = pw->pw_gid;

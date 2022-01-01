@@ -393,10 +393,9 @@ intptr_t os_setup_tun(struct openconnect_info *vpninfo)
 			 "/dev/%s", vpninfo->ifname);
 		tun_fd = bsd_open_tun(tun_name);
 		if (tun_fd < 0) {
-			int err = errno;
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("Cannot open '%s': %s\n"),
-				     tun_name, strerror(err));
+				     tun_name, strerror(errno));
 			return -EINVAL;
 		}
 	}

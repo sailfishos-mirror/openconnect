@@ -367,12 +367,11 @@ int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		if (ret < 0) {
 			/* Not that this is likely to happen with UDP, but... */
 			if (errno == ENOBUFS || errno == EAGAIN || errno == EWOULDBLOCK) {
-				int err = errno;
 				vpninfo->deflate_pkt = this;
 				this->len = len;
 				vpn_progress(vpninfo, PRG_DEBUG,
 					     _("Requeueing failed ESP send: %s\n"),
-					     strerror(err));
+					     strerror(errno));
 				monitor_write_fd(vpninfo, dtls);
 				return work_done;
 			} else {
