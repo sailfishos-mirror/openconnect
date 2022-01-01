@@ -400,8 +400,9 @@ static int parse_login_xml(struct openconnect_info *vpninfo, xmlNode *xml_node, 
 
 	if (unknown_args)
 		vpn_progress(vpninfo, PRG_ERR,
-					 _("Please report %d unexpected values above (of which %d fatal) to <openconnect-devel@lists.infradead.org>\n"),
-					 unknown_args, fatal_args);
+					 _("Please report %d unexpected values above (of which %d fatal) to <%s>\n"),
+					 unknown_args, fatal_args,
+					 "openconnect-devel@lists.infradead.org");
 	if (fatal_args) {
 		buf_free(cookie);
 		return -EPERM;

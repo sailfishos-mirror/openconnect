@@ -539,9 +539,9 @@ int start_dtls_handshake(struct openconnect_info *vpninfo, int dtls_fd)
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("SSL_set_session() failed with DTLS protocol version 0x%x\n"
 				       "Are you using a version of OpenSSL older than 0.9.8m?\n"
-				       "See http://rt.openssl.org/Ticket/Display.html?id=1751\n"
+				       "See %s\n"
 				       "Use the --no-dtls command line option to avoid this message\n"),
-				     dtlsver);
+				     dtlsver, "http://rt.openssl.org/Ticket/Display.html?id=1751");
 			SSL_CTX_free(vpninfo->dtls_ctx);
 			SSL_free(dtls_ssl);
 			vpninfo->dtls_ctx = NULL;

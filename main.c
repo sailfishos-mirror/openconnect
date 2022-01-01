@@ -659,7 +659,8 @@ static char *convert_to_utf8(char *legacy, int free_it)
 static void helpmessage(void)
 {
 	printf(_("For assistance with OpenConnect, please see the web page at\n"
-		 "  https://www.infradead.org/openconnect/mail.html\n"));
+		 "  %s\n"),
+	       "https://www.infradead.org/openconnect/mail.html");
 }
 
 static void print_build_opts(void)
@@ -2026,7 +2027,8 @@ int main(int argc, char **argv)
 		case OPT_NO_HTTP_KEEPALIVE:
 			fprintf(stderr,
 				_("Disabling all HTTP connection re-use due to --no-http-keepalive option.\n"
-				  "If this helps, please report to <openconnect-devel@lists.infradead.org>.\n"));
+				  "If this helps, please report to <%s>.\n"),
+				"openconnect-devel@lists.infradead.org");
 			vpninfo->no_http_keepalive = 1;
 			break;
 		case OPT_NO_CERT_CHECK:
@@ -2156,13 +2158,13 @@ int main(int argc, char **argv)
 			        _("WARNING: You specified %s. This should not be\n"
 			          "         necessary; please report cases where a priority string\n"
 			          "         override is necessary to connect to a server\n"
-			          "         to <openconnect-devel@lists.infradead.org>.\n"),
+			          "         to <%s>.\n"),
 #ifdef OPENCONNECT_GNUTLS
-				  "--gnutls-priority"
+			        "--gnutls-priority",
 #elif defined(OPENCONNECT_OPENSSL)
-				  "--openssl-ciphers"
+			        "--openssl-ciphers",
 #endif
-				  );
+			        "openconnect-devel@lists.infradead.org");
 
 			vpninfo->ciphersuite_config = dup_config_arg();
 			break;
@@ -2330,7 +2332,8 @@ int main(int argc, char **argv)
 		vpn_progress(vpninfo, PRG_INFO,
 			     _("No --script argument provided; DNS and routing are not configured\n"));
 		vpn_progress(vpninfo, PRG_INFO,
-			     _("See https://www.infradead.org/openconnect/vpnc-script.html\n"));
+			     _("See %s\n"),
+			     "https://www.infradead.org/openconnect/vpnc-script.html");
 	}
 
 

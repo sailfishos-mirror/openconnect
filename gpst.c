@@ -422,9 +422,9 @@ static int gpst_parse_config_xml(struct openconnect_info *vpninfo, xmlNode *xml_
 			if (vpninfo->ip_info.gateway_addr && strcmp(s, vpninfo->ip_info.gateway_addr))
 				vpn_progress(vpninfo, PRG_DEBUG, _("Config XML <connected-gw-ip> address (%s) differs from external\n"
 				                                   "gateway address (%s). Please report this to\n"
-								   "<openconnect-devel@lists.infradead.org>, including any problems\n"
+								   "<%s>, including any problems\n"
 								   "with ESP or other apparent loss of connectivity or performance.\n"),
-					     s, vpninfo->ip_info.gateway_addr);
+					     s, vpninfo->ip_info.gateway_addr, "openconnect-devel@lists.infradead.org");
 		} else if (xmlnode_is_named(xml_node, "dns-v6") ||
 			   xmlnode_is_named(xml_node, "dns")) {
 			for (member = xml_node->children; member && n_dns<3; member=member->next) {
@@ -568,7 +568,8 @@ static int gpst_parse_config_xml(struct openconnect_info *vpninfo, xmlNode *xml_
 	/* Warn about IPv6 config, if present, and ESP config, if absent */
 	if (new_ip_info.addr6)
 		vpn_progress(vpninfo, PRG_ERR,
-			     _("GlobalProtect IPv6 support is experimental. Please report results to <openconnect-devel@lists.infradead.org>.\n"));
+			     _("GlobalProtect IPv6 support is experimental. Please report results to <%s>.\n"),
+			     "openconnect-devel@lists.infradead.org");
 #ifdef HAVE_ESP
 	if (esp_keys && esp_v6 && new_ip_info.addr6) {
 		/* We got ESP keys, an IPv6 esp_magic address, and an IPv6 address */

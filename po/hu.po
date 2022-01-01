@@ -1323,7 +1323,7 @@ msgid ""
 "Server reports that reconnect-after-drop is not allowed. OpenConnect will "
 "not\n"
 "be able to reconnect if dead peer is detected. If reconnection DOES work,\n"
-"please report to <openconnect-devel@lists.infradead.org>\n"
+"please report to <%s>\n"
 msgstr ""
 
 #: fortinet.c:418
@@ -1356,7 +1356,7 @@ msgid ""
 "WARNING: Fortinet server does not specifically enable or disable "
 "reconnection\n"
 "    without reauthentication. If automatic reconnection does work, please\n"
-"    report results to <openconnect-devel@lists.infradead.org>\n"
+"    report results to <%s>\n"
 msgstr ""
 
 #: fortinet.c:557
@@ -1365,7 +1365,7 @@ msgid ""
 "OpenConnect will\n"
 "probably not be able to reconnect if dead peer is detected. If reconnection "
 "DOES,\n"
-"work please report to <openconnect-devel@lists.infradead.org>\n"
+"work please report to <%s>\n"
 msgstr ""
 
 #: fortinet.c:616
@@ -1382,9 +1382,9 @@ msgstr ""
 msgid ""
 "Fortinet server is rejecting request for connection options. This\n"
 "has been observed after reconnection in some cases. Please report to\n"
-"<openconnect-devel@lists.infradead.org>, or see the discussions on\n"
-"https://gitlab.com/openconnect/openconnect/-/issues/297 and\n"
-"https://gitlab.com/openconnect/openconnect/-/issues/298.\n"
+"<%s>, or see the discussions on\n"
+"%s and\n"
+"%s.\n"
 msgstr ""
 
 #: fortinet.c:680
@@ -2513,7 +2513,7 @@ msgstr ""
 msgid ""
 "Config XML <connected-gw-ip> address (%s) differs from external\n"
 "gateway address (%s). Please report this to\n"
-"<openconnect-devel@lists.infradead.org>, including any problems\n"
+"<%s>, including any problems\n"
 "with ESP or other apparent loss of connectivity or performance.\n"
 msgstr ""
 
@@ -2541,7 +2541,7 @@ msgstr ""
 #: gpst.c:571
 msgid ""
 "GlobalProtect IPv6 support is experimental. Please report results to "
-"<openconnect-devel@lists.infradead.org>.\n"
+"<%s>.\n"
 msgstr ""
 
 #: gpst.c:593
@@ -3304,10 +3304,10 @@ msgstr "Lefoglalási hiba a szabványos bemenetről érkező szöveghez\n"
 #, c-format
 msgid ""
 "For assistance with OpenConnect, please see the web page at\n"
-"  https://www.infradead.org/openconnect/mail.html\n"
+"  %s\n"
 msgstr ""
 "Ha segítségre van szüksége az OpenConnect programhoz, tekintse meg a\n"
-"  https://www.infradead.org/openconnect/mail.html címen lévő oldalt.\n"
+"  %s címen lévő oldalt.\n"
 
 #: main.c:663
 #, c-format
@@ -3914,11 +3914,11 @@ msgstr "A(z) %d. MTU túl kicsi\n"
 #, c-format
 msgid ""
 "Disabling all HTTP connection re-use due to --no-http-keepalive option.\n"
-"If this helps, please report to <openconnect-devel@lists.infradead.org>.\n"
+"If this helps, please report to <%s>.\n"
 msgstr ""
 "Minden HTTP kapcsolat újrafelhasználás letiltása a --no-http-keepalive "
 "miatt.\n"
-"Ha ez segít, jelentse a <openconnect-devel@lists.infradead.org> címre.\n"
+"Ha ez segít, jelentse a <%s> címre.\n"
 
 #: main.c:2000
 #, c-format
@@ -3958,7 +3958,7 @@ msgid ""
 "WARNING: You specified %s. This should not be\n"
 "         necessary; please report cases where a priority string\n"
 "         override is necessary to connect to a server\n"
-"         to <openconnect-devel@lists.infradead.org>.\n"
+"         to <%s>.\n"
 msgstr ""
 
 #: main.c:2145
@@ -4002,8 +4002,8 @@ msgstr ""
 "Nincs --script argumentum megadva; a DNS és az útválasztás nincs beállítva\n"
 
 #: main.c:2290
-msgid "See https://www.infradead.org/openconnect/vpnc-script.html\n"
-msgstr "Lásd: https://www.infradead.org/openconnect/vpnc-script.html\n"
+msgid "See %s\n"
+msgstr "Lásd: %s\n"
 
 #: main.c:2303
 msgid "User requested reconnect\n"
@@ -4669,7 +4669,7 @@ msgstr ""
 msgid ""
 "SSL_set_session() failed with DTLS protocol version 0x%x\n"
 "Are you using a version of OpenSSL older than 0.9.8m?\n"
-"See http://rt.openssl.org/Ticket/Display.html?id=1751\n"
+"See %s\n"
 "Use the --no-dtls command line option to avoid this message\n"
 msgstr ""
 
@@ -6372,7 +6372,7 @@ msgstr ""
 msgid ""
 "WARNING: Support for Wintun is experimental and may be unstable. If you\n"
 "  encounter problems, install the TAP-Windows driver instead. See\n"
-"  https://www.infradead.org/openconnect/building.html\n"
+"  %s\n"
 msgstr ""
 
 #: tun-win32.c:485
@@ -6487,12 +6487,12 @@ msgstr "Nem sikerült kötni a helyi tun eszközt (TUNSETIFF): %s\n"
 #: tun.c:257
 msgid ""
 "To configure local networking, openconnect must be running as root\n"
-"See https://www.infradead.org/openconnect/nonroot.html for more information\n"
+"See %s for more information\n"
 msgstr ""
 "A helyi hálózatkezelés beállításához az openconnect programot "
 "rendszergazdaként kell futtatni\n"
 "További információkért nézze meg a következő oldalt:\n"
-"https://www.infradead.org/openconnect/nonroot.html oldalt\n"
+"%s oldalt\n"
 
 #: tun.c:322
 #, c-format

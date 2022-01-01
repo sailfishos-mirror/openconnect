@@ -402,7 +402,8 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 					vpn_progress(vpninfo, PRG_INFO,
 						     _("Server reports that reconnect-after-drop is not allowed. OpenConnect will not\n"
 						       "be able to reconnect if dead peer is detected. If reconnection DOES work,\n"
-						       "please report to <openconnect-devel@lists.infradead.org>\n"));
+						       "please report to <%s>\n"),
+						     "openconnect-devel@lists.infradead.org");
 			}
 		} else if (xmlnode_is_named(xml_node, "fos")) {
 			char platform[80], *p = platform, *e = platform + 80;
@@ -549,14 +550,16 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("WARNING: Fortinet server does not specifically enable or disable reconnection\n"
 			       "    without reauthentication. If automatic reconnection does work, please\n"
-			       "    report results to <openconnect-devel@lists.infradead.org>\n"));
+			       "    report results to <%s>\n"),
+			     "openconnect-devel@lists.infradead.org");
 	}
 
 	if (reconnect_after_drop == -1)
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Server did not send <auth-ses tun-connect-without-reauth=\"0/1\"/>. OpenConnect will\n"
 			       "probably not be able to reconnect if dead peer is detected. If reconnection DOES,\n"
-			       "work please report to <openconnect-devel@lists.infradead.org>\n"));
+			       "work please report to <%s>\n"),
+			     "openconnect-devel@lists.infradead.org");
 
 	if (default_route && new_ip_info.addr)
 		new_ip_info.netmask = add_option_dup(&new_opts, "full-netmask", "0.0.0.0", -1);
@@ -643,9 +646,12 @@ static int fortinet_configure(struct openconnect_info *vpninfo)
 				vpn_progress(vpninfo, PRG_ERR,
 					     _("Fortinet server is rejecting request for connection options. This\n"
 					       "has been observed after reconnection in some cases. Please report to\n"
-					       "<openconnect-devel@lists.infradead.org>, or see the discussions on\n"
-					       "https://gitlab.com/openconnect/openconnect/-/issues/297 and\n"
-					       "https://gitlab.com/openconnect/openconnect/-/issues/298.\n"));
+					       "<%s>, or see the discussions on\n"
+					       "%s and\n"
+					       "%s.\n"),
+					     "openconnect-devel@lists.infradead.org",
+					     "https://gitlab.com/openconnect/openconnect/-/issues/297",
+					     "https://gitlab.com/openconnect/openconnect/-/issues/298");
 		}
 		goto out;
 	} else if (ret == 0) {

@@ -232,7 +232,8 @@ intptr_t os_setup_tun(struct openconnect_info *vpninfo)
 		if (err == EPERM) {
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("To configure local networking, openconnect must be running as root\n"
-				       "See https://www.infradead.org/openconnect/nonroot.html for more information\n"));
+				       "See %s for more information\n"),
+				     "https://www.infradead.org/openconnect/nonroot.html");
 		}
 		close(tun_fd);
 		return -EIO;

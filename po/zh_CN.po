@@ -1309,7 +1309,7 @@ msgid ""
 "Server reports that reconnect-after-drop is not allowed. OpenConnect will "
 "not\n"
 "be able to reconnect if dead peer is detected. If reconnection DOES work,\n"
-"please report to <openconnect-devel@lists.infradead.org>\n"
+"please report to <%s>\n"
 msgstr ""
 
 #: fortinet.c:418
@@ -1342,7 +1342,7 @@ msgid ""
 "WARNING: Fortinet server does not specifically enable or disable "
 "reconnection\n"
 "    without reauthentication. If automatic reconnection does work, please\n"
-"    report results to <openconnect-devel@lists.infradead.org>\n"
+"    report results to <%s>\n"
 msgstr ""
 
 #: fortinet.c:557
@@ -1351,7 +1351,7 @@ msgid ""
 "OpenConnect will\n"
 "probably not be able to reconnect if dead peer is detected. If reconnection "
 "DOES,\n"
-"work please report to <openconnect-devel@lists.infradead.org>\n"
+"work please report to <%s>\n"
 msgstr ""
 
 #: fortinet.c:616
@@ -1368,9 +1368,9 @@ msgstr ""
 msgid ""
 "Fortinet server is rejecting request for connection options. This\n"
 "has been observed after reconnection in some cases. Please report to\n"
-"<openconnect-devel@lists.infradead.org>, or see the discussions on\n"
-"https://gitlab.com/openconnect/openconnect/-/issues/297 and\n"
-"https://gitlab.com/openconnect/openconnect/-/issues/298.\n"
+"<%s>, or see the discussions on\n"
+"%s and\n"
+"%s.\n"
 msgstr ""
 
 #: fortinet.c:680
@@ -2489,7 +2489,7 @@ msgstr ""
 msgid ""
 "Config XML <connected-gw-ip> address (%s) differs from external\n"
 "gateway address (%s). Please report this to\n"
-"<openconnect-devel@lists.infradead.org>, including any problems\n"
+"<%s>, including any problems\n"
 "with ESP or other apparent loss of connectivity or performance.\n"
 msgstr ""
 
@@ -2515,7 +2515,7 @@ msgstr ""
 #: gpst.c:571
 msgid ""
 "GlobalProtect IPv6 support is experimental. Please report results to "
-"<openconnect-devel@lists.infradead.org>.\n"
+"<%s>.\n"
 msgstr ""
 
 #: gpst.c:593
@@ -3279,10 +3279,10 @@ msgstr "分配来自标准输入的字符串失败\n"
 #, c-format
 msgid ""
 "For assistance with OpenConnect, please see the web page at\n"
-"  https://www.infradead.org/openconnect/mail.html\n"
+"  %s\n"
 msgstr ""
 "为了帮助 OpenConnect，请查看网页于\n"
-"  https://www.infradead.org/openconnect/mail.html\n"
+"  %s\n"
 
 #: main.c:663
 #, c-format
@@ -3884,10 +3884,10 @@ msgstr "MTU %d 太小\n"
 #, c-format
 msgid ""
 "Disabling all HTTP connection re-use due to --no-http-keepalive option.\n"
-"If this helps, please report to <openconnect-devel@lists.infradead.org>.\n"
+"If this helps, please report to <%s>.\n"
 msgstr ""
 "正在禁用所有的 HTTP 连接复用，由于 --no-http-keepalive 选项。\n"
-"如果这有帮助，请报告到 <openconnect-devel@lists.infradead.org>。\n"
+"如果这有帮助，请报告到 <%s>。\n"
 "\n"
 
 #: main.c:2000
@@ -3927,7 +3927,7 @@ msgid ""
 "WARNING: You specified %s. This should not be\n"
 "         necessary; please report cases where a priority string\n"
 "         override is necessary to connect to a server\n"
-"         to <openconnect-devel@lists.infradead.org>.\n"
+"         to <%s>.\n"
 msgstr ""
 
 #: main.c:2145
@@ -3970,8 +3970,8 @@ msgid "No --script argument provided; DNS and routing are not configured\n"
 msgstr "没有提供 --script 参数；DNS 和路由未配置\n"
 
 #: main.c:2290
-msgid "See https://www.infradead.org/openconnect/vpnc-script.html\n"
-msgstr "查看 https://www.infradead.org/openconnect/vpnc-script.html\n"
+msgid "See %s\n"
+msgstr "查看 %s\n"
 
 #: main.c:2303
 msgid "User requested reconnect\n"
@@ -4641,7 +4641,7 @@ msgstr ""
 msgid ""
 "SSL_set_session() failed with DTLS protocol version 0x%x\n"
 "Are you using a version of OpenSSL older than 0.9.8m?\n"
-"See http://rt.openssl.org/Ticket/Display.html?id=1751\n"
+"See %s\n"
 "Use the --no-dtls command line option to avoid this message\n"
 msgstr ""
 
@@ -6339,7 +6339,7 @@ msgstr ""
 msgid ""
 "WARNING: Support for Wintun is experimental and may be unstable. If you\n"
 "  encounter problems, install the TAP-Windows driver instead. See\n"
-"  https://www.infradead.org/openconnect/building.html\n"
+"  %s\n"
 msgstr ""
 
 #: tun-win32.c:485
@@ -6454,10 +6454,10 @@ msgstr "绑定本地 tun 设备（TUNSETIFF）失败：%s\n"
 #: tun.c:257
 msgid ""
 "To configure local networking, openconnect must be running as root\n"
-"See https://www.infradead.org/openconnect/nonroot.html for more information\n"
+"See %s for more information\n"
 msgstr ""
 "为了配置本地网络，openconnect 必须以 root 权限运行\n"
-"查看 See https://www.infradead.org/openconnect/nonroot.html 来获取更多信息\n"
+"查看 See %s 来获取更多信息\n"
 
 #: tun.c:322
 #, c-format
