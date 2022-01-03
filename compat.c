@@ -404,7 +404,7 @@ int dumb_socketpair(OPENCONNECT_CMD_SOCKET socks[2], int make_overlapped)
         struct sockaddr addr;
     } a;
     OPENCONNECT_CMD_SOCKET listener;
-    int e;
+    int e, ii;
     int domain = AF_UNIX;
     socklen_t addrlen = sizeof(a.unaddr);
     DWORD flags = (make_overlapped ? WSA_FLAG_OVERLAPPED : 0);
@@ -416,65 +416,55 @@ int dumb_socketpair(OPENCONNECT_CMD_SOCKET socks[2], int make_overlapped)
     }
     socks[0] = socks[1] = -1;
 
-    listener = socket(domain, SOCK_STREAM, 0);
-    if (listener == INVALID_SOCKET) {
-        /* AF_UNIX/SOCK_STREAM became available in Windows 10:
-         * https://devblogs.microsoft.com/commandline/af_unix-comes-to-windows
-         *
-         * We need to fallback to AF_INET on earlier versions of Windows.
-         */
-        domain = AF_INET;
-        addrlen = sizeof(a.inaddr);
-        listener = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    for (ii = 0; ii < 2; ii++) {
+        listener = socket(domain, SOCK_STREAM, domain == AF_INET ? IPPROTO_TCP : 0);
         if (listener == INVALID_SOCKET)
-            return SOCKET_ERROR;
-    }
+            goto fallback;
 
-    memset(&a, 0, sizeof(a));
-    if (domain == AF_UNIX) {
-        /* XX: Abstract sockets (filesystem-independent) don't work, contrary to
-         * the claims of the aforementioned blog post:
-         * https://github.com/microsoft/WSL/issues/4240#issuecomment-549663217
-         *
-         * So we must use a named path, and that comes with all the attendant
-         * problems of permissions and collisions. Generating a path in the
-         * temporary directory, combining current high-res time and PID, seems
-         * like a less-bad option.
-         */
-        LARGE_INTEGER ticks;
-        DWORD n = GetTempPath(UNIX_PATH_MAX, a.unaddr.sun_path);
-        /* If temp dir is too long, give up and just use current directory. */
-        if (n >= UNIX_PATH_MAX - 8)
-            n = 0;
-        /* GetTempFileName could be used here.
-         * (https://docs.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-gettempfilenamea)
-         * However it only adds 16 bits of time-based random bits,
-         * fails if there isn't room for a 14-character filename, and
-         * seems to offers no other apparent advantages. So we will
-         * use high-res timer ticks and PID for filename.
-         */
-        QueryPerformanceCounter(&ticks);
-        snprintf(a.unaddr.sun_path + n, UNIX_PATH_MAX - n,
-                 "%"PRIx64"-%"PRId32".$$$", ticks.QuadPart, GetCurrentProcessId());
-        a.unaddr.sun_family = AF_UNIX;
-    } else {
-        a.inaddr.sin_family = AF_INET;
-        a.inaddr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-        a.inaddr.sin_port = 0;
-    }
+        memset(&a, 0, sizeof(a));
+        if (domain == AF_UNIX) {
+            /* XX: Abstract sockets (filesystem-independent) don't work, contrary to
+             * the claims of the aforementioned blog post:
+             * https://github.com/microsoft/WSL/issues/4240#issuecomment-549663217
+             *
+             * So we must use a named path, and that comes with all the attendant
+             * problems of permissions and collisions. Generating a path in the
+             * temporary directory, combining current high-res time and PID, seems
+             * like a less-bad option.
+             */
+            LARGE_INTEGER ticks;
+            DWORD n = GetTempPath(UNIX_PATH_MAX, a.unaddr.sun_path);
+            /* If temp dir is too long, give up and just use current directory. */
+            if (n >= UNIX_PATH_MAX - 8)
+                n = 0;
+            /* GetTempFileName could be used here.
+             * (https://docs.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-gettempfilenamea)
+             * However it only adds 16 bits of time-based random bits,
+             * fails if there isn't room for a 14-character filename, and
+             * seems to offers no other apparent advantages. So we will
+             * use high-res timer ticks and PID for filename.
+             */
+            QueryPerformanceCounter(&ticks);
+            snprintf(a.unaddr.sun_path + n, UNIX_PATH_MAX - n,
+                     "%"PRIx64"-%"PRId32".$$$", ticks.QuadPart, GetCurrentProcessId());
+            a.unaddr.sun_family = AF_UNIX;
+        } else {
+            a.inaddr.sin_family = AF_INET;
+            a.inaddr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+            a.inaddr.sin_port = 0;
 
-    for (;;) {
-        if (domain == AF_INET &&
-            setsockopt(listener, SOL_SOCKET, SO_REUSEADDR,
-                       (char *) &reuse, (socklen_t) sizeof(reuse)) == -1)
-                break;
+            if (setsockopt(listener, SOL_SOCKET, SO_REUSEADDR,
+                           (char *) &reuse, (socklen_t) sizeof(reuse)) == -1)
+                goto fallback;;
+        }
+
         if (bind(listener, &a.addr, addrlen) == SOCKET_ERROR)
-            break;
+            goto fallback;
 
         if (domain == AF_INET) {
             memset(&a, 0, sizeof(a));
             if (getsockname(listener, &a.addr, &addrlen) == SOCKET_ERROR)
-                break;
+                goto fallback;
 
             // win32 getsockname may only set the port number, p=0.0005.
             // ( https://docs.microsoft.com/windows/win32/api/winsock/nf-winsock-getsockname ):
@@ -483,28 +473,38 @@ int dumb_socketpair(OPENCONNECT_CMD_SOCKET socks[2], int make_overlapped)
         }
 
         if (listen(listener, 1) == SOCKET_ERROR)
-            break;
+            goto fallback;
 
         socks[0] = WSASocket(domain, SOCK_STREAM, 0, NULL, 0, flags);
         if (socks[0] == INVALID_SOCKET)
-            break;
+            goto fallback;
         if (connect(socks[0], &a.addr, addrlen) == SOCKET_ERROR)
-            break;
+            goto fallback;
 
         socks[1] = accept(listener, NULL, NULL);
         if (socks[1] == INVALID_SOCKET)
-            break;
+            goto fallback;
 
         closesocket(listener);
         return 0;
 
+    fallback:
+        /* AF_UNIX/SOCK_STREAM became available in Windows 10:
+         * https://devblogs.microsoft.com/commandline/af_unix-comes-to-windows
+         *
+         * We need to fallback to AF_INET on earlier versions of Windows,
+         * or if setting up AF_UNIX socket fails in any other way.
+         */
+        domain = AF_INET;
+        addrlen = sizeof(a.inaddr);
+
+        e = WSAGetLastError();
+        closesocket(listener);
+        closesocket(socks[0]);
+        closesocket(socks[1]);
+        WSASetLastError(e);
     }
 
-    e = WSAGetLastError();
-    closesocket(listener);
-    closesocket(socks[0]);
-    closesocket(socks[1]);
-    WSASetLastError(e);
     socks[0] = socks[1] = -1;
     return SOCKET_ERROR;
 }
