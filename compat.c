@@ -428,26 +428,52 @@ int dumb_socketpair(OPENCONNECT_CMD_SOCKET socks[2], int make_overlapped)
              * https://github.com/microsoft/WSL/issues/4240#issuecomment-549663217
              *
              * So we must use a named path, and that comes with all the attendant
-             * problems of permissions and collisions. Generating a path in the
-             * temporary directory, combining current high-res time and PID, seems
-             * like a less-bad option.
+             * problems of permissions and collisions. Trying various temporary
+             * directories and putting high-res time and PID in the filename, that
+             * seems like a less-bad option.
              */
             LARGE_INTEGER ticks;
-            DWORD n = GetTempPath(UNIX_PATH_MAX, a.unaddr.sun_path);
-            /* If temp dir is too long, give up and just use current directory. */
-            if (n >= UNIX_PATH_MAX - 8)
-                n = 0;
-            /* GetTempFileName could be used here.
-             * (https://docs.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-gettempfilenamea)
-             * However it only adds 16 bits of time-based random bits,
-             * fails if there isn't room for a 14-character filename, and
-             * seems to offers no other apparent advantages. So we will
-             * use high-res timer ticks and PID for filename.
-             */
-            QueryPerformanceCounter(&ticks);
-            snprintf(a.unaddr.sun_path + n, UNIX_PATH_MAX - n,
-                     "%"PRIx64"-%"PRId32".$$$", ticks.QuadPart, GetCurrentProcessId());
-            a.unaddr.sun_family = AF_UNIX;
+            DWORD n;
+            int bind_try = 0;
+
+            for (;;) {
+                switch (bind_try++) {
+                case 0:
+                    /* "The returned string ends with a backslash" */
+                    n = GetTempPath(UNIX_PATH_MAX, a.unaddr.sun_path);
+                    break;
+                case 1:
+                    /* Heckuva job with API consistency, Microsoft!
+                     * unless the Windows directory is the root directory."
+                     */
+                    n = GetWindowsDirectory(a.unaddr.sun_path, UNIX_PATH_MAX);
+                    n += snprintf(a.unaddr.sun_path + n, UNIX_PATH_MAX - n, "\\Temp\\");
+                    break;
+                case 2:
+                    n = snprintf(a.unaddr.sun_path, UNIX_PATH_MAX, "C:\\Temp\\");
+                    break;
+                case 3:
+                    n = 0; /* Current directory */
+                    break;
+                case 4:
+                    goto fallback;
+                }
+
+                /* GetTempFileName could be used here.
+                 * (https://docs.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-gettempfilenamea)
+                 * However it only adds 16 bits of time-based random bits,
+                 * fails if there isn't room for a 14-character filename, and
+                 * seems to offers no other apparent advantages. So we will
+                 * use high-res timer ticks and PID for filename.
+                 */
+                QueryPerformanceCounter(&ticks);
+                snprintf(a.unaddr.sun_path + n, UNIX_PATH_MAX - n,
+                         "%"PRIx64"-%"PRId32".$$$", ticks.QuadPart, GetCurrentProcessId());
+                a.unaddr.sun_family = AF_UNIX;
+
+                if (bind(listener, &a.addr, addrlen) != SOCKET_ERROR)
+                    break;
+            }
         } else {
             a.inaddr.sin_family = AF_INET;
             a.inaddr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
@@ -456,12 +482,10 @@ int dumb_socketpair(OPENCONNECT_CMD_SOCKET socks[2], int make_overlapped)
             if (setsockopt(listener, SOL_SOCKET, SO_REUSEADDR,
                            (char *) &reuse, (socklen_t) sizeof(reuse)) == -1)
                 goto fallback;;
-        }
 
-        if (bind(listener, &a.addr, addrlen) == SOCKET_ERROR)
-            goto fallback;
+            if (bind(listener, &a.addr, addrlen) == SOCKET_ERROR)
+                goto fallback;
 
-        if (domain == AF_INET) {
             memset(&a, 0, sizeof(a));
             if (getsockname(listener, &a.addr, &addrlen) == SOCKET_ERROR)
                 goto fallback;
