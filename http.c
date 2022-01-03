@@ -18,8 +18,13 @@
 
 #include <config.h>
 
+#include "openconnect-internal.h"
+
+#include <libxml/uri.h>
+
 #include <unistd.h>
 #include <fcntl.h>
+
 #include <time.h>
 #include <string.h>
 #include <ctype.h>
@@ -28,308 +33,8 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-#include <libxml/uri.h>
-
-#include "openconnect-internal.h"
-
 static int proxy_write(struct openconnect_info *vpninfo, char *buf, size_t len);
 static int proxy_read(struct openconnect_info *vpninfo, char *buf, size_t len);
-
-#define BUF_CHUNK_SIZE 4096
-
-struct oc_text_buf *buf_alloc(void)
-{
-	return calloc(1, sizeof(struct oc_text_buf));
-}
-
-void buf_append_urlencoded(struct oc_text_buf *buf, const char *str)
-{
-	while (str && *str) {
-		unsigned char c = *str;
-		if (c < 0x80 && (isalnum((int)(c)) || c=='-' || c=='_' || c=='.' || c=='~'))
-			buf_append_bytes(buf, str, 1);
-		else
-			buf_append(buf, "%%%02x", c);
-
-		str++;
-	}
-}
-
-void buf_append_xmlescaped(struct oc_text_buf *buf, const char *str)
-{
-	while (str && *str) {
-		unsigned char c = *str;
-		if (c=='<' || c=='>' || c=='&' || c=='"' || c=='\'')
-			buf_append(buf, "&#x%02x;", c);
-		else
-			buf_append_bytes(buf, str, 1);
-
-		str++;
-	}
-}
-
-void buf_append_be16(struct oc_text_buf *buf, uint16_t val)
-{
-	unsigned char b[2];
-
-	store_be16(b, val);
-
-	buf_append_bytes(buf, b, 2);
-}
-
-void buf_append_be32(struct oc_text_buf *buf, uint32_t val)
-{
-	unsigned char b[4];
-
-	store_be32(b, val);
-
-	buf_append_bytes(buf, b, 4);
-}
-
-void buf_append_le16(struct oc_text_buf *buf, uint16_t val)
-{
-	unsigned char b[2];
-
-	store_le16(b, val);
-
-	buf_append_bytes(buf, b, 2);
-}
-
-void buf_append_hex(struct oc_text_buf *buf, const void *str, unsigned len)
-{
-	const unsigned char *data = str;
-	unsigned i;
-
-	for (i = 0; i < len; i++)
-		buf_append(buf, "%02x", (unsigned)data[i]);
-}
-
-void buf_truncate(struct oc_text_buf *buf)
-{
-	if (!buf)
-		return;
-
-	if (buf->data)
-		memset(buf->data, 0, buf->pos);
-
-	buf->pos = 0;
-}
-
-int buf_ensure_space(struct oc_text_buf *buf, int len)
-{
-	unsigned int new_buf_len;
-
-	if (!buf)
-		return -ENOMEM;
-
-	new_buf_len = (buf->pos + len + BUF_CHUNK_SIZE - 1) & ~(BUF_CHUNK_SIZE - 1);
-
-	if (new_buf_len <= buf->buf_len)
-		return 0;
-
-	if (new_buf_len > INT_MAX) {
-		buf->error = -E2BIG;
-		return buf->error;
-	} else {
-		realloc_inplace(buf->data, new_buf_len);
-		if (!buf->data)
-			buf->error = -ENOMEM;
-		else
-			buf->buf_len = new_buf_len;
-	}
-	return buf->error;
-}
-
-void  __attribute__ ((format (printf, 2, 3)))
-	buf_append(struct oc_text_buf *buf, const char *fmt, ...)
-{
-	va_list ap;
-
-	if (!buf || buf->error)
-		return;
-
-	if (buf_ensure_space(buf, 1))
-		return;
-
-	while (1) {
-		int max_len = buf->buf_len - buf->pos, ret;
-
-		va_start(ap, fmt);
-		ret = vsnprintf(buf->data + buf->pos, max_len, fmt, ap);
-		va_end(ap);
-		if (ret < 0) {
-			buf->error = -EIO;
-			break;
-		} else if (ret < max_len) {
-			buf->pos += ret;
-			break;
-		} else if (buf_ensure_space(buf, ret))
-			break;
-	}
-}
-
-void buf_append_bytes(struct oc_text_buf *buf, const void *bytes, int len)
-{
-	if (!buf || buf->error)
-		return;
-
-	if (buf_ensure_space(buf, len + 1))
-		return;
-
-	memcpy(buf->data + buf->pos, bytes, len);
-	buf->pos += len;
-	buf->data[buf->pos] = 0;
-}
-
-void buf_append_from_utf16le(struct oc_text_buf *buf, const void *_utf16)
-{
-	const unsigned char *utf16 = _utf16;
-	unsigned char utf8[4];
-	int c;
-
-	if (!utf16)
-		return;
-
-	while (utf16[0] || utf16[1]) {
-		if ((utf16[1] & 0xfc) == 0xd8 && (utf16[3] & 0xfc) == 0xdc) {
-			c = ((load_le16(utf16) & 0x3ff) << 10)|
-				(load_le16(utf16 + 2) & 0x3ff);
-			c += 0x10000;
-			utf16 += 4;
-		} else {
-			c = load_le16(utf16);
-			utf16 += 2;
-		}
-
-		if (c < 0x80) {
-			utf8[0] = c;
-			buf_append_bytes(buf, utf8, 1);
-		} else if (c < 0x800) {
-			utf8[0] = 0xc0 | (c >> 6);
-			utf8[1] = 0x80 | (c & 0x3f);
-			buf_append_bytes(buf, utf8, 2);
-		} else if (c < 0x10000) {
-			utf8[0] = 0xe0 | (c >> 12);
-			utf8[1] = 0x80 | ((c >> 6) & 0x3f);
-			utf8[2] = 0x80 | (c & 0x3f);
-			buf_append_bytes(buf, utf8, 3);
-		} else {
-			utf8[0] = 0xf0 | (c >> 18);
-			utf8[1] = 0x80 | ((c >> 12) & 0x3f);
-			utf8[2] = 0x80 | ((c >> 6) & 0x3f);
-			utf8[3] = 0x80 | (c & 0x3f);
-			buf_append_bytes(buf, utf8, 4);
-		}
-	}
-	utf8[0] = 0;
-	buf_append_bytes(buf, utf8, 1);
-}
-
-int get_utf8char(const char **p)
-{
-	const char *utf8 = *p;
-	unsigned char c;
-	int utfchar, nr_extra, min;
-
-	c = *(utf8++);
-	if (c < 128) {
-		utfchar = c;
-		nr_extra = 0;
-		min = 0;
-	} else if ((c & 0xe0) == 0xc0) {
-		utfchar = c & 0x1f;
-		nr_extra = 1;
-		min = 0x80;
-	} else if ((c & 0xf0) == 0xe0) {
-		utfchar = c & 0x0f;
-		nr_extra = 2;
-		min = 0x800;
-	} else if ((c & 0xf8) == 0xf0) {
-		utfchar = c & 0x07;
-		nr_extra = 3;
-		min = 0x10000;
-	} else {
-		return -EILSEQ;
-	}
-
-	while (nr_extra--) {
-		c = *(utf8++);
-		if ((c & 0xc0) != 0x80)
-			return -EILSEQ;
-
-		utfchar <<= 6;
-		utfchar |= (c & 0x3f);
-	}
-	if (utfchar > 0x10ffff || utfchar < min)
-		return -EILSEQ;
-
-	*p = utf8;
-	return utfchar;
-}
-
-int buf_append_utf16le(struct oc_text_buf *buf, const char *utf8)
-{
-	int utfchar, len = 0;
-
-	/* Ick. Now I'm implementing my own UTF8 handling too. Perhaps it's
-	   time to bite the bullet and start requiring something like glib? */
-	while (*utf8) {
-		utfchar = get_utf8char(&utf8);
-		if (utfchar < 0) {
-			if (buf)
-				buf->error = utfchar;
-			return utfchar;
-		}
-		if (!buf)
-			continue;
-
-		if (utfchar >= 0x10000) {
-			utfchar -= 0x10000;
-			if (buf_ensure_space(buf, 4))
-				return buf_error(buf);
-			store_le16(buf->data + buf->pos, (utfchar >> 10) | 0xd800);
-			store_le16(buf->data + buf->pos + 2, (utfchar & 0x3ff) | 0xdc00);
-			buf->pos += 4;
-			len += 4;
-		} else {
-			if (buf_ensure_space(buf, 2))
-				return buf_error(buf);
-			store_le16(buf->data + buf->pos, utfchar);
-			buf->pos += 2;
-			len += 2;
-		}
-	}
-
-	/* We were only being used for validation */
-	if (!buf)
-		return 0;
-
-	/* Ensure UTF16 is NUL-terminated */
-	if (buf_ensure_space(buf, 2))
-		return buf_error(buf);
-	buf->data[buf->pos] = buf->data[buf->pos + 1] = 0;
-
-	return len;
-}
-
-int buf_error(struct oc_text_buf *buf)
-{
-	return buf ? buf->error : -ENOMEM;
-}
-
-int buf_free(struct oc_text_buf *buf)
-{
-	int error = buf_error(buf);
-
-	if (buf) {
-		buf_truncate(buf);
-		if (buf->data)
-			free(buf->data);
-		free(buf);
-	}
-
-	return error;
-}
 
 /*
  * We didn't really want to have to do this for ourselves -- one might have
@@ -1074,14 +779,19 @@ static int https_socket_closed(struct openconnect_info *vpninfo)
  *  request_body_type:  Content type for a POST (e.g. text/html).  Can be NULL.
  *  request_body:       POST content
  *  form_buf:           Callee-allocated buffer for server content
+ *  header_cb:          Callback executed on every header line
+ *                      If HTTP authentication is needed, the callback specified needs to call http_auth_hdrs.
+ *  flags (bitfield):   HTTP_REDIRECT: follow redirects;
+ *                      HTTP_REDIRECT_TO_GET: follow redirects, but change POST to GET;
+ *                      HTTP_BODY_ON_ERR: return server content in form_buf even on error
  *
  * Return value:
  *  < 0, on error
  *  >=0, on success, indicating the length of the data in *form_buf
  */
-int do_https_request(struct openconnect_info *vpninfo, const char *method,
-		     const char *request_body_type, struct oc_text_buf *request_body,
-		     char **form_buf, int fetch_redirect)
+int do_https_request(struct openconnect_info *vpninfo, const char *method, const char *request_body_type,
+		     struct oc_text_buf *request_body, char **form_buf,
+		     int (*header_cb)(struct openconnect_info *, char *, char *), int flags)
 {
 	struct oc_text_buf *buf;
 	int result;
@@ -1089,6 +799,9 @@ int do_https_request(struct openconnect_info *vpninfo, const char *method,
 	int rlen, pad;
 	int i, auth = 0;
 	int max_redirects = 10;
+
+	if (!header_cb)
+		header_cb = http_auth_hdrs;
 
 	if (request_body_type && buf_error(request_body))
 		return buf_error(request_body);
@@ -1112,7 +825,7 @@ int do_https_request(struct openconnect_info *vpninfo, const char *method,
 	 * A long time ago, I *wanted* to use an HTTP client library like cURL
 	 * for this. But we need a *lot* of control over the underlying SSL
 	 * transport, and we also have to do horrid tricks like the Juniper NC
-	 * 'GET' request that actaully behaves like a 'CONNECT'.
+	 * 'GET' request that actually behaves like a 'CONNECT'.
 	 *
 	 * So the world gained Yet Another HTTP Implementation. Sorry.
 	 *
@@ -1198,7 +911,7 @@ int do_https_request(struct openconnect_info *vpninfo, const char *method,
 		}
 	}
 
-	result = process_http_response(vpninfo, 0, http_auth_hdrs, buf);
+	result = process_http_response(vpninfo, 0, header_cb, buf);
 	if (result < 0) {
 		if (rq_retry) {
 			openconnect_close_https(vpninfo, 0);
@@ -1221,10 +934,10 @@ int do_https_request(struct openconnect_info *vpninfo, const char *method,
 	if (result != 200 && vpninfo->redirect_url) {
 		result = handle_redirect(vpninfo);
 		if (result == 0) {
-			if (!fetch_redirect)
+			if (!(flags & (HTTP_REDIRECT | HTTP_REDIRECT_TO_GET)))
 				goto out;
-			if (fetch_redirect == 2) {
-				/* Juniper requires we GET after a redirected POST */
+			if (flags & HTTP_REDIRECT_TO_GET) {
+				/* Some protocols require a GET after a redirected POST */
 				method = "GET";
 				request_body_type = NULL;
 			}
@@ -1244,12 +957,14 @@ int do_https_request(struct openconnect_info *vpninfo, const char *method,
 			result = -EACCES;
 		else
 			result = -EINVAL;
-		goto out;
-	}
+
+		if (!buf->pos || !(flags & HTTP_BODY_ON_ERROR))
+			goto out;
+	} else
+		result = buf->pos;
 
 	*form_buf = buf->data;
 	buf->data = NULL;
-	result = buf->pos;
 
  out:
 	buf_free(buf);
@@ -1483,7 +1198,7 @@ static int process_socks_proxy(struct openconnect_info *vpninfo)
 	}
 	if (buf[1]) {
 		unsigned char err = buf[1];
-		if (err < sizeof(socks_errors) / sizeof(socks_errors[0]))
+		if (err < ARRAY_SIZE(socks_errors))
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("SOCKS proxy error %02x: %s\n"),
 				     err, _(socks_errors[err]));

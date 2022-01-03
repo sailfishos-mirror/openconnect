@@ -70,10 +70,10 @@ int nx_obtain_cookie(struct openconnect_info *vpninfo)
 		// TODO: error checking, refactor to get headers (error-msg is in header)
 		if (resp_buf && resp_buf->pos)
 			ret = do_https_request(vpninfo, "POST", "application/x-www-form-urlencoded", resp_buf,
-					       &form_buf, 0);
+					       &form_buf, NULL, 0);
 
 		else
-			ret = do_https_request(vpninfo, "GET", NULL, NULL, &form_buf, 0);
+			ret = do_https_request(vpninfo, "GET", NULL, NULL, &form_buf, NULL, 0);
 
 		if (ret < 0)
 			break;
@@ -400,7 +400,7 @@ static int nx_get_connection_info(struct openconnect_info *vpninfo)
 	if (!vpninfo->cookies && vpninfo->cookie)
 		http_add_cookie(vpninfo, "swap", vpninfo->cookie, 1);
 	vpninfo->urlpath = url;
-	ret = do_https_request(vpninfo, "GET", NULL, NULL, &result_buf, 0);
+	ret = do_https_request(vpninfo, "GET", NULL, NULL, &result_buf, NULL, 0);
 	vpninfo->urlpath = NULL;
 	if (ret < 0)
 		goto out;
@@ -545,7 +545,7 @@ int nx_bye(struct openconnect_info *vpninfo, const char *reason)
 	}
 	append_opt(request_body, "userLogout", "1");
 	vpninfo->urlpath = strdup("cgi-bin/userLogout");
-	ret = do_https_request(vpninfo, "POST", "application/x-www-form-urlencoded", request_body, &resp_buf, 0);
+	ret = do_https_request(vpninfo, "POST", "application/x-www-form-urlencoded", request_body, &resp_buf, NULL, 0);
 	free(vpninfo->urlpath);
 	vpninfo->urlpath = NULL;
 	if (ret < 0)

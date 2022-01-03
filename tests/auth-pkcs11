@@ -28,7 +28,7 @@ top_builddir=${top_builddir:-..}
 pkcs11_keys=${pkcs11_keys:-object=RSA object=DSA object=EC id=%01 id=%02 id=%03}
 pkcs11_tokens=${pkcs11_tokens:-openconnect-test}
 
-echo "Testing PKCS#11 auth... "
+echo "Testing PKCS#11 auth..."
 
 launch_simple_sr_server -d 1 -f -c configs/test-user-cert.config
 PID=$!

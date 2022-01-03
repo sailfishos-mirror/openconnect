@@ -17,17 +17,19 @@
 
 #include <config.h>
 
-#include <ctype.h>
-#include <errno.h>
+#include "openconnect-internal.h"
 
 #include <libxml/parser.h>
 #include <libxml/tree.h>
 
-#include "openconnect-internal.h"
+#include <ctype.h>
+#include <errno.h>
 
 struct login_context {
 	char *username;				/* Username that has already succeeded in some form */
 	char *alt_secret;			/* Alternative secret (DO NOT FREE) */
+	char *portal_userauthcookie;		/* portal-userauthcookie (from global-protect/getconfig.esp) */
+	char *portal_prelogonuserauthcookie;	/* portal-prelogonuserauthcookie (from global-protect/getconfig.esp) */
 	struct oc_auth_form *form;
 };
 
@@ -113,7 +115,14 @@ static int parse_prelogin_xml(struct openconnect_info *vpninfo, xmlNode *xml_nod
 
 	/* XX: Alt-secret form field must be specified for SAML, because we can't autodetect it */
 	if (saml_method || saml_path) {
-		if (!ctx->alt_secret) {
+		if (ctx->portal_userauthcookie)
+			vpn_progress(vpninfo, PRG_DEBUG, _("SAML authentication required; using portal-userauthcookie to continue SAML.\n"));
+		else if (ctx->portal_prelogonuserauthcookie)
+			vpn_progress(vpninfo, PRG_DEBUG, _("SAML authentication required; using portal-prelogonuserauthcookie to continue SAML.\n"));
+		else if (ctx->alt_secret)
+			vpn_progress(vpninfo, PRG_DEBUG, _("Destination form field %s was specified; assuming SAML %s authentication is complete.\n"),
+			             ctx->alt_secret, saml_method);
+		else {
 			if (saml_method && !strcmp(saml_method, "REDIRECT"))
 				vpn_progress(vpninfo, PRG_ERR,
 				             _("SAML %s authentication is required via %s\n"),
@@ -124,12 +133,10 @@ static int parse_prelogin_xml(struct openconnect_info *vpninfo, xmlNode *xml_nod
 				             saml_method);
 			vpn_progress(vpninfo, PRG_ERR,
 			             _("When SAML authentication is complete, specify destination form field by appending :field_name to login URL.\n"));
-                       /* XX: EINVAL will lead to "failure to parse response", with unnecessary/confusing extra logging output */
+			/* XX: EINVAL will lead to "failure to parse response", with unnecessary/confusing extra logging output */
 			result = -EPERM;
 			goto out;
-		} else
-			vpn_progress(vpninfo, PRG_DEBUG, _("Destination form field %s was specified; assuming SAML %s authentication is complete.\n"),
-			             saml_method, ctx->alt_secret);
+		}
 	}
 
 	/* Replace old form */
@@ -247,7 +254,7 @@ static int challenge_cb(struct openconnect_info *vpninfo, char *prompt, char *in
  *
  * Extracts the relevant arguments from the XML (<jnlp><application-desc><argument>...</argument></application-desc></jnlp>)
  * and uses them to build a query string fragment which is usable for subsequent requests.
- * This query string fragement is saved as vpninfo->cookie.
+ * This query string fragment is saved as vpninfo->cookie.
  *
  */
 struct gp_login_arg {
@@ -278,7 +285,7 @@ static const struct gp_login_arg gp_login_args[] = {
 	{ .opt="preferred-ip", .save=1 },
 	{ .opt="portal-userauthcookie", .show=1},
 	{ .opt="portal-prelogonuserauthcookie", .show=1},
-	{ .unknown=1 },
+	{ .opt="preferred-ipv6", .save=1 },
 	{ .opt="usually-equals-4", .show=1 },           /* newer servers send "4" here, meaning unknown */
 	{ .opt="usually-equals-unknown", .show=1 },     /* newer servers send "unknown" here */
 };
@@ -339,7 +346,7 @@ static int parse_login_xml(struct openconnect_info *vpninfo, xmlNode *xml_node, 
 		} else if (arg->check && (!value || strcmp(value, arg->check))) {
 			unknown_args++;
 			fatal_args += arg->err_missing;
-            vpn_progress(vpninfo, PRG_ERR,
+			vpn_progress(vpninfo, PRG_ERR,
 			             _("GlobalProtect login returned %s=%s (expected %s)\n"),
 			             arg->opt, value, arg->check);
 		} else if ((arg->err_missing || arg->warn_missing) && !value) {
@@ -392,6 +399,7 @@ err_out:
  */
 static int parse_portal_xml(struct openconnect_info *vpninfo, xmlNode *xml_node, void *cb_data)
 {
+	struct login_context *ctx = cb_data;
 	struct oc_auth_form *form;
 	xmlNode *x, *x2, *x3, *gateways = NULL;
 	struct oc_form_opt_select *opt;
@@ -431,7 +439,7 @@ static int parse_portal_xml(struct openconnect_info *vpninfo, xmlNode *xml_node,
 					if (xmlnode_is_named(x2, "external"))
 						for (x3 = x2->children; x3; x3 = x3->next)
 							if (xmlnode_is_named(x3, "list"))
-							    gateways = x3;
+								gateways = x3;
 			} else if (xmlnode_is_named(x, "hip-collection")) {
 				for (x2 = x->children; x2; x2 = x2->next) {
 					if (!xmlnode_get_val(x2, "hip-report-interval", &hip_interval)) {
@@ -446,8 +454,21 @@ static int parse_portal_xml(struct openconnect_info *vpninfo, xmlNode *xml_node,
 						}
 					}
 				}
-			} else
+			} else {
 				xmlnode_get_val(x, "portal-name", &portal);
+				if (!xmlnode_get_val(x, "portal-userauthcookie", &ctx->portal_userauthcookie)) {
+					if (!*ctx->portal_userauthcookie || !strcmp(ctx->portal_userauthcookie, "empty")) {
+						free(ctx->portal_userauthcookie);
+						ctx->portal_userauthcookie = NULL;
+					}
+				}
+				if (!xmlnode_get_val(x, "portal-prelogonuserauthcookie", &ctx->portal_prelogonuserauthcookie)) {
+					if (!*ctx->portal_prelogonuserauthcookie || !strcmp(ctx->portal_prelogonuserauthcookie, "empty")) {
+						free(ctx->portal_prelogonuserauthcookie);
+						ctx->portal_prelogonuserauthcookie = NULL;
+					}
+				}
+			}
 		}
 	}
 
@@ -559,16 +580,27 @@ static int gpst_login(struct openconnect_info *vpninfo, int portal, struct login
 
 	/* Ask the user to fill in the auth form; repeat as necessary */
 	for (;;) {
-		/* submit prelogin request to get form */
-		orig_path = vpninfo->urlpath;
-		if (asprintf(&vpninfo->urlpath, "%s/prelogin.esp?tmp=tmp&clientVer=4100&clientos=%s",
-			     portal ? "global-protect" : "ssl-vpn", gpst_os_name(vpninfo)) < 0) {
-			result = -ENOMEM;
-			goto out;
+		int keep_urlpath = 0;
+		if (vpninfo->urlpath) {
+			/* XX: If the path ends with .esp (possibly followed by a query string), leave as-is */
+			const char *esp = strstr(vpninfo->urlpath, ".esp");
+			if (esp && (esp[4] == '\0' || esp[4] == '?'))
+				keep_urlpath = 1;
 		}
-		result = do_https_request(vpninfo, "POST", NULL, NULL, &xml_buf, 0);
-		free(vpninfo->urlpath);
-		vpninfo->urlpath = orig_path;
+		if (!keep_urlpath) {
+			orig_path = vpninfo->urlpath;
+			if (asprintf(&vpninfo->urlpath, "%s/prelogin.esp?tmp=tmp&clientVer=4100&clientos=%s",
+				     portal ? "global-protect" : "ssl-vpn", gpst_os_name(vpninfo)) < 0) {
+				result = -ENOMEM;
+				goto out;
+			}
+		}
+		/* submit prelogin request to get form */
+		result = do_https_request(vpninfo, "POST", NULL, NULL, &xml_buf, NULL, HTTP_REDIRECT);
+		if (!keep_urlpath) {
+			free(vpninfo->urlpath);
+			vpninfo->urlpath = orig_path;
+		}
 
 		if (result >= 0)
 			result = gpst_xml_or_error(vpninfo, xml_buf, parse_prelogin_xml, NULL, ctx);
@@ -598,8 +630,15 @@ static int gpst_login(struct openconnect_info *vpninfo, int portal, struct login
 		append_opt(request_body, "os-version", vpninfo->platname);
 		append_opt(request_body, "server", vpninfo->hostname);
 		append_opt(request_body, "computer", vpninfo->localname);
+		if (ctx->portal_userauthcookie)
+			append_opt(request_body, "portal-userauthcookie", ctx->portal_userauthcookie);
+		if (ctx->portal_prelogonuserauthcookie)
+			append_opt(request_body, "portal-prelogonuserauthcookie", ctx->portal_prelogonuserauthcookie);
+
 		if (vpninfo->ip_info.addr)
 			append_opt(request_body, "preferred-ip", vpninfo->ip_info.addr);
+		if (vpninfo->ip_info.addr6)
+			append_opt(request_body, "preferred-ipv6", vpninfo->ip_info.addr);
 		if (ctx->form->action)
 			append_opt(request_body, "inputStr", ctx->form->action);
 		append_form_opts(vpninfo, ctx->form, request_body);
@@ -608,8 +647,7 @@ static int gpst_login(struct openconnect_info *vpninfo, int portal, struct login
 
 		orig_path = vpninfo->urlpath;
 		vpninfo->urlpath = strdup(portal ? "global-protect/getconfig.esp" : "ssl-vpn/login.esp");
-		result = do_https_request(vpninfo, "POST", request_body_type, request_body,
-					  &xml_buf, 0);
+		result = do_https_request(vpninfo, "POST", request_body_type, request_body, &xml_buf, NULL, HTTP_NO_FLAGS);
 		free(vpninfo->urlpath);
 		vpninfo->urlpath = orig_path;
 
@@ -634,16 +672,18 @@ static int gpst_login(struct openconnect_info *vpninfo, int portal, struct login
 				/* New form is already populated from the challenge */
 				goto got_form;
 			} else if (portal && result == 0) {
-				/* Portal login succeeded; blindly retry same credentials on gateway,
-				 * unless it was a challenge auth form or alt-secret form.
+				/* Portal login succeeded; blindly retry same credentials on gateway if:
+				 *      (a) we received a cookie that should allow automatic retry
+				 *   OR (b) portal form was neither challenge auth nor alt-secret (SAML)
 				 */
 				portal = 0;
-				if (ctx->form->auth_id[0] == '_' && !ctx->alt_secret) {
+				if (ctx->portal_userauthcookie || ctx->portal_prelogonuserauthcookie ||
+				    (strcmp(ctx->form->auth_id, "_challenge") && !ctx->alt_secret)) {
 					blind_retry = 1;
 					goto replay_form;
 				}
 			} else
-			  break;
+				break;
 		}
 	}
 
@@ -655,7 +695,7 @@ out:
 
 int gpst_obtain_cookie(struct openconnect_info *vpninfo)
 {
-	struct login_context ctx = { .username=NULL, .alt_secret=NULL, .form=NULL };
+	struct login_context ctx = { .username=NULL, .alt_secret=NULL, .portal_userauthcookie=NULL, .portal_prelogonuserauthcookie=NULL, .form=NULL };
 	int result;
 
 	/* An alternate password/secret field may be specified in the "URL path" (or --usergroup).
@@ -686,6 +726,8 @@ int gpst_obtain_cookie(struct openconnect_info *vpninfo)
 	}
 	free(ctx.username);
 	free(ctx.alt_secret);
+	free(ctx.portal_userauthcookie);
+	free(ctx.portal_prelogonuserauthcookie);
 	free_auth_form(ctx.form);
 	return result;
 }
@@ -721,8 +763,7 @@ int gpst_bye(struct openconnect_info *vpninfo, const char *reason)
 	orig_path = vpninfo->urlpath;
 	vpninfo->urlpath = strdup("ssl-vpn/logout.esp");
 	openconnect_close_https(vpninfo, 0);
-	result = do_https_request(vpninfo, method, request_body_type, request_body,
-				  &xml_buf, 0);
+	result = do_https_request(vpninfo, method, request_body_type, request_body, &xml_buf, NULL, HTTP_NO_FLAGS);
 	free(vpninfo->urlpath);
 	vpninfo->urlpath = orig_path;
 

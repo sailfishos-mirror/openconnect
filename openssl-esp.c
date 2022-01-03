@@ -17,15 +17,15 @@
 
 #include <config.h>
 
-#include <unistd.h>
-#include <string.h>
-#include <stdlib.h>
-#include <errno.h>
-
 #include "openconnect-internal.h"
 
 #include <openssl/evp.h>
 #include <openssl/rand.h>
+
+#include <unistd.h>
+#include <string.h>
+#include <stdlib.h>
+#include <errno.h>
 
 #if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 

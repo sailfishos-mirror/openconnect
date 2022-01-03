@@ -22,25 +22,25 @@
 
 #include <config.h>
 
+#include "openconnect-internal.h"
+
+#include <libxml/HTMLparser.h>
+#include <libxml/HTMLtree.h>
+
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/types.h>
+#ifndef _WIN32
+#include <sys/wait.h>
+#endif
+
 #include <time.h>
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <sys/types.h>
 #include <stdarg.h>
-#include <sys/types.h>
-#ifndef _WIN32
-#include <sys/wait.h>
-#endif
-
-#include <libxml/HTMLparser.h>
-#include <libxml/HTMLtree.h>
-
-#include "openconnect-internal.h"
 
 /* XX: This is actually a lot of duplication with the CSTP version. */
 void oncp_common_headers(struct openconnect_info *vpninfo, struct oc_text_buf *buf)
@@ -63,7 +63,7 @@ static int oncp_can_gen_tokencode(struct openconnect_info *vpninfo,
 	if (opt->type == OC_FORM_OPT_PASSWORD &&
 	    (!strcmp(form->auth_id, "frmLogin") ||
 	     !strcmp(form->auth_id, "loginForm"))) {
-		/* XX: The first occurence of a password input field in frmLogin is likely to be a password,
+		/* XX: The first occurrence of a password input field in frmLogin is likely to be a password,
 		 * not token, input. However, if we have already added a password input field to this form,
 		 * then a second one is likely to hold a token.
 		 */
@@ -318,15 +318,13 @@ static int tncc_preauth(struct openconnect_info *vpninfo)
 			goto respfail;
 		if (len > 0)
 			vpn_progress(vpninfo, PRG_DEBUG,
-				     _("Unexpected non-empty line from TNCC "
-				       "after DSPREAUTH cookie: '%s'\n"),
+				     _("Unexpected non-empty line from TNCC after DSPREAUTH cookie: '%s'\n"),
 				     recvbuf);
 	} while (len && (count++ < 10));
 
 	if (len > 0) {
 		vpn_progress(vpninfo, PRG_ERR,
-			     _("Too many non-empty lines from TNCC after "
-			       "DSPREAUTH cookie\n"));
+			     _("Too many non-empty lines from TNCC after DSPREAUTH cookie\n"));
 		goto respfail;
 	}
 
@@ -347,9 +345,15 @@ static struct oc_auth_form *parse_roles_table_node(xmlNodePtr node)
 	if (!form)
 		return NULL;
 
+	form->auth_id = strdup("frmSelectRoles");
+	if (!form->auth_id) {
+		free(form);
+		return NULL;
+	};
+
 	opt = calloc(1, sizeof(*opt));
 	if (!opt) {
-		free(form);
+		free_auth_form(form);
 		return NULL;
 	}
 
@@ -460,12 +464,10 @@ int oncp_obtain_cookie(struct openconnect_info *vpninfo)
 	        char *url;
 
 		if (resp_buf && resp_buf->pos)
-			ret = do_https_request(vpninfo, "POST",
-					       "application/x-www-form-urlencoded",
-					       resp_buf, &form_buf, 2);
+			ret = do_https_request(vpninfo, "POST", "application/x-www-form-urlencoded", resp_buf,
+					       &form_buf, NULL, HTTP_REDIRECT_TO_GET);
 		else
-			ret = do_https_request(vpninfo, "GET", NULL, NULL,
-					       &form_buf, 2);
+			ret = do_https_request(vpninfo, "GET", NULL, NULL, &form_buf, NULL, HTTP_REDIRECT_TO_GET);
 
 		/* After login, the server will redirect the "browser" to a landing page.
 		 * https://kb.pulsesecure.net/articles/Pulse_Security_Advisories/SA44784

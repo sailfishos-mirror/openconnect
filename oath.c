@@ -18,12 +18,12 @@
 
 #include <config.h>
 
+#include "openconnect-internal.h"
+
 #include <ctype.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "openconnect-internal.h"
 
 static int b32_char(char in)
 {

@@ -17,15 +17,17 @@
 
 #include <config.h>
 
+#include "openconnect-internal.h"
+
+#include "lzo.h"
+
+#include <unistd.h>
+
 #include <stdio.h>
 #include <stdint.h>
-#include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
-
-#include "openconnect-internal.h"
-#include "lzo.h"
 
 int print_esp_keys(struct openconnect_info *vpninfo, const char *name, struct esp *esp)
 {
@@ -80,10 +82,13 @@ int esp_setup(struct openconnect_info *vpninfo)
 	    vpninfo->dtls_state == DTLS_NOSECRET)
 		return -EINVAL;
 
-	if (vpninfo->esp_ssl_fallback)
-		vpninfo->dtls_times.dpd = vpninfo->esp_ssl_fallback;
-	else
-		vpninfo->dtls_times.dpd = vpninfo->dtls_attempt_period;
+	/* XX: set ESP DPD interval if not already set */
+	if (!vpninfo->dtls_times.dpd) {
+		if (vpninfo->esp_ssl_fallback)
+			vpninfo->dtls_times.dpd = vpninfo->esp_ssl_fallback;
+		else
+			vpninfo->dtls_times.dpd = vpninfo->dtls_attempt_period;
+	}
 
 	print_esp_keys(vpninfo, _("incoming"), &vpninfo->esp_in[vpninfo->current_esp_in]);
 	print_esp_keys(vpninfo, _("outgoing"), &vpninfo->esp_out);
@@ -156,7 +161,7 @@ int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		struct pkt *pkt;
 
 		if (!vpninfo->dtls_pkt) {
-			vpninfo->dtls_pkt = malloc(sizeof(struct pkt) + len);
+			vpninfo->dtls_pkt = alloc_pkt(vpninfo, len);
 			if (!vpninfo->dtls_pkt) {
 				vpn_progress(vpninfo, PRG_ERR, _("Allocation failed\n"));
 				break;
@@ -167,8 +172,6 @@ int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		if (len <= 0)
 			break;
 
-		vpn_progress(vpninfo, PRG_TRACE, _("Received ESP packet of %d bytes\n"),
-			     len);
 		work_done = 1;
 
 		/* both supported algos (SHA1 and MD5) have 12-byte MAC lengths (RFC2403 and RFC2404) */
@@ -198,13 +201,21 @@ int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		/* Possible values of the Next Header field are:
 		   0x04: IP[v4]-in-IP
 		   0x05: supposed to mean Internet Stream Protocol
-		         (XXX: but used for LZO compressed packets by Juniper)
+		         (XXX: but used for LZO compressed IPv4 packets by Juniper)
 		   0x29: IPv6 encapsulation */
-		if (pkt->data[len - 1] != 0x04 && pkt->data[len - 1] != 0x29 &&
-		    pkt->data[len - 1] != 0x05) {
+		if (pkt->data[len - 1] == 0x04)
+			vpn_progress(vpninfo, PRG_TRACE, _("Received ESP Legacy IP packet of %d bytes\n"),
+				     len);
+		else if (pkt->data[len - 1] == 0x05)
+			vpn_progress(vpninfo, PRG_TRACE, _("Received ESP Legacy IP packet of %d bytes (LZO-compressed)\n"),
+				     len);
+		else if (pkt->data[len - 1] == 0x29)
+			vpn_progress(vpninfo, PRG_TRACE, _("Received ESP IPv6 packet of %d bytes\n"),
+				     len);
+		else {
 			vpn_progress(vpninfo, PRG_ERR,
-				     _("Received ESP packet with unrecognised payload type %02x\n"),
-				     pkt->data[len-1]);
+				     _("Received ESP packet of %d bytes with unrecognised payload type %02x\n"),
+				     len, pkt->data[len-1]);
 			continue;
 		}
 
@@ -238,7 +249,7 @@ int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			}
 		}
 		if (pkt->data[len - 1] == 0x05) {
-			struct pkt *newpkt = malloc(sizeof(*pkt) + receive_mtu + vpninfo->pkt_trailer);
+			struct pkt *newpkt = alloc_pkt(vpninfo, receive_mtu + vpninfo->pkt_trailer);
 			int newlen = receive_mtu;
 			if (!newpkt) {
 				vpn_progress(vpninfo, PRG_ERR,
@@ -249,7 +260,7 @@ int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 					    pkt->data, &pkt->len) || pkt->len) {
 				vpn_progress(vpninfo, PRG_ERR,
 					     _("LZO decompression of ESP packet failed\n"));
-				free(newpkt);
+				free_pkt(vpninfo, newpkt);
 				continue;
 			}
 			newpkt->len = receive_mtu - newlen;
@@ -295,27 +306,29 @@ int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 	}
 	while (1) {
 		int len;
+		int ip_version;
 
 		if (vpninfo->deflate_pkt) {
 			this = vpninfo->deflate_pkt;
 			len = this->len;
+			ip_version = this->data[0] >> 4;
 		} else {
 			this = dequeue_packet(&vpninfo->outgoing_queue);
 			if (!this)
 				break;
+			ip_version = this->data[0] >> 4;
 
-			if (vpninfo->proto->proto == PROTO_NC ||
-			    vpninfo->proto->proto == PROTO_PULSE) {
+			if (vpninfo->proto->proto == PROTO_PULSE) {
 				uint8_t dontsend;
 
-				/* Pulse/NC can only accept ESP of the same protocol as the one
+				/* Pulse can only accept ESP of the same protocol as the one
 				 * you connected to it with. The other has to go over IF-T/TLS. */
 				if (vpninfo->dtls_addr->sa_family == AF_INET6)
-					dontsend = 0x40;
+					dontsend = 4;
 				else
-					dontsend = 0x60;
+					dontsend = 6;
 
-				if ( (this->data[0] & 0xf0) == dontsend) {
+				if (ip_version == dontsend) {
 					store_be32(&this->pulse.vendor, 0xa4c);
 					store_be32(&this->pulse.type, 4);
 					store_be32(&this->pulse.len, this->len + 16);
@@ -323,6 +336,15 @@ int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 					work_done = 1;
 					continue;
 				}
+			} else if (vpninfo->proto->proto == PROTO_NC &&
+				   vpninfo->dtls_addr->sa_family == AF_INET6) {
+				/* Juniper/NC cannot do ESP-over-IPv6, and it cannot send
+				 * tunneled IPv6 packets at all; they just get dropped.
+				 * It shouldn't even send any ESP options/keys when connecting
+				 * to the server via IPv6. This should never happen.
+				 */
+				vpninfo->quit_reason = "Juniper/NC ESP tunnel over IPv6 should never happen.";
+				return 1;
 			}
 
 			/* XX: Must precede in-place encryption of the packet, because
@@ -335,7 +357,7 @@ int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			len = construct_esp_packet(vpninfo, this, 0);
 			if (len < 0) {
 				/* Should we disable ESP? */
-				free(this);
+				free_pkt(vpninfo, this);
 				work_done = 1;
 				continue;
 			}
@@ -362,14 +384,14 @@ int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		} else {
 			vpninfo->dtls_times.last_tx = time(NULL);
 
-			vpn_progress(vpninfo, PRG_TRACE, _("Sent ESP packet of %d bytes\n"),
-				     len);
+			vpn_progress(vpninfo, PRG_TRACE, _("Sent ESP IPv%d packet of %d bytes\n"),
+				     ip_version, len);
 		}
 		if (this == vpninfo->deflate_pkt) {
 			unmonitor_write_fd(vpninfo, dtls);
 			vpninfo->deflate_pkt = NULL;
 		}
-		free(this);
+		free_pkt(vpninfo, this);
 		work_done = 1;
 	}
 
@@ -381,16 +403,14 @@ void esp_close(struct openconnect_info *vpninfo)
 	/* We close and reopen the socket in case we roamed and our
 	   local IP address has changed. */
 	if (vpninfo->dtls_fd != -1) {
+		unmonitor_fd(vpninfo, dtls);
 		closesocket(vpninfo->dtls_fd);
-		unmonitor_read_fd(vpninfo, dtls);
-		unmonitor_write_fd(vpninfo, dtls);
-		unmonitor_except_fd(vpninfo, dtls);
 		vpninfo->dtls_fd = -1;
 	}
 	if (vpninfo->dtls_state > DTLS_DISABLED)
 		vpninfo->dtls_state = DTLS_SLEEPING;
 	if (vpninfo->deflate_pkt) {
-		free(vpninfo->deflate_pkt);
+		free_pkt(vpninfo, vpninfo->deflate_pkt);
 		vpninfo->deflate_pkt = NULL;
 	}
 }

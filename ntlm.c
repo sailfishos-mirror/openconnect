@@ -17,17 +17,12 @@
 
 #include <config.h>
 
+#include "openconnect-internal.h"
+
 #include <unistd.h>
 #include <fcntl.h>
-#include <time.h>
-#include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <ctype.h>
 #ifdef HAVE_ALLOCA_H
 #include <alloca.h>
 #endif
@@ -35,7 +30,13 @@
 #include <sys/wait.h>
 #endif
 
-#include "openconnect-internal.h"
+#include <time.h>
+#include <string.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdarg.h>
+#include <ctype.h>
 
 #define NTLM_SSO_REQ		2	/* SSO type1 packet sent */
 #define NTLM_MANUAL		3	/* SSO challenge/response sent or skipped; manual next */
@@ -89,7 +90,7 @@ static int ntlm_sspi(struct openconnect_info *vpninfo, int proxy,
 	}
 
 	buf_append(buf, "%sAuthorization: NTLM ", proxy ? "Proxy-" : "");
-	buf_append_base64(buf, out_token.pvBuffer, out_token.cbBuffer);
+	buf_append_base64(buf, out_token.pvBuffer, out_token.cbBuffer, 0);
 	buf_append(buf, "\r\n");
 
 	FreeContextBuffer(out_token.pvBuffer);
@@ -971,7 +972,7 @@ static int ntlm_manual_challenge(struct openconnect_info *vpninfo, int proxy,
 		return buf_free(resp);
 
 	buf_append(hdrbuf, "%sAuthorization: NTLM ", proxy ? "Proxy-" : "");
-	buf_append_base64(hdrbuf, resp->data, resp->pos);
+	buf_append_base64(hdrbuf, resp->data, resp->pos, 0);
 	buf_append(hdrbuf, "\r\n");
 
 	buf_free(resp);

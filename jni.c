@@ -15,17 +15,19 @@
 
 #include <config.h>
 
+#include "openconnect.h"
+
+#include <jni.h>
+
+#include <unistd.h>
+#include <sys/types.h>
+
 #include <errno.h>
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <sys/types.h>
-
-#include <jni.h>
-#include "openconnect.h"
 
 struct libctx {
 	JNIEnv *jenv;
@@ -49,7 +51,7 @@ static void throw_excep(JNIEnv *jenv, const char *exc, int line)
 		(*jenv)->ThrowNew(jenv, excep, msg);
 }
 
-#define OOM(jenv)	do { throw_excep(jenv, "java/lang/OutOfMemoryError", __LINE__); } while (0)
+#define OOM(jenv)	throw_excep(jenv, "java/lang/OutOfMemoryError", __LINE__)
 
 static struct libctx *getctx(JNIEnv *jenv, jobject jobj)
 {
@@ -75,7 +77,7 @@ static jstring dup_to_jstring(JNIEnv *jenv, const char *in)
 	/*
 	 * Many implementations of NewStringUTF() will return NULL on
 	 * NULL input, but that isn't guaranteed:
-	 * http://gcc.gnu.org/bugzilla/show_bug.cgi?id=35979
+	 * https://gcc.gnu.org/bugzilla/show_bug.cgi?id=35979
 	 */
 	return in ? (*jenv)->NewStringUTF(jenv, in) : NULL;
 }
@@ -850,7 +852,6 @@ JNIEXPORT void JNICALL Java_org_infradead_libopenconnect_LibOpenConnect_setClien
 
 	release_cstring(ctx->jenv, jcert, cert);
 	release_cstring(ctx->jenv, jsslkey, sslkey);
-	return;
 }
 
 /* special handling: multiple string arguments */
@@ -1298,6 +1299,14 @@ JNIEXPORT jstring JNICALL Java_org_infradead_libopenconnect_LibOpenConnect_getPr
 {
 	RETURN_STRING_START
 	buf = openconnect_get_protocol(ctx->vpninfo);
+	RETURN_STRING_END
+}
+
+JNIEXPORT jstring JNICALL Java_org_infradead_libopenconnect_LibOpenConnect_getConnectUrl(
+	JNIEnv *jenv, jobject jobj)
+{
+	RETURN_STRING_START
+	buf = openconnect_get_connect_url(ctx->vpninfo);
 	RETURN_STRING_END
 }
 

@@ -17,6 +17,8 @@
 
 #include <config.h>
 
+#include "openconnect-internal.h"
+
 #include <string.h>
 #include <stdarg.h>
 #include <stdlib.h>
@@ -40,8 +42,6 @@ errno_t _putenv_s(
 );
 #endif
 #endif
-
-#include "openconnect-internal.h"
 
 #ifdef HAVE_SUNOS_BROKEN_TIME
 /*
@@ -205,7 +205,7 @@ char *openconnect__strndup(const char *s, size_t n)
 #ifndef HAVE_STRCHRNUL
 const char *openconnect__strchrnul(const char *s, int c)
 {
-	while (*s && *s++ != c);
+	while (*s && *s != c) s++;
 	return s;
 }
 #endif
@@ -268,7 +268,7 @@ char *openconnect__win32_strerror(DWORD err)
 	return msgutf8;
 }
 
-int openconnect__win32_sock_init()
+int openconnect__win32_sock_init(void)
 {
 	WSADATA data;
 	if (WSAStartup (MAKEWORD(1, 1), &data) != 0) {
@@ -301,7 +301,7 @@ int openconnect__win32_inet_pton(int af, const char *src, void *dst)
 	 * inet_aton() (and WSAStringToAddress()) will support, but
 	 * which inet_pton() should not. Not to mention the fact that
 	 * Wine's implementation will even succeed for strings like
-	 * "2001::1" (http://bugs.winehq.org/show_bug.cgi?id=36991) */
+	 * "2001::1" (https://bugs.winehq.org/show_bug.cgi?id=36991) */
 	if (af == AF_INET) {
 		char canon[16];
 		unsigned char *a = (unsigned char *)&sa.s4.sin_addr;
@@ -382,8 +382,8 @@ WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH 
 OPENCONNECT_CMD_SOCKET dumb_socketpair(OPENCONNECT_CMD_SOCKET socks[2], int make_overlapped)
 {
     union {
-       struct sockaddr_in inaddr;
-       struct sockaddr addr;
+        struct sockaddr_in inaddr;
+        struct sockaddr addr;
     } a;
     OPENCONNECT_CMD_SOCKET listener;
     int e;
@@ -392,8 +392,8 @@ OPENCONNECT_CMD_SOCKET dumb_socketpair(OPENCONNECT_CMD_SOCKET socks[2], int make
     int reuse = 1;
 
     if (socks == 0) {
-      WSASetLastError(WSAEINVAL);
-      return SOCKET_ERROR;
+        WSASetLastError(WSAEINVAL);
+        return SOCKET_ERROR;
     }
 
     listener = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -408,16 +408,16 @@ OPENCONNECT_CMD_SOCKET dumb_socketpair(OPENCONNECT_CMD_SOCKET socks[2], int make
     socks[0] = socks[1] = -1;
     do {
         if (setsockopt(listener, SOL_SOCKET, SO_REUSEADDR,
-               (char*) &reuse, (socklen_t) sizeof(reuse)) == -1)
+               (char *) &reuse, (socklen_t) sizeof(reuse)) == -1)
             break;
-        if  (bind(listener, &a.addr, sizeof(a.inaddr)) == SOCKET_ERROR)
+        if (bind(listener, &a.addr, sizeof(a.inaddr)) == SOCKET_ERROR)
             break;
 
         memset(&a, 0, sizeof(a));
-        if  (getsockname(listener, &a.addr, &addrlen) == SOCKET_ERROR)
+        if (getsockname(listener, &a.addr, &addrlen) == SOCKET_ERROR)
             break;
         // win32 getsockname may only set the port number, p=0.0005.
-        // ( http://msdn.microsoft.com/library/ms738543.aspx ):
+        // ( https://docs.microsoft.com/en-us/windows/win32/api/winsock/nf-winsock-getsockname ):
         a.inaddr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
         a.inaddr.sin_family = AF_INET;
 

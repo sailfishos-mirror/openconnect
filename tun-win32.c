@@ -17,15 +17,19 @@
 
 #include <config.h>
 
+#include "openconnect-internal.h"
+
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <winioctl.h>
+/* must precede iphlpapi.h, per https://docs.microsoft.com/en-us/windows/win32/api/iptypes/ns-iptypes-ip_adapter_addresses_lh */
+#include <winsock2.h>
+#include <ws2ipdef.h>
 #include <iphlpapi.h>
+#include <netioapi.h>
 
 #include <errno.h>
 #include <stdio.h>
-
-#include "openconnect-internal.h"
 
 /*
  * TAP-Windows support inspired by http://i3.cs.berkeley.edu/ (v0.2) with
@@ -221,6 +225,130 @@ static int get_adapter_index(struct openconnect_info *vpninfo, char *guid)
 	return ret;
 }
 
+static int check_address_conflicts(struct openconnect_info *vpninfo)
+{
+	ULONG bufSize = 15000;
+	PIP_ADAPTER_ADDRESSES addresses = NULL;
+	DWORD LastError;
+	int ret = 0;
+
+	struct in_addr our_ipv4_addr;
+	struct in6_addr our_ipv6_addr;
+	if (vpninfo->ip_info.addr && !inet_aton(vpninfo->ip_info.addr, &our_ipv4_addr))
+		return -EINVAL;
+	if (vpninfo->ip_info.addr6 && !inet_pton(AF_INET6, vpninfo->ip_info.addr6, &our_ipv6_addr))
+		return -EINVAL;
+
+	/* XX: repeat twice, because it may tell us we need a bigger buffer */
+	for (int tries=0; tries<2; tries++) {
+		free(addresses);
+		addresses = malloc(bufSize);
+		if (!addresses)
+			return -ENOMEM;
+
+		/* AF_UNSPEC means both Legacy IP and IPv6 */
+		LastError = GetAdaptersAddresses(AF_UNSPEC,
+						 GAA_FLAG_SKIP_ANYCAST | GAA_FLAG_SKIP_MULTICAST,
+						 NULL, addresses, &bufSize);
+		if (LastError != ERROR_BUFFER_OVERFLOW)
+			break;
+	}
+	if (LastError != ERROR_SUCCESS) {
+		char *errstr = openconnect__win32_strerror(LastError);
+		vpn_progress(vpninfo, PRG_ERR, _("GetAdaptersAddresses() failed: %s\n"), errstr);
+		ret = -EIO;
+		goto out;
+	}
+
+	for (; addresses; addresses=addresses->Next) {
+		/* XX: skip "our own" adapter */
+		if (addresses->IfIndex == vpninfo->tun_idx)
+			continue;
+
+		for (PIP_ADAPTER_UNICAST_ADDRESS ua = addresses->FirstUnicastAddress;
+		     ua; ua=ua->Next) {
+			struct sockaddr *a = ua->Address.lpSockaddr;
+			union {
+				struct sockaddr_in s4;
+				struct sockaddr_in6 s6;
+			} *sa = (void *)a;
+			int needs_reclaim = 0;
+
+			if (a->sa_family == AF_INET) {
+				if (vpninfo->ip_info.addr && our_ipv4_addr.s_addr == sa->s4.sin_addr.s_addr)
+					needs_reclaim = 1;
+			} else if (a->sa_family == AF_INET6) {
+				if (vpninfo->ip_info.addr6 && !memcmp(&our_ipv6_addr, &sa->s6.sin6_addr, sizeof(sa->s6.sin6_addr)))
+					needs_reclaim = 1;
+			}
+
+			if (needs_reclaim) {
+				if (addresses->OperStatus == IfOperStatusUp) {
+					/* XX: Interface is up. We shouldn't steal its address */
+					vpn_progress(vpninfo, PRG_ERR,
+						     _("Adapter \"%S\" / %ld is UP and using our IPv%d address. Cannot resolve.\n"),
+						     addresses->FriendlyName, addresses->IfIndex, a->sa_family == AF_INET ? 4 : 6);
+					ret = -ENOENT;
+					goto out;
+				} else {
+					/* XX: Interface is down */
+					vpn_progress(vpninfo, PRG_ERR,
+						     _("Adapter \"%S\" / %ld is DOWN and using our IPv%d address. We will reclaim the address from it.\n"),
+						     addresses->FriendlyName, addresses->IfIndex, a->sa_family == AF_INET ? 4 : 6);
+
+					/* XX: In order to use DeleteUnicastIpAddressEntry(), we bizarrely have to iterate through a
+					 * whole different table of IP addresses to find the right row. I previously tried
+					 * faking/synthesizing the requisite MIB_UNICASTIPADDRESS_TABLE rows, and it did not
+					 * work.
+					 */
+					int found = 0;
+					PMIB_UNICASTIPADDRESS_TABLE pipTable = NULL;
+					LastError = GetUnicastIpAddressTable(AF_UNSPEC, &pipTable);
+					if (LastError != ERROR_SUCCESS) {
+						char *errstr = openconnect__win32_strerror(LastError);
+						vpn_progress(vpninfo, PRG_ERR, _("GetUnicastIpAddressTable() failed: %s\n"), errstr);
+						ret = -EIO;
+						goto out;
+					}
+					for (int i = 0; i < pipTable->NumEntries; i++) {
+						if (pipTable->Table[i].Address.si_family == AF_INET && a->sa_family == AF_INET) {
+							if (sa->s4.sin_addr.s_addr == pipTable->Table[i].Address.Ipv4.sin_addr.s_addr)
+								found = 1;
+						} else if (pipTable->Table[i].Address.si_family == AF_INET6 && a->sa_family == AF_INET6) {
+							if (!memcmp(&sa->s6.sin6_addr, &pipTable->Table[i].Address.Ipv6, sizeof(sa->s6.sin6_addr)))
+								found = 1;
+						}
+						if (found) {
+							LastError = DeleteUnicastIpAddressEntry(&pipTable->Table[i]);
+							break;
+						}
+					}
+					FreeMibTable(pipTable);
+
+					if (LastError != NO_ERROR) {
+						char *errstr = openconnect__win32_strerror(LastError);
+						vpn_progress(vpninfo, PRG_ERR, _("DeleteUnicastIpAddressEntry() failed: %s\n"), errstr);
+						ret = -EIO;
+						goto out;
+					}
+
+					if (!found) {
+						vpn_progress(vpninfo, PRG_ERR,
+							     _("GetUnicastIpAddressTable() did not find matching address to reclaim\n"));
+						/* ret = -EIO;
+						   goto out; */
+					}
+
+				}
+			}
+		}
+	}
+
+ out:
+	free(addresses);
+	return ret;
+}
+
 static intptr_t open_tuntap(struct openconnect_info *vpninfo, char *guid, wchar_t *wname)
 {
 	char devname[80];
@@ -242,7 +370,7 @@ static intptr_t open_tuntap(struct openconnect_info *vpninfo, char *guid, wchar_
 	vpn_progress(vpninfo, PRG_DEBUG, _("Opened tun device %S\n"), wname);
 
 	if (!DeviceIoControl(tun_fh, TAP_IOCTL_GET_VERSION,
-			     data, sizeof(&data), data, sizeof(data),
+			     data, sizeof(data), data, sizeof(data),
 			     &len, NULL)) {
 		char *errstr = openconnect__win32_strerror(GetLastError());
 
@@ -336,52 +464,78 @@ static intptr_t open_tun(struct openconnect_info *vpninfo, int adapter_type, cha
 
 	get_adapter_index(vpninfo, guid);
 
-	vpn_progress(vpninfo, PRG_INFO, _("Using %s device '%s', index %d\n"),
+	vpn_progress(vpninfo, adapter_type ? PRG_ERR : PRG_INFO,
+		     _("Using %s device '%s', index %d\n"),
 		     adapter_type ? "Wintun" : "TAP-Windows",
 		     vpninfo->ifname, vpninfo->tun_idx);
+	if (adapter_type == ADAPTER_WINTUN)
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("WARNING: Support for Wintun is experimental and may be unstable. If you\n"
+			       "  encounter problems, install the TAP-Windows driver instead. See\n"
+			       "  https://www.infradead.org/openconnect/building.html\n"));
 
 	return ret;
 }
 
-intptr_t os_setup_tun(struct openconnect_info *vpninfo)
-{
-	if (vpninfo->ifname) {
-		struct oc_text_buf *ifname_buf = buf_alloc();
-		buf_append_utf16le(ifname_buf, vpninfo->ifname);
+static intptr_t create_ifname_w(struct openconnect_info *vpninfo, const char *ifname) {
+	struct oc_text_buf *ifname_buf = buf_alloc();
+	buf_append_utf16le(ifname_buf, vpninfo->ifname);
 
-		if (buf_error(ifname_buf)) {
-			vpn_progress(vpninfo, PRG_ERR, _("Could not construct interface name\n"));
-			return buf_free(ifname_buf);
-		}
-
-		free(vpninfo->ifname_w);
-		vpninfo->ifname_w = (wchar_t *)ifname_buf->data;
-		ifname_buf->data = NULL;
-		buf_free(ifname_buf);
+	if (buf_error(ifname_buf)) {
+		vpn_progress(vpninfo, PRG_ERR, _("Could not construct interface name\n"));
+		return buf_free(ifname_buf);
 	}
 
-	intptr_t ret = search_taps(vpninfo, open_tun);
+	free(vpninfo->ifname_w);
+	vpninfo->ifname_w = (wchar_t *)ifname_buf->data;
+	ifname_buf->data = NULL;
+	buf_free(ifname_buf);
+	return 0;
+}
+
+intptr_t os_setup_tun(struct openconnect_info *vpninfo)
+{
+	intptr_t ret;
+
+	if (vpninfo->ifname) {
+		ret = create_ifname_w(vpninfo, vpninfo->ifname);
+		if (ret)
+			return ret;
+	}
+
+	ret = search_taps(vpninfo, open_tun);
 
 	if (ret == OPEN_TUN_SOFTFAIL) {
-		/* If an interface name was given, try creating a Wintun */
-		if (vpninfo->ifname && !create_wintun(vpninfo)) {
+		if (!vpninfo->ifname_w) {
+			ret = create_ifname_w(vpninfo, vpninfo->hostname);
+			if (ret)
+				return ret;
+		}
+
+		/* Try creating a Wintun instead of TAP */
+		int retw = create_wintun(vpninfo);
+		if (!retw) {
 			ret = search_taps(vpninfo, open_tun);
 
 			if (ret == OPEN_TUN_SOFTFAIL)
 				ret = OPEN_TUN_HARDFAIL;
 			if (ret == OPEN_TUN_HARDFAIL)
 				os_shutdown_wintun(vpninfo);
+		} else if (retw == -EPERM) {
+			ret = OPEN_TUN_HARDFAIL;
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("Access denied creating Wintun adapter. Are you running with Administrator privileges?\n"));
 		}
 	}
 
 	if (ret == OPEN_TUN_SOFTFAIL) {
 		vpn_progress(vpninfo, PRG_ERR,
-			     _("No Windows-TAP adapters found. Is the driver installed?\n"));
-		if (!vpninfo->ifname)
-			vpn_progress(vpninfo, PRG_ERR,
-				     _("Alternatively, specify an interface name to try creating it with Wintun\n"));
+			     _("Neither Windows-TAP nor Wintun adapters were found. Is the driver installed?\n"));
 		ret = OPEN_TUN_HARDFAIL;
 	}
+
+	if (check_address_conflicts(vpninfo) < 0)
+		ret = OPEN_TUN_HARDFAIL; /* already complained about it */
 
 	return ret;
 }

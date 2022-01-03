@@ -17,10 +17,10 @@
 
 #include <config.h>
 
+#include "openconnect-internal.h"
+
 #include <errno.h>
 #include <string.h>
-
-#include "openconnect-internal.h"
 
 static void print_gss_err(struct openconnect_info *vpninfo, const char *where,
 			  gss_OID mech, OM_uint32 err_maj, OM_uint32 err_min)
@@ -135,7 +135,7 @@ int gssapi_authorization(struct openconnect_info *vpninfo, int proxy,
 		return in.value ? -EAGAIN : -ENOENT;
 	}
 	buf_append(hdrbuf, "%sAuthorization: Negotiate ", proxy ? "Proxy-" : "");
-	buf_append_base64(hdrbuf, out.value, out.length);
+	buf_append_base64(hdrbuf, out.value, out.length, 0);
 	buf_append(hdrbuf, "\r\n");
 
 	gss_release_buffer(&minor, &out);

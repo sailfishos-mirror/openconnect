@@ -18,13 +18,13 @@
 
 #include <config.h>
 
-#include <stdio.h>
+#include "openconnect-internal.h"
+
+#include <libxml/parser.h>
+#include <libxml/tree.h>
+
 #include <unistd.h>
 #include <fcntl.h>
-#include <time.h>
-#include <string.h>
-#include <ctype.h>
-#include <errno.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #ifndef _WIN32
@@ -33,10 +33,11 @@
 #include <grp.h>
 #endif
 
-#include <libxml/parser.h>
-#include <libxml/tree.h>
-
-#include "openconnect-internal.h"
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <ctype.h>
+#include <errno.h>
 
 static int xmlpost_append_form_opts(struct openconnect_info *vpninfo,
 				    struct oc_auth_form *form, struct oc_text_buf *body);
@@ -89,7 +90,7 @@ static int parse_auth_choice(struct openconnect_info *vpninfo, struct oc_auth_fo
 
 	/* Return early when there is a <select/> tag with no children */
 	if (max_choices == 0) {
-	    return 0;
+		return 0;
 	}
 
 	opt = calloc(1, sizeof(*opt));
@@ -681,8 +682,18 @@ static int handle_auth_form(struct openconnect_info *vpninfo, struct oc_auth_for
 	if (!form->opts) {
 		if (form->message)
 			vpn_progress(vpninfo, PRG_INFO, "%s\n", form->message);
-		if (form->error)
-			vpn_progress(vpninfo, PRG_ERR, "%s\n", form->error);
+		if (form->error) {
+			if (!strcmp(form->error, "Certificate Validation Failure")) {
+				/* XX: Cisco servers send this ambiguous error string when the CLIENT certificate
+				 * is absent or incorrect. We rewrite it to make this clearer, while preserving
+				 * the original error as a substring.
+				 */
+				free(form->error);
+				if (!(form->error = strdup(_("Client certificate missing or incorrect (Certificate Validation Failure)"))))
+					return -ENOMEM;
+			} else
+				vpn_progress(vpninfo, PRG_ERR, "%s\n", form->error);
+		}
 		if (!strcmp(form->auth_id, "openconnect_authentication_complete"))
 			goto justpost;
 		return -EPERM;
@@ -925,8 +936,8 @@ static int cstp_can_gen_tokencode(struct openconnect_info *vpninfo,
 #endif
 	/* Otherwise it's an OATH token of some kind. */
 	if (!strcmp(opt->name, "secondary_password") ||
-        (form->auth_id && !strcmp(form->auth_id, "challenge")))
-	  return can_gen_tokencode(vpninfo, form, opt);
+	    (form->auth_id && !strcmp(form->auth_id, "challenge")))
+		return can_gen_tokencode(vpninfo, form, opt);
 
 	return -EINVAL;
 }
@@ -1189,8 +1200,7 @@ static int run_csd_script(struct openconnect_info *vpninfo, char *buf, int bufle
                 if (set_csd_user(vpninfo) < 0)
                         exit(1);
                 if (getuid() == 0 && !vpninfo->csd_wrapper) {
-                        fprintf(stderr, _("Warning: you are running insecure "
-                                          "CSD code with root privileges\n"
+                        fprintf(stderr, _("Warning: you are running insecure CSD code with root privileges\n"
                                           "\t Use command line option \"--csd-user\"\n"));
                 }
                 /*
@@ -1292,7 +1302,7 @@ int cstp_obtain_cookie(struct openconnect_info *vpninfo)
 	const char *method = "POST";
 	char *orig_host = NULL, *orig_path = NULL, *form_path = NULL;
 	int orig_port = 0;
-	int cert_rq, cert_sent = !vpninfo->cert;
+	int cert_rq, cert_sent = !vpninfo->certinfo[0].cert;
 	int newgroup_attempts = 5;
 
 	if (!vpninfo->xmlpost)
@@ -1352,8 +1362,7 @@ newgroup:
 		}
 
 		request_body_type = vpninfo->xmlpost ? "application/xml; charset=utf-8" : "application/x-www-form-urlencoded";
-		result = do_https_request(vpninfo, method, request_body_type, request_body,
-					  &form_buf, 0);
+		result = do_https_request(vpninfo, method, request_body_type, request_body, &form_buf, NULL, HTTP_NO_FLAGS);
 		if (vpninfo->got_cancel_cmd) {
 			result = 1;
 			goto out;
@@ -1386,10 +1395,10 @@ newgroup:
 			free_auth_form(form);
 			form = NULL;
 
-			if (!cert_sent && vpninfo->cert) {
+			if (!cert_sent && vpninfo->certinfo[0].cert) {
 				/* Try again on a fresh connection. */
 				cert_sent = 1;
-			} else if (cert_sent && vpninfo->cert) {
+			} else if (cert_sent && vpninfo->certinfo[0].cert) {
 				/* Try again with <client-cert-fail/> in the request */
 				vpn_progress(vpninfo, PRG_ERR,
 					     _("Server requested SSL client certificate after one was provided\n"));
@@ -1432,7 +1441,7 @@ newgroup:
 			vpninfo->csd_stuburl = NULL;
 			handle_redirect(vpninfo);
 
-			buflen = do_https_request(vpninfo, "GET", NULL, NULL, &form_buf, 0);
+			buflen = do_https_request(vpninfo, "GET", NULL, NULL, &form_buf, NULL, HTTP_NO_FLAGS);
 			if (buflen <= 0) {
 				if (vpninfo->csd_wrapper) {
 					vpn_progress(vpninfo, PRG_ERR,
@@ -1455,7 +1464,7 @@ newgroup:
 
 		/* vpninfo->urlpath now points to the wait page */
 		while (1) {
-			result = do_https_request(vpninfo, "GET", NULL, NULL, &form_buf, 0);
+			result = do_https_request(vpninfo, "GET", NULL, NULL, &form_buf, NULL, HTTP_NO_FLAGS);
 			if (result <= 0)
 				break;
 
@@ -1478,7 +1487,7 @@ newgroup:
 
 		result = do_https_request(vpninfo,
 					  vpninfo->xmlpost ? "POST" : "GET",
-					  request_body_type, request_body, &form_buf, 1);
+					  request_body_type, request_body, &form_buf, NULL, HTTP_REDIRECT);
 		if (result < 0)
 			goto out;
 
@@ -1504,8 +1513,7 @@ newgroup:
 			goto newgroup;
 		}
 
-		result = do_https_request(vpninfo, method, request_body_type, request_body,
-					  &form_buf, 1);
+		result = do_https_request(vpninfo, method, request_body_type, request_body, &form_buf, NULL, 1);
 		if (result < 0)
 			goto out;
 

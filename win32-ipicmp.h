@@ -16,12 +16,12 @@
 #ifndef __OPENCONNECT_WIN32_IPICMP_H__
 #define __OPENCONNECT_WIN32_IPICMP_H__
 
-#include <stdint.h>
 #include <ws2tcpip.h>
+#include <stdint.h>
 
 /* IPv4 header and flags used in gpst.c */
 
-#define	IP_DF 0x4000			/* dont fragment flag */
+#define	IP_DF 0x4000			/* don't fragment flag */
 #define	IP_MF 0x2000			/* more fragments flag */
 
 struct ip {
@@ -36,6 +36,31 @@ struct ip {
 	u_short	ip_sum;			/* checksum */
 	struct	in_addr ip_src,ip_dst;	/* source and dest address */
 };
+
+/* IPv6 header used in gpst.c */
+
+struct ip6_hdr {
+    union {
+	struct ip6_hdrctl {
+	    uint32_t ip6_un1_flow;   /* 4 bits version, 8 bits TC,
+					20 bits flow-ID */
+	    uint16_t ip6_un1_plen;   /* payload length */
+	    uint8_t  ip6_un1_nxt;    /* next header */
+	    uint8_t  ip6_un1_hlim;   /* hop limit */
+	} ip6_un1;
+	uint8_t ip6_un2_vfc;       /* 4 bits version, top 4 bits tclass */
+    } ip6_ctlun;
+    struct in6_addr ip6_src;      /* source address */
+    struct in6_addr ip6_dst;      /* destination address */
+  };
+
+
+#define ip6_vfc   ip6_ctlun.ip6_un2_vfc
+#define ip6_flow  ip6_ctlun.ip6_un1.ip6_un1_flow
+#define ip6_plen  ip6_ctlun.ip6_un1.ip6_un1_plen
+#define ip6_nxt   ip6_ctlun.ip6_un1.ip6_un1_nxt
+#define ip6_hlim  ip6_ctlun.ip6_un1.ip6_un1_hlim
+#define ip6_hops  ip6_ctlun.ip6_un1.ip6_un1_hlim
 
 /* ICMP header and flags used in gpst.c */
 
@@ -63,53 +88,44 @@ struct ip {
 #define	icmp_mask	icmp_dun.id_mask
 #define	icmp_data	icmp_dun.id_data
 
-struct icmp_ra_addr
-{
+struct icmp_ra_addr {
   uint32_t ira_addr;
   uint32_t ira_preference;
 };
 
-struct icmp
-{
+struct icmp {
   uint8_t  icmp_type;	/* type of message, see below */
   uint8_t  icmp_code;	/* type sub code */
   uint16_t icmp_cksum;	/* ones complement checksum of struct */
-  union
-  {
+  union {
     u_char ih_pptr;		/* ICMP_PARAMPROB */
     struct in_addr ih_gwaddr;	/* gateway address */
-    struct ih_idseq		/* echo datagram */
-    {
+    struct ih_idseq {		/* echo datagram */
       uint16_t icd_id;
       uint16_t icd_seq;
     } ih_idseq;
     uint32_t ih_void;
 
     /* ICMP_UNREACH_NEEDFRAG -- Path MTU Discovery (RFC1191) */
-    struct ih_pmtu
-    {
+    struct ih_pmtu {
       uint16_t ipm_void;
       uint16_t ipm_nextmtu;
     } ih_pmtu;
 
-    struct ih_rtradv
-    {
+    struct ih_rtradv {
       uint8_t irt_num_addrs;
       uint8_t irt_wpa;
       uint16_t irt_lifetime;
     } ih_rtradv;
   } icmp_hun;
 
-  union
-  {
-    struct
-    {
+  union {
+    struct {
       uint32_t its_otime;
       uint32_t its_rtime;
       uint32_t its_ttime;
     } id_ts;
-    struct
-    {
+    struct {
       struct ip idi_ip;
       /* options and then 64 bits of data */
     } id_ip;
@@ -118,5 +134,31 @@ struct icmp
     uint8_t    id_data[1];
   } icmp_dun;
 };
+
+/* ICMPv6 header and flags used in gpst.c */
+
+#define IPPROTO_ICMPV6	58
+#define ICMP6_ECHO_REQUEST	128
+#define ICMP6_ECHO_REPLY	129
+
+struct icmp6_hdr {
+    uint8_t     icmp6_type;   /* type field */
+    uint8_t     icmp6_code;   /* code field */
+    uint16_t    icmp6_cksum;  /* checksum field */
+    union {
+	uint32_t  icmp6_un_data32[1]; /* type-specific field */
+	uint16_t  icmp6_un_data16[2]; /* type-specific field */
+	uint8_t   icmp6_un_data8[4];  /* type-specific field */
+      } icmp6_dataun;
+  };
+
+#define icmp6_data32    icmp6_dataun.icmp6_un_data32
+#define icmp6_data16    icmp6_dataun.icmp6_un_data16
+#define icmp6_data8     icmp6_dataun.icmp6_un_data8
+#define icmp6_pptr      icmp6_data32[0]  /* parameter prob */
+#define icmp6_mtu       icmp6_data32[0]  /* packet too big */
+#define icmp6_id        icmp6_data16[0]  /* echo request/reply */
+#define icmp6_seq       icmp6_data16[1]  /* echo request/reply */
+#define icmp6_maxdelay  icmp6_data16[0]  /* mcast group membership */
 
 #endif /* __OPENCONNECT_WIN32_IPICMP_H__ */

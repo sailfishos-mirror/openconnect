@@ -17,11 +17,6 @@
 
 #include <config.h>
 
-#include <errno.h>
-#include <string.h>
-#include <sys/types.h>
-#include <ctype.h>
-
 #include "openconnect-internal.h"
 
 #include <openssl/crypto.h>
@@ -37,8 +32,14 @@
 #include <openssl/ui.h>
 #include <openssl/rsa.h>
 
+#include <sys/types.h>
+
+#include <errno.h>
+#include <string.h>
+#include <ctype.h>
+
 #if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
-#define X509_up_ref(x) 	CRYPTO_add(&(x)->references, 1, CRYPTO_LOCK_X509)
+#define X509_up_ref(x) CRYPTO_add(&(x)->references, 1, CRYPTO_LOCK_X509)
 #define X509_get0_notAfter(x) X509_get_notAfter(x)
 #define EVP_MD_CTX_new EVP_MD_CTX_create
 #define EVP_MD_CTX_free EVP_MD_CTX_destroy
@@ -52,7 +53,7 @@ typedef int (*X509_STORE_CTX_get_issuer_fn)(X509 **issuer,
 
 static char tls_library_version[32] = "";
 
-const char *openconnect_get_tls_library_version()
+const char *openconnect_get_tls_library_version(void)
 {
 	if (!*tls_library_version) {
 		strncpy(tls_library_version, SSLeay_version(SSLEAY_VERSION), sizeof(tls_library_version));
@@ -61,25 +62,12 @@ const char *openconnect_get_tls_library_version()
 	return tls_library_version;
 }
 
-int can_enable_insecure_crypto()
+int can_enable_insecure_crypto(void)
 {
-	int ret = 0;
-
-	if (setenv("OPENSSL_CONF", DEVNULL, 1) < 0)
-		return -errno;
-
-	/* FIXME: deinitialize and reinitialize library, as is done for GnuTLS,
-	 * to ensure that updated value is used.
-	 *
-	 * Cleaning up and reinitalizing OpenSSL appears to be complex:
-	 *   https://wiki.openssl.org/index.php/Library_Initialization#Cleanup
-	 */
-
 	if (EVP_des_ede3_cbc() == NULL ||
 	    EVP_rc4() == NULL)
-		ret = -ENOENT;
-
-	return ret;
+		return -ENOENT;
+	return 0;
 }
 
 int openconnect_sha1(unsigned char *result, void *data, int len)
@@ -498,17 +486,21 @@ static UI_METHOD *create_openssl_ui(void)
 }
 #endif
 
-static int pem_pw_cb(char *buf, int len, int w, void *v)
+static int pem_pw_cb(char *buf, int len, int w, void *ci)
 {
-	struct openconnect_info *vpninfo = v;
+	struct cert_info *certinfo = ci;
+	struct openconnect_info *vpninfo = certinfo->vpninfo;
 	char *pass = NULL;
 	int plen;
 
-	if (vpninfo->cert_password) {
-		pass = vpninfo->cert_password;
-		vpninfo->cert_password = NULL;
-	} else if (request_passphrase(vpninfo, "openconnect_pem",
-				      &pass, _("Enter PEM pass phrase:")))
+	if (certinfo->password) {
+		pass = certinfo->password;
+		certinfo->password = NULL;
+	} else if (request_passphrase(vpninfo,
+				      certinfo_string(certinfo, "openconnect_pem", "openconnect_secondary_pem"),
+				      &pass,
+				      certinfo_string(certinfo, _("Enter PEM pass phrase:"),
+						      _("Enter secondary PEM pass phrase:"))))
 		return -1;
 
 	plen = strlen(pass);
@@ -526,17 +518,57 @@ static int pem_pw_cb(char *buf, int len, int w, void *v)
 	return plen;
 }
 
-static int install_extra_certs(struct openconnect_info *vpninfo, const char *source,
-			       STACK_OF(X509) *ca)
+struct ossl_cert_info {
+	EVP_PKEY *key;
+	X509 *cert;
+	STACK_OF(X509) *extra_certs;
+	const char *certs_from;
+};
+
+static void free_ossl_cert_info(struct ossl_cert_info *oci)
 {
-	X509 *cert = vpninfo->cert_x509;
+	if (oci->key)
+		EVP_PKEY_free(oci->key);
+	if (oci->cert)
+		X509_free(oci->cert);
+	if (oci->extra_certs)
+		sk_X509_pop_free(oci->extra_certs, X509_free);
+	memset(oci, 0, sizeof(*oci));
+}
+
+static int install_ssl_ctx_certs(struct openconnect_info *vpninfo, struct ossl_cert_info *oci)
+{
+	X509 *cert = oci->cert;
 	int i;
 
-	if (!cert)
+	if (!cert || !oci->key) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Client certificate or key missing\n"));
 		return -EINVAL;
+	}
+
+	if (!SSL_CTX_use_PrivateKey(vpninfo->https_ctx, oci->key)) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Loading private key failed\n"));
+		openconnect_report_ssl_errors(vpninfo);
+		return -EIO;
+	}
+
+	if (!SSL_CTX_use_certificate(vpninfo->https_ctx, cert)) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Failed to install certificate in OpenSSL context\n"));
+		openconnect_report_ssl_errors(vpninfo);
+		return -EIO;
+	}
+
+	vpninfo->cert_x509 = cert;
+	X509_up_ref(cert);
+
+	if (!oci->extra_certs)
+		return 0;
  next:
-	for (i = 0; i < sk_X509_num(ca); i++) {
-		X509 *cert2 = sk_X509_value(ca, i);
+	for (i = 0; i < sk_X509_num(oci->extra_certs); i++) {
+		X509 *cert2 = sk_X509_value(oci->extra_certs, i);
 		if (X509_check_issued(cert2, cert) == X509_V_OK) {
 			char buf[200];
 
@@ -548,19 +580,19 @@ static int install_extra_certs(struct openconnect_info *vpninfo, const char *sou
 			X509_NAME_oneline(X509_get_subject_name(cert2),
 					  buf, sizeof(buf));
 			vpn_progress(vpninfo, PRG_DEBUG,
-				     _("Extra cert from %s: '%s'\n"), source, buf);
+				     _("Extra cert from %s: '%s'\n"), oci->certs_from, buf);
 			X509_up_ref(cert2);
 			SSL_CTX_add_extra_chain_cert(vpninfo->https_ctx, cert2);
 			cert = cert2;
 			goto next;
 		}
 	}
-	sk_X509_pop_free(ca, X509_free);
 
 	return 0;
 }
 
-static int load_pkcs12_certificate(struct openconnect_info *vpninfo, PKCS12 *p12)
+static int load_pkcs12_certificate(struct openconnect_info *vpninfo, struct cert_info *certinfo,
+				   struct ossl_cert_info *oci, PKCS12 *p12)
 {
 	EVP_PKEY *pkey = NULL;
 	X509 *cert = NULL;
@@ -568,8 +600,8 @@ static int load_pkcs12_certificate(struct openconnect_info *vpninfo, PKCS12 *p12
 	int ret = 0;
 	char *pass;
 
-	pass = vpninfo->cert_password;
-	vpninfo->cert_password = NULL;
+	pass = certinfo->password;
+	certinfo->password = NULL;
  retrypass:
 	/* We do this every time round the loop, to work around a bug in
 	   OpenSSL < 1.0.0-beta2 -- where the stack at *ca will be freed
@@ -580,14 +612,20 @@ static int load_pkcs12_certificate(struct openconnect_info *vpninfo, PKCS12 *p12
 		unsigned long err = ERR_peek_error();
 
 		if (ERR_GET_LIB(err) == ERR_LIB_PKCS12 &&
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
 		    ERR_GET_FUNC(err) == PKCS12_F_PKCS12_PARSE &&
+#endif
 		    ERR_GET_REASON(err) == PKCS12_R_MAC_VERIFY_FAILURE) {
 			if (pass)
 				vpn_progress(vpninfo, PRG_ERR,
 					     _("Failed to decrypt PKCS#12 certificate file\n"));
 			free_pass(&pass);
-			if (request_passphrase(vpninfo, "openconnect_pkcs12", &pass,
-					       _("Enter PKCS#12 pass phrase:")) < 0) {
+			if (request_passphrase(vpninfo,
+					       certinfo_string(certinfo, "openconnect_pkcs12",
+							       "openconnect_secondary_pkcs12"),
+					       &pass,
+					       certinfo_string(certinfo, _("Enter PKCS#12 pass phrase:"),
+							       _("Enter secondary PKCS#12 pass phrase:"))) < 0) {
 				PKCS12_free(p12);
 				return -EINVAL;
 			}
@@ -598,49 +636,52 @@ static int load_pkcs12_certificate(struct openconnect_info *vpninfo, PKCS12 *p12
 		openconnect_report_ssl_errors(vpninfo);
 
 		vpn_progress(vpninfo, PRG_ERR,
-			     _("Parse PKCS#12 failed (see above errors)\n"));
+			     certinfo_string(certinfo, _("Parse PKCS#12 failed (see above errors)\n"),
+					     _("Parse secondary PKCS#12 failed (see above errors)\n")));
 		PKCS12_free(p12);
 		free_pass(&pass);
 		return -EINVAL;
 	}
 	free_pass(&pass);
+
 	if (cert) {
 		char buf[200];
-		vpninfo->cert_x509 = cert;
-		SSL_CTX_use_certificate(vpninfo->https_ctx, cert);
+
 		X509_NAME_oneline(X509_get_subject_name(cert), buf, sizeof(buf));
 		vpn_progress(vpninfo, PRG_INFO,
-			     _("Using client certificate '%s'\n"), buf);
+			     certinfo_string(certinfo, _("Using client certificate '%s'\n"),
+					     _("Using secondary certificate '%s'\n")), buf);
+
 	} else {
 		vpn_progress(vpninfo, PRG_ERR,
-			     _("PKCS#12 contained no certificate!\n"));
+			     certinfo_string(certinfo, _("PKCS#12 contained no certificate!\n"),
+					     _("Secondary PKCS#12 contained no certificate!\n")));
 		ret = -EINVAL;
 	}
 
-	if (pkey) {
-		if (!SSL_CTX_use_PrivateKey(vpninfo->https_ctx, pkey)) {
-			vpn_progress(vpninfo, PRG_ERR,
-				     _("Loading private key failed\n"));
-			openconnect_report_ssl_errors(vpninfo);
-			ret = -EINVAL;
-		}
-		EVP_PKEY_free(pkey);
-	} else {
+	if (!pkey) {
 		vpn_progress(vpninfo, PRG_ERR,
-			     _("PKCS#12 contained no private key!\n"));
+			     certinfo_string(certinfo, _("PKCS#12 contained no private key!\n"),
+					     _("Secondary PKCS#12 contained no private key!\n")));
 		ret = -EINVAL;
 	}
 
-	if (ca)
-		install_extra_certs(vpninfo, _("PKCS#12"), ca);
+	oci->key = pkey;
+	oci->cert = cert;
+	oci->extra_certs = ca;
+	oci->certs_from = _("PKCS#12");
 
 	PKCS12_free(p12);
+
+	if (ret)
+		free_ossl_cert_info(oci);
+
 	return ret;
 }
 
 #ifdef HAVE_ENGINE
-static int load_tpm_certificate(struct openconnect_info *vpninfo,
-				const char *engine)
+static int load_tpm_certificate(struct openconnect_info *vpninfo, struct cert_info *certinfo,
+				struct ossl_cert_info *oci, const char *engine)
 {
 	ENGINE *e;
 	EVP_PKEY *key;
@@ -667,43 +708,40 @@ static int load_tpm_certificate(struct openconnect_info *vpninfo,
 		return -EINVAL;
 	}
 
-	if (vpninfo->cert_password) {
-		if (!ENGINE_ctrl_cmd(e, "PIN", strlen(vpninfo->cert_password),
-				     vpninfo->cert_password, NULL, 0)) {
+	if (certinfo->password) {
+		if (!ENGINE_ctrl_cmd(e, "PIN", strlen(certinfo->password),
+				     certinfo->password, NULL, 0)) {
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("Failed to set TPM SRK password\n"));
 			openconnect_report_ssl_errors(vpninfo);
 		}
-		free_pass(&vpninfo->cert_password);
+		free_pass(&certinfo->password);
 	}
 
 	/* Provide our own UI method to handle the PIN callback. */
 	meth = create_openssl_ui();
 
-	key = ENGINE_load_private_key(e, vpninfo->sslkey, meth, vpninfo);
+	key = ENGINE_load_private_key(e, certinfo->key, meth, vpninfo);
 	if (meth)
 		UI_destroy_method(meth);
 	if (!key) {
 		vpn_progress(vpninfo, PRG_ERR,
-			     _("Failed to load TPM private key\n"));
+			     certinfo_string(certinfo, _("Failed to load TPM private key\n"),
+					     _("Failed to load secondary TPM private key\n")));
 		openconnect_report_ssl_errors(vpninfo);
 		ret = -EINVAL;
 		goto out;
 	}
-	if (!SSL_CTX_use_PrivateKey(vpninfo->https_ctx, key)) {
-		vpn_progress(vpninfo, PRG_ERR, _("Add key from TPM failed\n"));
-		openconnect_report_ssl_errors(vpninfo);
-		ret = -EINVAL;
-	}
-	EVP_PKEY_free(key);
+
+	oci->key = key;
  out:
 	ENGINE_finish(e);
 	ENGINE_free(e);
 	return ret;
 }
 #else
-static int load_tpm_certificate(struct openconnect_info *vpninfo,
-				const char *engine)
+static int load_tpm_certificate(struct openconnect_info *vpninfo, struct cert_info *certinfo,
+				struct ossl_cert_info *oci, const char *engine)
 {
 	vpn_progress(vpninfo, PRG_ERR,
 		     _("This version of OpenConnect was built without TPM support\n"));
@@ -733,17 +771,19 @@ static int load_tpm_certificate(struct openconnect_info *vpninfo,
  *   allows us to explicitly print the supporting certs that we're using,
  *   which may assist in diagnosing problems.
  */
-static int load_cert_chain_file(struct openconnect_info *vpninfo)
+static int load_cert_chain_file(struct openconnect_info *vpninfo, struct cert_info *certinfo,
+				struct ossl_cert_info *oci)
 {
 	BIO *b;
-	FILE *f = openconnect_fopen_utf8(vpninfo, vpninfo->cert, "rb");
+	FILE *f = openconnect_fopen_utf8(vpninfo, certinfo->cert, "rb");
 	STACK_OF(X509) *extra_certs = NULL;
 	char buf[200];
 
 	if (!f) {
 		vpn_progress(vpninfo, PRG_ERR,
-			     _("Failed to open certificate file %s: %s\n"),
-			     vpninfo->cert, strerror(errno));
+			     certinfo_string(certinfo, _("Failed to open certificate file %s: %s\n"),
+					     _("Failed to open secondary certificate file %s: %s\n")),
+			     certinfo->cert, strerror(errno));
 		return -ENOENT;
 	}
 
@@ -756,23 +796,16 @@ static int load_cert_chain_file(struct openconnect_info *vpninfo)
 		openconnect_report_ssl_errors(vpninfo);
 		return -EIO;
 	}
-	vpninfo->cert_x509 = PEM_read_bio_X509_AUX(b, NULL, NULL, NULL);
-	if (!vpninfo->cert_x509) {
+	oci->cert = PEM_read_bio_X509_AUX(b, NULL, NULL, NULL);
+	if (!oci->cert) {
 		BIO_free(b);
 		goto err;
 	}
 
-	X509_NAME_oneline(X509_get_subject_name(vpninfo->cert_x509), buf, sizeof(buf));
+	X509_NAME_oneline(X509_get_subject_name(oci->cert), buf, sizeof(buf));
 	vpn_progress(vpninfo, PRG_INFO,
-			     _("Using client certificate '%s'\n"), buf);
-
-	if (!SSL_CTX_use_certificate(vpninfo->https_ctx, vpninfo->cert_x509)) {
-		vpn_progress(vpninfo, PRG_ERR,
-			     _("Failed to install certificate in OpenSSL context\n"));
-		openconnect_report_ssl_errors(vpninfo);
-		BIO_free(b);
-		return -EIO;
-	}
+		     certinfo_string(certinfo, _("Using client certificate '%s'\n"),
+				     _("Using secondary certificate '%s'\n")), buf);
 
 	while (1) {
 		X509 *x = PEM_read_bio_X509(b, NULL, NULL, NULL);
@@ -790,7 +823,8 @@ static int load_cert_chain_file(struct openconnect_info *vpninfo)
 		if (!extra_certs) {
 		err_extra:
 			vpn_progress(vpninfo, PRG_ERR,
-				     _("Failed to process all supporting certs. Trying anyway...\n"));
+				     certinfo_string(certinfo, _("Failed to process all supporting certs. Trying anyway...\n"),
+						     _("Failed to process secondary supporting certs. Trying anyway...\n")));
 			openconnect_report_ssl_errors(vpninfo);
 			X509_free(x);
 			/* It might work without... */
@@ -802,8 +836,8 @@ static int load_cert_chain_file(struct openconnect_info *vpninfo)
 
 	BIO_free(b);
 
-	if (extra_certs)
-		install_extra_certs(vpninfo, _("PEM file"), extra_certs);
+	oci->extra_certs = extra_certs;
+	oci->certs_from = _("PEM file");
 
 	return 0;
 }
@@ -843,7 +877,7 @@ static BIO *BIO_from_keystore(struct openconnect_info *vpninfo, const char *item
 }
 #endif
 
-static int is_pem_password_error(struct openconnect_info *vpninfo)
+static int is_pem_password_error(struct openconnect_info *vpninfo, struct cert_info *certinfo)
 {
 	unsigned long err = ERR_peek_error();
 
@@ -854,50 +888,58 @@ static int is_pem_password_error(struct openconnect_info *vpninfo)
 #endif
 	/* If the user fat-fingered the passphrase, try again */
 	if (ERR_GET_LIB(err) == ERR_LIB_EVP &&
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
 	    ERR_GET_FUNC(err) == EVP_F_EVP_DECRYPTFINAL_EX &&
+#endif
 	    ERR_GET_REASON(err) == EVP_R_BAD_DECRYPT) {
 		vpn_progress(vpninfo, PRG_ERR,
-			     _("Loading private key failed (wrong passphrase?)\n"));
+			     certinfo_string(certinfo, _("Loading private key failed (wrong passphrase?)\n"),
+					     _("Loading secondary private key failed (wrong passphrase?)\n")));
 		ERR_clear_error();
 		return 1;
 	}
 
 	vpn_progress(vpninfo, PRG_ERR,
-		     _("Loading private key failed (see above errors)\n"));
+		     certinfo_string(certinfo, _("Loading private key failed (see above errors)\n"),
+				     _("Loading secondary private key failed (see above errors)\n")));
 	return 0;
 }
 
-static int load_certificate(struct openconnect_info *vpninfo)
+static int load_certificate(struct openconnect_info *vpninfo, struct cert_info *certinfo,
+			    struct ossl_cert_info *oci)
 {
-	EVP_PKEY *key;
 	FILE *f;
 	char buf[256];
 	int ret;
 
-	if (!strncmp(vpninfo->cert, "pkcs11:", 7)) {
-		int ret = load_pkcs11_certificate(vpninfo);
+	certinfo->vpninfo = vpninfo;
+
+	if (!strncmp(certinfo->cert, "pkcs11:", 7)) {
+		int ret = load_pkcs11_certificate(vpninfo, certinfo, &oci->cert);
 		if (ret)
 			return ret;
 		goto got_cert;
 	}
 
 	vpn_progress(vpninfo, PRG_DEBUG,
-		     _("Using certificate file %s\n"), vpninfo->cert);
+		     certinfo_string(certinfo, _("Using certificate file %s\n"),
+				     _("Using secondary certificate file %s\n")),
+				     certinfo->cert);
 
-	if (strncmp(vpninfo->cert, "keystore:", 9)) {
+	if (strncmp(certinfo->cert, "keystore:", 9)) {
 		PKCS12 *p12;
 
-		f = openconnect_fopen_utf8(vpninfo, vpninfo->cert, "rb");
+		f = openconnect_fopen_utf8(vpninfo, certinfo->cert, "rb");
 		if (!f) {
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("Failed to open certificate file %s: %s\n"),
-				     vpninfo->cert, strerror(errno));
+				     certinfo->cert, strerror(errno));
 			return -ENOENT;
 		}
 		p12 = d2i_PKCS12_fp(f, NULL);
 		fclose(f);
 		if (p12)
-			return load_pkcs12_certificate(vpninfo, p12);
+			return load_pkcs12_certificate(vpninfo, certinfo, oci, p12);
 
 		/* Not PKCS#12. Clear error and fall through to see if it's a PEM file... */
 		ERR_clear_error();
@@ -905,70 +947,53 @@ static int load_certificate(struct openconnect_info *vpninfo)
 
 	/* It's PEM or TPM now, and either way we need to load the plain cert: */
 #ifdef ANDROID_KEYSTORE
-	if (!strncmp(vpninfo->cert, "keystore:", 9)) {
-		BIO *b = BIO_from_keystore(vpninfo, vpninfo->cert);
+	if (!strncmp(certinfo->cert, "keystore:", 9)) {
+		BIO *b = BIO_from_keystore(vpninfo, certinfo->cert);
 		if (!b)
 			return -EINVAL;
-		vpninfo->cert_x509 = PEM_read_bio_X509_AUX(b, NULL, pem_pw_cb, vpninfo);
+		oci->cert = PEM_read_bio_X509_AUX(b, NULL, pem_pw_cb, certinfo);
 		BIO_free(b);
-		if (!vpninfo->cert_x509) {
+		if (!oci->cert) {
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("Failed to load X509 certificate from keystore\n"));
 			openconnect_report_ssl_errors(vpninfo);
 			return -EINVAL;
 		}
-		if (!SSL_CTX_use_certificate(vpninfo->https_ctx, vpninfo->cert_x509)) {
-			vpn_progress(vpninfo, PRG_ERR,
-				     _("Failed to use X509 certificate from keystore\n"));
-			openconnect_report_ssl_errors(vpninfo);
-			X509_free(vpninfo->cert_x509);
-			vpninfo->cert_x509 = NULL;
-			return -EINVAL;
-		}
 	} else
 #endif /* ANDROID_KEYSTORE */
 	{
-		int ret = load_cert_chain_file(vpninfo);
+		int ret = load_cert_chain_file(vpninfo, certinfo, oci);
 		if (ret)
 			return ret;
 	}
 
  got_cert:
 #ifdef ANDROID_KEYSTORE
-	if (!strncmp(vpninfo->sslkey, "keystore:", 9)) {
+	if (!strncmp(certinfo->key, "keystore:", 9)) {
 		BIO *b;
 
 	again_android:
-		b = BIO_from_keystore(vpninfo, vpninfo->sslkey);
+		b = BIO_from_keystore(vpninfo, certinfo->key);
 		if (!b)
 			return -EINVAL;
-		key = PEM_read_bio_PrivateKey(b, NULL, pem_pw_cb, vpninfo);
+		oci->key = PEM_read_bio_PrivateKey(b, NULL, pem_pw_cb, certinfo);
 		BIO_free(b);
-		if (!key) {
-			if (is_pem_password_error(vpninfo))
+		if (!oci->key) {
+			if (is_pem_password_error(vpninfo, certinfo))
 				goto again_android;
 			return -EINVAL;
 		}
-		if (!SSL_CTX_use_PrivateKey(vpninfo->https_ctx, key)) {
-			vpn_progress(vpninfo, PRG_ERR,
-				     _("Failed to use private key from keystore\n"));
-			EVP_PKEY_free(key);
-			X509_free(vpninfo->cert_x509);
-			vpninfo->cert_x509 = NULL;
-			return -EINVAL;
-		}
-		EVP_PKEY_free(key);
 		return 0;
 	}
 #endif /* ANDROID_KEYSTORE */
-	if (!strncmp(vpninfo->sslkey, "pkcs11:", 7))
-		return load_pkcs11_key(vpninfo);
+	if (!strncmp(certinfo->key, "pkcs11:", 7))
+		return load_pkcs11_key(vpninfo, certinfo, &oci->key);
 
-	f = openconnect_fopen_utf8(vpninfo, vpninfo->sslkey, "rb");
+	f = openconnect_fopen_utf8(vpninfo, certinfo->key, "rb");
 	if (!f) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Failed to open private key file %s: %s\n"),
-			     vpninfo->sslkey, strerror(errno));
+			     certinfo->key, strerror(errno));
 		return -ENOENT;
 	}
 
@@ -976,11 +1001,11 @@ static int load_certificate(struct openconnect_info *vpninfo)
 	while (fgets(buf, 255, f)) {
 		if (!strcmp(buf, "-----BEGIN TSS KEY BLOB-----\n")) {
 			fclose(f);
-			return load_tpm_certificate(vpninfo, "tpm");
+			return load_tpm_certificate(vpninfo, certinfo, oci, "tpm");
 		} else if (!strcmp(buf, "-----BEGIN TSS2 KEY BLOB-----\n") ||
 			   !strcmp(buf, "-----BEGIN TSS2 PRIVATE KEY-----\n")) {
 			fclose(f);
-			return load_tpm_certificate(vpninfo, "tpm2");
+			return load_tpm_certificate(vpninfo, certinfo, oci, "tpm2");
 		} else if (!strcmp(buf, "-----BEGIN RSA PRIVATE KEY-----\n") ||
 			   !strcmp(buf, "-----BEGIN DSA PRIVATE KEY-----\n") ||
 			   !strcmp(buf, "-----BEGIN EC PRIVATE KEY-----\n") ||
@@ -991,27 +1016,21 @@ static int load_certificate(struct openconnect_info *vpninfo)
 			if (!b) {
 				fclose(f);
 				vpn_progress(vpninfo, PRG_ERR,
-					     _("Loading private key failed\n"));
+					     certinfo_string(certinfo, _("Loading private key failed\n"),
+							     _("Loading secondary private key failed\n")));
 				openconnect_report_ssl_errors(vpninfo);
 				return -EINVAL;
 			}
 		again:
 			fseek(f, 0, SEEK_SET);
-			key = PEM_read_bio_PrivateKey(b, NULL, pem_pw_cb, vpninfo);
-			if (!key) {
-				if (is_pem_password_error(vpninfo))
+			oci->key = PEM_read_bio_PrivateKey(b, NULL, pem_pw_cb, certinfo);
+			if (!oci->key) {
+				if (is_pem_password_error(vpninfo, certinfo))
 					goto again;
 				BIO_free(b);
 				return -EINVAL;
 			}
 			ret = 0;
-			if (!SSL_CTX_use_PrivateKey(vpninfo->https_ctx, key)) {
-				vpn_progress(vpninfo, PRG_ERR,
-					     _("Loading private key failed\n"));
-				openconnect_report_ssl_errors(vpninfo);
-				ret = -EINVAL;
-			}
-			EVP_PKEY_free(key);
 			BIO_free(b);
 			return ret;
 		}
@@ -1023,16 +1042,9 @@ static int load_certificate(struct openconnect_info *vpninfo)
 	/* This will catch PKCS#1 and unencrypted PKCS#8
 	 * (except in OpenSSL 0.9.8 where it doesn't handle
 	 * the latter but nobody cares about 0.9.8 any more. */
-	key = d2i_PrivateKey_fp(f, NULL);
-	if (key) {
+	oci->key = d2i_PrivateKey_fp(f, NULL);
+	if (oci->key) {
 		ret = 0;
-		if (!SSL_CTX_use_PrivateKey(vpninfo->https_ctx, key)) {
-			vpn_progress(vpninfo, PRG_ERR,
-				     _("Loading private key failed\n"));
-			openconnect_report_ssl_errors(vpninfo);
-			ret = -EINVAL;
-		}
-		EVP_PKEY_free(key);
 		fclose(f);
 		return ret;
 	} else {
@@ -1044,7 +1056,7 @@ static int load_certificate(struct openconnect_info *vpninfo)
 
 		if (p8) {
 			PKCS8_PRIV_KEY_INFO *p8inf;
-			char *pass = vpninfo->cert_password;
+			char *pass = certinfo->password;
 
 			fclose(f);
 
@@ -1052,53 +1064,55 @@ static int load_certificate(struct openconnect_info *vpninfo)
 				unsigned long err = ERR_peek_error();
 
 				if (ERR_GET_LIB(err) == ERR_LIB_EVP &&
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
 				    ERR_GET_FUNC(err) == EVP_F_EVP_DECRYPTFINAL_EX &&
+#endif
 				    ERR_GET_REASON(err) == EVP_R_BAD_DECRYPT) {
 					ERR_clear_error();
 
 					if (pass) {
 						vpn_progress(vpninfo, PRG_ERR,
-							     _("Failed to decrypt PKCS#8 certificate file\n"));
+							     certinfo_string(certinfo, _("Failed to decrypt PKCS#8 certificate file\n"),
+									     _("Failed to decrypt secondary PKCS#8 certificate file\n")));
 						free_pass(&pass);
 						pass = NULL;
 					}
 
-					if (request_passphrase(vpninfo, "openconnect_pkcs8", &pass,
-							       _("Enter PKCS#8 pass phrase:")) >= 0)
+					if (request_passphrase(vpninfo,
+							       certinfo_string(certinfo, "openconnect_pkcs8",
+									       "openconnect_secondary_pkcs8"),
+							       &pass,
+							       certinfo_string(certinfo, _("Enter PKCS#8 pass phrase:"),
+									       _("Enter PKCS#8 secondary pass phrase:"))) >= 0)
 						continue;
 				} else {
 					vpn_progress(vpninfo, PRG_ERR,
-						     _("Failed to decrypt PKCS#8 certificate file\n"));
+						     certinfo_string(certinfo, _("Failed to decrypt PKCS#8 certificate file\n"),
+								     _("Failed to decrypt secondary PKCS#8 certificate file\n")));
 					openconnect_report_ssl_errors(vpninfo);
 				}
 
 				free_pass(&pass);
-				vpninfo->cert_password = NULL;
+				certinfo->password = NULL;
 
 				X509_SIG_free(p8);
 				return -EINVAL;
 			}
 			free_pass(&pass);
-			vpninfo->cert_password = NULL;
+			certinfo->password = NULL;
 
-			key = EVP_PKCS82PKEY(p8inf);
+			oci->key = EVP_PKCS82PKEY(p8inf);
 
 			PKCS8_PRIV_KEY_INFO_free(p8inf);
 			X509_SIG_free(p8);
 
-			if (key == NULL) {
+			if (oci->key == NULL) {
 				vpn_progress(vpninfo, PRG_ERR,
-					     _("Failed to convert PKCS#8 to OpenSSL EVP_PKEY\n"));
+					     certinfo_string(certinfo, _("Failed to convert PKCS#8 to OpenSSL EVP_PKEY\n"),
+							     _("Failed to convert secondary PKCS#8 to OpenSSL EVP_PKEY\n")));
 				return -EIO;
 			}
 			ret = 0;
-			if (!SSL_CTX_use_PrivateKey(vpninfo->https_ctx, key)) {
-				vpn_progress(vpninfo, PRG_ERR,
-					     _("Loading private key failed\n"));
-				openconnect_report_ssl_errors(vpninfo);
-				ret = -EINVAL;
-			}
-			EVP_PKEY_free(key);
 			return ret;
 		}
 	}
@@ -1106,7 +1120,7 @@ static int load_certificate(struct openconnect_info *vpninfo)
 	fclose(f);
 	vpn_progress(vpninfo, PRG_ERR,
 		     _("Failed to identify private key type in '%s'\n"),
-		     vpninfo->sslkey);
+		     certinfo->key);
 	return -EINVAL;
 }
 
@@ -1464,7 +1478,7 @@ static int match_cert_hostname(struct openconnect_info *vpninfo, X509 *peer_cert
 /* Before OpenSSL 1.1 we could do this directly. And needed to. */
 #ifndef SSL_CTX_get_extra_chain_certs_only
 #define SSL_CTX_get_extra_chain_certs_only(ctx, st) \
-	do { *(st) = (ctx)->extra_certs; } while(0)
+	(void)(*(st) = (ctx)->extra_certs)
 #endif
 
 static void workaround_openssl_certchain_bug(struct openconnect_info *vpninfo,
@@ -1634,30 +1648,34 @@ static int ssl_app_verify_callback(X509_STORE_CTX *ctx, void *arg)
 	return 0;
 }
 
-static int check_certificate_expiry(struct openconnect_info *vpninfo)
+static int check_certificate_expiry(struct openconnect_info *vpninfo, struct cert_info *certinfo,
+				    struct ossl_cert_info *oci)
 {
 	method_const ASN1_TIME *notAfter;
 	const char *reason = NULL;
 	time_t t;
 	int i;
 
-	if (!vpninfo->cert_x509)
+	if (!oci->cert)
 		return 0;
 
 	t = time(NULL);
-	notAfter = X509_get0_notAfter(vpninfo->cert_x509);
+	notAfter = X509_get0_notAfter(oci->cert);
 	i = X509_cmp_time(notAfter, &t);
 	if (!i) {
 		vpn_progress(vpninfo, PRG_ERR,
-			     _("Error in client cert notAfter field\n"));
+			     certinfo_string(certinfo, _("Error in client cert notAfter field\n"),
+					     _("Error in secondary client cert notAfter field\n")));
 		return -EINVAL;
 	} else if (i < 0) {
-		reason = _("Client certificate has expired at");
+		reason = certinfo_string(certinfo, _("Client certificate has expired at"),
+					 _("Secondary client certificate has expired at"));
 	} else {
 		t += vpninfo->cert_expire_warning;
 		i = X509_cmp_time(notAfter, &t);
 		if (i < 0)
-			reason = _("Client certificate expires soon at");
+			reason = certinfo_string(certinfo, _("Client certificate expires soon at"),
+						 _("Secondary client certificate expires soon at"));
 	}
 	if (reason) {
 		BIO *bp = BIO_new(BIO_s_mem());
@@ -1676,6 +1694,26 @@ static int check_certificate_expiry(struct openconnect_info *vpninfo)
 			BIO_free(bp);
 	}
 	return 0;
+}
+
+static int load_primary_certificate(struct openconnect_info *vpninfo)
+{
+	struct ossl_cert_info oci = { };
+
+	int ret = load_certificate(vpninfo, &vpninfo->certinfo[0], &oci);
+	if (!ret)
+		ret = install_ssl_ctx_certs(vpninfo, &oci);
+
+	if (!ret && !SSL_CTX_check_private_key(vpninfo->https_ctx)) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("SSL certificate and key do not match\n"));
+		ret = -EINVAL;
+	}
+	if (!ret)
+		check_certificate_expiry(vpninfo, &vpninfo->certinfo[0], &oci);
+
+	free_ossl_cert_info(&oci);
+	return ret;
 }
 
 int openconnect_install_ctx_verify(struct openconnect_info *vpninfo, SSL_CTX *ctx)
@@ -1807,16 +1845,15 @@ int openconnect_open_https(struct openconnect_info *vpninfo)
 			 * For now we will set the security level to 0, thus reverting
 			 * to the functionality seen in versions before 1.1.0. */
 			SSL_CTX_set_security_level(vpninfo->https_ctx, 0);
+
+			/* OpenSSL 3.0.0 refuses legacy renegotiation by default.
+			 * Current versions of the Cisco ASA doesn't seem to cope */
+			SSL_CTX_set_options(vpninfo->https_ctx, SSL_OP_LEGACY_SERVER_CONNECT);
 		}
 #endif
 
-		if (vpninfo->cert) {
-			err = load_certificate(vpninfo);
-			if (!err && !SSL_CTX_check_private_key(vpninfo->https_ctx)) {
-				vpn_progress(vpninfo, PRG_ERR,
-					     _("SSL certificate and key do not match\n"));
-				err = -EINVAL;
-			}
+		if (vpninfo->certinfo[0].cert) {
+			err = load_primary_certificate(vpninfo);
 			if (err) {
 				vpn_progress(vpninfo, PRG_ERR,
 					     _("Loading certificate failed. Aborting.\n"));
@@ -1825,7 +1862,6 @@ int openconnect_open_https(struct openconnect_info *vpninfo)
 				closesocket(ssl_sock);
 				return err;
 			}
-			check_certificate_expiry(vpninfo);
 		}
 
 		if (!vpninfo->ciphersuite_config) {
@@ -1891,7 +1927,7 @@ int openconnect_open_https(struct openconnect_info *vpninfo)
 	 * packets by silently disabling extensions such as SNI.
 	 *
 	 * Discussion:
-	 * http://www.ietf.org/mail-archive/web/tls/current/msg10423.html
+	 * https://www.ietf.org/mail-archive/web/tls/current/msg10423.html
 	 *
 	 * OpenSSL commits:
 	 * 4fcdd66fff5fea0cfa1055c6680a76a4303f28a2
@@ -1969,10 +2005,8 @@ void openconnect_close_https(struct openconnect_info *vpninfo, int final)
 		vpninfo->https_ssl = NULL;
 	}
 	if (vpninfo->ssl_fd != -1) {
+		unmonitor_fd(vpninfo, ssl);
 		closesocket(vpninfo->ssl_fd);
-		unmonitor_read_fd(vpninfo, ssl);
-		unmonitor_write_fd(vpninfo, ssl);
-		unmonitor_except_fd(vpninfo, ssl);
 		vpninfo->ssl_fd = -1;
 	}
 	if (final) {

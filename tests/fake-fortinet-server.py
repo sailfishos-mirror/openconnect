@@ -27,14 +27,16 @@
 #    POST /remote/logincheck (with username and credential fields)
 #      No 2FA)   Completes the login
 #      With 2FA) Returns a 2FA challenge
-#    POST /remote/logincheck (with username, code, and challenge response fields)
+#    POST /remote/logincheck (with username and 2FA response fields)
 #
 # It does not actually validate the credentials in any way, but attempts to
 # verify their consistency from one request to the next, by saving their
 # values via a (cookie-based) session.
 #
 # In order to test with 2FA, the initial 'GET /' request should include
-# the query string '?want_2fa=1'.
+# the query string '?want_2fa=1&type_2fa={tokeninfo,html}'. If want_2fa>1,
+# multiple rounds of 2FA token entry will be required. If type_2fa is not,
+# specified tokeninfo-type 2FA is the default.
 ########################################
 
 import sys
@@ -53,10 +55,12 @@ context.load_cert_chain(*cert_and_maybe_keyfile)
 app = Flask(__name__)
 app.config.update(SECRET_KEY=b'fake', DEBUG=True, HOST=host, PORT=int(port), SESSION_COOKIE_NAME='fake')
 
+
 ########################################
 
 def cookify(jsonable):
     return base64.urlsafe_b64encode(dumps(jsonable).encode())
+
 
 def require_SVPNCOOKIE(fn):
     @wraps(fn)
@@ -66,6 +70,7 @@ def require_SVPNCOOKIE(fn):
             return redirect(url_for('login'))
         return fn(*args, **kwargs)
     return wrapped
+
 
 def check_form_against_session(*fields):
     def inner(fn):
@@ -82,14 +87,14 @@ def check_form_against_session(*fields):
 
 # Respond to initial 'GET /' with a login form
 # Respond to initial 'GET /<realm>' with a redirect to '/remote/login?realm=<realm>'
-# [Save want_2fa query parameter in the session for use later]
+# [Save want_2fa and type_2fa query parameters in the session for use later]
 @app.route('/')
 @app.route('/<realm>')
 def realm(realm=None):
-    session.update(step='GET-realm', want_2fa='want_2fa' in request.args)
+    session.update(step='GET-realm', want_2fa=int(request.args.get('want_2fa', 0)), type_2fa=request.args.get('type_2fa', 'tokeninfo'))
     # print(session)
     if realm:
-        return redirect(url_for('login', realm=realm))
+        return redirect(url_for('login', realm=realm, lang='en'))
     else:
         return login()
 
@@ -107,20 +112,29 @@ def login():
 @app.route('/remote/logincheck', methods=['POST'])
 def logincheck():
     want_2fa = session.get('want_2fa')
+    type_2fa = session.get('type_2fa')
 
-    if (want_2fa and request.form.get('code')):
-        return complete_2fa()
-    elif (want_2fa and request.form.get('username') and request.form.get('credential')):
-        return send_2fa_challenge()
+    if want_2fa:
+        if (   (type_2fa == 'tokeninfo' and request.form.get('username') and request.form.get('code'))
+            or (type_2fa == 'html' and request.form.get('username') and request.form.get('magic'))):
+            # we've received (at least one round of) 2FA login
+            if want_2fa == 1:
+                return complete_2fa()
+            else:
+                session.update(want_2fa=want_2fa - 1)
+                return send_2fa_tokeninfo() if type_2fa == 'tokeninfo' else send_2fa_html()
+        elif request.form.get('username') and request.form.get('credential'):
+            # we've just received the initial non-2FA login
+            return send_2fa_tokeninfo() if type_2fa == 'tokeninfo' else send_2fa_html()
     elif (request.form.get('username') and request.form.get('credential')):
         return complete_non_2fa()
     abort(405)
 
 
 # 2FA completion: ensure that client has parroted back the same values
-# for username, reqid, polid, grp, portal, magic
+# for username, reqid, polid, grp/grpid, portal, magic
 # [Save code in the session for potential use later]
-@check_form_against_session('username', 'reqid', 'polid', 'grp', 'portal', 'magic')
+@check_form_against_session('username', 'reqid', 'polid', 'grp', 'grpid', 'portal', 'magic')
 def complete_2fa():
     session.update(step='complete-2FA', code=request.form.get('code'))
     # print(session)
@@ -130,19 +144,44 @@ def complete_2fa():
     return resp
 
 
-# 2FA initial login: ensure that client has sent the right realm value, and
-# reply with a token challenge containing all known fields.
+# Tokeninfo-based 2FA initial login: ensure that client has sent the right realm value, and
+# reply with a tokeninfo challenge containing all known fields.
 # [Save username, credential, and challenge fields in the session for verification of client state later]
 @check_form_against_session('realm')
-def send_2fa_challenge():
-    session.update(step='send-2FA-challenge', username=request.form.get('username'), credential=request.form.get('credential'),
+def send_2fa_tokeninfo():
+    session.update(step='send-2FA-tokeninfo', username=request.form.get('username'), credential=request.form.get('credential'),
                    reqid=str(random.randint(10_000_000, 99_000_000)), polid='1-1-'+str(random.randint(10_000_000, 99_000_000)),
                    magic='1-'+str(random.randint(10_000_000, 99_000_000)), portal=random.choice('ABCD'), grp=random.choice('EFGH'))
     # print(session)
 
     return ('ret=2,reqid={reqid},polid={polid},grp={grp},portal={portal},magic={magic},'
-            'tokeninfo=,chal_msg=Please enter your token code'.format(**session),
+            'tokeninfo=,chal_msg=Please enter your tokeninfo code ({want_2fa} remaining)'.format(**session),
             {'content-type': 'text/plain'})
+
+
+# HTML-based 2FA initial login: ensure that client has sent the right realm value, and
+# reply with an HTML challenge containing all known fields.
+# [Save username, credential, and challenge fields in the session for verification of client state later]
+@check_form_against_session('realm')
+def send_2fa_html():
+    session.update(step='send-2FA-html', username=request.form.get('username'), credential=request.form.get('credential'),
+                   reqid=str(random.randint(10_000_000, 99_000_000)), grpid='0,'+str(random.randint(1_000, 9_999))+',1',
+                   magic='1-'+str(random.randint(10_000_000, 99_000_000)))
+    # print(session)
+
+    return ('''
+        <html><body><form action="{logincheck}" method="POST">
+        <b>Please enter your HTML 2FA code ({want_2fa} remaining)</b>
+        <input type="hidden" name="magic" value="{magic}">
+        <input type="hidden" name="username" value="{username}">
+        <input type="hidden" name="reqid" value="{reqid}">
+        <input type="hidden" name="grpid" value="{grpid}">
+        <input type="password" name="credential">
+        <input class="button" type="submit" value="OK">
+        </form></body></html>
+        '''.format(logincheck=url_for('logincheck'), **session),
+        401,
+        {'content-type': 'text/html'})
 
 
 # Non-2FA login: ensure that client has sent the right realm value
@@ -184,6 +223,15 @@ def xml_config():
                   <addr ip="10.11.1.0" mask="255.255.255.0"/>
                 </split-tunnel-info>
               </ipv4>
+              <!-- Real Fortinet servers are too dumb to send both IPv4 and IPv6 config simultaneously, but we
+                   may as well test it here nonetheless. -->
+              <ipv6>
+                <dns ipv6="cafe:1234::5678"/>
+                <assigned-addr ipv6="faff:ffff::1" prefix-len="64"/>
+                <split-tunnel-info>
+                  <addr ipv6="fdff:ffff::" prefix-len="120"/>
+                </split-tunnel-info>
+              </ipv6>
               <idle-timeout val="3600"/>
               <auth-timeout val="18000"/>
             </sslvpn-tunnel>''',

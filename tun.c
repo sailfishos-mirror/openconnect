@@ -17,12 +17,12 @@
 
 #include <config.h>
 
+#include "openconnect-internal.h"
+
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <string.h>
 #include <fcntl.h>
-#include <unistd.h>
-#include <signal.h>
 #include <sys/wait.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
@@ -31,17 +31,17 @@
 #include <netinet/ip.h>
 #include <net/if.h>
 #include <arpa/inet.h>
-#include <errno.h>
-#include <ctype.h>
-#include <stdio.h>
-#include <stdlib.h>
 #if defined(__APPLE__) && defined(HAVE_NET_UTUN_H)
 #include <sys/kern_control.h>
 #include <sys/sys_domain.h>
 #include <net/if_utun.h>
 #endif
-
-#include "openconnect-internal.h"
+#include <errno.h>
+#include <ctype.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 /*
  * If an if_tun.h include file was found anywhere (by the Makefile), it's
@@ -106,7 +106,7 @@ static int link_proto(struct openconnect_info *vpninfo, int unit_nr,
 
 	ip_fd = open(devname, O_RDWR);
 	if (ip_fd < 0) {
-		vpn_progress(vpninfo, PRG_ERR, _("Can't open %s: %s"),
+		vpn_progress(vpninfo, PRG_ERR, _("Can't open %s: %s\n"),
 			     devname, strerror(errno));
 		close(tun2_fd);
 		return -1;
@@ -255,7 +255,7 @@ intptr_t os_setup_tun(struct openconnect_info *vpninfo)
 		if (err == EPERM) {
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("To configure local networking, openconnect must be running as root\n"
-				       "See http://www.infradead.org/openconnect/nonroot.html for more information\n"));
+				       "See https://www.infradead.org/openconnect/nonroot.html for more information\n"));
 		}
 		close(tun_fd);
 		return -EIO;
@@ -453,18 +453,23 @@ int openconnect_setup_tun_fd(struct openconnect_info *vpninfo, int tun_fd)
 	set_fd_cloexec(tun_fd);
 
 	if (vpninfo->tun_fd != -1)
-		unmonitor_read_fd(vpninfo, tun);
+		unmonitor_fd(vpninfo, tun);
 
 	vpninfo->tun_fd = tun_fd;
-
-	monitor_fd_new(vpninfo, tun);
-	monitor_read_fd(vpninfo, tun);
 
 	if (set_sock_nonblock(tun_fd)) {
 		vpn_progress(vpninfo, PRG_ERR, _("Failed to make tun socket nonblocking: %s\n"),
 			     strerror(errno));
 		return -EIO;
 	}
+
+#ifdef HAVE_VHOST
+	if (!setup_vhost(vpninfo, tun_fd))
+		return 0;
+#endif
+
+	monitor_fd_new(vpninfo, tun);
+	monitor_read_fd(vpninfo, tun);
 
 	return 0;
 }
@@ -538,7 +543,7 @@ int os_write_tun(struct openconnect_info *vpninfo, struct pkt *pkt)
 		else if (iph->ip_v == 4)
 			type = AF_INET;
 		else {
-			static int complained = 0;
+			static int complained; /* static variable initialised to 0 */
 			if (!complained) {
 				complained = 1;
 				vpn_progress(vpninfo, PRG_ERR,
@@ -590,6 +595,10 @@ void os_shutdown_tun(struct openconnect_info *vpninfo)
 		}
 #endif
 	}
+
+#ifdef HAVE_VHOST
+	shutdown_vhost(vpninfo);
+#endif
 
 	if (vpninfo->vpnc_script)
 		close(vpninfo->tun_fd);

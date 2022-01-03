@@ -17,13 +17,15 @@
 
 #include <config.h>
 
+#include "openconnect-internal.h"
+
+#include <openssl/rand.h>
+
+#include <sys/types.h>
+
 #include <errno.h>
 #include <string.h>
-#include <sys/types.h>
 #include <ctype.h>
-
-#include "openconnect-internal.h"
-#include <openssl/rand.h>
 
 #ifdef HAVE_LIBP11 /* And p11-kit */
 
@@ -181,7 +183,8 @@ static int parse_pkcs11_uri(const char *uri, PKCS11_TOKEN **p_tok,
 	return ret;
 }
 
-static int request_pin(struct openconnect_info *vpninfo, struct pin_cache *cache, int retrying)
+static int request_pin(struct openconnect_info *vpninfo, struct cert_info *certinfo,
+		       struct pin_cache *cache, int retrying)
 {
 	struct oc_auth_form f;
 	struct oc_form_opt o;
@@ -191,13 +194,13 @@ static int request_pin(struct openconnect_info *vpninfo, struct pin_cache *cache
 	if (!vpninfo || !vpninfo->process_auth_form)
 		return -EINVAL;
 
-	if (vpninfo->cert_password) {
-		cache->pin = vpninfo->cert_password;
-		vpninfo->cert_password = NULL;
+	if (certinfo->password) {
+		cache->pin = certinfo->password;
+		certinfo->password = NULL;
 		return 0;
 	}
 	memset(&f, 0, sizeof(f));
-	f.auth_id = (char *)"pkcs11_pin";
+	f.auth_id = (char *)certinfo_string(certinfo, "pkcs11_pin", "secondary_pkcs11_pin");
 	f.opts = &o;
 	message[sizeof(message)-1] = 0;
 	snprintf(message, sizeof(message) - 1, _("PIN required for %s"), cache->token);
@@ -218,7 +221,8 @@ static int request_pin(struct openconnect_info *vpninfo, struct pin_cache *cache
 	return 0;
 }
 
-static int slot_login(struct openconnect_info *vpninfo, PKCS11_CTX *ctx, PKCS11_SLOT *slot)
+static int slot_login(struct openconnect_info *vpninfo, struct cert_info *certinfo,
+		      PKCS11_CTX *ctx, PKCS11_SLOT *slot)
 {
 	PKCS11_TOKEN *token = slot->token;
 	struct pin_cache *cache = vpninfo->pin_cache;
@@ -246,7 +250,7 @@ static int slot_login(struct openconnect_info *vpninfo, PKCS11_CTX *ctx, PKCS11_
 			vpninfo->pin_cache = cache;
 		}
 		if (!cache->pin) {
-			ret = request_pin(vpninfo, cache, retrying);
+			ret = request_pin(vpninfo, certinfo, cache, retrying);
 			if (ret)
 				return ret;
 		}
@@ -254,8 +258,12 @@ static int slot_login(struct openconnect_info *vpninfo, PKCS11_CTX *ctx, PKCS11_
 	ret = PKCS11_login(slot, 0, cache ? cache->pin : NULL);
 	if (ret) {
 		unsigned long err = ERR_peek_error();
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
 		if (ERR_GET_LIB(err) == ERR_LIB_PKCS11 &&
 		    ERR_GET_FUNC(err) == PKCS11_F_PKCS11_LOGIN)
+#else
+		if (ERR_GET_LIB(err) == ERR_LIB_PKCS11)
+#endif
 			err = ERR_GET_REASON(err);
 		else
 			err = CKR_OK; /* Anything we don't explicitly match */
@@ -324,7 +332,7 @@ static PKCS11_CERT *slot_find_cert(struct openconnect_info *vpninfo, PKCS11_CTX 
 	return NULL;
 }
 
-int load_pkcs11_certificate(struct openconnect_info *vpninfo)
+int load_pkcs11_certificate(struct openconnect_info *vpninfo, struct cert_info *certinfo, X509 **certp)
 {
 	PKCS11_CTX *ctx;
 	PKCS11_TOKEN *match_tok = NULL;
@@ -340,11 +348,11 @@ int load_pkcs11_certificate(struct openconnect_info *vpninfo)
 	if (!ctx)
 		return -EIO;
 
-	if (parse_pkcs11_uri(vpninfo->cert, &match_tok, &cert_id,
-			     &cert_id_len, &cert_label, &vpninfo->cert_password) < 0) {
+	if (parse_pkcs11_uri(certinfo->cert, &match_tok, &cert_id,
+			     &cert_id_len, &cert_label, &certinfo->password) < 0) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Failed to parse PKCS#11 URI '%s'\n"),
-			     vpninfo->cert);
+			     certinfo->cert);
 		return -EINVAL;
 	}
 
@@ -386,7 +394,7 @@ int load_pkcs11_certificate(struct openconnect_info *vpninfo)
 		vpn_progress(vpninfo, PRG_INFO,
 			     _("Logging in to PKCS#11 slot '%s'\n"),
 			     slot->description);
-		if (!slot_login(vpninfo, ctx, slot)) {
+		if (!slot_login(vpninfo, certinfo, ctx, slot)) {
 			cert = slot_find_cert(vpninfo, ctx, slot, cert_label, cert_id, cert_id_len);
 			if (cert)
 				goto got_cert;
@@ -395,7 +403,7 @@ int load_pkcs11_certificate(struct openconnect_info *vpninfo)
 	ret = -EINVAL;
 	vpn_progress(vpninfo, PRG_ERR,
 		     _("Failed to find PKCS#11 cert '%s'\n"),
-		     vpninfo->cert);
+		     certinfo->cert);
  got_cert:
 	if (cert) {
 		/* This happens if the cert is too large for the fixed buffer
@@ -408,20 +416,15 @@ int load_pkcs11_certificate(struct openconnect_info *vpninfo)
 		}
 
 		vpn_progress(vpninfo, PRG_DEBUG,
-			     _("Using PKCS#11 certificate %s\n"), vpninfo->cert);
+			     certinfo_string(certinfo, _("Using PKCS#11 certificate %s\n"),
+					     _("Using secondary PKCS#11 certificate %s\n")),
+			     certinfo->cert);
 
-		vpninfo->cert_x509 = X509_dup(cert->x509);
-		if (!SSL_CTX_use_certificate(vpninfo->https_ctx, vpninfo->cert_x509)) {
-			vpn_progress(vpninfo, PRG_ERR,
-				     _("Failed to install certificate in OpenSSL context\n"));
-			openconnect_report_ssl_errors(vpninfo);
-			ret = -EIO;
-			goto out;
-		}
+		*certp = cert->x509;
 		/* If the key is in PKCS#11 too (which is likely), then keep the slot around.
 		   We might want to know which slot the certificate was found in, so we can
 		   log into it to find the key. */
-		if (!strncmp(vpninfo->sslkey, "pkcs11:", 7)) {
+		if (!strncmp(certinfo->key, "pkcs11:", 7)) {
 			vpninfo->pkcs11_slot_list = slot_list;
 			vpninfo->pkcs11_slot_count = slot_count;
 			vpninfo->pkcs11_cert_slot = slot;
@@ -486,7 +489,8 @@ static PKCS11_KEY *slot_find_key(struct openconnect_info *vpninfo, PKCS11_CTX *c
 #if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 #define EVP_PKEY_id(k) ((k)->type)
 #endif
-static int validate_ecdsa_key(struct openconnect_info *vpninfo, EC_KEY *priv_ec)
+static int validate_ecdsa_key(struct openconnect_info *vpninfo, struct cert_info *certinfo,
+			      EC_KEY *priv_ec)
 {
 	EVP_PKEY *pub_pkey;
 	EC_KEY *pub_ec;
@@ -498,13 +502,15 @@ static int validate_ecdsa_key(struct openconnect_info *vpninfo, EC_KEY *priv_ec)
 	pub_pkey = X509_get_pubkey(vpninfo->cert_x509);
 	if (!pub_pkey) {
 		vpn_progress(vpninfo, PRG_ERR,
-			     _("Certificate has no public key\n"));
+			     certinfo_string(certinfo, _("Certificate has no public key\n"),
+					     _("Secondary certificate has no public key\n")));
 		goto out;
 	}
 	pub_ec = EVP_PKEY_get1_EC_KEY(pub_pkey);
 	if (!pub_ec) {
 		vpn_progress(vpninfo, PRG_ERR,
-			     _("Certificate does not match private key\n"));
+			     certinfo_string(certinfo, _("Certificate does not match private key\n"),
+					     _("Secondary certificate does not match private key\n")));
 		goto out_pkey;
 	}
 	vpn_progress(vpninfo, PRG_TRACE, _("Checking EC key matches cert\n"));
@@ -527,7 +533,8 @@ static int validate_ecdsa_key(struct openconnect_info *vpninfo, EC_KEY *priv_ec)
 	}
 	if (!ECDSA_verify(NID_sha1, rdata, sizeof(rdata), sig, siglen, pub_ec)) {
 		vpn_progress(vpninfo, PRG_ERR,
-			     _("Certificate does not match private key\n"));
+			     certinfo_string(certinfo, _("Certificate does not match private key\n"),
+					     _("Secondary certificate does not match private key\n")));
 		goto out_sig;
 	}
 
@@ -546,7 +553,7 @@ static int validate_ecdsa_key(struct openconnect_info *vpninfo, EC_KEY *priv_ec)
 }
 #endif
 
-int load_pkcs11_key(struct openconnect_info *vpninfo)
+int load_pkcs11_key(struct openconnect_info *vpninfo, struct cert_info *certinfo, EVP_PKEY **keyp)
 {
 	PKCS11_CTX *ctx;
 	PKCS11_TOKEN *match_tok = NULL;
@@ -563,11 +570,11 @@ int load_pkcs11_key(struct openconnect_info *vpninfo)
 	if (!ctx)
 		return -EIO;
 
-	if (parse_pkcs11_uri(vpninfo->sslkey, &match_tok, &key_id,
-			     &key_id_len, &key_label, &vpninfo->cert_password) < 0) {
+	if (parse_pkcs11_uri(certinfo->key, &match_tok, &key_id,
+			     &key_id_len, &key_label, &certinfo->password) < 0) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Failed to parse PKCS#11 URI '%s'\n"),
-			     vpninfo->sslkey);
+			     certinfo->key);
 		return -EINVAL;
 	}
 
@@ -609,7 +616,7 @@ int load_pkcs11_key(struct openconnect_info *vpninfo)
 	   the cert was found in and the key wasn't separately specified, then
 	   try that slot. */
 	if (matching_slots != 1 && vpninfo->pkcs11_cert_slot &&
-	    vpninfo->sslkey == vpninfo->cert) {
+	    certinfo->key == certinfo->cert) {
 		/* Use the slot the cert was found in, if one specifier was given for both */
 		matching_slots = 1;
 		login_slot = vpninfo->pkcs11_cert_slot;
@@ -620,7 +627,7 @@ int load_pkcs11_key(struct openconnect_info *vpninfo)
 		vpn_progress(vpninfo, PRG_INFO,
 			     _("Logging in to PKCS#11 slot '%s'\n"),
 			     slot->description);
-		if (!slot_login(vpninfo, ctx, slot)) {
+		if (!slot_login(vpninfo, certinfo, ctx, slot)) {
 			key = slot_find_key(vpninfo, ctx, slot, key_label, key_id, key_id_len);
 			if (key)
 				goto got_key;
@@ -628,7 +635,7 @@ int load_pkcs11_key(struct openconnect_info *vpninfo)
 			/* We still haven't found it. If we weren't explicitly given a URI for
 			   the key and we're inferring the location of the key from the cert,
 			   then drop the label and try matching the CKA_ID of the cert. */
-			if (vpninfo->cert == vpninfo->sslkey && vpninfo->pkcs11_cert_id &&
+			if (certinfo->cert == certinfo->key && vpninfo->pkcs11_cert_id &&
 			    (key_label || !key_id)) {
 				key = slot_find_key(vpninfo, ctx, slot, NULL, vpninfo->pkcs11_cert_id,
 						    vpninfo->pkcs11_cert_id_len);
@@ -640,17 +647,20 @@ int load_pkcs11_key(struct openconnect_info *vpninfo)
 	ret = -EINVAL;
 	vpn_progress(vpninfo, PRG_ERR,
 		     _("Failed to find PKCS#11 key '%s'\n"),
-		     vpninfo->sslkey);
+		     certinfo->key);
 
  got_key:
 	if (key) {
 		vpn_progress(vpninfo, PRG_DEBUG,
-			     _("Using PKCS#11 key %s\n"), vpninfo->sslkey);
+			     certinfo_string(certinfo, _("Using PKCS#11 key %s\n"),
+					     _("Using secondary PKCS#11 key %s\n")),
+			     certinfo->key);
 
 		pkey = PKCS11_get_private_key(key);
 		if (!pkey) {
 			vpn_progress(vpninfo, PRG_ERR,
-				     _("Failed to instantiated private key from PKCS#11\n"));
+				     certinfo_string(certinfo, _("Failed to instantiate private key from PKCS#11\n"),
+						     _("Failed to instantiate secondary private key from PKCS#11\n")));
 			openconnect_report_ssl_errors(vpninfo);
 			ret = -EIO;
 			goto out;
@@ -672,18 +682,13 @@ int load_pkcs11_key(struct openconnect_info *vpninfo)
 
 			ret = 0;
 			if (!EC_KEY_get0_public_key(priv_ec))
-				ret = validate_ecdsa_key(vpninfo, priv_ec);
+				ret = validate_ecdsa_key(vpninfo, certinfo, priv_ec);
 			EC_KEY_free(priv_ec);
 			if (ret)
 				goto out;
 		}
 #endif
-		if (!SSL_CTX_use_PrivateKey(vpninfo->https_ctx, pkey)) {
-			vpn_progress(vpninfo, PRG_ERR, _("Add key from PKCS#11 failed\n"));
-			openconnect_report_ssl_errors(vpninfo);
-			ret = -EINVAL;
-			goto out;
-		}
+		*keyp = pkey;
 
 		/* We have to keep the entire slot list around, because the EVP_PKEY
 		   depends on the one we're using, and we have no way to free the
@@ -708,13 +713,13 @@ int load_pkcs11_key(struct openconnect_info *vpninfo)
 	return ret;
 }
 #else
-int load_pkcs11_key(struct openconnect_info *vpninfo)
+int load_pkcs11_key(struct openconnect_info *vpninfo, struct cert_info *certinfo, EVP_PKEY **keyp)
 {
 	vpn_progress(vpninfo, PRG_ERR,
 		     _("This version of OpenConnect was built without PKCS#11 support\n"));
 	return -EINVAL;
 }
-int load_pkcs11_certificate(struct openconnect_info *vpninfo)
+int load_pkcs11_certificate(struct openconnect_info *vpninfo, struct cert_info *certinfo, X509 **certp)
 {
 	vpn_progress(vpninfo, PRG_ERR,
 		     _("This version of OpenConnect was built without PKCS#11 support\n"));

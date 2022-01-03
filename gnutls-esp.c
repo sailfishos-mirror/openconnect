@@ -17,15 +17,16 @@
 
 #include <config.h>
 
-#include <unistd.h>
-#include <string.h>
-#include <stdlib.h>
-#include <errno.h>
+#include "openconnect-internal.h"
 
 #include <gnutls/gnutls.h>
 #include <gnutls/crypto.h>
 
-#include "openconnect-internal.h"
+#include <unistd.h>
+
+#include <string.h>
+#include <stdlib.h>
+#include <errno.h>
 
 void destroy_esp_ciphers(struct esp *esp)
 {

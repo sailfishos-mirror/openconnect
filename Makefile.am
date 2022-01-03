@@ -1,4 +1,3 @@
-
 SUBDIRS = tests
 # We kind of want openconnect to be built before we try to test it
 check-recursive: openconnect$(EXEEXT)
@@ -24,30 +23,37 @@ AM_CFLAGS = @WFLAGS@
 AM_CPPFLAGS = -DLOCALEDIR="\"$(localedir)\""
 
 openconnect_SOURCES = xml.c main.c
-openconnect_CFLAGS = $(AM_CFLAGS) $(SSL_CFLAGS) $(DTLS_SSL_CFLAGS) $(LIBXML2_CFLAGS) $(LIBPROXY_CFLAGS) $(ZLIB_CFLAGS) $(LIBSTOKEN_CFLAGS) $(LIBPSKC_CFLAGS) $(GSSAPI_CFLAGS) $(INTL_CFLAGS) $(ICONV_CFLAGS) $(LIBPCSCLITE_CFLAGS)
-openconnect_LDADD = libopenconnect.la $(SSL_LIBS) $(LIBXML2_LIBS) $(LIBPROXY_LIBS) $(INTL_LIBS) $(ICONV_LIBS)
+openconnect_CFLAGS = $(AM_CFLAGS) $(SSL_CFLAGS) $(DTLS_SSL_CFLAGS) \
+	$(LIBXML2_CFLAGS) $(JSON_CFLAGS) $(LIBPROXY_CFLAGS) \
+	$(ZLIB_CFLAGS) $(LIBSTOKEN_CFLAGS) $(LIBPSKC_CFLAGS) \
+	$(GSSAPI_CFLAGS) $(INTL_CFLAGS) $(ICONV_CFLAGS) \
+	$(LIBPCSCLITE_CFLAGS)
+openconnect_LDADD = libopenconnect.la $(SSL_LIBS) $(LIBXML2_LIBS) \
+	$(LIBPROXY_LIBS) $(INTL_LIBS) $(ICONV_LIBS)
 
 if OPENCONNECT_WIN32
 openconnect_SOURCES += openconnect.rc
 endif
-library_srcs = ssl.c http.c http-auth.c auth-common.c auth-html.c library.c compat.c lzs.c mainloop.c script.c ntlm.c digest.c mtucalc.c openconnect-internal.h
+library_srcs = ssl.c http.c textbuf.c http-auth.c auth-common.c auth-html.c library.c compat.c lzs.c mainloop.c script.c ntlm.c digest.c mtucalc.c openconnect-internal.h
 lib_srcs_cisco = auth.c cstp.c
 lib_srcs_juniper = oncp.c lzo.c auth-juniper.c
 lib_srcs_nx = nx.c
 lib_srcs_pulse = pulse.c
 lib_srcs_globalprotect = gpst.c win32-ipicmp.h auth-globalprotect.c
+lib_srcs_array = array.c
 lib_srcs_oath = oath.c
 lib_srcs_oidc = oidc.c
 lib_srcs_ppp = ppp.c ppp.h
 lib_srcs_nullppp = nullppp.c
 lib_srcs_f5 = f5.c
 lib_srcs_fortinet = fortinet.c
+lib_srcs_json = jsondump.c
 
 library_srcs += $(lib_srcs_juniper) $(lib_srcs_cisco) $(lib_srcs_oath) \
 		$(lib_srcs_globalprotect) $(lib_srcs_pulse) \
 		$(lib_srcs_oidc) $(lib_srcs_ppp) $(lib_srcs_nullppp) \
-		$(lib_srcs_f5) $(lib_srcs_fortinet) $(lib_srcs_nx)
-
+		$(lib_srcs_f5) $(lib_srcs_fortinet) $(lib_srcs_json) \
+		$(lib_srcs_array) $(lib_srcs_nx)
 
 lib_srcs_gnutls = gnutls.c gnutls_tpm.c gnutls_tpm2.c
 lib_srcs_openssl = openssl.c openssl-pkcs11.c
@@ -59,13 +65,17 @@ lib_srcs_yubikey = yubikey.c
 lib_srcs_stoken = stoken.c
 lib_srcs_esp = esp.c esp-seqno.c
 lib_srcs_dtls = dtls.c
+lib_srcs_vhost = vhost.c
 
 POTFILES = $(openconnect_SOURCES) gnutls-esp.c gnutls-dtls.c openssl-esp.c openssl-dtls.c \
 	   $(lib_srcs_esp) $(lib_srcs_dtls) gnutls_tpm2_esys.c gnutls_tpm2_ibm.c \
 	   $(lib_srcs_openssl) $(lib_srcs_gnutls) $(library_srcs) \
 	   $(lib_srcs_win32) $(lib_srcs_posix) $(lib_srcs_gssapi) $(lib_srcs_iconv) \
-	   $(lib_srcs_yubikey) $(lib_srcs_stoken) $(lib_srcs_oidc)
+	   $(lib_srcs_yubikey) $(lib_srcs_stoken) $(lib_srcs_oidc) $(lib_srcs_vhost)
 
+if OPENCONNECT_VHOST
+library_srcs += $(lib_srcs_vhost)
+endif
 if OPENCONNECT_LIBPCSCLITE
 library_srcs += $(lib_srcs_yubikey)
 endif
@@ -100,6 +110,9 @@ endif
 if OPENCONNECT_ICONV
 library_srcs += $(lib_srcs_iconv)
 endif
+if BUILTIN_JSON
+library_srcs += json/json.c json/json.h
+endif
 if OPENCONNECT_WIN32
 library_srcs += $(lib_srcs_win32)
 .rc.o:
@@ -112,8 +125,17 @@ endif
 
 
 libopenconnect_la_SOURCES = version.c $(library_srcs)
-libopenconnect_la_CFLAGS = $(AM_CFLAGS) $(SSL_CFLAGS) $(DTLS_SSL_CFLAGS) $(LIBXML2_CFLAGS) $(LIBPROXY_CFLAGS) $(ZLIB_CFLAGS) $(P11KIT_CFLAGS) $(TSS_CFLAGS) $(LIBSTOKEN_CFLAGS) $(LIBPSKC_CFLAGS) $(GSSAPI_CFLAGS) $(INTL_CFLAGS) $(ICONV_CFLAGS) $(LIBPCSCLITE_CFLAGS) $(LIBP11_CFLAGS) $(LIBLZ4_CFLAGS)
-libopenconnect_la_LIBADD = $(SSL_LIBS) $(DTLS_SSL_LIBS) $(LIBXML2_LIBS) $(LIBPROXY_LIBS) $(ZLIB_LIBS) $(P11KIT_LIBS) $(TSS_LIBS) $(LIBSTOKEN_LIBS) $(LIBPSKC_LIBS) $(GSSAPI_LIBS) $(INTL_LIBS) $(ICONV_LIBS) $(LIBPCSCLITE_LIBS) $(LIBP11_LIBS) $(LIBLZ4_LIBS)
+libopenconnect_la_CFLAGS = $(AM_CFLAGS) $(SSL_CFLAGS) $(DTLS_SSL_CFLAGS) \
+	$(LIBXML2_CFLAGS) $(LIBPROXY_CFLAGS) $(ZLIB_CFLAGS) $(P11KIT_CFLAGS) \
+	$(TSS_CFLAGS) $(LIBSTOKEN_CFLAGS) $(LIBPSKC_CFLAGS) $(GSSAPI_CFLAGS) \
+	$(INTL_CFLAGS) $(ICONV_CFLAGS) $(LIBPCSCLITE_CFLAGS) $(LIBP11_CFLAGS) \
+	$(LIBLZ4_CFLAGS) $(JSON_CFLAGS)
+libopenconnect_la_LIBADD = $(SSL_LIBS) $(DTLS_SSL_LIBS) \
+	$(LIBXML2_LIBS) $(LIBPROXY_LIBS) $(ZLIB_LIBS) $(P11KIT_LIBS) \
+	$(TSS_LIBS) $(LIBSTOKEN_LIBS) $(LIBPSKC_LIBS) $(GSSAPI_LIBS) \
+	$(INTL_LIBS) $(ICONV_LIBS) $(LIBPCSCLITE_LIBS) $(LIBP11_LIBS)\
+	$(LIBLZ4_LIBS) ${JSON_LIBS}
+
 if OPENBSD_LIBTOOL
 # OpenBSD's libtool doesn't have -version-number, but its -version-info arg
 # does what GNU libtool's -version-number does. Which arguably is what the
@@ -144,7 +166,8 @@ endif
 
 pkgconfig_DATA = openconnect.pc
 
-EXTRA_DIST = AUTHORS version.sh COPYING.LGPL openconnect.ico $(lib_srcs_openssl) $(lib_srcs_gnutls) openconnect.nsi.in
+EXTRA_DIST = AUTHORS version.sh COPYING.LGPL openconnect.ico $(POTFILES) openconnect.nsi.in
+EXTRA_DIST += json/AUTHORS json/LICENSE json/json.c json/json.h
 EXTRA_DIST += $(shell cd "$(top_srcdir)" && \
 		git ls-tree HEAD -r --name-only -- android/ java/ trojans/ bash/ 2>/dev/null)
 
@@ -200,8 +223,8 @@ tag: uncommitted-check
 	@( echo '1,/<!-- latest-release-start -->/p' ;\
 	   echo '/<!-- latest-release-end -->/,$$p' ;\
 	   echo  '/<!-- latest-release-start -->/a\' ;\
-	   echo  'The latest release is <a href="ftp://ftp.infradead.org/pub/openconnect/openconnect-$(VERSION).tar.gz">OpenConnect v$(VERSION)</a>\' ;\
-	   echo  '<i>(<a href="ftp://ftp.infradead.org/pub/openconnect/openconnect-$(VERSION).tar.gz.asc">PGP signature</a>)</i>,\' ;\
+	   echo  'The latest release is <a href="https://www.infradead.org/openconnect/download/openconnect-$(VERSION).tar.gz">OpenConnect v$(VERSION)</a>\' ;\
+	   echo  '<i>(<a href="https://www.infradead.org/openconnect/download/openconnect-$(VERSION).tar.gz.asc">PGP signature</a>)</i>,\' ;\
 	   echo 'released on $(shell date +%Y-%m-%d) with the following changelog:</p>\' ;\
 	   sed '0,/<b>OpenConnect HEAD/d;/<\/ul><br\/>/,$$d;s/$$/\\/' $(srcdir)/www/changelog.xml ;\
 	   echo '     </ul>' ) | \
@@ -211,8 +234,8 @@ tag: uncommitted-check
 	   echo '     <ul>\' ;\
 	   echo '       <li><i>No changelog entries yet</i></li>\';\
 	   echo '     </ul><br/>\' ;  echo '  </li>\' ;\
-	   echo '  <li><b><a href="ftp://ftp.infradead.org/pub/openconnect/openconnect-$(VERSION).tar.gz">OpenConnect v$(VERSION)</a></b>\' ;\
-	   echo '     <i>(<a href="ftp://ftp.infradead.org/pub/openconnect/openconnect-$(VERSION).tar.gz.asc">PGP signature</a>)</i> &#8212; $(shell date +%Y-%m-%d)' ) | \
+	   echo '  <li><b><a href="https://www.infradead.org/openconnect/download/openconnect-$(VERSION).tar.gz">OpenConnect v$(VERSION)</a></b>\' ;\
+	   echo '     <i>(<a href="https://www.infradead.org/openconnect/download/openconnect-$(VERSION).tar.gz.asc">PGP signature</a>)</i> &#8212; $(shell date +%Y-%m-%d)' ) | \
 		sed -f - -i $(srcdir)/www/changelog.xml
 	@echo '/API version [0-9]\+\.[0-9]\+:$$/s/:/ (v$(VERSION); $(shell date +%Y-%m-%d)):/' | \
 		sed -f - -i $(srcdir)/openconnect.h
@@ -270,8 +293,14 @@ export V AM_DEFAULT_VERBOSITY bindir OBJDUMP
 file-list.txt: Makefile.dlldeps openconnect$(EXEEXT) libopenconnect.la $(WINTUN_DLL)
 	@$(MAKE) --no-print-directory -f $< $@
 
+# Wintun Layer 3 TUN driver for Windows 7 and newer
+# (see https://wintun.net)
+WINTUNDRIVER = wintun-0.13.zip
+WINTUNSHA256 = 34afe7d0de1fdb781af3defc0a75fd8c97daa756279b42dd6be6a1bd8ccdc7f0
+
 # OpenVPN TAP driver for Windows Vista/2003 and newer
 # (see https://community.openvpn.net/openvpn/wiki/GettingTapWindows)
+# XX: Newer releases exist, but are split between Win7+ and Win10+ versions.
 TAPDRIVER = tap-windows-9.21.2.exe
 TAPSHA256 = 645bee92ba4e9f32ddfdd9f8519dc1b9f9ff0b0a8e87e342f08d39da77e499a9
 
@@ -283,9 +312,6 @@ file-list-$(TAPDRIVER).txt: $(TAPDRIVER)
 	echo $(TAPSHA256) $< | sha256sum -c
 	echo $< > $@
 
-WINTUNDRIVER = wintun-0.10.2.zip
-WINTUNSHA256 = fcd9f62f1bd5a550fcb9c21fbb5d6a556214753ccbbd1a3ebad4d318ec9dcbef
-
 $(WINTUNDRIVER):
 	curl https://www.wintun.net/builds/$(WINTUNDRIVER) -o $@
 
@@ -293,9 +319,12 @@ $(WINTUNDRIVER):
 	echo $(WINTUNSHA256) $< | sha256sum -c
 	unzip -DD -o -j -d .libs $< wintun/bin/$(WINTUN_ARCH)/wintun.dll
 
-# Latest vpnc-script-win.js
+# Latest vpnc-script-win.js, annotated with a header documenting the
+# exact source revision.
 vpnc-script-win.js:
-	curl https://gitlab.com/openconnect/vpnc-scripts/raw/master/vpnc-script-win.js -o $@
+	curl 'https://gitlab.com/api/v4/projects/openconnect%2Fvpnc-scripts/repository/commits?path=vpnc-script-win.js&branch=master' | \
+	    jq -r '.[0] | "// This script matches the version found at " + (.web_url | sub("/commit/"; "/blob/")) + "/vpnc-script-win.js\n// Updated on " + .authored_date[:10] + " by " + .author_name + " <" + .author_email + "> (\"" + .title + "\")\n//"' > $@
+	curl https://gitlab.com/openconnect/vpnc-scripts/raw/master/vpnc-script-win.js >> $@
 
 # Let make find the file in VPATH
 file-list-%.txt: %
@@ -325,7 +354,7 @@ openconnect.nsi: version.c
 	fi; \
 	( echo "VIProductVersion \"$$PROD_VERSION\""; \
 	  echo "VIAddVersionKey ProductVersion \"$$VERSION\""; \
-	  echo "VIAddVersionKey Comments \"OpenConnect multi-protocol VPN client for Windows (command-line version, built with $$TLS_LIBRARY). For more information, visit http://www.infradead.org/openconnect/\""; \
+	  echo "VIAddVersionKey Comments \"OpenConnect multi-protocol VPN client for Windows (command-line version, built with $$TLS_LIBRARY). For more information, visit https://www.infradead.org/openconnect/\""; \
 	  echo "!include $(srcdir)/openconnect.nsi.in" ) > $@
 
 AM_V_MAKENSIS = $(am__v_MAKENSIS_$(V))

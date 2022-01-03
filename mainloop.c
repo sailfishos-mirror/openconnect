@@ -17,22 +17,24 @@
 
 #include <config.h>
 
-#include <errno.h>
-#include <limits.h>
-#include <stdlib.h>
+#include "openconnect-internal.h"
+
 #include <unistd.h>
-#include <string.h>
 #ifndef _WIN32
 /* for setgroups() */
 # include <sys/types.h>
 # include <grp.h>
 #endif
 
-#include "openconnect-internal.h"
+#include <errno.h>
+#include <limits.h>
+#include <stdlib.h>
+#include <string.h>
 
-int queue_new_packet(struct pkt_q *q, void *buf, int len)
+int queue_new_packet(struct openconnect_info *vpninfo,
+		     struct pkt_q *q, void *buf, int len)
 {
-	struct pkt *new = malloc(sizeof(struct pkt) + len);
+	struct pkt *new = alloc_pkt(vpninfo, len);
 	if (!new)
 		return -ENOMEM;
 
@@ -45,18 +47,10 @@ int queue_new_packet(struct pkt_q *q, void *buf, int len)
 
 /* This is here because it's generic and hence can't live in either of the
    tun*.c files for specific platforms */
-int tun_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
+int tun_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable, int did_work)
 {
 	struct pkt *this;
 	int work_done = 0;
-
-	if (!tun_is_up(vpninfo)) {
-		/* no tun yet; clear any queued packets */
-		while ((this = dequeue_packet(&vpninfo->incoming_queue)))
-			free(this);
-
-		return 0;
-	}
 
 	if (readable && read_fd_monitored(vpninfo, tun)) {
 		struct pkt *out_pkt = vpninfo->tun_pkt;
@@ -64,7 +58,7 @@ int tun_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			int len = vpninfo->ip_info.mtu;
 
 			if (!out_pkt) {
-				out_pkt = malloc(sizeof(struct pkt) + len + vpninfo->pkt_trailer);
+				out_pkt = alloc_pkt(vpninfo, len + vpninfo->pkt_trailer);
 				if (!out_pkt) {
 					vpn_progress(vpninfo, PRG_ERR, _("Allocation failed\n"));
 					break;
@@ -104,7 +98,7 @@ int tun_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		vpninfo->stats.rx_pkts++;
 		vpninfo->stats.rx_bytes += this->len;
 
-		free(this);
+		free_pkt(vpninfo, this);
 	}
 	/* Work is not done if we just got rid of packets off the queue */
 	return work_done;
@@ -180,6 +174,10 @@ int openconnect_mainloop(struct openconnect_info *vpninfo,
 {
 	int ret = 0;
 	int tun_r = 1, udp_r = 1, tcp_r = 1;
+#ifdef HAVE_VHOST
+	int vhost_r = 0;
+#endif
+
 	vpninfo->reconnect_timeout = reconnect_timeout;
 	vpninfo->reconnect_interval = reconnect_interval;
 
@@ -232,13 +230,31 @@ int openconnect_mainloop(struct openconnect_info *vpninfo,
 			break;
 		did_work += ret;
 
+
 		/* Tun must be last because it will set/clear its bit
 		   in the select_rfds according to the queue length */
-		did_work += tun_mainloop(vpninfo, &timeout, tun_r);
+		if (!tun_is_up(vpninfo)) {
+			struct pkt *this;
+			/* no tun yet; clear any queued packets */
+			while ((this = dequeue_packet(&vpninfo->incoming_queue)))
+				free_pkt(vpninfo, this);
+#ifdef HAVE_VHOST
+		} else if (vpninfo->vhost_fd != -1) {
+			did_work += vhost_tun_mainloop(vpninfo, &timeout, vhost_r, did_work);
+			/* If it returns zero *then* it will have read the eventfd
+			 * and there's no need to do so again until we poll again. */
+			if (!did_work)
+				vhost_r = 0;
+#endif
+		} else {
+			did_work += tun_mainloop(vpninfo, &timeout, tun_r, did_work);
+		}
 		if (vpninfo->quit_reason)
 			break;
 
-		poll_cmd_fd(vpninfo, 0);
+		if (vpninfo->need_poll_cmd_fd)
+			poll_cmd_fd(vpninfo, 0);
+
 		if (vpninfo->got_cancel_cmd) {
 			if (vpninfo->delay_close != NO_DELAY_CLOSE) {
 				if (vpninfo->delay_close == DELAY_CLOSE_IMMEDIATE_CALLBACK) {
@@ -281,6 +297,10 @@ int openconnect_mainloop(struct openconnect_info *vpninfo,
 
 				vpninfo->got_pause_cmd = 0;
 				vpn_progress(vpninfo, PRG_INFO, _("Caller paused the connection\n"));
+
+				if (vpninfo->cmd_fd >= 0)
+					unmonitor_fd(vpninfo, cmd);
+
 				return 0;
 			}
 		}
@@ -315,6 +335,59 @@ int openconnect_mainloop(struct openconnect_info *vpninfo,
 			free(errstr);
 		}
 #else
+#ifdef HAVE_EPOLL
+		if (vpninfo->epoll_fd >= 0) {
+			struct epoll_event evs[5];
+
+			/* During busy periods, monitor_read_fd() and unmonitor_read_fd()
+			 * may get called multiple times as we go round and round the
+			 * loop and queues get full then have space again. In the past
+			 * with the select() loop, that was only a bitflip in the fd_set
+			 * and didn't cost much. With epoll() it's actually a system
+			 * call, so don't do it every time. Wait until we're about to
+			 * sleep, and *then* ensure that we call epoll_ctl() to sync the
+			 * set of events that we care about, if it's changed. */
+			if (vpninfo->epoll_update) {
+				update_epoll_fd(vpninfo, tun);
+				update_epoll_fd(vpninfo, ssl);
+				update_epoll_fd(vpninfo, cmd);
+				update_epoll_fd(vpninfo, dtls);
+#ifdef HAVE_VHOST
+				update_epoll_fd(vpninfo, vhost_call);
+#endif
+			}
+
+			tun_r = udp_r = tcp_r = 0;
+#ifdef HAVE_VHOST
+			vhost_r = 0;
+#endif
+
+			int nfds = epoll_wait(vpninfo->epoll_fd, evs, 5, timeout);
+			if (nfds < 0) {
+				if (errno != EINTR) {
+					ret = -errno;
+					vpn_perror(vpninfo, _("Failed epoll_wait() in mainloop"));
+					break;
+				}
+				nfds = 0;
+			}
+			while (nfds--) {
+				if (evs[nfds].events & EPOLLIN) {
+					if (evs[nfds].data.fd == vpninfo->tun_fd)
+						tun_r = 1;
+					else if (evs[nfds].data.fd == vpninfo->ssl_fd)
+						tcp_r = 1;
+					else if (evs[nfds].data.fd == vpninfo->dtls_fd)
+						udp_r = 1;
+#ifdef HAVE_VHOST
+					else if (evs[nfds].data.fd == vpninfo->vhost_call_fd)
+						vhost_r = 1;
+#endif
+				}
+			}
+			continue;
+		}
+#endif
 		memcpy(&rfds, &vpninfo->_select_rfds, sizeof(rfds));
 		memcpy(&wfds, &vpninfo->_select_wfds, sizeof(wfds));
 		memcpy(&efds, &vpninfo->_select_efds, sizeof(efds));
@@ -328,7 +401,10 @@ int openconnect_mainloop(struct openconnect_info *vpninfo,
 			vpn_perror(vpninfo, _("Failed select() in mainloop"));
 			break;
 		}
-
+#ifdef HAVE_VHOST
+		if (vpninfo->vhost_call_fd >= 0)
+			vhost_r = FD_ISSET(vpninfo->vhost_call_fd, &rfds);
+#endif
 		if (vpninfo->tun_fd >= 0)
 			tun_r = FD_ISSET(vpninfo->tun_fd, &rfds);
 		if (vpninfo->dtls_fd >= 0)
@@ -343,6 +419,10 @@ int openconnect_mainloop(struct openconnect_info *vpninfo,
 
 	if (tun_is_up(vpninfo))
 		os_shutdown_tun(vpninfo);
+
+	if (vpninfo->cmd_fd >= 0)
+		unmonitor_fd(vpninfo, cmd);
+
 	return ret < 0 ? ret : -EIO;
 }
 

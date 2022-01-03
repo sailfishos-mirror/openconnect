@@ -17,12 +17,12 @@
 
 #include <config.h>
 
-#include <errno.h>
+#include "openconnect-internal.h"
 
 #include <libxml/HTMLparser.h>
 #include <libxml/HTMLtree.h>
 
-#include "openconnect-internal.h"
+#include <errno.h>
 
 xmlNodePtr htmlnode_next(xmlNodePtr top, xmlNodePtr node)
 {
@@ -98,7 +98,10 @@ int parse_input_node(struct openconnect_info *vpninfo, struct oc_auth_form *form
 		    !strcmp(opt->name, "VerificationCode") &&
 		    can_gen_tokencode && !can_gen_tokencode(vpninfo, form, opt))
 			opt->type = OC_FORM_OPT_TOKEN;
-	} else if (vpninfo->proto->proto == PROTO_NC && !strcasecmp(type, "submit")) {
+	} else if (!strcasecmp(type, "submit")) {
+		/* XX: can be ignored except for Juniper */
+		if (vpninfo->proto->proto != PROTO_NC)
+			goto free_out;
 
 		xmlnode_get_prop(node, "name", &opt->name);
 		if (opt->name && submit_button && (!strcmp(opt->name, submit_button) ||
@@ -142,6 +145,7 @@ int parse_input_node(struct openconnect_info *vpninfo, struct oc_auth_form *form
 	*p = opt;
  out:
 	if (ret)
+	free_out:
 		free_opt(opt);
 	free(type);
 	free(style);
@@ -275,6 +279,15 @@ struct oc_auth_form *parse_form_node(struct openconnect_info *vpninfo,
 					     _("Unknown textarea field: '%s'\n"), fieldname);
 			}
 			free(fieldname);
+
+		} else if (vpninfo->proto->proto == PROTO_FORTINET &&
+			   !strcasecmp((char *)child->name, "b")) {
+
+			char *msg = (char *)xmlNodeGetContent(child);
+			if (msg) {
+				free(form->message);
+				form->message = msg;
+			}
 		}
 	}
 	return form;

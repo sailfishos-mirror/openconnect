@@ -70,7 +70,7 @@ openconnect \- Multi-protocol VPN client, for Cisco AnyConnect VPNs and others
 .OP \-\-version\-string string
 .OP \-\-local-hostname string
 .OP \-\-os string
-.B [https://]\fIserver\fB[:\fIport\fB][/\fIgroup\fB]
+.B [\-\-server] [https://]\fIhost\fB[:\fIport\fB][/\fIgroup\fB]
 .YS
 
 .SH DESCRIPTION
@@ -89,8 +89,10 @@ PAN GlobalProtect VPN servers,
 .RB ( \-\-protocol=gp )
 F5 Big-IP VPN servers,
 .RB ( \-\-protocol=f5 )
-and Fortinet Fortigate VPN servers,
+Fortinet Fortigate VPN servers,
 .RB ( \-\-protocol=fortinet )
+and Array Networks SSL VPN servers,
+.RB ( \-\-protocol=array )
 .
 
 The connection happens in two phases. First there is a simple HTTPS
@@ -183,7 +185,14 @@ compression can be disabled by setting the mode to
 .B \-\-force\-dpd=INTERVAL
 Use
 .I INTERVAL
-as minimum Dead Peer Detection interval (in seconds) for CSTP and DTLS, forcing use of DPD even when the server doesn't request it.
+as Dead Peer Detection interval (in seconds). This will cause the client to use
+DPD at the specified interval even if the server hasn't requested it, or at a
+different interval from the one requested by the server.
+
+DPD mechanisms vary by protocol and by transport (TLS or DTLS/ESP), but are all
+functionally similar: they enable either the VPN client or the VPN server to
+transmit a signal to the peer, requesting an immediate reply which can be used
+to confirm that the link between the two peers is still working.
 .TP
 .B \-g,\-\-usergroup=GROUP
 Use
@@ -319,7 +328,31 @@ Less output
 .B \-Q,\-\-queue\-len=LEN
 Set packet queue limit to
 .I LEN
-pkts
+packets. The default is 10. A high value may allow better overall bandwidth
+but at a cost of latency. If you run Voice over IP or other interactive
+traffic over the VPN, you don't want those packets to be queued behind
+thousands of other large packets which are part of a bulk transfer.
+
+This option sets the maximum inbound and outbound packet queue sizes
+in OpenConnect itself, which control how many packets will be sent and
+received in a single batch, as well as affecting other buffering such
+as the socket send buffer (SO_SNDBUF) for network connections and the
+OS tunnel device.
+
+Ultimately, the right size for a queue is "just enough packets that it
+never quite gets empty before more are pushed to it". Any higher than
+that is simply introducing bufferbloat and additional latency with no
+benefit. With the default of 10, we are able to saturate a single
+Gigabit Ethernet from modest hardware, which is more than enough for
+most VPN users.
+
+If OpenConnect is built with vhost-net support, it will only be used
+if the queue length is set to 16 or more. This is because vhost-net
+introduces a small amount of additional latency, but improves total
+bandwidth quite considerably for those operating at high traffic
+rates. Thus it makes sense to use it when the user has indicated a
+preference for bandwidth over latency, by increasing the queue size.
+
 .TP
 .B \-s,\-\-script=SCRIPT
 Invoke
@@ -329,7 +362,7 @@ service are unlikely to work correctly. The script is expected to be
 compatible with the
 .B vpnc\-script
 which is shipped with the "vpnc" VPN client. See
-.I http://www.infradead.org/openconnect/vpnc-script.html
+.I https://www.infradead.org/openconnect/vpnc-script.html
 for more information. This version of OpenConnect is configured to
 use \fB@DEFAULT_VPNCSCRIPT@\fR by default.
 
@@ -343,6 +376,19 @@ Pass traffic to 'script' program over a UNIX socket, instead of to a kernel
 tun/tap device. This allows the VPN IP traffic to be handled entirely in
 userspace, for example by a program which uses lwIP to provide SOCKS access
 into the VPN.
+.TP
+.B \-\-server=[https://]\fIHOST\fB[:\fIPORT\fB][/\fIGROUP\fB]
+Define the VPN server as a simple
+.I HOST
+or as an URL containing the
+. I HOST
+and optionally the
+.I PORT
+number and the login 
+.I GROUP
+or realm.
+
+As an alternative, define the VPN server as non-option command line argument.
 .TP
 .B \-u,\-\-user=NAME
 Set login username to
@@ -361,14 +407,18 @@ XML config file
 Choose authentication login selection
 .TP
 .B \-\-authenticate
-Authenticate only, and output the information needed to make the connection
-a form which can be used to set shell environment variables. When invoked with
-this option, openconnect will not make the connection, but if successful will
-output something like the following to stdout:
+Authenticate to the VPN, output the information needed to make the connection in
+a form which can be used to set shell environment variables, and then exit.
+
+When invoked with this option, OpenConnect will not actually create the VPN connection
+or configure a tunnel interface, but if successful will print something like the
+following to stdout:
 .nf
-.B COOKIE=3311180634@13561856@1339425499@B315A0E29D16C6FD92EE...
-.B HOST=10.0.0.1
-.B FINGERPRINT=469bb424ec8835944d30bc77c77e8fc1d8e23a42
+.B COOKIE='3311180634@13561856@1339425499@B315A0E29D16C6FD92EE...'
+.B HOST='10.0.0.1'
+.B CONNECT_URL='https://vpnserver.example.com'
+.B FINGERPRINT='469bb424ec8835944d30bc77c77e8fc1d8e23a42'
+.B RESOLVE='vpnserver.example.com:10.0.0.1'
 .fi
 Thus, you can invoke openconnect as a non-privileged user
 .I (with access to the user's PKCS#11 tokens, etc.)
@@ -377,14 +427,39 @@ connection as root:
 .nf
 .B eval `openconnect --authenticate https://vpnserver.example.com`;
 .B [ -n "$COOKIE" ] && echo "$COOKIE" |
-.B \ \ sudo openconnect --cookie-on-stdin $HOST --servercert $FINGERPRINT
+.B \ \ sudo openconnect --cookie-on-stdin $CONNECT_URL --servercert $FINGERPRINT --resolve $RESOLVE
+.fi
+
+Earlier versions of OpenConnect produced only the
+.B HOST
+variable (containing the numeric server address), and not the
+.B CONNECT_URL
+or
+.B RESOLVE
+variables. Subsequently, we discovered that servers behind proxies may not respond
+correctly unless the correct DNS name is present in the connection phase, and we
+added support for VPN protocols where the server URL's
+.I path
+component may be significant in the connection phase, prompting the addition of
+.B CONNECT_URL
+and
+.BR RESOLVE ,
+and the recommendation to use them as described above.
+If you are not certain that you are invoking a newer version of OpenConnect which outputs
+these variables, use the following command-line (compatible with most Bourne shell derivatives)
+which will work with either a newer or older version:
+.nf
+.B sudo openconnect --cookie-on-stdin ${CONNECT_URL:-$HOST} --servercert $FINGERPRINT ${RESOLVE:+--resolve=$RESOLVE}
 .fi
 .TP
 .B \-\-cookieonly
-Fetch and print cookie only; don't connect
+Fetch and print cookie only; don't connect (this is essentially a subset of
+.BR \-\-authenticate ).
 .TP
 .B \-\-printcookie
-Print cookie before connecting
+Print cookie to stdout before connecting (see
+.B \-\-authenticate
+for the meaning of this cookie)
 .TP
 .B \-\-cafile=FILE
 Additional CA file for server verification. By default, this simply
@@ -447,7 +522,7 @@ However, Cisco's support team has failed to give any competent
 response to the bug report and we don't know under what other
 circumstances their bug might manifest itself. So this option exists
 to disable ALL re\-use of HTTP sessions and cause a new connection to be
-made for each request. If your server seems not to be recognising your
+made for each request. If your server seems not to be recognizing your
 certificate, try this option. If it makes a difference, please report
 this information to the
 .B openconnect\-devel@lists.infradead.org
@@ -466,7 +541,7 @@ compatibility issues with the code which falls back to the old method
 automatically. It causes OpenConnect to behave more like older
 versions (4.08 and below) did. If you find that you need to use this
 option, then you have found a bug in OpenConnect. Please see
-http://www.infradead.org/openconnect/mail.html and report this to the
+https://www.infradead.org/openconnect/mail.html and report this to the
 developers.
 .TP
 .B \-\-allow\-insecure\-crypto
@@ -474,11 +549,8 @@ The ancient, broken 3DES and RC4 ciphers are insecure; we explicitly
 disable them by default. However, some still-in-use VPN servers can't do
 any better.
 
-This option
-.B attempts
-to enable use of these insecure ciphers, as well as
-the use of SHA1 for server certificate validation, and to override any
-other system policies regarding minimum crypto requirements.
+This option enables use of these insecure ciphers, as well as the use
+of SHA1 for server certificate validation.
 .TP
 .B \-\-non\-inter
 Do not expect user input; exit if it is required.
@@ -500,12 +572,14 @@ for experimental support for Junos Pulse,
 .I gp
 for experimental support for PAN GlobalProtect,
 .I f5
-for experimental support for F5 Big-IP, and
+for experimental support for F5 Big-IP,
 .I fortinet
-for experimental support for Fortinet Fortigate.
+for experimental support for Fortinet Fortigate, and
+.I array
+for experimental support for Array Networks SSL VPN.
 
 See
-.I http://www.infradead.org/openconnect/protocols.html
+.I https://www.infradead.org/openconnect/protocols.html
 for details on features and deficiencies of the individual
 protocols.
 
@@ -642,7 +716,7 @@ is known to run, it depends on a suitable
 to configure the network. The standard
 .B vpnc\-script
 shipped with vpnc 0.5.3 is not capable of setting up IPv6 routes; the one from
-.B git://git.infradead.org/users/dwmw2/vpnc\-scripts.git
+.B https://gitlab.com/openconnect/vpnc\-scripts
 will be required.
 .SH SEE ALSO
 .BR ocserv (8)

@@ -17,20 +17,24 @@
 
 #include <config.h>
 
+#include "openconnect-internal.h"
+
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <string.h>
 #include <fcntl.h>
-#include <unistd.h>
-#ifndef _WIN32
+#ifdef _WIN32
+#include <process.h>
+#define getpid _getpid
+#else
 #include <sys/wait.h>
 #endif
+
 #include <errno.h>
 #include <ctype.h>
+#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-#include "openconnect-internal.h"
 
 int script_setenv(struct openconnect_info *vpninfo,
 		  const char *opt, const char *val, int trunc, int append)
@@ -118,7 +122,7 @@ static int process_split_xxclude(struct openconnect_info *vpninfo,
 {
 	struct in_addr net_addr, mask_addr;
 	const char *in_ex = include ? "IN" : "EX";
-	char envname[80], uptoslash[20];
+	char envname[80], uptoslash[20], abuf[INET_ADDRSTRLEN];
 	const char *slash;
 	char *endp;
 	int masklen;
@@ -201,21 +205,22 @@ static int process_split_xxclude(struct openconnect_info *vpninfo,
 	/* Fix incorrectly-set host bits */
 	if (net_addr.s_addr & ~mask_addr.s_addr) {
 		net_addr.s_addr &= mask_addr.s_addr;
+		inet_ntop(AF_INET, &net_addr, abuf, sizeof(abuf));
 		if (include)
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("WARNING: Split include \"%s\" has host bits set, replacing with \"%s/%d\".\n"),
-				     route, inet_ntoa(net_addr), masklen);
+				     route, abuf, masklen);
 		else
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("WARNING: Split exclude \"%s\" has host bits set, replacing with \"%s/%d\".\n"),
-				     route, inet_ntoa(net_addr), masklen);
+				     route, abuf, masklen);
 	}
 
 	snprintf(envname, 79, "CISCO_SPLIT_%sC_%d_ADDR", in_ex, *v4_incs);
-	script_setenv(vpninfo, envname, inet_ntoa(net_addr), 0, 0);
+	script_setenv(vpninfo, envname, inet_ntop(AF_INET, &net_addr, abuf, sizeof(abuf)), 0, 0);
 
 	snprintf(envname, 79, "CISCO_SPLIT_%sC_%d_MASK", in_ex, *v4_incs);
-	script_setenv(vpninfo, envname, inet_ntoa(mask_addr), 0, 0);
+	script_setenv(vpninfo, envname, inet_ntop(AF_INET, &mask_addr, abuf, sizeof(abuf)), 0, 0);
 
 	snprintf(envname, 79, "CISCO_SPLIT_%sC_%d_MASKLEN", in_ex, *v4_incs);
 	script_setenv_int(vpninfo, envname, masklen);
@@ -300,6 +305,7 @@ void prepare_script_env(struct openconnect_info *vpninfo)
 	script_setenv(vpninfo, "CISCO_SPLIT_EXC", NULL, 0, 0);
 
 	script_setenv_int(vpninfo, "INTERNAL_IP4_MTU", vpninfo->ip_info.mtu);
+	script_setenv_int(vpninfo, "VPNPID", (int)getpid());
 
 	if (vpninfo->idle_timeout)
 		script_setenv_int(vpninfo, "IDLE_TIMEOUT", vpninfo->idle_timeout);
@@ -322,13 +328,13 @@ void prepare_script_env(struct openconnect_info *vpninfo)
 					     _("Ignoring legacy network because netmask \"%s\" is invalid.\n"),
 					     vpninfo->ip_info.netmask);
 			else {
-				char *netaddr;
+				char netaddr[INET_ADDRSTRLEN];
 				int masklen = netmasklen(mask);
 
 				if (netmaskbits(masklen) != mask.s_addr)
 					goto bad_netmask;
 				addr.s_addr &= mask.s_addr;
-				netaddr = inet_ntoa(addr);
+				inet_ntop(AF_INET, &addr, netaddr, sizeof(netaddr));
 
 				script_setenv(vpninfo, "INTERNAL_IP4_NETADDR", netaddr, 0, 0);
 				script_setenv(vpninfo, "INTERNAL_IP4_NETMASK", vpninfo->ip_info.netmask, 0, 0);
@@ -346,8 +352,8 @@ void prepare_script_env(struct openconnect_info *vpninfo)
 	if (vpninfo->ip_info.netmask6 && !vpninfo->ip_info.addr6) {
 		char *slash = strchr(vpninfo->ip_info.netmask6, '/');
 		if (slash)
-                       script_setenv(vpninfo, "INTERNAL_IP6_ADDRESS", vpninfo->ip_info.netmask6,
-				     slash - vpninfo->ip_info.netmask6, 0);
+			script_setenv(vpninfo, "INTERNAL_IP6_ADDRESS", vpninfo->ip_info.netmask6,
+				      slash - vpninfo->ip_info.netmask6, 0);
 	}
 
 	if (vpninfo->ip_info.dns[0])
@@ -545,7 +551,7 @@ int script_config_tun(struct openconnect_info *vpninfo, const char *reason)
 	char *cmd;
 	PROCESS_INFORMATION pi;
 	STARTUPINFOW si;
-	DWORD cpflags;
+	DWORD cpflags, exit_status;
 
 	if (!vpninfo->vpnc_script || vpninfo->script_tun)
 		return 0;
@@ -583,11 +589,28 @@ int script_config_tun(struct openconnect_info *vpninfo, const char *reason)
 	if (CreateProcessW(NULL, script_w, NULL, NULL, FALSE, cpflags,
 			   script_env, NULL, &si, &pi)) {
 		ret = WaitForSingleObject(pi.hProcess,10000);
+		if (!GetExitCodeProcess(pi.hProcess, &exit_status)) {
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("Failed to get script exit status: %s\n"),
+				     openconnect__win32_strerror(GetLastError()));
+			ret = -EIO;
+		} else if (exit_status > 0 && exit_status != STILL_ACTIVE) {
+			/* STILL_ACTIVE == 259. That means that a perfectly normal positive integer return value overlaps with
+			 * an exceptional condition. Don't blame me. I didn't design this.
+			 * https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-getexitcodeprocess#remarks
+			 */
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("Script '%s' returned error %ld\n"),
+				     vpninfo->vpnc_script, exit_status);
+			ret = -EIO;
+		}
 		CloseHandle(pi.hThread);
 		CloseHandle(pi.hProcess);
-		if (ret == WAIT_TIMEOUT)
+		if (ret == WAIT_TIMEOUT || exit_status == STILL_ACTIVE) {
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("Script did not complete within 10 seconds.\n"));
 			ret = -ETIMEDOUT;
-		else
+		} else if (ret != -EIO)
 			ret = 0;
 	} else {
 		ret = -EIO;

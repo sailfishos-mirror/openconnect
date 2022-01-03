@@ -10,15 +10,18 @@
 
     	<h1>Download</h1>
 
-<p>Released versions of OpenConnect are available from the FTP site:</p>
-<ul><li><a href="ftp://ftp.infradead.org/pub/openconnect/"><tt>ftp://ftp.infradead.org/pub/openconnect/</tt></a></li></ul>
+<p>Released versions of OpenConnect are available from the FTP site, and also over HTTP:</p>
+<ul>
+  <li><a href="ftp://ftp.infradead.org/pub/openconnect/"><tt>ftp://ftp.infradead.org/pub/openconnect/</tt></a></li>
+  <li><a href="https://www.infradead.org/openconnect/download/"><tt>https://www.infradead.org/openconnect/download/</tt></a></li>
+</ul>
 
 <p>Release tarballs (since 3.13) are signed with the PGP key with fingerprint <a href="https://pgp.mit.edu/pks/lookup?op=vindex&amp;search=0xBE07D9FD54809AB2C4B0FF5F63762CDA67E2F359">BE07 D9FD 5480 9AB2 C4B0  FF5F 6376 2CDA 67E2 F359</a>.</p>
 
 <p>
 <!-- latest-release-start -->
-The latest release is <a href="ftp://ftp.infradead.org/pub/openconnect/openconnect-8.10.tar.gz">OpenConnect v8.10</a>
-<i>(<a href="ftp://ftp.infradead.org/pub/openconnect/openconnect-8.10.tar.gz.asc">PGP signature</a>)</i>,
+The latest release is <a href="https://www.infradead.org/openconnect/download/openconnect-8.10.tar.gz">OpenConnect v8.10</a>
+<i>(<a href="https://www.infradead.org/openconnect/download/openconnect-8.10.tar.gz.asc">PGP signature</a>)</i>,
 released on 2020-05-14 with the following changelog:</p>
      <ul>
        <li>Install bash completion script to <tt>${datadir}/bash-completion/completions/openconnect</tt>.</li>
@@ -33,9 +36,9 @@ released on 2020-05-14 with the following changelog:</p>
 <h2>Latest sources</h2>
 
 <p>The latest source code is available from the git repository at:</p>
-<ul><li><tt>git://git.infradead.org/users/dwmw2/openconnect.git</tt><br/>or browseable in gitweb at:</li>
-<li><a href="http://git.infradead.org/users/dwmw2/openconnect.git">
-http://git.infradead.org/users/dwmw2/openconnect.git</a></li></ul>
+<ul><li><tt>git://git.infradead.org/users/dwmw2/openconnect.git</tt><br/>or browsable in gitweb at:</li>
+<li><a href="https://git.infradead.org/users/dwmw2/openconnect.git">
+https://git.infradead.org/users/dwmw2/openconnect.git</a></li></ul>
 
 	<INCLUDE file="inc/footer.tmpl" />
 </PAGE>

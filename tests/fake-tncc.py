@@ -19,6 +19,7 @@
 
 import os
 
+
 def main():
     """
     Reply "success" when we receive "hostchecker".
@@ -32,6 +33,7 @@ def main():
         if started and line == "Cookie=hostchecker":
             io.write(b"200\n3\nsuccess\n\n\n")
             started = False
+
 
 if __name__ == "__main__":
     main()

@@ -120,9 +120,9 @@ while read HASHTYPE FILE EQU HASHVAL; do
             fi
 
             echo "Failure on $FILE, trying gz"
-            FILE_GZ="${TMPFILE}.gz"
-            curl $PINNEDPUBKEY -s "${URL}/sdesktop/hostscan/$ARCH/$FILE_GZ" -o "${FILE_GZ}" &&
-		gunzip --verbose --decompress "${FILE_GZ}"
+            FILE_GZ="${FILE}.gz"
+            curl $PINNEDPUBKEY -s "${URL}/sdesktop/hostscan/$ARCH/$FILE_GZ" -o "${TMPFILE}.gz" &&
+		gunzip --verbose --decompress "${TMPFILE}.gz"
         fi
 
 	if [ -r "${TMPFILE}" ]; then

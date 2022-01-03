@@ -18,22 +18,22 @@
 
 #include <config.h>
 
-#include <errno.h>
-#include <sys/types.h>
+#include "gnutls.h"
+
+#include <gnutls/dtls.h>
+
 #include <unistd.h>
 #include <fcntl.h>
-#include <string.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <stdio.h>
+#include <sys/types.h>
 #ifndef _WIN32
 #include <netinet/in.h>
 #include <sys/socket.h>
 #endif
 
-
-#include <gnutls/dtls.h>
-#include "gnutls.h"
+#include <errno.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 #if GNUTLS_VERSION_NUMBER < 0x030400
 # define GNUTLS_CIPHER_CHACHA20_POLY1305 23
@@ -57,15 +57,15 @@ struct {
 	int cisco_dtls12;
 } gnutls_dtls_ciphers[] = {
 	{ "DHE-RSA-AES128-SHA", GNUTLS_DTLS0_9, GNUTLS_CIPHER_AES_128_CBC, GNUTLS_KX_DHE_RSA, GNUTLS_MAC_SHA1,
-	  "NONE:+VERS-DTLS0.9:+COMP-NULL:+AES-128-CBC:+SHA1:+DHE-RSA:%COMPAT", "3.0.0" },
+	  "NONE:+VERS-DTLS0.9:+COMP-NULL:+AES-128-CBC:+SHA1:+DHE-RSA:+SIGN-ALL:%COMPAT", "3.0.0" },
 	{ "DHE-RSA-AES256-SHA", GNUTLS_DTLS0_9, GNUTLS_CIPHER_AES_256_CBC, GNUTLS_KX_DHE_RSA, GNUTLS_MAC_SHA1,
-	  "NONE:+VERS-DTLS0.9:+COMP-NULL:+AES-256-CBC:+SHA1:+DHE-RSA:%COMPAT", "3.0.0" },
+	  "NONE:+VERS-DTLS0.9:+COMP-NULL:+AES-256-CBC:+SHA1:+DHE-RSA:+SIGN-ALL:%COMPAT", "3.0.0" },
 	{ "AES128-SHA", GNUTLS_DTLS0_9, GNUTLS_CIPHER_AES_128_CBC, GNUTLS_KX_RSA, GNUTLS_MAC_SHA1,
-	  "NONE:+VERS-DTLS0.9:+COMP-NULL:+AES-128-CBC:+SHA1:+RSA:%COMPAT", "3.0.0" },
+	  "NONE:+VERS-DTLS0.9:+COMP-NULL:+AES-128-CBC:+SHA1:+RSA:+SIGN-ALL:%COMPAT", "3.0.0" },
 	{ "AES256-SHA", GNUTLS_DTLS0_9, GNUTLS_CIPHER_AES_256_CBC, GNUTLS_KX_RSA, GNUTLS_MAC_SHA1,
-	  "NONE:+VERS-DTLS0.9:+COMP-NULL:+AES-256-CBC:+SHA1:+RSA:%COMPAT", "3.0.0" },
+	  "NONE:+VERS-DTLS0.9:+COMP-NULL:+AES-256-CBC:+SHA1:+RSA:+SIGN-ALL:%COMPAT", "3.0.0" },
 	{ "DES-CBC3-SHA", GNUTLS_DTLS0_9, GNUTLS_CIPHER_3DES_CBC, GNUTLS_KX_RSA, GNUTLS_MAC_SHA1,
-	  "NONE:+VERS-DTLS0.9:+COMP-NULL:+3DES-CBC:+SHA1:+RSA:%COMPAT", "3.0.0" },
+	  "NONE:+VERS-DTLS0.9:+COMP-NULL:+3DES-CBC:+SHA1:+RSA:+SIGN-ALL:%COMPAT", "3.0.0" },
 	{ "OC-DTLS1_2-AES128-GCM", GNUTLS_DTLS1_2, GNUTLS_CIPHER_AES_128_GCM, GNUTLS_KX_RSA, GNUTLS_MAC_AEAD,
 	  "NONE:+VERS-DTLS1.2:+COMP-NULL:+AES-128-GCM:+AEAD:+RSA:%COMPAT:+SIGN-ALL", "3.2.7" },
 	{ "OC-DTLS1_2-AES256-GCM", GNUTLS_DTLS1_2, GNUTLS_CIPHER_AES_256_GCM, GNUTLS_KX_RSA, GNUTLS_MAC_AEAD,
@@ -73,6 +73,14 @@ struct {
 	{ "OC2-DTLS1_2-CHACHA20-POLY1305", GNUTLS_DTLS1_2, GNUTLS_CIPHER_CHACHA20_POLY1305, GNUTLS_KX_PSK, GNUTLS_MAC_AEAD,
 	  "NONE:+VERS-DTLS1.2:+COMP-NULL:+CHACHA20-POLY1305:+AEAD:+PSK:%COMPAT:+SIGN-ALL", "3.4.8" },
 	/* Cisco X-DTLS12-CipherSuite: values */
+	{ "DHE-RSA-AES128-SHA", GNUTLS_DTLS1_2, GNUTLS_CIPHER_AES_128_CBC, GNUTLS_KX_DHE_RSA, GNUTLS_MAC_SHA1,
+	  "NONE:+VERS-DTLS1.2:+COMP-NULL:+AES-128-CBC:+SHA1:+DHE-RSA:+SIGN-ALL:%COMPAT", "3.0.0", 1 },
+	{ "DHE-RSA-AES256-SHA", GNUTLS_DTLS1_2, GNUTLS_CIPHER_AES_256_CBC, GNUTLS_KX_DHE_RSA, GNUTLS_MAC_SHA1,
+	  "NONE:+VERS-DTLS1.2:+COMP-NULL:+AES-256-CBC:+SHA1:+DHE-RSA:+SIGN-ALL:%COMPAT", "3.0.0", 1 },
+	{ "AES128-SHA", GNUTLS_DTLS1_2, GNUTLS_CIPHER_AES_128_CBC, GNUTLS_KX_RSA, GNUTLS_MAC_SHA1,
+	  "NONE:+VERS-DTLS1.2:+COMP-NULL:+AES-128-CBC:+SHA1:+RSA:+SIGN-ALL:%COMPAT", "3.0.0", 1 },
+	{ "AES256-SHA", GNUTLS_DTLS1_2, GNUTLS_CIPHER_AES_256_CBC, GNUTLS_KX_RSA, GNUTLS_MAC_SHA1,
+	  "NONE:+VERS-DTLS1.2:+COMP-NULL:+AES-256-CBC:+SHA1:+RSA:+SIGN-ALL:%COMPAT", "3.0.0", 1 },
 	{ "ECDHE-RSA-AES256-GCM-SHA384", GNUTLS_DTLS1_2, GNUTLS_CIPHER_AES_256_GCM, GNUTLS_KX_ECDHE_RSA, GNUTLS_MAC_AEAD,
 	  "NONE:+VERS-DTLS1.2:+COMP-NULL:+AES-256-GCM:+AEAD:+ECDHE-RSA:+SIGN-ALL:%COMPAT", "3.2.7", 1 },
 	{ "ECDHE-RSA-AES128-GCM-SHA256", GNUTLS_DTLS1_2, GNUTLS_CIPHER_AES_128_GCM, GNUTLS_KX_ECDHE_RSA, GNUTLS_MAC_AEAD,
@@ -94,7 +102,7 @@ void gather_dtls_ciphers(struct openconnect_info *vpninfo, struct oc_text_buf *b
 {
 	int i, first = 1;
 
-	for (i = 0; i < sizeof(gnutls_dtls_ciphers) / sizeof(gnutls_dtls_ciphers[0]); i++) {
+	for (i = 0; i < ARRAY_SIZE(gnutls_dtls_ciphers); i++) {
 		if (!gnutls_dtls_ciphers[i].cisco_dtls12 &&
 		    gnutls_check_version(gnutls_dtls_ciphers[i].min_gnutls_version)) {
 			buf_append(buf, "%s%s", first ? "" : ":",
@@ -132,7 +140,7 @@ void gather_dtls_ciphers(struct openconnect_info *vpninfo, struct oc_text_buf *b
 			break;
 
 		if (gnutls_cipher_suite_info(idx, NULL, NULL, &cipher, &mac, NULL) != NULL) {
-			for (i = 0; i < sizeof(gnutls_dtls_ciphers)/sizeof(gnutls_dtls_ciphers[0]); i++) {
+			for (i = 0; i < ARRAY_SIZE(gnutls_dtls_ciphers); i++) {
 				if (used & (1 << i))
 					continue;
 				if (gnutls_dtls_ciphers[i].mac == mac && gnutls_dtls_ciphers[i].cipher == cipher) {
@@ -230,7 +238,7 @@ static int start_dtls_psk_handshake(struct openconnect_info *vpninfo, gnutls_ses
 	 * the RFC5705 context, the output is identical with gnutls_prf(). The
 	 * latter is available in much earlier versions of gnutls. */
 	err = gnutls_prf(vpninfo->https_sess, PSK_LABEL_SIZE, PSK_LABEL,
-			 0, 0, 0, PSK_KEY_SIZE, (char*)vpninfo->dtls_secret);
+			 0, 0, 0, PSK_KEY_SIZE, (char *)vpninfo->dtls_secret);
 	if (err < 0) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Failed to generate DTLS key: %s\n"),
@@ -276,7 +284,7 @@ static int start_dtls_resume_handshake(struct openconnect_info *vpninfo, gnutls_
 	int err;
 	int cipher;
 
-	for (cipher = 0; cipher < sizeof(gnutls_dtls_ciphers)/sizeof(gnutls_dtls_ciphers[0]); cipher++) {
+	for (cipher = 0; cipher < ARRAY_SIZE(gnutls_dtls_ciphers); cipher++) {
 		if (gnutls_dtls_ciphers[cipher].cisco_dtls12 != vpninfo->dtls12 ||
 		    gnutls_check_version(gnutls_dtls_ciphers[cipher].min_gnutls_version) == NULL)
 			continue;

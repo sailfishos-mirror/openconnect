@@ -13,10 +13,10 @@
 <p>OpenConnect supports three types of software tokens for automatically
 generating one-time passwords:</p>
 <ul>
-  <li><a href="http://en.wikipedia.org/wiki/SecurID">RSA SecurID</a> tokens using
-      <a href="http://stoken.sourceforge.net/">libstoken</a></li>
-  <li>OATH TOTP <i>(<a href="http://tools.ietf.org/html/rfc6238">RFC6238</a>)</i> tokens</li>
-  <li>OATH HOTP <i>(<a href="http://tools.ietf.org/html/rfc4226">RFC4226</a>)</i> tokens</li>
+  <li><a href="https://en.wikipedia.org/wiki/SecurID">RSA SecurID</a> tokens using
+      <a href="http://stoken.sf.net/">libstoken</a></li>
+  <li>OATH TOTP <i>(<a href="https://tools.ietf.org/html/rfc6238">RFC6238</a>)</i> tokens</li>
+  <li>OATH HOTP <i>(<a href="https://tools.ietf.org/html/rfc4226">RFC4226</a>)</i> tokens</li>
 </ul>
  <p>OATH HOTP/TOTP tokens are also supported in hardware by:</p>
  <ul><li><a href="https://developers.yubico.com/ykneo-oath/">ykneo-oath</a> applet on
@@ -30,8 +30,8 @@ argument, and the precise form it takes is dependent on the type of
 token as described below.</p>
 <p>For the <tt>openconnect</tt> command line program, if the first character of
 the <tt>--token-secret</tt> value is / or @, the argument is interpreted as a
-filename. The secret data will be loaded from <i>(and potentially saved back 
-to, in the case of HOTP tokens)</i> the specifed file.</p>
+filename. The secret data will be loaded from <i>(and potentially saved back
+to, in the case of HOTP tokens)</i> the specified file.</p>
 
 <p>In each case, the automatic token generation will be tried twice before it
 is automatically disabled and the user asked to enter tokencodes manually.</p>
@@ -46,7 +46,7 @@ in which it is not appropriate, please <a href="mail.html">let us know</a>.</p>
 <p>If no <tt>--token-secret</tt> argument is provided in SecurID mode, the
 default <tt>.stokenrc</tt> file from the user's home directory will be used.
 For the NetworkManager integration, this is a separate choice for the token
-type — the UI has separate choices for <i>"RSA SecurID - read from ~/.stokenrc"</i> vs. 
+type — the UI has separate choices for <i>"RSA SecurID - read from ~/.stokenrc"</i> vs.
 <i>"RSA SecurID - manually entered"</i>.</p>
 
 <p>If a token is provided — either directly on the command line, as the contents
@@ -126,17 +126,17 @@ They may be specified in one of the following forms:</p>
   <li><b>sha256:0x53656372657453656372657421</b></li>
   <li><b>sha512:0x53656372657453656372657421</b><br/>
   This is the hexadecimal form which <i>(without the leading <tt>0x</tt>)</i> is
-  accepted by default by the 
-  <tt><a href="http://www.nongnu.org/oath-toolkit/oathtool.1.html">oathtool</a></tt>
+  accepted by default by the
+  <tt><a href="https://www.nongnu.org/oath-toolkit/oathtool.1.html">oathtool</a></tt>
   program.</li>
   <li><b>base32:KNSWG4TFORJWKY3SMV2CC===</b></li>
   <li><b>sha256:base32:KNSWG4TFORJWKY3SMV2CC===</b></li>
   <li><b>sha512:base32:KNSWG4TFORJWKY3SMV2CC===</b><br/>
-  This is the base32 form which is accepted by the 
-  <tt><a href="http://www.nongnu.org/oath-toolkit/oathtool.1.html">oathtool</a></tt>
+  This is the base32 form which is accepted by the
+  <tt><a href="https://www.nongnu.org/oath-toolkit/oathtool.1.html">oathtool</a></tt>
   program with its <tt>-b</tt> option..</li>
   <li><b>&amp;lt;?xml version=...</b><br/>
-  PSKC XML files conforming to <a href="http://tools.ietf.org/html/rfc6030">RFC6030</a>.
+  PSKC XML files conforming to <a href="https://tools.ietf.org/html/rfc6030">RFC6030</a>.
   These should be generally be imported from a file: '<tt>--token-secret @<i>FILE.PSKC</i></tt>'</li>
 </ul>
 
@@ -145,7 +145,7 @@ SHA-512 are also supported; to use them prefix "<tt>sha256:</tt>" or
 "<tt>sha512:</tt>" when explicitly providing a key on the command line.
 Algorithms other than SHA-1 are not yet supported with PSKC files until
 the relevant standards have been updated to indicate how they shall be
-indicated in the PSKC file. See <a href="http://www.rfc-editor.org/errata_search.php?rfc=6238&amp;eid=4249">this erratum</a> to RFC6238 for current status.</p>
+indicated in the PSKC file. See <a href="https://www.rfc-editor.org/errata_search.php?rfc=6238&amp;eid=4249">this erratum</a> to RFC6238 for current status.</p>
 
 
 
@@ -163,7 +163,7 @@ generated.</p>
   These correspond to the raw forms of the TOTP tokens given above, with the <i>counter</i>
   value appended in decimal form after a comma.</li>
   <li><b>&amp;lt;?xml version=...</b><br/>
-  PSKC XML files conforming to <a href="http://tools.ietf.org/html/rfc6030">RFC6030</a> will
+  PSKC XML files conforming to <a href="https://tools.ietf.org/html/rfc6030">RFC6030</a> will
   contain the <i>counter</i> value.</li>
 </ul>
 

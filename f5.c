@@ -17,27 +17,38 @@
 
 #include <config.h>
 
+#include "openconnect-internal.h"
+
+#include "ppp.h"
+
+#include <libxml/HTMLparser.h>
+#include <libxml/HTMLtree.h>
+
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/types.h>
+
 #include <time.h>
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <sys/types.h>
 #include <stdarg.h>
-#include <sys/types.h>
-
-#include <libxml/HTMLparser.h>
-#include <libxml/HTMLtree.h>
-
-#include "openconnect-internal.h"
-#include "ppp.h"
 
 #define XCAST(x) ((const xmlChar *)(x))
 
-static struct oc_auth_form *plain_auth_form() {
+/* XX: some F5 VPNs simply do not have a static HTML form to parse, but
+ * only a mess of JavaScript which creates a dynamic form that's
+ * functionally equivalent to the following:
+ *
+ * <form id="auth_form" method="post">
+ *   <input type="text" name="username"/>
+ *   <input type="password" name="password"/>
+ * </form>
+ */
+static struct oc_auth_form *plain_auth_form(void)
+{
 	struct oc_auth_form *form;
 	struct oc_form_opt *opt, *opt2;
 
@@ -47,6 +58,9 @@ static struct oc_auth_form *plain_auth_form() {
 		free_auth_form(form);
 		return NULL;
 	}
+	if ((form->auth_id = strdup("auth_form")) == NULL)
+		goto nomem;
+
 	opt = form->opts = calloc(1, sizeof(*opt));
 	if (!opt)
 		goto nomem;
@@ -111,10 +125,9 @@ int f5_obtain_cookie(struct openconnect_info *vpninfo)
 		if (req_buf && req_buf->pos)
 			ret = do_https_request(vpninfo, "POST",
 					       "application/x-www-form-urlencoded",
-					       req_buf, &resp_buf, 2);
+					       req_buf, &resp_buf, NULL, HTTP_REDIRECT_TO_GET);
 		else
-			ret = do_https_request(vpninfo, "GET", NULL, NULL,
-					       &resp_buf, 2);
+			ret = do_https_request(vpninfo, "GET", NULL, NULL, &resp_buf, NULL, HTTP_REDIRECT_TO_GET);
 
 		if (!check_cookie_success(vpninfo)) {
 			free(resp_buf);
@@ -474,7 +487,7 @@ static int parse_options(struct openconnect_info *vpninfo, char *buf, int len,
 			     _("Response was:%s\n"), buf);
 		ret = -EINVAL;
 	}
- 	xmlFreeDoc(xml_doc);
+	xmlFreeDoc(xml_doc);
 	free(s);
 	return ret;
 }
@@ -538,7 +551,7 @@ static int f5_configure(struct openconnect_info *vpninfo)
 
 	free(vpninfo->urlpath);
 	vpninfo->urlpath = strdup("vdesk/vpn/index.php3?outform=xml&client_version=2.0");
-	ret = do_https_request(vpninfo, "GET", NULL, NULL, &res_buf, 0);
+	ret = do_https_request(vpninfo, "GET", NULL, NULL, &res_buf, NULL, HTTP_NO_FLAGS);
 	if (ret < 0)
 		goto out;
 
@@ -558,7 +571,7 @@ static int f5_configure(struct openconnect_info *vpninfo)
 		ret = -ENOMEM;
 		goto out;
 	}
-	ret = do_https_request(vpninfo, "GET", NULL, NULL, &res_buf, 0);
+	ret = do_https_request(vpninfo, "GET", NULL, NULL, &res_buf, NULL, HTTP_NO_FLAGS);
 	if (ret < 0)
 		goto out;
 
@@ -586,7 +599,7 @@ static int f5_configure(struct openconnect_info *vpninfo)
 	buf_truncate(reqbuf);
 	buf_append(reqbuf, "GET /myvpn?sess=%s&hdlc_framing=%s&ipv4=%s&ipv6=%s&Z=%s&hostname=",
 		   sid, hdlc?"yes":"no", ipv4?"yes":"no", ipv6?"yes":"no", ur_z);
-	buf_append_base64(reqbuf, vpninfo->localname, strlen(vpninfo->localname));
+	buf_append_base64(reqbuf, vpninfo->localname, strlen(vpninfo->localname), 0);
 	buf_append(reqbuf, " HTTP/1.1\r\n");
 	struct oc_vpn_option *saved_cookies = vpninfo->cookies;
 	vpninfo->cookies = NULL; /* hide cookies */
@@ -693,7 +706,7 @@ int f5_bye(struct openconnect_info *vpninfo, const char *reason)
 
 	orig_path = vpninfo->urlpath;
 	vpninfo->urlpath = strdup("vdesk/hangup.php3?hangup_error=1"); /* redirect segfaults without strdup */
-	ret = do_https_request(vpninfo, "GET", NULL, NULL, &res_buf, 0);
+	ret = do_https_request(vpninfo, "GET", NULL, NULL, &res_buf, NULL, HTTP_NO_FLAGS);
 	free(vpninfo->urlpath);
 	vpninfo->urlpath = orig_path;
 

@@ -17,34 +17,28 @@
 
 #include <config.h>
 
-#include <unistd.h>
-#include <fcntl.h>
-#include <time.h>
-#include <string.h>
-#include <ctype.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <sys/types.h>
-#ifndef _WIN32
-#include <sys/wait.h>
-#endif
-#include <stdarg.h>
+#include "openconnect-internal.h"
+
 #ifdef HAVE_LZ4
 #include <lz4.h>
 #endif
 
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/types.h>
 #ifdef _WIN32
 #include "win32-ipicmp.h"
 #else
+#include <sys/wait.h>
 /* The BSDs require the first two headers before netinet/ip.h
  * (Linux and macOS already #include them within netinet/ip.h)
  */
-#include <sys/types.h>
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
+#include <netinet/ip6.h>
+#include <netinet/icmp6.h>
 #endif
 
 #if defined(__linux__)
@@ -52,9 +46,13 @@
 # include <linux/tcp.h>
 #endif
 
-#include <assert.h>
-
-#include "openconnect-internal.h"
+#include <time.h>
+#include <string.h>
+#include <ctype.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdarg.h>
 
 /*
  * Data packets are encapsulated in the SSL stream as follows:
@@ -299,7 +297,7 @@ static int check_hmac_algo(struct openconnect_info *v, const char *s)
 	if (!strcmp(s, "sha1"))	  return HMAC_SHA1;
 	if (!strcmp(s, "md5"))    return HMAC_MD5;
 	if (!strcmp(s, "sha256")) return HMAC_SHA256;
-	vpn_progress(v, PRG_ERR, _("Unknown ESP MAC algorithm: %s"), s);
+	vpn_progress(v, PRG_ERR, _("Unknown ESP MAC algorithm: %s\n"), s);
 	return -ENOENT;
 }
 
@@ -307,7 +305,7 @@ static int check_enc_algo(struct openconnect_info *v, const char *s)
 {
 	if (!strcmp(s, "aes128") || !strcmp(s, "aes-128-cbc")) return ENC_AES_128_CBC;
 	if (!strcmp(s, "aes-256-cbc"))                         return ENC_AES_256_CBC;
-	vpn_progress(v, PRG_ERR, _("Unknown ESP encryption algorithm: %s"), s);
+	vpn_progress(v, PRG_ERR, _("Unknown ESP encryption algorithm: %s\n"), s);
 	return -ENOENT;
 }
 
@@ -347,9 +345,12 @@ static int gpst_parse_config_xml(struct openconnect_info *vpninfo, xmlNode *xml_
 	char *s = NULL, *deferred_netmask = NULL;
 	struct oc_split_include *inc;
 	int split_route_is_default_route = 0;
-	int n_dns = 0, got_esp = 0;
+	int n_dns = 0, esp_keys = 0, esp_v4 = 0, esp_v6 = 0;
 	int ret = 0;
 	int ii;
+
+	uint32_t esp_magic = 0;
+	struct in6_addr esp6_magic;
 
 	if (!xml_node || !xmlnode_is_named(xml_node, "response"))
 		return -EINVAL;
@@ -358,8 +359,7 @@ static int gpst_parse_config_xml(struct openconnect_info *vpninfo, xmlNode *xml_
 	struct oc_vpn_option *new_opts = NULL;
 	struct oc_ip_info new_ip_info = {};
 
-	if (vpninfo->ip_info.gateway_addr)
-		vpninfo->esp_magic = inet_addr(vpninfo->ip_info.gateway_addr);
+	memset(vpninfo->esp_magic, 0, sizeof(vpninfo->esp_magic));
 	vpninfo->esp_replay_protect = 1;
 	vpninfo->ssl_times.rekey_method = REKEY_NONE;
 
@@ -379,11 +379,12 @@ static int gpst_parse_config_xml(struct openconnect_info *vpninfo, xmlNode *xml_
 			new_ip_info.mtu = atoi(s);
 		else if (!xmlnode_get_val(xml_node, "lifetime", &s))
 			vpninfo->auth_expiration = time(NULL) + atol(s);
-		else if (!xmlnode_get_val(xml_node, "quarantine", &s) && strcmp(s, "no"))
-			vpn_progress(vpninfo, PRG_DEBUG,
-				     _("WARNING: Config XML contains <quarantine> tag with value of \"%s\".\n"
-				       "    VPN connectivity may be disabled or limited.\n"), s);
-		else if (!xmlnode_get_val(xml_node, "disconnect-on-idle", &s)) {
+		else if (!xmlnode_get_val(xml_node, "quarantine", &s)) {
+			if (strcmp(s, "no"))
+				vpn_progress(vpninfo, PRG_DEBUG,
+					     _("WARNING: Config XML contains <quarantine> tag with value of \"%s\".\n"
+					       "    VPN connectivity may be disabled or limited.\n"), s);
+		} else if (!xmlnode_get_val(xml_node, "disconnect-on-idle", &s)) {
 			int sec = atoi(s);
 			vpn_progress(vpninfo, PRG_INFO, _("Idle timeout is %d minutes.\n"), sec/60);
 			vpninfo->idle_timeout = sec;
@@ -404,20 +405,23 @@ static int gpst_parse_config_xml(struct openconnect_info *vpninfo, xmlNode *xml_
 			 * gateway is meaningless." See esp_send_probes_gp for the
 			 * gory details of what this field actually means.
 			 */
-			if (vpninfo->ip_info.gateway_addr && strcmp(s, vpninfo->ip_info.gateway_addr))
+			if (vpninfo->peer_addr->sa_family == IPPROTO_IP &&
+			    vpninfo->ip_info.gateway_addr && strcmp(s, vpninfo->ip_info.gateway_addr))
 				vpn_progress(vpninfo, PRG_DEBUG,
-							 _("Gateway address in config XML (%s) differs from external gateway address (%s).\n"), s, new_ip_info.gateway_addr);
-			vpninfo->esp_magic = inet_addr(s);
+					     _("Gateway address in config XML (%s) differs from external gateway address (%s).\n"), s, new_ip_info.gateway_addr);
+			esp_magic = inet_addr(s);
+			esp_v4 = 1;
 		} else if (!xmlnode_get_val(xml_node, "gw-address-v6", &s)) {
-			/* This is probably used analogously to <gw-address>, but
-			 * we haven't yet been able to test.
-			 */
-			vpn_progress(vpninfo, PRG_ERR,
-				     _("WARNING: IPv6 gateway address set in config XML (%s). IPv6 ESP may not yet be functional.\n"), s);
+			if (vpninfo->peer_addr->sa_family == IPPROTO_IPV6 &&
+			    vpninfo->ip_info.gateway_addr && strcmp(s, vpninfo->ip_info.gateway_addr))
+				vpn_progress(vpninfo, PRG_DEBUG,
+					     _("IPv6 gateway address in config XML (%s) differs from external gateway address (%s).\n"), s, vpninfo->ip_info.gateway_addr);
+			inet_pton(AF_INET6, s, &esp6_magic);
+			esp_v6 = 1;
 		} else if (!xmlnode_get_val(xml_node, "connected-gw-ip", &s)) {
 			if (vpninfo->ip_info.gateway_addr && strcmp(s, vpninfo->ip_info.gateway_addr))
 				vpn_progress(vpninfo, PRG_DEBUG, _("Config XML <connected-gw-ip> address (%s) differs from external\n"
-				                                   "gateway address (%s). Please report any this to\n"
+				                                   "gateway address (%s). Please report this to\n"
 								   "<openconnect-devel@lists.infradead.org>, including any problems\n"
 								   "with ESP or other apparent loss of connectivity or performance.\n"),
 					     s, vpninfo->ip_info.gateway_addr);
@@ -485,7 +489,7 @@ static int gpst_parse_config_xml(struct openconnect_info *vpninfo, xmlNode *xml_
 				vpninfo->old_esp_maxseq = vpninfo->esp_in[c^1].seq + 32;
 				for (member = xml_node->children; member; member=member->next) {
 					if (!xmlnode_get_val(member, "udp-port", &s))		udp_sockaddr(vpninfo, atoi(s));
-					else if (!xmlnode_get_val(member, "enc-algo", &s)) 	vpninfo->esp_enc = check_enc_algo(vpninfo, s);
+					else if (!xmlnode_get_val(member, "enc-algo", &s))	vpninfo->esp_enc = check_enc_algo(vpninfo, s);
 					else if (!xmlnode_get_val(member, "hmac-algo", &s))	vpninfo->esp_hmac = check_hmac_algo(vpninfo, s);
 					else if (!xmlnode_get_val(member, "c2s-spi", &s))	eo->spi = htonl(strtoul(s, NULL, 16));
 					else if (!xmlnode_get_val(member, "s2c-spi", &s))	ei->spi = htonl(strtoul(s, NULL, 16));
@@ -498,14 +502,8 @@ static int gpst_parse_config_xml(struct openconnect_info *vpninfo, xmlNode *xml_
 				}
 				if (!(vpninfo->esp_enc > 0 && vpninfo->esp_hmac > 0 && vpninfo->enc_key_len > 0 && vpninfo->hmac_key_len > 0))
 					vpn_progress(vpninfo, PRG_ERR, "Server's ESP configuration is incomplete or uses unknown algorithms.\n");
-				else if (openconnect_setup_esp_keys(vpninfo, 0))
-					vpn_progress(vpninfo, PRG_ERR, "Failed to setup ESP keys.\n");
-				else {
-					got_esp = 1;
-					/* prevent race condition between esp_mainloop() and gpst_mainloop() timers */
-					vpninfo->dtls_times.last_rekey = time(&vpninfo->new_dtls_started);
-					vpninfo->delay_tunnel_reason = "awaiting GPST ESP connection";
-				}
+				else
+					esp_keys = 1;
 			}
 #else
 			vpn_progress(vpninfo, PRG_DEBUG, _("Ignoring ESP keys since ESP support not available in this build\n"));
@@ -547,8 +545,9 @@ static int gpst_parse_config_xml(struct openconnect_info *vpninfo, xmlNode *xml_
 				inet_aton(new_ip_info.addr, &net_addr);
 				net_addr.s_addr &= nm_bits; /* clear host bits */
 
+				char abuf[INET_ADDRSTRLEN];
 				if ((inc = malloc(sizeof(*inc))) == NULL ||
-				    asprintf(&s, "%s/%s", inet_ntoa(net_addr), original_netmask) <= 0)
+				    asprintf(&s, "%s/%s", inet_ntop(AF_INET, &net_addr, abuf, sizeof(abuf)), original_netmask) <= 0)
 					return -ENOMEM;
 				inc->route = add_option_steal(&new_opts, "split-include", &s);
 				inc->next = new_ip_info.split_includes;
@@ -571,9 +570,27 @@ static int gpst_parse_config_xml(struct openconnect_info *vpninfo, xmlNode *xml_
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("GlobalProtect IPv6 support is experimental. Please report results to <openconnect-devel@lists.infradead.org>.\n"));
 #ifdef HAVE_ESP
-	if (!got_esp)
-		vpn_progress(vpninfo, vpninfo->dtls_state != DTLS_DISABLED ? PRG_ERR : PRG_DEBUG,
-			     _("Did not receive ESP keys in GlobalProtect config; tunnel will be TLS only.\n"));
+	if (esp_keys && esp_v6 && new_ip_info.addr6) {
+		/* We got ESP keys, an IPv6 esp_magic address, and an IPv6 address */
+		vpninfo->esp_magic_af = AF_INET6;
+		memcpy(vpninfo->esp_magic, &esp6_magic, sizeof(esp6_magic));
+
+	setup_esp_keys:
+		if (openconnect_setup_esp_keys(vpninfo, 0)) {
+			vpn_progress(vpninfo, PRG_ERR, "Failed to setup ESP keys.\n");
+		} else {
+			/* prevent race condition between esp_mainloop() and gpst_mainloop() timers */
+			vpninfo->dtls_times.last_rekey = time(&vpninfo->new_dtls_started);
+			vpninfo->delay_tunnel_reason = "awaiting GPST ESP connection";
+		}
+	} else if (esp_keys && esp_v4 && new_ip_info.addr) {
+		/* We got ESP keys, an IPv4 esp_magic address, and an IPv4 address */
+		vpninfo->esp_magic_af = AF_INET;
+		memcpy(vpninfo->esp_magic, &esp_magic, sizeof(esp_magic));
+		goto setup_esp_keys;
+	} else if (vpninfo->dtls_state != DTLS_DISABLED)
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Did not receive ESP keys and matching gateway in GlobalProtect config; tunnel will be TLS only.\n"));
 #endif
 
 	free(s);
@@ -618,8 +635,7 @@ static int gpst_get_config(struct openconnect_info *vpninfo)
 
 	orig_path = vpninfo->urlpath;
 	vpninfo->urlpath = strdup("ssl-vpn/getconfig.esp");
-	result = do_https_request(vpninfo, method, request_body_type, request_body,
-				  &xml_buf, 0);
+	result = do_https_request(vpninfo, method, request_body_type, request_body, &xml_buf, NULL, HTTP_NO_FLAGS);
 	free(vpninfo->urlpath);
 	vpninfo->urlpath = orig_path;
 
@@ -630,7 +646,7 @@ static int gpst_get_config(struct openconnect_info *vpninfo)
 		/* XX: if our "cookie" is bogus (doesn't include at least 'user', 'authcookie',
 		 * and 'portal' fields) the server will respond like this.
 		 */
-		if (result == -EINVAL && !strcmp(xml_buf, "errors getting SSL/VPN config"))
+		if (result == -EINVAL && xml_buf && !strcmp(xml_buf, "errors getting SSL/VPN config"))
 			result = -EPERM;
 		goto out;
 	}
@@ -671,7 +687,7 @@ static int gpst_connect(struct openconnect_info *vpninfo)
 {
 	int ret;
 	struct oc_text_buf *reqbuf;
-	const char start_tunnel[12] = "START_TUNNEL"; /* NOT zero-terminated */
+	static const char start_tunnel[12] = "START_TUNNEL"; /* NOT zero-terminated */
 	char buf[256];
 
 	/* We do NOT actually start the HTTPS tunnel if ESP is enabled and we received
@@ -721,10 +737,15 @@ static int gpst_connect(struct openconnect_info *vpninfo)
 			ret = vpninfo->ssl_gets(vpninfo, buf+sizeof(start_tunnel), sizeof(buf)-sizeof(start_tunnel));
 			ret = (ret>0 ? ret : 0) + sizeof(start_tunnel);
 		}
-		vpn_progress(vpninfo, PRG_ERR,
-		             _("Got inappropriate HTTP GET-tunnel response: %.*s\n"), ret, buf);
-		/* XX: this is what GP servers return when they don't like the cookie */
-		ret = !strncmp(buf, "HTTP/1.1 502 ", 13) ? -EPERM : -EINVAL;
+		int status = check_http_status(buf, ret);
+		/* XX: GP servers return 502 when they don't like the cookie */
+		if (status == 502)
+			ret = -EPERM;
+		else {
+			vpn_progress(vpninfo, PRG_ERR, _("Got unexpected HTTP response: %.*s\n"),
+				     ret, buf);
+			ret = -EINVAL;
+		}
 	}
 
 	if (ret < 0)
@@ -798,9 +819,9 @@ static int build_csd_token(struct openconnect_info *vpninfo)
 	if (!vpninfo->csd_token)
 		return -ENOMEM;
 
-	/* use cookie (excluding volatile authcookie and preferred-ip) to build md5sum */
+	/* use cookie (excluding volatile authcookie and preferred-ip/ipv6) to build md5sum */
 	buf = buf_alloc();
-	filter_opts(buf, vpninfo->cookie, "authcookie,preferred-ip", 0);
+	filter_opts(buf, vpninfo->cookie, "authcookie,preferred-ip,preferred-ipv6", 0);
 	if (buf_error(buf))
 		goto out;
 
@@ -823,7 +844,7 @@ static int check_or_submit_hip_report(struct openconnect_info *vpninfo, const ch
 	const char *method = "POST";
 	char *xml_buf=NULL, *orig_path;
 
-	/* cookie gives us these fields: authcookie, portal, user, domain, computer, and (maybe the unnecessary) preferred-ip */
+	/* cookie gives us these fields: authcookie, portal, user, domain, computer, and (maybe the unnecessary) preferred-ip/ipv6 */
 	buf_append(request_body, "client-role=global-protect-full&%s", vpninfo->cookie);
 	if (vpninfo->ip_info.addr)
 		append_opt(request_body, "client-ip", vpninfo->ip_info.addr);
@@ -844,8 +865,7 @@ static int check_or_submit_hip_report(struct openconnect_info *vpninfo, const ch
 
 	orig_path = vpninfo->urlpath;
 	vpninfo->urlpath = strdup(report ? "ssl-vpn/hipreport.esp" : "ssl-vpn/hipreportcheck.esp");
-	result = do_https_request(vpninfo, method, request_body_type, request_body,
-				  &xml_buf, 0);
+	result = do_https_request(vpninfo, method, request_body_type, request_body, &xml_buf, NULL, HTTP_NO_FLAGS);
 	free(vpninfo->urlpath);
 	vpninfo->urlpath = orig_path;
 
@@ -1104,7 +1124,7 @@ int gpst_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		int len, payload_len;
 
 		if (!vpninfo->cstp_pkt) {
-			vpninfo->cstp_pkt = malloc(sizeof(struct pkt) + receive_mtu);
+			vpninfo->cstp_pkt = alloc_pkt(vpninfo, receive_mtu);
 			if (!vpninfo->cstp_pkt) {
 				vpn_progress(vpninfo, PRG_ERR, _("Allocation failed\n"));
 				break;
@@ -1215,7 +1235,7 @@ int gpst_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		}
 		/* Don't free the 'special' packets */
 		if (vpninfo->current_ssl_pkt != &dpd_pkt)
-			free(vpninfo->current_ssl_pkt);
+			free_pkt(vpninfo, vpninfo->current_ssl_pkt);
 
 		vpninfo->current_ssl_pkt = NULL;
 	}
@@ -1306,14 +1326,24 @@ int gpst_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 }
 
 #ifdef HAVE_ESP
-static uint16_t csum(uint16_t *buf, int nwords)
+static inline uint32_t csum_partial(uint16_t *buf, int nwords)
 {
 	uint32_t sum = 0;
 	for(sum=0; nwords>0; nwords--)
 		sum += ntohs(*buf++);
+	return sum;
+}
+
+static inline uint16_t csum_finish(uint32_t sum)
+{
 	sum = (sum >> 16) + (sum &0xffff);
 	sum += (sum >> 16);
 	return htons((uint16_t)(~sum));
+}
+
+static inline uint16_t csum(uint16_t *buf, int nwords)
+{
+	return csum_finish(csum_partial(buf, nwords));
 }
 
 static char magic_ping_payload[16] = "monitor\x00\x00pan ha ";
@@ -1328,28 +1358,31 @@ int gpst_esp_send_probes(struct openconnect_info *vpninfo)
 	 *    sends this 56-byte version, but the remaining bytes don't
 	 *    seem to matter:
 	 *
-	 *    "monitor\x00\x00pan ha 0123456789:;<=>? !\"#$%&\'()*+,-./\x10\x11\x12\x13\x14\x15\x16\x18";
+	 *    "monitor\x00\x00pan ha 0123456789:;<=>? !\"#$%&\'()*+,-./\x10\x11\x12\x13\x14\x15\x16\x17";
 	 *
 	 * 2) The ping packets are addressed to the IP supplied in the
-	 *    config XML as as <gw-address>. In most cases, this is the
+	 *    config XML as <gw-address>. In most cases, this is the
 	 *    same as the *external* IP address of the VPN gateway
 	 *    (vpninfo->ip_info.gateway_addr), but in some cases it is a
 	 *    separate address.
 	 *
 	 *    Don't blame me. I didn't design this.
 	 */
-	int pktlen, seq;
-	struct pkt *pkt = malloc(sizeof(*pkt) + sizeof(struct ip) + ICMP_MINLEN + sizeof(magic_ping_payload) + vpninfo->pkt_trailer);
-	struct ip *iph = (void *)pkt->data;
-	struct icmp *icmph = (void *)(pkt->data + sizeof(*iph));
-	char *pmagic = (void *)(pkt->data + sizeof(*iph) + ICMP_MINLEN);
+	const int icmplen = ICMP_MINLEN + sizeof(magic_ping_payload);
+	int plen, seq;
+
+	if (vpninfo->esp_magic_af == AF_INET6)
+		plen = sizeof(struct ip6_hdr) + icmplen;
+	else
+		plen = sizeof(struct ip) + icmplen;
+	struct pkt *pkt = alloc_pkt(vpninfo, plen + vpninfo->pkt_trailer);
 	if (!pkt)
 		return -ENOMEM;
 
 	if (vpninfo->dtls_fd == -1) {
 		int fd = udp_connect(vpninfo);
 		if (fd < 0) {
-			free(pkt);
+			free_pkt(vpninfo, pkt);
 			return fd;
 		}
 		/* We are not connected until we get an ESP packet back */
@@ -1361,35 +1394,105 @@ int gpst_esp_send_probes(struct openconnect_info *vpninfo)
 	}
 
 	for (seq=1; seq <= (vpninfo->dtls_state==DTLS_ESTABLISHED ? 1 : 3); seq++) {
-		memset(pkt, 0, sizeof(*pkt) + sizeof(*iph) + ICMP_MINLEN + sizeof(magic_ping_payload));
-		pkt->len = sizeof(struct ip) + ICMP_MINLEN + sizeof(magic_ping_payload);
+		if (vpninfo->esp_magic_af == AF_INET6) {
+			memset(pkt, 0, sizeof(*pkt) + plen);
+			pkt->len = plen;
+			struct ip6_hdr *iph = (void *)pkt->data;
+			struct icmp6_hdr *icmph = (void *)(pkt->data + sizeof(*iph));
 
-		/* IP Header */
-		iph->ip_hl = 5;
-		iph->ip_v = 4;
-		iph->ip_len = htons(sizeof(*iph) + ICMP_MINLEN + sizeof(magic_ping_payload));
-		iph->ip_id = htons(0x4747); /* what the Windows client uses */
-		iph->ip_off = htons(IP_DF); /* don't fragment, frag offset = 0 */
-		iph->ip_ttl = 64; /* hops */
-		iph->ip_p = IPPROTO_ICMP;
-		iph->ip_src.s_addr = inet_addr(vpninfo->ip_info.addr);
-		iph->ip_dst.s_addr = vpninfo->esp_magic;
-		iph->ip_sum = csum((uint16_t *)iph, sizeof(*iph)/2);
+			/* IPv6 Header */
+			iph->ip6_flow = htonl((6 << 28) + /* version 6 */
+					      (0 << 20) + /* traffic class; match Windows client */
+					      (0 << 0));  /* flow ID; match Windows client */
+			iph->ip6_nxt = IPPROTO_ICMPV6;
+			iph->ip6_plen = htons(icmplen);
+			iph->ip6_hlim = 128; /* what the Windows client uses */
+			inet_pton(AF_INET6, vpninfo->ip_info.addr6, &iph->ip6_src);
+			memcpy(&iph->ip6_dst, vpninfo->esp_magic, 16);
 
-		/* ICMP echo request */
-		icmph->icmp_type = ICMP_ECHO;
-		icmph->icmp_hun.ih_idseq.icd_id = htons(0x4747);
-		icmph->icmp_hun.ih_idseq.icd_seq = htons(seq);
-		memcpy(pmagic, magic_ping_payload, sizeof(magic_ping_payload)); /* required to get gateway to respond */
-		icmph->icmp_cksum = csum((uint16_t *)icmph, (ICMP_MINLEN+sizeof(magic_ping_payload))/2);
+			/* ICMPv6 echo request */
+			icmph->icmp6_type = ICMP6_ECHO_REQUEST;
+			icmph->icmp6_code = 0;
+			/* Windows client seemingly uses random IDs here but fall back to
+			 * 0x4747 even if only to keep Coverity happy about error checking. */
+			if (openconnect_random(&icmph->icmp6_data16[0], 2))
+				icmph->icmp6_data16[0] = htons(0x4747);
+			icmph->icmp6_data16[1] = htons(seq);            /* sequence */
 
-		pktlen = construct_esp_packet(vpninfo, pkt, IPPROTO_IPIP);
+			/* required to get gateway to respond */
+			memcpy(&icmph[1], magic_ping_payload, sizeof(magic_ping_payload));
+
+			/*
+			 * IPv6 upper-layer checksums include a pseudo-header
+			 * for IPv6 which contains the source address, the
+			 * destination address, the upper-layer packet length
+			 * and next-header field. See RFC8200 §8.1. The
+			 * checksum is as follows:
+			 *
+			 *   checksum 32 bytes of real IPv6 header:
+			 *     src addr (16 bytes)
+			 *     dst addr (16 bytes)
+			 *   8 bytes more:
+			 *     length of ICMPv6 in bytes (be32)
+			 *     3 bytes of 0
+			 *     next header byte (IPPROTO_ICMPV6)
+			 *   Then the actual ICMPv6 bytes
+			 */
+			uint32_t sum = csum_partial((uint16_t *)&iph->ip6_src, 8);      /* 8 uint16_t */
+			sum += csum_partial((uint16_t *)&iph->ip6_dst, 8);              /* 8 uint16_t */
+
+			/* The easiest way to checksum the following 8-byte
+			 * part of the pseudo-header without horridly violating
+			 * C type aliasing rules is *not* to build it in memory
+			 * at all. We know the length fits in 16 bits so the
+			 * partial checksum of 00 00 LL LL 00 00 00 NH ends up
+			 * being just LLLL + NH.
+			 */
+			sum += IPPROTO_ICMPV6;
+			sum += ICMP_MINLEN + sizeof(magic_ping_payload);
+
+			sum += csum_partial((uint16_t *)icmph, icmplen / 2);
+			icmph->icmp6_cksum = csum_finish(sum);
+		} else {
+			memset(pkt, 0, sizeof(*pkt) + plen);
+			pkt->len = plen;
+			struct ip *iph = (void *)pkt->data;
+			struct icmp *icmph = (void *)(pkt->data + sizeof(*iph));
+			char *pmagic = (void *)(pkt->data + sizeof(*iph) + ICMP_MINLEN);
+
+			/* IP Header */
+			iph->ip_hl = 5;
+			iph->ip_v = 4;
+			iph->ip_len = htons(sizeof(*iph) + icmplen);
+			iph->ip_id = htons(0x4747); /* what the Windows client uses */
+			iph->ip_off = htons(IP_DF); /* don't fragment, frag offset = 0 */
+			iph->ip_ttl = 64; /* hops */
+			iph->ip_p = IPPROTO_ICMP;
+			iph->ip_src.s_addr = inet_addr(vpninfo->ip_info.addr);
+			memcpy(&iph->ip_dst.s_addr, vpninfo->esp_magic, 4);
+			iph->ip_sum = csum((uint16_t *)iph, sizeof(*iph)/2);
+
+			/* ICMP echo request */
+			icmph->icmp_type = ICMP_ECHO;
+			icmph->icmp_hun.ih_idseq.icd_id = htons(0x4747);
+			icmph->icmp_hun.ih_idseq.icd_seq = htons(seq);
+			memcpy(pmagic, magic_ping_payload, sizeof(magic_ping_payload)); /* required to get gateway to respond */
+			icmph->icmp_cksum = csum((uint16_t *)icmph, (ICMP_MINLEN+sizeof(magic_ping_payload))/2);
+		}
+
+		if (vpninfo->dtls_state != DTLS_ESTABLISHED) {
+			vpn_progress(vpninfo, PRG_TRACE, _("ICMPv%d probe packet (seq %d) for GlobalProtect ESP:\n"),
+				     vpninfo->esp_magic_af == AF_INET6 ? 6 : 4, seq);
+			dump_buf_hex(vpninfo, PRG_TRACE, '>', pkt->data, pkt->len);
+		}
+
+		int pktlen = construct_esp_packet(vpninfo, pkt, vpninfo->esp_magic_af == AF_INET6 ? IPPROTO_IPV6 : IPPROTO_IPIP);
 		if (pktlen < 0 ||
 		    send(vpninfo->dtls_fd, (void *)&pkt->esp, pktlen, 0) < 0)
 			vpn_progress(vpninfo, PRG_DEBUG, _("Failed to send ESP probe\n"));
 	}
 
-	free(pkt);
+	free_pkt(vpninfo, pkt);
 
 	vpninfo->dtls_times.last_tx = time(&vpninfo->new_dtls_started);
 
@@ -1398,14 +1501,24 @@ int gpst_esp_send_probes(struct openconnect_info *vpninfo)
 
 int gpst_esp_catch_probe(struct openconnect_info *vpninfo, struct pkt *pkt)
 {
-	struct ip *iph = (void *)(pkt->data);
-
-	return ( pkt->len >= 21 && iph->ip_v==4 /* IPv4 header */
-		 && iph->ip_p==IPPROTO_ICMP /* IPv4 protocol field == ICMP */
-		 && iph->ip_src.s_addr == vpninfo->esp_magic /* source == magic address */
-		 && pkt->len >= (iph->ip_hl<<2) + ICMP_MINLEN + sizeof(magic_ping_payload) /* No short-packet segfaults */
-		 && pkt->data[iph->ip_hl<<2]==ICMP_ECHOREPLY /* ICMP reply */
-		 && !memcmp(&pkt->data[(iph->ip_hl<<2) + ICMP_MINLEN], magic_ping_payload, sizeof(magic_ping_payload)) /* Same magic payload in response */
-	       );
+	if (vpninfo->esp_magic_af == AF_INET6) {
+		struct ip6_hdr *iph = (void *)(pkt->data);
+		return ( pkt->len >= 41 && (ntohl(iph->ip6_flow) >> 28)==6 /* IPv6 header */
+			 && iph->ip6_nxt == IPPROTO_ICMPV6 /* IPv6 next header field = ICMPv6 */
+			 && !memcmp(&iph->ip6_src, vpninfo->esp_magic, 16) /* source == magic address */
+			 && pkt->len >= 40 + ICMP_MINLEN + sizeof(magic_ping_payload) /* No short-packet segfaults */
+			 && pkt->data[40]==ICMP6_ECHO_REPLY /* ICMPv6 reply */
+			 && !memcmp(&pkt->data[40 + ICMP_MINLEN], magic_ping_payload, sizeof(magic_ping_payload)) /* Same magic payload in response */
+			 );
+	} else {
+		struct ip *iph = (void *)(pkt->data);
+		return ( pkt->len >= 21 && iph->ip_v==4 /* IPv4 header */
+			 && iph->ip_p==IPPROTO_ICMP /* IPv4 protocol field == ICMP */
+			 && !memcmp(&iph->ip_src.s_addr, vpninfo->esp_magic, 4) /* source == magic address */
+			 && pkt->len >= (iph->ip_hl<<2) + ICMP_MINLEN + sizeof(magic_ping_payload) /* No short-packet segfaults */
+			 && pkt->data[iph->ip_hl<<2]==ICMP_ECHOREPLY /* ICMP reply */
+			 && !memcmp(&pkt->data[(iph->ip_hl<<2) + ICMP_MINLEN], magic_ping_payload, sizeof(magic_ping_payload)) /* Same magic payload in response */
+			 );
+	}
 }
 #endif /* HAVE_ESP */

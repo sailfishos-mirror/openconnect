@@ -45,7 +45,7 @@ if test "$(id -u)" != "0";then
 	exit 77
 fi
 
-echo "Testing ocserv connection with DTLS-PSK... "
+echo "Testing ocserv connection with DTLS-PSK..."
 
 function finish {
   set +e
@@ -90,7 +90,7 @@ if test $? != 0;then
 fi
 
 echo " * Connecting to ${ADDRESS}:${PORT}..."
-( echo "test" | ${CMDNS1} ${OPENCONNECT} --interface ${TUNDEV} --dtls-ciphers=PSK-NEGOTIATE ${ADDRESS}:${PORT} -u ${USERNAME} --servercert=d66b507ae074d03b02eafca40d35f87dd81049d3 -s ${srcdir}/scripts/vpnc-script-detect-disconnect --pid-file=${CLIPID} --passwd-on-stdin -b )
+( echo "test" | ${CMDNS1} ${OPENCONNECT} -Q16 --interface ${TUNDEV} --dtls-ciphers=PSK-NEGOTIATE ${ADDRESS}:${PORT} -u ${USERNAME} --servercert=d66b507ae074d03b02eafca40d35f87dd81049d3 -s ${srcdir}/scripts/vpnc-script-detect-disconnect --pid-file=${CLIPID} --passwd-on-stdin -b )
 if test $? != 0;then
 	echo "Could not connect to server"
 	exit 1

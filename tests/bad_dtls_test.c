@@ -20,7 +20,7 @@
  * AnyConnect VPN protocol.
  *
  * This is designed to exercise the code paths in
- * http://git.infradead.org/users/dwmw2/openconnect.git/blob/HEAD:/dtls.c
+ * https://git.infradead.org/users/dwmw2/openconnect.git/blob/HEAD:/dtls.c
  * which have frequently been affected by regressions in DTLS1_BAD_VER
  * support.
  *
@@ -37,6 +37,8 @@
  */
 #include <string.h>
 
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
@@ -49,7 +51,7 @@
 #define DTLS1_BAD_VER 0x100
 #endif
 
-/* PACKET functions lifted from OpenSSL 1.1's ssl/packet_locl.h. Permisson
+/* PACKET functions lifted from OpenSSL 1.1's ssl/packet_locl.h. Permission
  * requested in https://github.com/openssl/openssl/pull/1296 for reuse here
  * as an OpenConnect test case. */
 /*
@@ -788,7 +790,8 @@ int main(int argc, char *argv[])
     ctx = SSL_CTX_new(DTLS_client_method());
     if (ctx == NULL ||
 	!SSL_CTX_set_min_proto_version(ctx, DTLS1_BAD_VER) ||
-	!SSL_CTX_set_max_proto_version(ctx, DTLS1_BAD_VER)) {
+	!SSL_CTX_set_max_proto_version(ctx, DTLS1_BAD_VER) ||
+	!SSL_CTX_set_options(ctx, SSL_OP_LEGACY_SERVER_CONNECT)) {
         printf("Failed to allocate SSL_CTX\n");
         goto end_md;
     }

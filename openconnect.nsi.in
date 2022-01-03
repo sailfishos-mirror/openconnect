@@ -3,7 +3,7 @@
 # This is an NSIS Installer Command Script generated automatically
 # by the Fedora nsiswrapper program.  For more information see:
 #
-#   http://fedoraproject.org/wiki/MinGW
+#   https://fedoraproject.org/wiki/MinGW
 #
 # To build an installer from the script you would normally do:
 #
@@ -93,6 +93,7 @@ Section "Uninstall"
   RMDir "$SMPROGRAMS\OpenConnect"
 
   !include uninstfiles.nsh
+  Delete /rebootok "$INSTDIR\Online Documentation.url"
   Delete /rebootok "$INSTDIR\Uninstall OpenConnect.exe"
   RMDir "$INSTDIR"
 SectionEnd

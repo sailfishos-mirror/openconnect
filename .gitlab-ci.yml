@@ -4,7 +4,11 @@ variables:
   CENTOS7_BUILD: openconnect-cli-centos7
   CENTOS8_BUILD: openconnect-cli-centos8
   FEDORA_BUILD: openconnect-cli-fedora
+  MINGW32_BUILD: openconnect-cli-mingw32
+  MINGW64_BUILD: openconnect-cli-mingw64
   UBUNTU_BUILD: openconnect-cli-ubuntu
+  ANDROID_BUILD: openconnect-cli-android
+  ANDROID_TOOLCHAINDIR: /opt/android-sdk-linux_x86/toolchains
 
 image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$FEDORA_BUILD
 
@@ -17,8 +21,15 @@ CentOS7/GnuTLS:
 # Flask-based authentication tests.
   - ./configure --with-java --enable-ppp-tests --disable-flask-tests CFLAGS=-g
   - make -j4
+# For reasons that are unclear, but probably also unimportant, IPv6 is disabled by default on this CI
+# image (verified in https://gitlab.com/openconnect/openconnect/-/jobs/1135199323#L335), and this will
+# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
+  - sysctl net.ipv6.conf.all.disable_ipv6=0
+# we don't want pppd to invoke any actual connection scripts
+  - mv /etc/ppp /etc/ppp.DISABLED
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
-  - make VERBOSE=1 XFAIL_TESTS="auth-nonascii" -j4 check
+# ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
+  - make VERBOSE=1 XFAIL_TESTS="auth-nonascii ppp-over-tls-sync" -j4 check
   tags:
   - shared
   except:
@@ -39,11 +50,16 @@ CentOS7/OpenSSL:
 # Flask-based authentication tests.
   - ./configure --without-gnutls --with-openssl --with-java --without-openssl-version-check --enable-dtls-xfail --disable-dsa-tests --enable-ppp-tests --disable-flask-tests CFLAGS=-g
   - make -j4
+# For reasons that are unclear, but probably also unimportant, IPv6 is disabled by default on this CI
+# image (verified in https://gitlab.com/openconnect/openconnect/-/jobs/1135199323#L335), and this will
+# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
+  - sysctl net.ipv6.conf.all.disable_ipv6=0
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
 # dtls-psk: communication with ocserv fails for undetermined reasons marking as xfail until issue is identified
-  - make VERBOSE=1 XFAIL_TESTS="auth-nonascii dtls-psk" -j4 check
+# ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
+  - make VERBOSE=1 XFAIL_TESTS="auth-nonascii dtls-psk ppp-over-tls-sync" -j4 check
   tags:
   - shared
   except:
@@ -61,10 +77,15 @@ CentOS8/GnuTLS:
   - ./autogen.sh
   - ./configure --with-java --without-gnutls-version-check --disable-dsa-tests --enable-ppp-tests CFLAGS=-g
   - make -j4
+# For reasons that are unclear, but probably also unimportant, IPv6 is disabled by default on this CI
+# image (verified in https://gitlab.com/openconnect/openconnect/-/jobs/1135199323#L335), and this will
+# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
+  - sysctl net.ipv6.conf.all.disable_ipv6=0
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
-  - make VERBOSE=1 XFAIL_TESTS="auth-nonascii" -j4 check
+# ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
+  - make VERBOSE=1 XFAIL_TESTS="auth-nonascii ppp-over-tls-sync" -j4 check
   tags:
   - shared
   except:
@@ -82,11 +103,16 @@ CentOS8/OpenSSL:
   - ./autogen.sh
   - ./configure --without-gnutls --with-openssl --with-java --without-openssl-version-check --disable-dsa-tests --enable-ppp-tests CFLAGS=-g
   - make -j4
+# For reasons that are unclear, but probably also unimportant, IPv6 is disabled by default on this CI
+# image (verified in https://gitlab.com/openconnect/openconnect/-/jobs/1135199323#L335), and this will
+# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
+  - sysctl net.ipv6.conf.all.disable_ipv6=0
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
 # obsolete-server-crypto: OpenSSL 1.1.0 disables 3DES and RC4 by default (https://www.openssl.org/blog/blog/2016/08/24/sweet32/)
-  - make VERBOSE=1 XFAIL_TESTS="auth-nonascii obsolete-server-crypto" -j4 check
+# ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
+  - make VERBOSE=1 XFAIL_TESTS="auth-nonascii obsolete-server-crypto ppp-over-tls-sync" -j4 check
   tags:
   - shared
   except:
@@ -109,7 +135,8 @@ CentOS6/OpenSSL:
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
-  - make VERBOSE=1 XFAIL_TESTS="bad_dtls_test auth-nonascii" -j4 check
+# ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
+  - make VERBOSE=1 XFAIL_TESTS="bad_dtls_test auth-nonascii ppp-over-tls-sync" -j4 check
   tags:
   - shared
   except:
@@ -124,7 +151,7 @@ CentOS6/OpenSSL:
 Signoff:
   script:
   # Quoted to work around https://gitlab.com/gitlab-org/gitlab-foss/-/issues/20177
-  - 'echo "Checking for new commits without Signed-off-by: tags as described in http://www.infradead.org/openconnect/contribute.html"'
+  - 'echo "Checking for new commits without Signed-off-by: tags as described in https://www.infradead.org/openconnect/contribute.html"'
   # Last bad commit
   - 'git log ceab1765db11c15a18a0c605812dbc11afd63e8b.. --grep "(^Signed-off-by)|(^Merge branch)|(^This reverts commit)" --extended-regexp --invert-grep --exit-code'
   - echo "None (good)"
@@ -167,7 +194,10 @@ ubsan/GnuTLS/Fedora:
   - export UBCFLAGS="-Wall -Wextra -fsanitize=undefined -fsanitize=bool -fsanitize=alignment -fsanitize=null -fsanitize=bounds-strict -fsanitize=enum -fno-sanitize-recover -g -O2"
   - CFLAGS="$UBCFLAGS" ./configure --with-java --disable-dsa-tests --without-gnutls-version-check
   - make -j4
-  - make VERBOSE=1 -j4 check
+# obsolete-server-crypto: system-wide crypto policy prevents --allow-insecure-crypto from working, and the
+#   library-reinitialization hack does not reliably work (https://gitlab.com/openconnect/openconnect/-/issues/243#note_576194663)
+#   XFAIL until we get a solution for https://bugzilla.redhat.com/show_bug.cgi?id=1960763
+  - make VERBOSE=1 XFAIL_TESTS="obsolete-server-crypto" -j4 check
   tags:
   - shared
   - linux
@@ -189,7 +219,8 @@ ubsan/OpenSSL/Fedora:
   - CFLAGS="$UBCFLAGS" ./configure --without-gnutls --with-openssl --without-openssl-version-check --disable-dsa-tests
   - make -j4
 # obsolete-server-crypto: OpenSSL 1.1.0 disables 3DES and RC4 by default (https://www.openssl.org/blog/blog/2016/08/24/sweet32/)
-  - make VERBOSE=1 XFAIL_TESTS="obsolete-server-crypto" -j4 check
+# auth-swtpm: XFAIL until we understand the TPM error
+  - make VERBOSE=1 XFAIL_TESTS="obsolete-server-crypto auth-swtpm" -j4 check
   tags:
   - shared
   - linux
@@ -205,6 +236,8 @@ ubsan/OpenSSL/Fedora:
 
 asan/GnuTLS/Fedora:
   image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$FEDORA_BUILD
+  only:
+  - asan
   script:
   - ./autogen.sh
   - CC=clang CFLAGS="-fsanitize=address -fno-optimize-sibling-calls -fno-omit-frame-pointer -g -O1"
@@ -226,6 +259,8 @@ asan/GnuTLS/Fedora:
 
 asan/OpenSSL/Fedora:
   image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$FEDORA_BUILD
+  only:
+  - asan
   script:
   - ./autogen.sh
   - CC=clang CFLAGS="-fsanitize=address -fno-optimize-sibling-calls -fno-omit-frame-pointer -g -O1"
@@ -248,6 +283,7 @@ asan/OpenSSL/Fedora:
 
 Fedora/GnuTLS:
   script:
+  - dnf -y install swtpm swtpm-tools
   - ./autogen.sh
   - ./configure --with-java --disable-dsa-tests --without-gnutls-version-check --enable-ppp-tests CFLAGS=-g
   - make tmp-distdir
@@ -256,10 +292,52 @@ Fedora/GnuTLS:
   - TMPDISTDIR=../openconnect-$(git describe --tags | sed s/^v//)
   - ${TMPDISTDIR}/configure --with-java --disable-dsa-tests --without-gnutls-version-check --enable-ppp-tests CFLAGS=-g
   - make -j4
+# For reasons that are unclear, but probably also unimportant, IPv6 is disabled by default on this CI
+# image (verified in https://gitlab.com/openconnect/openconnect/-/jobs/1135199323#L335), and this will
+# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
+  - sysctl net.ipv6.conf.all.disable_ipv6=0
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
 # auth-pkcs11: Disable rdrand to work around https://bugzilla.redhat.com/1831086
-  - make VERBOSE=1 OPENSSL_ia32cap=~0x4000000000000000 -j4 check
+# obsolete-server-crypto: system-wide crypto policy prevents --allow-insecure-crypto from working, and the
+#   library-reinitialization hack does not reliably work (https://gitlab.com/openconnect/openconnect/-/issues/243#note_576194663)
+#   XFAIL until we get a solution for https://bugzilla.redhat.com/show_bug.cgi?id=1960763
+# ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
+  - make VERBOSE=1 OPENSSL_ia32cap=~0x4000000000000000 XFAIL_TESTS="obsolete-server-crypto ppp-over-tls-sync" -j4 check
+  tags:
+  - shared
+  except:
+  - tags
+  - schedules
+  artifacts:
+    expire_in: 1 week
+    when: on_failure
+    paths:
+      - build/tests/*.log
+
+Fedora/GnuTLS/ibmtss:
+  script:
+  - dnf -y install swtpm swtpm-tools
+  - ./autogen.sh
+  - ./configure --with-java --disable-dsa-tests --without-gnutls-version-check --enable-ppp-tests CFLAGS=-g
+  - make tmp-distdir
+  - mkdir build
+  - cd build
+  - TMPDISTDIR=../openconnect-$(git describe --tags | sed s/^v//)
+  - ${TMPDISTDIR}/configure --with-java --disable-dsa-tests --without-gnutls-version-check --enable-ppp-tests --with-gnutls-tss2=ibmtss CFLAGS=-g
+  - make -j4
+# For reasons that are unclear, but probably also unimportant, IPv6 is disabled by default on this CI
+# image (verified in https://gitlab.com/openconnect/openconnect/-/jobs/1135199323#L335), and this will
+# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
+  - sysctl net.ipv6.conf.all.disable_ipv6=0
+# we don't want pppd to invoke any actual connection scripts
+  - mv /etc/ppp /etc/ppp.DISABLED
+# auth-pkcs11: Disable rdrand to work around https://bugzilla.redhat.com/1831086
+# obsolete-server-crypto: system-wide crypto policy prevents --allow-insecure-crypto from working, and the
+#   library-reinitialization hack does not reliably work (https://gitlab.com/openconnect/openconnect/-/issues/243#note_576194663)
+#   XFAIL until we get a solution for https://bugzilla.redhat.com/show_bug.cgi?id=1960763
+# ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
+  - make VERBOSE=1 OPENSSL_ia32cap=~0x4000000000000000 XFAIL_TESTS="obsolete-server-crypto ppp-over-tls-sync" -j4 check
   tags:
   - shared
   except:
@@ -281,10 +359,18 @@ Fedora/GnuTLS/clang:
   - TMPDISTDIR=../openconnect-$(git describe --tags | sed s/^v//)
   - ${TMPDISTDIR}/configure --with-java --disable-dsa-tests --without-gnutls-version-check CC=clang --enable-ppp-tests CFLAGS=-g
   - make -j4
+# For reasons that are unclear, but probably also unimportant, IPv6 is disabled by default on this CI
+# image (verified in https://gitlab.com/openconnect/openconnect/-/jobs/1135199323#L335), and this will
+# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
+  - sysctl net.ipv6.conf.all.disable_ipv6=0
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
 # auth-pkcs11: Disable rdrand to work around https://bugzilla.redhat.com/1831086
-  - make VERBOSE=1 OPENSSL_ia32cap=~0x4000000000000000 -j4 check
+# obsolete-server-crypto: system-wide crypto policy prevents --allow-insecure-crypto from working, and the
+#   library-reinitialization hack does not reliably work (https://gitlab.com/openconnect/openconnect/-/issues/243#note_576194663)
+#   XFAIL until we get a solution for https://bugzilla.redhat.com/show_bug.cgi?id=1960763
+# ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
+  - make VERBOSE=1 OPENSSL_ia32cap=~0x4000000000000000 XFAIL_TESTS="obsolete-server-crypto ppp-over-tls-sync" -j4 check
   tags:
   - shared
   except:
@@ -308,11 +394,17 @@ Fedora/OpenSSL:
   - TMPDISTDIR=../openconnect-$(git describe --tags | sed s/^v//)
   - ${TMPDISTDIR}/configure --without-gnutls --with-openssl --without-openssl-version-check --disable-dsa-tests --enable-ppp-tests CFLAGS=-g
   - make -j4
+# For reasons that are unclear, but probably also unimportant, IPv6 is disabled by default on this CI
+# image (verified in https://gitlab.com/openconnect/openconnect/-/jobs/1135199323#L335), and this will
+# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
+  - sysctl net.ipv6.conf.all.disable_ipv6=0
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
 # obsolete-server-crypto: OpenSSL 1.1.0 disables 3DES and RC4 by default (https://www.openssl.org/blog/blog/2016/08/24/sweet32/)
-  - make VERBOSE=1 XFAIL_TESTS="obsolete-server-crypto" -j4 check
+# auth-swtpm: XFAIL until we understand the TPM error
+# ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
+  - make VERBOSE=1 XFAIL_TESTS="obsolete-server-crypto auth-swtpm ppp-over-tls-sync" -j4 check
   tags:
   - shared
   except:
@@ -336,10 +428,16 @@ Fedora/OpenSSL/clang:
   - TMPDISTDIR=../openconnect-$(git describe --tags | sed s/^v//)
   - ${TMPDISTDIR}/configure CC=clang --without-gnutls --with-openssl --without-openssl-version-check --disable-dsa-tests --enable-ppp-tests CFLAGS=-g
   - make -j4
+# For reasons that are unclear, but probably also unimportant, IPv6 is disabled by default on this CI
+# image (verified in https://gitlab.com/openconnect/openconnect/-/jobs/1135199323#L335), and this will
+# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
+  - sysctl net.ipv6.conf.all.disable_ipv6=0
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
 # obsolete-server-crypto: OpenSSL 1.1.0 disables 3DES and RC4 by default (https://www.openssl.org/blog/blog/2016/08/24/sweet32/)
-  - make VERBOSE=1 XFAIL_TESTS="obsolete-server-crypto" -j4 check
+# auth-swtpm: XFAIL until we understand the TPM error
+# ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
+  - make VERBOSE=1 XFAIL_TESTS="obsolete-server-crypto auth-swtpm ppp-over-tls-sync" -j4 check
   tags:
   - shared
   except:
@@ -357,6 +455,10 @@ Ubuntu18.04/GnuTLS:
   - ./autogen.sh
   - ./configure --with-java --enable-ppp-tests CFLAGS=-g
   - make -j4
+# For reasons that are unclear, but probably also unimportant, IPv6 is disabled by default on this CI
+# image (verified in https://gitlab.com/openconnect/openconnect/-/jobs/1135199323#L335), and this will
+# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
+  - sysctl net.ipv6.conf.all.disable_ipv6=0
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
 # For reasons that are unclear, but probably also unimportant, IPv6 is disabled by default on this CI
@@ -364,7 +466,8 @@ Ubuntu18.04/GnuTLS:
 # cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
   - sysctl net.ipv6.conf.all.disable_ipv6=0
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
-  - make VERBOSE=1 XFAIL_TESTS="auth-nonascii" -j4 check
+# ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
+  - make VERBOSE=1 XFAIL_TESTS="auth-nonascii ppp-over-tls-sync" -j4 check
   tags:
   - shared
   except:
@@ -381,6 +484,10 @@ Ubuntu18.04/OpenSSL:
   - ./autogen.sh
   - ./configure --without-gnutls --with-openssl --with-java --without-openssl-version-check --disable-dsa-tests --enable-ppp-tests CFLAGS=-g
   - make -j4
+# For reasons that are unclear, but probably also unimportant, IPv6 is disabled by default on this CI
+# image (verified in https://gitlab.com/openconnect/openconnect/-/jobs/1135199323#L335), and this will
+# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
+  - sysctl net.ipv6.conf.all.disable_ipv6=0
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
 # For reasons that are unclear, but probably also unimportant, IPv6 is disabled by default on this CI
@@ -389,7 +496,8 @@ Ubuntu18.04/OpenSSL:
   - sysctl net.ipv6.conf.all.disable_ipv6=0
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
 # obsolete-server-crypto: OpenSSL 1.1.0 disables 3DES and RC4 by default (https://www.openssl.org/blog/blog/2016/08/24/sweet32/)
-  - make VERBOSE=1 XFAIL_TESTS="auth-nonascii obsolete-server-crypto" -j4 check
+# ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
+  - make VERBOSE=1 XFAIL_TESTS="auth-nonascii obsolete-server-crypto ppp-over-tls-sync" -j4 check
   tags:
   - shared
   except:
@@ -402,6 +510,7 @@ Ubuntu18.04/OpenSSL:
       - tests/*.log
 
 MinGW32/GnuTLS:
+  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$MINGW32_BUILD
   script:
   - mount -t binfmt_misc binfmt_misc /proc/sys/fs/binfmt_misc
   - echo ':DOSWin:M::MZ::/usr/bin/wine:' > /proc/sys/fs/binfmt_misc/register
@@ -424,6 +533,7 @@ MinGW32/GnuTLS:
       - openconnect-installer.exe
 
 MinGW32/OpenSSL:
+  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$MINGW32_BUILD
   script:
   - mount -t binfmt_misc binfmt_misc /proc/sys/fs/binfmt_misc
   - echo ':DOSWin:M::MZ::/usr/bin/wine:' > /proc/sys/fs/binfmt_misc/register
@@ -446,6 +556,7 @@ MinGW32/OpenSSL:
       - openconnect-installer.exe
 
 MinGW64/GnuTLS:
+  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$MINGW64_BUILD
   script:
   - dnf remove -y wine.i686
   - mount -t binfmt_misc binfmt_misc /proc/sys/fs/binfmt_misc
@@ -469,6 +580,7 @@ MinGW64/GnuTLS:
       - openconnect-installer.exe
 
 MinGW64/OpenSSL:
+  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$MINGW64_BUILD
   script:
   - dnf remove -y wine.i686
   - mount -t binfmt_misc binfmt_misc /proc/sys/fs/binfmt_misc
@@ -491,8 +603,56 @@ MinGW64/OpenSSL:
       - tests/*.log
       - openconnect-installer.exe
 
+Android/x86_64:
+  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$ANDROID_BUILD
+  script:
+  tags:
+  - shared
+  script:
+  - make -C android ARCH=x86_64 TOOLCHAIN=$ANDROID_TOOLCHAINDIR/'$(TRIPLET)-$(API_LEVEL)'
+  artifacts:
+    when: always
+    paths:
+      - android/*-linux-android*/out/*
+
+Android/x86:
+  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$ANDROID_BUILD
+  script:
+  tags:
+  - shared
+  script:
+  - make -C android ARCH=x86 TOOLCHAIN=$ANDROID_TOOLCHAINDIR/'$(TRIPLET)-$(API_LEVEL)'
+  artifacts:
+    when: always
+    paths:
+      - android/*-linux-android*/out/*
+
+Android/arm:
+  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$ANDROID_BUILD
+  script:
+  tags:
+  - shared
+  script:
+  - make -C android ARCH=arm TOOLCHAIN=$ANDROID_TOOLCHAINDIR/'$(TRIPLET)-$(API_LEVEL)'
+  artifacts:
+    when: always
+    paths:
+      - android/*-linux-android*/out/*
+
+Android/arm64:
+  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$ANDROID_BUILD
+  script:
+  tags:
+  - shared
+  script:
+  - make -C android ARCH=arm64 TOOLCHAIN=$ANDROID_TOOLCHAINDIR/'$(TRIPLET)-$(API_LEVEL)'
+  artifacts:
+    when: always
+    paths:
+      - android/*-linux-android*/out/*
+
 static-analyzer/GnuTLS/Fedora:
-  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:buildenv-fedora
+  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:buildenv-fedora33
   script:
   - ./autogen.sh
   - scan-build ./configure
@@ -510,7 +670,7 @@ static-analyzer/GnuTLS/Fedora:
       - scan-build-src/*
 
 static-analyzer/OpenSSL/Fedora:
-  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:buildenv-fedora
+  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:buildenv-fedora33
   script:
   - ./autogen.sh
   - scan-build ./configure --without-gnutls --with-openssl --without-openssl-version-check

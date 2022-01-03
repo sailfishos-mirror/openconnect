@@ -17,12 +17,14 @@
 
 #include <config.h>
 
-#include <errno.h>
-#include <string.h>
+#include "openconnect-internal.h"
+
+#include "gnutls.h"
 
 #include <gnutls/gnutls.h>
-#include "openconnect-internal.h"
-#include "gnutls.h"
+
+#include <errno.h>
+#include <string.h>
 
 #ifdef HAVE_TSS2
 
@@ -69,24 +71,25 @@ static const char OID_legacy_loadableKey[] = "2.23.133.10.2";
 static const char OID_loadableKey[] =        "2.23.133.10.1.3";
 
 #if GNUTLS_VERSION_NUMBER < 0x030600
-static int tpm2_rsa_sign_fn(gnutls_privkey_t key, void *_vpninfo,
+static int tpm2_rsa_sign_fn(gnutls_privkey_t key, void *_certinfo,
 			    const gnutls_datum_t *data, gnutls_datum_t *sig)
 {
-	return tpm2_rsa_sign_hash_fn(key, GNUTLS_SIGN_UNKNOWN, _vpninfo, 0, data, sig);
+	return tpm2_rsa_sign_hash_fn(key, GNUTLS_SIGN_UNKNOWN, _certinfo, 0, data, sig);
 }
 
 
-static int tpm2_ec_sign_fn(gnutls_privkey_t key, void *_vpninfo,
+static int tpm2_ec_sign_fn(gnutls_privkey_t key, void *_certinfo,
 			   const gnutls_datum_t *data, gnutls_datum_t *sig)
 {
-	struct openconnect_info *vpninfo = _vpninfo;
+	struct cert_info *certinfo = _certinfo;
+	struct openconnect_info *vpninfo = certinfo->vpninfo;
 	gnutls_sign_algorithm_t algo;
 
 	switch (data->size) {
-	case 20: algo = GNUTLS_SIGN_ECDSA_SHA1; break;
-	case 32: algo = GNUTLS_SIGN_ECDSA_SHA256; break;
-	case 48: algo = GNUTLS_SIGN_ECDSA_SHA384; break;
-	case 64: algo = GNUTLS_SIGN_ECDSA_SHA512; break;
+	case SHA1_SIZE:   algo = GNUTLS_SIGN_ECDSA_SHA1; break;
+	case SHA256_SIZE: algo = GNUTLS_SIGN_ECDSA_SHA256; break;
+	case SHA384_SIZE: algo = GNUTLS_SIGN_ECDSA_SHA384; break;
+	case SHA512_SIZE: algo = GNUTLS_SIGN_ECDSA_SHA512; break;
 	default:
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Unknown TPM2 EC digest size %d\n"),
@@ -94,15 +97,26 @@ static int tpm2_ec_sign_fn(gnutls_privkey_t key, void *_vpninfo,
 		return GNUTLS_E_PK_SIGN_FAILED;
 	}
 
-	return tpm2_ec_sign_hash_fn(key, algo, vpninfo, 0, data, sig);
+	return tpm2_ec_sign_hash_fn(key, algo, certinfo, 0, data, sig);
 }
 #endif
 
 #if GNUTLS_VERSION_NUMBER >= 0x030600
-static int rsa_key_info(gnutls_privkey_t key, unsigned int flags, void *_vpninfo)
+static int rsa_key_info(gnutls_privkey_t key, unsigned int flags, void *_certinfo)
 {
+	struct cert_info *certinfo = _certinfo;
+	struct openconnect_info *vpninfo = certinfo->vpninfo;
+
 	if (flags & GNUTLS_PRIVKEY_INFO_PK_ALGO)
 		return GNUTLS_PK_RSA;
+
+	if (flags & GNUTLS_PRIVKEY_INFO_SIGN_ALGO)
+		return GNUTLS_SIGN_RSA_RAW;
+
+	int bits = tpm2_rsa_key_bits(vpninfo, certinfo);
+
+	if (flags & GNUTLS_PRIVKEY_INFO_PK_ALGO_BITS)
+		return bits;
 
 	if (flags & GNUTLS_PRIVKEY_INFO_HAVE_SIGN_ALGO) {
 		gnutls_sign_algorithm_t algo = GNUTLS_FLAGS_TO_SIGN_ALGO(flags);
@@ -114,33 +128,68 @@ static int rsa_key_info(gnutls_privkey_t key, unsigned int flags, void *_vpninfo
 		case GNUTLS_SIGN_RSA_SHA512:
 			return 1;
 
+		/* Only support RSA-PSS for a given hash if the key is large
+		 * enough, since RFC8446 mandates that the salt length MUST
+		 * equal the digest output length. So we need 2N + 2 bytes. */
+		case GNUTLS_SIGN_RSA_PSS_SHA256:
+		case GNUTLS_SIGN_RSA_PSS_RSAE_SHA256:
+			if (bits >= (SHA256_SIZE * 16) + 16)
+				return 1;
+			/* Fall through */
+		case GNUTLS_SIGN_RSA_PSS_SHA384:
+		case GNUTLS_SIGN_RSA_PSS_RSAE_SHA384:
+			if (bits >= (SHA384_SIZE * 16) + 16)
+				return 1;
+			/* Fall through */
+		case GNUTLS_SIGN_RSA_PSS_SHA512:
+		case GNUTLS_SIGN_RSA_PSS_RSAE_SHA512:
+			if (bits >= (SHA512_SIZE * 16) + 16)
+				return 1;
+			/* Fall through */
 		default:
+			vpn_progress(vpninfo, PRG_DEBUG,
+				     _("Not supporting EC sign algo %s\n"),
+				     gnutls_sign_get_name(algo));
 			return 0;
 		}
 	}
-
-	if (flags & GNUTLS_PRIVKEY_INFO_SIGN_ALGO)
-		return GNUTLS_SIGN_RSA_RAW;
 
 	return -1;
 }
 #endif
 
 #if GNUTLS_VERSION_NUMBER >= 0x030400
-static int ec_key_info(gnutls_privkey_t key, unsigned int flags, void *_vpninfo)
+static int ec_key_info(gnutls_privkey_t key, unsigned int flags, void *_certinfo)
 {
 	if (flags & GNUTLS_PRIVKEY_INFO_PK_ALGO)
 		return GNUTLS_PK_EC;
 
 #ifdef GNUTLS_PRIVKEY_INFO_HAVE_SIGN_ALGO
 	if (flags & GNUTLS_PRIVKEY_INFO_HAVE_SIGN_ALGO) {
+		struct cert_info *certinfo = _certinfo;
+		struct openconnect_info *vpninfo = certinfo->vpninfo;
+
+		uint16_t tpm2_curve = tpm2_key_curve(vpninfo, certinfo);
 		gnutls_sign_algorithm_t algo = GNUTLS_FLAGS_TO_SIGN_ALGO(flags);
+
 		switch (algo) {
 		case GNUTLS_SIGN_ECDSA_SHA1:
 		case GNUTLS_SIGN_ECDSA_SHA256:
 			return 1;
 
+		case GNUTLS_SIGN_ECDSA_SECP256R1_SHA256:
+			return tpm2_curve == 0x0003; /* TPM2_ECC_NIST_P256 */
+
+		case GNUTLS_SIGN_ECDSA_SECP384R1_SHA384:
+			return tpm2_curve == 0x0004; /* TPM2_ECC_NIST_P384 */
+
+		case GNUTLS_SIGN_ECDSA_SECP521R1_SHA512:
+			return tpm2_curve == 0x0005; /* TPM2_ECC_NIST_P521 */
+
 		default:
+			vpn_progress(vpninfo, PRG_DEBUG,
+				     _("Not supporting EC sign algo %s\n"),
+				     gnutls_sign_get_name(algo));
 			return 0;
 		}
 	}
@@ -174,8 +223,8 @@ static int decode_data(ASN1_TYPE n, gnutls_datum_t *r)
 	return 0;
 }
 
-int load_tpm2_key(struct openconnect_info *vpninfo, gnutls_datum_t *fdata,
-		  gnutls_privkey_t *pkey, gnutls_datum_t *pkey_sig)
+int load_tpm2_key(struct openconnect_info *vpninfo, struct cert_info *certinfo,
+		  gnutls_datum_t *fdata, gnutls_privkey_t *pkey, gnutls_datum_t *pkey_sig)
 {
 	gnutls_datum_t asn1, pubdata, privdata;
 	ASN1_TYPE tpmkey_def = ASN1_TYPE_EMPTY, tpmkey = ASN1_TYPE_EMPTY;
@@ -282,7 +331,7 @@ int load_tpm2_key(struct openconnect_info *vpninfo, gnutls_datum_t *fdata,
 
 	/* Now we've extracted what we need from the ASN.1, invoke the
 	 * actual TPM2 code (whichever implementation we end up with */
-	ret = install_tpm2_key(vpninfo, pkey, pkey_sig, parent, emptyauth,
+	ret = install_tpm2_key(vpninfo, certinfo, pkey, pkey_sig, parent, emptyauth,
 			       asn1tab == tpmkey_asn1_tab_old, &privdata, &pubdata);
 	if (ret < 0)
 		goto out_tpmkey;
@@ -292,19 +341,19 @@ int load_tpm2_key(struct openconnect_info *vpninfo, gnutls_datum_t *fdata,
 	switch(ret) {
 	case GNUTLS_PK_RSA:
 #if GNUTLS_VERSION_NUMBER >= 0x030600
-		gnutls_privkey_import_ext4(*pkey, vpninfo, NULL, tpm2_rsa_sign_hash_fn, NULL, NULL, rsa_key_info, 0);
+		gnutls_privkey_import_ext4(*pkey, certinfo, NULL, tpm2_rsa_sign_hash_fn, NULL, NULL, rsa_key_info, 0);
 #else
-		gnutls_privkey_import_ext(*pkey, GNUTLS_PK_RSA, vpninfo, tpm2_rsa_sign_fn, NULL, 0);
+		gnutls_privkey_import_ext(*pkey, GNUTLS_PK_RSA, certinfo, tpm2_rsa_sign_fn, NULL, 0);
 #endif
 		break;
 
 	case GNUTLS_PK_ECC:
 #if GNUTLS_VERSION_NUMBER >= 0x030600
-		gnutls_privkey_import_ext4(*pkey, vpninfo, NULL, tpm2_ec_sign_hash_fn, NULL, NULL, ec_key_info, 0);
+		gnutls_privkey_import_ext4(*pkey, certinfo, NULL, tpm2_ec_sign_hash_fn, NULL, NULL, ec_key_info, 0);
 #elif GNUTLS_VERSION_NUMBER >= 0x030400
-		gnutls_privkey_import_ext3(*pkey, vpninfo, tpm2_ec_sign_fn, NULL, NULL, ec_key_info, 0);
+		gnutls_privkey_import_ext3(*pkey, certinfo, tpm2_ec_sign_fn, NULL, NULL, ec_key_info, 0);
 #else
-		gnutls_privkey_import_ext(*pkey, GNUTLS_PK_EC, vpninfo, tpm2_ec_sign_fn, NULL, 0);
+		gnutls_privkey_import_ext(*pkey, GNUTLS_PK_EC, certinfo, tpm2_ec_sign_fn, NULL, 0);
 #endif
 		break;
 	}
@@ -376,8 +425,8 @@ int oc_gnutls_encode_rs_value(gnutls_datum_t *sig, const gnutls_datum_t *sig_r,
 
 /* EMSA-PKCS1-v1_5 padding in accordance with RFC3447 §9.2 */
 #define PKCS1_PAD_OVERHEAD 11
-int oc_pkcs1_pad(struct openconnect_info *vpninfo,
-		 unsigned char *buf, int size, const gnutls_datum_t *data)
+static int oc_pkcs1_pad(struct openconnect_info *vpninfo,
+			unsigned char *buf, int size, const gnutls_datum_t *data)
 {
 	if (data->size + PKCS1_PAD_OVERHEAD > size) {
 		vpn_progress(vpninfo, PRG_ERR,
@@ -393,5 +442,186 @@ int oc_pkcs1_pad(struct openconnect_info *vpninfo,
 	memcpy(buf + size - data->size, data->data, data->size);
 
 	return 0;
+}
+
+#if GNUTLS_VERSION_NUMBER >= 0x030600
+/* EMSA-PSS encoding in accordance with RFC3447 §9.1 */
+static int oc_pss_mgf1_pad(struct openconnect_info *vpninfo, gnutls_digest_algorithm_t dig,
+			   unsigned char *emBuf, int emLen, const gnutls_datum_t *mHash, int keybits)
+{
+	gnutls_hash_hd_t hashctx = NULL;
+	int err = GNUTLS_E_PK_SIGN_FAILED;
+
+	/* The emBits for EMSA-PSS encoding is actually one *fewer* bit than
+	 * the RSA modulus. As RFC3447 §8.1.1 points out, "the octet length
+	 * of EM will be one less than k if modBits - 1 is divisible by 8
+	 * and equal to k otherwise". Where k is the input emLen, which we
+	 * thus need to adjust before using it as emLen for the following
+	 * operations. Not that it matters much since I don't think the TPM
+	 * can cope with RSA keys whose modulus isn't a multiple of 8 bits
+	 * anyway. */
+	int msbits = (keybits - 1) & 7;
+	if (!msbits) {
+		*(emBuf++) = 0;
+		emLen--;
+	}
+
+	/* GnuTLS gives us a predigested mHash from which we create M' and
+	 * continue the process. Can we infer all the PSS parameters from
+	 * the digest size, including the salt size? Or does GnuTLS need
+	 * a gnutls_privkey_import_ext5() which lets us have the params too?
+	 * Better still, could GnuTLS just do this all for us and we only
+	 * do a raw signature — really raw, unlike GNUTLS_SIGN_RSA_RAW
+	 * which AIUI is actually padded. */
+
+	/* Actually, RFC8446 §4.2.3 mandates that the salt length MUST be
+	 * equal to the length of the output of the digest algorithm. So
+	 * truncating is it *wrong*.
+	 *
+	 *  • https://gitlab.com/gnutls/gnutls/-/issues/1258
+	 *  • https://github.com/openssl/openssl/issues/16167
+	 */
+	int sLen = mHash->size;
+	if (sLen + mHash->size > emLen - 2) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("PSS encoding failed; hash size %d too large for RSA key %d\n"),
+			     mHash->size, emLen);
+		return GNUTLS_E_PK_SIGN_FAILED;
+	}
+
+	/*
+	 * We don't truncate salt since RFC8446 forbids it for TLSv1.3 and
+	 * that's all we are using it for.
+	 *
+	 * if (sLen + mHash->size > emLen - 2)
+	 *	sLen = emLen - 2 - mHash->size;
+	 */
+
+	char salt[SHA512_SIZE];
+	if (sLen) {
+		err = gnutls_rnd(GNUTLS_RND_NONCE, salt, sLen);
+		if (err)
+			goto out;
+	}
+
+	/* Hash M' (8 zeroes || mHash || salt) into its place in EM */
+	if ((err = gnutls_hash_init(&hashctx, dig)) ||
+	    (err = gnutls_hash(hashctx, "\0\0\0\0\0\0\0\0", 8)) ||
+	    (err = gnutls_hash(hashctx, mHash->data, mHash->size)) ||
+	    (sLen && (err = gnutls_hash(hashctx, salt, sLen))))
+		goto out;
+
+	int maskedDBLen = emLen - mHash->size - 1;
+	gnutls_hash_output(hashctx, emBuf + maskedDBLen);
+
+	emBuf[emLen - 1] = 0xbc;
+
+	/* Although gnutls_hash_output() is supposed to reset the context,
+	 * it doesn't actually seem to work at least for SHA384; the later
+	 * gnutls_hash_copy() ends up wrong somehow, and gives incorrect
+	 * output. Unless we completely destroy the context and make a
+	 * new one. https://gitlab.com/gnutls/gnutls/-/issues/1257 */
+	gnutls_hash_deinit(hashctx, NULL);
+	err = gnutls_hash_init(&hashctx, dig);
+	if (err) {
+		hashctx = NULL;
+		goto out;
+	}
+
+	/* Now the MGF1 function as defined in RFC3447 Appendix B, although
+	 * it's somewhat easier to read in NIST SP 800-56B §7.2.2.2.
+	 *
+	 * We repeatedly hash (M' || C) where C is an incrementing 32-bit
+	 * counter, so hash M' first and then use gnutls_hash_copy() each
+	 * time to add C to the copy. */
+	err = gnutls_hash(hashctx, emBuf + maskedDBLen, mHash->size);
+	if (err)
+		goto out;
+
+	int mgflen = 0, mgf_count = 0;
+	while (mgflen < maskedDBLen) {
+		gnutls_hash_hd_t ctx2 = gnutls_hash_copy(hashctx);
+		if (!ctx2) {
+			err = GNUTLS_E_PK_SIGN_FAILED;
+			goto out;
+		}
+		uint32_t be_count = htonl(mgf_count++);
+		err = gnutls_hash(ctx2, &be_count, sizeof(be_count));
+		if (err) {
+			gnutls_hash_deinit(ctx2, NULL);
+			goto out;
+		}
+		if (mgflen + mHash->size <= maskedDBLen) {
+			gnutls_hash_deinit(ctx2, emBuf + mgflen);
+			mgflen += mHash->size;
+		} else {
+			char md[SHA512_SIZE];
+			gnutls_hash_deinit(ctx2, md);
+			memcpy(emBuf + mgflen, md, maskedDBLen - mgflen);
+			mgflen = maskedDBLen;
+		}
+	}
+
+	/* Back to EMSA-PSS-ENCODE step 10. The MGF result was directly placed
+	 * into emBuf, so now XOR with DB, which is (zeroes || 0x01 || salt) */
+	int dst = maskedDBLen - 1;
+	while (sLen--)
+		emBuf[dst--] ^= salt[sLen];
+	emBuf[dst] ^= 0x01;
+
+	/* Now mask out the high bits. In the case where msbits is zero, we
+	 * skipped the entire first byte so do nothing. */
+	if (msbits)
+		emBuf[0] &= 0xFF >> (8 - msbits);
+
+	err = 0;
+ out:
+	if (hashctx)
+		gnutls_hash_deinit(hashctx, NULL);
+
+	return err;
+}
+#endif
+
+int oc_pad_rsasig(struct openconnect_info *vpninfo, gnutls_sign_algorithm_t algo,
+		  unsigned char *buf, int size, const gnutls_datum_t *data, int keybits)
+{
+	switch(algo) {
+	case GNUTLS_SIGN_UNKNOWN:
+	case GNUTLS_SIGN_RSA_SHA1:
+	case GNUTLS_SIGN_RSA_SHA256:
+	case GNUTLS_SIGN_RSA_SHA384:
+	case GNUTLS_SIGN_RSA_SHA512:
+		return oc_pkcs1_pad(vpninfo, buf, size, data);
+
+#if GNUTLS_VERSION_NUMBER >= 0x030600
+		/* Really PKCS#1.5 padding, yes. */
+	case GNUTLS_SIGN_RSA_RAW:
+		return oc_pkcs1_pad(vpninfo, buf, size, data);
+
+	case GNUTLS_SIGN_RSA_PSS_SHA256:
+	case GNUTLS_SIGN_RSA_PSS_RSAE_SHA256:
+		if (data->size != SHA256_SIZE)
+			return GNUTLS_E_PK_SIGN_FAILED;
+		return oc_pss_mgf1_pad(vpninfo, GNUTLS_DIG_SHA256, buf, size, data, keybits);
+
+	case GNUTLS_SIGN_RSA_PSS_SHA384:
+	case GNUTLS_SIGN_RSA_PSS_RSAE_SHA384:
+		if (data->size != SHA384_SIZE)
+			return GNUTLS_E_PK_SIGN_FAILED;
+		return oc_pss_mgf1_pad(vpninfo, GNUTLS_DIG_SHA384, buf, size, data, keybits);
+
+	case GNUTLS_SIGN_RSA_PSS_SHA512:
+	case GNUTLS_SIGN_RSA_PSS_RSAE_SHA512:
+		if (data->size != SHA512_SIZE)
+			return GNUTLS_E_PK_SIGN_FAILED;
+		return oc_pss_mgf1_pad(vpninfo, GNUTLS_DIG_SHA512, buf, size, data, keybits);
+#endif /* 3.6.0+ */
+	default:
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("TPMv2 RSA sign called for unknown algorithm %s\n"),
+			     gnutls_sign_get_name(algo));
+		return GNUTLS_E_PK_SIGN_FAILED;
+	}
 }
 #endif /* HAVE_TSS2 */

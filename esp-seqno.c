@@ -17,12 +17,12 @@
 
 #include <config.h>
 
-#include <stdint.h>
+#include "openconnect-internal.h"
+
 #include <inttypes.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <errno.h>
-
-#include "openconnect-internal.h"
 
 #define DTLS_EMPTY_BITMAP		(0xFFFFFFFFFFFFFFFFULL)
 
@@ -139,4 +139,3 @@ int verify_packet_seqno(struct openconnect_info *vpninfo,
 		}
 	}
 }
-

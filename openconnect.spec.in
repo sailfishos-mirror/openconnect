@@ -33,14 +33,14 @@
 Name:		openconnect
 Version:	%{tagver}%{?snapver}
 Release:	0%{?dist}
-Summary:	Open client for Cisco AnyConnect VPN, Juniper Network Connect/Pulse, PAN GlobalProtect
+Summary:	Open client for SSL VPNs including Cisco AnyConnect VPN, Juniper Network Connect/Pulse, PAN GlobalProtect, Fortinet, etc.
 
 License:	LGPLv2
-URL:		http://www.infradead.org/openconnect.html
+URL:		https://www.infradead.org/openconnect.html
 %if 0%{?gitsnapshot}
 Source0:        https://github.com/openconnect/%{name}/archive/%{snapcommit}/%{name}-%{shortcommit}.tar.gz
 %else
-Source0:        ftp://ftp.infradead.org/pub/%{name}/%{name}-%{version}.tar.gz
+Source0:        https://www.infradead.org/openconnect/download/%{name}-%{version}.tar.gz
 %endif
 Source2:	gpgkey-BE07D9FD54809AB2C4B0FF5F63762CDA67E2F359.asc
 Source3:	macros.gpg
@@ -49,6 +49,9 @@ Source3:	macros.gpg
 BuildRequires:	pkgconfig(libxml-2.0) pkgconfig(libpcsclite) krb5-devel gnupg2
 BuildRequires:	autoconf automake libtool gettext pkgconfig(liblz4)
 BuildRequires:	pkgconfig(uid_wrapper) pkgconfig(socket_wrapper)
+%if 0%{?fedora}
+BuildRequires:  pkgconfig(json-parser)
+%endif
 %if 0%{?fedora} || 0%{?rhel} <= 7
 # SoftHSM doesn't install on EPEL8: https://bugzilla.redhat.com/show_bug.cgi?id=1829480
 BuildRequires:  softhsm
@@ -77,8 +80,13 @@ BuildRequires:	pkgconfig(libproxy-1.0)
 BuildRequires:  pkgconfig(stoken) pkgconfig(libpskc)
 %endif
 %if %{use_tss2_esys}
+BuildRequires: pkgconfig(tss2-esys) pkgconfig(tss2-tctildr) pkgconfig(tss2-mu)
 # https://bugzilla.redhat.com/show_bug.cgi?id=1638961
-BuildRequires: pkgconfig(tss2-esys) libgcrypt-devel
+BuildRequires: libgcrypt-devel
+%if 0%{?fedora} > 32
+# Older versions of tss2-esys don't have the swtpm TCTI
+BuildRequires: swtpm swtpm-tools
+%endif
 %endif
 
 %description

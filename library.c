@@ -18,12 +18,11 @@
 
 #include <config.h>
 
-#include <string.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <ctype.h>
+#include "openconnect-internal.h"
+
+#if defined(OPENCONNECT_GNUTLS)
+#include "gnutls.h"
+#endif
 
 #ifdef HAVE_LIBSTOKEN
 #include <stoken.h>
@@ -32,15 +31,17 @@
 #include <libxml/tree.h>
 #include <zlib.h>
 
-#include "openconnect-internal.h"
-
-#if defined(OPENCONNECT_GNUTLS)
-#include "gnutls.h"
-#endif
-
 #if defined(OPENCONNECT_OPENSSL)
 #include <openssl/bio.h>
 #endif
+
+#include <unistd.h>
+#include <fcntl.h>
+
+#include <string.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <ctype.h>
 
 struct openconnect_info *openconnect_vpninfo_new(const char *useragent,
 						 openconnect_validate_peer_cert_vfn validate_peer_cert,
@@ -66,9 +67,13 @@ struct openconnect_info *openconnect_vpninfo_new(const char *useragent,
 		vpninfo->ic_legacy_to_utf8 = (iconv_t)-1;
 	}
 #endif
+#ifdef HAVE_VHOST
+	vpninfo->vhost_fd = vpninfo->vhost_call_fd = vpninfo->vhost_kick_fd = -1;
+#endif
 #ifndef _WIN32
 	vpninfo->tun_fd = -1;
 #endif
+	init_pkt_queue(&vpninfo->free_queue);
 	init_pkt_queue(&vpninfo->incoming_queue);
 	init_pkt_queue(&vpninfo->outgoing_queue);
 	init_pkt_queue(&vpninfo->tcp_control_queue);
@@ -94,7 +99,9 @@ struct openconnect_info *openconnect_vpninfo_new(const char *useragent,
 	vpninfo->proxy_auth[AUTH_TYPE_BASIC].state = AUTH_DEFAULT_DISABLED;
 	vpninfo->http_auth[AUTH_TYPE_BASIC].state = AUTH_DEFAULT_DISABLED;
 	openconnect_set_reported_os(vpninfo, NULL);
-
+#ifdef HAVE_EPOLL
+	vpninfo->epoll_fd = epoll_create1(EPOLL_CLOEXEC);
+#endif
 	if (!vpninfo->localname || !vpninfo->useragent)
 		goto err;
 
@@ -136,7 +143,7 @@ static const struct vpn_proto openconnect_protos[] = {
 		.pretty_name = N_("Juniper Network Connect"),
 		.description = N_("Compatible with Juniper Network Connect"),
 		.proto = PROTO_NC,
-		.flags = OC_PROTO_PROXY | OC_PROTO_CSD | OC_PROTO_AUTH_CERT | OC_PROTO_AUTH_OTP | OC_PROTO_PERIODIC_TROJAN,
+		.flags = OC_PROTO_PROXY | OC_PROTO_CSD | OC_PROTO_AUTH_CERT | OC_PROTO_AUTH_OTP | OC_PROTO_AUTH_STOKEN | OC_PROTO_PERIODIC_TROJAN,
 		.vpn_close_session = oncp_bye,
 		.tcp_connect = oncp_connect,
 		.tcp_mainloop = oncp_mainloop,
@@ -254,6 +261,24 @@ static const struct vpn_proto openconnect_protos[] = {
 		.tcp_mainloop = nullppp_mainloop,
 		.add_http_headers = http_common_headers,
 		.obtain_cookie = nullppp_obtain_cookie,
+	}, {
+		.name = "array",
+		.pretty_name = N_("Array SSL VPN"),
+		.description = N_("Compatible with Array Networks SSL VPN"),
+		.proto = PROTO_ARRAY,
+		.flags = OC_PROTO_PROXY,
+		.vpn_close_session = array_bye,
+		.tcp_connect = array_connect,
+		.tcp_mainloop = array_mainloop,
+		.add_http_headers = http_common_headers,
+		.obtain_cookie = array_obtain_cookie,
+		.udp_protocol = "DTLS",
+#ifdef HAVE_DTLS
+		.udp_setup = dtls_setup,
+		.udp_mainloop = array_dtls_mainloop,
+		.udp_close = dtls_close,
+		.udp_shutdown = dtls_shutdown,
+#endif
 	},
 };
 
@@ -365,18 +390,36 @@ int openconnect_make_cstp_connection(struct openconnect_info *vpninfo)
 int openconnect_set_reported_os(struct openconnect_info *vpninfo,
 				const char *os)
 {
+	const char *allowed[] = {"linux", "linux-64", "win", "mac-intel", "android", "apple-ios"};
+
 	if (!os) {
 #if defined(__APPLE__)
+#  include <TargetConditionals.h>
+#  if TARGET_OS_IOS
+		/* We need to use Apple's boolean "target" defines to distinguish iOS from
+		 * desktop MacOS. See  https://stackoverflow.com/a/5920028 and
+		 * https://github.com/mstg/iOS-full-sdk/blob/master/iPhoneOS9.3.sdk/usr/include/TargetConditionals.h#L64-L71
+		 */
+		os = "apple-ios";
+#  else
 		os = "mac-intel";
+#  endif
 #elif defined(__ANDROID__)
 		os = "android";
+#elif defined(_WIN32)
+		os = "win";
 #else
 		os = sizeof(long) > 4 ? "linux-64" : "linux";
 #endif
 	}
 
-	STRDUP(vpninfo->platname, os);
-	return 0;
+	for (int i = 0; i < ARRAY_SIZE(allowed); i++) {
+		if (!strcmp(os, allowed[i])) {
+			STRDUP(vpninfo->platname, os);
+			return 0;
+		}
+	}
+	return -EINVAL;
 }
 
 int openconnect_set_mobile_info(struct openconnect_info *vpninfo,
@@ -463,12 +506,29 @@ void free_optlist(struct oc_vpn_option *opt)
 int install_vpn_opts(struct openconnect_info *vpninfo, struct oc_vpn_option *opt,
 		     struct oc_ip_info *ip_info, int allow_no_ip)
 {
-	/* F5 and NX don't get its IP address until they actually establish the
-	 * PPP connection. */
-	if (!allow_no_ip && !ip_info->addr && !ip_info->addr6 && !ip_info->netmask6) {
-		vpn_progress(vpninfo, PRG_ERR,
-			     _("No IP address received. Aborting\n"));
-		return -EINVAL;
+	/* XX: remove protocol-specific exceptions here, once we can test them
+	 * with F5 and NX reconnections in addition to Juniper reconnections. See:
+	 * https://gitlab.com/openconnect/openconnect/-/merge_requests/293#note_702388182
+	 */
+	if (!ip_info->addr && !ip_info->addr6 && !ip_info->netmask6) {
+		if (allow_no_ip) {
+			/* Some protocols, such as F5 and NX don't get their IP address
+			 * until they actually establish the PPP connection. */
+		} else if (vpninfo->proto->proto == PROTO_NC && vpninfo->ip_info.addr) {
+			/* Juniper doesn't necessarily resend the Legacy IP address in the
+			 * event of a rekey/reconnection. */
+			ip_info->addr = add_option_dup(&opt, "ipaddr", vpninfo->ip_info.addr, -1);
+			if (!ip_info->netmask && vpninfo->ip_info.netmask)
+				ip_info->netmask = add_option_dup(&opt, "netmask", vpninfo->ip_info.netmask, -1);
+			vpn_progress(vpninfo, PRG_DEBUG,
+				     _("No IP address received with Juniper rekey/reconnection.\n"));
+			goto after_ip_checks;
+		} else {
+			/* For all other protocols, not receiving any IP address is an error */
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("No IP address received. Aborting\n"));
+			return -EINVAL;
+		}
 	}
 
 	if (vpninfo->ip_info.addr) {
@@ -505,6 +565,7 @@ int install_vpn_opts(struct openconnect_info *vpninfo, struct oc_vpn_option *opt
 		}
 	}
 
+ after_ip_checks:
 	/* Preserve gateway_addr and MTU if they were set */
 	ip_info->gateway_addr = vpninfo->ip_info.gateway_addr;
 	if (!ip_info->mtu)
@@ -570,6 +631,7 @@ void openconnect_vpninfo_free(struct openconnect_info *vpninfo)
 	free_split_routes(&vpninfo->ip_info);
 	free(vpninfo->hostname);
 	free(vpninfo->unique_hostname);
+	buf_free(vpninfo->connect_urlbuf);
 	free(vpninfo->urlpath);
 	free(vpninfo->redirect_url);
 	free_pass(&vpninfo->cookie);
@@ -577,7 +639,7 @@ void openconnect_vpninfo_free(struct openconnect_info *vpninfo)
 	free(vpninfo->proxy);
 	free(vpninfo->proxy_user);
 	free_pass(&vpninfo->proxy_pass);
-	free_pass(&vpninfo->cert_password);
+	free_pass(&vpninfo->certinfo[0].password);
 	free(vpninfo->vpnc_script);
 	free(vpninfo->cafile);
 	free(vpninfo->ifname);
@@ -623,9 +685,9 @@ void openconnect_vpninfo_free(struct openconnect_info *vpninfo)
 	/* These are const in openconnect itself, but for consistency of
 	   the library API we do take ownership of the strings we're given,
 	   and thus we have to free them too. */
-	if (vpninfo->cert != vpninfo->sslkey)
-		free((void *)vpninfo->sslkey);
-	free((void *)vpninfo->cert);
+	if (vpninfo->certinfo[0].cert != vpninfo->certinfo[0].key)
+		free((void *)vpninfo->certinfo[0].key);
+	free((void *)vpninfo->certinfo[0].cert);
 	if (vpninfo->peer_cert) {
 #if defined(OPENCONNECT_OPENSSL)
 		X509_free(vpninfo->peer_cert);
@@ -679,12 +741,54 @@ void openconnect_vpninfo_free(struct openconnect_info *vpninfo)
 	inflateEnd(&vpninfo->inflate_strm);
 	deflateEnd(&vpninfo->deflate_strm);
 
-	free(vpninfo->deflate_pkt);
-	free(vpninfo->tun_pkt);
-	free(vpninfo->dtls_pkt);
-	free(vpninfo->cstp_pkt);
+#ifdef HAVE_EPOLL
+	if (vpninfo->epoll_fd >= 0)
+		close(vpninfo->epoll_fd);
+#endif
+
+	free_pkt(vpninfo, vpninfo->deflate_pkt);
+	free_pkt(vpninfo, vpninfo->tun_pkt);
+	free_pkt(vpninfo, vpninfo->dtls_pkt);
+	free_pkt(vpninfo, vpninfo->cstp_pkt);
+	struct pkt *pkt;
+	while ((pkt = dequeue_packet(&vpninfo->free_queue)))
+		free(pkt);
+
 	free(vpninfo->bearer_token);
 	free(vpninfo);
+}
+
+
+const char *openconnect_get_connect_url(struct openconnect_info *vpninfo)
+{
+	struct oc_text_buf *urlbuf = vpninfo->connect_urlbuf;
+
+	if (!urlbuf)
+		urlbuf = buf_alloc();
+
+	buf_append(urlbuf, "https://%s", vpninfo->hostname);
+	if (vpninfo->port != 443)
+		buf_append(urlbuf, ":%d", vpninfo->port);
+	buf_append(urlbuf, "/");
+
+	/* Other protocols don't care and just leave noise from the
+	 * authentication process in ->urlpath. Pulse does care, and
+	 * you have to *connect* to a given usergroup at the correct
+	 * path, not just authenticate.
+	 *
+	 * https://gitlab.gnome.org/GNOME/NetworkManager-openconnect/-/issues/53
+	 * https://gitlab.gnome.org/GNOME/NetworkManager-openconnect/-/merge_requests/22
+	 */
+	if (vpninfo->proto->proto == PROTO_PULSE)
+		buf_append(urlbuf, "%s", vpninfo->urlpath);
+	if (buf_error(urlbuf)) {
+		buf_free(urlbuf);
+		vpninfo->connect_urlbuf = NULL;
+		return NULL;
+	}
+
+	vpninfo->connect_urlbuf = urlbuf;
+	return urlbuf->data;
 }
 
 const char *openconnect_get_hostname(struct openconnect_info *vpninfo)
@@ -866,15 +970,15 @@ int openconnect_set_client_cert(struct openconnect_info *vpninfo,
 	UTF8CHECK(sslkey);
 
 	/* Avoid freeing it twice if it's the same */
-	if (vpninfo->sslkey == vpninfo->cert)
-		vpninfo->sslkey = NULL;
+	if (vpninfo->certinfo[0].key == vpninfo->certinfo[0].cert)
+		vpninfo->certinfo[0].key = NULL;
 
-	STRDUP(vpninfo->cert, cert);
+	STRDUP(vpninfo->certinfo[0].cert, cert);
 
 	if (sslkey) {
-		STRDUP(vpninfo->sslkey, sslkey);
+		STRDUP(vpninfo->certinfo[0].key, sslkey);
 	} else {
-		vpninfo->sslkey = vpninfo->cert;
+		vpninfo->certinfo[0].key = vpninfo->certinfo[0].cert;
 	}
 
 	return 0;
@@ -956,7 +1060,7 @@ void openconnect_set_cert_expiry_warning(struct openconnect_info *vpninfo,
 
 int openconnect_set_key_password(struct openconnect_info *vpninfo, const char *pass)
 {
-	STRDUP(vpninfo->cert_password, pass);
+	STRDUP(vpninfo->certinfo[0].password, pass);
 
 	return 0;
 }
@@ -969,8 +1073,10 @@ void openconnect_set_pfs(struct openconnect_info *vpninfo, unsigned val)
 int openconnect_set_allow_insecure_crypto(struct openconnect_info *vpninfo, unsigned val)
 {
 	int ret = can_enable_insecure_crypto();
+	if (ret)
+		return ret;
 	vpninfo->allow_insecure_crypto = val;
-	return ret;
+	return 0;
 }
 
 void openconnect_set_cancel_fd(struct openconnect_info *vpninfo, int fd)
@@ -1003,6 +1109,7 @@ OPENCONNECT_CMD_SOCKET openconnect_setup_cmd_pipe(struct openconnect_info *vpnin
 	}
 	vpninfo->cmd_fd = pipefd[0];
 	vpninfo->cmd_fd_write = pipefd[1];
+	vpninfo->need_poll_cmd_fd = 1;
 	return vpninfo->cmd_fd_write;
 }
 
@@ -1453,6 +1560,10 @@ int process_auth_form(struct openconnect_info *vpninfo, struct oc_auth_form *for
 
 	if (!vpninfo->process_auth_form) {
 		vpn_progress(vpninfo, PRG_ERR, _("No form handler; cannot authenticate.\n"));
+		return OC_FORM_RESULT_ERR;
+	}
+	if (!form->auth_id) {
+		vpn_progress(vpninfo, PRG_ERR, _("No form ID. This is a bug in OpenConnect's authentication code.\n"));
 		return OC_FORM_RESULT_ERR;
 	}
 

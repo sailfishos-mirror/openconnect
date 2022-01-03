@@ -17,6 +17,8 @@
 
 #include <config.h>
 
+#include "openconnect-internal.h"
+
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <winioctl.h>
@@ -27,8 +29,6 @@
 
 #include <errno.h>
 #include <stdio.h>
-
-#include "openconnect-internal.h"
 
 static WINTUN_CREATE_ADAPTER_FUNC WintunCreateAdapter;
 static WINTUN_DELETE_ADAPTER_FUNC WintunDeleteAdapter;
@@ -52,9 +52,9 @@ static WINTUN_SEND_PACKET_FUNC WintunSendPacket;
 static struct openconnect_info *logger_vpninfo;
 
 #define WINTUN_POOL_NAME L"OpenConnect"
-#define WINTUN_RING_SIZE 0x400000
+#define WINTUN_RING_CAPACITY 0x400000 /* 4 MiB */
 
-static CALLBACK void wintun_log_fn(WINTUN_LOGGER_LEVEL wlvl, const WCHAR *wmsg)
+static void CALLBACK wintun_log_fn(WINTUN_LOGGER_LEVEL wlvl, const WCHAR *wmsg)
 {
 	int lvl = (wlvl == WINTUN_LOG_INFO) ? PRG_INFO : PRG_ERR;
 
@@ -69,14 +69,13 @@ static int init_wintun(struct openconnect_info *vpninfo)
 {
 	if (!vpninfo->wintun) {
 		vpninfo->wintun = LoadLibraryExW(L"wintun.dll", NULL,
-						 LOAD_LIBRARY_SEARCH_APPLICATION_DIR |
-						 LOAD_LIBRARY_SEARCH_SYSTEM32);
+						 LOAD_LIBRARY_SEARCH_APPLICATION_DIR);
 		if (!vpninfo->wintun) {
 			vpn_progress(vpninfo, PRG_DEBUG, _("Could not load wintun.dll\n"));
 			return -ENOENT;
 		}
-#define Resolve(Name) ((Name = (void *)GetProcAddress(vpninfo->wintun, #Name)) == NULL)
 
+#define Resolve(Name) ((Name = (void *)GetProcAddress(vpninfo->wintun, #Name)) == NULL)
 		if (Resolve(WintunCreateAdapter) || Resolve(WintunDeleteAdapter) ||
 		    Resolve(WintunDeletePoolDriver) || Resolve(WintunEnumAdapters) ||
 		    Resolve(WintunFreeAdapter) || Resolve(WintunOpenAdapter) ||
@@ -86,7 +85,7 @@ static int init_wintun(struct openconnect_info *vpninfo)
 		    Resolve(WintunEndSession) || Resolve(WintunGetReadWaitEvent) ||
 		    Resolve(WintunReceivePacket) || Resolve(WintunReleaseReceivePacket) ||
 		    Resolve(WintunAllocateSendPacket) || Resolve(WintunSendPacket)) {
-
+#undef Resolve
 			vpn_progress(vpninfo, PRG_ERR, _("Could not resolve functions from wintun.dll\n"));
 			FreeLibrary(vpninfo->wintun);
 			vpninfo->wintun = NULL;
@@ -102,19 +101,21 @@ static int init_wintun(struct openconnect_info *vpninfo)
 
 int create_wintun(struct openconnect_info *vpninfo)
 {
-	if (init_wintun(vpninfo))
-		return -1;
+	int ret = init_wintun(vpninfo);
+	if (ret < 0)
+		return ret;
 
 	vpninfo->wintun_adapter = WintunCreateAdapter(WINTUN_POOL_NAME,
 						      vpninfo->ifname_w, NULL, NULL);
 	if (vpninfo->wintun_adapter)
 		return 0;
 
-	char *errstr = openconnect__win32_strerror(GetLastError());
+	ret = GetLastError();
+	char *errstr = openconnect__win32_strerror(ret);
 	vpn_progress(vpninfo, PRG_ERR, "Could not create Wintun adapter '%S': %s\n",
 		     vpninfo->ifname_w, errstr);
 	free(errstr);
-	return -EIO;
+	return (ret == ERROR_ACCESS_DENIED ? -EPERM : -EIO);
 }
 
 intptr_t open_wintun(struct openconnect_info *vpninfo, char *guid, wchar_t *wname)
@@ -138,64 +139,21 @@ intptr_t open_wintun(struct openconnect_info *vpninfo, char *guid, wchar_t *wnam
 		}
 	}
 
-	if (vpninfo->ip_info.addr) {
-		/*
-		 * For now, vpnc-script-win.js depends on us setting the Legacy IP
-		 * address on the interface. Which of course assumes there *is* a
-		 * Legacy IP configuration not just IPv6. This is kind of horrid
-		 * but stay compatible with it for now. In order to set the address
-		 * up, we may first need to *remove* it from any other interface
-		 * that has it, even if the other interface is down. Testing with
-		 * a TAP-Windows interface and then Wintun was failing until I made
-		 * it explicitly delete the IP address first. The later call to
-		 * CreateUnicastIpAddressEntry() was apparently succeeding, but
-		 * wasn't changing anything. Yay Windows!
-		 */
-		MIB_UNICASTIPADDRESS_ROW AddressRow;
-		InitializeUnicastIpAddressEntry(&AddressRow);
-		WintunGetAdapterLUID(vpninfo->wintun_adapter, &AddressRow.InterfaceLuid);
-		AddressRow.Address.Ipv4.sin_family = AF_INET;
-		AddressRow.Address.Ipv4.sin_addr.S_un.S_addr = htonl(inet_addr(vpninfo->ip_info.addr));
-		AddressRow.OnLinkPrefixLength = 32;
+	DWORD ver = WintunGetRunningDriverVersion();
+	vpn_progress(vpninfo, PRG_DEBUG, _("Loaded Wintun v%u.%u\n"),
+		     (ver >> 16) & 0xff, ver & 0xff);
 
-		PMIB_UNICASTIPADDRESS_TABLE pipTable = NULL;
-		DWORD LastError = GetUnicastIpAddressTable(AF_INET, &pipTable);
-		if (LastError == ERROR_SUCCESS) {
-			for (int i = 0; i < pipTable->NumEntries; i++) {
-				if (pipTable->Table[i].Address.Ipv4.sin_addr.S_un.S_addr ==
-				    AddressRow.Address.Ipv4.sin_addr.S_un.S_addr) {
-					DeleteUnicastIpAddressEntry(&pipTable->Table[i]);
-				}
-			}
-		}
-
-		LastError = CreateUnicastIpAddressEntry(&AddressRow);
-		if (LastError != ERROR_SUCCESS) {
-			char *errstr = openconnect__win32_strerror(GetLastError());
-			vpn_progress(vpninfo, PRG_ERR,
-				     _("Failed to set Legacy IP address on Wintun: %s\n"),
-				     errstr);
-			free(errstr);
-
-			ret = OPEN_TUN_HARDFAIL;
-			goto out;
-		}
-	}
-
-	vpninfo->wintun_session = WintunStartSession(vpninfo->wintun_adapter, 0x400000);
+	vpninfo->wintun_session = WintunStartSession(vpninfo->wintun_adapter,
+	                                             WINTUN_RING_CAPACITY);
 	if (!vpninfo->wintun_session) {
 		char *errstr = openconnect__win32_strerror(GetLastError());
-		vpn_progress(vpninfo, PRG_ERR, _("Failed to create Wintun session: %s"),
+		vpn_progress(vpninfo, PRG_ERR, _("Failed to create Wintun session: %s\n"),
 			     errstr);
 		free(errstr);
 
 		ret = OPEN_TUN_HARDFAIL;
 		goto out;
 	}
-
-	DWORD ver = WintunGetRunningDriverVersion();
-	vpn_progress(vpninfo, PRG_DEBUG, _("Loaded Wintun v%d.%d\n"),
-		     (int)ver >> 16, (int)ver & 0xff);
 
 	return 1;
  out:
@@ -208,25 +166,46 @@ int os_read_wintun(struct openconnect_info *vpninfo, struct pkt *pkt)
 	DWORD tun_len;
 	BYTE *tun_pkt = WintunReceivePacket(vpninfo->wintun_session,
 					    &tun_len);
-	if (tun_pkt && tun_len < pkt->len) {
+	if (!tun_pkt) {
+		DWORD err = GetLastError();
+		if (err != ERROR_NO_MORE_ITEMS) {
+			const char *errstr = openconnect__win32_strerror(err);
+			vpn_progress(vpninfo, PRG_ERR, _("Could not retrieve packet from Wintun adapter '%S': %s\n"),
+				     vpninfo->ifname_w, errstr);
+			free(errstr);
+		}
+		return -1;
+	}
+
+	int ret = 0;
+	if (tun_len <= pkt->len) {
 		memcpy(pkt->data, tun_pkt, tun_len);
 		pkt->len = tun_len;
-		WintunReleaseReceivePacket(vpninfo->wintun_session, tun_pkt);
-		return 0;
+	} else {
+		vpn_progress(vpninfo, PRG_ERR, _("Drop oversized packet retrieved from Wintun adapter '%S' (%ld > %d)\n"),
+			     vpninfo->ifname_w, tun_len, pkt->len);
+		ret = -1;
 	}
-	return -1;
+	WintunReleaseReceivePacket(vpninfo->wintun_session, tun_pkt);
+	return ret;
 }
 
 int os_write_wintun(struct openconnect_info *vpninfo, struct pkt *pkt)
 {
 	BYTE *tun_pkt = WintunAllocateSendPacket(vpninfo->wintun_session,
 						 pkt->len);
-	if (tun_pkt) {
-		memcpy(tun_pkt, pkt->data, pkt->len);
-		WintunSendPacket(vpninfo->wintun_session, tun_pkt);
-		return 0;
+	if (!tun_pkt) {
+		DWORD err = GetLastError();
+		const char *errstr = openconnect__win32_strerror(err);
+		vpn_progress(vpninfo, PRG_ERR, _("Could not send packet through Wintun adapter '%S': %s\n"),
+			     vpninfo->ifname_w, errstr);
+		free(errstr);
+		return -1;
 	}
-	return -1;
+
+	memcpy(tun_pkt, pkt->data, pkt->len);
+	WintunSendPacket(vpninfo->wintun_session, tun_pkt);
+	return 0;
 }
 
 void os_shutdown_wintun(struct openconnect_info *vpninfo)
@@ -236,8 +215,8 @@ void os_shutdown_wintun(struct openconnect_info *vpninfo)
 		vpninfo->wintun_session = NULL;
 	}
 	if (vpninfo->wintun_adapter) {
-		BOOL rr;
-		WintunDeleteAdapter(vpninfo->wintun_adapter, FALSE, &rr);
+		WintunDeleteAdapter(vpninfo->wintun_adapter, FALSE, NULL);
+		WintunFreeAdapter(vpninfo->wintun_adapter);
 		vpninfo->wintun_adapter = NULL;
 	}
 	logger_vpninfo = NULL;

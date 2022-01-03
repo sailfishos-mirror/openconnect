@@ -58,7 +58,7 @@ modify the system's network configuration.  Instead, OpenConnect can
 spawn a user-supplied program, passing all data traffic through a UNIX
 socket to that program.</p>
 <p>This option can be used in conjunction with a userspace TCP stack
-such as <a href="http://savannah.nongnu.org/projects/lwip/">lwip</a>
+such as <a href="https://savannah.nongnu.org/projects/lwip/">lwip</a>
 to provide SOCKS access to the VPN, without requiring root privileges
 at all.</p>
 <p>SOCKS proxy implementions suitable for being used from OpenConnect

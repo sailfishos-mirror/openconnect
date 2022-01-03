@@ -17,17 +17,13 @@
 
 #include <config.h>
 
+#include "openconnect-internal.h"
+
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <unistd.h>
 #include <inttypes.h>
 #include <fcntl.h>
-#include <string.h>
-#include <stdio.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <time.h>
 #if defined(__linux__) || defined(__ANDROID__)
 #include <sys/vfs.h>
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__OpenBSD__) || defined(__APPLE__)
@@ -45,11 +41,16 @@
 #include <sys/socket.h>
 #endif
 
-#include "openconnect-internal.h"
-
 #ifdef ANDROID_KEYSTORE
 #include <sys/un.h>
 #endif
+
+#include <string.h>
+#include <stdio.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <stdarg.h>
+#include <time.h>
 
 /* OSX < 1.6 doesn't have AI_NUMERICSERV */
 #ifndef AI_NUMERICSERV
@@ -65,7 +66,7 @@
 #endif
 #endif
 
-static inline int connect_pending()
+static inline int connect_pending(void)
 {
 #ifdef _WIN32
 	return WSAGetLastError() == WSAEWOULDBLOCK;
@@ -127,7 +128,7 @@ static int cancellable_connect(struct openconnect_info *vpninfo, int sockfd,
 		 !vpninfo->got_pause_cmd);
 
 	/* Check whether connect() succeeded or failed by using
-	   getpeername(). See http://cr.yp.to/docs/connect.html */
+	   getpeername(). See https://cr.yp.to/docs/connect.html */
 	if (!getpeername(sockfd, (void *)&peer, &peerlen))
 		return 0;
 
@@ -559,17 +560,17 @@ int __attribute__ ((format(printf, 4, 5)))
 int openconnect_passphrase_from_fsid(struct openconnect_info *vpninfo)
 {
 	struct statvfs buf;
-	char *sslkey = openconnect_utf8_to_legacy(vpninfo, vpninfo->sslkey);
+	char *sslkey = openconnect_utf8_to_legacy(vpninfo, vpninfo->certinfo[0].key);
 	int err = 0;
 
 	if (statvfs(sslkey, &buf)) {
 		err = -errno;
 		vpn_progress(vpninfo, PRG_ERR, _("statvfs: %s\n"),
 			     strerror(errno));
-	} else if (asprintf(&vpninfo->cert_password, "%lx", buf.f_fsid) == -1)
+	} else if (asprintf(&vpninfo->certinfo[0].password, "%lx", buf.f_fsid) == -1)
 		err = -ENOMEM;
 
-	if (sslkey != vpninfo->sslkey)
+	if (sslkey != vpninfo->certinfo[0].key)
 		free(sslkey);
 	return err;
 }
@@ -600,11 +601,11 @@ int openconnect_passphrase_from_fsid(struct openconnect_info *vpninfo)
 	if (!func)
 		goto notsupp;
 
-	fd = openconnect_open_utf8(vpninfo, vpninfo->sslkey, O_RDONLY);
+	fd = openconnect_open_utf8(vpninfo, vpninfo->certinfo[0].key, O_RDONLY);
 	if (fd == -1) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Failed to open private key file '%s': %s\n"),
-			     vpninfo->sslkey, strerror(errno));
+			     vpninfo->certinfo[0].key, strerror(errno));
 		return -ENOENT;
 	}
 
@@ -615,7 +616,7 @@ int openconnect_passphrase_from_fsid(struct openconnect_info *vpninfo)
 	if (!success)
 		return -EIO;
 
-	if (asprintf(&vpninfo->cert_password, "%lx", serial) == -1)
+	if (asprintf(&vpninfo->certinfo[0].password, "%lx", serial) == -1)
 		return -ENOMEM;
 
 	return 0;
@@ -623,7 +624,7 @@ int openconnect_passphrase_from_fsid(struct openconnect_info *vpninfo)
 #elif defined(HAVE_STATFS)
 int openconnect_passphrase_from_fsid(struct openconnect_info *vpninfo)
 {
-	char *sslkey = openconnect_utf8_to_legacy(vpninfo, vpninfo->sslkey);
+	char *sslkey = openconnect_utf8_to_legacy(vpninfo, vpninfo->certinfo[0].key);
 	struct statfs buf;
 	unsigned *fsid = (unsigned *)&buf.f_fsid;
 	unsigned long long fsid64;
@@ -637,11 +638,11 @@ int openconnect_passphrase_from_fsid(struct openconnect_info *vpninfo)
 	} else {
 		fsid64 = ((unsigned long long)fsid[0] << 32) | fsid[1];
 
-		if (asprintf(&vpninfo->cert_password, "%llx", fsid64) == -1)
+		if (asprintf(&vpninfo->certinfo[0].password, "%llx", fsid64) == -1)
 			err = -ENOMEM;
 	}
 
-	if (sslkey != vpninfo->sslkey)
+	if (sslkey != vpninfo->certinfo[0].key)
 		free(sslkey);
 
 	return err;
@@ -860,14 +861,20 @@ void poll_cmd_fd(struct openconnect_info *vpninfo, int timeout)
 		tv.tv_sec = now >= expiration ? 0 : expiration - now;
 		tv.tv_usec = 0;
 
+		/* If the cmd_fd is internal and we've been told to poll it,
+		 * don't *keep* doing so afterwards. */
+		vpninfo->need_poll_cmd_fd = !vpninfo->cmd_fd_internal;
+
 		FD_ZERO(&rd_set);
 		cmd_fd_set(vpninfo, &rd_set, &maxfd);
 		if (select(maxfd + 1, &rd_set, NULL, NULL, &tv) < 0 &&
 		    errno != EINTR) {
 			vpn_perror(vpninfo, _("Failed select() for command socket"));
 		}
-
-		check_cmd_fd(vpninfo, &rd_set);
+		if (FD_ISSET(vpninfo->cmd_fd, &rd_set)) {
+			vpninfo->need_poll_cmd_fd = 1; /* Until it's *empty */
+			check_cmd_fd(vpninfo, &rd_set);
+		}
 	}
 }
 
@@ -928,8 +935,8 @@ FILE *openconnect_fopen_utf8(struct openconnect_info *vpninfo, const char *fname
 		/* This should never happen, but if we forget and start using other
 		   modes without implementing proper mode->flags conversion, complain! */
 		vpn_progress(vpninfo, PRG_ERR,
-			     _("openconnect_fopen_utf8() used with unsupported mode '%s'\n"),
-			     mode);
+			     _("%s() used with unsupported mode '%s'\n"),
+			     __func__, mode);
 		return NULL;
 	}
 
@@ -1048,10 +1055,17 @@ int udp_connect(struct openconnect_info *vpninfo)
 	if (vpninfo->protect_socket)
 		vpninfo->protect_socket(vpninfo->cbdata, fd);
 
-	sndbuf = vpninfo->ip_info.mtu * 2;
+	sndbuf = vpninfo->ip_info.mtu;
+	if (!sndbuf)
+		sndbuf = 1500;
+	sndbuf *= vpninfo->max_qlen;
 	if (setsockopt(fd, SOL_SOCKET, SO_SNDBUF, (void *)&sndbuf, sizeof(sndbuf)) < 0) {
 		vpn_perror(vpninfo, "Set UDP socket send buffer");
 	}
+
+	socklen_t l = sizeof(sndbuf);
+	if (!getsockopt(fd, SOL_SOCKET, SO_SNDBUF, (void *)&sndbuf, &l))
+		vpn_progress(vpninfo, PRG_DEBUG, "UDP SO_SNDBUF: %d\n", sndbuf);
 
 	if (vpninfo->dtls_local_port) {
 		union {
@@ -1090,7 +1104,7 @@ int udp_connect(struct openconnect_info *vpninfo)
 	}
 
 	if (connect(fd, vpninfo->dtls_addr, vpninfo->peer_addrlen)) {
-		vpn_perror(vpninfo, _("Connect UDP socket\n"));
+		vpn_perror(vpninfo, _("Connect UDP socket"));
 		closesocket(fd);
 		return -EINVAL;
 	}
@@ -1118,9 +1132,9 @@ int ssl_reconnect(struct openconnect_info *vpninfo)
 	timeout = vpninfo->reconnect_timeout;
 	interval = vpninfo->reconnect_interval;
 
-	free(vpninfo->dtls_pkt);
+	free_pkt(vpninfo, vpninfo->dtls_pkt);
 	vpninfo->dtls_pkt = NULL;
-	free(vpninfo->tun_pkt);
+	free_pkt(vpninfo, vpninfo->tun_pkt);
 	vpninfo->tun_pkt = NULL;
 
 	while (1) {

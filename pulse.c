@@ -17,19 +17,19 @@
 
 #include <config.h>
 
+#include "openconnect-internal.h"
+
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/types.h>
+
 #include <time.h>
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <sys/types.h>
 #include <stdarg.h>
-#include <sys/types.h>
-
-#include "openconnect-internal.h"
 
 #define VENDOR_JUNIPER 0xa4c
 #define VENDOR_JUNIPER2 0x583
@@ -283,12 +283,13 @@ static int process_attr(struct openconnect_info *vpninfo, struct oc_vpn_option *
 				     _("Failed to handle IPv6 address\n"));
 			return -EINVAL;
 		}
-		new_ip_info->addr6 = add_option_dup(new_opts, "ip6addr", buf, -1);
+		if (!vpninfo->disable_ipv6) {
+			new_ip_info->addr6 = add_option_dup(new_opts, "ip6addr", buf, -1);
 
-		i = strlen(buf);
-		snprintf(buf + i, sizeof(buf) - i, "/%d", data[16]);
-		new_ip_info->netmask6 = add_option_dup(new_opts, "ip6netmask", buf, -1);
-
+			i = strlen(buf);
+			snprintf(buf + i, sizeof(buf) - i, "/%d", data[16]);
+			new_ip_info->netmask6 = add_option_dup(new_opts, "ip6netmask", buf, -1);
+		}
 		vpn_progress(vpninfo, PRG_DEBUG, _("Received internal IPv6 address %s\n"), buf);
 		break;
 
@@ -375,7 +376,7 @@ static int process_attr(struct openconnect_info *vpninfo, struct oc_vpn_option *
 		if (!attrlen)
 			goto badlen;
 		if (!data[attrlen-1])
-		    attrlen--;
+			attrlen--;
 		vpn_progress(vpninfo, PRG_DEBUG, _("Received DNS search domain %.*s\n"),
 			     attrlen, (char *)data);
 		new_ip_info->domain = add_option_dup(new_opts, "search", (char *)data, attrlen);
@@ -1688,27 +1689,26 @@ static int pulse_authenticate(struct openconnect_info *vpninfo, int connecting)
 			val = load_be32(avp_p);
 
 			switch (val) {
-		case 1: /* Prompt for both username and password. */
-			prompt_flags = PROMPT_PASSWORD | PROMPT_USERNAME;
-			break;
-		case 3: /* Prompt for password.*/
-		case 15:
-			prompt_flags = PROMPT_PASSWORD;
-			break;
-		case 5: /* Prompt for username.*/
-			prompt_flags = PROMPT_USERNAME;
-			break;
-
-		default:
-			/* It does no harm to submit both, as anything unwanted is ignored. */
-			vpn_progress(vpninfo, PRG_ERR,
-				     _("Unknown D73 prompt value 0x%x. Will prompt for both username and password.\n"),
-				     val);
-			vpn_progress(vpninfo, PRG_ERR,
-				     _("Please report this value and the behaviour of the official client.\n"));
-			prompt_flags = PROMPT_PASSWORD | PROMPT_USERNAME;
-			break;
-		}
+			case 1: /* Prompt for both username and password. */
+				prompt_flags = PROMPT_PASSWORD | PROMPT_USERNAME;
+				break;
+			case 3: /* Prompt for password.*/
+			case 15:
+				prompt_flags = PROMPT_PASSWORD;
+				break;
+			case 5: /* Prompt for username.*/
+				prompt_flags = PROMPT_USERNAME;
+				break;
+			default:
+				/* It does no harm to submit both, as anything unwanted is ignored. */
+				vpn_progress(vpninfo, PRG_ERR,
+				             _("Unknown D73 prompt value 0x%x. Will prompt for both username and password.\n"),
+				             val);
+				vpn_progress(vpninfo, PRG_ERR,
+				             _("Please report this value and the behaviour of the official client.\n"));
+				prompt_flags = PROMPT_PASSWORD | PROMPT_USERNAME;
+				break;
+			}
 		} else if (avp_vendor == VENDOR_JUNIPER2 && avp_code == 0xd7b) {
 			free(signin_prompt);
 			signin_prompt = strndup(avp_p, avp_len);
@@ -2568,16 +2568,20 @@ int pulse_connect(struct openconnect_info *vpninfo)
 
 	if (!vpninfo->ip_info.mtu ||
 	    (!vpninfo->ip_info.addr && !vpninfo->ip_info.addr6)) {
-		vpn_progress(vpninfo, PRG_ERR, "Insufficient configuration found\n");
+		vpn_progress(vpninfo, PRG_ERR, _("Insufficient configuration found\n"));
 		return -EINVAL;
 	}
+
+	/* This should never happen, but be defensive and shut Coverity up */
+	if (vpninfo->ssl_fd == -1)
+		return -EIO;
 
 	ret = 0;
 	monitor_fd_new(vpninfo, ssl);
 	monitor_read_fd(vpninfo, ssl);
 	monitor_except_fd(vpninfo, ssl);
 
-	free(vpninfo->cstp_pkt);
+	free_pkt(vpninfo, vpninfo->cstp_pkt);
 	vpninfo->cstp_pkt = NULL;
 
 	return ret;
@@ -2607,7 +2611,7 @@ int pulse_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		int len, payload_len;
 
 		if (!pkt) {
-			pkt = vpninfo->cstp_pkt = malloc(sizeof(struct pkt) + receive_mtu);
+			pkt = vpninfo->cstp_pkt = alloc_pkt(vpninfo, receive_mtu);
 			if (!pkt) {
 				vpn_progress(vpninfo, PRG_ERR, _("Allocation failed\n"));
 				break;
@@ -2778,7 +2782,7 @@ int pulse_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 				return work_done;
 			default:
 				/* This should never happen */
-				;
+				break;
 			}
 #else
 			return work_done;
@@ -2794,10 +2798,10 @@ int pulse_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		}
 		/* Don't free the 'special' packets */
 		if (vpninfo->current_ssl_pkt == vpninfo->deflate_pkt) {
-			free(vpninfo->pending_deflated_pkt);
+			free_pkt(vpninfo, vpninfo->pending_deflated_pkt);
 			vpninfo->pending_deflated_pkt = NULL;
 		} else
-			free(vpninfo->current_ssl_pkt);
+			free_pkt(vpninfo, vpninfo->current_ssl_pkt);
 
 		vpninfo->current_ssl_pkt = NULL;
 	}

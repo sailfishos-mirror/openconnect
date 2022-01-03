@@ -17,9 +17,10 @@
  * Lesser General Public License for more details.
  */
 
-#include "config.h"
+#include <config.h>
 
 #include "openconnect-internal.h"
+
 #include "gnutls.h"
 
 #include <stdio.h>
@@ -219,7 +220,7 @@ static TPM_RC tpm2_load_srk(struct openconnect_info *vpninfo, TSS_CONTEXT *tssCo
 }
 
 
-static TPM_HANDLE tpm2_load_key(struct openconnect_info *vpninfo, TSS_CONTEXT **tsscp)
+static TPM_HANDLE tpm2_load_key(struct openconnect_info *vpninfo, struct cert_info *certinfo, TSS_CONTEXT **tsscp)
 {
 	TSS_CONTEXT *tssContext;
 	Load_In in;
@@ -227,10 +228,10 @@ static TPM_HANDLE tpm2_load_key(struct openconnect_info *vpninfo, TSS_CONTEXT **
 	TPM_HANDLE key = 0;
 	TPM_RC rc;
 	TPM_HANDLE session;
-	char *pass = vpninfo->tpm2->parent_pass;
+	char *pass = certinfo->tpm2->parent_pass;
 	int need_pw = 0;
 
-	vpninfo->tpm2->parent_pass = NULL;
+	certinfo->tpm2->parent_pass = NULL;
 
 	rc = TSS_Create(&tssContext);
 	if (rc) {
@@ -241,10 +242,10 @@ static TPM_HANDLE tpm2_load_key(struct openconnect_info *vpninfo, TSS_CONTEXT **
 	memset(&in, 0, sizeof(in));
 	memset(&out, 0, sizeof(out));
 
-	if (parent_is_persistent(vpninfo->tpm2->parent)) {
+	if (parent_is_persistent(certinfo->tpm2->parent)) {
 		if (!pass) {
 			TPMT_PUBLIC pub;
-			rc = tpm2_readpublic(vpninfo, tssContext, vpninfo->tpm2->parent, &pub);
+			rc = tpm2_readpublic(vpninfo, tssContext, certinfo->tpm2->parent, &pub);
 			if (rc)
 				goto out;
 
@@ -252,13 +253,16 @@ static TPM_HANDLE tpm2_load_key(struct openconnect_info *vpninfo, TSS_CONTEXT **
 				need_pw = 1;
 		}
 
-		in.parentHandle = vpninfo->tpm2->parent;
+		in.parentHandle = certinfo->tpm2->parent;
 	} else {
 	reauth_srk:
-		rc = tpm2_load_srk(vpninfo, tssContext, &in.parentHandle, pass, vpninfo->tpm2->parent, vpninfo->tpm2->legacy_srk);
+		rc = tpm2_load_srk(vpninfo, tssContext, &in.parentHandle, pass, certinfo->tpm2->parent, certinfo->tpm2->legacy_srk);
 		if (rc == KEY_AUTH_FAILED) {
 			free_pass(&pass);
-			if (!request_passphrase(vpninfo, "openconnect_tpm2_hierarchy", &pass,
+			if (!request_passphrase(vpninfo,
+						certinfo_string(certinfo, "openconnect_tpm2_hierarchy",
+								"openconnect_secondary_tpm2_hierarchy"),
+						&pass,
 						_("Enter TPM2 %s hierarchy password:"), "owner")) {
 				goto reauth_srk;
 			}
@@ -270,12 +274,16 @@ static TPM_HANDLE tpm2_load_key(struct openconnect_info *vpninfo, TSS_CONTEXT **
 	if (rc)
 		goto out_flush_srk;
 
-	memcpy(&in.inPublic, &vpninfo->tpm2->pub, sizeof(in.inPublic));
-	memcpy(&in.inPrivate, &vpninfo->tpm2->priv, sizeof(in.inPrivate));
+	memcpy(&in.inPublic, &certinfo->tpm2->pub, sizeof(in.inPublic));
+	memcpy(&in.inPrivate, &certinfo->tpm2->priv, sizeof(in.inPrivate));
 	if (need_pw && !pass) {
 	reauth_parent:
-		if (request_passphrase(vpninfo, "openconnect_tpm2_parent", &pass,
-				       _("Enter TPM2 parent key password:"))) {
+		if (request_passphrase(vpninfo,
+				       certinfo_string(certinfo, "openconnect_tpm2_parent",
+						       "openconnect_secondary_tpm2_parent"),
+				       &pass,
+				       certinfo_string(certinfo, _("Enter TPM2 parent key password:"),
+						       _("Enter secondary TPM2 parent key password:")))) {
 			tpm2_flush_handle(tssContext, session);
 			goto out_flush_srk;
 		}
@@ -299,10 +307,10 @@ static TPM_HANDLE tpm2_load_key(struct openconnect_info *vpninfo, TSS_CONTEXT **
 		key = out.objectHandle;
 
  out_flush_srk:
-	if (parent_is_generated(vpninfo->tpm2->parent))
+	if (parent_is_generated(certinfo->tpm2->parent))
 		tpm2_flush_handle(tssContext, in.parentHandle);
  out:
-	vpninfo->tpm2->parent_pass = pass;
+	certinfo->tpm2->parent_pass = pass;
 	if (!key)
 		TSS_Delete(tssContext);
 	else
@@ -318,29 +326,31 @@ static void tpm2_unload_key(TSS_CONTEXT *tssContext, TPM_HANDLE key)
 }
 
 int tpm2_rsa_sign_hash_fn(gnutls_privkey_t key, gnutls_sign_algorithm_t algo,
-			  void *_vpninfo, unsigned int flags,
+			  void *_certinfo, unsigned int flags,
 			  const gnutls_datum_t *data, gnutls_datum_t *sig)
 {
-	struct openconnect_info *vpninfo = _vpninfo;
+	struct cert_info *certinfo = _certinfo;
+	struct openconnect_info *vpninfo = certinfo->vpninfo;
 	TSS_CONTEXT *tssContext = NULL;
 	RSA_Decrypt_In in;
 	RSA_Decrypt_Out out;
 	int ret = GNUTLS_E_PK_SIGN_FAILED;
 	TPM_HANDLE authHandle;
 	TPM_RC rc;
-	char *pass = vpninfo->tpm2->key_pass;
+	char *pass = certinfo->tpm2->key_pass;
 
-	vpninfo->tpm2->key_pass = NULL;
+	certinfo->tpm2->key_pass = NULL;
 
 	memset(&in, 0, sizeof(in));
 
-	in.cipherText.t.size = vpninfo->tpm2->pub.publicArea.unique.rsa.t.size;
+	in.cipherText.t.size = certinfo->tpm2->pub.publicArea.unique.rsa.t.size;
 
-	if (oc_pkcs1_pad(vpninfo, in.cipherText.t.buffer, in.cipherText.t.size, data))
+	if (oc_pad_rsasig(vpninfo, algo, in.cipherText.t.buffer, in.cipherText.t.size, data,
+			  certinfo->tpm2->pub.publicArea.parameters.rsaDetail.keyBits))
 		return GNUTLS_E_PK_SIGN_FAILED;
 
 	in.inScheme.scheme = TPM_ALG_NULL;
-	in.keyHandle = tpm2_load_key(vpninfo, &tssContext);
+	in.keyHandle = tpm2_load_key(vpninfo, certinfo, &tssContext);
 	in.label.t.size = 0;
 	if (!in.keyHandle)
 		return GNUTLS_E_PK_SIGN_FAILED;
@@ -359,8 +369,12 @@ int tpm2_rsa_sign_hash_fn(gnutls_privkey_t key, gnutls_sign_algorithm_t algo,
 			 TPM_RH_NULL, NULL, 0);
 	if (rc == KEY_AUTH_FAILED) {
 		free_pass(&pass);
-		if (!request_passphrase(vpninfo, "openconnect_tpm2_key",
-					&pass, _("Enter TPM2 key password:")))
+		if (!request_passphrase(vpninfo,
+					certinfo_string(certinfo, "openconnect_tpm2_key",
+							"openconnect_secondary_tpm2_key"),
+					&pass,
+					certinfo_string(certinfo, _("Enter TPM2 key password:"),
+							_("Enter secondary TPM2 key password:"))))
 			goto reauth;
 	}
 	if (rc) {
@@ -370,7 +384,7 @@ int tpm2_rsa_sign_hash_fn(gnutls_privkey_t key, gnutls_sign_algorithm_t algo,
 		goto out;
 	}
 
-	vpninfo->tpm2->key_pass = pass;
+	certinfo->tpm2->key_pass = pass;
 
 	sig->data = malloc(out.message.t.size);
 	if (!sig->data)
@@ -386,20 +400,21 @@ int tpm2_rsa_sign_hash_fn(gnutls_privkey_t key, gnutls_sign_algorithm_t algo,
 }
 
 int tpm2_ec_sign_hash_fn(gnutls_privkey_t key, gnutls_sign_algorithm_t algo,
-			 void *_vpninfo, unsigned int flags,
+			 void *_certinfo, unsigned int flags,
 			 const gnutls_datum_t *data, gnutls_datum_t *sig)
 {
-	struct openconnect_info *vpninfo = _vpninfo;
+	struct cert_info *certinfo = _certinfo;
+	struct openconnect_info *vpninfo = certinfo->vpninfo;
 	TSS_CONTEXT *tssContext = NULL;
 	Sign_In in;
 	Sign_Out out;
 	int ret = GNUTLS_E_PK_SIGN_FAILED;
 	TPM_HANDLE authHandle;
 	TPM_RC rc;
-	char *pass = vpninfo->tpm2->key_pass;
+	char *pass = certinfo->tpm2->key_pass;
 	gnutls_datum_t sig_r, sig_s;
 
-	vpninfo->tpm2->key_pass = NULL;
+	certinfo->tpm2->key_pass = NULL;
 
 	vpn_progress(vpninfo, PRG_DEBUG,
 		     _("TPM2 EC sign function called for %d bytes.\n"),
@@ -407,17 +422,28 @@ int tpm2_ec_sign_hash_fn(gnutls_privkey_t key, gnutls_sign_algorithm_t algo,
 
 	memset(&in, 0, sizeof(in));
 
-	switch (algo) {
-	case GNUTLS_SIGN_ECDSA_SHA1:   in.inScheme.details.ecdsa.hashAlg = TPM_ALG_SHA1;   break;
-	case GNUTLS_SIGN_ECDSA_SHA256: in.inScheme.details.ecdsa.hashAlg = TPM_ALG_SHA256; break;
-	case GNUTLS_SIGN_ECDSA_SHA384: in.inScheme.details.ecdsa.hashAlg = TPM_ALG_SHA384; break;
+
+	/* FIPS-186-4 §6.4 says "When the length of the output of the hash
+	 * function is greater than the bit length of n, then the leftmost
+	 * n bits of the hash function output block shall be used in any
+	 * calculation using the hash function output during the generation
+	 * or verification of a digital signature."
+	 *
+	 * So GnuTLS is expected to *truncate* a larger hash to fit the
+	 * curve bit length, and then we lie to the TPM about which hash
+	 * it was because the TPM only really cares about the size of the
+	 * data anyway. */
+	switch (data->size) {
+	case SHA1_SIZE:   in.inScheme.details.ecdsa.hashAlg = TPM_ALG_SHA1;   break;
+	case SHA256_SIZE: in.inScheme.details.ecdsa.hashAlg = TPM_ALG_SHA256; break;
+	case SHA384_SIZE: in.inScheme.details.ecdsa.hashAlg = TPM_ALG_SHA384; break;
 #ifdef TPM_ALG_SHA512
-	case GNUTLS_SIGN_ECDSA_SHA512: in.inScheme.details.ecdsa.hashAlg = TPM_ALG_SHA512; break;
+	case SHA512_SIZE: in.inScheme.details.ecdsa.hashAlg = TPM_ALG_SHA512; break;
 #endif
 	default:
 		vpn_progress(vpninfo, PRG_ERR,
-			     _("Unknown TPM2 EC digest size %d\n"),
-			     data->size);
+			     _("Unknown TPM2 EC digest size %d for algo 0x%x\n"),
+			     data->size, algo);
 		return GNUTLS_E_PK_SIGN_FAILED;
 	}
 
@@ -428,7 +454,7 @@ int tpm2_ec_sign_hash_fn(gnutls_privkey_t key, gnutls_sign_algorithm_t algo,
 	in.validation.hierarchy = TPM_RH_NULL;
 	in.validation.digest.t.size = 0;
 
-	in.keyHandle = tpm2_load_key(vpninfo, &tssContext);
+	in.keyHandle = tpm2_load_key(vpninfo, certinfo, &tssContext);
 	if (!in.keyHandle)
 		return GNUTLS_E_PK_SIGN_FAILED;
 
@@ -456,7 +482,7 @@ int tpm2_ec_sign_hash_fn(gnutls_privkey_t key, gnutls_sign_algorithm_t algo,
 		goto out;
 	}
 
-	vpninfo->tpm2->key_pass = pass;
+	certinfo->tpm2->key_pass = pass;
 	sig_r.data = out.signature.signature.ecdsa.signatureR.t.buffer;
 	sig_r.size = out.signature.signature.ecdsa.signatureR.t.size;
 	sig_s.data = out.signature.signature.ecdsa.signatureS.t.buffer;
@@ -470,7 +496,8 @@ int tpm2_ec_sign_hash_fn(gnutls_privkey_t key, gnutls_sign_algorithm_t algo,
 	return ret;
 }
 
-int install_tpm2_key(struct openconnect_info *vpninfo, gnutls_privkey_t *pkey, gnutls_datum_t *pkey_sig,
+int install_tpm2_key(struct openconnect_info *vpninfo, struct cert_info *certinfo,
+		     gnutls_privkey_t *pkey, gnutls_datum_t *pkey_sig,
 		     unsigned int parent, int emptyauth, int legacy,
 		     gnutls_datum_t *privdata, gnutls_datum_t *pubdata)
 {
@@ -486,17 +513,17 @@ int install_tpm2_key(struct openconnect_info *vpninfo, gnutls_privkey_t *pkey, g
 		return -EINVAL;
 	}
 
-	vpninfo->tpm2 = calloc(1, sizeof(*vpninfo->tpm2));
-	if (!vpninfo->tpm2)
+	certinfo->tpm2 = calloc(1, sizeof(*certinfo->tpm2));
+	if (!certinfo->tpm2)
 		return -ENOMEM;
 
-	vpninfo->tpm2->parent = parent;
-	vpninfo->tpm2->need_userauth = !emptyauth;
-	vpninfo->tpm2->legacy_srk = legacy;
+	certinfo->tpm2->parent = parent;
+	certinfo->tpm2->need_userauth = !emptyauth;
+	certinfo->tpm2->legacy_srk = legacy;
 
 	der = privdata->data;
 	dersize = privdata->size;
-	rc = TPM2B_PRIVATE_Unmarshal(&vpninfo->tpm2->priv, &der, &dersize);
+	rc = TPM2B_PRIVATE_Unmarshal(&certinfo->tpm2->priv, &der, &dersize);
 	if (rc) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Failed to import TPM2 private key data: 0x%x\n"),
@@ -506,7 +533,7 @@ int install_tpm2_key(struct openconnect_info *vpninfo, gnutls_privkey_t *pkey, g
 
 	der = pubdata->data;
 	dersize = pubdata->size;
-	rc = TPM2B_PUBLIC_Unmarshal(&vpninfo->tpm2->pub, &der, &dersize, FALSE);
+	rc = TPM2B_PUBLIC_Unmarshal(&certinfo->tpm2->pub, &der, &dersize, FALSE);
 	if (rc) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Failed to import TPM2 public key data: 0x%x\n"),
@@ -514,27 +541,36 @@ int install_tpm2_key(struct openconnect_info *vpninfo, gnutls_privkey_t *pkey, g
 		goto err_out;
 	}
 
-	switch(vpninfo->tpm2->pub.publicArea.type) {
+	switch(certinfo->tpm2->pub.publicArea.type) {
 	case TPM_ALG_RSA: return GNUTLS_PK_RSA;
 	case TPM_ALG_ECC: return GNUTLS_PK_ECC;
 	}
 
 	vpn_progress(vpninfo, PRG_ERR,
 		     _("Unsupported TPM2 key type %d\n"),
-		     vpninfo->tpm2->pub.publicArea.type);
-;
+		     certinfo->tpm2->pub.publicArea.type);
+
  err_out:
-	release_tpm2_ctx(vpninfo);
+	release_tpm2_ctx(vpninfo, certinfo);
 	return -EINVAL;
 }
 
-
-void release_tpm2_ctx(struct openconnect_info *vpninfo)
+uint16_t tpm2_key_curve(struct openconnect_info *vpninfo, struct cert_info *certinfo)
 {
-	if (vpninfo->tpm2) {
-		free_pass(&vpninfo->tpm2->parent_pass);
-		free_pass(&vpninfo->tpm2->key_pass);
-		free(vpninfo->tpm2);
-		vpninfo->tpm2 = NULL;
+	return certinfo->tpm2->pub.publicArea.parameters.eccDetail.curveID;
+}
+
+int tpm2_rsa_key_bits(struct openconnect_info *vpninfo, struct cert_info *certinfo)
+{
+	return certinfo->tpm2->pub.publicArea.parameters.rsaDetail.keyBits;
+}
+
+void release_tpm2_ctx(struct openconnect_info *vpninfo, struct cert_info *certinfo)
+{
+	if (certinfo->tpm2) {
+		free_pass(&certinfo->tpm2->parent_pass);
+		free_pass(&certinfo->tpm2->key_pass);
+		free(certinfo->tpm2);
+		certinfo->tpm2 = NULL;
 	}
 }

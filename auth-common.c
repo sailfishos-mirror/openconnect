@@ -17,18 +17,19 @@
 
 #include <config.h>
 
+#include "openconnect-internal.h"
+
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/types.h>
+
 #include <time.h>
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <sys/types.h>
 #include <stdarg.h>
-
-#include "openconnect-internal.h"
 
 int xmlnode_is_named(xmlNode *xml_node, const char *name)
 {
@@ -74,7 +75,7 @@ int xmlnode_match_prop(xmlNode *xml_node, const char *name, const char *match)
 		return -ENOENT;
 
 	if (strcmp(str, match))
-	    ret = -EEXIST;
+		ret = -EEXIST;
 
 	free(str);
 	return ret;

@@ -5,7 +5,7 @@
 	<VAR match="VAR_SEL_BUILDING" replace="selected" />
 	<PARSE file="menu1.xml" />
 	<PARSE file="menu2-started.xml" />
-	
+
 	<INCLUDE file="inc/content.tmpl" />
 
     	<h1>Building OpenConnect</h1>
@@ -28,13 +28,13 @@ libraries and tools installed:</p>
 </ul>
 And <em>optionally</em> also:
 <ul>
-  <li><b><tt><a href="http://p11-glue.freedesktop.org/p11-kit.html">p11-kit</a></tt></b> <i>(for PKCS#11 support)</i></li>
+  <li><b><tt><a href="https://p11-glue.github.io/p11-glue/p11-kit.html">p11-kit</a></tt></b> <i>(for PKCS#11 support)</i></li>
   <li><b><tt><a href="https://github.com/OpenSC/libp11/wiki">libp11</a></tt></b> <i>(also needed for PKCS#11 support if using OpenSSL)</i></li>
-  <li><b><tt><a href="http://code.google.com/p/libproxy/">libproxy</a></tt></b></li>
+  <li><b><tt><a href="https://code.google.com/archive/p/libproxy/">libproxy</a></tt></b></li>
   <li><b><tt><a href="http://trousers.sourceforge.net/">trousers</a></tt></b> <i>(for TPMv1 support if using GnuTLS)</i></li>
-  <li><b><tt><a href="https://www.gnu.org/software/libtasn1/">libtasn1</a></tt></b> and <em>either</em> <b><tt><a href="https://github.com/tpm2-software/tpm2-tss">tss2-esys</a></tt></b> or <b><tt><a href="http://sourceforge.net/projects/ibmtpm20tss/">IBM's TPM 2.0 TSS</a></tt></b>. <i>(for TPMv2 support if using GnuTLS)</i></li>
-  <li><b><tt><a href="http://stoken.sourceforge.net/">libstoken</a></tt></b> <i>(for SecurID software token support)</i></li>
-  <li><b><tt><a href="http://www.nongnu.org/oath-toolkit/">libpskc</a></tt></b> <i>(for RFC6030 PSKC file storage of HOTP/TOTP keys)</i></li>
+  <li><b><tt><a href="https://www.gnu.org/software/libtasn1/">libtasn1</a></tt></b> and <em>either</em> <b><tt><a href="https://github.com/tpm2-software/tpm2-tss">tss2-esys</a></tt></b> or <b><tt><a href="https://sourceforge.net/projects/ibmtpm20tss/">IBM's TPM 2.0 TSS</a></tt></b>. <i>(for TPMv2 support if using GnuTLS)</i></li>
+  <li><b><tt><a href="http://stoken.sf.net/">libstoken</a></tt></b> <i>(for SecurID software token support)</i></li>
+  <li><b><tt><a href="https://www.nongnu.org/oath-toolkit/">libpskc</a></tt></b> <i>(for RFC6030 PSKC file storage of HOTP/TOTP keys)</i></li>
   <li><b><tt><a href="https://pcsclite.alioth.debian.org/pcsclite.html">libpcsclite</a></tt></b> <i>(for Yubikey hardware HOTP/HOTP support)</i></li>
 </ul>
 <p>OpenConnect supports the use of HTTP and SOCKS proxies to connect to the
@@ -45,14 +45,14 @@ on the command line.</p>
 
 <h2>Install vpnc-script</h2>
  <p>OpenConnect should be given a default <a href="vpnc-script.html">vpnc-script</a>
- for network configuration (routing and DNS) at compile-time. This can be overriden
+ for network configuration (routing and DNS) at compile-time. This can be overridden
  at runtime (with <tt>--script</tt>).</p>
  <p>The <tt>configure</tt> script will check whether <tt>/etc/vpnc/vpnc-script</tt>
  exists and can be executed, and will fail if not. If you don't already have
  a copy then you should install one. It might be in a separate <tt>vpnc-script</tt>
  package for your operating system, it might be part of their <tt>vpnc</tt> package,
- and there's one linked from from the <a href="vpnc-script.html">vpnc-script page</a>,
- if you need to download it manually. Install it as <tt>/etc/vpnc/vpnc-script</tt>.</p>
+ and there's one linked from the <a href="vpnc-script.html">vpnc-script page</a>, if
+ you need to download it manually. Install it as <tt>/etc/vpnc/vpnc-script</tt>.</p>
 
 <p>If you do not want to use the standard location, you can configure OpenConnect to
  use a different location by default. When running the <tt>./configure</tt> script
@@ -111,6 +111,8 @@ it still doesn't build, please send the full output in a plain-text mail to the
 
 <h2>TUN/TAP driver</h2>
 
+<h3>Mac OS</h3>
+
 <p>Mac OS X users with OS X 10.6 or older, or using OpenConnect 6.00 or older,
 will also need to install the <a href="http://tuntaposx.sourceforge.net/">Mac OS X tun/tap driver</a>.
 Newer versions of OpenConnect will use the <tt>utun</tt> device on OS X which does not
@@ -118,8 +120,19 @@ require additional kernel modules to be installed.</p>
 <p>Solaris/OpenIndiana users will need the <a href="http://www.whiteboard.ne.jp/~admin2/tuntap/">Solaris TAP driver</a>.
 Note that for IPv6 support, the Solaris tun/tap driver from 16th Nov 2009 or newer is required.</p>
 
-<p>On Windows, version 9.9 or later of the <a href="https://community.openvpn.net/openvpn/wiki/ManagingWindowsTAPDrivers">TAP-Windows driver</a> from the <a href="http://www.openvpn.net/">OpenVPN project</a> is required. The easiest way to install the driver is to use the Windows installer from the <a href="http://openvpn.net/index.php/download/community-downloads.html">Community Downloads page</a>. The 64-bit installer contains signed drivers suitable for use on Windows 7 and later versions.</p>
+<h3>Windows</h3>
+
+<p>On Windows, OpenConnect uses the
+<a href="https://community.openvpn.net/openvpn/wiki/GettingTapWindows">TAP-Windows driver from OpenVPN</a> (version 9.9 or
+later; requires Windows 2003 or newer). This driver is only available for the 32-bit and 64-bit x86
+architectures.</p>
+
+<p>OpenConnect v9.00 also contains <b><i>experimental</i></b> support for the
+<a href="https://www.wintun.net">Wintun layer-3 driver from Wireguard</a>
+(requires Windows 7 or newer). This is a more modern driver, and supports 32-bit and 64-bit ARM
+architectures as well, however it does not yet appear to be fully stable
+(see <a href="https://gitlab.com/openconnect/openconnect/-/issues/338">issue #338</a>).
+OpenConnect v9.00 will only attempt to use Wintun if TAP-Windows is unavailable.</p>
 
 	<INCLUDE file="inc/footer.tmpl" />
 </PAGE>
-

@@ -17,20 +17,20 @@
 
 #include <config.h>
 
-#include <errno.h>
-#include <sys/types.h>
+#include "openconnect-internal.h"
+
 #include <unistd.h>
+#include <sys/types.h>
 #include <fcntl.h>
-#include <string.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <stdio.h>
 #ifndef _WIN32
 #include <netinet/in.h>
 #include <sys/socket.h>
 #endif
 
-#include "openconnect-internal.h"
+#include <errno.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 /* In the very early days there were cases where this wasn't found in
  * the header files but it did still work somehow. I forget the details
@@ -435,6 +435,15 @@ int start_dtls_handshake(struct openconnect_info *vpninfo, int dtls_fd)
 			 */
 			SSL_CTX_set_options(vpninfo->dtls_ctx, SSL_OP_NO_ENCRYPT_THEN_MAC);
 #endif
+#ifdef SSL_OP_LEGACY_SERVER_CONNECT
+			/*
+			 * Since https://github.com/openssl/openssl/pull/15127, OpenSSL
+			 * *requires* secure renegotiation support by default. For interop
+			 * with Cisco's resumed DTLS sessions, we have to turn that off.
+			 */
+			if (dtlsver)
+				SSL_CTX_set_options(vpninfo->dtls_ctx, SSL_OP_LEGACY_SERVER_CONNECT);
+#endif
 #ifdef SSL_OP_NO_EXTENDED_MASTER_SECRET
 			/* RFC7627 says:
 			 *
@@ -490,6 +499,9 @@ int start_dtls_handshake(struct openconnect_info *vpninfo, int dtls_fd)
 	if (!cipher) {
 		/* Non-AnyConnect protocols need to verify the peer */
 		SSL_set_verify(dtls_ssl, SSL_VERIFY_PEER, NULL);
+		/* Where they only do DTLSv1, they also don't cope with secure renegotiation */
+		if (dtlsver == DTLS1_VERSION)
+			SSL_set_options(dtls_ssl, SSL_OP_LEGACY_SERVER_CONNECT);
 	} else if (dtlsver) {
 		/* This is the actual Cisco AnyConnect method, using session resume */
 		STACK_OF(SSL_CIPHER) *ciphers = SSL_get_ciphers(dtls_ssl);
@@ -573,7 +585,22 @@ int start_dtls_handshake(struct openconnect_info *vpninfo, int dtls_fd)
 		SSL_SESSION_free(dtls_session);
 	} /* else it's ocserv PSK-NEGOTIATE without an App-ID */
 
-	dtls_bio = BIO_new_socket(dtls_fd, BIO_NOCLOSE);
+	dtls_bio = BIO_new_dgram(dtls_fd, BIO_NOCLOSE);
+	if (!dtls_bio || !BIO_ctrl(dtls_bio, BIO_CTRL_DGRAM_SET_CONNECTED,
+				  0, (char *)vpninfo->dtls_addr)) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Create DTLS dgram BIO failed\n"));
+
+		if (dtls_bio)
+			BIO_free(dtls_bio);
+
+		SSL_CTX_free(vpninfo->dtls_ctx);
+		SSL_free(dtls_ssl);
+		vpninfo->dtls_ctx = NULL;
+		vpninfo->dtls_attempt_period = 0;
+		return -EIO;
+	}
+
 	/* Set non-blocking */
 	BIO_set_nbio(dtls_bio, 1);
 	SSL_set_bio(dtls_ssl, dtls_bio, dtls_bio);
@@ -684,7 +711,7 @@ int dtls_try_handshake(struct openconnect_info *vpninfo, int *timeout)
 		   version, warn about it. */
 		if (SSLeay() < 0x1000005fL) {
 			vpn_progress(vpninfo, PRG_ERR,
-				     _("Your OpenSSL is older than the one you built against, so DTLS may fail!"));
+				     _("Your OpenSSL is older than the one you built against, so DTLS may fail!\n"));
 		}
 #elif defined(HAVE_DTLS1_STOP_TIMER)
 		/*
@@ -744,9 +771,9 @@ int dtls_try_handshake(struct openconnect_info *vpninfo, int *timeout)
 			return 0;
 		}
 
-		static int badossl_bitched = 0;
-		if (((OPENSSL_VERSION_NUMBER >= 0x100000b0L && OPENSSL_VERSION_NUMBER <= 0x100000c0L) || \
-		     (OPENSSL_VERSION_NUMBER >= 0x10001040L && OPENSSL_VERSION_NUMBER <= 0x10001060L) || \
+		static int badossl_bitched; /* static variable initialised to 0 */
+		if (((OPENSSL_VERSION_NUMBER >= 0x100000b0L && OPENSSL_VERSION_NUMBER <= 0x100000c0L) ||
+		     (OPENSSL_VERSION_NUMBER >= 0x10001040L && OPENSSL_VERSION_NUMBER <= 0x10001060L) ||
 		     OPENSSL_VERSION_NUMBER == 0x10002000L) && !badossl_bitched) {
 			badossl_bitched = 1;
 			vpn_progress(vpninfo, PRG_ERR, _("DTLS handshake timed out\n"));
@@ -815,6 +842,8 @@ void gather_dtls_ciphers(struct openconnect_info *vpninfo, struct oc_text_buf *b
 		return;
 	}
 
+	int aes128_gcm = 0, aes256_gcm = 0;
+
 	ciphers = SSL_get1_supported_ciphers(ssl);
 	for (i = 0; i < sk_SSL_CIPHER_num(ciphers); i++) {
 		const SSL_CIPHER *ciph = sk_SSL_CIPHER_value(ciphers, i);
@@ -830,7 +859,15 @@ void gather_dtls_ciphers(struct openconnect_info *vpninfo, struct oc_text_buf *b
 			buf_append(buf12, "%s%s",
 				   (buf_error(buf12) || !buf12->pos) ? "" : ":",
 				   name);
+			/* The OC-specific names for the DTLSv1.2 AES-GCM ciphersuites
+			 * need to be added to the X-DTLS-CipherSuite: header too. */
+			if (!strcmp(name, "AES128-GCM-SHA256")) {
+				aes128_gcm = 1;
+			} else if (!strcmp(name, "AES256-GCM-SHA384")) {
+				aes256_gcm = 1;
+			}
 		}
+
 	}
 	sk_SSL_CIPHER_free(ciphers);
 	SSL_free(ssl);
@@ -839,6 +876,10 @@ void gather_dtls_ciphers(struct openconnect_info *vpninfo, struct oc_text_buf *b
 	/* All DTLSv1 suites are also supported in DTLSv1.2 */
 	if (!buf_error(buf))
 		buf_append(buf12, ":%s", buf->data);
+	if (aes128_gcm)
+		buf_append(buf, ":OC-DTLS1_2-AES128-GCM");
+	if (aes256_gcm)
+		buf_append(buf, ":OC-DTLS1_2-AES256-GCM");
 #ifndef OPENSSL_NO_PSK
 	buf_append(buf, ":PSK-NEGOTIATE");
 #endif

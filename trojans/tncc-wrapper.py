@@ -33,9 +33,10 @@ TNCC_DIRECTORY = "~/.pulse_secure"
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
+
 class Tncc:
     def __init__(self, vpn_host):
-        self.vpn_host = vpn_host;
+        self.vpn_host = vpn_host
         self.plugin_jar = '/usr/share/icedtea-web/plugin.jar'
 
         if not os.path.isfile(self.plugin_jar):
@@ -52,7 +53,7 @@ class Tncc:
         try:
             if zipfile.ZipFile(self.tncc_jar, 'r').testzip() is not None:
                 raise Exception()
-        except:
+        except Exception:
             print('Downloading tncc.jar...')
             os.makedirs(os.path.expanduser(TNCC_DIRECTORY), exist_ok=True)
             urllib.request.urlretrieve('https://' + self.vpn_host
@@ -64,7 +65,7 @@ class Tncc:
                     jar.getinfo(name.replace('.', '/') + '.class')
                     self.class_name = name
                     break
-                except:
+                except Exception:
                     pass
             else:
                 raise Exception('Could not find class name for', self.tncc_jar)
@@ -97,7 +98,6 @@ class Tncc:
             'Parameter0', '',
             'user_agent', self.user_agent,
             ], env={'LD_PRELOAD': self.tncc_preload} if self.tncc_preload else {})
-
 
 
 if __name__ == "__main__":

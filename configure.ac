@@ -1,11 +1,12 @@
 AC_INIT(openconnect, 8.10)
+AC_LANG([C])
 AC_CONFIG_HEADERS([config.h])
+m4_ifdef([AC_CONFIG_MACRO_DIRS], [AC_CONFIG_MACRO_DIRS([m4])])
 
 PKG_PROG_PKG_CONFIG
-AC_LANG_C
 AC_CANONICAL_HOST
 AM_MAINTAINER_MODE([enable])
-AM_INIT_AUTOMAKE([foreign tar-ustar])
+AM_INIT_AUTOMAKE([foreign tar-ustar subdir-objects])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
 AC_PREREQ([2.62], [], [AC_SUBST([localedir], ['$(datadir)/locale'])])
@@ -26,6 +27,7 @@ symver_getline=
 symver_asprintf=
 symver_vasprintf=
 symver_win32_strerror=
+symver_win32_setenv=
 
 # Autoconf is stupid and if the first time it needs to find the C compiler
 # is conditional (as it is here for some of the MinGW checks), it forgets
@@ -33,8 +35,14 @@ symver_win32_strerror=
 AC_PROG_CC
 AC_PROG_CC_C99
 
+have_vhost=no
 case $host_os in
  *linux* | *gnu* | *nacl*)
+    case $host_cpu in
+	x86_64|amd64)
+	    have_vhost=yes
+	    ;;
+    esac
     AC_MSG_NOTICE([Applying feature macros for GNU build])
     AC_DEFINE(_GNU_SOURCE, 1, [_GNU_SOURCE])
     ;;
@@ -60,6 +68,7 @@ case $host_os in
     # For asprintf()
     AC_DEFINE(_GNU_SOURCE, 1, [_GNU_SOURCE])
     symver_win32_strerror="openconnect__win32_strerror;"
+    symver_win32_setenv="openconnect__win32_setenv;"
     # Win32 does have the SCard API
     system_pcsc_libs="-lwinscard"
     system_pcsc_cflags=
@@ -133,7 +142,7 @@ if test "$with_vpnc_script" = "yes" || test "$with_vpnc_script" = ""; then
       if ! test -x "$with_vpnc_script"; then
 	 AC_MSG_ERROR([${with_vpnc_script} does not seem to be executable.]
  [OpenConnect will not function correctly without a vpnc-script.]
- [See http://www.infradead.org/openconnect/vpnc-script.html for more details.]
+ [See https://www.infradead.org/openconnect/vpnc-script.html for more details.]
  []
  [If you are building a distribution package, please ensure that your]
  [packaging is correct, and that a vpnc-script will be installed when the]
@@ -150,9 +159,9 @@ if test "$with_vpnc_script" = "yes" || test "$with_vpnc_script" = ""; then
       fi
    fi
 elif test "$with_vpnc_script" = "no"; then
-   AC_ERROR([You cannot disable vpnc-script.]
-   [OpenConnect will not function correctly without it.]
-   [See http://www.infradead.org/openconnect/vpnc-script.html])
+   AC_MSG_ERROR(You cannot disable vpnc-script.
+   OpenConnect will not function correctly without it.
+   See https://www.infradead.org/openconnect/vpnc-script.html)
 elif test "$have_win" = "yes"; then
    # Oh Windows how we hate thee. If user specifies a vpnc-script and it contains
    # backslashes, double them all up to survive escaping.
@@ -207,6 +216,7 @@ AC_SUBST(SYMVER_GETLINE, $symver_getline)
 AC_SUBST(SYMVER_ASPRINTF, $symver_asprintf)
 AC_SUBST(SYMVER_VASPRINTF, $symver_vasprintf)
 AC_SUBST(SYMVER_WIN32_STRERROR, $symver_win32_strerror)
+AC_SUBST(SYMVER_WIN32_SETENV, $symver_win32_setenv)
 
 AS_COMPILER_FLAGS(WFLAGS,
         "-Wall
@@ -268,7 +278,7 @@ if test "$have_win" = yes; then
 	        AC_DEFINE(HAVE_LOCALTIME_S, 1, [Have localtime_s() function])],
 	       [AC_MSG_RESULT([no])])
 else
-   AC_CHECK_FUNC(socket, [], AC_CHECK_LIB(socket, socket, [], AC_ERROR(Cannot find socket() function)))
+   AC_CHECK_FUNC(socket, [], AC_CHECK_LIB(socket, socket, [], AC_MSG_ERROR(Cannot find socket() function)))
 fi
 
 have_inet_aton=yes
@@ -311,7 +321,7 @@ LIBINTL=
 if test "$USE_NLS" = "yes"; then
    AC_PATH_PROG(MSGFMT, msgfmt)
    if test "$MSGFMT" = ""; then
-      AC_ERROR([msgfmt could not be found. Try configuring with --disable-nls])
+      AC_MSG_ERROR(msgfmt could not be found. Try configuring with --disable-nls)
    fi
 fi
 LIBINTL=
@@ -352,7 +362,7 @@ AC_ARG_WITH([system-cafile],
 	    AS_HELP_STRING([--with-system-cafile],
 			   [Location of the default system CA certificate file for old (<3.0.20) GnuTLS versions]))
 
-# We will use GnuTLS by default if it's present. We used to suppport
+# We will use GnuTLS by default if it's present. We used to support
 # using GnuTLS for the TLS connections and OpenSSL for DTLS, but none
 # of the reasons for that make sense any more.
 
@@ -382,7 +392,7 @@ if test "$with_gnutls" = "yes" || test "$with_gnutls" = ""; then
 	    ssl_library=GnuTLS
 	fi], [:])
 elif test "$with_gnutls" != "no"; then
-    AC_ERROR([Values other than 'yes' or 'no' for --with-gnutls are not supported])
+    AC_MSG_ERROR(Values other than 'yes' or 'no' for --with-gnutls are not supported)
 fi
 
 # Do we need to look for OpenSSL?
@@ -406,7 +416,7 @@ if test "$ssl_library" = ""; then
 			 AC_SUBST([OPENSSL_CFLAGS], [])]
 			 AC_SUBST([openssl_pc_libs], [$OPENSSL_LIBS]),
 			[AC_MSG_RESULT(no)
-			 AC_ERROR([Could not build against OpenSSL])])
+			 AC_MSG_ERROR(Could not build against OpenSSL)])
 	     LIBS="$oldLIBS"])
 	ssl_library=OpenSSL
 	PKG_CHECK_MODULES(P11KIT, p11-kit-1,
@@ -427,7 +437,7 @@ if test "$ssl_library" = ""; then
 		  -r "${with_openssl}/ssl/.libs/libssl.a"; then
 	    OPENSSL_LIBS="${with_openssl}/ssl/.libs/libssl.a ${with_openssl}/crypto/.libs/libcrypto.a -ldl -lz -pthread"
 	else
-	    AC_ERROR([Could not find OpenSSL libraries in ${with_openssl}]);
+	    AC_MSG_ERROR(Could not find OpenSSL libraries in ${with_openssl});
 	fi
 	AC_SUBST(OPENSSL_CFLAGS)
 	AC_SUBST(OPENSSL_LIBS)
@@ -449,7 +459,10 @@ if test -n "$default_gnutls_priority"; then
    AC_DEFINE_UNQUOTED([DEFAULT_PRIO], ["$default_gnutls_priority"], [The GnuTLS priority string])
 fi
 
-tss2lib=
+AC_ARG_WITH([gnutls-tss2],
+   AS_HELP_STRING([--with-gnutls-tss2], [Specify TSS2 library (tss2-esys, ibmtss)]))
+
+tss2lib=none
 case "$ssl_library" in
     OpenSSL)
 	oldLIBS="${LIBS}"
@@ -478,10 +491,10 @@ case "$ssl_library" in
 				])],
 			  [],
 			  [AC_MSG_RESULT(yes)
-			   AC_ERROR([This version of OpenSSL is known to be broken with Cisco DTLS.]
-[See http://rt.openssl.org/Ticket/Display.html?id=2984&user=guest&pass=guest]
-[Add --without-openssl-version-check to configure args to avoid this check, or]
-[perhaps consider building with GnuTLS instead.])])
+			   AC_MSG_ERROR(This version of OpenSSL is known to be broken with Cisco DTLS.
+See http://rt.openssl.org/Ticket/Display.html?id=2984&user=guest&pass=guest
+Add --without-openssl-version-check to configure args to avoid this check, or
+perhaps consider building with GnuTLS instead.)])
 	    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <openssl/opensslv.h>],[#if \
 				    (OPENSSL_VERSION_NUMBER == 0x1000200fL)
 				#error Bad OpenSSL
@@ -489,11 +502,11 @@ case "$ssl_library" in
 				])],
 			  [],
 			  [AC_MSG_RESULT(yes)
-			   AC_ERROR([This version of OpenSSL is known to be broken with Cisco DTLS.]
-[See http://rt.openssl.org/Ticket/Display.html?id=3703&user=guest&pass=guest]
-[and http://rt.openssl.org/Ticket/Display.html?id=3711&user=guest&pass=guest]
-[Add --without-openssl-version-check to configure args to avoid this check, or]
-[perhaps consider building with GnuTLS instead.])])
+			   AC_MSG_ERROR(This version of OpenSSL is known to be broken with Cisco DTLS.
+See http://rt.openssl.org/Ticket/Display.html?id=3703&user=guest&pass=guest
+and http://rt.openssl.org/Ticket/Display.html?id=3711&user=guest&pass=guest
+Add --without-openssl-version-check to configure args to avoid this check, or
+perhaps consider building with GnuTLS instead.)])
 	    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#include <openssl/opensslv.h>],[#if \
 				    ((OPENSSL_VERSION_NUMBER >= 0x10001110L && OPENSSL_VERSION_NUMBER <= 0x10001150L) || \
 				     (OPENSSL_VERSION_NUMBER >= 0x10002050L && OPENSSL_VERSION_NUMBER <= 0x10002090L))
@@ -502,10 +515,10 @@ case "$ssl_library" in
 				])],
 			  [],
 			  [AC_MSG_RESULT(yes)
-			   AC_ERROR([This version of OpenSSL is known to be broken with Cisco DTLS.]
-[See http://rt.openssl.org/Ticket/Display.html?id=4631&user=guest&pass=guest]
-[Add --without-openssl-version-check to configure args to avoid this check, or]
-[perhaps consider building with GnuTLS instead.])])
+			   AC_MSG_ERROR(This version of OpenSSL is known to be broken with Cisco DTLS.
+See http://rt.openssl.org/Ticket/Display.html?id=4631&user=guest&pass=guest
+Add --without-openssl-version-check to configure args to avoid this check, or
+perhaps consider building with GnuTLS instead.)])
 	    AC_MSG_RESULT(no)
 	fi
 
@@ -567,6 +580,7 @@ case "$ssl_library" in
 
 	dtls=yes
 	AC_DEFINE(OPENCONNECT_OPENSSL, 1, [Using OpenSSL])
+	AC_DEFINE(OPENSSL_SUPPRESS_DEPRECATED, 1, [We need to update to OpenSSL 3.0.0 API])
 	AC_SUBST(SSL_LIBS, ['$(OPENSSL_LIBS)'])
 	AC_SUBST(SSL_CFLAGS, ['$(OPENSSL_CFLAGS)'])
 	;;
@@ -595,7 +609,6 @@ case "$ssl_library" in
 [will still be disabled at runtime), or build with another version.])])
 	   AC_MSG_RESULT(no)
        fi
-
 	AC_CHECK_FUNC(gnutls_system_key_add_x509,
 		      [AC_DEFINE(HAVE_GNUTLS_SYSTEM_KEYS, 1, [From GnuTLS 3.4.0])], [])
 	AC_CHECK_FUNC(gnutls_pkcs11_add_provider,
@@ -605,7 +618,7 @@ case "$ssl_library" in
 					  AC_SUBST(P11KIT_PC, p11-kit-1)],
 					 [:])], [])
 	LIBS="$oldlibs -ltspi"
-	AC_MSG_CHECKING([for tss library])
+	AC_MSG_CHECKING([for Trousers tss library])
 	AC_LINK_IFELSE([AC_LANG_PROGRAM([
 					   #include <trousers/tss.h>
 					   #include <trousers/trousers.h>],[
@@ -621,25 +634,41 @@ case "$ssl_library" in
 
 	PKG_CHECK_MODULES(TASN1, [libtasn1], [have_tasn1=yes], [have_tasn1=no])
 	if test "$have_tasn1" = "yes"; then
-	   PKG_CHECK_MODULES(TSS2_ESYS, [tss2-esys tss2-mu],
+	   if test "$with_gnutls_tss2" = "yes" -o "$with_gnutls_tss2" = "tss2-esys" -o "$with_gnutls_tss2" = ""; then
+	      PKG_CHECK_MODULES(TSS2_ESYS, [tss2-esys tss2-mu tss2-tctildr],
 			     [AC_DEFINE(HAVE_TSS2, 1, [Have TSS2])
 			      AC_SUBST(TPM2_CFLAGS, ['$(TASN1_CFLAGS) $(TSS2_ESYS_CFLAGS)'])
 			      AC_SUBST(TPM2_LIBS, ['$(TASN1_LIBS) $(TSS2_ESYS_LIBS)'])
 			      tss2lib=tss2-esys],
 			     [:])
-	   if test "$tss2lib" = ""; then
-	       AC_CHECK_LIB([tss], [TSS_Create], [tss2inc=tss2
-						  tss2lib=tss],
-			    AC_CHECK_LIB([ibmtss], [TSS_Create], [tss2inc=ibmtss
-								  tss2lib=ibmtss], []))
-	       if test "$tss2lib" != ""; then
-		   AC_CHECK_HEADER($tss2inc/tss.h,
-				   [AC_DEFINE_UNQUOTED(HAVE_TSS2, $tss2inc, [TSS2 library])
-				    AC_SUBST(TSS2_LIBS, [-l$tss2lib])
-				    AC_SUBST(TPM2_CFLAGS, ['$(TASN1_CFLAGS)'])
-				    AC_SUBST(TPM2_LIBS, ['$(TASN1_LIBS) $(TSS2_LIBS)'])],
-				   [tss2lib=])
-	       fi
+	   fi
+	   if test "$tss2lib" = "none"; then
+	      if test "$with_gnutls_tss2" = "yes" -o "$with_gnutls_tss2" = "ibmtss" -o "$with_gnutls_tss2" = ""; then
+
+		 # The Fedora 'tss2-devel' package puts headers in /usr/include/ibmtss/
+		 # and the library is named libibmtss.so. The Ubuntu libtss-dev package
+		 # puts headers in /usr/include/${host}/tss2/ and the library is named
+		 # libtss.so. Neither ships a pkg-config file at the time I write this.
+		 AC_CHECK_LIB([tss], [TSS_Create], [tss2inc=tss2
+						    tss2lib=tss],
+			      AC_CHECK_LIB([ibmtss], [TSS_Create],
+					   [tss2inc=ibmtss
+					    tss2lib=ibmtss], []))
+
+		 if test "$tss2lib" != "none"; then
+		    AC_MSG_CHECKING([For <${tss2inc}/tss.h>])
+		    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([#define TPM_POSIX
+		                                          #include <${tss2inc}/tss.h>
+							  ],[])],
+				      [AC_MSG_RESULT(yes)
+				       AC_DEFINE_UNQUOTED(HAVE_TSS2, $tss2inc, [TSS2 library])
+				       AC_SUBST(TSS2_LIBS, [-l$tss2lib])
+				       AC_SUBST(TPM2_CFLAGS, ['$(TASN1_CFLAGS) -DTPM_POSIX'])
+				       AC_SUBST(TPM2_LIBS, ['$(TASN1_LIBS) $(TSS2_LIBS)'])],
+				      [AC_MSG_RESULT(no)
+				       tss2lib=none])
+		 fi
+	      fi
 	   fi
 	fi
 
@@ -655,8 +684,63 @@ case "$ssl_library" in
 	;;
 esac
 
+case x"$with_gnutls_tss2" in
+    xtss2-esys)
+	if test "$tss2lib" != "tss2-esys"; then
+	   AC_MSG_ERROR([tss2-esys requested but not found])
+	fi
+	;;
+
+    xibmtss|xtss)
+	if test "$tss2lib" != "ibmtss" -a "$tss2lib" != "tss"; then
+	   AC_MSG_ERROR([ibmtss requested but not found: $tss2lib])
+	fi
+	;;
+
+    x|xno)
+	;;
+
+    xyes)
+	if test "$tss2lib" = "none" -a "$with_gnutls_tss2" = "yes"; then
+	   AC_MSG_ERROR([No TSS2 library found])
+	fi
+	;;
+
+     *)
+        AC_MSG_ERROR([Unknown value for gnutls-tss2])
+	;;
+esac
+
 AM_CONDITIONAL(OPENCONNECT_TSS2_ESYS, [ test "$tss2lib" = "tss2-esys" ])
 AM_CONDITIONAL(OPENCONNECT_TSS2_IBM, [ test "$tss2lib" = "ibmtss" -o "$tss2lib" = "tss" ])
+
+AC_PATH_PROG(SWTPM, swtpm)
+SWTPM_IOCTL=""
+TPM2_STARTUP=""
+TSSTARTUP=""
+if test "$SWTPM" != ""; then
+    AC_PATH_PROG(SWTPM_IOCTL, swtpm_ioctl)
+    AC_PATH_PROG(TPM2_STARTUP, tpm2_startup)
+    AC_PATH_PROG(TSSTARTUP, tsstartup)
+fi
+
+# The Intel/TCG TSS can only *create* keys
+AC_PATH_PROG(TPM2TSS_GENKEY, tpm2tss-genkey)
+# James's one can import them too.
+AC_PATH_PROG(CREATE_TPM2_KEY, create_tpm2_key)
+
+AC_ARG_ENABLE([hwtpm-test],
+	AS_HELP_STRING([--enable-hwtpm-test], [Test TPM support using real TPMv2 [default=no]]),
+	[test_hwtpm=$enableval], [test_hwtpm=no])
+
+if test "$test_hwtpm" = "yes" -a "$TPM2TSS_GENKEY$CREATE_TPM2_KEY" = ""; then
+   AC_MSG_ERROR([Hardware TPM test requires tpm2tss-genkey and/or create_tpm2_key tools])
+fi
+
+AM_CONDITIONAL(TEST_HWTPM, [ test "$test_hwtpm" = "yes" ])
+AM_CONDITIONAL(TEST_SWTPM, [ test "$SWTPM_IOCTL" != "" -a \( "$TPM2_STARTUP" != "" -o "$TSSTARTUP" != "" \) ])
+AM_CONDITIONAL(TEST_TPM2_CREATE, [ test "$TPM2TSS_GENKEY" != "" ])
+AM_CONDITIONAL(TEST_TPM2_IMPORT, [ test "$CREATE_TPM2_KEY" != "" ])
 
 test_pkcs11=
 if test "$pkcs11_support" != ""; then
@@ -736,7 +820,7 @@ fi
 AC_PROG_EGREP
 
 # Needs to happen after we default to static/shared libraries based on OpenSSL
-AC_PROG_LIBTOOL
+LT_INIT
 if test "$use_openbsd_libtool" = "true" && test -x /usr/bin/libtool; then
 	echo using OpenBSD libtool
 	LIBTOOL=/usr/bin/libtool
@@ -746,6 +830,32 @@ AM_CONDITIONAL(OPENBSD_LIBTOOL, [ test "$use_openbsd_libtool" = "true" ])
 AX_CHECK_VSCRIPT
 
 PKG_CHECK_MODULES(LIBXML2, libxml-2.0)
+
+AC_ARG_WITH([builtin-json],
+	AS_HELP_STRING([--with-builtin-json],
+	[Build with builtin json-parser library [default=auto]]))
+
+json=
+AS_IF([test "$with_builtin_json" != "yes"],
+	[PKG_CHECK_MODULES(JSON, json-parser,
+			   [AC_SUBST(JSON_PC, [json-parser])
+			    json=system], [:])
+      ])
+
+AS_IF([test "$with_builtin_json" != "no"  && test "$json" = "" ],
+	[json=builtin
+	 oldLIBS="$LIBS"
+	 AC_SEARCH_LIBS(pow, [m])
+	 LIBS="$oldLIBS"
+	 AC_SUBST([JSON_LIBS], [$ac_cv_search_pow])
+	 AC_SUBST([JSON_CFLAGS], ['-I$(srcdir)/json'])
+      ])
+
+AS_IF([test "$json" = ""],
+    AC_MSG_ERROR(No json-parser package found and --without-builtin-json specified)
+    )
+
+AM_CONDITIONAL(BUILTIN_JSON, [test "$json" = "builtin"])
 
 PKG_CHECK_MODULES(ZLIB, zlib, [AC_SUBST(ZLIB_PC, [zlib])],
 		  [oldLIBS="$LIBS"
@@ -760,7 +870,7 @@ PKG_CHECK_MODULES(ZLIB, zlib, [AC_SUBST(ZLIB_PC, [zlib])],
 		   AC_SUBST([ZLIB_LIBS], [-lz])
 		   AC_SUBST([ZLIB_CFLAGS], [])],
   		  [AC_MSG_RESULT(no)
-		   AC_ERROR([Could not build against zlib])])
+		   AC_MSG_ERROR(Could not build against zlib)])
 		  LIBS="$oldLIBS"])
 
 AC_ARG_WITH([libproxy],
@@ -828,6 +938,8 @@ if test "$libpcsclite_pkg" = "yes"; then
     AC_DEFINE([HAVE_LIBPCSCLITE], 1, [Have libpcsclite])
 fi
 AM_CONDITIONAL(OPENCONNECT_LIBPCSCLITE, [test "$libpcsclite_pkg" = "yes"])
+
+AC_CHECK_FUNC(epoll_create1, [AC_DEFINE(HAVE_EPOLL, 1, [Have epoll])], [])
 
 AC_ARG_WITH([libpskc],
 	AS_HELP_STRING([--without-libpskc],
@@ -1069,6 +1181,40 @@ AC_CHECK_HEADER([if_tun.h],
 AC_CHECK_HEADER([net/if_utun.h], AC_DEFINE([HAVE_NET_UTUN_H], 1, [Have net/if_utun.h]), ,
 		[#include <sys/types.h>])
 
+AC_ARG_ENABLE([vhost-net],
+	AS_HELP_STRING([--enable-vhost-net],
+		       [Build vhost-net support for tun device acceleration [default=no]]),
+	[have_vhost=$enableval])
+
+if test "$have_vhost" = "yes"; then
+   AC_MSG_CHECKING([for vhost-net support])
+   AC_COMPILE_IFELSE([AC_LANG_PROGRAM([
+		#include <linux/if_tun.h>
+		#include <linux/virtio_net.h>
+		#include <linux/vhost.h>
+		#include <sys/eventfd.h>
+
+		struct foo {
+			struct vring_desc desc;
+			struct vring_avail avail;
+			struct vring_used used;
+			struct virtio_net_hdr_mrg_rxbuf h;
+		};
+	],[
+		(void)eventfd(0, EFD_CLOEXEC|EFD_NONBLOCK);
+		(void)VHOST_NET_F_VIRTIO_NET_HDR;
+		(void)VIRTIO_F_VERSION_1;
+		(void)TUNSETSNDBUF;
+		__sync_synchronize();
+	])],
+	[have_vhost=yes
+	 AC_DEFINE([HAVE_VHOST], 1, [Have vhost])
+	 AC_MSG_RESULT([yes])],
+	[have_vhost=no
+	 AC_MSG_RESULT([no])])
+fi
+AM_CONDITIONAL(OPENCONNECT_VHOST, [test "$have_vhost" = "yes"])
+
 AC_CHECK_HEADER([alloca.h], AC_DEFINE([HAVE_ALLOCA_H], 1, [Have alloca.h]))
 
 AC_CHECK_HEADER([endian.h],
@@ -1208,13 +1354,18 @@ AC_DEFUN([SUMMARY],
 echo "BUILD OPTIONS:"
 SUMMARY([SSL library], [$ssl_library])
 SUMMARY([[PKCS#11 support]], [$pkcs11_support])
+if test "$ssl_library" = "GnuTLS"; then
+ SUMMARY([TSS2 library], [$tss2lib])
+fi
 SUMMARY([DTLS support], [$dtls])
 SUMMARY([ESP support], [$esp])
 SUMMARY([libproxy support], [$libproxy_pkg])
 SUMMARY([RSA SecurID support], [$libstoken_pkg])
 SUMMARY([PSKC OATH file support], [$libpskc_pkg])
 SUMMARY([GSSAPI support], [$linked_gssapi])
+SUMMARY([vhost-net support], [$have_vhost])
 SUMMARY([Yubikey support], [$libpcsclite_pkg])
+SUMMARY([JSON parser], [$json])
 SUMMARY([LZ4 compression], [$lz4_pkg])
 SUMMARY([Java bindings], [$with_java])
 SUMMARY([Build docs], [$build_www])

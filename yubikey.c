@@ -17,12 +17,12 @@
 
 #include <config.h>
 
+#include "openconnect-internal.h"
+
 #include <ctype.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "openconnect-internal.h"
 
 #define NAME_TAG	0x71
 #define NAME_LIST_TAG	0x72
@@ -55,7 +55,7 @@ static const unsigned char send_remaining[] = { 0x00, SEND_REMAINING_INS, 0x00, 
 #define free_scard_error(str) free(str)
 #else
 #define scard_error(st) ((char *)pcsc_stringify_error(st))
-#define free_scard_error(str) do { ; } while (0)
+#define free_scard_error(str)
 
 #endif
 
@@ -277,8 +277,8 @@ static int select_yubioath_applet(struct openconnect_info *vpninfo,
 			memset(vpninfo->yubikey_pwhash, 0, sizeof(vpninfo->yubikey_pwhash));
 			if (pin) {
 				/* Try working around pre-KitKat PBKDF2 bug discussed at
-				 * http://forum.yubico.com/viewtopic.php?f=26&t=1601#p6807 and
-				 * http://android-developers.blogspot.se/2013/12/changes-to-secretkeyfactory-api-in.html */
+				 * https://forum.yubico.com/viewtopica454-3.html?f=26&t=1601#p6807 and
+				 * https://android-developers.googleblog.com/2013/12/changes-to-secretkeyfactory-api-in.html */
 				const char *in;
 				char *out;
 

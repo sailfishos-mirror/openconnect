@@ -17,23 +17,24 @@
 
 #include <config.h>
 
+#include "openconnect-internal.h"
+
+#include "ppp.h"
+
+#include <libxml/HTMLparser.h>
+#include <libxml/HTMLtree.h>
+
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/types.h>
+
 #include <time.h>
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <sys/types.h>
 #include <stdarg.h>
-#include <sys/types.h>
-
-#include <libxml/parser.h>
-#include <libxml/tree.h>
-
-#include "openconnect-internal.h"
-#include "ppp.h"
 
 /* clthello/svrhello strings for Fortinet DTLS initialization.
  * NB: C string literals implicitly add a final \0 (which is correct for these).
@@ -100,7 +101,7 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 	struct oc_text_buf *req_buf = NULL;
 	struct oc_auth_form *form = NULL;
 	struct oc_form_opt *opt, *opt2;
-	char *resp_buf = NULL, *realm = NULL;
+	char *resp_buf = NULL, *realm = NULL, *tokeninfo_fields = NULL;
 
 	req_buf = buf_alloc();
 	if (buf_error(req_buf)) {
@@ -108,9 +109,7 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 		goto out;
 	}
 
-	ret = do_https_request(vpninfo, "GET", NULL, NULL, &resp_buf, 1);
-	free(resp_buf);
-	resp_buf = NULL;
+	ret = do_https_request(vpninfo, "GET", NULL, NULL, &resp_buf, NULL, HTTP_REDIRECT);
 	if (ret < 0)
 		goto out;
 
@@ -124,7 +123,7 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 		for (realm = strchr(vpninfo->urlpath, '?'); realm && *++realm; realm=strchr(realm, '&')) {
 			if (!strncmp(realm, "realm=", 6)) {
 				const char *end = strchrnul(realm+1, '&');
-				realm = strndup(realm+6, end-realm);
+				realm = strndup(realm+6, end-realm-6);
 				vpn_progress(vpninfo, PRG_INFO, _("Got login realm '%s'\n"), realm);
 				break;
 			}
@@ -134,9 +133,10 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 	/* XX: Fortinet HTML forms *seem* like they should be about as easy to follow
 	 * as Juniper HTML forms, but some redirects use Javascript EXCLUSIVELY (no
 	 * 'Location' header). Also, a failed login returns the misleading HTTP status
-	 * "405 Method Not Allowed", rather than 403/401.
+	 * "405 Method Not Allowed", rather than 403/401, and HTTP status 401 is used to
+	 * signal an HTML-form-based mode of presenting a 2FA challenge.
 	 *
-	 * So we just build a static form (username and password).
+	 * So we just build a static form (username and password) to start.
 	 */
 	form = calloc(1, sizeof(*form));
 	if (!form) {
@@ -144,6 +144,9 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 		ret = -ENOMEM;
 		goto out;
 	}
+	form->auth_id = strdup("_login");
+	if (!form->auth_id)
+		goto nomem;
 	opt = form->opts = calloc(1, sizeof(*opt));
 	if (!opt)
 		goto nomem;
@@ -179,44 +182,51 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 		append_form_opts(vpninfo, form, req_buf);
 		buf_append(req_buf, "&realm=%s", realm ?: ""); /* XX: already URL-escaped */
 
-		if (!form->action) {
+		if (!tokeninfo_fields) {
 			/* "normal" form (fields 'username', 'credential') */
 			buf_append(req_buf, "&ajax=1&just_logged_in=1");
 		} else {
 			/* 2FA form (fields 'username', 'code', and a bunch of values
 			 * from the previous response which we mindlessly parrot back)
 			 */
-			buf_append(req_buf, "&code2=&%s", form->action);
+			buf_append(req_buf, "&code2=&%s", tokeninfo_fields);
+			free(tokeninfo_fields);
+			tokeninfo_fields = NULL;
 		}
 
 		if ((ret = buf_error(req_buf)))
 		        goto out;
+
+		/* XX: Disable HTTP auth, because Fortinet uses 401 status to indicate HTML-type 2FA challenge */
+		int try_http_auth = vpninfo->try_http_auth;
+		vpninfo->try_http_auth = 0;
 		ret = do_https_request(vpninfo, "POST", "application/x-www-form-urlencoded",
-				       req_buf, &resp_buf, 0);
+				       req_buf, &resp_buf, NULL, HTTP_BODY_ON_ERROR);
+		vpninfo->try_http_auth = try_http_auth;
 
 		/* If we got SVPNCOOKIE, then we're done. */
 		struct oc_vpn_option *cookie;
 		for (cookie = vpninfo->cookies; cookie; cookie = cookie->next) {
 			if (!strcmp(cookie->option, "SVPNCOOKIE")) {
 				free(vpninfo->cookie);
-				vpninfo->cookie = strdup(cookie->value);
-				if (!vpninfo->cookie)
+				if (asprintf(&vpninfo->cookie, "SVPNCOOKIE=%s", cookie->value) < 0)
 					goto nomem;
 				ret = 0;
 				goto out;
 			}
 		}
 
-		/* XX: We got 200 status, but no SVPNCOOKIE. 2FA? */
-		if (ret >= 0 &&
+		/* XX: We got 200 status, but no SVPNCOOKIE. tokeninfo-type 2FA? */
+		if (ret > 0 &&
 		    !strncmp(resp_buf, "ret=", 4) && strstr(resp_buf, ",tokeninfo=")) {
 			const char *prompt;
-			struct oc_text_buf *action_buf = buf_alloc();
+			struct oc_text_buf *tokeninfo_buf = buf_alloc();
 
 			/* Hide 'username' field */
 			opt->type = OC_FORM_OPT_HIDDEN;
 			free(opt2->label);
 			free(opt2->_value);
+			opt2->label = opt2->_value = NULL;
 
 			/* Change 'credential' field to 'code'. */
 			opt2->_value = NULL;
@@ -227,14 +237,19 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 			else
 				opt2->type = OC_FORM_OPT_PASSWORD;
 
+			/* Change 'auth_id' to '_challenge'. */
+			free(form->auth_id);
+			if (!(form->auth_id = strdup("_challenge")))
+				goto nomem;
+
 			/* Save a bunch of values to parrot back */
-			filter_opts(action_buf, resp_buf, "reqid,polid,grp,portal,peer,magic", 1);
-			if ((ret = buf_error(action_buf)))
+			filter_opts(tokeninfo_buf, resp_buf, "reqid,polid,grp,portal,peer,magic", 1);
+			if ((ret = buf_error(tokeninfo_buf)))
 				goto out;
-			free(form->action);
-			form->action = action_buf->data;
-			action_buf->data = NULL;
-			buf_free(action_buf);
+			free(tokeninfo_fields);
+			tokeninfo_fields = tokeninfo_buf->data;
+			tokeninfo_buf->data = NULL;
+			buf_free(tokeninfo_buf);
 
 			if ((prompt = strstr(resp_buf, ",chal_msg="))) {
 				const char *end = strchrnul(prompt, ',');
@@ -243,13 +258,45 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 				form->message = strndup(prompt, end-prompt);
 			}
 		}
+		/* XX: We got 401 response with HTML body. HTML-type 2FA? */
+		else if (ret == -EPERM && resp_buf) {
+			xmlDocPtr doc = NULL;
+			xmlNode *node;
+			char *url = internal_get_url(vpninfo);
+
+			if (!url)
+				goto nomem;
+
+			/* XX: HTML body should contain a "normal" HTML form with hidden fields
+			 * including 'username', 'magic', 'reqid', 'grpid' (similar to the tokeninfo-type
+			 * 2FA bove), and a password field named 'credential'.
+			 */
+			doc = htmlReadMemory(resp_buf, strlen(resp_buf), url, NULL,
+					     HTML_PARSE_RECOVER|HTML_PARSE_NOERROR|HTML_PARSE_NOWARNING|HTML_PARSE_NONET);
+			free(url);
+
+			node = find_form_node(doc);
+			if (node) {
+				free_auth_form(form);
+				form = parse_form_node(vpninfo, node, NULL, can_gen_tokencode);
+				if (!form)
+					goto no_html_form;
+			} else {
+			no_html_form:
+				xmlFreeDoc(doc);
+				ret = -EINVAL;
+				goto out;
+			}
+		}
 	}
 
  out:
 	free(realm);
-	free(resp_buf);
+	if (resp_buf)
+		free(resp_buf);
 	if (form)
 		free_auth_form(form);
+	free(tokeninfo_fields);
 	buf_free(req_buf);
 	return ret;
 }
@@ -261,6 +308,7 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
   <tunnel-method value="ppp"/>
   <tunnel-method value="tun"/>
   <fos platform="FG100E" major="5" minor="06" patch="6" build="1630" branch="1630"/>
+  <auth-ses check-src-ip='1' tun-connect-without-reauth='1' tun-user-ses-timeout='240' />
   <client-config save-password="off" keep-alive="on" auto-connect="off"/>
   <ipv4>
     <dns ip="1.1.1.1"/>
@@ -272,6 +320,12 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
       <addr ip="10.11.1.0" mask="255.255.255.0"/>
     </split-tunnel-info>
   </ipv4>
+  <ipv6>
+    <assigned-addr ipv6='fdff:ffff::1' prefix-len='120'/>
+    <split-tunnel-info>
+      <addr ipv6='fdff:ffff::' prefix-len='120'/>
+    </split-tunnel-info>
+  </ipv6>
   <idle-timeout val="3600"/>
   <auth-timeout val="18000"/>
 </sslvpn-tunnel>
@@ -282,6 +336,7 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 	xmlDocPtr xml_doc;
 	int ret = 0, n_dns = 0, default_route = 1;
 	char *s = NULL, *s2 = NULL;
+	int reconnect_after_drop = -1;
 	struct oc_text_buf *domains = NULL;
 
 	if (!buf || !len)
@@ -323,24 +378,48 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 			vpn_progress(vpninfo, PRG_INFO, _("Idle timeout is %d minutes.\n"), sec/60);
 		} else if (xmlnode_is_named(xml_node, "dtls-config") && !xmlnode_get_prop(xml_node, "heartbeat-interval", &s)) {
 			int sec = atoi(s);
-			if (sec && (!vpninfo->dtls_times.dpd || sec < vpninfo->dtls_times.dpd))
+			if (sec && !vpninfo->dtls_times.dpd)
 				vpninfo->dtls_times.dpd = vpninfo->ssl_times.dpd = sec;
+		} else if (xmlnode_is_named(xml_node, "auth-ses")) {
+			/* These settings were apparently added in v6.2.1 of the Fortigate server,
+			 * (see https://docs.fortinet.com/document/fortigate/6.2.1/cli-reference/281620/vpn-ssl-settings)
+			 * and seem to control the possibility of reconnecting after a dropped connection.
+			 * See discussion at https://gitlab.com/openconnect/openconnect/-/issues/297#note_664686767
+			 */
+			int check_ip_src = -1, dropped_session_cleanup = -1;
+			if (!xmlnode_get_prop(xml_node, "tun-connect-without-reauth", &s)) {
+				reconnect_after_drop = atoi(s);
+				if (reconnect_after_drop) {
+					if (!xmlnode_get_prop(xml_node, "check-src-ip", &s))
+						check_ip_src = atoi(s);
+					if (!xmlnode_get_prop(xml_node, "tun-user-ses-timeout", &s))
+						dropped_session_cleanup = atoi(s);
+					vpn_progress(vpninfo, PRG_ERR,
+						     _("Server reports that reconnect-after-drop is allowed within %d seconds, %s\n"),
+						     dropped_session_cleanup,
+						     check_ip_src ? _("but only from the same source IP address") : _("even if source IP address changes"));
+				} else if (reconnect_after_drop == 0)
+					vpn_progress(vpninfo, PRG_ERR,
+						     _("Server reports that reconnect-after-drop is not allowed. OpenConnect will not\n"
+						       "be able to reconnect if dead peer is detected. If reconnection DOES work,\n"
+						       "please report to <openconnect-devel@lists.infradead.org>\n"));
+			}
 		} else if (xmlnode_is_named(xml_node, "fos")) {
 			char platform[80], *p = platform, *e = platform + 80;
 			if (!xmlnode_get_prop(xml_node, "platform", &s)) {
-			    p+=snprintf(p, e-p, "%s", s);
-			    if (!xmlnode_get_prop(xml_node, "major", &s))  p+=snprintf(p, e-p, " v%s", s);
-			    if (!xmlnode_get_prop(xml_node, "minor", &s))  p+=snprintf(p, e-p, ".%s", s);
-			    if (!xmlnode_get_prop(xml_node, "patch", &s))  p+=snprintf(p, e-p, ".%s", s);
-			    if (!xmlnode_get_prop(xml_node, "build", &s))  p+=snprintf(p, e-p, " build %s", s);
-			    if (!xmlnode_get_prop(xml_node, "branch", &s))    snprintf(p, e-p, " branch %s", s);
-			    vpn_progress(vpninfo, PRG_INFO,
-					 _("Reported platform is %s\n"), platform);
+				p+=snprintf(p, e-p, "%s", s);
+				if (!xmlnode_get_prop(xml_node, "major", &s))  p+=snprintf(p, e-p, " v%s", s);
+				if (!xmlnode_get_prop(xml_node, "minor", &s))  p+=snprintf(p, e-p, ".%s", s);
+				if (!xmlnode_get_prop(xml_node, "patch", &s))  p+=snprintf(p, e-p, ".%s", s);
+				if (!xmlnode_get_prop(xml_node, "build", &s))  p+=snprintf(p, e-p, " build %s", s);
+				if (!xmlnode_get_prop(xml_node, "branch", &s))    snprintf(p, e-p, " branch %s", s);
+				vpn_progress(vpninfo, PRG_INFO,
+					     _("Reported platform is %s\n"), platform);
 			}
 		} else if (xmlnode_is_named(xml_node, "ipv4")) {
 			for (x = xml_node->children; x; x=x->next) {
 				if (xmlnode_is_named(x, "assigned-addr") && !xmlnode_get_prop(x, "ipv4", &s)) {
-					vpn_progress(vpninfo, PRG_INFO, _("Got legacy IP address %s\n"), s);
+					vpn_progress(vpninfo, PRG_INFO, _("Got Legacy IP address %s\n"), s);
 					new_ip_info.addr = add_option_steal(&new_opts, "ipaddr", &s);
 				} else if (xmlnode_is_named(x, "dns")) {
 					if (!xmlnode_get_prop(x, "domain", &s) && s && *s) {
@@ -392,8 +471,84 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 					}
 				}
 			}
+		} else if (xmlnode_is_named(xml_node, "ipv6")) {
+			for (x = xml_node->children; x; x=x->next) {
+				if (xmlnode_is_named(x, "assigned-addr") && !xmlnode_get_prop(x, "ipv6", &s)) {
+					if (!xmlnode_get_prop(x, "prefix-len", &s2)) {
+						char *a;
+						if (asprintf(&a, "%s/%s", s, s2) < 0) {
+							ret = -ENOMEM;
+							goto out;
+						}
+						vpn_progress(vpninfo, PRG_INFO, _("Got IPv6 address %s\n"), a);
+						if (!vpninfo->disable_ipv6)
+							new_ip_info.netmask6 = add_option_steal(&new_opts, "ipaddr6", &a);
+						free(a);
+					} else {
+						vpn_progress(vpninfo, PRG_INFO, _("Got IPv6 address %s\n"), s);
+						if (!vpninfo->disable_ipv6)
+							new_ip_info.addr6 = add_option_steal(&new_opts, "ipaddr6", &s);
+					}
+				} else if (xmlnode_is_named(x, "dns")) {
+					if (!xmlnode_get_prop(x, "domain", &s) && s && *s) {
+						vpn_progress(vpninfo, PRG_INFO, _("Got search domain %s\n"), s);
+						buf_append(domains, "%s ", s);
+					}
+					if (!xmlnode_get_prop(x, "ipv6", &s) && s && *s) {
+						vpn_progress(vpninfo, PRG_INFO, _("Got IPv%d DNS server %s\n"), 6, s);
+						if (n_dns < 3) new_ip_info.dns[n_dns++] = add_option_steal(&new_opts, "DNS", &s);
+					}
+				} else if (xmlnode_is_named(x, "split-dns")) {
+					int ii;
+					if (!xmlnode_get_prop(x, "domains", &s) && s && *s)
+						vpn_progress(vpninfo, PRG_ERR, _("WARNING: Got split-DNS domains %s (not yet implemented)\n"), s);
+					for (ii=1; ii<10; ii++) {
+						char propname[] = "dnsserver0";
+						propname[9] = '0' + ii;
+						if (!xmlnode_get_prop(x, propname, &s) && s && *s)
+							vpn_progress(vpninfo, PRG_ERR, _("WARNING: Got split-DNS server %s (not yet implemented)\n"), s);
+						else
+							break;
+					}
+				} else if (xmlnode_is_named(x, "split-tunnel-info")) {
+					for (x2 = x->children; x2; x2=x2->next) {
+						if (xmlnode_is_named(x2, "addr")) {
+							if (!xmlnode_get_prop(x2, "ipv6", &s) &&
+							    !xmlnode_get_prop(x2, "prefix-len", &s2) &&
+							    s && s2 && *s && *s2) {
+								struct oc_split_include *inc = malloc(sizeof(*inc));
+								char *route = NULL;
+
+								default_route = 0;
+
+								if (!inc || asprintf(&route, "%s/%s", s, s2) == -1) {
+									free(route);
+									free(inc);
+									free_optlist(new_opts);
+									free_split_routes(&new_ip_info);
+									ret = -ENOMEM;
+									goto out;
+								}
+
+								vpn_progress(vpninfo, PRG_INFO, _("Got IPv%d route %s\n"), 6, route);
+								inc->route = add_option_steal(&new_opts, "split-include", &route);
+								inc->next = new_ip_info.split_includes;
+								new_ip_info.split_includes = inc;
+								/* XX: static analyzer doesn't realize that add_option_steal will steal route's reference, so... */
+								free(route);
+							}
+						}
+					}
+				}
+			}
 		}
 	}
+
+	if (reconnect_after_drop == -1)
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Server did not send <auth-ses tun-connect-without-reauth=\"0/1\"/>. OpenConnect will\n"
+			       "probably not be able to reconnect if dead peer is detected. If reconnection DOES,\n"
+			       "work please report to <openconnect-devel@lists.infradead.org>\n"));
 
 	if (default_route && new_ip_info.addr)
 		new_ip_info.netmask = add_option_dup(&new_opts, "full-netmask", "0.0.0.0", -1);
@@ -401,7 +556,6 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 		domains->data[domains->pos-1] = '\0';
 		new_ip_info.domain = add_option_steal(&new_opts, "search", &domains->data);
 	}
-	buf_free(domains);
 
 	ret = install_vpn_opts(vpninfo, new_opts, &new_ip_info, 0);
 	if (ret) {
@@ -412,12 +566,13 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 			     _("Failed to find VPN options\n"));
 		vpn_progress(vpninfo, PRG_DEBUG,
 			     _("Response was:%s\n"), buf);
-		ret = -EINVAL;
 	}
  out:
- 	xmlFreeDoc(xml_doc);
+	xmlFreeDoc(xml_doc);
+	buf_free(domains);
 	free(s);
 	free(s2);
+
 	return ret;
 }
 
@@ -455,41 +610,49 @@ static int fortinet_configure(struct openconnect_info *vpninfo)
 		goto out;
 	}
 
-	/* XXX: Why do Forticlient and Openfortivpn do this anyway?
-	 * It's fetching the legacy non-XML configuration, isn't it?
-	 * Do we *actually* have to do this, before fetching the XML config?
-	 */
 	free(vpninfo->urlpath);
-	vpninfo->urlpath = strdup("remote/fortisslvpn");
-	ret = do_https_request(vpninfo, "GET", NULL, NULL, &res_buf, 0);
-	if (ret < 0)
+
+	/* Fetch the connection options in XML format */
+	vpninfo->urlpath = strdup("remote/fortisslvpn_xml");
+	ret = do_https_request(vpninfo, "GET", NULL, NULL, &res_buf, NULL, HTTP_NO_FLAGS);
+	if (ret < 0) {
+		if (ret == -EPERM) {
+			/* XXX: Forticlient and Openfortivpn fetch the legacy HTTP configuration.
+			 * FortiOS 4 was the last version to send the legacy HTTP configuration.
+			 * FortiOS 5 and later send the current XML configuration.
+			 * We clearly do not need to support FortiOS 4 anymore.
+			 *
+			 * Yet we keep this code around in order to get a sanity check about
+			 * whether the SVPNCOOKIE is still valid/alive, until we are sure we've
+			 * worked out the weirdness with reconnects.
+			 */
+			vpninfo->urlpath = strdup("remote/fortisslvpn");
+			int ret2 = do_https_request(vpninfo, "GET", NULL, NULL, &res_buf, NULL, HTTP_NO_FLAGS);
+			if (ret2 == 0)
+				vpn_progress(vpninfo, PRG_ERR,
+					     _("Ancient Fortinet server (<v5?) only supports ancient HTML config, which is not implemented by OpenConnect.\n"));
+			else
+				vpn_progress(vpninfo, PRG_ERR,
+					     _("Fortinet server is rejecting request for connection options. This\n"
+					       "has been observed after reconnection in some cases. Please report to\n"
+					       "<openconnect-devel@lists.infradead.org>, or see the discussions on\n"
+					       "https://gitlab.com/openconnect/openconnect/-/issues/297 and\n"
+					       "https://gitlab.com/openconnect/openconnect/-/issues/298.\n"));
+		}
 		goto out;
-	else if (ret == 0) {
+	} else if (ret == 0) {
 		/* This is normally a redirect to /remote/login, which
 		 * indicates that the auth session/cookie is no longer valid.
 		 *
 		 * XX: See do_https_request() for why ret==0 can only happen
 		 * if there was a successful-but-unfetched redirect.
 		 */
+#if 0
 	invalid_cookie:
+#endif
 		ret = -EPERM;
 		goto out;
 	}
-	/* We don't care what it returned as long as it was successful */
-	free(res_buf);
-	res_buf = NULL;
-	free(vpninfo->urlpath);
-
-	/* Now fetch the connection options in XML format */
-	vpninfo->urlpath = strdup("remote/fortisslvpn_xml");
-	ret = do_https_request(vpninfo, "GET", NULL, NULL, &res_buf, 0);
-	if (ret < 0) {
-		if (ret == -EPERM)
-			vpn_progress(vpninfo, PRG_ERR,
-				     _("Server doesn't support XML config format. Ancient HTML format is not currently implemented.\n"));
-		goto out;
-	} else if (ret == 0)
-		goto invalid_cookie;
 
 	ret = parse_fortinet_xml_config(vpninfo, res_buf, ret);
 	if (ret)
@@ -538,15 +701,7 @@ int fortinet_connect(struct openconnect_info *vpninfo)
 {
 	int ret = 0;
 
-	if (!vpninfo->ppp) {
-		/* Initial connection */
-		ret = fortinet_configure(vpninfo);
-	} else if (vpninfo->ppp->ppp_state != PPPS_DEAD) {
-		/* TLS/DTLS reconnection with already-established PPP session
-		 * (PPP session will persist past reconnect.)
-		 */
-		ret = ppp_reset(vpninfo);
-	}
+	ret = fortinet_configure(vpninfo);
 	if (ret) {
 	err:
 		openconnect_close_https(vpninfo, 0);
@@ -582,6 +737,7 @@ int fortinet_connect(struct openconnect_info *vpninfo)
 	 *
 	 * Don't blame me. I didn't design this.
 	 */
+	vpninfo->ppp->check_http_response = 1;
 
 	/* Trigger the first PPP negotiations and ensure the PPP state
 	 * is PPPS_ESTABLISH so that ppp_tcp_mainloop() knows we've started. */
@@ -656,7 +812,7 @@ int fortinet_bye(struct openconnect_info *vpninfo, const char *reason)
 
 	orig_path = vpninfo->urlpath;
 	vpninfo->urlpath = strdup("remote/logout");
-	ret = do_https_request(vpninfo, "GET", NULL, NULL, &res_buf, 0);
+	ret = do_https_request(vpninfo, "GET", NULL, NULL, &res_buf, NULL, HTTP_NO_FLAGS);
 	free(vpninfo->urlpath);
 	vpninfo->urlpath = orig_path;
 

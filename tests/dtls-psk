@@ -42,7 +42,7 @@ if test "$(id -u)" != "0";then
 	exit 77
 fi
 
-echo "Testing ocserv connection with DTLS-PSK... "
+echo "Testing ocserv connection with DTLS-PSK..."
 
 function finish {
   set +e
@@ -87,7 +87,7 @@ if test $? != 0;then
 fi
 
 echo " * Connecting to ${ADDRESS}:${PORT}..."
-( echo "test" | ${CMDNS1} ${OPENCONNECT} --interface ${TUNDEV} --dtls-ciphers=PSK-NEGOTIATE ${ADDRESS}:${PORT} -u ${USERNAME} --servercert=d66b507ae074d03b02eafca40d35f87dd81049d3 -s ${srcdir}/scripts/vpnc-script --pid-file=${CLIPID} --passwd-on-stdin -b )
+( echo "test" | ${CMDNS1} ${OPENCONNECT} -Q16 --interface ${TUNDEV} --dtls-ciphers=PSK-NEGOTIATE ${ADDRESS}:${PORT} -u ${USERNAME} --servercert=d66b507ae074d03b02eafca40d35f87dd81049d3 -s ${srcdir}/scripts/vpnc-script --pid-file=${CLIPID} --passwd-on-stdin -b )
 if test $? != 0;then
 	echo "Could not connect to server"
 	exit 1
@@ -180,5 +180,15 @@ if test $? != 0;then
 	echo "occtl show user didn't find client address!"
 	exit 1
 fi
+
+echo " * ping remote address after reconnect"
+
+kill -USR2 $(cat ${CLIPID})
+
+${CMDNS2} nuttcp -1
+
+${CMDNS1} ping -c 3 ${VPNADDR}
+
+sleep 2
 
 exit 0

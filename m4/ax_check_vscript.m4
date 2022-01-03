@@ -1,5 +1,5 @@
 # ===========================================================================
-#   http://www.gnu.org/software/autoconf-archive/ax_check_vscript.html
+#     https://www.gnu.org/software/autoconf-archive/ax_check_vscript.html
 # ===========================================================================
 #
 # SYNOPSIS
@@ -17,8 +17,8 @@
 #
 #   If version scripts are supported, VSCRIPT_LDFLAGS will contain the
 #   appropriate flag to pass to the linker.  On GNU systems this would
-#   typically be "-Wl,--version-script", and on Solaris it would
-#   typically be "-Wl,-M".
+#   typically be "-Wl,--version-script", and on Solaris it would typically
+#   be "-Wl,-M".
 #
 #   Two Automake conditionals are also set:
 #
@@ -57,7 +57,7 @@
 #   and this notice are preserved. This file is offered as-is, without any
 #   warranty.
 
-#serial 1
+#serial 2
 
 # _AX_CHECK_VSCRIPT(flag, global-sym, action-if-link-succeeds, [junk-file=no])
 AC_DEFUN([_AX_CHECK_VSCRIPT], [

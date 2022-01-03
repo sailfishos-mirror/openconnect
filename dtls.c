@@ -17,20 +17,20 @@
 
 #include <config.h>
 
-#include <errno.h>
-#include <sys/types.h>
+#include "openconnect-internal.h"
+
 #include <unistd.h>
+#include <sys/types.h>
 #include <fcntl.h>
-#include <string.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <stdio.h>
 #ifndef _WIN32
 #include <netinet/in.h>
 #include <sys/socket.h>
 #endif
 
-#include "openconnect-internal.h"
+#include <errno.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 /*
  * The master-secret is generated randomly by the client. The server
@@ -85,7 +85,7 @@ char *openconnect_bin2base64(const char *prefix, const uint8_t *data, unsigned l
 	buf = buf_alloc();
 	if (prefix)
 		buf_append(buf, "%s", prefix);
-	buf_append_base64(buf, data, len);
+	buf_append_base64(buf, data, len, 0);
 
 	if (!buf_error(buf)) {
 		p = buf->data;
@@ -154,10 +154,8 @@ void dtls_close(struct openconnect_info *vpninfo)
 {
 	if (vpninfo->dtls_ssl) {
 		dtls_ssl_free(vpninfo);
+		unmonitor_fd(vpninfo, dtls);
 		closesocket(vpninfo->dtls_fd);
-		unmonitor_read_fd(vpninfo, dtls);
-		unmonitor_write_fd(vpninfo, dtls);
-		unmonitor_except_fd(vpninfo, dtls);
 		vpninfo->dtls_ssl = NULL;
 		vpninfo->dtls_fd = -1;
 	}
@@ -185,6 +183,7 @@ int dtls_setup(struct openconnect_info *vpninfo)
 		return 0;
 
 	if (!vpninfo->dtls_addr) {
+		vpn_progress(vpninfo, PRG_ERR, _("No DTLS address\n"));
 		vpninfo->dtls_attempt_period = 0;
 		return -EINVAL;
 	}
@@ -207,17 +206,17 @@ int udp_tos_update(struct openconnect_info *vpninfo, struct pkt *pkt)
 
 	/* Extract TOS field from IP header (IPv4 and IPv6 differ) */
 	switch(pkt->data[0] >> 4) {
-		case 4:
-			tos = pkt->data[1];
-			break;
-		case 6:
-			tos = (load_be16(pkt->data) >> 4) & 0xff;
-			break;
-		default:
-			vpn_progress(vpninfo, PRG_ERR,
-				     _("Unknown packet (len %d) received: %02x %02x %02x %02x...\n"),
-				     pkt->len, pkt->data[0], pkt->data[1], pkt->data[2], pkt->data[3]);
-			return -EINVAL;
+	case 4:
+		tos = pkt->data[1];
+		break;
+	case 6:
+		tos = (load_be16(pkt->data) >> 4) & 0xff;
+		break;
+	default:
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Unknown packet (len %d) received: %02x %02x %02x %02x...\n"),
+			     pkt->len, pkt->data[0], pkt->data[1], pkt->data[2], pkt->data[3]);
+		return -EINVAL;
 	}
 
 	/* set the actual value */
@@ -274,8 +273,12 @@ int dtls_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		int len = MAX(16384, vpninfo->ip_info.mtu);
 		unsigned char *buf;
 
+		if (vpninfo->incoming_queue.count >= vpninfo->max_qlen) {
+			work_done = 1;
+			break;
+		}
 		if (!vpninfo->dtls_pkt) {
-			vpninfo->dtls_pkt = malloc(sizeof(struct pkt) + len);
+			vpninfo->dtls_pkt = alloc_pkt(vpninfo, len);
 			if (!vpninfo->dtls_pkt) {
 				vpn_progress(vpninfo, PRG_ERR, _("Allocation failed\n"));
 				break;
@@ -448,7 +451,7 @@ int dtls_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		vpn_progress(vpninfo, PRG_TRACE,
 			     _("Sent DTLS packet of %d bytes; DTLS send returned %d\n"),
 			     this->len, ret);
-		free(this);
+		free_pkt(vpninfo, this);
 	}
 
 	return work_done;

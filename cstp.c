@@ -18,16 +18,8 @@
 
 #include <config.h>
 
-#include <unistd.h>
-#include <fcntl.h>
-#include <time.h>
-#include <string.h>
-#include <ctype.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <sys/types.h>
-#include <stdarg.h>
+#include "openconnect-internal.h"
+
 #ifdef HAVE_LZ4
 #include <lz4.h>
 #ifndef HAVE_LZ4_COMPRESS_DEFAULT
@@ -35,12 +27,21 @@
 #endif
 #endif
 
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/types.h>
 #if defined(__linux__)
 /* For TCP_INFO */
 # include <linux/tcp.h>
 #endif
 
-#include "openconnect-internal.h"
+#include <time.h>
+#include <string.h>
+#include <ctype.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdarg.h>
 
 /*
  * Data packets are encapsulated in the SSL stream as follows:
@@ -257,7 +258,7 @@ static int start_cstp_connection(struct openconnect_info *vpninfo)
 	}
 #ifdef HAVE_DTLS
 	if (vpninfo->dtls_state != DTLS_DISABLED) {
-		/* The X-DTLS-Master-Secret is only used for the legacy protocol negotation
+		/* The X-DTLS-Master-Secret is only used for the legacy protocol negotiation
 		 * which required the client to send explicitly the secret. In the PSK-NEGOTIATE
 		 * method, the master secret is implicitly agreed on */
 		buf_append(reqbuf, "X-DTLS-Master-Secret: ");
@@ -432,7 +433,7 @@ static int start_cstp_connection(struct openconnect_info *vpninfo)
 				if (vsize != 32) {
 					vpn_progress(vpninfo, PRG_ERR,
 					     _("X-DTLS-Session-ID not 64 characters; is: \"%s\"\n"),
-					     	colon);
+					     colon);
 					vpninfo->dtls_attempt_period = 0;
 					ret = -EINVAL;
 					goto err;
@@ -450,7 +451,7 @@ static int start_cstp_connection(struct openconnect_info *vpninfo)
 				if (vsize <= 0) {
 					vpn_progress(vpninfo, PRG_ERR,
 					     _("X-DTLS-Session-ID is invalid; is: \"%s\"\n"),
-					     	colon);
+					     colon);
 					vpninfo->dtls_attempt_period = 0;
 					ret = -EINVAL;
 					goto err;
@@ -485,7 +486,7 @@ static int start_cstp_connection(struct openconnect_info *vpninfo)
 				vpninfo->dtls_times.keepalive = atol(colon);
 			} else if (!strcmp(buf + i, "DPD")) {
 				int j = atol(colon);
-				if (j && (!vpninfo->dtls_times.dpd || j < vpninfo->dtls_times.dpd))
+				if (j && !vpninfo->dtls_times.dpd)
 					vpninfo->dtls_times.dpd = j;
 			} else if (!strcmp(buf + i, "Rekey-Method")) {
 				if (!strcmp(colon, "new-tunnel"))
@@ -523,7 +524,7 @@ static int start_cstp_connection(struct openconnect_info *vpninfo)
 			vpninfo->idle_timeout = atol(colon);
 		} else if (!strcmp(buf + 7, "DPD")) {
 			int j = atol(colon);
-			if (j && (!vpninfo->ssl_times.dpd || j < vpninfo->ssl_times.dpd))
+			if (j && !vpninfo->ssl_times.dpd)
 				vpninfo->ssl_times.dpd = j;
 		} else if (!strcmp(buf + 7, "Rekey-Time")) {
 			vpninfo->ssl_times.rekey = atol(colon);
@@ -715,8 +716,8 @@ int cstp_connect(struct openconnect_info *vpninfo)
 
 	/* If *any* compression is enabled, we'll need a deflate_pkt to compress into */
 	if (deflate_bufsize > vpninfo->deflate_pkt_size) {
-		free(vpninfo->deflate_pkt);
-		vpninfo->deflate_pkt = malloc(sizeof(struct pkt) + deflate_bufsize);
+		free_pkt(vpninfo, vpninfo->deflate_pkt);
+		vpninfo->deflate_pkt = alloc_pkt(vpninfo, deflate_bufsize);
 		if (!vpninfo->deflate_pkt) {
 			vpninfo->deflate_pkt_size = 0;
 			vpn_progress(vpninfo, PRG_ERR,
@@ -761,7 +762,7 @@ int decompress_and_queue_packet(struct openconnect_info *vpninfo, int compr_type
 	   negotiated MTU after decompression. We reserve some extra
 	   space to handle that */
 	int receive_mtu = MAX(16384, vpninfo->ip_info.mtu);
-	struct pkt *new = malloc(sizeof(struct pkt) + receive_mtu);
+	struct pkt *new = alloc_pkt(vpninfo, receive_mtu);
 	const char *comprname = "";
 
 	if (!new)
@@ -882,7 +883,7 @@ int compress_packet(struct openconnect_info *vpninfo, int compr_type, struct pkt
 		if (this->len < 40)
 			return -EFBIG;
 
-		ret = LZ4_compress_default((void*)this->data, (void*)vpninfo->deflate_pkt->data,
+		ret = LZ4_compress_default((void *)this->data, (void *)vpninfo->deflate_pkt->data,
 					   this->len, this->len);
 		if (ret <= 0) {
 			if (ret == 0)
@@ -921,7 +922,7 @@ int cstp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		int len, payload_len;
 
 		if (!vpninfo->cstp_pkt) {
-			vpninfo->cstp_pkt = malloc(sizeof(struct pkt) + receive_mtu);
+			vpninfo->cstp_pkt = alloc_pkt(vpninfo, receive_mtu);
 			if (!vpninfo->cstp_pkt) {
 				vpn_progress(vpninfo, PRG_ERR, _("Allocation failed\n"));
 				break;
@@ -1058,7 +1059,7 @@ int cstp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 				return work_done;
 			default:
 				/* This should never happen */
-				;
+				break;
 			}
 		}
 
@@ -1071,12 +1072,12 @@ int cstp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		}
 		/* Don't free the 'special' packets */
 		if (vpninfo->current_ssl_pkt == vpninfo->deflate_pkt) {
-			free(vpninfo->pending_deflated_pkt);
+			free_pkt(vpninfo, vpninfo->pending_deflated_pkt);
 			vpninfo->pending_deflated_pkt = NULL;
 		} else if (vpninfo->current_ssl_pkt != &dpd_pkt &&
 			 vpninfo->current_ssl_pkt != &dpd_resp_pkt &&
 			 vpninfo->current_ssl_pkt != &keepalive_pkt)
-			free(vpninfo->current_ssl_pkt);
+			free_pkt(vpninfo, vpninfo->current_ssl_pkt);
 
 		vpninfo->current_ssl_pkt = NULL;
 	}

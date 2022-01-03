@@ -54,13 +54,13 @@ the <tt>trojans/</tt> subdirectory:</p>
 
   <p>It may require configuration or customization to work with VPNs that have modified
   the behaviour of their Host Checker binaries in some way; consult its source code for details, starting with the
-  list of environment variables that may be set to overriden some of the data that it sends to the server.</p>
+  list of environment variables that may be set to overridden some of the data that it sends to the server.</p>
 
   <p>This script is based entirely on <a href="https://github.com/russdill/juniper-vpn-py"><tt>tncc.py</tt>
   from russdill/juniper-vpn-py on GitHub</a>.)</p></li>
 </ul>
 
-<p>With either of these sripts, it may also be necessary to pass a Mozilla-compatible user agent string:</p>
+<p>With either of these scripts, it may also be necessary to pass a Mozilla-compatible user agent string:</p>
 <pre>
   ./openconnect --protocol=nc --useragent 'Mozilla/5.0 (Linux) Firefox' --csd-wrapper=trojans/tncc-wrapper.py vpn.example.com
 </pre>

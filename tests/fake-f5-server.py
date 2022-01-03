@@ -38,7 +38,7 @@ import base64
 import time
 from json import dumps
 from functools import wraps
-from flask import Flask, request, abort, redirect, url_for, make_response, session
+from flask import Flask, request, redirect, url_for, make_response, session
 
 host, port, *cert_and_maybe_keyfile = sys.argv[1:]
 
@@ -48,10 +48,12 @@ context.load_cert_chain(*cert_and_maybe_keyfile)
 app = Flask(__name__)
 app.config.update(SECRET_KEY=b'fake', DEBUG=True, HOST=host, PORT=int(port), SESSION_COOKIE_NAME='fake')
 
+
 ########################################
 
 def cookify(jsonable):
     return base64.urlsafe_b64encode(dumps(jsonable).encode())
+
 
 def require_MRHSession(fn):
     @wraps(fn)
@@ -61,6 +63,7 @@ def require_MRHSession(fn):
             return redirect(url_for('get_policy'))
         return fn(*args, **kwargs)
     return wrapped
+
 
 def check_form_against_session(*fields, use_query=False):
     def inner(fn):
@@ -81,9 +84,12 @@ def check_form_against_session(*fields, use_query=False):
 # [Save list of domains/authgroups in the session for use later]
 @app.route('/')
 def root():
-    domains, mock_dtls = request.args.get('domains'), request.args.get('mock_dtls')
+    domains, mock_dtls, no_html_login_form = request.args.get('domains'), request.args.get('mock_dtls'), request.args.get('no_html_login_form')
+    assert not (domains and no_html_login_form), \
+        f'combination of domains and no_html_login_form is not allow specified'
     session.update(step='initial-GET', domains=domains and domains.split(','),
-		   mock_dtls=mock_dtls and bool(mock_dtls))
+                   mock_dtls=mock_dtls and bool(mock_dtls),
+                   no_html_login_form = no_html_login_form and bool(no_html_login_form))
     # print(session)
     return redirect(url_for('get_policy'))
 
@@ -92,6 +98,10 @@ def root():
 @app.route('/my.policy')
 def get_policy():
     session.update(step='GET-login-form')
+    no_html_login_form = session.get('no_html_login_form')
+    if no_html_login_form:
+        return '''<html><body>It would be nice if F5 login pages consistently used actual HTML forms</body></html>'''
+
     domains = session.get('domains')
     sel = ''
     if domains:
@@ -111,7 +121,7 @@ def get_policy():
 def post_policy():
     domains = session.get('domains')
     if domains:
-        assert 0 <= int(request.form.get('domain',-1)) < len(domains)
+        assert 0 <= int(request.form.get('domain', -1)) < len(domains)
     session.update(step='POST-login', username=request.form.get('username'),
                    credential=request.form.get('password'),
                    domain=request.form.get('domain'))
@@ -161,9 +171,9 @@ def profile_params():
 @check_form_against_session('resourcename', use_query=True)
 def options():
     assert request.args.get('outform') == 'xml' and request.args.get('client_version') == '2.0'
-    session.update(hdlc_framing=['no','yes'][random.randint(0, 1)],
+    session.update(hdlc_framing=['no', 'yes'][random.randint(0, 1)],
                    Z=session['resourcename'] + str(random.randint(1, 100)),
-                   ipv4='yes', ipv6=['no','yes'][random.randint(0, 1)],
+                   ipv4='yes', ipv6=['no', 'yes'][random.randint(0, 1)],
                    sess=request.cookies['MRHSession'] + str(random.randint(1, 100)))
 
     return (f'''
