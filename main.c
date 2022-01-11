@@ -420,13 +420,15 @@ static void read_stdin(char **string, int hidden, int allow_fail)
 {
 	CONSOLE_READCONSOLE_CONTROL rcc = { sizeof(rcc), 0, 13, 0 };
 	HANDLE stdinh = GetStdHandle(STD_INPUT_HANDLE);
-	DWORD cmode, nr_read;
+	DWORD cmode, nr_read, last_error;
 	wchar_t wbuf[1024];
 	char *buf;
 
 	if (GetConsoleMode(stdinh, &cmode)) {
 		if (hidden)
 			SetConsoleMode(stdinh, cmode & (~ENABLE_ECHO_INPUT));
+
+		SetLastError(0);
 
 		if (!ReadConsoleW(stdinh, wbuf, sizeof(wbuf)/2, &nr_read, &rcc)) {
 			char *errstr = openconnect__win32_strerror(GetLastError());
@@ -437,8 +439,26 @@ static void read_stdin(char **string, int hidden, int allow_fail)
 				SetConsoleMode(stdinh, cmode);
 			return;
 		}
+
+		last_error = GetLastError();
+
 		if (hidden)
 			SetConsoleMode(stdinh, cmode);
+
+		if (!nr_read) {
+			if (allow_fail) {
+				*string = NULL;
+				return;
+			} else {
+				if (last_error == ERROR_OPERATION_ABORTED) {
+					fprintf(stderr, _("Operation aborted by user\n"));
+				} else {
+					/* Should never happen */
+					fprintf(stderr, _("ReadConsole() didn't read any input\n"));
+				}
+				exit(1);
+			}
+		}
 	} else {
 		/* Not a console; maybe reading from a piped stdin? */
 		if (!fgetws(wbuf, sizeof(wbuf)/2, stdin)) {
@@ -824,6 +844,33 @@ static void set_default_vpncscript(void)
 	} else {
 		default_vpncscript = "cscript " DEFAULT_VPNCSCRIPT;
 	}
+}
+
+static BOOL WINAPI console_ctrl_handler(DWORD dwCtrlType)
+{
+	char cmd;
+
+	/* Note: this function always runs in a separate thread */
+
+	switch (dwCtrlType) {
+	case CTRL_C_EVENT:
+	case CTRL_BREAK_EVENT:
+	case CTRL_CLOSE_EVENT:
+	case CTRL_LOGOFF_EVENT:
+	case CTRL_SHUTDOWN_EVENT:
+		cmd = OC_CMD_CANCEL;
+		break;
+	default:
+		return FALSE;
+	}
+
+	/* Use send() here since, on Windows, sig_cmd_fd is a socket descriptor */
+	send(sig_cmd_fd, &cmd, 1, 0);
+
+	if (sig_vpninfo)
+		sig_vpninfo->need_poll_cmd_fd = 1;
+
+	return TRUE;
 }
 #endif
 
@@ -2121,7 +2168,9 @@ int main(int argc, char **argv)
 	sigaction(SIGHUP, &sa, NULL);
 	sigaction(SIGUSR1, &sa, NULL);
 	sigaction(SIGUSR2, &sa, NULL);
-#endif /* !_WIN32 */
+#else /* _WIN32 */
+	SetConsoleCtrlHandler(console_ctrl_handler, TRUE /* Add */);
+#endif
 
 	sig_vpninfo = vpninfo;
 	sig_cmd_fd = openconnect_setup_cmd_pipe(vpninfo);
