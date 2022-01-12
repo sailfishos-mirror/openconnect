@@ -854,11 +854,13 @@ static BOOL WINAPI console_ctrl_handler(DWORD dwCtrlType)
 
 	switch (dwCtrlType) {
 	case CTRL_C_EVENT:
-	case CTRL_BREAK_EVENT:
 	case CTRL_CLOSE_EVENT:
 	case CTRL_LOGOFF_EVENT:
 	case CTRL_SHUTDOWN_EVENT:
 		cmd = OC_CMD_CANCEL;
+		break;
+	case CTRL_BREAK_EVENT:
+		cmd = OC_CMD_DETACH;
 		break;
 	default:
 		return FALSE;
