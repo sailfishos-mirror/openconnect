@@ -1116,7 +1116,7 @@ int openconnect__win32_setenv(const char *name, const char *value, int overwrite
 #define inet_pton openconnect__win32_inet_pton
 int openconnect__win32_inet_pton(int af, const char *src, void *dst);
 #define OPENCONNECT_CMD_SOCKET SOCKET
-OPENCONNECT_CMD_SOCKET dumb_socketpair(OPENCONNECT_CMD_SOCKET socks[2], int make_overlapped);
+int dumb_socketpair(OPENCONNECT_CMD_SOCKET socks[2], int make_overlapped);
 #else
 #define closesocket close
 #define OPENCONNECT_CMD_SOCKET int
