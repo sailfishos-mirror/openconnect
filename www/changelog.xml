@@ -56,6 +56,7 @@
        <li>Fix a subtle bug which has prevented ESP rekey and ESP-to-TLS fallback from working reliably with the Juniper/oNCP protocol since v8.04. (<a href="https://gitlab.com/openconnect/openconnect/-/issues/322">#322</a>, <a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/293">!293</a>).</li>
        <li>Fix a bug in <tt>csd-wrapper.sh</tt> which has prevented it from correctly downloading compressed Trojan binaries since at least v8.00. (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/305">!305</a>)</li>
        <li>Make Windows socketpair emulation more robust in the face of Windows's ability to break its localhost routes. (<a href="https://gitlab.com/openconnect/openconnect/-/issues/228">#228</a>, <a href="https://gitlab.com/openconnect/openconnect/-/issues/361">#361</a>, <a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/320">#320</a>)</li>
+       <li>Perform proper disconnect and routes cleanup on Windows when receiving Ctrl+C or Ctrl+Break. (<a href="https://gitlab.com/openconnect/openconnect/-/issues/362">#362</a>, <a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/323">!323</a>)</li>
      </ul><br/>
   </li>
   <li><b><a href="https://www.infradead.org/openconnect/download/openconnect-8.10.tar.gz">OpenConnect v8.10</a></b>
