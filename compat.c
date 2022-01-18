@@ -416,6 +416,13 @@ int dumb_socketpair(OPENCONNECT_CMD_SOCKET socks[2], int make_overlapped)
     }
     socks[0] = socks[1] = -1;
 
+    /* AF_UNIX/SOCK_STREAM became available in Windows 10
+     * ( https://devblogs.microsoft.com/commandline/af_unix-comes-to-windows )
+     *
+     * We will attempt to use AF_UNIX, but fallback to using AF_INET if
+     * setting up AF_UNIX socket fails in any other way, which it surely will
+     * on earlier versions of Windows.
+     */
     for (ii = 0; ii < 2; ii++) {
         listener = socket(domain, SOCK_STREAM, domain == AF_INET ? IPPROTO_TCP : 0);
         if (listener == INVALID_SOCKET)
@@ -443,8 +450,8 @@ int dumb_socketpair(OPENCONNECT_CMD_SOCKET socks[2], int make_overlapped)
                     n = GetTempPath(UNIX_PATH_MAX, a.unaddr.sun_path);
                     break;
                 case 1:
-                    /* Heckuva job with API consistency, Microsoft!
-                     * unless the Windows directory is the root directory."
+                    /* Heckuva job with API consistency, Microsoft! Reversed argument order, and
+                     * "This path does not end with a backslash unless the Windows directory is the root directory.."
                      */
                     n = GetWindowsDirectory(a.unaddr.sun_path, UNIX_PATH_MAX);
                     n += snprintf(a.unaddr.sun_path + n, UNIX_PATH_MAX - n, "\\Temp\\");
@@ -513,12 +520,6 @@ int dumb_socketpair(OPENCONNECT_CMD_SOCKET socks[2], int make_overlapped)
         return 0;
 
     fallback:
-        /* AF_UNIX/SOCK_STREAM became available in Windows 10:
-         * https://devblogs.microsoft.com/commandline/af_unix-comes-to-windows
-         *
-         * We need to fallback to AF_INET on earlier versions of Windows,
-         * or if setting up AF_UNIX socket fails in any other way.
-         */
         domain = AF_INET;
         addrlen = sizeof(a.inaddr);
 
