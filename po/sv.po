@@ -1,16 +1,16 @@
 # Swedish translation for network-manager-openconnect.
-# Copyright © 2008, 2010, 2011, 2015, 2017, 2019, 2020 Free Software Foundation, Inc.
+# Copyright © 2008, 2010, 2011, 2015, 2017, 2019, 2020, 2021 Free Software Foundation, Inc.
 # This file is distributed under the same license as the network-manager-openconnect package.
 # Daniel Nylander <po@danielnylander.se>, 2008, 2010, 2011.
 # Josef Andersson <josef.andersson@fripost.org>, 2015, 2017, 2018, 2019.
-# Anders Jonsson <anders.jonsson@norsjovallen.se>, 2019, 2020.
+# Anders Jonsson <anders.jonsson@norsjovallen.se>, 2019, 2020, 2021.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: network-manager-openconnect\n"
 "Report-Msgid-Bugs-To: openconnect-devel@lists.infradead.org\n"
-"POT-Creation-Date: 2021-09-26 12:52+0200\n"
-"PO-Revision-Date: 2020-04-11 20:13+0200\n"
+"POT-Creation-Date: 2022-01-18 19:04+0000\n"
+"PO-Revision-Date: 2021-10-06 18:25+0200\n"
 "Last-Translator: Anders Jonsson <anders.jonsson@norsjovallen.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
 "Language: sv\n"
@@ -18,12 +18,12 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 2.3\n"
+"X-Generator: Poedit 3.0\n"
 "X-Project-Style: gnome\n"
 
 #: array.c:130
 msgid "No ANsession cookie found\n"
-msgstr ""
+msgstr "Ingen ANsession-kaka hittades\n"
 
 #: array.c:158 http.c:128
 #, c-format
@@ -33,75 +33,75 @@ msgstr "Ogiltig kaka ”%s”\n"
 #: array.c:364
 #, c-format
 msgid "Found DNS server %s\n"
-msgstr ""
+msgstr "Hittade DNS-server %s\n"
 
 #: array.c:391
 #, c-format
 msgid "Got search domain '%s'\n"
-msgstr ""
+msgstr "Erhöll sökdomän ”%s”\n"
 
 #: array.c:478
 #, c-format
 msgid "Unknown Array config element '%s'\n"
-msgstr ""
+msgstr "Okänt Array-konfigurationselement ”%s”\n"
 
 #: array.c:517
 #, c-format
 msgid "Initial config: Speed tunnel %d, enc %d, DPD %d\n"
-msgstr ""
+msgstr "Initial konfig: Speed tunnel %d, krypt %d, DPD %d\n"
 
 #: array.c:548
 msgid "Short write in Array JSON negotiation\n"
-msgstr ""
+msgstr "Kort skrivning i Array JSON-förhandling\n"
 
 #: array.c:557
 msgid "Failed to read Array JSON response\n"
-msgstr ""
+msgstr "Misslyckades med att läsa Array JSON-svar\n"
 
 #: array.c:566
 msgid "Unexpected response to Array JSON request\n"
-msgstr ""
+msgstr "Oväntat svar på Array JSON-begäran\n"
 
 #: array.c:579
 msgid "Failed to parse Array JSON response\n"
-msgstr ""
+msgstr "Misslyckades med att tolka Array JSON-svar\n"
 
 #: array.c:659
 msgid "Error creating array negotiation request\n"
-msgstr ""
+msgstr "Fel vid skapande av array-förhandlingsbegäran\n"
 
-#: array.c:675 f5.c:667 http.c:950 oncp.c:522 pulse.c:1370
+#: array.c:675 f5.c:679 http.c:952 oncp.c:524 pulse.c:1370
 #, c-format
 msgid "Unexpected %d result from server\n"
 msgstr "Oväntat resultat %d från server\n"
 
 #: array.c:698
 msgid "Error building Array DTLS negotiation packet\n"
-msgstr ""
+msgstr "Fel vid bygge av Array DTLS-förhandlingspaket\n"
 
 #: array.c:716 array.c:763
 msgid "Short write in array negotiation\n"
-msgstr ""
+msgstr "Kort skrivning i array-förhandling\n"
 
 #: array.c:726
 msgid "Failed to read UDP negotiation response\n"
-msgstr ""
+msgstr "Misslyckades med att läsa UDP-förhandlingssvar\n"
 
 #: array.c:738
 #, c-format
 msgid "DTLS enabled on port %d\n"
-msgstr ""
+msgstr "DTLS aktiverat på port %d\n"
 
 #: array.c:750
 msgid "Refusing non-DTLS UDP tunnel\n"
-msgstr ""
+msgstr "Nekar UPD-tunnel utan DTLS\n"
 
 #: array.c:772
 msgid "Failed to read ipff response\n"
-msgstr ""
+msgstr "Misslyckades med att läsa ipff-svar\n"
 
 #: array.c:825 array.c:1060 array.c:1170 cstp.c:927 dtls.c:283 dtls.c:642
-#: esp.c:163 gpst.c:1129 mainloop.c:63 oncp.c:867 ppp.c:1089 ppp.c:1676
+#: esp.c:166 gpst.c:1129 mainloop.c:63 oncp.c:869 ppp.c:1089 ppp.c:1676
 #: pulse.c:2616
 msgid "Allocation failed\n"
 msgstr "Allokering misslyckades\n"
@@ -109,55 +109,55 @@ msgstr "Allokering misslyckades\n"
 #: array.c:836 cstp.c:938 gpst.c:1142 pulse.c:2628
 #, c-format
 msgid "Short packet received (%d bytes)\n"
-msgstr "Kort paket mottogs (%d bytes)\n"
+msgstr "Kort paket mottogs (%d byte)\n"
 
 #: array.c:852 array.c:1197
 #, c-format
 msgid "Receive control packet of type %x:\n"
-msgstr ""
+msgstr "Ta emot kontrollpaket av typ %x:\n"
 
 #: array.c:859 pulse.c:2661
 #, c-format
 msgid "Received data packet of %d bytes\n"
 msgstr "Mottog datapaket på %d byte\n"
 
-#: array.c:902 cstp.c:1068 gpst.c:1231 oncp.c:1081 ppp.c:1376 pulse.c:2794
+#: array.c:902 cstp.c:1068 gpst.c:1231 oncp.c:1083 ppp.c:1376 pulse.c:2794
 #, c-format
 msgid "SSL wrote too few bytes! Asked for %d, sent %d\n"
 msgstr "SSL skrev för få byte! Frågade efter %d, skickade %d\n"
 
 #. Not that this will ever happen; we don't even process
 #. the setting when we're asked for it.
-#: array.c:920 cstp.c:1096 oncp.c:1116 pulse.c:2821
+#: array.c:920 cstp.c:1096 oncp.c:1118 pulse.c:2821
 msgid "CSTP rekey due\n"
 msgstr "CSTP rekey väntas\n"
 
 #. if we failed rehandshake try establishing a new-tunnel instead of failing
-#: array.c:927 cstp.c:1103 oncp.c:1123 pulse.c:2828
+#: array.c:927 cstp.c:1103 oncp.c:1125 pulse.c:2828
 msgid "Rehandshake failed; attempting new-tunnel\n"
 msgstr "Återhandskakning misslyckades; provar ny tunnel\n"
 
 #: array.c:937
 msgid "TCP Dead Peer Detection detected dead peer!\n"
-msgstr ""
+msgstr "TCP Dead Peer Detection upptäckte en död motpart!\n"
 
 #: array.c:941
 msgid "TCP reconnect failed\n"
-msgstr ""
+msgstr "TCP-återanslutning misslyckades\n"
 
 #: array.c:957
 msgid "Send TCP DPD\n"
-msgstr ""
+msgstr "Skicka TCP DPD\n"
 
 #: array.c:974
 msgid "Send TCP Keepalive\n"
-msgstr ""
+msgstr "Skicka TCP Keepalive\n"
 
 #: array.c:990
 msgid "Sending DTLS off packet\n"
-msgstr ""
+msgstr "Skickar DTLS off-paket\n"
 
-#: array.c:1000 cstp.c:1182 oncp.c:1199
+#: array.c:1000 cstp.c:1182 oncp.c:1201
 #, c-format
 msgid "Sending uncompressed data packet of %d bytes\n"
 msgstr "Skickar okomprimerade datapaket på %d byte\n"
@@ -168,36 +168,36 @@ msgstr "Försöker med ny DTLS-anslutning\n"
 
 #: array.c:1072 ppp.c:1688
 msgid "Failed to receive authentication response from DTLS\n"
-msgstr ""
+msgstr "Misslyckades med att ta emot autentiseringssvar från DTLS\n"
 
 #: array.c:1084
 msgid "DTLS session established\n"
-msgstr ""
+msgstr "Etablerade DTLS-session\n"
 
 #: array.c:1097
 msgid "Received Legacy IP over DTLS; assuming established\n"
-msgstr ""
+msgstr "Mottog äldre IP över DTLS; antar etablerad\n"
 
 #: array.c:1105
 msgid "Received IPv6 over DTLS; assuming established\n"
-msgstr ""
+msgstr "Mottog IPv6 över DTLS; antar etablerad\n"
 
 #: array.c:1111
 msgid "Received unknown DTLS packet\n"
-msgstr ""
+msgstr "Mottog okänt DTLS-paket\n"
 
 #: array.c:1119 ppp.c:1742
 msgid "Error creating connect request for DTLS session\n"
-msgstr ""
+msgstr "Fel vid skapande av anslutningsbegäran för DTLS-session\n"
 
 #: array.c:1135 ppp.c:1758
 msgid "Failed to write connect request to DTLS session\n"
-msgstr ""
+msgstr "Misslyckades med att skriva anslutningsbegäran till DTLS-session\n"
 
 #: array.c:1188 dtls.c:294
 #, c-format
 msgid "Received DTLS packet 0x%02x of %d bytes\n"
-msgstr "Hämtade DTLS-paket 0x%02x av %d byte\n"
+msgstr "Mottog DTLS-paket 0x%02x på %d byte\n"
 
 #: array.c:1212 dtls.c:358
 msgid "DTLS rekey due\n"
@@ -224,11 +224,11 @@ msgstr "Misslyckades med att skicka DPD-begäran. Förvänta frånkoppling\n"
 msgid "Sent DTLS packet of %d bytes; DTLS send returned %d\n"
 msgstr "Skickade DTLS-paket på %d byte, DTLS send returnerade %d\n"
 
-#: array.c:1303 auth-globalprotect.c:777 f5.c:702 fortinet.c:752 oncp.c:1227
+#: array.c:1303 auth-globalprotect.c:777 f5.c:714 fortinet.c:820 oncp.c:1229
 msgid "Logout failed.\n"
 msgstr "Misslyckades med utloggning.\n"
 
-#: array.c:1305 auth-globalprotect.c:779 f5.c:704 fortinet.c:754 oncp.c:1229
+#: array.c:1305 auth-globalprotect.c:779 f5.c:716 fortinet.c:822 oncp.c:1231
 msgid "Logout successful.\n"
 msgstr "Utloggning lyckades.\n"
 
@@ -353,7 +353,7 @@ msgstr "  %s (%s)\n"
 msgid "GlobalProtect portal configuration lists no gateway servers.\n"
 msgstr "GlobalProtect-portalkonfiguration listar inga gateway-servrar.\n"
 
-#: auth-globalprotect.c:620 auth-juniper.c:583 auth.c:709 fortinet.c:177
+#: auth-globalprotect.c:620 auth-juniper.c:583 auth.c:709 fortinet.c:176
 msgid "Failed to generate OTP tokencode; disabling token\n"
 msgstr "Misslyckades med att generera OTP-tokenkod; inaktiverar token\n"
 
@@ -361,27 +361,27 @@ msgstr "Misslyckades med att generera OTP-tokenkod; inaktiverar token\n"
 msgid "Server is neither a GlobalProtect portal nor a gateway.\n"
 msgstr "Servern är varken en GlobalProtect-portal eller en gateway.\n"
 
-#: auth-html.c:114
+#: auth-html.c:117
 #, c-format
 msgid "Ignoring unknown form submit item '%s'\n"
 msgstr "Ignorerar okänd formskickat objekt: ”%s\n"
 
-#: auth-html.c:125
+#: auth-html.c:128
 #, c-format
 msgid "Ignoring unknown form input type '%s'\n"
 msgstr "Ignorerar okänd forminmatningstyp: ”%s”\n"
 
-#: auth-html.c:135
+#: auth-html.c:138
 #, c-format
 msgid "Discarding duplicate option '%s'\n"
-msgstr "Förkasta dupliceringsalternativet ”%s”\n"
+msgstr "Förkastar duplicerat alternativ ”%s”\n"
 
-#: auth-html.c:212 auth.c:438
+#: auth-html.c:216 auth.c:438
 #, c-format
 msgid "Cannot handle form method='%s', action='%s'\n"
 msgstr "Kan inte hantera formulärmetod=”%s”, åtgärd=”%s”\n"
 
-#: auth-html.c:274
+#: auth-html.c:278
 #, c-format
 msgid "Unknown textarea field: '%s'\n"
 msgstr "Okänt textområdesfält: ”%s”\n"
@@ -392,7 +392,7 @@ msgstr "Misslyckades med att allokera minne för kommunikation med TNCC\n"
 
 #: auth-juniper.c:112
 msgid "Failed to send command to TNCC\n"
-msgstr ""
+msgstr "Misslyckades med att skicka kommando till TNCC\n"
 
 #: auth-juniper.c:174
 msgid "TNCC support not implemented yet on Windows\n"
@@ -405,7 +405,7 @@ msgstr "Ingen DSPREAUTH-kaka, provar ej TNCC\n"
 #: auth-juniper.c:193
 #, c-format
 msgid "Trying to run TNCC/Host Checker Trojan script '%s'.\n"
-msgstr ""
+msgstr "Försöker köra TNCC/Host Checker-trojanskriptet ”%s”.\n"
 
 #: auth-juniper.c:242
 #, c-format
@@ -442,7 +442,7 @@ msgstr "Erhöll ny DSPREAUTH-kaka från TNCC: %s\n"
 #: auth-juniper.c:308
 #, c-format
 msgid "Got reauth interval from TNCC: %d seconds\n"
-msgstr ""
+msgstr "Erhöll återautentiseringsintervall från TNCC: %d sekunder\n"
 
 #: auth-juniper.c:321
 #, c-format
@@ -453,7 +453,7 @@ msgstr "Oväntad icke-tom rad från TNCC efter DSPREAUTH-kaka: ”%s”\n"
 msgid "Too many non-empty lines from TNCC after DSPREAUTH cookie\n"
 msgstr "För många icke-tomma rader från TNCC efter DSPREAUTH-kaka\n"
 
-#: auth-juniper.c:499 f5.c:143
+#: auth-juniper.c:499 f5.c:155
 msgid "Failed to parse HTML document\n"
 msgstr "Misslyckades med att tolka HTML-dokument\n"
 
@@ -464,19 +464,21 @@ msgstr ""
 
 #: auth-juniper.c:526
 msgid "Encountered form with no 'name' or 'id'\n"
-msgstr ""
+msgstr "Stötte på formulär med varken ”name” eller ”id”\n"
 
 #: auth-juniper.c:555
 #, c-format
 msgid "Form action (%s) likely indicates that TNCC/Host Checker failed.\n"
 msgstr ""
+"Formuläråtgärden (%s) indikerar troligen att TNCC/Host Checker "
+"misslyckades.\n"
 
 #: auth-juniper.c:561
 #, c-format
 msgid "Unknown form (name '%s', id '%s')\n"
-msgstr ""
+msgstr "Okänt formulär (namn ”%s”, id ”%s”)\n"
 
-#: auth-juniper.c:564 f5.c:163
+#: auth-juniper.c:564 f5.c:175
 #, c-format
 msgid "Dumping unknown HTML form:\n"
 msgstr "Dumpar okänt HTML-formulär:\n"
@@ -511,7 +513,7 @@ msgstr "Tomt svar från server\n"
 msgid "Failed to parse server response\n"
 msgstr "Misslyckades med att tolka serversvar\n"
 
-#: auth.c:583 f5.c:245 f5.c:287 f5.c:330 f5.c:475 fortinet.c:312 fortinet.c:499
+#: auth.c:583 f5.c:257 f5.c:299 f5.c:342 f5.c:487 fortinet.c:351 fortinet.c:568
 #, c-format
 msgid "Response was:%s\n"
 msgstr "Svaret var:%s\n"
@@ -531,13 +533,13 @@ msgstr "Frågade efter lösenord men ”--no-passwd” var angivet\n"
 #: auth.c:692
 msgid ""
 "Client certificate missing or incorrect (Certificate Validation Failure)"
-msgstr ""
+msgstr "Klientcertifikat saknas eller är felaktigt (Certifikatvalideringsfel)"
 
 #: auth.c:958
 msgid "Not downloading XML profile because SHA1 already matches\n"
 msgstr "Hämtar inte XML-profil eftersom SHA1 redan matchar\n"
 
-#: auth.c:964 cstp.c:329 http.c:884
+#: auth.c:964 cstp.c:329 http.c:886
 #, c-format
 msgid "Failed to open HTTPS connection to %s\n"
 msgstr "Misslyckades med att öppna HTTPS-anslutningen till %s\n"
@@ -623,7 +625,7 @@ msgstr "Misslyckades med att skriva tillfälliga CSD-skriptfilen: %s\n"
 #: auth.c:1148
 #, c-format
 msgid "Trying to run CSD Trojan script '%s'.\n"
-msgstr ""
+msgstr "Försöker köra CSD-trojanskriptet ”%s”.\n"
 
 #: auth.c:1160
 #, c-format
@@ -646,7 +648,7 @@ msgstr ""
 #: auth.c:1175
 #, c-format
 msgid "CSD script '%s' completed successfully.\n"
-msgstr ""
+msgstr "CSD-skriptet ”%s” slutfördes korrekt.\n"
 
 #: auth.c:1203
 #, c-format
@@ -687,23 +689,23 @@ msgstr ""
 #: auth.c:1456
 #, c-format
 msgid "Fetched CSD stub for %s platform (size is %d bytes).\n"
-msgstr ""
+msgstr "Hämtade CSD-stubbe för %s-plattformen (storleken är %d byte).\n"
 
 #: auth.c:1476
 #, c-format
 msgid "Refreshing %s after 1 second...\n"
 msgstr "Uppdaterar %s efter 1 sekund…\n"
 
-#: compat.c:249
+#: compat.c:250
 #, c-format
 msgid "(error 0x%lx)"
 msgstr "(fel 0x%lx)"
 
-#: compat.c:252
+#: compat.c:253
 msgid "(Error while describing error!)"
 msgstr "(Fel vid beskrivning av fel!)"
 
-#: compat.c:275
+#: compat.c:276
 #, c-format
 msgid "ERROR: Cannot initialize sockets\n"
 msgstr "FEL: Kan inte initiera uttag (sockets)\n"
@@ -739,12 +741,12 @@ msgstr "VPN-tjänst otillgänglig, orsak: %s\n"
 #: cstp.c:354
 #, c-format
 msgid "Got inappropriate HTTP CONNECT response: %s\n"
-msgstr "Tog emot opassande HTTP CONNECT-svar: %s\n"
+msgstr "Erhöll opassande HTTP CONNECT-svar: %s\n"
 
 #: cstp.c:361
 #, c-format
 msgid "Got CONNECT response: %s\n"
-msgstr "Tog emot CONNECT-svar: %s\n"
+msgstr "Erhöll CONNECT-svar: %s\n"
 
 #: cstp.c:397 cstp.c:406
 msgid "No memory for options\n"
@@ -812,7 +814,7 @@ msgstr "Okänd komprimeringstyp %d\n"
 #: cstp.c:834
 #, c-format
 msgid "Received %s compressed data packet of %d bytes (was %d)\n"
-msgstr "Tog emot %s komprimerade datapaket av %d byte (var %d)\n"
+msgstr "Tog emot %s komprimerade datapaket på %d byte (var %d)\n"
 
 #: cstp.c:854
 #, c-format
@@ -826,17 +828,17 @@ msgstr "Oväntad paketlängd. SSL_read returnerade %d men paket är\n"
 
 #: cstp.c:965
 msgid "Got CSTP DPD request\n"
-msgstr "Mottog CSTP DPD-begäran\n"
+msgstr "Erhöll CSTP DPD-begäran\n"
 
 #: cstp.c:971
 msgid "Got CSTP DPD response\n"
-msgstr "Mottog CSTP DPD-svar\n"
+msgstr "Erhöll CSTP DPD-svar\n"
 
 #: cstp.c:976
 msgid "Got CSTP Keepalive\n"
-msgstr "Mottog CSTP Keepalive\n"
+msgstr "Erhöll CSTP Keepalive\n"
 
-#: cstp.c:981 oncp.c:956
+#: cstp.c:981 oncp.c:958
 #, c-format
 msgid "Received uncompressed data packet of %d bytes\n"
 msgstr "Mottog dekomprimerade datapaket av %d byte\n"
@@ -863,27 +865,27 @@ msgstr "mottog paket för serveravslut\n"
 msgid "Unknown packet %02x %02x %02x %02x %02x %02x %02x %02x\n"
 msgstr "Okänt paket %02x %02x %02x %02x %02x %02x %02x %02x\n"
 
-#: cstp.c:1114 oncp.c:1134 pulse.c:2839
+#: cstp.c:1114 oncp.c:1136 pulse.c:2839
 msgid "CSTP Dead Peer Detection detected dead peer!\n"
 msgstr "CSTP Dead Peer Detection upptäckte en död motpart!\n"
 
-#: cstp.c:1118 gpst.c:1279 oncp.c:1051 oncp.c:1138 ppp.c:1406 pulse.c:2764
+#: cstp.c:1118 gpst.c:1279 oncp.c:1053 oncp.c:1140 ppp.c:1406 pulse.c:2764
 #: pulse.c:2844
 msgid "Reconnect failed\n"
 msgstr "Återanslutning misslyckades\n"
 
-#: cstp.c:1134 oncp.c:1154 pulse.c:2860
+#: cstp.c:1134 oncp.c:1156 pulse.c:2860
 msgid "Send CSTP DPD\n"
 msgstr "Skicka CSTP DPD\n"
 
-#: cstp.c:1146 oncp.c:1165 pulse.c:2872
+#: cstp.c:1146 oncp.c:1167 pulse.c:2872
 msgid "Send CSTP Keepalive\n"
 msgstr "Skicka CSTP Keepalive\n"
 
 #: cstp.c:1171
 #, c-format
 msgid "Sending compressed data packet of %d bytes (was %d)\n"
-msgstr "Skickar komprimerade datapaket för %d byte (var %d)\n"
+msgstr "Skickar komprimerat datapaket på %d byte (var %d)\n"
 
 #: cstp.c:1222
 #, c-format
@@ -942,7 +944,7 @@ msgstr "UDP setsockopt"
 
 #: dtls.c:308
 msgid "Got DTLS DPD request\n"
-msgstr "Mottog DTLS DPD-begäran\n"
+msgstr "Erhöll DTLS DPD-begäran\n"
 
 #: dtls.c:314
 msgid "Failed to send DPD response. Expect disconnect\n"
@@ -950,11 +952,11 @@ msgstr "Misslyckades med att skicka DPD-svar. Förvänta frånkoppling\n"
 
 #: dtls.c:318
 msgid "Got DTLS DPD response\n"
-msgstr "Mottog DTLS DPD-svar\n"
+msgstr "Erhöll DTLS DPD-svar\n"
 
 #: dtls.c:322
 msgid "Got DTLS Keepalive\n"
-msgstr "Mottog DTLS Keepalive\n"
+msgstr "Erhöll DTLS Keepalive\n"
 
 #: dtls.c:328
 msgid "Compressed DTLS packet received when compression not enabled\n"
@@ -1080,275 +1082,319 @@ msgstr "ESP krypteringstyp %s key 0x%s\n"
 msgid "ESP authentication type %s key 0x%s\n"
 msgstr "ESP autentiseringstyp %s key 0x%s\n"
 
-#: esp.c:90
+#: esp.c:93
 msgid "incoming"
 msgstr "inkommande"
 
-#: esp.c:91
+#: esp.c:94
 msgid "outgoing"
 msgstr "utgående"
 
-#: esp.c:93 esp.c:147
+#: esp.c:96 esp.c:150
 msgid "Send ESP probes\n"
 msgstr "Skicka ESP-avsökningar\n"
 
-#: esp.c:187
+#: esp.c:190
 #, c-format
 msgid "Received ESP packet from old SPI 0x%x, seq %u\n"
 msgstr "Mottog ESP-paket från gammal SPI 0x%x, seq %u\n"
 
-#: esp.c:193
+#: esp.c:196
 #, c-format
 msgid "Received ESP packet with invalid SPI 0x%08x\n"
 msgstr "Mottog ESP-paket med ogiltig SPI 0x%08x\n"
 
-#: esp.c:204
-#, c-format
-msgid "Received ESP Legacy IP packet of %d bytes\n"
-msgstr ""
-
 #: esp.c:207
 #, c-format
-msgid "Received ESP Legacy IP packet of %d bytes (LZO-compressed)\n"
-msgstr ""
+msgid "Received ESP Legacy IP packet of %d bytes\n"
+msgstr "Mottog äldre ESP IP-paket på %d byte\n"
 
 #: esp.c:210
 #, c-format
-msgid "Received ESP IPv6 packet of %d bytes\n"
-msgstr ""
+msgid "Received ESP Legacy IP packet of %d bytes (LZO-compressed)\n"
+msgstr "Mottog äldre ESP IP-paket på %d byte (LZO-komprimerat)\n"
 
-#: esp.c:214
+#: esp.c:213
+#, c-format
+msgid "Received ESP IPv6 packet of %d bytes\n"
+msgstr "Mottog ESP IPv6-paket på %d byte\n"
+
+#: esp.c:217
 #, c-format
 msgid "Received ESP packet of %d bytes with unrecognised payload type %02x\n"
-msgstr ""
+msgstr "Mottog ESP-paket på %d byte med okänd nyttolasttyp %02x\n"
 
-#: esp.c:221
+#: esp.c:224
 #, c-format
 msgid "Invalid padding length %02x in ESP\n"
 msgstr "Ogiltig utfyllnadslängd %02x i ESP\n"
 
-#: esp.c:233
+#: esp.c:236
 msgid "Invalid padding bytes in ESP\n"
 msgstr "Ogiltig utfyllnadsbyte i ESP\n"
 
-#: esp.c:242
+#: esp.c:245
 msgid "ESP session established with server\n"
 msgstr "ESP-session etablerad med server\n"
 
-#: esp.c:253
+#: esp.c:256
 msgid "Failed to allocate memory to decrypt ESP packet\n"
 msgstr "Misslyckades med att allokera minne för att dekryptera ESP-paket\n"
 
-#: esp.c:259
+#: esp.c:262
 msgid "LZO decompression of ESP packet failed\n"
 msgstr "LZO-dekomprimering av ESP-paket misslyckades\n"
 
-#: esp.c:265
+#: esp.c:268
 #, c-format
 msgid "LZO decompressed %d bytes into %d\n"
 msgstr "LZO-dekomprimerade %d byte till %d\n"
 
-#: esp.c:279
+#: esp.c:282
 msgid "Rekey not implemented for ESP\n"
 msgstr "Rekey inte implementerad än för ESP\n"
 
-#: esp.c:283
+#: esp.c:286
 msgid "ESP detected dead peer\n"
 msgstr "ESP upptäckte en död motpart\n"
 
-#: esp.c:291
+#: esp.c:294
 msgid "Send ESP probes for DPD\n"
 msgstr "Skicka ESP-avsökningar för DPD\n"
 
-#: esp.c:298
+#: esp.c:301
 msgid "Keepalive not implemented for ESP\n"
 msgstr "Keepalive inte implementerad än för ESP\n"
 
-#: esp.c:363
+#: esp.c:374
 #, c-format
 msgid "Requeueing failed ESP send: %s\n"
 msgstr "Köar om misslyckad ESP-sändning: %s\n"
 
-#: esp.c:370
+#: esp.c:381
 #, c-format
 msgid "Failed to send ESP packet: %s\n"
 msgstr "Misslyckades med att skicka ESP-paket: %s\n"
 
-#: esp.c:376
+#: esp.c:387
 #, c-format
 msgid "Sent ESP IPv%d packet of %d bytes\n"
-msgstr ""
+msgstr "Skickade ESP IPv%d-paket på %d byte\n"
 
-#: esp.c:445
+#: esp.c:456
 msgid "Failed to generate random keys for ESP\n"
 msgstr "Misslyckades med att generera slumpmässiga nycklar för ESP\n"
 
-#: esp.c:452
+#: esp.c:463
 msgid "Failed to generate initial IV for ESP\n"
 msgstr "Misslyckades med att generera ursprungligt IV för ESP-paket:\n"
 
-#: f5.c:154
+#: f5.c:166
 msgid ""
 "WARNING: no HTML login form found; assuming username and password fields\n"
 msgstr ""
+"VARNING: inget HTML-inloggningsformulär hittades; antar användarnamn- och "
+"lösenordsfält\n"
 
-#: f5.c:160
+#: f5.c:172
 #, c-format
 msgid "Unknown form ID '%s' (expected 'auth_form')\n"
-msgstr ""
+msgstr "Okänt formulär-ID ”%s” (förväntade ”auth_form”)\n"
 
-#: f5.c:243
+#: f5.c:255
 msgid "Failed to parse F5 profile response\n"
-msgstr ""
+msgstr "Misslyckades med att tolka F5-profilsvar\n"
 
-#: f5.c:285
+#: f5.c:297
 msgid "Failed to find VPN profile parameters\n"
-msgstr ""
+msgstr "Misslyckades med att hitta VPN-profilparametrar\n"
 
-#: f5.c:328
+#: f5.c:340
 msgid "Failed to parse F5 options response\n"
-msgstr ""
+msgstr "Misslyckades med att tolka F5-alternativsvar\n"
 
-#: f5.c:362
+#: f5.c:374
 #, c-format
 msgid "Idle timeout is %d minutes\n"
-msgstr ""
-
-#: f5.c:372
-msgid "Got default routes\n"
-msgstr ""
-
-#: f5.c:375
-#, c-format
-msgid "Got SplitTunneling0 value of %d\n"
-msgstr ""
+msgstr "Tidsgräns för inaktivitet är %d minuter\n"
 
 #: f5.c:384
+msgid "Got default routes\n"
+msgstr "Erhöll standardrutter\n"
+
+#: f5.c:387
+#, c-format
+msgid "Got SplitTunneling0 value of %d\n"
+msgstr "Erhöll SplitTunneling0-värde på %d\n"
+
+#: f5.c:396
 #, c-format
 msgid "Got DNS server %s\n"
-msgstr ""
+msgstr "Erhöll DNS-server %s\n"
 
-#: f5.c:391
+#: f5.c:403
 #, c-format
 msgid "Got WINS/NBNS server %s\n"
-msgstr ""
+msgstr "Erhöll WINS/NBNS-server %s\n"
 
-#: f5.c:398 fortinet.c:363 fortinet.c:431
+#: f5.c:410 fortinet.c:426 fortinet.c:494
 #, c-format
 msgid "Got search domain %s\n"
-msgstr ""
+msgstr "Erhöll sökdomän %s\n"
 
-#: f5.c:428
+#: f5.c:440
 #, c-format
 msgid "Got split exclude route %s\n"
-msgstr ""
+msgstr "Erhöll split-exclude-rutt %s\n"
 
-#: f5.c:432
+#: f5.c:444
 #, c-format
 msgid "Got split include route %s\n"
-msgstr ""
+msgstr "Erhöll split-include-rutt %s\n"
 
 #. XX: DTLS always uses same port as TLS?
-#: f5.c:440 fortinet.c:328
+#: f5.c:452 fortinet.c:367
 #, c-format
 msgid "DTLS is enabled on port %d\n"
-msgstr ""
+msgstr "DTLS är aktiverat på port %d\n"
 
-#: f5.c:452
+#: f5.c:464
 msgid ""
 "WARNING: Server enables DTLS, but also requires HDLC. Disabling DTLS,\n"
 "    because HDLC prevents determination of efficient and consistent MTU.\n"
 msgstr ""
+"VARNING: Servern aktiverar DTLS, men kräver också HDLC. Inaktiverar DTLS\n"
+"    eftersom HDLC förhindrar avgörande av effektiv och konsekvent MTU.\n"
 
-#: f5.c:473 fortinet.c:497
+#: f5.c:485 fortinet.c:566
 msgid "Failed to find VPN options\n"
-msgstr ""
+msgstr "Misslyckades med att hitta VPN-alternativ\n"
 
-#: f5.c:496 fortinet.c:359
+#: f5.c:508 fortinet.c:422
 #, c-format
 msgid "Got Legacy IP address %s\n"
-msgstr ""
+msgstr "Erhöll äldre IP-adress %s\n"
 
-#: f5.c:501 fortinet.c:420 fortinet.c:425
+#: f5.c:513 fortinet.c:483 fortinet.c:488
 #, c-format
 msgid "Got IPv6 address %s\n"
-msgstr ""
+msgstr "Erhöll IPv6-adress %s\n"
 
-#: f5.c:551
+#: f5.c:563
 #, c-format
 msgid "Got profile parameters '%s'\n"
-msgstr ""
+msgstr "Erhöll profilparametrarna ”%s”\n"
 
-#: f5.c:571
+#: f5.c:583
 #, c-format
 msgid "Got ipv4 %d ipv6 %d hdlc %d ur_Z '%s'\n"
-msgstr ""
+msgstr "Erhöll ipv4 %d ipv6 %d hdlc %d ur_Z ”%s”\n"
 
-#: f5.c:600
+#: f5.c:612
 msgid "Error establishing F5 connection\n"
-msgstr ""
+msgstr "Fel vid etablering av F5-anslutning\n"
 
-#: fortinet.c:129
+#: fortinet.c:127
 #, c-format
 msgid "Got login realm '%s'\n"
-msgstr ""
+msgstr "Erhöll inloggningsrike ”%s”\n"
 
-#: fortinet.c:310
+#: fortinet.c:349
 msgid "Failed to parse Fortinet config XML\n"
-msgstr ""
+msgstr "Misslyckades med att tolka Fortinet-konfigurations-XML\n"
 
-#: fortinet.c:339 gpst.c:389
+#: fortinet.c:378 gpst.c:389
 #, c-format
 msgid "Idle timeout is %d minutes.\n"
-msgstr "Inaktiv tidsgräns är %d minuter.\n"
+msgstr "Tidsgräns för inaktivitet är %d minuter.\n"
 
-#: fortinet.c:354
+#: fortinet.c:398
+#, c-format
+msgid ""
+"Server reports that reconnect-after-drop is allowed within %d seconds, %s\n"
+msgstr ""
+
+#: fortinet.c:400
+msgid "but only from the same source IP address"
+msgstr ""
+
+#: fortinet.c:400
+msgid "even if source IP address changes"
+msgstr ""
+
+#: fortinet.c:403
+msgid ""
+"Server reports that reconnect-after-drop is not allowed. OpenConnect will "
+"not\n"
+"be able to reconnect if dead peer is detected. If reconnection DOES work,\n"
+"please report to <openconnect-devel@lists.infradead.org>\n"
+msgstr ""
+
+#: fortinet.c:417
 #, c-format
 msgid "Reported platform is %s\n"
-msgstr ""
+msgstr "Rapporterad plattform är %s\n"
 
-#: fortinet.c:367 fortinet.c:435
+#: fortinet.c:430 fortinet.c:498
 #, c-format
 msgid "Got IPv%d DNS server %s\n"
-msgstr ""
+msgstr "Erhöll IPv%d-DNS-server %s\n"
 
-#: fortinet.c:373 fortinet.c:441
+#: fortinet.c:436 fortinet.c:504
 #, c-format
 msgid "WARNING: Got split-DNS domains %s (not yet implemented)\n"
-msgstr ""
+msgstr "VARNING: Erhöll split-DNS-domänerna %s (inte implementerat ännu)\n"
 
-#: fortinet.c:378 fortinet.c:446
+#: fortinet.c:441 fortinet.c:509
 #, c-format
 msgid "WARNING: Got split-DNS server %s (not yet implemented)\n"
-msgstr ""
+msgstr "VARNING: Erhöll split-DNS-servern %s (inte implementerat ännu)\n"
 
-#: fortinet.c:400 fortinet.c:470
+#: fortinet.c:463 fortinet.c:533
 #, c-format
 msgid "Got IPv%d route %s\n"
-msgstr ""
+msgstr "Erhöll IPv%d-rutten %s\n"
 
-#: fortinet.c:539
-msgid "No cookie named SVPNCOOKIE.\n"
-msgstr ""
-
-#: fortinet.c:573
+#: fortinet.c:549
 msgid ""
-"Server doesn't support XML config format. Ancient HTML format is not "
-"currently implemented.\n"
+"Server did not send <auth-ses tun-connect-without-reauth=\"0/1\"/>. "
+"OpenConnect will\n"
+"probably not be able to reconnect if dead peer is detected. If reconnection "
+"DOES,\n"
+"work please report to <openconnect-devel@lists.infradead.org>\n"
 msgstr ""
 
-#: fortinet.c:603
+#: fortinet.c:608
+msgid "No cookie named SVPNCOOKIE.\n"
+msgstr "Ingen kaka med namnet SVPNCOOKIE.\n"
+
+#: fortinet.c:633
+msgid ""
+"Ancient Fortinet server (<v5?) only supports ancient HTML config, which is "
+"not implemented by OpenConnect.\n"
+msgstr ""
+
+#: fortinet.c:636
+msgid ""
+"Fortinet server is rejecting request for connection options. This\n"
+"has been observed after reconnection in some cases. Please report to\n"
+"<openconnect-devel@lists.infradead.org>, or see the discussions on\n"
+"https://gitlab.com/openconnect/openconnect/-/issues/297 and\n"
+"https://gitlab.com/openconnect/openconnect/-/issues/298.\n"
+msgstr ""
+
+#: fortinet.c:671
 msgid "Error establishing Fortinet connection\n"
-msgstr ""
+msgstr "Fel vid etablering av Fortinet-anslutning\n"
 
-#: fortinet.c:704
+#: fortinet.c:772
 msgid "Did not receive expected svrhello response.\n"
-msgstr ""
+msgstr "Fick ej förväntat svrhello-svar.\n"
 
-#: fortinet.c:715
+#: fortinet.c:783
 #, c-format
 msgid "svrhello status was \"%.*s\" rather than \"ok\"\n"
-msgstr ""
+msgstr "svrhello-status var ”%.*s” snarare än ”ok”\n"
 
 #: gnutls-dtls.c:194
 msgid "Deferring DTLS resumption until CSTP generates a PSK\n"
@@ -1391,7 +1437,7 @@ msgstr "Okända DTLS-parametrar för begärd chiffersvit ”%s”\n"
 #: gnutls-dtls.c:320
 #, c-format
 msgid "Failed to set DTLS session parameters: %s\n"
-msgstr "Misslyckades att sätta DTLS-sessionsparametrar: %s\n"
+msgstr "Misslyckades med att sätta DTLS-sessionsparametrar: %s\n"
 
 #: gnutls-dtls.c:382
 #, c-format
@@ -1430,7 +1476,7 @@ msgstr ""
 #: gnutls-dtls.c:517
 #, c-format
 msgid "Failed to set DTLS MTU: %s\n"
-msgstr "Misslyckades att sätta DTLS MTU: %s\n"
+msgstr "Misslyckades med att sätta DTLS MTU: %s\n"
 
 #: gnutls-dtls.c:528
 #, c-format
@@ -1490,52 +1536,52 @@ msgstr "Misslyckad select() för TLS"
 
 #: gnutls.c:120 openssl.c:175
 msgid "TLS/DTLS write cancelled\n"
-msgstr ""
+msgstr "TLS/DTLS-skrivning avbröts\n"
 
 #: gnutls.c:124
 #, c-format
 msgid "Failed to write to TLS/DTLS socket: %s\n"
-msgstr ""
+msgstr "Misslyckades med att skriva till TLS/DTLS-uttag: %s\n"
 
 #: gnutls.c:170
 msgid "Failed select() for TLS/DTLS"
-msgstr ""
+msgstr "Misslyckad select() för TLS/DTLS"
 
 #: gnutls.c:175 gnutls.c:271 openssl.c:225 openssl.c:292
 msgid "TLS/DTLS read cancelled\n"
-msgstr ""
+msgstr "TLS/DTLS-läsning avbröts\n"
 
 #. We've seen this with HTTP 1.0 responses followed by abrupt
 #. socket closure and no clean SSL shutdown.
 #. https://bugs.launchpad.net/bugs/1225276
 #: gnutls.c:188
 msgid "TLS/DTLS socket closed uncleanly\n"
-msgstr ""
+msgstr "TLS/DTLS-uttag stängdes orent\n"
 
 #: gnutls.c:198 gnutls.c:280
 #, c-format
 msgid "Failed to read from TLS/DTLS socket: %s\n"
-msgstr ""
+msgstr "Misslyckades med att läsa från TLS/DTLS-uttag: %s\n"
 
 #: gnutls.c:297 openssl.c:309
 #, c-format
 msgid "Attempted to read from non-existent %s session\n"
-msgstr ""
+msgstr "Försökte läsa från ej existerande %s-session\n"
 
 #: gnutls.c:309
 #, c-format
 msgid "Read error on %s session: %s\n"
-msgstr ""
+msgstr "Läsfel på %s-session: %s\n"
 
 #: gnutls.c:321 openssl.c:334
 #, c-format
 msgid "Attempted to write to non-existent %s session\n"
-msgstr ""
+msgstr "Försökte skriva till ej existerande %s-session\n"
 
 #: gnutls.c:355
 #, c-format
 msgid "Write error on %s session: %s\n"
-msgstr ""
+msgstr "Skrivfel på %s-session: %s\n"
 
 #: gnutls.c:369
 msgid "Could not extract expiration time of certificate\n"
@@ -1543,11 +1589,11 @@ msgstr "Kunde inte extrahera tidsgräns för certifikat\n"
 
 #: gnutls.c:374 openssl.c:1671
 msgid "Client certificate has expired at"
-msgstr "Klientcertifikat har passerat tidsgränsen"
+msgstr "Klientcertifikat har gått ut"
 
 #: gnutls.c:375 openssl.c:1672
 msgid "Secondary client certificate has expired at"
-msgstr ""
+msgstr "Sekundärt klientcertifikat har gått ut"
 
 #: gnutls.c:377 openssl.c:1677
 msgid "Client certificate expires soon at"
@@ -1555,7 +1601,7 @@ msgstr "Klientcertifikat passerar snart tidsgräns"
 
 #: gnutls.c:378 openssl.c:1678
 msgid "Secondary client certificate expires soon at"
-msgstr ""
+msgstr "Sekundärt klientcertifikat passerar snart tidsgräns"
 
 #: gnutls.c:427 openssl.c:863
 #, c-format
@@ -1584,7 +1630,7 @@ msgstr "Misslyckades med att läsa in certifikat till minnet: %s\n"
 #: gnutls.c:496
 #, c-format
 msgid "Failed to setup PKCS#12 data structure: %s\n"
-msgstr "Misslyckades med att ställa in PKCS#12-datastrukturen: %s\n"
+msgstr "Misslyckades med att konfigurera PKCS#12-datastrukturen: %s\n"
 
 #: gnutls.c:519 openssl.c:621
 msgid "Failed to decrypt PKCS#12 certificate file\n"
@@ -1596,12 +1642,12 @@ msgstr "Ange PKCS#12-lösenfras:"
 
 #: gnutls.c:527 openssl.c:628
 msgid "Enter secondary PKCS#12 pass phrase:"
-msgstr ""
+msgstr "Ange sekundär PKCS#12-lösenfras:"
 
 #: gnutls.c:550
 #, c-format
 msgid "Failed to process PKCS#12 file: %s\n"
-msgstr "Misslyckades med att behandla PKCS#12-filen: %s\n"
+msgstr "Misslyckades med att bearbeta PKCS#12-filen: %s\n"
 
 #: gnutls.c:562
 #, c-format
@@ -1611,7 +1657,7 @@ msgstr "Misslyckades med att läsa PKCS#12-certifikatet: %s\n"
 #: gnutls.c:563
 #, c-format
 msgid "Failed to load secondary PKCS#12 certificate: %s\n"
-msgstr ""
+msgstr "Misslyckades med att läsa in sekundärt PKCS#12-certifikat: %s\n"
 
 #: gnutls.c:636
 #, c-format
@@ -1625,7 +1671,7 @@ msgstr "MD5-hashfel: %s\n"
 
 #: gnutls.c:704
 msgid "Missing DEK-Info: header from OpenSSL encrypted key\n"
-msgstr "Saknar DEK-Info: huvud from OpenSSL-krypterad nyckel\n"
+msgstr "Saknar DEK-Info: huvud från OpenSSL-krypterad nyckel\n"
 
 #: gnutls.c:711
 msgid "Cannot determine PEM encryption type\n"
@@ -1669,7 +1715,7 @@ msgstr "Ange PEM-lösenfras:"
 
 #: gnutls.c:893 openssl.c:503
 msgid "Enter secondary PEM pass phrase:"
-msgstr ""
+msgstr "Ange sekundär PEM-lösenfras:"
 
 #: gnutls.c:1024
 msgid "This binary built without system key support\n"
@@ -1707,7 +1753,7 @@ msgstr "Använder certifikatfilen %s\n"
 #: gnutls.c:1107 openssl.c:926
 #, c-format
 msgid "Using secondary certificate file %s\n"
-msgstr ""
+msgstr "Använder sekundära certifikatfilen %s\n"
 
 #: gnutls.c:1130
 msgid "PKCS#11 file contained no certificate\n"
@@ -1725,7 +1771,7 @@ msgstr "Misslyckades med att läsa in certifikatet: %s\n"
 #: gnutls.c:1162
 #, c-format
 msgid "Loading secondary certificate failed: %s\n"
-msgstr ""
+msgstr "Misslyckades med att läsa in sekundärt certifikat: %s\n"
 
 #: gnutls.c:1177
 #, c-format
@@ -1735,7 +1781,7 @@ msgstr "Använder systemnyckeln %s\n"
 #: gnutls.c:1178
 #, c-format
 msgid "Using secondary system key %s\n"
-msgstr ""
+msgstr "Använder sekundära systemnyckeln %s\n"
 
 #: gnutls.c:1184 gnutls.c:1331
 #, c-format
@@ -1833,16 +1879,16 @@ msgstr "Hittade inget SSL-certifikat som matchade privat nyckel\n"
 
 #: gnutls.c:1613
 msgid "No secondary certificate found to match private key\n"
-msgstr ""
+msgstr "Hittade inget sekundärt certifikat som matchade privat nyckel\n"
 
 #: gnutls.c:1625
 msgid "got_key conditions not met!\n"
-msgstr ""
+msgstr "got_key-villkor uppfylldes inte!\n"
 
 #: gnutls.c:1640
 #, c-format
 msgid "Error creating an abstract privkey from /x509_privkey: %s\n"
-msgstr ""
+msgstr "Fel vid skapande av en abstrakt privkey från /x509_privkey: %s\n"
 
 #: gnutls.c:1654 openssl.c:652 openssl.c:807
 #, c-format
@@ -1852,7 +1898,7 @@ msgstr "Använder klientcertifikatet ”%s”\n"
 #: gnutls.c:1655 openssl.c:653 openssl.c:808
 #, c-format
 msgid "Using secondary certificate '%s'\n"
-msgstr ""
+msgstr "Använder sekundära certifikatet ”%s”\n"
 
 #: gnutls.c:1672
 msgid "Failed to allocate memory for certificate\n"
@@ -1955,7 +2001,7 @@ msgstr "certifikat inte aktiverat"
 
 #: gnutls.c:2106
 msgid "certificate expired"
-msgstr "certifikat har överskridit tidsgräns"
+msgstr "certifikat har gått ut"
 
 #. If this is set and no other reason, it apparently means
 #. that signature verification failed. Not entirely sure
@@ -1993,7 +2039,7 @@ msgstr "Misslyckades med att läsa in certifikat. Avbryter.\n"
 
 #: gnutls.c:2362
 msgid "Failed to construct GnuTLS priority string\n"
-msgstr ""
+msgstr "Misslyckades med att konstruera GnuTLS-prioritetssträng\n"
 
 #: gnutls.c:2374
 #, c-format
@@ -2067,7 +2113,7 @@ msgstr ""
 #: gnutls.c:2780
 #, c-format
 msgid "Could not set ciphersuites: %s\n"
-msgstr ""
+msgstr "Kunde inte sätta chiffersviter: %s\n"
 
 #: gnutls.c:2787 openssl.c:2233
 msgid "Established EAP-TTLS session\n"
@@ -2148,11 +2194,11 @@ msgstr "Misslyckades med att tilldela policy till nyckeln; %s\n"
 
 #: gnutls_tpm.c:245
 msgid "Enter TPM key PIN:"
-msgstr "Ange TPM-nyckel PIN:"
+msgstr "Ange PIN för TPM-nyckel:"
 
 #: gnutls_tpm.c:246
 msgid "Enter secondary key TPM PIN:"
-msgstr ""
+msgstr "Ange PIN för sekundär TPM-nyckel:"
 
 #: gnutls_tpm.c:257
 #, c-format
@@ -2162,12 +2208,12 @@ msgstr "Misslyckades med att ange nyckel-PIN: %s\n"
 #: gnutls_tpm2.c:95
 #, c-format
 msgid "Unknown TPM2 EC digest size %d\n"
-msgstr "Okänt TPM2-EC-hashvärde med storlek %d\n"
+msgstr "Okänd TPM2 EC-hashstorlek %d\n"
 
 #: gnutls_tpm2.c:151 gnutls_tpm2.c:191
 #, c-format
 msgid "Not supporting EC sign algo %s\n"
-msgstr ""
+msgstr "Stöder inte EC-signaturalgoritmen %s\n"
 
 #: gnutls_tpm2.c:247
 #, c-format
@@ -2220,12 +2266,12 @@ msgstr "TPM2-hashvärde för stort (%d > %d)\n"
 #: gnutls_tpm2.c:487
 #, c-format
 msgid "PSS encoding failed; hash size %d too large for RSA key %d\n"
-msgstr ""
+msgstr "PSS-kodning misslyckades; hashstorlek %d för stor för RSA-nyckel %d\n"
 
 #: gnutls_tpm2.c:622
 #, c-format
 msgid "TPMv2 RSA sign called for unknown algorithm %s\n"
-msgstr ""
+msgstr "TPMv2 RSA-signering anropad för okänd algoritm %s\n"
 
 #: gnutls_tpm2_esys.c:178
 msgid "TPM2 password too long; truncating\n"
@@ -2305,7 +2351,7 @@ msgstr "Ange lösenord för överordnad TPM2-nyckel:"
 
 #: gnutls_tpm2_esys.c:309 gnutls_tpm2_ibm.c:286
 msgid "Enter secondary TPM2 parent key password:"
-msgstr ""
+msgstr "Ange lösenord för sekundär överordnad TPM2-nyckel:"
 
 #: gnutls_tpm2_esys.c:323
 #, c-format
@@ -2335,12 +2381,12 @@ msgstr "Ange lösenord för TPM2-nyckel:"
 
 #: gnutls_tpm2_esys.c:382 gnutls_tpm2_ibm.c:377
 msgid "Enter secondary TPM2 key password:"
-msgstr ""
+msgstr "Ange lösenord för sekundär TPM2-nyckel:"
 
 #: gnutls_tpm2_esys.c:415
 #, c-format
 msgid "TPM2 RSA sign function called for %d bytes, algo %s\n"
-msgstr ""
+msgstr "TPM2 RSA-signaturfunktion anropad för %d byte, algo %s\n"
 
 #: gnutls_tpm2_esys.c:435
 msgid "TPM2 Esys_RSA_Decrypt auth failed\n"
@@ -2361,7 +2407,7 @@ msgstr "TPM2-EC signeringsfunktion begärde %d byte.\n"
 #: gnutls_tpm2_esys.c:506 gnutls_tpm2_ibm.c:445
 #, c-format
 msgid "Unknown TPM2 EC digest size %d for algo 0x%x\n"
-msgstr ""
+msgstr "Okänd TPM2 EC-hashstorlek %d för algo 0x%x\n"
 
 #: gnutls_tpm2_esys.c:526
 msgid "TPM2 Esys_Sign auth failed\n"
@@ -2374,12 +2420,12 @@ msgstr "Ogiltig överordnad TPM2-referens 0x%08x\n"
 
 #: gnutls_tpm2_esys.c:583
 msgid "Using SWTPM due to TPM_INTERFACE_TYPE environment variable\n"
-msgstr ""
+msgstr "Använder SWTPM på grund av TPM_INTERFACE_TYPE-miljövariabel\n"
 
 #: gnutls_tpm2_esys.c:588
 #, c-format
 msgid "TSS2_TctiLdr_Initialize failed for swtpm: 0x%x\n"
-msgstr ""
+msgstr "TSS2_TctiLdr_Initialize misslyckades för swtpm: 0x%x\n"
 
 #: gnutls_tpm2_esys.c:598 gnutls_tpm2_ibm.c:529
 #, c-format
@@ -2414,7 +2460,7 @@ msgstr "Utmaning: %s\n"
 #: gpst.c:264
 #, c-format
 msgid "Response was: %s\n"
-msgstr ""
+msgstr "Svaret var: %s\n"
 
 #: gpst.c:300
 #, c-format
@@ -2432,6 +2478,8 @@ msgid ""
 "WARNING: Config XML contains <quarantine> tag with value of \"%s\".\n"
 "    VPN connectivity may be disabled or limited.\n"
 msgstr ""
+"VARNING: Konfigurations-XML innehåller <quarantine>-tagg med värdet ”%s”.\n"
+"    VPN-anslutbarhet kan vara inaktiverad eller begränsad.\n"
 
 #: gpst.c:395
 #, c-format
@@ -2458,12 +2506,14 @@ msgid ""
 "IPv6 gateway address in config XML (%s) differs from external gateway "
 "address (%s).\n"
 msgstr ""
+"IPv6-gatewayadressen i konfigurations-XML (%s) skiljer sig från extern "
+"gatewayadress (%s).\n"
 
 #: gpst.c:423
 #, c-format
 msgid ""
 "Config XML <connected-gw-ip> address (%s) differs from external\n"
-"gateway address (%s). Please report any this to\n"
+"gateway address (%s). Please report this to\n"
 "<openconnect-devel@lists.infradead.org>, including any problems\n"
 "with ESP or other apparent loss of connectivity or performance.\n"
 msgstr ""
@@ -2474,7 +2524,7 @@ msgid "GlobalProtect config sent ipsec-mode=%s (expected esp-tunnel)\n"
 msgstr ""
 "GlobalProtect-konfiguration skickade ipsec-mode=%s (förväntade esp-tunnel)\n"
 
-#: gpst.c:509 oncp.c:777
+#: gpst.c:509 oncp.c:779
 msgid "Ignoring ESP keys since ESP support not available in this build\n"
 msgstr ""
 "Ignorerar ESP-nycklar eftersom ESP-stöd inte är tillgängligt i detta bygge\n"
@@ -2482,7 +2532,7 @@ msgstr ""
 #: gpst.c:527
 #, c-format
 msgid "Potential IPv6-related GlobalProtect config tag <%s>: %s\n"
-msgstr ""
+msgstr "Potentiellt IPv6-relaterad GlobalProtect-konfigurationstagg <%s>: %s\n"
 
 #: gpst.c:529
 #, c-format
@@ -2494,12 +2544,16 @@ msgid ""
 "GlobalProtect IPv6 support is experimental. Please report results to "
 "<openconnect-devel@lists.infradead.org>.\n"
 msgstr ""
+"IPv6-stöd för GlobalProtect är experimentellt. Rapportera gärna resultat "
+"till <openconnect-devel@lists.infradead.org>.\n"
 
 #: gpst.c:593
 msgid ""
 "Did not receive ESP keys and matching gateway in GlobalProtect config; "
 "tunnel will be TLS only.\n"
 msgstr ""
+"Fick ej ESP-nycklar och matchande gateway i GlobalProtect-konfiguration; "
+"tunnel kommer endast vara TLS.\n"
 
 #: gpst.c:659
 msgid "ESP disabled"
@@ -2535,7 +2589,7 @@ msgstr "Gateway frånkopplad omedelbart efter begäran av GET-tunnel.\n"
 #: gpst.c:745 ppp.c:1130
 #, c-format
 msgid "Got unexpected HTTP response: %.*s\n"
-msgstr ""
+msgstr "Erhöll oväntat HTTP-svar: %.*s\n"
 
 #: gpst.c:893
 #, c-format
@@ -2576,15 +2630,15 @@ msgstr ""
 #: gpst.c:914
 #, c-format
 msgid "Trying to run HIP Trojan script '%s'.\n"
-msgstr ""
+msgstr "Försöker köra HIP-trojanskriptet ”%s”.\n"
 
 #: gpst.c:922
 msgid "Failed to create pipe for HIP script\n"
-msgstr ""
+msgstr "Misslyckades med att skapa rör för HIP-skript\n"
 
 #: gpst.c:930
 msgid "Failed to fork for HIP script\n"
-msgstr ""
+msgstr "Misslyckades med att köra fork för HIP-skript\n"
 
 #: gpst.c:946
 #, c-format
@@ -2599,7 +2653,7 @@ msgstr "HIP-skriptet ”%s” returnerade nollskild status: %d\n"
 #: gpst.c:956
 #, c-format
 msgid "HIP script '%s' completed successfully (report is %d bytes).\n"
-msgstr ""
+msgstr "HIP-skriptet ”%s” slutfördes korrekt (rapporten är %d byte).\n"
 
 #: gpst.c:961
 msgid "HIP report submission failed.\n"
@@ -2648,7 +2702,7 @@ msgstr ""
 
 #: gpst.c:1169
 msgid "Got GPST DPD/keepalive response\n"
-msgstr "Mottog GPST DPD/keepalive-svar\n"
+msgstr "Erhöll GPST DPD/keepalive-svar\n"
 
 #: gpst.c:1173
 msgid ""
@@ -2705,9 +2759,9 @@ msgstr "Skickar IPv%d-datapaket på %d byte\n"
 #: gpst.c:1484
 #, c-format
 msgid "ICMPv%d probe packet (seq %d) for GlobalProtect ESP:\n"
-msgstr ""
+msgstr "ICMPv%d-avsökningspaket (sekv %d) för GlobalProtect ESP:\n"
 
-#: gpst.c:1492 oncp.c:1273
+#: gpst.c:1492 oncp.c:1275
 msgid "Failed to send ESP probe\n"
 msgstr "Misslyckades med att skicka ESP-avsökning\n"
 
@@ -2752,7 +2806,7 @@ msgstr ""
 #, c-format
 msgid "Failed to receive GSSAPI authentication token from proxy: %s\n"
 msgstr ""
-"Misslyckades med att mottaga GSSAPI-autentiseringstoken från proxy: %s\n"
+"Misslyckades med att ta emot GSSAPI-autentiseringstoken från proxy: %s\n"
 
 #: gssapi.c:246
 msgid "SOCKS server reported GSSAPI context failure\n"
@@ -2766,12 +2820,12 @@ msgstr "Okänd GSSAPI-status svar (0x%02x) från SOCKS-server\n"
 #: gssapi.c:271
 #, c-format
 msgid "Got GSSAPI token of %zu bytes: %02x %02x %02x %02x\n"
-msgstr "Mottog GSSAPI-token på %zu byte: %02x %02x %02x %02x\n"
+msgstr "Erhöll GSSAPI-token på %zu byte: %02x %02x %02x %02x\n"
 
 #: gssapi.c:297
 #, c-format
 msgid "Sending GSSAPI protection negotiation of %zu bytes\n"
-msgstr "Skickar GSSAPI-skyddsöverenskommelse på %zu byte\n"
+msgstr "Skickar GSSAPI-skyddsförhandling på %zu byte\n"
 
 #: gssapi.c:302
 #, c-format
@@ -2781,7 +2835,7 @@ msgstr "Misslyckades med att skicka GSSAPI-skyddssvar till proxy: %s\n"
 #: gssapi.c:310 gssapi.c:320
 #, c-format
 msgid "Failed to receive GSSAPI protection response from proxy: %s\n"
-msgstr "Misslyckades med att motta GSSAPI-skyddssvar från proxy: %s\n"
+msgstr "Misslyckades med att ta emot GSSAPI-skyddssvar från proxy: %s\n"
 
 #: gssapi.c:325
 #, c-format
@@ -2820,7 +2874,7 @@ msgstr "Försöker med HTTP Basic-autentisering till servern ”%s”\n"
 msgid "Attempting HTTP Bearer authentication to server '%s'\n"
 msgstr "Försöker med HTTP Bearer-autentisering till servern ”%s”\n"
 
-#: http-auth.c:112 http.c:1150
+#: http-auth.c:112 http.c:1154
 msgid "This version of OpenConnect was built without GSSAPI support\n"
 msgstr "Denna version av OpenConnect byggdes utan GSSAPI-stöd\n"
 
@@ -2859,7 +2913,7 @@ msgstr "Misslyckades med att tolka HTTP-svaret ”%s”\n"
 #: http.c:261
 #, c-format
 msgid "Got HTTP response: %s\n"
-msgstr "Mottog HTTP-svaret: %s\n"
+msgstr "Erhöll HTTP-svar: %s\n"
 
 #: http.c:284
 #, c-format
@@ -2916,7 +2970,7 @@ msgstr "Fel vid hämtning av HTTP-svarskropp\n"
 #: http.c:463
 #, c-format
 msgid "Error in chunked decoding. Expected '', got: '%s'\n"
-msgstr ""
+msgstr "Fel i chunk-avkodning. Förväntade '', fick: '%s'\n"
 
 #: http.c:476
 msgid "Cannot receive HTTP 1.0 body without closing connection\n"
@@ -2941,157 +2995,157 @@ msgstr "Misslyckades med att allokera ny sökväg för relativ omdirigering: %s\
 msgid "HTTPS socket closed by peer; reopening\n"
 msgstr "HTTPS-uttag stängt av motpart, öppnar igen\n"
 
-#: http.c:917
+#: http.c:919
 #, c-format
 msgid "Retrying failed %s request on new connection\n"
 msgstr "Försöker igen med misslyckad %s-begäran på ny anslutning\n"
 
-#: http.c:998
+#: http.c:1002
 msgid "request granted"
 msgstr "begäran tillåten"
 
-#: http.c:999
+#: http.c:1003
 msgid "general failure"
 msgstr "allmänt fel"
 
-#: http.c:1000
+#: http.c:1004
 msgid "connection not allowed by ruleset"
 msgstr "anslutning inte tillåten av regeluppsättning"
 
-#: http.c:1001
+#: http.c:1005
 msgid "network unreachable"
 msgstr "nätverk ej nåbart"
 
-#: http.c:1002
+#: http.c:1006
 msgid "host unreachable"
 msgstr "värd ej nåbar"
 
-#: http.c:1003
+#: http.c:1007
 msgid "connection refused by destination host"
 msgstr "anslutning vägras av målvärd"
 
-#: http.c:1004
+#: http.c:1008
 msgid "TTL expired"
-msgstr "TTL tidsgräns har överskridits"
+msgstr "TTL har gått ut"
 
-#: http.c:1005
+#: http.c:1009
 msgid "command not supported / protocol error"
 msgstr "kommando stöds ej / protokollfel"
 
-#: http.c:1006
+#: http.c:1010
 msgid "address type not supported"
 msgstr "adresstyp stöds ej"
 
-#: http.c:1016
+#: http.c:1020
 msgid "SOCKS server requested username/password but we have none\n"
 msgstr "SOCKS-server begärde användarnamn/lösenord men vi har inga\n"
 
-#: http.c:1024
+#: http.c:1028
 msgid "Username and password for SOCKS authentication must be < 255 bytes\n"
 msgstr ""
 "Användarnamn och lösenord för SOCKS-autentisering måste vara < 255 byte\n"
 
-#: http.c:1039 http.c:1102
+#: http.c:1043 http.c:1106
 #, c-format
 msgid "Error writing auth request to SOCKS proxy: %s\n"
 msgstr "Fel vid skrivning av auth-begäran till SOCKS-proxy: %s\n"
 
-#: http.c:1047 http.c:1109
+#: http.c:1051 http.c:1113
 #, c-format
 msgid "Error reading auth response from SOCKS proxy: %s\n"
 msgstr "Fel vid läsning av auth-svar från SOCKS-proxy: %s\n"
 
-#: http.c:1054 http.c:1115
+#: http.c:1058 http.c:1119
 #, c-format
 msgid "Unexpected auth response from SOCKS proxy: %02x %02x\n"
 msgstr "Oväntat auth-svar från SOCKS-proxy: %02x %02x\n"
 
-#: http.c:1060
+#: http.c:1064
 msgid "Authenticated to SOCKS server using password\n"
 msgstr "Autentiserad till SOCKS-server med lösenord\n"
 
-#: http.c:1064
+#: http.c:1068
 msgid "Password authentication to SOCKS server failed\n"
 msgstr "Lösenordsautentisering till SOCKS-server misslyckades\n"
 
-#: http.c:1127 http.c:1134
+#: http.c:1131 http.c:1138
 msgid "SOCKS server requested GSSAPI authentication\n"
 msgstr "SOCKS-server begärde GSSAPI-autentisering\n"
 
-#: http.c:1140
+#: http.c:1144
 msgid "SOCKS server requested password authentication\n"
 msgstr "SOCKS-server begärde lösenordsautentisering\n"
 
-#: http.c:1147
+#: http.c:1151
 msgid "SOCKS server requires authentication\n"
 msgstr "SOCKS-server begärde autentisering\n"
 
-#: http.c:1156
+#: http.c:1160
 #, c-format
 msgid "SOCKS server requested unknown authentication type %02x\n"
 msgstr "SOCKS-server begärde okänd autentiseringstyp %02x\n"
 
-#: http.c:1162
+#: http.c:1166
 #, c-format
 msgid "Requesting SOCKS proxy connection to %s:%d\n"
 msgstr "Begär SOCKS-proxyanslutning till %s:%d\n"
 
-#: http.c:1177
+#: http.c:1181
 #, c-format
 msgid "Error writing connect request to SOCKS proxy: %s\n"
 msgstr "Fel vid skrivning av anslutningsbegäran till SOCKS-proxy: %s\n"
 
-#: http.c:1185 http.c:1227
+#: http.c:1189 http.c:1231
 #, c-format
 msgid "Error reading connect response from SOCKS proxy: %s\n"
 msgstr "Fel vid läsning av anslutningssvar från SOCKS-proxy: %s\n"
 
-#: http.c:1191
+#: http.c:1195
 #, c-format
 msgid "Unexpected connect response from SOCKS proxy: %02x %02x...\n"
 msgstr "Oväntat anslutningssvar från SOCKS-proxy: %02x %02x…\n"
 
-#: http.c:1199
+#: http.c:1203
 #, c-format
 msgid "SOCKS proxy error %02x: %s\n"
 msgstr "SOCKS-proxyfel %02x: %s\n"
 
-#: http.c:1203
+#: http.c:1207
 #, c-format
 msgid "SOCKS proxy error %02x\n"
 msgstr "SOCKS-proxyfel %02x\n"
 
-#: http.c:1220
+#: http.c:1224
 #, c-format
 msgid "Unexpected address type %02x in SOCKS connect response\n"
 msgstr "Oväntad adresstyp %02x i SOCKS-anslutningssvar\n"
 
-#: http.c:1243
+#: http.c:1247
 #, c-format
 msgid "Requesting HTTP proxy connection to %s:%d\n"
 msgstr "Begär HTTP-proxyanslutning till %s:%d\n"
 
-#: http.c:1278
+#: http.c:1282
 #, c-format
 msgid "Sending proxy request failed: %s\n"
 msgstr "Misslyckades med att skicka proxybegäran: %s\n"
 
-#: http.c:1301
+#: http.c:1305
 #, c-format
 msgid "Proxy CONNECT request failed: %d\n"
 msgstr "Misslyckades med proxy CONNECT-begäran: %d\n"
 
-#: http.c:1320
+#: http.c:1324
 #, c-format
 msgid "Unknown proxy type '%s'\n"
 msgstr "Okänd proxytyp ”%s”\n"
 
-#: http.c:1346
+#: http.c:1350
 #, c-format
 msgid "Failed to parse proxy '%s'\n"
 msgstr "Misslyckades med att tolka proxy ”%s”\n"
 
-#: http.c:1370
+#: http.c:1374
 msgid "Only http or socks(5) proxies supported\n"
 msgstr "Endast http eller socks(5)-proxyservrar stöds\n"
 
@@ -3130,35 +3184,35 @@ msgstr "Kompatibel med Pulse Connect Secure SSL VPN"
 
 #: library.c:204
 msgid "F5 BIG-IP SSL VPN"
-msgstr ""
+msgstr "F5 BIG-IP SSL VPN"
 
 #: library.c:205
 msgid "Compatible with F5 BIG-IP SSL VPN"
-msgstr ""
+msgstr "Kompatibel med F5 BIG-IP SSL VPN"
 
 #: library.c:224
 msgid "Fortinet SSL VPN"
-msgstr ""
+msgstr "Fortinet SSL VPN"
 
 #: library.c:225
 msgid "Compatible with FortiGate SSL VPN"
-msgstr ""
+msgstr "Kompatibel med FortiGate SSL VPN"
 
 #: library.c:244
 msgid "PPP over TLS"
-msgstr ""
+msgstr "PPP över TLS"
 
 #: library.c:245
 msgid "Unauthenticated RFC1661/RFC1662 PPP over TLS, for testing"
-msgstr ""
+msgstr "Oautentiserad PPP över TLS enligt RFC1661/RFC1662, för tester"
 
 #: library.c:254
 msgid "Array SSL VPN"
-msgstr ""
+msgstr "Array SSL VPN"
 
 #: library.c:255
 msgid "Compatible with Array Networks SSL VPN"
-msgstr ""
+msgstr "Kompatibel med Array Networks SSL VPN"
 
 #: library.c:328
 #, c-format
@@ -3169,50 +3223,54 @@ msgstr "Okänt VPN-protokoll ”%s”\n"
 msgid "Built against SSL library with no Cisco DTLS support\n"
 msgstr "Byggd mot SSL-bibliotek utan Cisco DTLS-stöd\n"
 
-#: library.c:484
+#: library.c:512
+msgid "No IP address received with Juniper rekey/reconnection.\n"
+msgstr ""
+
+#: library.c:517
 msgid "No IP address received. Aborting\n"
 msgstr "Ingen IP-adress mottagen. Avbryter\n"
 
-#: library.c:491
+#: library.c:525
 #, c-format
 msgid "Reconnect gave different Legacy IP address (%s != %s)\n"
-msgstr "Återanslutning gav en annan föråldrad IP-adress (%s != %s)\n"
+msgstr "Återanslutning gav en annan äldre IP-adress (%s != %s)\n"
 
-#: library.c:500
+#: library.c:534
 #, c-format
 msgid "Reconnect gave different Legacy IP netmask (%s != %s)\n"
-msgstr "Återanslutning gav en annan föråldrad IP-nätmask (%s != %s)\n"
+msgstr "Återanslutning gav en annan äldre IP-nätmask (%s != %s)\n"
 
-#: library.c:508
+#: library.c:542
 #, c-format
 msgid "Reconnect gave different IPv6 address (%s != %s)\n"
 msgstr "Återanslutning gav en annan föråldrad IPv6-adress (%s != %s)\n"
 
-#: library.c:516
+#: library.c:550
 #, c-format
 msgid "Reconnect gave different IPv6 netmask (%s != %s)\n"
 msgstr "Återanslutning gav en annan IPv6-nätmask (%s != %s)\n"
 
-#: library.c:530
+#: library.c:565
 #, c-format
 msgid "IPv6 configuration received but MTU %d is too small.\n"
 msgstr "IPv6-konfiguration mottagen men MTU %d är för liten.\n"
 
-#: library.c:995
+#: library.c:1030
 #, c-format
 msgid "Failed to parse server URL '%s'\n"
 msgstr "Misslyckades med att tolka server-URL ”%s”\n"
 
-#: library.c:1001
+#: library.c:1036
 msgid "Only https:// permitted for server URL\n"
 msgstr "Endast https:// tillåtet för server-URL\n"
 
-#: library.c:1424
+#: library.c:1459
 #, c-format
 msgid "Unknown certificate hash: %s.\n"
 msgstr "Okänd certifikatshash: %s\n"
 
-#: library.c:1458
+#: library.c:1493
 #, c-format
 msgid ""
 "The size of the provided fingerprint is less than the minimum required "
@@ -3221,9 +3279,13 @@ msgstr ""
 "Storleken på det tillhandahållna fingeravtrycket är mindre än det minsta som "
 "krävs (%u).\n"
 
-#: library.c:1515
+#: library.c:1550
 msgid "No form handler; cannot authenticate.\n"
 msgstr "Ingen formhanterare, kan inte autentisera.\n"
+
+#: library.c:1554
+msgid "No form ID. This is a bug in OpenConnect's authentication code.\n"
+msgstr ""
 
 #: main.c:385
 #, c-format
@@ -3235,27 +3297,38 @@ msgstr "CommandLineToArgvW() misslyckades: %s\n"
 msgid "Fatal error in command line handling\n"
 msgstr "Kritiskt misstag i kommandoradshantering\n"
 
-#: main.c:433
+#: main.c:435
 #, c-format
 msgid "ReadConsole() failed: %s\n"
 msgstr "ReadConsole() misslyckades: %s\n"
 
-#: main.c:446
+#: main.c:454
+#, c-format
+msgid "Operation aborted by user\n"
+msgstr ""
+
+#. Should never happen
+#: main.c:457
+#, c-format
+msgid "ReadConsole() didn't read any input\n"
+msgstr ""
+
+#: main.c:466
 #, c-format
 msgid "fgetws() failed: %s\n"
 msgstr "fgetws() misslyckades: %s\n"
 
-#: main.c:466 main.c:479
+#: main.c:486 main.c:499
 #, c-format
 msgid "Error converting console input: %s\n"
 msgstr "Fel vid konvertering av konsolinmatning: %s\n"
 
-#: main.c:473 main.c:739
+#: main.c:493 main.c:759
 #, c-format
 msgid "Allocation failure for string from stdin\n"
 msgstr "Allokeringsfel för sträng från stdin\n"
 
-#: main.c:634
+#: main.c:654
 #, c-format
 msgid ""
 "For assistance with OpenConnect, please see the web page at\n"
@@ -3264,16 +3337,16 @@ msgstr ""
 "För hjälp med OpenConnect, se webbsidan på\n"
 "  https://www.infradead.org/openconnect/mail.html\n"
 
-#: main.c:642
+#: main.c:662
 #, c-format
 msgid "Using %s. Features present:"
 msgstr "Använder %s. Egenskaper:"
 
-#: main.c:654
+#: main.c:674
 msgid "OpenSSL ENGINE not present"
 msgstr "OpenSSL ENGINE inte tillgänglig"
 
-#: main.c:693
+#: main.c:713
 #, c-format
 msgid ""
 "WARNING: This binary lacks DTLS and/or ESP support. Performance will be "
@@ -3282,44 +3355,48 @@ msgstr ""
 "VARNING: Inget DTLS- och/eller ESP-stöd i denna binär. Prestanda kommer att "
 "påverkas.\n"
 
-#: main.c:705
+#: main.c:725
 #, c-format
 msgid "Supported protocols:"
 msgstr "Protokoll som stöds:"
 
-#: main.c:707 main.c:725
+#: main.c:727 main.c:745
 msgid " (default)"
 msgstr " (standard)"
 
-#: main.c:722
+#: main.c:742
 msgid "Set VPN protocol"
-msgstr "Ange VPN-protokoll"
+msgstr "Sätt VPN-protokoll"
 
-#: main.c:763
+#: main.c:783
 msgid "fgets (stdin)"
 msgstr "fgets (stdin)"
 
-#: main.c:815
+#: main.c:835
 #, c-format
 msgid "Cannot process this executable path \"%s\""
 msgstr "Kan inte bearbeta denna körbara sökväg ”%s”"
 
-#: main.c:821
+#: main.c:841
 #, c-format
 msgid "Allocation for vpnc-script path failed\n"
 msgstr "Allokering för vpnc-skriptsökväg misslyckades\n"
 
-#: main.c:841
+#: main.c:881
+msgid "Default vpnc-script (override with --script):"
+msgstr ""
+
+#: main.c:896
 #, c-format
 msgid "Override hostname '%s' to '%s'\n"
 msgstr "Åsidosätt värdnamnet ”%s” till ”%s”\n"
 
-#: main.c:854
+#: main.c:909
 #, c-format
 msgid "Usage:  openconnect [options] <server>\n"
 msgstr "Användning:  openconnect [flaggor] <server>\n"
 
-#: main.c:855
+#: main.c:910
 #, c-format
 msgid ""
 "Open client for multiple VPN protocols, version %s\n"
@@ -3328,466 +3405,471 @@ msgstr ""
 "Öppen klient för multipla VPN-protokoll, version %s\n"
 "\n"
 
-#: main.c:857
+#: main.c:912
 msgid "Read options from config file"
 msgstr "Läs flaggor från konfigurationsfil"
 
-#: main.c:858
+#: main.c:913
 msgid "Report version number"
 msgstr "Rapportera versionsnummer"
 
-#: main.c:859
+#: main.c:914
 msgid "Display help text"
 msgstr "Visa hjälptext"
 
-#: main.c:863
+#: main.c:918
 msgid "Authentication"
 msgstr "Autentisering"
 
-#: main.c:864
+#: main.c:919
 msgid "Set login username"
 msgstr "Sätt användarnamn för inloggning"
 
-#: main.c:865
+#: main.c:920
 msgid "Disable password/SecurID authentication"
 msgstr "Inaktivera lösenord-/SecurID-autentisering"
 
-#: main.c:866
+#: main.c:921
 msgid "Do not expect user input; exit if it is required"
 msgstr "Förvänta inte användarinmatning, avsluta om det krävs"
 
-#: main.c:867
+#: main.c:922
 msgid "Read password from standard input"
 msgstr "Läs lösenord från standardinmatning"
 
-#: main.c:868
+#: main.c:923
 msgid "Choose authentication login selection"
 msgstr "Välj autentiseringinloggningsmarkering"
 
-#: main.c:869
+#: main.c:924
 msgid "Provide authentication form responses"
 msgstr "Tillhandahåll svar för autentiseringsformulär"
 
-#: main.c:870
+#: main.c:925
 msgid "Use SSL client certificate CERT"
 msgstr "Använd SSL-klientcertifikat CERT"
 
-#: main.c:871
+#: main.c:926
 msgid "Use SSL private key file KEY"
 msgstr "Använd privata SSL-nyckelfilen KEY"
 
-#: main.c:872
+#: main.c:927
 msgid "Warn when certificate lifetime < DAYS"
 msgstr "Varna när certifikatets livslängd < DAYS"
 
-#: main.c:873
+#: main.c:928
 msgid "Set login usergroup"
 msgstr "Sätt användargrupp för inloggning"
 
-#: main.c:874
+#: main.c:929
 msgid "Set key passphrase or TPM SRK PIN"
 msgstr "Sätt lösenfras för nyckel ett TPM SRK PIN"
 
-#: main.c:875
+#: main.c:930
 msgid "Key passphrase is fsid of file system"
 msgstr "Nyckellösenfras är fsid för filsystemet"
 
-#: main.c:876
+#: main.c:931
 msgid "Software token type: rsa, totp, hotp or oidc"
 msgstr "Programvarutokentyp: rsa, totp, hotp eller oidc"
 
-#: main.c:877
+#: main.c:932
 msgid "Software token secret or oidc token"
 msgstr "Programvarutokenhemlighet eller oidc-token"
 
-#: main.c:879
+#: main.c:934
 msgid "(NOTE: libstoken (RSA SecurID) disabled in this build)"
 msgstr "(OBS: libstoken (RSA SecurID) inaktiverat i detta bygge)"
 
-#: main.c:882
+#: main.c:937
 msgid "(NOTE: Yubikey OATH disabled in this build)"
 msgstr "(OBS: Yubikey OATH inaktiverat i detta bygge)"
 
-#: main.c:885
+#: main.c:940
 msgid "Server validation"
 msgstr "Servervalidering"
 
-#: main.c:886
+#: main.c:941
 msgid "Accept only server certificate with this fingerprint"
-msgstr ""
+msgstr "Acceptera endast servercertifikat med detta fingeravtryck"
 
-#: main.c:887
+#: main.c:942
 msgid "Disable default system certificate authorities"
 msgstr "Inaktivera standardutfärdarna för systemcertifikat"
 
-#: main.c:888
+#: main.c:943
 msgid "Cert file for server verification"
 msgstr "Certifikatfil för serververifiering"
 
-#: main.c:890
+#: main.c:945
 msgid "Internet connectivity"
 msgstr "Internetanslutning"
 
-#: main.c:891
+#: main.c:946
 msgid "Set VPN server"
-msgstr ""
+msgstr "Sätt VPN-server"
 
-#: main.c:892
+#: main.c:947
 msgid "Set proxy server"
 msgstr "Sätt proxyserver"
 
-#: main.c:893
+#: main.c:948
 msgid "Set proxy authentication methods"
 msgstr "Sätt proxyautentiseringsmetoder"
 
-#: main.c:894
+#: main.c:949
 msgid "Disable proxy"
 msgstr "Inaktivera proxy"
 
-#: main.c:895
+#: main.c:950
 msgid "Use libproxy to automatically configure proxy"
 msgstr "Använd libproxy för att automatiskt konfigurera proxy"
 
-#: main.c:897
+#: main.c:952
 msgid "(NOTE: libproxy disabled in this build)"
 msgstr "(OBS: libproxy inaktiverad i detta bygge)"
 
-#: main.c:899
+#: main.c:954
 msgid "Connection retry timeout in seconds"
 msgstr "Tidsgräns för återanslutningsförsök i sekunder"
 
-#: main.c:900
+#: main.c:955
 msgid "Use IP when connecting to HOST"
 msgstr "Använd IP vid anslutning till VÄRD"
 
-#: main.c:901
+#: main.c:956
 msgid "Copy TOS / TCLASS field into DTLS and ESP packets"
 msgstr "Kopiera TOS / TCLASS-fält till DTLS- och ESP-paket"
 
-#: main.c:902
+#: main.c:957
 msgid "Set local port for DTLS and ESP datagrams"
 msgstr "Sätt lokal port för DTLS- och ESP-datagram"
 
-#: main.c:904
+#: main.c:959
 msgid "Authentication (two-phase)"
 msgstr "Autentisering (tvåfasig)"
 
-#: main.c:905
+#: main.c:960
 msgid "Use authentication cookie COOKIE"
 msgstr "Använd autentiseringskakan COOKIE"
 
-#: main.c:906
+#: main.c:961
 msgid "Read cookie from standard input"
 msgstr "Läs kaka från standard in"
 
-#: main.c:907
+#: main.c:962
 msgid "Authenticate only and print login info"
 msgstr "Autentisera endast och skriv ut inloggningsinformation"
 
-#: main.c:908
+#: main.c:963
 msgid "Fetch and print cookie only; don't connect"
 msgstr "Hämta och skriv endast ut kakan; anslut ej"
 
-#: main.c:909
+#: main.c:964
 msgid "Print cookie before connecting"
 msgstr "Skriv ut kakan innan anslutning"
 
-#: main.c:912
+#: main.c:967
 msgid "Process control"
 msgstr "Processkontroll"
 
-#: main.c:913
+#: main.c:968
 msgid "Continue in background after startup"
 msgstr "Fortsätt i bakgrunden efter start"
 
-#: main.c:914
+#: main.c:969
 msgid "Write the daemon's PID to this file"
 msgstr "Skriv demonens PID till denna fil"
 
-#: main.c:915
+#: main.c:970
 msgid "Drop privileges after connecting"
 msgstr "Förkasta privilegier efter anslutning"
 
-#: main.c:918
+#: main.c:973
 msgid "Logging (two-phase)"
 msgstr "Loggning (tvåfasig)"
 
-#: main.c:920
+#: main.c:975
 msgid "Use syslog for progress messages"
 msgstr "Använd syslog för förloppsmeddelanden"
 
-#: main.c:922
+#: main.c:977
 msgid "More output"
 msgstr "Mer utmatning"
 
-#: main.c:923
+#: main.c:978
 msgid "Less output"
 msgstr "Mindre utmatning"
 
-#: main.c:924
+#: main.c:979
 msgid "Dump HTTP authentication traffic (implies --verbose)"
 msgstr "Dumpa HTTP-autentiseringstrafik (implicerar --verbose)"
 
-#: main.c:925
+#: main.c:980
 msgid "Prepend timestamp to progress messages"
 msgstr "Lägg till tidsstämpel i början av förloppsmeddelanden"
 
-#: main.c:927
+#: main.c:982
 msgid "VPN configuration script"
 msgstr "VPN-konfigurationsskript"
 
-#: main.c:928
+#: main.c:983
 msgid "Use IFNAME for tunnel interface"
 msgstr "Använd IFNAME för tunnelgränssnitt"
 
-#: main.c:929
+#: main.c:984
 msgid "Shell command line for using a vpnc-compatible config script"
 msgstr ""
 "Skalkommandorad för att använda ett vpnc-kompatibelt konfigurationsskript"
 
-#: main.c:930
+#: main.c:985
 msgid "default"
 msgstr "standard"
 
-#: main.c:932
+#: main.c:987
 msgid "Pass traffic to 'script' program, not tun"
 msgstr "Sänd trafik till ”script”-program, inte tun"
 
-#: main.c:935
+#: main.c:990
 msgid "Tunnel control"
 msgstr "Tunnelkontroll"
 
-#: main.c:936
+#: main.c:991
 msgid "Do not ask for IPv6 connectivity"
 msgstr "Fråga inte efter IPv6-anslutning"
 
-#: main.c:937
+#: main.c:992
 msgid "XML config file"
 msgstr "XML-konfigurationsfil"
 
-#: main.c:938
+#: main.c:993
 msgid "Request MTU from server (legacy servers only)"
-msgstr "Begär MTU från servern (endast föråldrade servrar)"
+msgstr "Begär MTU från servern (endast äldre servrar)"
 
-#: main.c:939
+#: main.c:994
 msgid "Indicate path MTU to/from server"
 msgstr "Indikerar sökvägs-MTU till/från server"
 
-#: main.c:940
+#: main.c:995
 msgid "Enable stateful compression (default is stateless only)"
 msgstr "Aktivera komprimering med tillstånd (standard är tillståndslös)"
 
-#: main.c:941
+#: main.c:996
 msgid "Disable all compression"
 msgstr "Inaktivera komprimering"
 
-#: main.c:942
-msgid "Set minimum Dead Peer Detection interval (in seconds)"
-msgstr "Sätt minsta intervall för Dead Peer Detection (i sekunder)"
+#: main.c:997
+msgid "Set Dead Peer Detection interval (in seconds)"
+msgstr ""
 
-#: main.c:943
+#: main.c:998
 msgid "Require perfect forward secrecy"
 msgstr "Kräver perfect forward secrecy"
 
-#: main.c:944
+#: main.c:999
 msgid "Disable DTLS and ESP"
 msgstr "Inaktivera DTLS och ESP"
 
-#: main.c:945
+#: main.c:1000
 msgid "OpenSSL ciphers to support for DTLS"
 msgstr "OpenSSL-chiffer till stöd för DTLS"
 
-#: main.c:946
+#: main.c:1001
 msgid "Set packet queue limit to LEN pkts"
 msgstr "Sätt paketkögräns till LEN-pkts"
 
-#: main.c:948
+#: main.c:1003
 msgid "Local system information"
 msgstr "Lokal systeminformation"
 
-#: main.c:949
+#: main.c:1004
 msgid "HTTP header User-Agent: field"
 msgstr "HTTP-header User-Agent:-fält"
 
-#: main.c:950
+#: main.c:1005
 msgid "Local hostname to advertise to server"
 msgstr "Lokalt värdnamn att annonsera till server"
 
-#: main.c:951
-msgid "OS type (linux,linux-64,win,...) to report"
-msgstr "OS-typ (linux,linux-64,win,…) att rapportera"
+#: main.c:1006
+msgid "OS type to report. Allowed values are the following:"
+msgstr ""
 
-#: main.c:952
+#: main.c:1007
+msgid "linux, linux-64, win, mac-intel, android, apple-ios"
+msgstr ""
+
+#: main.c:1008
 msgid "reported version string during authentication"
 msgstr "rapporterade versionssträng vid autentisering"
 
-#: main.c:953
+#: main.c:1009
 msgid "default:"
 msgstr "standard:"
 
-#: main.c:955
+#: main.c:1011
 msgid "Trojan binary (CSD) execution"
 msgstr "Kör Trojanbinär (CSD)"
 
-#: main.c:957
+#: main.c:1013
 msgid "Drop privileges during trojan execution"
-msgstr "Förkasta rättigheter under trojan-körning"
+msgstr "Förkasta rättigheter under trojankörning"
 
-#: main.c:958
+#: main.c:1014
 msgid "Run SCRIPT instead of trojan binary"
-msgstr "Kör SCRIPT istället för trojan-binär"
+msgstr "Kör SCRIPT istället för trojanbinär"
 
-#: main.c:960
+#: main.c:1016
 msgid "Set minimum interval between trojan runs (in seconds)"
 msgstr ""
 
-#: main.c:962
+#: main.c:1018
 msgid "Server bugs"
 msgstr "Serverprogramfel"
 
-#: main.c:963
+#: main.c:1019
 msgid "Disable HTTP connection re-use"
 msgstr "Inaktivera återanvändning av HTTP-anslutning"
 
-#: main.c:964
+#: main.c:1020
 msgid "Do not attempt XML POST authentication"
 msgstr "Försök inte med XML POST-autentisering"
 
-#: main.c:965
+#: main.c:1021
 msgid "Allow use of the ancient, insecure 3DES and RC4 ciphers"
-msgstr ""
+msgstr "Tillåt användning av de uråldriga, osäkra 3DES- och RC4-chiffren"
 
-#: main.c:987
+#: main.c:1043
 #, c-format
 msgid "Failed to allocate string\n"
 msgstr "Misslyckades med att allokera sträng\n"
 
-#: main.c:1060
+#: main.c:1116
 #, c-format
 msgid "Failed to get line from config file: %s\n"
 msgstr "Misslyckades med att hämta rad från konfigurationsfilen %s\n"
 
-#: main.c:1100
+#: main.c:1156
 #, c-format
 msgid "Unrecognised option at line %d: '%s'\n"
 msgstr "Okänd flagga på rad %d: ”%s”\n"
 
-#: main.c:1110
+#: main.c:1166
 #, c-format
 msgid "Option '%s' does not take an argument at line %d\n"
 msgstr "Alternativet ”%s” tar inte argument på rad %d\n"
 
-#: main.c:1114
+#: main.c:1170
 #, c-format
 msgid "Option '%s' requires an argument at line %d\n"
 msgstr "Alternativet ”%s” kräver ett argument på rad %d\n"
 
 #. Should never happen
-#: main.c:1130
+#: main.c:1186
 #, c-format
 msgid "Internal error; option '%s' unexpectedly yielded null config_arg\n"
 msgstr ""
 
-#: main.c:1148
+#: main.c:1204
 #, c-format
 msgid "Invalid user \"%s\": %s\n"
 msgstr "Ogiltig användare ”%s”: %s\n"
 
-#: main.c:1158
+#: main.c:1214
 #, c-format
 msgid "Invalid user ID \"%d\": %s\n"
 msgstr "Ogiltigt användar-ID ”%d”: %s\n"
 
-#: main.c:1429
+#: main.c:1485
 #, c-format
 msgid "Unhandled autocomplete for option %d '--%s'. Please report.\n"
 msgstr ""
+"Ohanterad automatisk komplettering för flagga %d ”--%s”. Rapportera gärna.\n"
 
-#: main.c:1450 main.c:1465
+#: main.c:1506 main.c:1521
 msgid "connected"
-msgstr ""
+msgstr "ansluten"
 
-#: main.c:1450
+#: main.c:1506
 msgid "disconnected"
-msgstr ""
+msgstr "frånkopplad"
 
-#: main.c:1454
+#: main.c:1510
 msgid "unsuccessful"
-msgstr ""
+msgstr "misslyckades"
 
-#: main.c:1459
+#: main.c:1515
 msgid "in progress"
 msgstr "pågående"
 
-#: main.c:1462
+#: main.c:1518
 msgid "disabled"
 msgstr "inaktiverad"
 
-#: main.c:1468
+#: main.c:1524
 msgid "established"
-msgstr ""
+msgstr "etablerad"
 
-#: main.c:1471
+#: main.c:1527
 msgid "unknown"
-msgstr ""
+msgstr "okänt"
 
-#: main.c:1478
+#: main.c:1534
 #, c-format
 msgid "Configured as %s%s%s, with SSL%s%s %s and %s%s%s %s\n"
-msgstr ""
+msgstr "Konfigurerad som %s%s%s, med SSL%s%s %s och %s%s%s %s\n"
 
-#: main.c:1487
+#: main.c:1543
 #, c-format
 msgid "Session authentication will expire at %s\n"
 msgstr ""
 
-#: main.c:1501
+#: main.c:1557
 #, c-format
 msgid ""
 "RX: %<PRId64> packets (%<PRId64> B); TX: %<PRId64> packets (%<PRId64> B)\n"
-msgstr ""
+msgstr "RX: %<PRId64> paket (%<PRId64> B); TX: %<PRId64> paket (%<PRId64> B)\n"
 
-#: main.c:1505
+#: main.c:1561
 #, c-format
 msgid "SSL ciphersuite: %s\n"
-msgstr ""
+msgstr "SSL-chiffersvit: %s\n"
 
-#: main.c:1507
+#: main.c:1563
 #, c-format
 msgid "%s ciphersuite: %s\n"
-msgstr ""
+msgstr "%s-chiffersvit: %s\n"
 
-#: main.c:1510
+#: main.c:1566
 #, c-format
 msgid "Next SSL rekey in %ld seconds\n"
-msgstr ""
+msgstr "Nästa SSL-rekey om %ld sekunder\n"
 
-#: main.c:1513
+#: main.c:1569
 #, c-format
 msgid "Next %s rekey in %ld seconds\n"
-msgstr ""
+msgstr "Nästa %s-rekey om %ld sekunder\n"
 
-#: main.c:1517
+#: main.c:1573
 #, c-format
 msgid "Next Trojan invocation in %ld seconds\n"
-msgstr ""
+msgstr "Nästa trojankörning om %ld sekunder\n"
 
-#: main.c:1536
+#: main.c:1592
 #, c-format
 msgid "Failed to open '%s' for write: %s\n"
 msgstr "Misslyckades med att öppna ”%s” för att skriva: %s\n"
 
-#: main.c:1553
+#: main.c:1609
 #, c-format
 msgid "Continuing in background; pid %d\n"
 msgstr "Fortsätter i bakgrunden, pid %d\n"
 
-#: main.c:1618
+#: main.c:1674
 #, c-format
 msgid "WARNING: Cannot set locale: %s\n"
 msgstr "VARNING: Det går inte att ange lokal: %s\n"
 
-#: main.c:1631
+#: main.c:1687
 #, c-format
 msgid ""
 "WARNING: This version of openconnect was built without iconv\n"
@@ -3795,10 +3877,10 @@ msgid ""
 "         set \"%s\". Expect strangeness.\n"
 msgstr ""
 "VARNING: Denna version av openconnect byggdes utan iconvstöd\n"
-"         men du verkar använda den föråldrade teckenuppsättningen\n"
+"         men du verkar använda den äldre teckenuppsättningen\n"
 "         ”%s”. Förvänta dig konstiga händelser.\n"
 
-#: main.c:1638
+#: main.c:1694
 #, c-format
 msgid ""
 "WARNING: This version of openconnect is %s but\n"
@@ -3807,56 +3889,60 @@ msgstr ""
 "VARNING: Denna version av openconnect är %s men\n"
 "         biblioteket libopenconnect är %s\n"
 
-#: main.c:1645
+#: main.c:1701
 #, c-format
 msgid ""
 "WARNING: This build is intended only for debugging purposes and\n"
 "         may allow you to establish insecure connections.\n"
 msgstr ""
+"VARNING: Detta bygge är endast avsett för felsökningssyften och\n"
+"         kan låta dig etablera osäkra anslutningar.\n"
 
-#: main.c:1677
+#: main.c:1733
 #, c-format
 msgid "Failed to allocate vpninfo structure\n"
 msgstr "Misslyckades med att allokera vpninfo-struktur\n"
 
-#: main.c:1737
+#: main.c:1793
 #, c-format
 msgid "Cannot use 'config' option inside config file\n"
 msgstr "Kan inte använda ”config” inuti konfigurationsfil\n"
 
-#: main.c:1745
+#: main.c:1801
 #, c-format
 msgid "Cannot open config file '%s': %s\n"
 msgstr "Kan inte öppna konfigurationsfilen ”%s”: %s\n"
 
-#: main.c:1762
+#: main.c:1818
 #, c-format
 msgid "Invalid compression mode '%s'\n"
 msgstr "Ogiltigt komprimeringsläge ”%s”\n"
 
-#: main.c:1780
+#: main.c:1836
 #, c-format
 msgid ""
 "Cannot enable insecure 3DES or RC4 ciphers, because the library\n"
 "%s no longer supports them.\n"
 msgstr ""
+"Kan inte aktivera osäkra 3DES- eller RC4-chiffer för att biblioteket\n"
+"%s inte längre stöder dem.\n"
 
-#: main.c:1788 main.c:1809
+#: main.c:1844 main.c:1865
 #, c-format
 msgid "Failed to allocate memory\n"
 msgstr "Misslyckades med att allokera minne\n"
 
-#: main.c:1804
+#: main.c:1860
 #, c-format
 msgid "Missing colon in resolve option\n"
 msgstr "Saknar kolon i flaggan för uppslag\n"
 
-#: main.c:1896 main.c:1906
+#: main.c:1952 main.c:1962
 #, c-format
 msgid "MTU %d too small\n"
 msgstr "MTU %d för litet\n"
 
-#: main.c:1936
+#: main.c:1992
 #, c-format
 msgid ""
 "Disabling all HTTP connection re-use due to --no-http-keepalive option.\n"
@@ -3865,7 +3951,7 @@ msgstr ""
 "Inaktiverar alla HTTP-anslutningsåteranvändningar pga --no-http-keepalive.\n"
 "Om detta hjälper, rapportera till <openconnect-devel@lists.infradead.org>.\n"
 
-#: main.c:1942
+#: main.c:1998
 #, c-format
 msgid ""
 "The --no-cert-check option was insecure and has been removed.\n"
@@ -3874,27 +3960,29 @@ msgstr ""
 "--no-cert-check-flaggan var osäker och har tagits bort.\n"
 "Fixa din servers certifikat eller använd --servercert för att lita på den.\n"
 
-#: main.c:1960
+#: main.c:2016
 #, c-format
 msgid "Queue length zero not permitted; using 1\n"
 msgstr "Kölängd noll tillåts inte: använder 1\n"
 
-#: main.c:1974
+#: main.c:2030
 #, c-format
 msgid "OpenConnect version %s\n"
 msgstr "OpenConnect version %s\n"
 
-#: main.c:2021
+#: main.c:2078
 #, c-format
 msgid "Invalid software token mode \"%s\"\n"
 msgstr "Ogiltigt programvarutokenläge ”%s”\n"
 
-#: main.c:2032
+#: main.c:2089
 #, c-format
-msgid "Invalid OS identity \"%s\"\n"
-msgstr "Ogiltig OS-identitet ”%s”\n"
+msgid ""
+"Invalid OS identity \"%s\"\n"
+"Allowed values: linux, linux-64, win, mac-intel, android, apple-ios\n"
+msgstr ""
 
-#: main.c:2059
+#: main.c:2117
 #, c-format
 msgid ""
 "WARNING: You specified %s. This should not be\n"
@@ -3907,110 +3995,114 @@ msgstr ""
 "         en prioritetssträng är nödvändig för att ansluta till\n"
 "         en server till <openconnect-devel@lists.infradead.org>.\n"
 
-#: main.c:2085
+#: main.c:2143
 #, c-format
 msgid "Too many arguments on command line\n"
 msgstr "För många argument på kommandoraden\n"
 
-#: main.c:2088
+#: main.c:2146
 #, c-format
 msgid "No server specified\n"
 msgstr "Ingen server angiven\n"
 
-#: main.c:2102
+#: main.c:2160
 #, c-format
 msgid "This version of openconnect was built without libproxy support\n"
 msgstr "Denna version av OpenConnect byggdes utan libproxy-stöd\n"
 
-#: main.c:2127
+#: main.c:2187
 #, c-format
 msgid "Error opening cmd pipe\n"
 msgstr "Fel vid öppning av cmd-rör\n"
 
-#: main.c:2161
+#: main.c:2221
 #, c-format
 msgid "Failed to complete authentication\n"
-msgstr ""
+msgstr "Misslyckades med att slutföra autentisering\n"
 
-#: main.c:2197
+#: main.c:2257
 #, c-format
 msgid "Creating SSL connection failed\n"
 msgstr "Misslyckades med att skapa SSL-anslutning\n"
 
-#: main.c:2212
+#: main.c:2272
 #, c-format
 msgid "Set up UDP failed; using SSL instead\n"
 msgstr "Misslyckades med att ställa in UDP; använder SSL istället\n"
 
-#: main.c:2218
+#: main.c:2278
 msgid "No --script argument provided; DNS and routing are not configured\n"
 msgstr ""
 "Inget --script-argument givet, DNS och omdirigering är inte konfigurerade\n"
 
-#: main.c:2220
+#: main.c:2280
 msgid "See https://www.infradead.org/openconnect/vpnc-script.html\n"
 msgstr "Se https://www.infradead.org/openconnect/vpnc-script.html\n"
 
-#: main.c:2233
+#: main.c:2293
 msgid "User requested reconnect\n"
 msgstr "Användare begärde återanslutning\n"
 
-#: main.c:2244
+#: main.c:2304
 msgid "Cookie was rejected by server; exiting.\n"
-msgstr ""
+msgstr "Kakan nekades av servern; avslutar.\n"
 
-#: main.c:2248
+#: main.c:2308
 msgid "Session terminated by server; exiting.\n"
-msgstr "Sessionen avslutades av server, avslutar.\n"
+msgstr "Sessionen terminerades av servern; avslutar.\n"
 
-#: main.c:2252
+#: main.c:2312
 #, c-format
 msgid "User cancelled (%s); exiting.\n"
-msgstr ""
+msgstr "Användaren avbröt (%s); avslutar.\n"
 
-#: main.c:2262
+#: main.c:2322
 #, c-format
 msgid "User detached from session (%s); exiting.\n"
-msgstr ""
+msgstr "Användare frånkopplad från session (%s); avslutar.\n"
 
-#: main.c:2272
+#: main.c:2332
 msgid "Unrecoverable I/O error; exiting.\n"
-msgstr ""
+msgstr "Oåterhämtbart in/ut-fel; avslutar.\n"
 
-#: main.c:2279
+#: main.c:2339
 msgid "Unknown error; exiting.\n"
 msgstr "Okänt fel, avslutar.\n"
 
-#: main.c:2299
+#: main.c:2359
 #, c-format
 msgid "Failed to open %s for write: %s\n"
 msgstr "Misslyckades med att öppna %s för att skriva: %s\n"
 
-#: main.c:2307
+#: main.c:2367
 #, c-format
 msgid "Failed to write config to %s: %s\n"
 msgstr "Misslyckades med att skriva konfiguration till %s: %s\n"
 
-#: main.c:2353
+#: main.c:2413
 #, c-format
 msgid ""
 "Insecurely accepting certificate from VPN server \"%s\" because you ran with "
 "--servercert=ACCEPT.\n"
 msgstr ""
+"Accepterar på ett osäkert sätt certifikat från VPN-servern ”%s” eftersom du "
+"körde med --servercert=ACCEPT.\n"
 
-#: main.c:2366
+#: main.c:2426
 #, c-format
 msgid "Could not check server's certificate against %s\n"
-msgstr ""
+msgstr "Kunde inte kontrollera serverns certifikat mot %s\n"
 
-#: main.c:2374
+#: main.c:2434
 #, c-format
 msgid ""
 "None of the %d fingerprint(s) specified via --servercert match server's "
 "certificate: %s\n"
 msgstr ""
+"Inget av %d fingeravtryck angivna via --servercert matchar serverns "
+"certifikat: %s\n"
 
-#: main.c:2383
+#: main.c:2443
 #, c-format
 msgid ""
 "\n"
@@ -4021,7 +4113,7 @@ msgstr ""
 "Certifikatet från VPN-servern \"%s\" klarade inte verifiering.\n"
 "Anledning: %s\n"
 
-#: main.c:2386
+#: main.c:2446
 #, c-format
 msgid ""
 "To trust this server in future, perhaps add this to your command line:\n"
@@ -4029,111 +4121,111 @@ msgstr ""
 "För att lista på denna server i framtiden kan du lägga till detta till din "
 "kommandorad:\n"
 
-#: main.c:2387
+#: main.c:2447
 #, c-format
 msgid "    --servercert %s\n"
 msgstr "    --servercert %s\n"
 
-#: main.c:2392
+#: main.c:2452
 #, c-format
 msgid "Enter '%s' to accept, '%s' to abort; anything else to view: "
 msgstr ""
 "Skriv in ”%s” för att acceptera, ”%s” för att avbryta, vad som helst annat "
 "för att visa: "
 
-#: main.c:2393 main.c:2412
+#: main.c:2453 main.c:2472
 msgid "no"
 msgstr "nej"
 
-#: main.c:2393 main.c:2399
+#: main.c:2453 main.c:2459
 msgid "yes"
 msgstr "ja"
 
-#: main.c:2421
+#: main.c:2481
 #, c-format
 msgid "Server key hash: %s\n"
 msgstr "Hash för servernyckel: %s\n"
 
-#: main.c:2455
+#: main.c:2515
 #, c-format
 msgid "Auth choice \"%s\" matches multiple options\n"
 msgstr "Auth-val ”%s” matchar flera alternativ\n"
 
-#: main.c:2458
+#: main.c:2518
 #, c-format
 msgid "Auth choice \"%s\" not available\n"
 msgstr "Auth-val ”%s” ej tillgängligt\n"
 
-#: main.c:2479
+#: main.c:2539
 msgid "User input required in non-interactive mode\n"
 msgstr "Användarinmatning krävs i icke-interaktivt läge\n"
 
-#: main.c:2721
+#: main.c:2781
 #, c-format
 msgid "Failed to open token file for write: %s\n"
 msgstr "Misslyckades med att öppna tokenfil för skrivning: %s\n"
 
-#: main.c:2729
+#: main.c:2789
 #, c-format
 msgid "Failed to write token: %s\n"
 msgstr "Misslyckades med att skriva token: %s\n"
 
-#: main.c:2776 main.c:2800
+#: main.c:2836 main.c:2860
 #, c-format
 msgid "Soft token string is invalid\n"
 msgstr "Programvarutokensträng är ogiltig\n"
 
-#: main.c:2780
+#: main.c:2840
 #, c-format
 msgid "Can't open stoken file\n"
 msgstr "Kan inte öppna stoken-fil\n"
 
-#: main.c:2782
+#: main.c:2842
 #, c-format
 msgid "Can't open ~/.stokenrc file\n"
 msgstr "Kan inte öppna ~/.stokenrc-fil\n"
 
-#: main.c:2785
+#: main.c:2845
 #, c-format
 msgid "OpenConnect was not built with libstoken support\n"
 msgstr "OpenConnect byggdes inte med libstoken-stöd\n"
 
-#: main.c:2788
+#: main.c:2848
 #, c-format
 msgid "General failure in libstoken\n"
 msgstr "Allmänt fel i libstoken\n"
 
-#: main.c:2803
+#: main.c:2863
 #, c-format
 msgid "OpenConnect was not built with liboath support\n"
 msgstr "OpenConnect byggdes inte med liboath-stöd\n"
 
-#: main.c:2806
+#: main.c:2866
 #, c-format
 msgid "General failure in liboath\n"
 msgstr "Allmänt fel i liboath\n"
 
-#: main.c:2817
+#: main.c:2877
 #, c-format
 msgid "Yubikey token not found\n"
 msgstr "Yubikey-token inte funnen\n"
 
-#: main.c:2820
+#: main.c:2880
 #, c-format
 msgid "OpenConnect was not built with Yubikey support\n"
 msgstr "OpenConnect byggdes inte med Yubikey-stöd\n"
 
-#: main.c:2823
+#: main.c:2883
 #, c-format
 msgid "General Yubikey failure: %s\n"
 msgstr "Allmänt Yubikey-fel: %s\n"
 
-#: main.c:2832
+#: main.c:2892
 #, c-format
 msgid "Can't open oidc file\n"
 msgstr "Kan inte öppna oidc-fil\n"
 
-#: main.c:2835
+#: main.c:2895
 #, c-format
 msgid "General failure in oidc token\n"
 msgstr "Allmänt fel i oidc-token\n"
@@ -4151,23 +4243,23 @@ msgstr "Misslyckades med att ställa in tun-enhet\n"
 #: mainloop.c:209
 #, c-format
 msgid "Delaying tunnel with reason: %s\n"
-msgstr ""
+msgstr "Fördröjer tunnel med orsak: %s\n"
 
 #: mainloop.c:261
 msgid "Delaying cancel (immediate callback).\n"
-msgstr ""
+msgstr "Fördröjer avbryt (omedelbart återanrop).\n"
 
 #: mainloop.c:264
 msgid "Delaying cancel.\n"
-msgstr ""
+msgstr "Fördröjer avbryt.\n"
 
 #: mainloop.c:283
 msgid "Delaying pause (immediate callback).\n"
-msgstr ""
+msgstr "Fördröjer paus (omedelbart återanrop).\n"
 
 #: mainloop.c:286
 msgid "Delaying pause.\n"
-msgstr ""
+msgstr "Fördröjer paus.\n"
 
 #: mainloop.c:299
 msgid "Caller paused the connection\n"
@@ -4194,12 +4286,12 @@ msgstr "Misslyckad select() i huvudslinga"
 #: mtucalc.c:90
 #, c-format
 msgid "Using base_mtu of %d\n"
-msgstr ""
+msgstr "Använder base_mtu på %d\n"
 
 #: mtucalc.c:106
 #, c-format
 msgid "After removing %s/IPv%d headers, MTU of %d\n"
-msgstr ""
+msgstr "Efter borttagande av %s/IPv%d-huvuden, MTU på %d\n"
 
 #. MTU is now (we hope) the number of payload bytes that can fit in a UDP or
 #. * TCP packet exchanged with the VPN gateway.
@@ -4212,6 +4304,8 @@ msgid ""
 "After removing protocol specific overhead (%d unpadded, %d padded, %d "
 "blocksize), MTU of %d\n"
 msgstr ""
+"Efter borttagande av protokollspecifikt pålägg (%d ej utfyllt, %d utfyllt, "
+"%d blockstorlek), MTU på %d\n"
 
 #: ntlm.c:88 sspi.c:113 sspi.c:196
 #, c-format
@@ -4249,7 +4343,7 @@ msgstr "Försöker med HTTP NTLMv%d-autentisering till servern ”%s”\n"
 
 #: nullppp.c:84
 msgid "Terminating because nullppp has reached network state.\n"
-msgstr ""
+msgstr "Terminerar för att nullppp har nått nätverkstillstånd.\n"
 
 #: oath.c:104
 msgid "Invalid base32 token string\n"
@@ -4291,7 +4385,7 @@ msgstr "Oväntad längd %d för TLV %d/%d\n"
 #: oncp.c:82 pulse.c:371
 #, c-format
 msgid "Received MTU %d from server\n"
-msgstr "Erhöll MTU %d från server\n"
+msgstr "Mottog MTU %d från server\n"
 
 #: oncp.c:91 pulse.c:253 pulse.c:312
 #, c-format
@@ -4390,7 +4484,7 @@ msgstr "Okänd TLV grupp %d attr %d län %d:%s\n"
 
 #: oncp.c:393
 msgid "Failed to parse KMP header\n"
-msgstr "Misslyckades med att tolka KMP-header\n"
+msgstr "Misslyckades med att tolka KMP-huvud\n"
 
 #: oncp.c:412
 msgid "Failed to parse KMP message\n"
@@ -4404,32 +4498,32 @@ msgstr "Erhöll KMP-meddelande %d med storlek %d\n"
 #: oncp.c:437
 #, c-format
 msgid "Received non-ESP TLVs (group %d) in ESP negotiation KMP\n"
-msgstr "Erhöll icke-ESP TLVs (grupp %d) i ESP-förhandling KMP\n"
+msgstr "Mottog icke-ESP TLVs (grupp %d) i ESP-förhandling KMP\n"
 
-#: oncp.c:508 oncp.c:540 oncp.c:684
+#: oncp.c:508 oncp.c:542 oncp.c:686
 msgid "Error creating oNCP negotiation request\n"
 msgstr "Fel vid skapande av begäran av oNCP-förhandling\n"
 
-#: oncp.c:549 oncp.c:719
+#: oncp.c:551 oncp.c:721
 msgid "Short write in oNCP negotiation\n"
 msgstr "Kort skrivning i oNCP-förhandling\n"
 
-#: oncp.c:562 oncp.c:603
+#: oncp.c:564 oncp.c:605
 #, c-format
 msgid "Read %d bytes of SSL record\n"
 msgstr "Läste %d byte av SSL-post\n"
 
-#: oncp.c:567
+#: oncp.c:569
 #, c-format
 msgid "Unexpected response of size %d after hostname packet\n"
 msgstr "Oväntat svar på storlek %d efter värdnamnspaket\n"
 
-#: oncp.c:574
+#: oncp.c:576
 #, c-format
 msgid "Server response to hostname packet is error 0x%02x\n"
 msgstr "Serversvar till värdnamnspaket är fel 0x%02x\n"
 
-#: oncp.c:578
+#: oncp.c:580
 msgid ""
 "This seems to indicate that the server has disabled support for\n"
 "Juniper's older oNCP protocol, and only allows connections using\n"
@@ -4441,119 +4535,119 @@ msgstr ""
 "använder det nyare Junos Pulse-protokollet. Denna version av\n"
 "OpenConnect har EXPERIMENTELLT stöd för Pulse genom --prot=pulse\n"
 
-#: oncp.c:607
+#: oncp.c:609
 msgid "Invalid packet waiting for KMP 301\n"
 msgstr "Ogiltigt paket väntar på KMP 301\n"
 
-#: oncp.c:620
+#: oncp.c:622
 #, c-format
 msgid "Expected KMP message 301 from server but got %d\n"
 msgstr "Förväntad KMP-meddelande 301 från server, men fick %d\n"
 
-#: oncp.c:629
+#: oncp.c:631
 #, c-format
 msgid "KMP message 301 from server too large (%d bytes)\n"
 msgstr "KMP-meddelande 301 från server för stort (%d byte)\n"
 
-#: oncp.c:635
+#: oncp.c:637
 #, c-format
 msgid "Got KMP message 301 of length %d\n"
 msgstr "Erhöll KMP-meddelande 301 med längd %d\n"
 
-#: oncp.c:642
+#: oncp.c:644
 msgid "Failed to read continuation record length\n"
 msgstr "Misslyckades med att läsa fortsättning på postens längd\n"
 
-#: oncp.c:648
+#: oncp.c:650
 #, c-format
 msgid "Record of additional %d bytes too large; would make %d\n"
 msgstr "Post på ytterligare %d byte för stor; skulle bli %d\n"
 
-#: oncp.c:657
+#: oncp.c:659
 #, c-format
 msgid "Failed to read continuation record of length %d\n"
 msgstr "Misslyckades med att läsa ytterligare post på längd %d\n"
 
-#: oncp.c:663
+#: oncp.c:665
 #, c-format
 msgid "Read additional %d bytes of KMP 301 message\n"
 msgstr "Läs ytterligare %d byte av KMP-301-meddelande\n"
 
-#: oncp.c:704
+#: oncp.c:706
 msgid "Error negotiating ESP keys\n"
 msgstr "Fel vid förhandling av ESP-nycklar\n"
 
-#: oncp.c:713
+#: oncp.c:715
 msgid "oNCP negotiation request outgoing:\n"
 msgstr "Utgående begäran om oNCP-förhandling:\n"
 
-#: oncp.c:771 pulse.c:2691
+#: oncp.c:773 pulse.c:2691
 msgid "new incoming"
 msgstr "ny inkommande"
 
-#: oncp.c:772 pulse.c:2692
+#: oncp.c:774 pulse.c:2692
 msgid "new outgoing"
 msgstr "ny utgående"
 
-#: oncp.c:797
+#: oncp.c:799
 msgid "Read only 1 byte of oNCP length field\n"
 msgstr "Läs bara 1 byte från fältet för oNCP-längd\n"
 
-#: oncp.c:806
+#: oncp.c:808
 msgid "Server terminated connection (session expired)\n"
-msgstr "Servern avslutade anslutningen (sessionens tidsgräns passerades)\n"
+msgstr "Servern avslutade anslutningen (sessionen har gått ut)\n"
 
-#: oncp.c:810
+#: oncp.c:812
 msgid "Server terminated connection (idle timeout)\n"
-msgstr ""
+msgstr "Servern avslutade anslutningen (tidsgräns för inaktivitet)\n"
 
-#: oncp.c:814
+#: oncp.c:816
 #, c-format
 msgid "Server terminated connection (reason: %d)\n"
 msgstr "Servern avslutade anslutningen (orsak: %d)\n"
 
-#: oncp.c:821
+#: oncp.c:823
 msgid "Server sent zero-length oNCP record\n"
 msgstr "Servern skickade oNCP-post med längd 0\n"
 
-#: oncp.c:922
+#: oncp.c:924
 #, c-format
 msgid "Incoming KMP message %d of size %d (got %d)\n"
 msgstr "Inkommande KMP-meddelande %d med storlek %d (fick %d)\n"
 
-#: oncp.c:925
+#: oncp.c:927
 #, c-format
 msgid "Continuing to process KMP message %d now size %d (got %d)\n"
 msgstr "Fortsätter att bearbeta KMP-meddelande %d med storlek %d (fick %d)\n"
 
-#: oncp.c:944
+#: oncp.c:946
 msgid "Unrecognised data packet\n"
 msgstr "Okänt datapaket\n"
 
-#: oncp.c:1003
+#: oncp.c:1005
 #, c-format
 msgid "Failed to set up ESP: %s\n"
 msgstr "Misslyckades med att konfigurera ESP: %s\n"
 
-#: oncp.c:1013
+#: oncp.c:1015
 #, c-format
 msgid "Unknown KMP message %d of size %d:\n"
 msgstr "Okänt KMP-meddelande %d med storlek %d:\n"
 
-#: oncp.c:1018
+#: oncp.c:1020
 #, c-format
 msgid ".... + %d more bytes unreceived\n"
 msgstr ".... + %d mer byte ej mottaget\n"
 
-#: oncp.c:1033 pulse.c:2746
+#: oncp.c:1035 pulse.c:2746
 msgid "Packet outgoing:\n"
 msgstr "Utgående paket:\n"
 
-#: oncp.c:1095
+#: oncp.c:1097
 msgid "Sent ESP enable control packet\n"
 msgstr "Skicka ESP enable control-paket\n"
 
-#: openconnect-internal.h:1591 openconnect-internal.h:1601
+#: openconnect-internal.h:1596 openconnect-internal.h:1606
 #, c-format
 msgid "ERROR: %s() called with invalid UTF-8 for '%s' argument\n"
 msgstr "FEL: %s() anropades med ogiltig UTF-8 för ”%s” argument\n"
@@ -4561,7 +4655,7 @@ msgstr "FEL: %s() anropades med ogiltig UTF-8 för ”%s” argument\n"
 #: openssl-dtls.c:94
 #, c-format
 msgid "Unable to calculate DTLS overhead for %s\n"
-msgstr "Misslyckades med att beräkna DTLS-kostnad för %s\n"
+msgstr "Misslyckades med att beräkna DTLS-pålägg för %s\n"
 
 #: openssl-dtls.c:210 openssl-dtls.c:269
 msgid "Failed to generate random key\n"
@@ -4617,6 +4711,10 @@ msgid ""
 "See http://rt.openssl.org/Ticket/Display.html?id=1751\n"
 "Use the --no-dtls command line option to avoid this message\n"
 msgstr ""
+"SSL_set_session() misslyckades med DTLS-protokollversion 0x%x\n"
+"Använder du en version av OpenSSl som är äldre 0.9.8m?\n"
+"Se http://rt.openssl.org/Ticket/Display.html?id=1751\n"
+"Använd kommandoradsflaggan --no-dtls för att undvika detta meddelande\n"
 
 #: openssl-dtls.c:576
 msgid "SSL_set_session() failed\n"
@@ -4659,7 +4757,7 @@ msgstr "Misslyckades med att initiera ESP HMAC\n"
 
 #: openssl-esp.c:176
 msgid "Failed to set up decryption context for ESP packet:\n"
-msgstr "Misslyckades med att ställa in dekryptering för ESP-paket:\n"
+msgstr "Misslyckades med att konfigurera dekryptering för ESP-paket:\n"
 
 #: openssl-esp.c:184
 msgid "Failed to decrypt ESP packet:\n"
@@ -4684,7 +4782,7 @@ msgstr "PIN-låst\n"
 
 #: openssl-pkcs11.c:284
 msgid "PIN expired\n"
-msgstr "PIN-tidsgräns överskriden\n"
+msgstr "PIN har gått ut\n"
 
 #: openssl-pkcs11.c:287
 msgid "Another user already logged in\n"
@@ -4735,7 +4833,7 @@ msgstr "Certifikat X.509-innehåll hämtas inte med libp11\n"
 #: openssl-pkcs11.c:420
 #, c-format
 msgid "Using secondary PKCS#11 certificate %s\n"
-msgstr ""
+msgstr "Använder sekundära PKCS#11-certifikatet %s\n"
 
 #: openssl-pkcs11.c:465
 #, c-format
@@ -4753,7 +4851,7 @@ msgstr "Certifikatet har inga öppna nycklar\n"
 
 #: openssl-pkcs11.c:506
 msgid "Secondary certificate has no public key\n"
-msgstr ""
+msgstr "Sekundärt certifikat har inga öppna nycklar\n"
 
 #: openssl-pkcs11.c:512 openssl-pkcs11.c:536
 msgid "Certificate does not match private key\n"
@@ -4761,7 +4859,7 @@ msgstr "Certifikatet stämmer inte överens med privat nyckel\n"
 
 #: openssl-pkcs11.c:513 openssl-pkcs11.c:537
 msgid "Secondary certificate does not match private key\n"
-msgstr ""
+msgstr "Sekundärt certifikat stämmer inte överens med privat nyckel\n"
 
 #: openssl-pkcs11.c:516
 msgid "Checking EC key matches cert\n"
@@ -4783,15 +4881,15 @@ msgstr "Misslyckades med att hitta PKCS#11-nyckel ”%s”\n"
 #: openssl-pkcs11.c:656
 #, c-format
 msgid "Using secondary PKCS#11 key %s\n"
-msgstr ""
+msgstr "Använder sekundära PKCS#11-nyckeln %s\n"
 
 #: openssl-pkcs11.c:662
 msgid "Failed to instantiate private key from PKCS#11\n"
-msgstr ""
+msgstr "Misslyckades med att instansiera privat nyckel från PKCS#11\n"
 
 #: openssl-pkcs11.c:663
 msgid "Failed to instantiate secondary private key from PKCS#11\n"
-msgstr ""
+msgstr "Misslyckades med att instansiera sekundär privat nyckel från PKCS#11\n"
 
 #: openssl-pkcs11.c:719 openssl-pkcs11.c:725
 msgid "This version of OpenConnect was built without PKCS#11 support\n"
@@ -4799,21 +4897,21 @@ msgstr "Denna version av OpenConnect byggdes utan PKCS#11-stöd\n"
 
 #: openssl.c:168
 msgid "Failed to write to TLS/DTLS socket\n"
-msgstr ""
+msgstr "Misslyckades med att skriva till TLS/DTLS-uttag\n"
 
 #: openssl.c:218 openssl.c:284
 msgid "Failed to read from TLS/DTLS socket\n"
-msgstr ""
+msgstr "Misslyckades med att läsa från TLS/DTLS-uttag\n"
 
 #: openssl.c:322
 #, c-format
 msgid "Read error on %s session: %d\n"
-msgstr ""
+msgstr "Läsfel på %s-session: %d\n"
 
 #: openssl.c:357
 #, c-format
 msgid "Write error on %s session: %d\n"
-msgstr ""
+msgstr "Skrivfel på %s-session: %d\n"
 
 #: openssl.c:430
 #, c-format
@@ -4827,7 +4925,7 @@ msgstr "PEM-lösenord för långt (%d >= %d)\n"
 
 #: openssl.c:546
 msgid "Client certificate or key missing\n"
-msgstr ""
+msgstr "Klientcertifikat eller nyckel saknas\n"
 
 #: openssl.c:552 openssl.c:1019
 msgid "Loading private key failed\n"
@@ -4848,15 +4946,15 @@ msgstr "Misslyckades med att tolka PKCS#12 (se fel ovan)\n"
 
 #: openssl.c:640
 msgid "Parse secondary PKCS#12 failed (see above errors)\n"
-msgstr ""
+msgstr "Misslyckades med att tolka sekundär PKCS#12 (se fel ovan)\n"
 
 #: openssl.c:657
 msgid "PKCS#12 contained no certificate!\n"
-msgstr "PKCS#12-filen innehöll inget certifikat!\n"
+msgstr "PKCS#12 innehöll inget certifikat!\n"
 
 #: openssl.c:658
 msgid "Secondary PKCS#12 contained no certificate!\n"
-msgstr ""
+msgstr "Sekundär PKCS#12 innehöll inget certifikat!\n"
 
 #: openssl.c:664
 msgid "PKCS#12 contained no private key!\n"
@@ -4864,7 +4962,7 @@ msgstr "PKCS#12 innehöll inga privata nycklar!\n"
 
 #: openssl.c:665
 msgid "Secondary PKCS#12 contained no private key!\n"
-msgstr ""
+msgstr "Sekundär PKCS#12 innehöll inga privata nycklar!\n"
 
 #: openssl.c:672
 msgid "PKCS#12"
@@ -4884,11 +4982,11 @@ msgstr "Misslyckades med att sätta TPM SRK-lösenord\n"
 
 #: openssl.c:729
 msgid "Failed to load TPM private key\n"
-msgstr "Misslyckades med att läsa in TPM-privat nyckel\n"
+msgstr "Misslyckades med att läsa in privat TPM-nyckel\n"
 
 #: openssl.c:730
 msgid "Failed to load secondary TPM private key\n"
-msgstr ""
+msgstr "Misslyckades med att läsa in sekundär privat TPM-nyckel\n"
 
 #: openssl.c:784 openssl.c:935
 #, c-format
@@ -4898,7 +4996,7 @@ msgstr "Misslyckades med att öppna certifikatfil %s: %s\n"
 #: openssl.c:785
 #, c-format
 msgid "Failed to open secondary certificate file %s: %s\n"
-msgstr ""
+msgstr "Misslyckades med att öppna sekundär certifikatfil %s: %s\n"
 
 #: openssl.c:795
 msgid "Loading certificate failed\n"
@@ -4911,6 +5009,8 @@ msgstr "Misslyckades med att bearbeta certifikat som stöds. Försöker ändå�
 #: openssl.c:827
 msgid "Failed to process secondary supporting certs. Trying anyway...\n"
 msgstr ""
+"Misslyckades med att bearbeta sekundära certifikat som stöds. Försöker "
+"ändå…\n"
 
 #: openssl.c:840
 msgid "PEM file"
@@ -4928,6 +5028,7 @@ msgstr "Misslyckades med att läsa in privat nyckel (fel lösenfras)\n"
 #: openssl.c:897
 msgid "Loading secondary private key failed (wrong passphrase?)\n"
 msgstr ""
+"Misslyckades med att läsa in sekundär privat nyckel (felaktig lösenfras?)\n"
 
 #: openssl.c:903
 msgid "Loading private key failed (see above errors)\n"
@@ -4935,7 +5036,7 @@ msgstr "Inläsning av privat nyckel misslyckades (se fel ovan)\n"
 
 #: openssl.c:904
 msgid "Loading secondary private key failed (see above errors)\n"
-msgstr ""
+msgstr "Misslyckades med att läsa in sekundär privat nyckel (se fel ovan)\n"
 
 #: openssl.c:958
 msgid "Failed to load X509 certificate from keystore\n"
@@ -4948,15 +5049,15 @@ msgstr "Misslyckades med att öppna privat nyckelfil %s: %s\n"
 
 #: openssl.c:1020
 msgid "Loading secondary private key failed\n"
-msgstr ""
+msgstr "Misslyckades med att läsa in sekundär privat nyckel\n"
 
 #: openssl.c:1076 openssl.c:1091
 msgid "Failed to decrypt secondary PKCS#8 certificate file\n"
-msgstr ""
+msgstr "Misslyckades med att dekryptera sekundär PKCS#8-certifikatfil\n"
 
 #: openssl.c:1086
 msgid "Enter PKCS#8 secondary pass phrase:"
-msgstr ""
+msgstr "Ange sekundär PKCS#8-lösenfras:"
 
 #: openssl.c:1111
 msgid "Failed to convert PKCS#8 to OpenSSL EVP_PKEY\n"
@@ -4965,6 +5066,7 @@ msgstr "Misslyckades med att konvertera PKCS#8 till OpenSSL EVP_PKEY\n"
 #: openssl.c:1112
 msgid "Failed to convert secondary PKCS#8 to OpenSSL EVP_PKEY\n"
 msgstr ""
+"Misslyckades med att konvertera sekundär PKCS#8 till OpenSSL EVP_PKEY\n"
 
 #: openssl.c:1122
 #, c-format
@@ -5041,11 +5143,11 @@ msgstr "Extra certifikat från cafile: ”%s”\n"
 
 #: openssl.c:1667
 msgid "Error in client cert notAfter field\n"
-msgstr "Fel i klientcertifikat notAfter-fält\n"
+msgstr "Fel i klientcertifikats notAfter-fält\n"
 
 #: openssl.c:1668
 msgid "Error in secondary client cert notAfter field\n"
-msgstr ""
+msgstr "Fel i sekundärt klientcertifikats notAfter-fält\n"
 
 #: openssl.c:1683
 msgid "<error>"
@@ -5071,7 +5173,7 @@ msgstr "Misslyckades med att skapa TLSv1 CTX\n"
 
 #: openssl.c:1881
 msgid "Failed to construct OpenSSL cipher list\n"
-msgstr ""
+msgstr "Misslyckades med att konstruera OpenSSL-chifferlista\n"
 
 #: openssl.c:1892
 #, c-format
@@ -5098,37 +5200,38 @@ msgstr "EAP-TTLS-anslutningsfel %d\n"
 
 #: ppp.c:113
 msgid "HDLC initial flag sequence (0x7e) is missing\n"
-msgstr ""
+msgstr "Inledande HDLC-flaggsekvens (0x7e) saknas\n"
 
 #: ppp.c:131
 msgid "HDLC buffer ended without FCS and flag sequence (0x7e)\n"
-msgstr ""
+msgstr "HDLC-buffert slutade utan FCS och flaggsekvens (0x7e)\n"
 
 #: ppp.c:137
 #, c-format
 msgid "HDLC frame too short (%d bytes)\n"
-msgstr ""
+msgstr "HDLC-ramen för kort (%d byte)\n"
 
 #: ppp.c:149
 #, c-format
 msgid "Bad HDLC packet FCS %04x\n"
-msgstr ""
+msgstr "Felaktig FCS %04x för HDLC-paket\n"
 
 #: ppp.c:154
 #, c-format
 msgid "Un-HDLC'ed packet (%ld bytes -> %ld), FCS=0x%04x\n"
-msgstr ""
+msgstr "Av-HDLC:at paket (%ld byte -> %ld), FCS=0x%04x\n"
 
 #: ppp.c:312
 #, c-format
 msgid "Current PPP state: %s (encap %s):\n"
-msgstr ""
+msgstr "Aktuellt PPP-tillstånd: %s (inkapsl %s):\n"
 
 #: ppp.c:314
 #, c-format
 msgid ""
 "    in: asyncmap=0x%08x, lcp_opts=%d, lcp_magic=0x%08x, ipv4=%s, ipv6=%s\n"
 msgstr ""
+"    in: asyncmap=0x%08x, lcp_opts=%d, lcp_magic=0x%08x, ipv4=%s, ipv6=%s\n"
 
 #: ppp.c:322
 #, c-format
@@ -5136,190 +5239,192 @@ msgid ""
 "   out: asyncmap=0x%08x, lcp_opts=%d, lcp_magic=0x%08x, ipv4=%s, ipv6=%s, "
 "solicit_peerns=%d, got_peerns=%d\n"
 msgstr ""
+"   ut: asyncmap=0x%08x, lcp_opts=%d, lcp_magic=0x%08x, ipv4=%s, ipv6=%s, "
+"solicit_peerns=%d, got_peerns=%d\n"
 
 #: ppp.c:407
 #, c-format
 msgid "Received MRU %d from server. Nak-offering larger MRU of %d (our MTU)\n"
-msgstr ""
+msgstr "Mottog MRU %d från server. NAK-erbjuder större MRU på %d (vår MTU)\n"
 
 #: ppp.c:413
 #, c-format
 msgid "Received MRU %d from server. Setting our MTU to match.\n"
-msgstr ""
+msgstr "Mottog MRU %d från server. Sätter vår MTU så den matchar.\n"
 
 #: ppp.c:421
 #, c-format
 msgid "Received asyncmap of 0x%08x from server\n"
-msgstr ""
+msgstr "Mottog asyncmap på 0x%08x från servern\n"
 
 #: ppp.c:427
 #, c-format
 msgid "Received magic number of 0x%08x from server\n"
-msgstr ""
+msgstr "Mottog magiskt tal på 0x%08x från servern\n"
 
 #: ppp.c:432
 msgid "Received protocol field compression from server\n"
-msgstr ""
+msgstr "Mottog protokollfältkomprimering från servern\n"
 
 #: ppp.c:437
 msgid "Received address and control field compression from server\n"
-msgstr ""
+msgstr "Mottog adress- och kontrollfältskomprimering från servern\n"
 
 #: ppp.c:444
 msgid "Received deprecated IP-Addresses from server, ignoring\n"
-msgstr ""
+msgstr "Mottog föråldrade IP-adresser från servern, ignorerar\n"
 
 #: ppp.c:451
 msgid "Received Van Jacobson TCP/IP compression from server\n"
-msgstr ""
+msgstr "Mottog Van Jacobson TCP/IP-komprimering från servern\n"
 
 #: ppp.c:459
 #, c-format
 msgid "Received peer IPv4 address %s from server\n"
-msgstr ""
+msgstr "Mottog motpartens IPv4-adress %s från servern\n"
 
 #: ppp.c:475
 #, c-format
 msgid "Received peer IPv6 link-local address %s from server\n"
-msgstr ""
+msgstr "Mottog motpartens länklokala IPv6-adress %s från servern\n"
 
 #: ppp.c:482
 #, c-format
 msgid "Received unknown %s TLV (tag %d, len %d+2) from server:\n"
-msgstr ""
+msgstr "Mottog okänd %s TLV (tagg %d, län %d+2) från servern:\n"
 
 #: ppp.c:509
 #, c-format
 msgid "Received %ld extra bytes at end of Config-Request:\n"
-msgstr ""
+msgstr "Mottog %ld extra byte i slutet på Config-Request:\n"
 
 #: ppp.c:516
 #, c-format
 msgid "Reject %s/id %d config from server\n"
-msgstr ""
+msgstr "Neka %s/id %d-konfiguration från servern\n"
 
 #: ppp.c:524
 #, c-format
 msgid "Nak %s/id %d config from server\n"
-msgstr ""
+msgstr "NAK %s/id %d-konfiguration från servern\n"
 
 #: ppp.c:530
 #, c-format
 msgid "Ack %s/id %d config from server\n"
-msgstr ""
+msgstr "ACK %s/id %d-konfiguration från servern\n"
 
 #: ppp.c:570
 #, c-format
 msgid "Requesting calculated MTU of %d\n"
-msgstr ""
+msgstr "Begär beräknad MTU på %d\n"
 
 #: ppp.c:625
 #, c-format
 msgid "Sending our %s/id %d config request to server\n"
-msgstr ""
+msgstr "Skickar vår %s/id %d-konfigurationsbegäran till servern\n"
 
 #: ppp.c:662
 msgid "Server rejected/nak'ed LCP MRU option\n"
-msgstr ""
+msgstr "Servern nekade/NAK:ade LCP MRU-alternativ\n"
 
 #: ppp.c:667
 msgid "Server rejected/nak'ed LCP asyncmap option\n"
-msgstr ""
+msgstr "Servern nekade/NAK:ade LCP asyncmap-alternativ\n"
 
 #: ppp.c:678
 msgid "Server rejected LCP magic option\n"
-msgstr ""
+msgstr "Servern nekade LCP magic-alternativ\n"
 
 #: ppp.c:684
 msgid "Server rejected/nak'ed LCP PFCOMP option\n"
-msgstr ""
+msgstr "Servern nekade/NAK:ade LCP PFCOMP-alternativ\n"
 
 #: ppp.c:689
 msgid "Server rejected/nak'ed LCP ACCOMP option\n"
-msgstr ""
+msgstr "Servern nekade/NAK:ade LCP ACCOMP-alternativ\n"
 
 #: ppp.c:697
 #, c-format
 msgid "Server nak-offered IPv4 address: %s\n"
-msgstr ""
+msgstr "Servern NAK-erbjöd IPv4-adress: %s\n"
 
 #: ppp.c:701
 #, c-format
 msgid "Server rejected Legacy IP address %s\n"
-msgstr ""
+msgstr "Servern nekade äldre IP-adress %s\n"
 
 #: ppp.c:707
 #, c-format
 msgid "Server rejected/nak'ed our IPv4 address or request: %s\n"
-msgstr ""
+msgstr "Servern nekade/NAK:ade vår IPv4-adress eller begäran: %s\n"
 
 #: ppp.c:723
 #, c-format
 msgid "Server nak-offered IPCP request for %s[%d] server: %s\n"
-msgstr ""
+msgstr "Servern NAK-erbjöd IPCP-begäran för %s[%d]-server: %s\n"
 
 #: ppp.c:729
 #, c-format
 msgid "Server rejected/nak'ed IPCP request for %s[%d] server\n"
-msgstr ""
+msgstr "Servern nekade/NAK:ade IPCP-begäran för %s[%d]-server\n"
 
 #: ppp.c:744
 #, c-format
 msgid "Server nak-offered IPv6 link-local address %s\n"
-msgstr ""
+msgstr "Servern NAK-erbjöd länklokal IPv6-adress %s\n"
 
 #: ppp.c:752
 msgid "Server rejected/nak'ed our IPv6 interface identifier\n"
-msgstr ""
+msgstr "Servern nekade/NAK:ade vår IPv6-gränssnittsidentifierare\n"
 
 #: ppp.c:760
 #, c-format
 msgid "Server rejected/nak'ed %s TLV (tag %d, len %d+2)\n"
-msgstr ""
+msgstr "Servern nekade/NAK:ade %s TLV (tagg %d, län %d+2)\n"
 
 #: ppp.c:769
 #, c-format
 msgid "Received %ld extra bytes at end of Config-Reject:\n"
-msgstr ""
+msgstr "Mottog %ld extra byte i slutet på Config-Reject:\n"
 
 #: ppp.c:794
 #, c-format
 msgid "Received %s/id %d %s from server\n"
-msgstr ""
+msgstr "Mottog %s/id %d %s från servern\n"
 
 #: ppp.c:825
 #, c-format
 msgid "Server terminates with reason: %s\n"
-msgstr ""
+msgstr "Servern terminerar med orsak: %s\n"
 
 #: ppp.c:852
 #, c-format
 msgid "Server rejected our request to configure IPv%d\n"
-msgstr ""
+msgstr "Servern nekade vår begäran att konfigurera IPv%d\n"
 
 #: ppp.c:1023
 #, c-format
 msgid "PPP state transition from %s to %s on %s channel\n"
-msgstr ""
+msgstr "PPP-tillståndsövergång från %s till %s på %s-kanal\n"
 
 #: ppp.c:1106
 msgid "PPP payload exceeds receive buffer\n"
-msgstr ""
+msgstr "PPP-nyttolast överskrider mottagandebuffert\n"
 
 #: ppp.c:1145
 #, c-format
 msgid "Short packet received (%d bytes). Waiting for more.\n"
-msgstr ""
+msgstr "Kort paket mottogs (%d byte). Väntar på mer.\n"
 
 #: ppp.c:1163
 #, c-format
 msgid "Unexpected pre-PPP packet header for encap %d.\n"
-msgstr ""
+msgstr "Oväntat för-PPP-pakethuvud för inkapsl %d.\n"
 
 #: ppp.c:1176
 #, c-format
 msgid "PPP payload len %d exceeds receive buffer %d\n"
-msgstr ""
+msgstr "PPP-nyttolastlängd %d överskrider mottagandebuffert %d\n"
 
 #: ppp.c:1182
 #, c-format
@@ -5327,98 +5432,102 @@ msgid ""
 "PPP packet is incomplete. Received %d bytes on wire (includes %d encap) but "
 "header payload_len is %d. Waiting for more.\n"
 msgstr ""
+"PPP-paket är ofullständigt. Erhöll %d byte på linan (inklusive %d inkapsl) "
+"men huvudets payload_len är %d. Väntar på mer.\n"
 
 #: ppp.c:1214
 msgid "Invalid PPP encapsulation\n"
-msgstr ""
+msgstr "Ogiltig PPP-inkapsling\n"
 
 #: ppp.c:1223
 #, c-format
 msgid "Packet contains %d bytes after payload. Assuming concatenated packet.\n"
-msgstr ""
+msgstr "Paket innehåller %d byte efter nyttolast. Antar konkatenerat paket.\n"
 
 #: ppp.c:1273
 #, c-format
 msgid "Unexpected IPv%d packet in PPP state %s.\n"
-msgstr ""
+msgstr "Oväntat IPv%d-paket i PPP-tillståndet %s.\n"
 
 #: ppp.c:1278
 #, c-format
 msgid "Received IPv%d data packet of %d bytes over %s\n"
-msgstr ""
+msgstr "Mottog IPv%d-datapaket på %d byte över %s\n"
 
 #: ppp.c:1284
 #, c-format
 msgid "Expected %d PPP header bytes but got %ld, shifting payload.\n"
-msgstr ""
+msgstr "Förväntade %d PPP-huvudbyte men fick %ld, växlar nyttolast.\n"
 
 #: ppp.c:1306
 #, c-format
 msgid "Sending Protocol-Reject for %s. Payload:\n"
-msgstr ""
+msgstr "Skickar Protocol-Reject för %s. Nyttolast:\n"
 
 #: ppp.c:1390
 msgid "Detected dead peer!\n"
-msgstr ""
+msgstr "Upptäckte en död motpart!\n"
 
 #: ppp.c:1400
 msgid "Failed to establish PPP\n"
-msgstr ""
+msgstr "Misslyckades med att etablera PPP\n"
 
 #: ppp.c:1419
 msgid "Send PPP discard request as keepalive\n"
-msgstr ""
+msgstr "Skicka PPP-förkastandebegäran som keepalive\n"
 
 #: ppp.c:1423
 msgid "Send PPP echo request as DPD\n"
-msgstr ""
+msgstr "Skicka PPP-ekobegäran som DPD\n"
 
 #: ppp.c:1489
 #, c-format
 msgid "Sending PPP %s %s packet over %s (id %d, %d bytes total)\n"
-msgstr ""
+msgstr "Skickar PPP %s %s-paket över %s (id %d, %d byte totalt)\n"
 
 #: ppp.c:1495
 #, c-format
 msgid "Sending PPP %s packet over %s (%d bytes total)\n"
-msgstr ""
+msgstr "Skickar PPP %s-paket över %s (%d byte totalt)\n"
 
 #: ppp.c:1553
 #, c-format
 msgid "PPP connect called with invalid DTLS state %d\n"
-msgstr ""
+msgstr "PPP connect anropat med ogiltigt DTLS-tillstånd %d\n"
 
 #: ppp.c:1574
 msgid "DTLS tunnel connected; exiting HTTPS mainloop.\n"
-msgstr ""
+msgstr "DTLS-tunnel ansluten; avslutar HTTPS-huvudslinga.\n"
 
 #: ppp.c:1608
 #, c-format
 msgid "Failed to connect DTLS tunnel; using HTTPS instead (state %d).\n"
 msgstr ""
+"Misslyckades med att ansluta DTLS-tunnel; använder HTTPS istället (tillstånd "
+"%d).\n"
 
 #: ppp.c:1633
 msgid "Establishing PPP tunnel over TLS failed\n"
-msgstr ""
+msgstr "Etablering av PPP-tunnel över TLS misslyckades\n"
 
 #: ppp.c:1644
 #, c-format
 msgid "Invalid DTLS state %d\n"
-msgstr ""
+msgstr "Ogiltigt DTLS-tillstånd %d\n"
 
 #. This should never happen
 #: ppp.c:1711
 msgid "Reset PPP failed\n"
-msgstr ""
+msgstr "Återställning av PPP misslyckades\n"
 
 #: ppp.c:1732
 msgid "Failed to authenticate DTLS session\n"
-msgstr ""
+msgstr "Misslyckades med att autentisera DTLS-session\n"
 
 #: pulse.c:235
 #, c-format
 msgid "Received internal Legacy IP address %s\n"
-msgstr "Tog emot intern IP-adress %s av gammal typ\n"
+msgstr "Tog emot intern äldre IP-adress %s\n"
 
 #: pulse.c:283 pulse.c:301 pulse.c:320 pulse.c:343
 msgid "Failed to handle IPv6 address\n"
@@ -5488,7 +5597,7 @@ msgstr "Oväntad IF-T/TLS-autentiseringsutmaning:\n"
 
 #: pulse.c:646
 msgid "Unexpected EAP-TTLS payload:\n"
-msgstr "Oväntad EAP-TTLS-payload:\n"
+msgstr "Oväntad EAP-TTLS-nyttolast:\n"
 
 #: pulse.c:679
 #, c-format
@@ -5634,7 +5743,7 @@ msgstr ""
 
 #: pulse.c:1668
 msgid "Authentication failure: Client certificate required\n"
-msgstr ""
+msgstr "Autentiseringsfel: Klientcertifikat krävs\n"
 
 #: pulse.c:1671
 #, c-format
@@ -5663,6 +5772,8 @@ msgid ""
 "Pulse server requested Host Checker; not yet supported\n"
 "Try Juniper mode (--protocol=nc)\n"
 msgstr ""
+"Pulse-servern begärde Host Checker; stöds inte ännu\n"
+"Pröva Juniper-läge (--protocol=nc)\n"
 
 #: pulse.c:1807
 msgid "Unhandled Pulse authentication packet, or authentication failure\n"
@@ -5762,7 +5873,7 @@ msgstr "Oväntat IF-T/TLS-paket när konfiguration förväntades.\n"
 
 #: pulse.c:2571
 msgid "Insufficient configuration found\n"
-msgstr ""
+msgstr "Otillräcklig konfiguration hittades\n"
 
 #: pulse.c:2683
 msgid "ESP rekey failed\n"
@@ -5771,7 +5882,7 @@ msgstr "ESP rekey misslyckades\n"
 #: pulse.c:2712
 #, c-format
 msgid "Pulse fatal error (reason: %ld): %s\n"
-msgstr ""
+msgstr "Ödesdigert Pulse-fel (orsak: %ld): %s\n"
 
 #: pulse.c:2730
 msgid "Unknown Pulse packet\n"
@@ -5797,22 +5908,24 @@ msgstr "Förkasta dålig split-exclude: ”%s”\n"
 msgid ""
 "WARNING: Split include \"%s\" has host bits set, replacing with \"%s/%d\".\n"
 msgstr ""
+"VARNING: Split-include ”%s” har värdbitar satta, ersätter med ”%s/%d”.\n"
 
 #: script.c:215
 #, c-format
 msgid ""
 "WARNING: Split exclude \"%s\" has host bits set, replacing with \"%s/%d\".\n"
 msgstr ""
+"VARNING: Split-exclude ”%s” har värdbitar satta, ersätter med ”%s/%d”.\n"
 
 #: script.c:323
 #, c-format
 msgid "Ignoring legacy network because address \"%s\" is invalid.\n"
-msgstr ""
+msgstr "Ignorerar äldre nätverk för att adressen ”%s” är ogiltig.\n"
 
 #: script.c:328
 #, c-format
 msgid "Ignoring legacy network because netmask \"%s\" is invalid.\n"
-msgstr ""
+msgstr "Ignorerar äldre nätverk för att nätmasken ”%s” är ogiltig.\n"
 
 #: script.c:594
 #, c-format
@@ -5853,7 +5966,7 @@ msgstr "Uttagsanslutning (socket connect) avbruten\n"
 
 #: ssl.c:196
 msgid "Failed setsockopt(TCP_NODELAY) on TLS socket:"
-msgstr ""
+msgstr "Misslyckades med setsockopt(TCP_NODELAY) på TLS-uttag:"
 
 #: ssl.c:247
 #, c-format
@@ -6114,7 +6227,7 @@ msgstr "EncryptMessage() resultat för stort (%lu + %lu + %lu)\n"
 #: sspi.c:349
 #, c-format
 msgid "Sending SSPI protection negotiation of %u bytes\n"
-msgstr "Skickar SSPI-skyddsöverenskommelse på %u byte\n"
+msgstr "Skickar SSPI-skyddsförhandling på %u byte\n"
 
 #: sspi.c:354
 #, c-format
@@ -6124,7 +6237,7 @@ msgstr "Misslyckades med att skicka SSPI-skyddssvar till proxy: %s\n"
 #: sspi.c:362 sspi.c:372
 #, c-format
 msgid "Failed to receive SSPI protection response from proxy: %s\n"
-msgstr "Misslyckades med att erhålla SSPI-skyddssvar från proxy: %s\n"
+msgstr "Misslyckades med att ta emot SSPI-skyddssvar från proxy: %s\n"
 
 #: sspi.c:377
 #, c-format
@@ -6197,7 +6310,7 @@ msgstr "Kan inte läsa %s\\%s eller är inte sträng\n"
 #: tun-win32.c:122
 #, c-format
 msgid "%s\\ComponentId is unknown '%s'\n"
-msgstr ""
+msgstr "%s\\ComponentId är okänt ”%s”\n"
 
 #: tun-win32.c:128
 #, c-format
@@ -6268,7 +6381,7 @@ msgstr "Misslyckades med att öppna %s\n"
 #: tun-win32.c:370
 #, c-format
 msgid "Opened tun device %S\n"
-msgstr ""
+msgstr "Öppnade tun-enheten %S\n"
 
 #: tun-win32.c:378
 #, c-format
@@ -6283,9 +6396,9 @@ msgstr "Fel: TAP-Windows drivrutin v9.9 eller större krävs (fann %ld.%ld)\n"
 #: tun-win32.c:405
 #, c-format
 msgid "Failed to set TAP IP addresses: %s\n"
-msgstr "Misslyckades med att ange TAP IP-adress: %s\n"
+msgstr "Misslyckades med att sätta TAP IP-adress: %s\n"
 
-#: tun-win32.c:417 tun-win32.c:656
+#: tun-win32.c:417 tun-win32.c:662
 #, c-format
 msgid "Failed to set TAP media status: %s\n"
 msgstr "Misslyckades med att sätta TAP mediastatus: %s\n"
@@ -6293,67 +6406,74 @@ msgstr "Misslyckades med att sätta TAP mediastatus: %s\n"
 #: tun-win32.c:431
 #, c-format
 msgid "Ignoring non-matching interface \"%S\"\n"
-msgstr ""
+msgstr "Ignorerar ej matchande gränssnitt ”%S”\n"
 
 #: tun-win32.c:454
 msgid "Could not convert interface name to UTF-8\n"
-msgstr ""
+msgstr "Kunde inte konvertera gränssnittsnamn till UTF-8\n"
 
-#: tun-win32.c:467
+#: tun-win32.c:468
 #, c-format
 msgid "Using %s device '%s', index %d\n"
+msgstr "Använder %s-enhet ”%s”, index %d\n"
+
+#: tun-win32.c:473
+msgid ""
+"WARNING: Support for Wintun is experimental and may be unstable. If you\n"
+"  encounter problems, install the TAP-Windows driver instead. See\n"
+"  https://www.infradead.org/openconnect/building.html\n"
 msgstr ""
 
-#: tun-win32.c:479
+#: tun-win32.c:485
 msgid "Could not construct interface name\n"
-msgstr ""
+msgstr "Kunde inte konstruera gränssnittsnamn\n"
 
-#: tun-win32.c:521
+#: tun-win32.c:527
 msgid ""
 "Access denied creating Wintun adapter. Are you running with Administrator "
 "privileges?\n"
 msgstr ""
 
-#: tun-win32.c:527
+#: tun-win32.c:533
 msgid ""
 "Neither Windows-TAP nor Wintun adapters were found. Is the driver "
 "installed?\n"
 msgstr ""
 
-#: tun-win32.c:554
+#: tun-win32.c:560
 msgid "TAP device aborted connectivity. Disconnecting.\n"
 msgstr "TAP-enhet avslutade anslutning. Kopplar från.\n"
 
-#: tun-win32.c:559
+#: tun-win32.c:565
 #, c-format
 msgid "Failed to read from TAP device: %s\n"
 msgstr "Misslyckades med att läsa från TAP-enhet: %s\n"
 
-#: tun-win32.c:573
+#: tun-win32.c:579
 #, c-format
 msgid "Failed to complete read from TAP device: %s\n"
 msgstr "Misslyckades med att läsa från TAP-enhet: %s\n"
 
-#: tun-win32.c:599
+#: tun-win32.c:605
 #, c-format
 msgid "Wrote %ld bytes to tun\n"
 msgstr "Skrev %ld byte till tun\n"
 
-#: tun-win32.c:609
+#: tun-win32.c:615
 msgid "Waiting for tun write...\n"
 msgstr "Väntar på tun-skrivning…\n"
 
-#: tun-win32.c:612
+#: tun-win32.c:618
 #, c-format
 msgid "Wrote %ld bytes to tun after waiting\n"
 msgstr "Skrev %ld byte till tun efter väntan\n"
 
-#: tun-win32.c:619
+#: tun-win32.c:625
 #, c-format
 msgid "Failed to write to TAP device: %s\n"
 msgstr "Misslyckades med att skriva till TAP-enhet: %s\n"
 
-#: tun-win32.c:673
+#: tun-win32.c:679
 msgid "Spawning tunnel scripts is not yet supported on Windows\n"
 msgstr "Att generera tunnelskript stöds ännu inte på Windows\n"
 
@@ -6615,22 +6735,37 @@ msgstr ""
 msgid "Kick vhost ring\n"
 msgstr ""
 
-#: wintun.c:75
+#: wintun.c:74
 msgid "Could not load wintun.dll\n"
-msgstr ""
+msgstr "Kunde inte läsa in wintun.dll\n"
 
-#: wintun.c:90
+#: wintun.c:89
 msgid "Could not resolve functions from wintun.dll\n"
+msgstr "Kunde inte slå upp funktioner från wintun.dll\n"
+
+#: wintun.c:143
+#, c-format
+msgid "Loaded Wintun v%u.%u\n"
 msgstr ""
 
-#: wintun.c:146
+#: wintun.c:150
 #, c-format
 msgid "Failed to create Wintun session: %s\n"
 msgstr ""
 
-#: wintun.c:155
+#: wintun.c:173
 #, c-format
-msgid "Loaded Wintun v%d.%d\n"
+msgid "Could not retrieve packet from Wintun adapter '%S': %s\n"
+msgstr ""
+
+#: wintun.c:185
+#, c-format
+msgid "Drop oversized packet retrieved from Wintun adapter '%S' (%ld > %d)\n"
+msgstr ""
+
+#: wintun.c:200
+#, c-format
+msgid "Could not send packet through Wintun adapter '%S': %s\n"
 msgstr ""
 
 #: xml.c:77 xml.c:102
