@@ -270,7 +270,7 @@ static const struct vpn_proto openconnect_protos[] = {
 	},
 };
 
-#define NR_PROTOS (sizeof(openconnect_protos)/sizeof(*openconnect_protos))
+#define NR_PROTOS ARRAY_SIZE(openconnect_protos)
 
 int openconnect_get_supported_protocols(struct oc_vpn_proto **protos)
 {

@@ -332,7 +332,7 @@ static int __attribute__ ((format(printf, 2, 0)))
 	if (bytes > sizeof(buf))
 		bytes = sizeof(buf);
 
-	wchars = MultiByteToWideChar(CP_UTF8, 0, buf, bytes, wbuf, sizeof(wbuf)/2);
+	wchars = MultiByteToWideChar(CP_UTF8, 0, buf, bytes, wbuf, ARRAY_SIZE(wbuf));
 	if (!wchars)
 		return -1;
 
@@ -431,7 +431,7 @@ static void read_stdin(char **string, int hidden, int allow_fail)
 
 		SetLastError(0);
 
-		if (!ReadConsoleW(stdinh, wbuf, sizeof(wbuf)/2, &nr_read, &rcc)) {
+		if (!ReadConsoleW(stdinh, wbuf, ARRAY_SIZE(wbuf), &nr_read, &rcc)) {
 			char *errstr = openconnect__win32_strerror(GetLastError());
 			fprintf(stderr, _("ReadConsole() failed: %s\n"), errstr);
 			free(errstr);
@@ -462,7 +462,7 @@ static void read_stdin(char **string, int hidden, int allow_fail)
 		}
 	} else {
 		/* Not a console; maybe reading from a piped stdin? */
-		if (!fgetws(wbuf, sizeof(wbuf)/2, stdin)) {
+		if (!fgetws(wbuf, ARRAY_SIZE(wbuf), stdin)) {
 			char *errstr = openconnect__win32_strerror(GetLastError());
 			fprintf(stderr, _("fgetws() failed: %s\n"), errstr);
 			free(errstr);
