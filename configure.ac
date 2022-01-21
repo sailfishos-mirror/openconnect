@@ -340,7 +340,7 @@ if test "$USE_NLS" = "yes"; then
     [AC_MSG_RESULT(yes)],
     [AC_LIB_LINKFLAGS_BODY([intl])
      oldLIBS="$LIBS"
-     LIBS="$LIBS $LIBINTL"
+     LIBS="$LIBINTL $LIBS"
      oldCFLAGS="$LIBS"
      CFLAGS="$CFLAGS $INCINTL"
      AC_LINK_IFELSE([AC_LANG_PROGRAM([
@@ -406,7 +406,7 @@ if test "$ssl_library" = ""; then
     elif test "$with_openssl" = "yes" -o "$with_openssl" = ""; then
         PKG_CHECK_MODULES(OPENSSL, openssl, [AC_SUBST(SSL_PC, [openssl])],
 	    [oldLIBS="$LIBS"
-	     LIBS="$LIBS -lssl -lcrypto"
+	     LIBS="-lssl -lcrypto $LIBS"
 	     AC_MSG_CHECKING([for OpenSSL without pkg-config])
 	     AC_LINK_IFELSE([AC_LANG_PROGRAM([
 			        #include <openssl/ssl.h>
@@ -471,7 +471,7 @@ case "$ssl_library" in
     OpenSSL)
 	oldLIBS="${LIBS}"
 	oldCFLAGS="${CFLAGS}"
-	LIBS="${LIBS} ${OPENSSL_LIBS}"
+	LIBS="${OPENSSL_LIBS} ${LIBS}"
 	CFLAGS="${CFLAGS} ${OPENSSL_CFLAGS}"
 
 	# Check for the various known-broken versions of OpenSSL, which includes LibreSSL.
@@ -592,7 +592,7 @@ perhaps consider building with GnuTLS instead.)])
     GnuTLS)
 	oldlibs="$LIBS"
 	oldcflags="$CFLAGS"
-	LIBS="$LIBS $GNUTLS_LIBS"
+	LIBS="$GNUTLS_LIBS $LIBS"
 	CFLAGS="$CFLAGS $GNUTLS_CFLAGS"
 	esp=yes
 	dtls=yes
@@ -621,7 +621,7 @@ perhaps consider building with GnuTLS instead.)])
 					  pkcs11_support=GnuTLS
 					  AC_SUBST(P11KIT_PC, p11-kit-1)],
 					 [:])], [])
-	LIBS="$oldlibs -ltspi"
+	LIBS="-ltspi $oldlibs"
 	AC_MSG_CHECKING([for Trousers tss library])
 	AC_LINK_IFELSE([AC_LANG_PROGRAM([
 					   #include <trousers/tss.h>
@@ -796,7 +796,7 @@ PKG_CHECK_MODULES([LIBLZ4], [liblz4], [
 	AC_DEFINE([HAVE_LZ4], [], [LZ4 was found])
 	lz4_pkg=yes
 	oldLIBS="$LIBS"
-	LIBS="$LIBS $LIBLZ4_LIBS"
+	LIBS="$LIBLZ4_LIBS $LIBS"
 	oldCFLAGS="$CFLAGS"
 	CFLAGS="$CFLAGS $LIBLZ4_CFLAGS"
 	AC_MSG_CHECKING([for LZ4_compress_default()])
@@ -863,7 +863,7 @@ AM_CONDITIONAL(BUILTIN_JSON, [test "$json" = "builtin"])
 
 PKG_CHECK_MODULES(ZLIB, zlib, [AC_SUBST(ZLIB_PC, [zlib])],
 		  [oldLIBS="$LIBS"
-		  LIBS="$LIBS -lz"
+		  LIBS="-lz $LIBS"
 		  AC_MSG_CHECKING([for zlib without pkg-config])
 		  AC_LINK_IFELSE([AC_LANG_PROGRAM([
 		   #include <zlib.h>],[
@@ -893,7 +893,7 @@ dnl libproxy.h in that case.
 if (test "$libproxy_pkg" = "no"); then
    AC_MSG_CHECKING([for libproxy])
    oldLIBS="$LIBS"
-   LIBS="$LIBS -lproxy"
+   LIBS="-lproxy $LIBS"
    AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <libproxy.h>],
 			   [(void)px_proxy_factory_new();])],
 	  [AC_MSG_RESULT(yes (with libproxy.h))
