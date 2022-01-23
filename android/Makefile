@@ -155,7 +155,7 @@ $(GMP_SRC)/configure: $(GMP_TAR)
 
 $(GMP_BUILD)/Makefile: $(TOOLCHAIN_BUILT) $(GMP_SRC)/configure
 	mkdir -p $(GMP_BUILD)
-	cd $(GMP_BUILD) && ../../$(GMP_SRC)/configure $(CONFIGURE_ARGS) 
+	cd $(GMP_BUILD) && ../../$(GMP_SRC)/configure $(CONFIGURE_ARGS)
 
 
 $(GMP_BUILD)/libgmp.la: $(GMP_BUILD)/Makefile

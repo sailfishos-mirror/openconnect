@@ -25,4 +25,3 @@ if [ ! -z $MAKEDIR ]; then
     mkdir -p $1
 fi
 cp -f $SRCS "$1"
-
