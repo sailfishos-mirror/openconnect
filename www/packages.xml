@@ -67,7 +67,7 @@
       package.
     </p>
   </li>
-  <li><h2>Windows</h2>
+  <li><a name="windows"/><h2>Windows</h2>
     <p>
       <a href="https://nsis.sourceforge.io">NSIS</a>-based installers
       for OpenConnect are automatically built with each
