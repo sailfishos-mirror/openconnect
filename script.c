@@ -306,6 +306,7 @@ void prepare_script_env(struct openconnect_info *vpninfo)
 
 	script_setenv_int(vpninfo, "INTERNAL_IP4_MTU", vpninfo->ip_info.mtu);
 	script_setenv_int(vpninfo, "VPNPID", (int)getpid());
+	script_setenv_int(vpninfo, "LOG_LEVEL", vpninfo->verbose);
 
 	if (vpninfo->idle_timeout)
 		script_setenv_int(vpninfo, "IDLE_TIMEOUT", vpninfo->idle_timeout);

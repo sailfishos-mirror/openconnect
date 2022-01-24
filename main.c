@@ -150,7 +150,7 @@ static void __attribute__ ((format(printf, 3, 4)))
 static void  __attribute__ ((format(printf, 3, 4)))
     syslog_progress(void *_vpninfo, int level, const char *fmt, ...)
 {
-	struct openconect_info *vpninfo = _vpninfo;
+	struct openconnect_info *vpninfo = _vpninfo;
 	int priority = level ? LOG_INFO : LOG_NOTICE;
 	va_list args;
 
@@ -1658,7 +1658,7 @@ int main(int argc, char **argv)
 	oc_token_mode_t token_mode = OC_TOKEN_MODE_NONE;
 	int reconnect_timeout = 300;
 	int ret;
-	int verbose;
+	int verbose = PRG_INFO;
 #ifdef HAVE_NL_LANGINFO
 	char *charset;
 #endif
