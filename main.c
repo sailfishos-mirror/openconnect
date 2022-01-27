@@ -81,7 +81,6 @@ static void init_token(struct openconnect_info *vpninfo,
 #include <version.c>
 #undef openconnect_version_str
 
-static int verbose = PRG_INFO;
 static int timestamp;
 #ifndef _WIN32
 static int background;
@@ -120,6 +119,7 @@ static void add_form_field(char *field);
 static void __attribute__ ((format(printf, 3, 4)))
     syslog_progress(void *_vpninfo, int level, const char *fmt, ...)
 {
+	struct openconnect_info *vpninfo;
 	static int l[4] = {
 		ANDROID_LOG_ERROR,	/* PRG_ERR   */
 		ANDROID_LOG_INFO,	/* PRG_INFO  */
@@ -128,7 +128,7 @@ static void __attribute__ ((format(printf, 3, 4)))
 	};
 	va_list args, args2;
 
-	if (verbose >= level) {
+	if (vpninfo->verbose >= level) {
 		va_start(args, fmt);
 		va_copy(args2, args);
 		__android_log_vprint(l[level], "openconnect", fmt, args);
@@ -150,10 +150,11 @@ static void __attribute__ ((format(printf, 3, 4)))
 static void  __attribute__ ((format(printf, 3, 4)))
     syslog_progress(void *_vpninfo, int level, const char *fmt, ...)
 {
+	struct openconnect_info *vpninfo = _vpninfo;
 	int priority = level ? LOG_INFO : LOG_NOTICE;
 	va_list args;
 
-	if (verbose >= level) {
+	if (vpninfo->verbose >= level) {
 		va_start(args, fmt);
 		vsyslog(priority, fmt, args);
 		va_end(args);
@@ -1657,6 +1658,7 @@ int main(int argc, char **argv)
 	oc_token_mode_t token_mode = OC_TOKEN_MODE_NONE;
 	int reconnect_timeout = 300;
 	int ret;
+	int verbose = PRG_INFO;
 #ifdef HAVE_NL_LANGINFO
 	char *charset;
 #endif
@@ -2377,13 +2379,14 @@ static int write_new_config(void *_vpninfo, const char *buf, int buflen)
 static void __attribute__ ((format(printf, 3, 4)))
     write_progress(void *_vpninfo, int level, const char *fmt, ...)
 {
+	struct openconnect_info *vpninfo = _vpninfo;
 	FILE *outf = level ? stdout : stderr;
 	va_list args;
 
 	if (cookieonly)
 		outf = stderr;
 
-	if (verbose >= level) {
+	if (vpninfo->verbose >= level) {
 		if (timestamp) {
 			char ts[64];
 			time_t t = time(NULL);
@@ -2650,13 +2653,13 @@ static int process_auth_form_cb(void *_vpninfo,
 	if (!form->auth_id)
 		return -EINVAL;
 
-	if (form->banner && verbose > PRG_ERR)
+	if (form->banner && vpninfo->verbose > PRG_ERR)
 		fprintf(stderr, "%s\n", form->banner);
 
 	if (form->error)
 		fprintf(stderr, "%s\n", form->error);
 
-	if (form->message && verbose > PRG_ERR)
+	if (form->message && vpninfo->verbose > PRG_ERR)
 		fprintf(stderr, "%s\n", form->message);
 
 	/* Special handling for GROUP: field if present, as different group
