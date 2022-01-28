@@ -2312,8 +2312,8 @@ static int handle_main_config_packet(struct openconnect_info *vpninfo,
 			if (inc) {
 				inc->route = add_option_dup(&new_opts, "split-include", buf, -1);
 				if (inc->route) {
-					inc->next = vpninfo->ip_info.split_includes;
-					vpninfo->ip_info.split_includes = inc;
+					inc->next = new_ip_info.split_includes;
+					new_ip_info.split_includes = inc;
 				} else
 					free(inc);
 			}
@@ -2325,8 +2325,8 @@ static int handle_main_config_packet(struct openconnect_info *vpninfo,
 			if (exc) {
 				exc->route = add_option_dup(&new_opts, "split-exclude", buf, -1);
 				if (exc->route) {
-					exc->next = vpninfo->ip_info.split_excludes;
-					vpninfo->ip_info.split_excludes = exc;
+					exc->next = new_ip_info.split_excludes;
+					new_ip_info.split_excludes = exc;
 				} else
 					free(exc);
 			}
