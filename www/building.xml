@@ -47,14 +47,16 @@ on the command line.</p>
  <p>OpenConnect should be given a default <a href="vpnc-script.html">vpnc-script</a>
  for network configuration (routing and DNS) at compile-time. This can be overridden
  at runtime (with <tt>--script</tt>).</p>
- <p>The <tt>configure</tt> script will check whether <tt>/etc/vpnc/vpnc-script</tt>
+ <p>The <tt>configure</tt> script will check whether either
+ <tt>/etc/vpnc/vpnc-script</tt> or <tt>/usr/share/vpnc-scripts/vpnc-script</tt>
  exists and can be executed, and will fail if not. If you don't already have
  a copy then you should install one. It might be in a separate <tt>vpnc-script</tt>
  package for your operating system, it might be part of their <tt>vpnc</tt> package,
  and there's one linked from the <a href="vpnc-script.html">vpnc-script page</a>, if
  you need to download it manually. Install it as <tt>/etc/vpnc/vpnc-script</tt>.</p>
 
-<p>If you do not want to use the standard location, you can configure OpenConnect to
+<p>If you do not want to OpenConnect to use a vpnc-script from one of these
+ standard locations, you can configure OpenConnect to
  use a different location by default. When running the <tt>./configure</tt> script
  in the instructions below, you can append an argument such as <tt>--with-vpnc-script=<i>/where/I/put/vpnc-script</i></tt> to its command line. Note that the path you give will not be checked; the script doesn't have to be present when you <b>build</b> OpenConnect. But of course OpenConnect won't work very
 well without it, so you'll still have to install it later.</p>

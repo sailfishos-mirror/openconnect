@@ -2,7 +2,9 @@
 	<INCLUDE file="inc/header.tmpl" />
 
 	<VAR match="VAR_SEL_CONTRIBUTE" replace="selected" />
+	<VAR match="VAR_SEL_CONTRIB_MAIN" replace="selected" />
 	<PARSE file="menu1.xml" />
+	<PARSE file="menu2-contribute.xml" />
 
 	<INCLUDE file="inc/content.tmpl" />
 
@@ -98,8 +100,6 @@ bout it.</p>
 it should. There are some things which the regular developers don't have easy access to test,
 some help with testing these would be particularly welcome:</p>
 <ul>
-  <li><b>Testing a PAN GlobalProtect VPN with IPv6 internal addresses.</b><br/>
-  We think we know how this works, but we've not been able to test.</li>
   <li><b>Various authentication methods for Pulse Secure.</b><br/>
   Although it looked sane at first, the Pulse protocol has a lot of horrid
   special cases. Aside from the <a href="tncc.html">Host Checker</a> most
@@ -108,27 +108,42 @@ some help with testing these would be particularly welcome:</p>
 </ul>
 
 
+<a name="new-protocols"/>
 <h2>New Protocols</h2>
 
 <p>There are some other protocols which would be good to add to OpenConnect. Getting a new
 protocol to the point where it basically works to send and receive traffic is only a
 few hours of work, and can be very rewarding.</p>
 
-<p>For some protocols we already know how they work on the wire and it's mostly
-just a matter of typing. For others we might have to observe the existing clients
-to learn how they work.</p>
+<p>For some protocols we already know how they work on the wire and it's mostly just
+a matter of writing the code. For others we might have to <a href="mitm.html">observe
+the existing clients</a> to learn how they work.</p>
+
 <p>These would be great projects for someone to take on as a learning exercise, or
 perhaps even Google Summer of Code projects.</p>
 
 <ul>
   <li><b><a href="https://www.checkpoint.com/products/endpoint-remote-access-vpn-software-blade/">CheckPoint VPN</a></b><br/>
-  This is an IPSec-based VPN with fallback to using the SSL transport. Some discussion of OpenConnect support in this <a href="https://gitlab.com/openconnect/openconnect/issues/13">GitLab ticket</a>. </li>
+  This is an IPSec-based VPN with fallback to using the SSL transport. Some discussion of OpenConnect support in this <a href="https://gitlab.com/openconnect/openconnect/issues/13">GitLab ticket</a>,
+  and working code contributed in <a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/207">MR !207</a>.</li>
   <li><b>Cisco / Nortel IPSec VPN</b><br/>
   These IPSec-based protocols are already supported by <a href="https://www.unix-ag.uni-kl.de/~massar/vpnc/">vpnc</a> to differing extents, but vpnc is no longer actively maintained.
   Since OpenConnect now has ESP support, and since some of these protocols also fall back to operating over TCP when UDP and native ESP aren't available, it may make sense to implement them in OpenConnect now.</li>
+  <li><b>External authentication support for multiple protocols.</b><br/>
+  Many VPNs now use SAML or other technologies to hand off the login/authentication
+  process to a <a href="https://en.wikipedia.org/wiki/Single_sign-on">single sign-on</a> (SSO)
+  provider. Okta and Microsoft Azure are well known cloud-based SSO providers.
+  We have numerous <a href="https://gitlab.com/openconnect/openconnect/-/issues?label_name%5B%5D=External+Auth%2FSAML%2FSSO">issues</a> and
+  <a href="https://gitlab.com/openconnect/openconnect/-/merge_requests?label_name[]=External+Auth%2FSAML%2FSSO">merge requests</a> labeled
+  <tt>External Auth/SAML/SSO</tt>. This is an area where there is a large amount of
+  commonal functionality across protocols, but also a large amount of variation in
+  the details, and where we need careful help designing suitable interfaces for
+  the interactions between OpenConnect's core code, VPN protocol-specific authentication code,
+  and external interfaces for authentication (e.g. web browsers or graphical pop-up
+  interfaces).</li>
 </ul>
 
-<p>Suggestions for other protocols which OpenConnect could usefully implement, are also welcome.</p>
+<p>Suggestions for other protocols which OpenConnect could usefully implement are also welcome.</p>
 
 <h2>Other enhancements</h2>
 
