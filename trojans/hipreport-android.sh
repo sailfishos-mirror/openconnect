@@ -10,12 +10,14 @@ COOKIE=
 IP=
 IPV6=
 MD5=
+APP_VERSION=4.0.2-19
 
 while [ "$1" ]; do
     if [ "$1" = "--cookie" ];      then shift; COOKIE="$1"; fi
     if [ "$1" = "--client-ip" ];   then shift; IP="$1"; fi
     if [ "$1" = "--client-ipv6" ]; then shift; IPV6="$1"; fi
     if [ "$1" = "--md5" ];         then shift; MD5="$1"; fi
+    if [ "$1" = "--app-version" ]; then shift; APP_VERSION="$1"; fi
     shift
 done
 
@@ -47,7 +49,7 @@ echo "	<ipv6-address>$IPV6</ipv6-address>"
 echo "	<generate-time>$NOW</generate-time>"
 echo '	<categories>'
 echo '		<entry name="host-info">'
-echo '			<client-version>4.0.2-19</client-version>'
+echo '			<client-version>$APP_VERSION</client-version>'
 echo "			<os>$PLATFORM_NAME $PLATFORM_VERSION</os>"
 echo '			<os-vendor>Google</os-vendor>'
 echo "			<domain>$DOMAIN.internal</domain>"

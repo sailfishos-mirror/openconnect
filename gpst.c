@@ -605,7 +605,8 @@ static int gpst_get_config(struct openconnect_info *vpninfo)
 
 
 	/* submit getconfig request */
-	buf_append(request_body, "client-type=1&protocol-version=p1&internal=no&app-version=5.1.5-8");
+	buf_append(request_body, "client-type=1&protocol-version=p1&internal=no");
+	append_opt(request_body, "app-version", vpninfo->csd_ticket ? : "5.1.5-8");
 	append_opt(request_body, "ipv6-support", vpninfo->disable_ipv6 ? "no" : "yes");
 	append_opt(request_body, "clientos", gpst_os_name(vpninfo));
 	append_opt(request_body, "os-version", vpninfo->platname);
@@ -972,6 +973,10 @@ static int run_hip_script(struct openconnect_info *vpninfo)
 		if (vpninfo->ip_info.addr6) {
 			hip_argv[i++] = "--client-ipv6";
 			hip_argv[i++] = vpninfo->ip_info.addr6;
+		}
+		if (vpninfo->csd_ticket) {
+			hip_argv[i++] = "--app-version";
+			hip_argv[i++] = vpninfo->csd_ticket;
 		}
 		hip_argv[i++] = "--md5";
 		hip_argv[i++] = vpninfo->csd_token;

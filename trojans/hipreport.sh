@@ -21,6 +21,9 @@
 #                values are 'Linux', 'Mac' or 'Windows' ). Defaults to
 #                'Windows'.
 #
+#   --app-version: The client software version in GlobalProtect's
+#                  format. Defaults to '5.1.5-8'.
+#
 # This hipreport.sh does not work as-is on Android. The large here-doc
 # (cat <<EOF) does not appear to work with Android's /system/bin/sh,
 # likely due to an insufficient read buffer size.
@@ -32,6 +35,7 @@ IP=
 IPv6=
 MD5=
 CLIENTOS=Windows
+APP_VERSION=5.1.5-8
 
 
 while [ "$1" ]; do
@@ -40,6 +44,7 @@ while [ "$1" ]; do
     if [ "$1" = "--client-ipv6" ]; then shift; IPV6="$1"; fi
     if [ "$1" = "--md5" ];         then shift; MD5="$1"; fi
     if [ "$1" = "--client-os" ];   then shift; CLIENTOS="$1"; fi
+    if [ "$1" = "--app-version" ]; then shift; APP_VERSION="$1"; fi
     shift
 done
 
@@ -57,7 +62,6 @@ COMPUTER=$(echo "$COOKIE" | sed -rn 's/(.+&|^)computer=([^&]+)(&.+|$)/\2/p')
 HOSTID="deadbeef-dead-beef-dead-beefdeadbeef"
 case $CLIENTOS in
 	Linux)
-		CLIENT_VERSION="5.1.5-8"
 		OS="Linux Fedora 32"
 		OS_VENDOR="Linux"
 		NETWORK_INTERFACE_NAME="virbr0"
@@ -67,7 +71,6 @@ case $CLIENTOS in
 		;;
 
 	*)
-		CLIENT_VERSION="5.1.5-8"
 		OS="Microsoft Windows 10 Pro , 64-bit"
 		OS_VENDOR="Microsoft"
 		NETWORK_INTERFACE_NAME="{DEADBEEF-DEAD-BEEF-DEAD-BEEFDEADBEEF}"
@@ -97,7 +100,7 @@ cat <<EOF
 	<hip-report-version>4</hip-report-version>
 	<categories>
 		<entry name="host-info">
-			<client-version>$CLIENT_VERSION</client-version>
+			<client-version>$APP_VERSION</client-version>
 			<os>$OS</os>
 			<os-vendor>$OS_VENDOR</os-vendor>
 			<domain>$DOMAIN.internal</domain>

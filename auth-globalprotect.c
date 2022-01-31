@@ -448,9 +448,6 @@ static int parse_portal_xml(struct openconnect_info *vpninfo, xmlNode *xml_node,
 	/*
 	 * The portal contains a ton of stuff, but basically none of it is
 	 * useful to a VPN client that wishes to give control to the client
-	 * user, as opposed to the VPN administrator.  The exceptions are the
-	 * list of gateways in policy/gateways/external/list and the interval
-	 * for HIP checks in policy/hip-collection/hip-report-interval
 	 * user, as opposed to the VPN administrator.  The exception is
 	 * the list of gateways in policy/gateways/external/list.
 	 *
@@ -501,6 +498,13 @@ static int parse_portal_xml(struct openconnect_info *vpninfo, xmlNode *xml_node,
 						}
 					}
 				}
+			} else if (!xmlnode_get_trimmed_val(x, "version", &vpninfo->csd_ticket)) {
+				/* We abuse csd_ticket to store the portal's software version. Parroting this back as
+				 * the client software version (app-version) appears to be the best way to prevent the
+				 * gateway server from rejecting the connection due to obsolete client software.
+				 */
+				vpn_progress(vpninfo, PRG_INFO, _("Portal reports GlobalProtect version %s; we will report the same client version.\n"),
+					     vpninfo->csd_ticket);
 			} else {
 				xmlnode_get_val(x, "portal-name", &portal);
 				if (!xmlnode_get_val(x, "portal-userauthcookie", &ctx->portal_userauthcookie)) {
@@ -532,7 +536,7 @@ no_gateways:
 		buf_append(buf, "<GPPortal>\n  <ServerList>\n");
 		if (portal) {
 			buf_append(buf, "      <HostEntry><HostName>");
-			buf_append_xmlescaped(buf, portal);
+			buf_append_xmlescaped(buf, portal ? : _("unknown"));
 			buf_append(buf, "</HostName><HostAddress>%s", vpninfo->hostname);
 			if (vpninfo->port!=443)
 				buf_append(buf, ":%d", vpninfo->port);
