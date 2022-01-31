@@ -428,9 +428,33 @@ static int parse_portal_xml(struct openconnect_info *vpninfo, xmlNode *xml_node,
 	/*
 	 * The portal contains a ton of stuff, but basically none of it is
 	 * useful to a VPN client that wishes to give control to the client
-	 * user, as opposed to the VPN administrator.  The exceptions are the
-	 * list of gateways in policy/gateways/external/list and the interval
-	 * for HIP checks in policy/hip-collection/hip-report-interval
+	 * user, as opposed to the VPN administrator.  The exception is
+	 * the list of gateways in policy/gateways/external/list.
+	 *
+	 * There are other fields which are worthless in terms of end-user
+	 * functionality, but are needed for compliance with the server's
+	 * security policies:
+	 * - Interval for HIP checks in policy/hip-collection/hip-report-interval
+	 *   (save so that we can rerun HIP on the expected interval)
+	 * - Software version (save so we can mindlessly parrot it back)
+	 *
+	 * Potentially also useful, but currently ignored:
+	 * - welcome-page/page, help-page, and help-page-2 contents might in
+	 *   principle be informative, but in practice they're either empty
+	 *   or extremely verbose multi-page boilerplate in HTML format
+	 * - hip-collection/default/category/member[] might be useful
+	 *   to report to the user as a diagnostic, so that they know what
+	 *   HIP report entries the server expects, if their HIP report
+	 *   isn't expected. In practice, servers that actually check the HIP
+	 *   report contents are so nitpicky that anything less than a
+	 *   capture from an officially-supported client is unlikely to help.
+	 * - root-ca/entry[]/cert is potentially useful because it contains
+	 *   certs that we should allow as root-of-trust for the gateway
+	 *   servers. This could prevent users from having to specify --cafile
+	 *   or repeated --servercert in order to allow non-interactive
+	 *   authentication to gateways whose certs aren't trusted by the
+	 *   system but ARE trusted by the portal (see example at
+	 *   https://github.com/dlenski/openconnect/issues/128).
 	 */
 	if (xmlnode_is_named(xml_node, "policy")) {
 		for (x = xml_node->children; x; x = x->next) {
@@ -454,6 +478,13 @@ static int parse_portal_xml(struct openconnect_info *vpninfo, xmlNode *xml_node,
 						}
 					}
 				}
+			} else if (!xmlnode_get_trimmed_val(x, "version", &vpninfo->csd_ticket)) {
+				/* We abuse csd_ticket to store the portal's software version. Parroting this back as
+				 * the client software version (app-version) appears to be the best way to prevent the
+				 * gateway server from rejecting the connection due to obsolete client software.
+				 */
+				vpn_progress(vpninfo, PRG_INFO, _("Portal reports GlobalProtect version %s; we will report the same client version.\n"),
+					     vpninfo->csd_ticket);
 			} else {
 				xmlnode_get_val(x, "portal-name", &portal);
 				if (!xmlnode_get_val(x, "portal-userauthcookie", &ctx->portal_userauthcookie)) {
@@ -482,7 +513,7 @@ static int parse_portal_xml(struct openconnect_info *vpninfo, xmlNode *xml_node,
 		buf_append(buf, "<GPPortal>\n  <ServerList>\n");
 		if (portal) {
 			buf_append(buf, "      <HostEntry><HostName>");
-			buf_append_xmlescaped(buf, portal);
+			buf_append_xmlescaped(buf, portal ? : _("unknown"));
 			buf_append(buf, "</HostName><HostAddress>%s", vpninfo->hostname);
 			if (vpninfo->port!=443)
 				buf_append(buf, ":%d", vpninfo->port);
