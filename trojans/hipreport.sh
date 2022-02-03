@@ -83,7 +83,7 @@ esac
 
 # If default/made-up values are not accepted, these values may need to be extracted from the
 # HIP report sent by an official GlobalProtect client.
-HOSTID="deadbeef-dead-beef-dead-beefdeadbeef"
+HOST_ID="deadbeef-dead-beef-dead-beefdeadbeef"
 if [ -z "$APP_VERSION" ]; then APP_VERSION=5.1.5-8; fi
 
 # Timestamp in the format expected by GlobalProtect server
@@ -99,7 +99,7 @@ cat <<EOF
 	<user-name>$USER</user-name>
 	<domain>$DOMAIN</domain>
 	<host-name>$COMPUTER</host-name>
-	<host-id>$HOSTID</host-id>
+	<host-id>$HOST_ID</host-id>
 	<ip-address>$IP</ip-address>
 	<ipv6-address>$IPV6</ipv6-address>
 	<generate-time>$NOW</generate-time>
@@ -111,7 +111,7 @@ cat <<EOF
 			<os-vendor>$OS_VENDOR</os-vendor>
 			<domain>$DOMAIN.internal</domain>
 			<host-name>$COMPUTER</host-name>
-			<host-id>$HOSTID</host-id>
+			<host-id>$HOST_ID</host-id>
 			<network-interface>
 				<entry name="$NETWORK_INTERFACE_NAME">
 					<description>$NETWORK_INTERFACE_DESCRIPTION</description>
