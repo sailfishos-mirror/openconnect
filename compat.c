@@ -511,6 +511,8 @@ int dumb_socketpair(OPENCONNECT_CMD_SOCKET socks[2], int make_overlapped)
             goto fallback;
         if (connect(socks[0], &a.addr, addrlen) == SOCKET_ERROR)
             goto fallback;
+        if (domain == AF_UNIX)
+            DeleteFile(a.unaddr.sun_path);  // Socket file no longer needed
 
         socks[1] = accept(listener, NULL, NULL);
         if (socks[1] == INVALID_SOCKET)
