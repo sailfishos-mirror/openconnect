@@ -438,13 +438,11 @@ struct openconnect_info {
 	/* Values that may be required for host identification or CSD/Trojan to succeed: */
 	int tncc_fd; /* For Juniper TNCC */
 	char *localname;
-	char *platname;                /* originally based on AnyConnect values: linux, linux-64, win, mac-intel, android, apple-ios */
-	char *mobile_platform_version; /* detailed platform version (e.g. `uname -a` output on POSIX systems) */
-	char *mobile_device_uniqueid;  /* opaque/unique device identifier (unique-id for AnyConnect, host-id for GlobalProtect, DeviceId for Juniper/Pulse TNCC) */
-	char *mobile_device_type;
+	char *platname; /* originally based on AnyConnect values: linux, linux-64, win, mac-intel, android, apple-ios */
 	xmlNode *opaque_srvdata;
 	char *useragent;
 	char *version_string;
+	struct oc_vpn_option *id_options;
 
 	/* Used to track CSD/Trojan execution state: */
 	char *csd_token;

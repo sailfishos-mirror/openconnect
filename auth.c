@@ -754,6 +754,7 @@ static xmlDocPtr xmlpost_new_query(struct openconnect_info *vpninfo, const char 
 {
 	xmlDocPtr doc;
 	xmlNodePtr root, node;
+	struct oc_vpn_option *opt;
 
 	doc = xmlNewDoc(XCAST("1.0"));
 	if (!doc)
@@ -779,11 +780,17 @@ static xmlDocPtr xmlpost_new_query(struct openconnect_info *vpninfo, const char 
 	node = xmlNewTextChild(root, NULL, XCAST("device-id"), XCAST(vpninfo->platname));
 	if (!node)
 		goto bad;
-	if (vpninfo->mobile_platform_version) {
-		if (!xmlNewProp(node, XCAST("platform-version"), XCAST(vpninfo->mobile_platform_version)) ||
-		    !xmlNewProp(node, XCAST("device-type"), XCAST(vpninfo->mobile_device_type)) ||
-		    !xmlNewProp(node, XCAST("unique-id"), XCAST(vpninfo->mobile_device_uniqueid)))
-			goto bad;
+
+	for (opt = vpninfo->id_options; opt; opt = opt->next) {
+		if (!strcmp(opt->option, "platform_version")) {
+			if (!xmlNewProp(node, XCAST("platform-version"), XCAST(opt->value)))
+				goto bad;
+		} else if (!strcmp(opt->option, "device_type")) {
+			if (!xmlNewProp(node, XCAST("device_type"), XCAST(opt->value)))
+				goto bad;
+		} else if (!strcmp(opt->option, "device_uniqueid"))
+			if (!xmlNewProp(node, XCAST("unique-id"), XCAST(opt->value)))
+				goto bad;
 	}
 
 	*rootp = root;
@@ -1080,6 +1087,7 @@ static int run_csd_script(struct openconnect_info *vpninfo, char *buf, int bufle
 	char fname[64];
 	int fd, ret;
 	pid_t child;
+	struct oc_vpn_option *opt;
 
 	if (!vpninfo->csd_wrapper && !buflen) {
 		vpn_progress(vpninfo, PRG_ERR,
@@ -1253,6 +1261,12 @@ static int run_csd_script(struct openconnect_info *vpninfo, char *buf, int bufle
                         goto out;
                 if (setenv("CSD_HOSTNAME", openconnect_get_hostname(vpninfo), 1))
                         goto out;
+		for (opt = vpninfo->id_options; opt; opt = opt->next) {
+			if (!strncmp(opt->option, "CSD_", 4)) {
+				if (setenv(opt->option, opt->value, 1))
+					goto out;
+			}
+		}
 
                 apply_script_env(vpninfo->csd_env);
 
