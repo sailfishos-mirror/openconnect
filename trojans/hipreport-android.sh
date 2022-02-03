@@ -4,20 +4,19 @@
 PLATFORM_VERSION="4.3"
 PLATFORM_NAME="Android-x86"
 HOSTID="deadbeef-dead-beef-dead-beefdeadbeef"
+if [ -z "$APP_VERSION" ]; then APP_VERSION=4.0.2-19; fi
 
 # Read command line arguments into variables
 COOKIE=
 IP=
 IPV6=
 MD5=
-APP_VERSION=4.0.2-19
 
 while [ "$1" ]; do
     if [ "$1" = "--cookie" ];      then shift; COOKIE="$1"; fi
     if [ "$1" = "--client-ip" ];   then shift; IP="$1"; fi
     if [ "$1" = "--client-ipv6" ]; then shift; IPV6="$1"; fi
     if [ "$1" = "--md5" ];         then shift; MD5="$1"; fi
-    if [ "$1" = "--app-version" ]; then shift; APP_VERSION="$1"; fi
     shift
 done
 

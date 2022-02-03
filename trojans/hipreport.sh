@@ -21,8 +21,13 @@
 #                values are 'Linux', 'Mac' or 'Windows' ). Defaults to
 #                'Windows'.
 #
-#   --app-version: The client software version in GlobalProtect's
-#                  format. Defaults to '5.1.5-8'.
+# Sending these parameters as --long-options was a mistake (see
+# comments on run_hip_script in gpst.c for more details). New
+# parameters should be sent as environment variables instead:
+#
+#    APP_VERSION: client software version, labeled here in the HIP
+#      report as '<client-version>', but as 'app-version' or as
+#      'clientgpversion' elsewhere in the GlobalProtect wire protocol.
 #
 # This hipreport.sh does not work as-is on Android. The large here-doc
 # (cat <<EOF) does not appear to work with Android's /system/bin/sh,
@@ -35,7 +40,6 @@ IP=
 IPv6=
 MD5=
 CLIENTOS=Windows
-APP_VERSION=5.1.5-8
 
 
 while [ "$1" ]; do
@@ -44,7 +48,6 @@ while [ "$1" ]; do
     if [ "$1" = "--client-ipv6" ]; then shift; IPV6="$1"; fi
     if [ "$1" = "--md5" ];         then shift; MD5="$1"; fi
     if [ "$1" = "--client-os" ];   then shift; CLIENTOS="$1"; fi
-    if [ "$1" = "--app-version" ]; then shift; APP_VERSION="$1"; fi
     shift
 done
 
@@ -58,8 +61,6 @@ USER=$(echo "$COOKIE" | sed -rn 's/(.+&|^)user=([^&]+)(&.+|$)/\2/p')
 DOMAIN=$(echo "$COOKIE" | sed -rn 's/(.+&|^)domain=([^&]+)(&.+|$)/\2/p')
 COMPUTER=$(echo "$COOKIE" | sed -rn 's/(.+&|^)computer=([^&]+)(&.+|$)/\2/p')
 
-# This value may need to be extracted from the official HIP report, if a made-up value is not accepted.
-HOSTID="deadbeef-dead-beef-dead-beefdeadbeef"
 case $CLIENTOS in
 	Linux)
 		OS="Linux Fedora 32"
@@ -79,6 +80,11 @@ case $CLIENTOS in
 		ENCDRIVE='C:\\'
 		;;
 esac
+
+# If default/made-up values are not accepted, these values may need to be extracted from the
+# HIP report sent by an official GlobalProtect client.
+HOSTID="deadbeef-dead-beef-dead-beefdeadbeef"
+if [ -z "$APP_VERSION" ]; then APP_VERSION=5.1.5-8; fi
 
 # Timestamp in the format expected by GlobalProtect server
 NOW=$(date +'%m/%d/%Y %H:%M:%S')
