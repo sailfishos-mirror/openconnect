@@ -14,7 +14,13 @@ import getopt
 import xml.sax
 import codecs
 
-sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())
+if sys.version_info >= (3, 0):
+    sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())
+else:
+    # reload() always needed because of https://docs.python.org/2.7/library/sys.html#sys.setdefaultencoding
+    reload(sys)
+    sys.setdefaultencoding('utf-8')
+    sys.stdout = codecs.getwriter("utf-8")(sys.stdout)
 
 lookupdir = ''
 
