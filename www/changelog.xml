@@ -55,6 +55,7 @@
        <li>Make Windows socketpair emulation more robust in the face of Windows's ability to break its localhost routes. (<a href="https://gitlab.com/openconnect/openconnect/-/issues/228">#228</a>, <a href="https://gitlab.com/openconnect/openconnect/-/issues/361">#361</a>, <a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/320">!320</a>)</li>
        <li>Perform proper disconnect and routes cleanup on Windows when receiving Ctrl+C or Ctrl+Break. (<a href="https://gitlab.com/openconnect/openconnect/-/issues/362">#362</a>, <a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/323">!323</a>)</li>
        <li>Improve logging in routing/DNS configuration scripts. (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/328">!328</a>, <a href="https://gitlab.com/openconnect/vpnc-scripts/-/merge_requests/45">vpnc-scripts!45</a>)</li>
+       <li>Support modified configuration packet from Pulse 9.1R14 servers (<a href="https://gitlab.com/openconnect/openconnect/-/issues/379">#379</a>, <a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/331">!331</a>)</li>
      </ul><br/>
   </li>
   <li><b><a href="https://www.infradead.org/openconnect/download/openconnect-8.10.tar.gz">OpenConnect v8.10</a></b>

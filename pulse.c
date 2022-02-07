@@ -2197,6 +2197,40 @@ int pulse_obtain_cookie(struct openconnect_info *vpninfo)
 	return pulse_authenticate(vpninfo, 0);
 }
 
+/* Handler for config attributes, see handle_main_config_packet */
+static int handle_attr_elements(struct openconnect_info *vpninfo,
+				unsigned char *bytes, int len,
+				struct oc_vpn_option **new_opts,
+				struct oc_ip_info *new_ip_info) {
+	unsigned char *p = bytes;
+	int l = len;
+
+	/* No idea what this is */
+	if (l < 8 || load_be32(p + 4) != 0x03000000)
+		return -EINVAL;
+	p += 8;
+	l -= 8;
+
+	while (l) {
+		if (l < 4)
+			return -EINVAL;
+
+		uint16_t type = load_be16(p);
+		uint16_t attrlen = load_be16(p+2);
+
+		if (attrlen + 4 > l)
+			return -EINVAL;
+
+		p += 4;
+		l -= 4;
+		process_attr(vpninfo, new_opts, new_ip_info, type, p, attrlen);
+		p += attrlen;
+		l -= attrlen;
+	}
+
+	return 0;
+}
+
 /* Example config packet:
    < 0000: 00 00 0a 4c 00 00 00 01  00 00 01 80 00 00 01 fb  |...L............|
    < 0010: 00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00  |................|
@@ -2258,21 +2292,12 @@ static int handle_main_config_packet(struct openconnect_info *vpninfo,
 	int routes_len = 0;
 	int l;
 	unsigned char *p;
-
+	int offset = 0x2c;
 	struct oc_vpn_option *new_opts = NULL;
 	struct oc_ip_info new_ip_info = {};
 
-	/* First part of header, similar to ESP, has already been checked */
-	if (len < 0x31 ||
-	    /* Start of routing information */
-	    load_be16(bytes + 0x2c) != 0x2e00 ||
-	    /* Routing length at 0x2e makes sense */
-	    (routes_len = load_be16(bytes + 0x2e)) != ((int)bytes[0x30] * 0x10 + 8) ||
-	    /* Make sure the next length field (at 0xa4 in the above example) is present */
-	    len < 0x2c + routes_len + 4||
-	    /* Another length field, must match to end of packet */
-	    load_be32(bytes + 0x2c + routes_len) + routes_len + 0x2c != len) {
-	bad_config:
+	if (len < 0x31) {
+		bad_config:
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Unexpected Pulse config packet:\n"));
 		dump_buf_hex(vpninfo, PRG_ERR, '<', (void *)bytes, len);
@@ -2280,9 +2305,44 @@ static int handle_main_config_packet(struct openconnect_info *vpninfo,
 		free_split_routes(&new_ip_info);
 		return -EINVAL;
 	}
-	p = bytes + 0x34;
-	routes_len -= 8; /* The header including length and number of routes */
 
+	/* On Pulse 9.1R14, we see packet type 0x2e20f0000, whereas earlier
+	 * versions had 0x2c20f0000.
+	 * With the newer packet type, we seem to have a leading set of
+	 * attribute elements. Example:
+	 *     2c 00           (fixed)
+	 *     00 0d           (length 13)
+	 *     03 00 00 00     (fixed)
+	 *     40 25 00 01 01  (unknown attr 0x4025, length 1, value 0x01)
+	*/
+	if (bytes[0x20] == 0x2e) {
+		/* Length of attributes section */
+		int attr_len = load_be16(bytes + 0x2e);
+
+		/* Start of attributes */
+		if (load_be16(bytes + 0x2c) != 0x2c00 ||
+		    len < 0x2c + attr_len + 4 ||
+		    /* Process the attributes */
+		    handle_attr_elements(vpninfo, bytes + 0x2c, attr_len,
+					 &new_opts, &new_ip_info) < 0) {
+			goto bad_config;
+		}
+		offset += attr_len;
+	}
+
+	/* First part of header, similar to ESP, has already been checked */
+	if (len < offset + 5 ||
+	    /* Start of routing information */
+	    load_be16(bytes + offset) != 0x2e00 ||
+	    /* Routing length at offset+2 makes sense */
+	    (routes_len = load_be16(bytes + offset + 2)) != ((int)bytes[offset + 4] * 0x10 + 8) ||
+	    /* Make sure the next length field (at 0xa4 in the above example) is present */
+	    len < offset + routes_len + 4 ||
+	    /* Another length field, must match to end of packet */
+	    load_be32(bytes + offset + routes_len) + routes_len + offset != len) {
+	}
+	p = bytes + offset + 8;
+	routes_len -= 8; /* The header including length and number of routes */
 	/* We know it's a multiple of 0x10 now. We checked. */
 	while (routes_len) {
 		char buf[80];
@@ -2345,27 +2405,8 @@ static int handle_main_config_packet(struct openconnect_info *vpninfo,
 	/* p now points at the length field of the final elements, which
 	   was already checked. */
 	l = load_be32(p);
-	/* No idea what this is */
-	if (l < 8 || load_be32(p + 4) != 0x03000000)
+	if (handle_attr_elements(vpninfo, p, l, &new_opts, &new_ip_info) < 0)
 		goto bad_config;
-	p += 8;
-	l -= 8;
-
-	while (l) {
-		uint16_t type = load_be16(p);
-		uint16_t attrlen = load_be16(p+2);
-
-		if (attrlen + 4 > l)
-			goto bad_config;
-
-		p += 4;
-		l -= 4;
-		process_attr(vpninfo, &new_opts, &new_ip_info, type, p, attrlen);
-		p += attrlen;
-		l -= attrlen;
-		if (l && l < 4)
-			goto bad_config;
-	}
 
 	int ret = install_vpn_opts(vpninfo, new_opts, &new_ip_info);
 	if (ret) {
@@ -2534,6 +2575,7 @@ int pulse_connect(struct openconnect_info *vpninfo)
 
 		switch(load_be32(bytes + 0x20)) {
 		case 0x2c20f000:
+		case 0x2e20f000: /* Variant seen on Pulse 9.1R14 */
 			ret = handle_main_config_packet(vpninfo, bytes, ret);
 			if (ret)
 				return ret;
