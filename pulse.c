@@ -2259,6 +2259,9 @@ static int handle_main_config_packet(struct openconnect_info *vpninfo,
 	int l;
 	unsigned char *p;
 
+	struct oc_vpn_option *new_opts = NULL;
+	struct oc_ip_info new_ip_info = {};
+
 	/* First part of header, similar to ESP, has already been checked */
 	if (len < 0x31 ||
 	    /* Start of routing information */
@@ -2273,13 +2276,12 @@ static int handle_main_config_packet(struct openconnect_info *vpninfo,
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Unexpected Pulse config packet:\n"));
 		dump_buf_hex(vpninfo, PRG_ERR, '<', (void *)bytes, len);
+		free_optlist(new_opts);
+		free_split_routes(&new_ip_info);
 		return -EINVAL;
 	}
 	p = bytes + 0x34;
 	routes_len -= 8; /* The header including length and number of routes */
-
-	struct oc_vpn_option *new_opts = NULL;
-	struct oc_ip_info new_ip_info = {};
 
 	/* We know it's a multiple of 0x10 now. We checked. */
 	while (routes_len) {
