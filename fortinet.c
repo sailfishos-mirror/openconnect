@@ -398,7 +398,7 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 						     _("Server reports that reconnect-after-drop is allowed within %d seconds, %s\n"),
 						     dropped_session_cleanup,
 						     check_ip_src ? _("but only from the same source IP address") : _("even if source IP address changes"));
-				} else if (reconnect_after_drop == 0)
+				} else
 					vpn_progress(vpninfo, PRG_ERR,
 						     _("Server reports that reconnect-after-drop is not allowed. OpenConnect will not\n"
 						       "be able to reconnect if dead peer is detected. If reconnection DOES work,\n"
@@ -412,7 +412,8 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 				if (!xmlnode_get_prop(xml_node, "minor", &s))  p+=snprintf(p, e-p, ".%s", s);
 				if (!xmlnode_get_prop(xml_node, "patch", &s))  p+=snprintf(p, e-p, ".%s", s);
 				if (!xmlnode_get_prop(xml_node, "build", &s))  p+=snprintf(p, e-p, " build %s", s);
-				if (!xmlnode_get_prop(xml_node, "branch", &s))    snprintf(p, e-p, " branch %s", s);
+				if (!xmlnode_get_prop(xml_node, "branch", &s)) p+=snprintf(p, e-p, " branch %s", s);
+				if (!xmlnode_get_prop(xml_node, "mr_num", &s))    snprintf(p, e-p, " mr_num %s", s);
 				vpn_progress(vpninfo, PRG_INFO,
 					     _("Reported platform is %s\n"), platform);
 			}
@@ -544,6 +545,13 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 		}
 	}
 
+	if (reconnect_after_drop < 0) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("WARNING: Fortinet server does not specifically enable or disable reconnection\n"
+			       "    without reauthentication. If automatic reconnection does work, please\n"
+			       "    report results to <openconnect-devel@lists.infradead.org>\n"));
+	}
+
 	if (reconnect_after_drop == -1)
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Server did not send <auth-ses tun-connect-without-reauth=\"0/1\"/>. OpenConnect will\n"
@@ -628,7 +636,7 @@ static int fortinet_configure(struct openconnect_info *vpninfo)
 			 */
 			vpninfo->urlpath = strdup("remote/fortisslvpn");
 			int ret2 = do_https_request(vpninfo, "GET", NULL, NULL, &res_buf, NULL, HTTP_NO_FLAGS);
-			if (ret2 == 0)
+			if (ret2 > 0)
 				vpn_progress(vpninfo, PRG_ERR,
 					     _("Ancient Fortinet server (<v5?) only supports ancient HTML config, which is not implemented by OpenConnect.\n"));
 			else
@@ -641,16 +649,17 @@ static int fortinet_configure(struct openconnect_info *vpninfo)
 		}
 		goto out;
 	} else if (ret == 0) {
-		/* This is normally a redirect to /remote/login, which
-		 * indicates that the auth session/cookie is no longer valid.
+		/* A redirect to /remote/login also indicates that the auth session/cookie
+		 * is no longer valid, and appears to occur only on older FortiGate
+		 * versions.
 		 *
 		 * XX: See do_https_request() for why ret==0 can only happen
 		 * if there was a successful-but-unfetched redirect.
 		 */
-#if 0
-	invalid_cookie:
-#endif
-		ret = -EPERM;
+		if (vpninfo->urlpath && !strncmp(vpninfo->urlpath, "remote/login", 12))
+			ret = -EPERM;
+		else
+			ret = -EINVAL;
 		goto out;
 	}
 

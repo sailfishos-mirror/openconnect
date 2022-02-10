@@ -395,7 +395,7 @@ static int process_attr(struct openconnect_info *vpninfo, struct oc_vpn_option *
 		vpn_progress(vpninfo, PRG_DEBUG, _("Received internal gateway address %s\n"), buf);
 		/* Hm, what are we supposed to do with this? It's a tunnel;
 		   having a gateway is meaningless. */
-		add_option_dup(new_opts, "ipaddr", buf, -1);
+		add_option_dup(new_opts, "gateway", buf, -1);
 		break;
 
 	case 0x4010: {
@@ -490,24 +490,22 @@ static int process_attr(struct openconnect_info *vpninfo, struct oc_vpn_option *
 		vpn_progress(vpninfo, PRG_DEBUG, _("ESP only: %d\n"),
 			     data[0]);
 		break;
-#if 0
-	case GRP_ATTR(7, 1):
-		if (attrlen != 4)
+
+	case 0x401e:
+		if (attrlen != 16)
 			goto badlen;
-		memcpy(&vpninfo->esp_out.spi, data, 4);
-		vpn_progress(vpninfo, PRG_DEBUG, _("ESP SPI (outbound): %x\n"),
-			     load_be32(data));
+		if (!inet_ntop(AF_INET6, data, buf, sizeof(buf))) {
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("Failed to handle IPv6 address\n"));
+			return -EINVAL;
+		}
+
+		vpn_progress(vpninfo, PRG_DEBUG, _("Received internal gateway IPv6 address %s\n"), buf);
+		/* Hm, what are we supposed to do with this? It's a tunnel;
+		   having a gateway is meaningless. */
+		add_option_dup(new_opts, "gateway6", buf, -1);
 		break;
 
-	case GRP_ATTR(7, 2):
-		if (attrlen != 0x40)
-			goto badlen;
-		/* data contains enc_key and hmac_key concatenated */
-		memcpy(vpninfo->esp_out.enc_key, data, 0x40);
-		vpn_progress(vpninfo, PRG_DEBUG, _("%d bytes of ESP secrets\n"),
-			     attrlen);
-		break;
-#endif
 	/* 0x4022: disable proxy
 	   0x400a: preserve proxy
 	   0x4008: proxy (string)
@@ -517,8 +515,6 @@ static int process_attr(struct openconnect_info *vpninfo, struct oc_vpn_option *
 	   0x401f:  tunnel routes with subnet access (also 4001 set)
 	   0x4020: Enforce IPv4
 	   0x4021: Enforce IPv6
-	   0x401e: Server IPv6 address
-	   0x000f: IPv6 netmask?
 	*/
 
 	default:
