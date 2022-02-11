@@ -662,7 +662,7 @@ static int gpst_login(struct openconnect_info *vpninfo, int portal, struct login
 
 		/* submit gateway login (ssl-vpn/login.esp) or portal config (global-protect/getconfig.esp) request */
 		buf_truncate(request_body);
-		buf_append(request_body, "jnlpReady=jnlpReady&ok=Login&direct=yes&clientVer=4100&prot=https:");
+		buf_append(request_body, "jnlpReady=jnlpReady&ok=Login&direct=yes&clientVer=4100&prot=https:&internal=no");
 		append_opt(request_body, "ipv6-support", vpninfo->disable_ipv6 ? "no" : "yes");
 		append_opt(request_body, "clientos", gpst_os_name(vpninfo));
 		append_opt(request_body, "os-version", vpninfo->platname);
