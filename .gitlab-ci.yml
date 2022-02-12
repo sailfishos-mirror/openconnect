@@ -283,7 +283,6 @@ asan/OpenSSL/Fedora:
 
 Fedora/GnuTLS:
   script:
-  - dnf -y install swtpm swtpm-tools
   - ./autogen.sh
   - ./configure --with-java --disable-dsa-tests --without-gnutls-version-check --enable-ppp-tests CFLAGS=-g
   - make tmp-distdir
@@ -317,7 +316,6 @@ Fedora/GnuTLS:
 
 Fedora/GnuTLS/ibmtss:
   script:
-  - dnf -y install swtpm swtpm-tools
   - ./autogen.sh
   - ./configure --with-java --disable-dsa-tests --without-gnutls-version-check --enable-ppp-tests CFLAGS=-g
   - make tmp-distdir
