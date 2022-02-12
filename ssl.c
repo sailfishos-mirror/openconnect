@@ -349,7 +349,7 @@ int connect_https_socket(struct openconnect_info *vpninfo)
 			if (hints.ai_flags & AI_NUMERICHOST)
 				free(hostname);
 			ssl_sock = -EINVAL;
-			/* If we were just retrying for dynamic DNS, reconnct using
+			/* If we were just retrying for dynamic DNS, reconnect using
 			   the previously-known IP address */
 			if (vpninfo->peer_addr) {
 				vpn_progress(vpninfo, PRG_ERR,

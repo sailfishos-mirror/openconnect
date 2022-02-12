@@ -1453,7 +1453,7 @@ static int autocomplete(int argc, char **argv)
 				 * connect, then return the result? */
 				break;
 
-			/* No autocmplete for these but handle them explicitly so that
+			/* No autocomplete for these but handle them explicitly so that
 			 * we can have automatic checking for *accidentally* unhandled
 			 * options. Right after we do automated checking of man page
 			 * entries and --help output for all supported options too. */
