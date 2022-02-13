@@ -734,7 +734,7 @@ int dtls_try_handshake(struct openconnect_info *vpninfo, int *timeout)
 			 &(vpninfo->dtls_ssl->d1->next_timeout));
 #elif defined(BIO_CTRL_DGRAM_SET_TIMEOUT)
 		/*
-		 * OK, here it gets more fun... this shoul handle the case
+		 * OK, here it gets more fun... this should handle the case
 		 * of older OpenSSL which has the Cisco DTLS compatibility
 		 * backported, but *not* the fix for RT#1922.
 		 */

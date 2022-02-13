@@ -858,7 +858,7 @@ int oncp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 	while (readable) {
 		int len, kmp, kmplen, iplen;
 		/* Some servers send us packets that are larger than
-		   negitiated MTU. We reserve some estra space to
+		   negotiated MTU. We reserve some extra space to
 		   handle that */
 		int receive_mtu = MAX(16384, vpninfo->ip_info.mtu);
 

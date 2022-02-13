@@ -212,7 +212,7 @@ static int select_yubioath_applet(struct openconnect_info *vpninfo,
 		chall_len = tlvlen;
 
 		/* On later invocations, we know there must have been a
-		 * successfui authentication in the past. So try the same
+		 * successful authentication in the past. So try the same
 		 * hash first, and only retry in the loop on failure. */
 		if (!vpninfo->pcsc) {
 			struct oc_auth_form f;
