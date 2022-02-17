@@ -3,7 +3,7 @@ variables:
   CENTOS6_BUILD: openconnect-cli-centos6
   CENTOS7_BUILD: openconnect-cli-centos7
   CENTOS8_BUILD: openconnect-cli-centos8
-  FEDORA_BUILD: openconnect-cli-fedora
+  FEDORA_BUILD: openconnect-cli-fedora35
   MINGW32_BUILD: openconnect-cli-mingw32
   MINGW64_BUILD: openconnect-cli-mingw64
   UBUNTU_BUILD: openconnect-cli-ubuntu
@@ -283,7 +283,6 @@ asan/OpenSSL/Fedora:
 
 Fedora/GnuTLS:
   script:
-  - dnf -y install swtpm swtpm-tools
   - ./autogen.sh
   - ./configure --with-java --disable-dsa-tests --without-gnutls-version-check --enable-ppp-tests CFLAGS=-g
   - make tmp-distdir
@@ -298,12 +297,11 @@ Fedora/GnuTLS:
   - sysctl net.ipv6.conf.all.disable_ipv6=0
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
-# auth-pkcs11: Disable rdrand to work around https://bugzilla.redhat.com/1831086
 # obsolete-server-crypto: system-wide crypto policy prevents --allow-insecure-crypto from working, and the
 #   library-reinitialization hack does not reliably work (https://gitlab.com/openconnect/openconnect/-/issues/243#note_576194663)
 #   XFAIL until we get a solution for https://bugzilla.redhat.com/show_bug.cgi?id=1960763
 # ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
-  - make VERBOSE=1 OPENSSL_ia32cap=~0x4000000000000000 XFAIL_TESTS="obsolete-server-crypto ppp-over-tls-sync" -j4 check
+  - make VERBOSE=1 XFAIL_TESTS="obsolete-server-crypto ppp-over-tls-sync" -j4 check
   tags:
   - shared
   except:
@@ -317,7 +315,6 @@ Fedora/GnuTLS:
 
 Fedora/GnuTLS/ibmtss:
   script:
-  - dnf -y install swtpm swtpm-tools
   - ./autogen.sh
   - ./configure --with-java --disable-dsa-tests --without-gnutls-version-check --enable-ppp-tests CFLAGS=-g
   - make tmp-distdir
@@ -332,12 +329,11 @@ Fedora/GnuTLS/ibmtss:
   - sysctl net.ipv6.conf.all.disable_ipv6=0
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
-# auth-pkcs11: Disable rdrand to work around https://bugzilla.redhat.com/1831086
 # obsolete-server-crypto: system-wide crypto policy prevents --allow-insecure-crypto from working, and the
 #   library-reinitialization hack does not reliably work (https://gitlab.com/openconnect/openconnect/-/issues/243#note_576194663)
 #   XFAIL until we get a solution for https://bugzilla.redhat.com/show_bug.cgi?id=1960763
 # ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
-  - make VERBOSE=1 OPENSSL_ia32cap=~0x4000000000000000 XFAIL_TESTS="obsolete-server-crypto ppp-over-tls-sync" -j4 check
+  - make VERBOSE=1 XFAIL_TESTS="obsolete-server-crypto ppp-over-tls-sync" -j4 check
   tags:
   - shared
   except:
@@ -365,12 +361,11 @@ Fedora/GnuTLS/clang:
   - sysctl net.ipv6.conf.all.disable_ipv6=0
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
-# auth-pkcs11: Disable rdrand to work around https://bugzilla.redhat.com/1831086
 # obsolete-server-crypto: system-wide crypto policy prevents --allow-insecure-crypto from working, and the
 #   library-reinitialization hack does not reliably work (https://gitlab.com/openconnect/openconnect/-/issues/243#note_576194663)
 #   XFAIL until we get a solution for https://bugzilla.redhat.com/show_bug.cgi?id=1960763
 # ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
-  - make VERBOSE=1 OPENSSL_ia32cap=~0x4000000000000000 XFAIL_TESTS="obsolete-server-crypto ppp-over-tls-sync" -j4 check
+  - make VERBOSE=1 XFAIL_TESTS="obsolete-server-crypto ppp-over-tls-sync" -j4 check
   tags:
   - shared
   except:
