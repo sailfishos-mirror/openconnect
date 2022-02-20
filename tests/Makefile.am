@@ -62,7 +62,8 @@ EXTRA_DIST = certs/ca.pem certs/ca-key.pem certs/user-cert.pem $(USER_KEYS) $(US
 	$(OSSL_KEYS) $(DSA_KEYS) $(certsdir)/user-key-nonascii-password.p12 \
 	pass-UTF-8 pass-ISO8859-2 $(SWTPM_KEYS) $(SWTPM_CERTS) swtpm-perm.state \
 	certs/server-cert.pem certs/server-key.pem configs/test1.passwd \
-	common.sh configs/test-user-cert.config configs/test-user-pass.config \
+	common.sh configs/test-user-cert.config.in \
+	configs/test-user-pass.config.in \
 	configs/test-obsolete-server-crypto.config \
 	configs/user-cert.prm configs/server-cert.prm \
 	softhsm2.conf.in softhsm ns.sh configs/test-dtls-psk.config \
