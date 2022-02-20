@@ -15,6 +15,12 @@
 <ul>
    <li><b>OpenConnect HEAD</b>
      <ul>
+       <li><i>No changelog entries yet</i></li>
+     </ul><br/>
+  </li>
+  <li><b><a href="https://www.infradead.org/openconnect/download/openconnect-8.20.tar.gz">OpenConnect v8.20</a></b>
+     <i>(<a href="https://www.infradead.org/openconnect/download/openconnect-8.20.tar.gz.asc">PGP signature</a>)</i> &#8212; 2022-02-20
+     <ul>
        <li>When the queue length <i>(<tt>-Q</tt> option)</i> is 16 or more, try using <a
        href="https://www.redhat.com/en/blog/virtqueues-and-virtio-ring-how-data-travels">vhost-net</a> to accelerate tun device access.</li>
        <li>Use <tt>epoll()</tt> where available.</li>

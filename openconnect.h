@@ -36,7 +36,7 @@ extern "C" {
 #define OPENCONNECT_API_VERSION_MINOR 7
 
 /*
- * API version 5.7:
+ * API version 5.7 (v8.20; 2022-02-20):
  *  - Add openconnect_get_connect_url()
  *  - Add openconnect_set_cookie()
  *  - Add openconnect_set_allow_insecure_crypto()
