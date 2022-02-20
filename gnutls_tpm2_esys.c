@@ -75,7 +75,7 @@ struct oc_tpm2_ctx {
 	unsigned int parent;
 };
 
-static TPM2B_PUBLIC primaryTemplate = {
+static const TPM2B_PUBLIC primaryTemplate = {
 	.publicArea = {
 		.type = TPM2_ALG_ECC,
 		.nameAlg = TPM2_ALG_SHA256,
@@ -112,7 +112,7 @@ static TPM2B_PUBLIC primaryTemplate = {
 	}
 };
 
-static TPM2B_PUBLIC primaryTemplate_legacy = {
+static const TPM2B_PUBLIC primaryTemplate_legacy = {
 	.publicArea = {
 		.type = TPM2_ALG_ECC,
 		.nameAlg = TPM2_ALG_SHA256,
@@ -147,7 +147,7 @@ static TPM2B_PUBLIC primaryTemplate_legacy = {
 	}
 };
 
-static TPM2B_SENSITIVE_CREATE primarySensitive = {
+static const TPM2B_SENSITIVE_CREATE primarySensitive = {
 	.sensitive = {
 		.userAuth = {
 			.size = 0,
@@ -157,17 +157,16 @@ static TPM2B_SENSITIVE_CREATE primarySensitive = {
 		}
 	}
 };
-static TPM2B_DATA allOutsideInfo = {
+static const TPM2B_DATA allOutsideInfo = {
 	.size = 0,
 };
-static TPML_PCR_SELECTION allCreationPCR = {
+static const TPML_PCR_SELECTION allCreationPCR = {
 	.count = 0,
 };
 
 
-/* Where do these error values come from? */
-#define KEY_AUTH_FAILED		0x9a2
-#define PARENT_AUTH_FAILED	0x98e
+#define rc_is_key_auth_failed(rc) (((rc) & 0xff) == TPM2_RC_BAD_AUTH)
+#define rc_is_parent_auth_failed(rc) (((rc) & 0xff) == TPM2_RC_AUTH_FAIL)
 
 static void install_tpm_passphrase(struct openconnect_info *vpninfo, TPM2B_DIGEST *auth, char *pass)
 {
@@ -226,7 +225,7 @@ static int init_tpm2_primary(struct openconnect_info *vpninfo, struct cert_info 
 			       certinfo->tpm2->legacy_srk ? &primaryTemplate_legacy : &primaryTemplate,
 			       &allOutsideInfo, &allCreationPCR,
 			       primaryHandle, NULL, NULL, NULL, NULL);
-	if (r == KEY_AUTH_FAILED) {
+	if (rc_is_key_auth_failed(r)) {
 		vpn_progress(vpninfo, PRG_DEBUG,
 			     _("TPM2 Esys_CreatePrimary owner auth failed\n"));
 		certinfo->tpm2->need_ownerauth = 1;
@@ -296,7 +295,7 @@ static int init_tpm2_key(ESYS_CONTEXT **ctx, ESYS_TR *keyHandle,
 					    &pub, NULL, NULL);
 			if (!r && !(pub->publicArea.objectAttributes & TPMA_OBJECT_NODA))
 				certinfo->tpm2->need_ownerauth = 1;
-			free(pub);
+			Esys_Free(pub);
 		}
 	reauth:
 		if (certinfo->tpm2->need_ownerauth) {
@@ -326,7 +325,7 @@ static int init_tpm2_key(ESYS_CONTEXT **ctx, ESYS_TR *keyHandle,
 		      ESYS_TR_PASSWORD, ESYS_TR_NONE, ESYS_TR_NONE,
 		      &certinfo->tpm2->priv, &certinfo->tpm2->pub,
 		      keyHandle);
-	if (r == PARENT_AUTH_FAILED) {
+	if (rc_is_parent_auth_failed(r)) {
 		vpn_progress(vpninfo, PRG_DEBUG,
 			     _("TPM2 Esys_Load auth failed\n"));
 		certinfo->tpm2->need_ownerauth = 1;
@@ -430,7 +429,7 @@ int tpm2_rsa_sign_hash_fn(gnutls_privkey_t key, gnutls_sign_algorithm_t algo,
 	r = Esys_RSA_Decrypt(ectx, key_handle,
 			     ESYS_TR_PASSWORD, ESYS_TR_NONE, ESYS_TR_NONE,
 			     &digest, &inScheme, &label, &tsig);
-	if (r == KEY_AUTH_FAILED) {
+	if (rc_is_key_auth_failed(r)) {
 		vpn_progress(vpninfo, PRG_DEBUG,
 			     _("TPM2 Esys_RSA_Decrypt auth failed\n"));
 		certinfo->tpm2->need_userauth = 1;
@@ -452,8 +451,7 @@ int tpm2_rsa_sign_hash_fn(gnutls_privkey_t key, gnutls_sign_algorithm_t algo,
 
 	ret = 0;
  out:
-	if (tsig)
-		free(tsig);
+	Esys_Free(tsig);
 
 	if (key_handle != ESYS_TR_NONE)
 		Esys_FlushContext(ectx, key_handle);
@@ -521,7 +519,7 @@ int tpm2_ec_sign_hash_fn(gnutls_privkey_t key, gnutls_sign_algorithm_t algo,
 		      ESYS_TR_PASSWORD, ESYS_TR_NONE, ESYS_TR_NONE,
 		      &digest, &inScheme, &validation,
 		      &tsig);
-	if (r == KEY_AUTH_FAILED) {
+	if (rc_is_key_auth_failed(r)) {
 		vpn_progress(vpninfo, PRG_DEBUG,
 			     _("TPM2 Esys_Sign auth failed\n"));
 		certinfo->tpm2->need_userauth = 1;
@@ -541,7 +539,7 @@ int tpm2_ec_sign_hash_fn(gnutls_privkey_t key, gnutls_sign_algorithm_t algo,
 
 	ret = gnutls_encode_rs_value(sig, &sig_r, &sig_s);
  out:
-	free(tsig);
+	Esys_Free(tsig);
 
 	if (key_handle != ESYS_TR_NONE)
 		Esys_FlushContext(ectx, key_handle);
