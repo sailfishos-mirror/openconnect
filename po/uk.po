@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: network-manager-openconnect\n"
 "Report-Msgid-Bugs-To: openconnect-devel@lists.infradead.org\n"
-"POT-Creation-Date: 2022-02-01 09:59+0000\n"
+"POT-Creation-Date: 2022-02-20 15:16+0000\n"
 "PO-Revision-Date: 2022-01-19 00:51+0200\n"
 "Last-Translator: Yuri Chornoivan <yurchor@ukr.net>\n"
 "Language-Team: Ukrainian <kde-i18n-uk@kde.org>\n"
@@ -69,7 +69,7 @@ msgstr "Не вдалося обробити відповідь у формат�
 msgid "Error creating array negotiation request\n"
 msgstr "Помилка під час спроби створити запити щодо узгодження масиву\n"
 
-#: array.c:675 f5.c:679 http.c:952 oncp.c:524 pulse.c:1370
+#: array.c:675 f5.c:679 http.c:952 oncp.c:524 pulse.c:1366
 #, c-format
 msgid "Unexpected %d result from server\n"
 msgstr "Неочікуваний результат %d від сервера\n"
@@ -102,11 +102,11 @@ msgstr "Не вдалося прочитати відповідь ipff\n"
 
 #: array.c:825 array.c:1060 array.c:1170 cstp.c:927 dtls.c:283 dtls.c:642
 #: esp.c:166 gpst.c:1129 mainloop.c:63 oncp.c:869 ppp.c:1089 ppp.c:1676
-#: pulse.c:2616
+#: pulse.c:2656
 msgid "Allocation failed\n"
 msgstr "Помилка розподілу пам'яті\n"
 
-#: array.c:836 cstp.c:938 gpst.c:1142 pulse.c:2628
+#: array.c:836 cstp.c:938 gpst.c:1142 pulse.c:2668
 #, c-format
 msgid "Short packet received (%d bytes)\n"
 msgstr "Отримано надто короткий пакет (%d байтів)\n"
@@ -116,24 +116,24 @@ msgstr "Отримано надто короткий пакет (%d байтів
 msgid "Receive control packet of type %x:\n"
 msgstr "Отримання керівного пакета типу %x:\n"
 
-#: array.c:859 pulse.c:2661
+#: array.c:859 pulse.c:2701
 #, c-format
 msgid "Received data packet of %d bytes\n"
 msgstr "Отримано пакет даних у %d байтів\n"
 
-#: array.c:902 cstp.c:1068 gpst.c:1231 oncp.c:1083 ppp.c:1376 pulse.c:2794
+#: array.c:902 cstp.c:1068 gpst.c:1231 oncp.c:1083 ppp.c:1376 pulse.c:2834
 #, c-format
 msgid "SSL wrote too few bytes! Asked for %d, sent %d\n"
 msgstr "SSL записано надто мало байтів! Мало бути %d, надіслано %d\n"
 
 #. Not that this will ever happen; we don't even process
 #. the setting when we're asked for it.
-#: array.c:920 cstp.c:1096 oncp.c:1118 pulse.c:2821
+#: array.c:920 cstp.c:1096 oncp.c:1118 pulse.c:2861
 msgid "CSTP rekey due\n"
 msgstr "Потрібен повторний обмін ключами CSTP\n"
 
 #. if we failed rehandshake try establishing a new-tunnel instead of failing
-#: array.c:927 cstp.c:1103 oncp.c:1125 pulse.c:2828
+#: array.c:927 cstp.c:1103 oncp.c:1125 pulse.c:2868
 msgid "Rehandshake failed; attempting new-tunnel\n"
 msgstr ""
 "Не вдалося виконати повторне узгодження; намагаємося використати new-tunnel\n"
@@ -230,11 +230,11 @@ msgstr ""
 "Надіслано пакет DTLS розміром %d байтів; функцією надсилання DTLS повернуто "
 "%d\n"
 
-#: array.c:1303 auth-globalprotect.c:777 f5.c:714 fortinet.c:820 oncp.c:1229
+#: array.c:1303 auth-globalprotect.c:777 f5.c:714 fortinet.c:829 oncp.c:1229
 msgid "Logout failed.\n"
 msgstr "Не вдалося вийти.\n"
 
-#: array.c:1305 auth-globalprotect.c:779 f5.c:716 fortinet.c:822 oncp.c:1231
+#: array.c:1305 auth-globalprotect.c:779 f5.c:716 fortinet.c:831 oncp.c:1231
 msgid "Logout successful.\n"
 msgstr "Успішний вихід.\n"
 
@@ -526,7 +526,7 @@ msgstr "Порожня відповідь від сервера\n"
 msgid "Failed to parse server response\n"
 msgstr "Не вдалося обробити відповідь сервера\n"
 
-#: auth.c:583 f5.c:257 f5.c:299 f5.c:342 f5.c:487 fortinet.c:351 fortinet.c:568
+#: auth.c:583 f5.c:257 f5.c:299 f5.c:342 f5.c:487 fortinet.c:351 fortinet.c:576
 #, c-format
 msgid "Response was:%s\n"
 msgstr "Відповідь: %s\n"
@@ -890,20 +890,20 @@ msgstr "отримано пакет переривання зв'язку від 
 msgid "Unknown packet %02x %02x %02x %02x %02x %02x %02x %02x\n"
 msgstr "Невідомий пакет %02x %02x %02x %02x %02x %02x %02x %02x\n"
 
-#: cstp.c:1114 oncp.c:1136 pulse.c:2839
+#: cstp.c:1114 oncp.c:1136 pulse.c:2879
 msgid "CSTP Dead Peer Detection detected dead peer!\n"
 msgstr "DPD CSTP виявлено непрацездатний вузол!\n"
 
-#: cstp.c:1118 gpst.c:1279 oncp.c:1053 oncp.c:1140 ppp.c:1406 pulse.c:2764
-#: pulse.c:2844
+#: cstp.c:1118 gpst.c:1279 oncp.c:1053 oncp.c:1140 ppp.c:1406 pulse.c:2804
+#: pulse.c:2884
 msgid "Reconnect failed\n"
 msgstr "Не вдалося повторно встановити з'єднання\n"
 
-#: cstp.c:1134 oncp.c:1156 pulse.c:2860
+#: cstp.c:1134 oncp.c:1156 pulse.c:2900
 msgid "Send CSTP DPD\n"
 msgstr "Надсилання DPD CSTP\n"
 
-#: cstp.c:1146 oncp.c:1167 pulse.c:2872
+#: cstp.c:1146 oncp.c:1167 pulse.c:2912
 msgid "Send CSTP Keepalive\n"
 msgstr "Надсилання Keepalive CSTP\n"
 
@@ -1269,7 +1269,7 @@ msgstr "Отримано запис сервера DNS %s\n"
 msgid "Got WINS/NBNS server %s\n"
 msgstr "Отримано сервер WINS/NBNS %s\n"
 
-#: f5.c:410 fortinet.c:426 fortinet.c:494
+#: f5.c:410 fortinet.c:427 fortinet.c:495
 #, c-format
 msgid "Got search domain %s\n"
 msgstr "Отримано домен пошуку %s\n"
@@ -1299,16 +1299,16 @@ msgstr ""
 "DTLS,\n"
 "    оскільки HDLC заважає визначенню ефективного і сумісного MTU.\n"
 
-#: f5.c:485 fortinet.c:566
+#: f5.c:485 fortinet.c:574
 msgid "Failed to find VPN options\n"
 msgstr "Не вдалося знайти параметри VPN\n"
 
-#: f5.c:508 fortinet.c:422
+#: f5.c:508 fortinet.c:423
 #, c-format
 msgid "Got Legacy IP address %s\n"
 msgstr "Отримано застарілу IP-адресу %s\n"
 
-#: f5.c:513 fortinet.c:483 fortinet.c:488
+#: f5.c:513 fortinet.c:484 fortinet.c:489
 #, c-format
 msgid "Got IPv6 address %s\n"
 msgstr "Отримано IPv6-адресу %s\n"
@@ -1371,32 +1371,40 @@ msgstr ""
 "будь ласка, повідомте про це на адресу <openconnect-devel@lists.infradead."
 "org>\n"
 
-#: fortinet.c:417
+#: fortinet.c:418
 #, c-format
 msgid "Reported platform is %s\n"
 msgstr "Повідомлено про платформу %s\n"
 
-#: fortinet.c:430 fortinet.c:498
+#: fortinet.c:431 fortinet.c:499
 #, c-format
 msgid "Got IPv%d DNS server %s\n"
 msgstr "Отримано IPv%d сервера DNS %s\n"
 
-#: fortinet.c:436 fortinet.c:504
+#: fortinet.c:437 fortinet.c:505
 #, c-format
 msgid "WARNING: Got split-DNS domains %s (not yet implemented)\n"
 msgstr "УВАГА: отримано домени split-DNS %s (ще не реалізовано)\n"
 
-#: fortinet.c:441 fortinet.c:509
+#: fortinet.c:442 fortinet.c:510
 #, c-format
 msgid "WARNING: Got split-DNS server %s (not yet implemented)\n"
 msgstr "УВАГА: отримано сервер split-DNS %s (ще не реалізовано)\n"
 
-#: fortinet.c:463 fortinet.c:533
+#: fortinet.c:464 fortinet.c:534
 #, c-format
 msgid "Got IPv%d route %s\n"
 msgstr "Отримано маршрут IPv%d %s\n"
 
-#: fortinet.c:549
+#: fortinet.c:550
+msgid ""
+"WARNING: Fortinet server does not specifically enable or disable "
+"reconnection\n"
+"    without reauthentication. If automatic reconnection does work, please\n"
+"    report results to <openconnect-devel@lists.infradead.org>\n"
+msgstr ""
+
+#: fortinet.c:557
 msgid ""
 "Server did not send <auth-ses tun-connect-without-reauth=\"0/1\"/>. "
 "OpenConnect will\n"
@@ -1412,11 +1420,11 @@ msgstr ""
 "будь ласка, повідомте про це на адресу <openconnect-devel@lists.infradead."
 "org>\n"
 
-#: fortinet.c:608
+#: fortinet.c:616
 msgid "No cookie named SVPNCOOKIE.\n"
 msgstr "Немає куки із назвою SVPNCOOKIE.\n"
 
-#: fortinet.c:633
+#: fortinet.c:641
 msgid ""
 "Ancient Fortinet server (<v5?) only supports ancient HTML config, which is "
 "not implemented by OpenConnect.\n"
@@ -1424,7 +1432,7 @@ msgstr ""
 "На давньому сервері Fortinet (<v5?) передбачено підтримку лише давніх "
 "налаштувань у форматі HTML, підтримку яких не реалізовано в OpenConnect.\n"
 
-#: fortinet.c:636
+#: fortinet.c:644
 msgid ""
 "Fortinet server is rejecting request for connection options. This\n"
 "has been observed after reconnection in some cases. Please report to\n"
@@ -1439,15 +1447,15 @@ msgstr ""
 "https://gitlab.com/openconnect/openconnect/-/issues/297 та\n"
 "https://gitlab.com/openconnect/openconnect/-/issues/298.\n"
 
-#: fortinet.c:671
+#: fortinet.c:680
 msgid "Error establishing Fortinet connection\n"
 msgstr "Помилка під час встановлення з'єднання Fortinet\n"
 
-#: fortinet.c:772
+#: fortinet.c:781
 msgid "Did not receive expected svrhello response.\n"
 msgstr "Не отримано очікуваної відповіді svrhello.\n"
 
-#: fortinet.c:783
+#: fortinet.c:792
 #, c-format
 msgid "svrhello status was \"%.*s\" rather than \"ok\"\n"
 msgstr "Станом svrhello був «%.*s», а не «ok»\n"
@@ -2344,165 +2352,165 @@ msgstr ""
 msgid "TPMv2 RSA sign called for unknown algorithm %s\n"
 msgstr "Викликано підпис RSA TPMv2 для невідомого алгоритму %s\n"
 
-#: gnutls_tpm2_esys.c:178
+#: gnutls_tpm2_esys.c:177
 msgid "TPM2 password too long; truncating\n"
 msgstr "Пароль TPM2 є надто довгим; обрізаємо\n"
 
-#: gnutls_tpm2_esys.c:196
+#: gnutls_tpm2_esys.c:195
 msgid "owner"
 msgstr "власник"
 
-#: gnutls_tpm2_esys.c:197
+#: gnutls_tpm2_esys.c:196
 msgid "null"
 msgstr "null"
 
-#: gnutls_tpm2_esys.c:198
+#: gnutls_tpm2_esys.c:197
 msgid "endorsement"
 msgstr "схвалення"
 
-#: gnutls_tpm2_esys.c:199
+#: gnutls_tpm2_esys.c:198
 msgid "platform"
 msgstr "платформа"
 
-#: gnutls_tpm2_esys.c:203
+#: gnutls_tpm2_esys.c:202
 #, c-format
 msgid "Creating primary key under %s hierarchy.\n"
 msgstr "Створюємо основний ключ у ієрархії %s.\n"
 
-#: gnutls_tpm2_esys.c:211 gnutls_tpm2_ibm.c:266
+#: gnutls_tpm2_esys.c:210 gnutls_tpm2_ibm.c:266
 #, c-format
 msgid "Enter TPM2 %s hierarchy password:"
 msgstr "Введіть пароль до ієрархії TPM2 %s:"
 
-#: gnutls_tpm2_esys.c:219 gnutls_tpm2_esys.c:317 gnutls_tpm2_esys.c:393
+#: gnutls_tpm2_esys.c:218 gnutls_tpm2_esys.c:316 gnutls_tpm2_esys.c:392
 #, c-format
 msgid "TPM2 Esys_TR_SetAuth failed: 0x%x\n"
 msgstr "Помилка Esys_TR_SetAuth TPM2: 0x%x\n"
 
-#: gnutls_tpm2_esys.c:231
+#: gnutls_tpm2_esys.c:230
 msgid "TPM2 Esys_CreatePrimary owner auth failed\n"
 msgstr "Не вдалося пройти розпізнавання власника Esys_CreatePrimary TPM2\n"
 
-#: gnutls_tpm2_esys.c:236
+#: gnutls_tpm2_esys.c:235
 #, c-format
 msgid "TPM2 Esys_CreatePrimary failed: 0x%x\n"
 msgstr "Помилка Esys_CreatePrimary TPM2: 0x%x\n"
 
-#: gnutls_tpm2_esys.c:255
+#: gnutls_tpm2_esys.c:254
 msgid "Establishing connection with TPM.\n"
 msgstr "Встановлюємо з'єднання з TPM.\n"
 
-#: gnutls_tpm2_esys.c:260
+#: gnutls_tpm2_esys.c:259
 #, c-format
 msgid "TPM2 Esys_Initialize failed: 0x%x\n"
 msgstr "Помилка Esys_Initialize TPM2: 0x%x\n"
 
-#: gnutls_tpm2_esys.c:268
+#: gnutls_tpm2_esys.c:267
 msgid ""
 "TPM2 was already started up thus false positive failing in tpm2tss log.\n"
 msgstr ""
 "TPM2 вже було запущено, отже, маємо фальшиве спрацювання у журналі tpm2tss.\n"
 
-#: gnutls_tpm2_esys.c:271
+#: gnutls_tpm2_esys.c:270
 #, c-format
 msgid "TPM2 Esys_Startup failed: 0x%x\n"
 msgstr "Помилка Esys_Startup TPM2: 0x%x\n"
 
-#: gnutls_tpm2_esys.c:284
+#: gnutls_tpm2_esys.c:283
 #, c-format
 msgid "Esys_TR_FromTPMPublic failed for handle 0x%x: 0x%x\n"
 msgstr "Помилка Esys_TR_FromTPMPublic для обробника 0x%x: 0x%x\n"
 
-#: gnutls_tpm2_esys.c:308 gnutls_tpm2_ibm.c:285
+#: gnutls_tpm2_esys.c:307 gnutls_tpm2_ibm.c:285
 msgid "Enter TPM2 parent key password:"
 msgstr "Введіть пароль до батьківського ключа TPM2:"
 
-#: gnutls_tpm2_esys.c:309 gnutls_tpm2_ibm.c:286
+#: gnutls_tpm2_esys.c:308 gnutls_tpm2_ibm.c:286
 msgid "Enter secondary TPM2 parent key password:"
 msgstr "Введіть пароль до вторинного батьківського ключа TPM2:"
 
-#: gnutls_tpm2_esys.c:323
+#: gnutls_tpm2_esys.c:322
 #, c-format
 msgid "Loading TPM2 key blob, parent %x.\n"
 msgstr "Завантажуємо бінарний ключ TPM2, батьківський запис — %x.\n"
 
-#: gnutls_tpm2_esys.c:331
+#: gnutls_tpm2_esys.c:330
 msgid "TPM2 Esys_Load auth failed\n"
 msgstr "Не пройдено розпізнавання Esys_Load TPM2\n"
 
-#: gnutls_tpm2_esys.c:337
+#: gnutls_tpm2_esys.c:336
 #, c-format
 msgid "TPM2 Esys_Load failed: 0x%x\n"
 msgstr "Помилка Esys_Load TPM2: 0x%x\n"
 
-#: gnutls_tpm2_esys.c:347
+#: gnutls_tpm2_esys.c:346
 #, c-format
 msgid "TPM2 Esys_FlushContext for generated primary failed: 0x%x\n"
 msgstr "Помилка Esys_FlushContext TPM2 для створеного основного ключа: 0x%x\n"
 
-#: gnutls_tpm2_esys.c:381 gnutls_tpm2_ibm.c:376 gnutls_tpm2_ibm.c:476
+#: gnutls_tpm2_esys.c:380 gnutls_tpm2_ibm.c:376 gnutls_tpm2_ibm.c:476
 msgid "Enter TPM2 key password:"
 msgstr "Введіть пароль до ключа TPM2:"
 
-#: gnutls_tpm2_esys.c:382 gnutls_tpm2_ibm.c:377
+#: gnutls_tpm2_esys.c:381 gnutls_tpm2_ibm.c:377
 msgid "Enter secondary TPM2 key password:"
 msgstr "Введіть пароль до вторинного ключа TPM2:"
 
-#: gnutls_tpm2_esys.c:415
+#: gnutls_tpm2_esys.c:414
 #, c-format
 msgid "TPM2 RSA sign function called for %d bytes, algo %s\n"
 msgstr "Функцію підписування RSA TPM2 викликано для %d байтів, алгоритм %s.\n"
 
-#: gnutls_tpm2_esys.c:435
+#: gnutls_tpm2_esys.c:434
 msgid "TPM2 Esys_RSA_Decrypt auth failed\n"
 msgstr "Не пройдено розпізнавання Esys_RSA_Decrypt TPM2\n"
 
-#: gnutls_tpm2_esys.c:441 gnutls_tpm2_esys.c:532
+#: gnutls_tpm2_esys.c:440 gnutls_tpm2_esys.c:530
 #, c-format
 msgid "TPM2 failed to generate RSA signature: 0x%x\n"
 msgstr "TPM2 не вдалося створити підпис RSA: 0x%x\n"
 
-#: gnutls_tpm2_esys.c:486 gnutls_tpm2_ibm.c:420
+#: gnutls_tpm2_esys.c:484 gnutls_tpm2_ibm.c:420
 #, c-format
 msgid "TPM2 EC sign function called for %d bytes.\n"
 msgstr "Функцію підписування EC TPM2 викликано для %d байтів.\n"
 
-#: gnutls_tpm2_esys.c:506 gnutls_tpm2_ibm.c:445
+#: gnutls_tpm2_esys.c:504 gnutls_tpm2_ibm.c:445
 #, c-format
 msgid "Unknown TPM2 EC digest size %d for algo 0x%x\n"
 msgstr "Невідомий розмір контрольної суми EC TPM2 — %d для алгоритму 0x%x\n"
 
-#: gnutls_tpm2_esys.c:526
+#: gnutls_tpm2_esys.c:524
 msgid "TPM2 Esys_Sign auth failed\n"
 msgstr "Не пройдено розпізнавання Esys_Sign TPM2\n"
 
-#: gnutls_tpm2_esys.c:566 gnutls_tpm2_ibm.c:512
+#: gnutls_tpm2_esys.c:564 gnutls_tpm2_ibm.c:512
 #, c-format
 msgid "Invalid TPM2 parent handle 0x%08x\n"
 msgstr "Некоректний обробник батьківського елемента TPM2 0x%08x\n"
 
-#: gnutls_tpm2_esys.c:583
+#: gnutls_tpm2_esys.c:581
 msgid "Using SWTPM due to TPM_INTERFACE_TYPE environment variable\n"
 msgstr ""
 "Використовуємо SWTPM через встановлення змінної середовища "
 "TPM_INTERFACE_TYPE\n"
 
-#: gnutls_tpm2_esys.c:588
+#: gnutls_tpm2_esys.c:586
 #, c-format
 msgid "TSS2_TctiLdr_Initialize failed for swtpm: 0x%x\n"
 msgstr "Помилка TSS2_TctiLdr_Initialize для swtpm: 0x%x\n"
 
-#: gnutls_tpm2_esys.c:598 gnutls_tpm2_ibm.c:529
+#: gnutls_tpm2_esys.c:596 gnutls_tpm2_ibm.c:529
 #, c-format
 msgid "Failed to import TPM2 private key data: 0x%x\n"
 msgstr "Не вдалося імпортувати дані закритого ключа TPM2: 0x%x\n"
 
-#: gnutls_tpm2_esys.c:607 gnutls_tpm2_ibm.c:539
+#: gnutls_tpm2_esys.c:605 gnutls_tpm2_ibm.c:539
 #, c-format
 msgid "Failed to import TPM2 public key data: 0x%x\n"
 msgstr "Не вдалося імпортувати дані відкритого ключа TPM2: 0x%x\n"
 
-#: gnutls_tpm2_esys.c:621 gnutls_tpm2_ibm.c:550
+#: gnutls_tpm2_esys.c:619 gnutls_tpm2_ibm.c:550
 #, c-format
 msgid "Unsupported TPM2 key type %d\n"
 msgstr "Непідтримуваний тип ключа TPM2 %d\n"
@@ -4128,75 +4136,75 @@ msgstr "Не вказано сервер\n"
 msgid "This version of openconnect was built without libproxy support\n"
 msgstr "Цю версію openconnect було зібрано без підтримки libproxy\n"
 
-#: main.c:2189
+#: main.c:2194
 #, c-format
-msgid "Error opening cmd pipe\n"
-msgstr "Помилка під час спроби відкрити конвеєр команд\n"
+msgid "Error opening cmd pipe: %s\n"
+msgstr ""
 
-#: main.c:2223
+#: main.c:2231
 #, c-format
 msgid "Failed to complete authentication\n"
 msgstr "Не вдалося завершити розпізнавання\n"
 
-#: main.c:2259
+#: main.c:2267
 #, c-format
 msgid "Creating SSL connection failed\n"
 msgstr "Спроба створення з'єднання SSL зазнала невдачі\n"
 
-#: main.c:2274
+#: main.c:2282
 #, c-format
 msgid "Set up UDP failed; using SSL instead\n"
 msgstr "Не вдалося налаштувати UDP; використовуємо замість нього SSL\n"
 
-#: main.c:2280
+#: main.c:2288
 msgid "No --script argument provided; DNS and routing are not configured\n"
 msgstr "Не вказано аргументу --script; DNS і маршрутизацію не налаштовано\n"
 
-#: main.c:2282
+#: main.c:2290
 msgid "See https://www.infradead.org/openconnect/vpnc-script.html\n"
 msgstr "Див. https://www.infradead.org/openconnect/vpnc-script.html\n"
 
-#: main.c:2295
+#: main.c:2303
 msgid "User requested reconnect\n"
 msgstr "Користувач надіслав запит щодо повторного з'єднання\n"
 
-#: main.c:2306
+#: main.c:2314
 msgid "Cookie was rejected by server; exiting.\n"
 msgstr "Куку не було прийнято сервером; завершуємо обробку.\n"
 
-#: main.c:2310
+#: main.c:2318
 msgid "Session terminated by server; exiting.\n"
 msgstr "Сеанс перервано сервером; завершуємо роботу.\n"
 
-#: main.c:2314
+#: main.c:2322
 #, c-format
 msgid "User cancelled (%s); exiting.\n"
 msgstr "Скасовано користувачем (%s); завершуємо роботу.\n"
 
-#: main.c:2324
+#: main.c:2332
 #, c-format
 msgid "User detached from session (%s); exiting.\n"
 msgstr "Користувач від'єднався від сеансу (%s); завершуємо роботу.\n"
 
-#: main.c:2334
+#: main.c:2342
 msgid "Unrecoverable I/O error; exiting.\n"
 msgstr "Критична помилка введення-виведення; завершуємо роботу.\n"
 
-#: main.c:2341
+#: main.c:2349
 msgid "Unknown error; exiting.\n"
 msgstr "Невідома помилка. Завершуємо роботу.\n"
 
-#: main.c:2361
+#: main.c:2369
 #, c-format
 msgid "Failed to open %s for write: %s\n"
 msgstr "Не вдалося відкрити %s для записування: %s\n"
 
-#: main.c:2369
+#: main.c:2377
 #, c-format
 msgid "Failed to write config to %s: %s\n"
 msgstr "Не вдалося записати налаштування до %s: %s\n"
 
-#: main.c:2416
+#: main.c:2424
 #, c-format
 msgid ""
 "Insecurely accepting certificate from VPN server \"%s\" because you ran with "
@@ -4205,12 +4213,12 @@ msgstr ""
 "Приймаємо недостатньо захищений сертифікат від сервера VPN «%s», оскільки "
 "використано параметр --servercert=ACCEPT.\n"
 
-#: main.c:2429
+#: main.c:2437
 #, c-format
 msgid "Could not check server's certificate against %s\n"
 msgstr "Не вдалося перевірити сертифікат сервера у %s\n"
 
-#: main.c:2437
+#: main.c:2445
 #, c-format
 msgid ""
 "None of the %d fingerprint(s) specified via --servercert match server's "
@@ -4219,7 +4227,7 @@ msgstr ""
 "Жоден з %d відбитків, які вказано за допомогою --servercert, не відповідає "
 "сертифікату сервера: %s\n"
 
-#: main.c:2446
+#: main.c:2454
 #, c-format
 msgid ""
 "\n"
@@ -4230,7 +4238,7 @@ msgstr ""
 "Сертифікат від сервера VPN «%s» не пройшов розпізнавання.\n"
 "Причина: %s\n"
 
-#: main.c:2449
+#: main.c:2457
 #, c-format
 msgid ""
 "To trust this server in future, perhaps add this to your command line:\n"
@@ -4238,111 +4246,111 @@ msgstr ""
 "Щоб встановити довіру до цього сервера у майбутньому, варто додати таке до "
 "командного рядка:\n"
 
-#: main.c:2450
+#: main.c:2458
 #, c-format
 msgid "    --servercert %s\n"
 msgstr "    --servercert %s\n"
 
-#: main.c:2455
+#: main.c:2463
 #, c-format
 msgid "Enter '%s' to accept, '%s' to abort; anything else to view: "
 msgstr ""
 "Введіть «%s», щоб прийняти, «%s», щоб перервати; будь-що інше, щоб "
 "переглянути: "
 
-#: main.c:2456 main.c:2475
+#: main.c:2464 main.c:2483
 msgid "no"
 msgstr "ні"
 
-#: main.c:2456 main.c:2462
+#: main.c:2464 main.c:2470
 msgid "yes"
 msgstr "так"
 
-#: main.c:2484
+#: main.c:2492
 #, c-format
 msgid "Server key hash: %s\n"
 msgstr "Хеш ключа сервера: %s\n"
 
-#: main.c:2518
+#: main.c:2526
 #, c-format
 msgid "Auth choice \"%s\" matches multiple options\n"
 msgstr "Варіант розпізнавання «%s» відповідає декільком варіантам\n"
 
-#: main.c:2521
+#: main.c:2529
 #, c-format
 msgid "Auth choice \"%s\" not available\n"
 msgstr "Варіант розпізнавання «%s» є недоступним\n"
 
-#: main.c:2542
+#: main.c:2550
 msgid "User input required in non-interactive mode\n"
 msgstr "У неінтерактивному режимі потрібна реакція користувача\n"
 
-#: main.c:2784
+#: main.c:2792
 #, c-format
 msgid "Failed to open token file for write: %s\n"
 msgstr "Не вдалося відкрити файл ключа для запису: %s\n"
 
-#: main.c:2792
+#: main.c:2800
 #, c-format
 msgid "Failed to write token: %s\n"
 msgstr "Не вдалося записати ключ: %s\n"
 
-#: main.c:2839 main.c:2863
+#: main.c:2847 main.c:2871
 #, c-format
 msgid "Soft token string is invalid\n"
 msgstr "Рядок програмного ключа є некоректним\n"
 
-#: main.c:2843
+#: main.c:2851
 #, c-format
 msgid "Can't open stoken file\n"
 msgstr "Не вдалося відкрити файл stoken\n"
 
-#: main.c:2845
+#: main.c:2853
 #, c-format
 msgid "Can't open ~/.stokenrc file\n"
 msgstr "Не вдалося відкрити файл ~/.stokenrc\n"
 
-#: main.c:2848
+#: main.c:2856
 #, c-format
 msgid "OpenConnect was not built with libstoken support\n"
 msgstr "OpenConnect було зібрано без підтримки libstoken\n"
 
-#: main.c:2851
+#: main.c:2859
 #, c-format
 msgid "General failure in libstoken\n"
 msgstr "Загальна помилка у libstoken\n"
 
-#: main.c:2866
+#: main.c:2874
 #, c-format
 msgid "OpenConnect was not built with liboath support\n"
 msgstr "OpenConnect було зібрано без підтримки liboath\n"
 
-#: main.c:2869
+#: main.c:2877
 #, c-format
 msgid "General failure in liboath\n"
 msgstr "Загальна помилка у liboath\n"
 
-#: main.c:2880
+#: main.c:2888
 #, c-format
 msgid "Yubikey token not found\n"
 msgstr "Не знайдено ключ Yubikey\n"
 
-#: main.c:2883
+#: main.c:2891
 #, c-format
 msgid "OpenConnect was not built with Yubikey support\n"
 msgstr "OpenConnect було зібрано без підтримки Yubikey\n"
 
-#: main.c:2886
+#: main.c:2894
 #, c-format
 msgid "General Yubikey failure: %s\n"
 msgstr "Загальна помилка Yubikey: %s\n"
 
-#: main.c:2895
+#: main.c:2903
 #, c-format
 msgid "Can't open oidc file\n"
 msgstr "Не вдалося відкрити файл oidc\n"
 
-#: main.c:2898
+#: main.c:2906
 #, c-format
 msgid "General failure in oidc token\n"
 msgstr "Загальна помилка у ключі oidc\n"
@@ -4533,12 +4541,12 @@ msgstr "Отримано маску мережі %s\n"
 msgid "Received internal gateway address %s\n"
 msgstr "Отримано внутрішню адресу шлюзу %s\n"
 
-#: oncp.c:148 pulse.c:2310
+#: oncp.c:148 pulse.c:2368
 #, c-format
 msgid "Received split include route %s\n"
 msgstr "Отримано маршрут включення поділу %s\n"
 
-#: oncp.c:170 pulse.c:2323
+#: oncp.c:170 pulse.c:2381
 #, c-format
 msgid "Received split exclude route %s\n"
 msgstr "Отримано маршрут виключення поділу %s\n"
@@ -4588,12 +4596,12 @@ msgstr "Резервний варіант ESP до SSL: %u секунд\n"
 msgid "ESP replay protection: %d\n"
 msgstr "Захист від відтворення ESP: %d\n"
 
-#: oncp.c:290 pulse.c:498 pulse.c:2430
+#: oncp.c:290 pulse.c:2469
 #, c-format
 msgid "ESP SPI (outbound): %x\n"
 msgstr "SPI ESP (вихідний): %x\n"
 
-#: oncp.c:299 pulse.c:507 pulse.c:2418
+#: oncp.c:299 pulse.c:2457
 #, c-format
 msgid "%d bytes of ESP secrets\n"
 msgstr "%d байтів реєстраційних даних ESP\n"
@@ -4703,11 +4711,11 @@ msgstr "Помилка під час узгодження ключів ESP\n"
 msgid "oNCP negotiation request outgoing:\n"
 msgstr "Вихідний запит узгодження oNCP:\n"
 
-#: oncp.c:773 pulse.c:2691
+#: oncp.c:773 pulse.c:2731
 msgid "new incoming"
 msgstr "нове вхідне"
 
-#: oncp.c:774 pulse.c:2692
+#: oncp.c:774 pulse.c:2732
 msgid "new outgoing"
 msgstr "нове вихідне"
 
@@ -4763,7 +4771,7 @@ msgstr "Невідоме повідомлення KMP %d розміру %d:\n"
 msgid ".... + %d more bytes unreceived\n"
 msgstr ".... + отримано ще %d байтів\n"
 
-#: oncp.c:1035 pulse.c:2746
+#: oncp.c:1035 pulse.c:2786
 msgid "Packet outgoing:\n"
 msgstr "Вихідний пакет:\n"
 
@@ -5671,7 +5679,7 @@ msgstr "Не вдалося пройти розпізнавання для се�
 msgid "Received internal Legacy IP address %s\n"
 msgstr "Отримано внутрішню застарілу IP-адресу %s\n"
 
-#: pulse.c:283 pulse.c:301 pulse.c:320 pulse.c:343
+#: pulse.c:283 pulse.c:301 pulse.c:320 pulse.c:343 pulse.c:499
 msgid "Failed to handle IPv6 address\n"
 msgstr "Не вдалося обробити адресу IPv6\n"
 
@@ -5711,167 +5719,172 @@ msgstr "HMAC ESP: 0x%04x (%s)\n"
 msgid "ESP only: %d\n"
 msgstr "Лише ESP: %d\n"
 
-#: pulse.c:532
+#: pulse.c:503
+#, c-format
+msgid "Received internal gateway IPv6 address %s\n"
+msgstr ""
+
+#: pulse.c:528
 #, c-format
 msgid "Unknown attr 0x%x len %d:%s\n"
 msgstr "Невідомий атрибут 0x%x довжини %d:%s\n"
 
-#: pulse.c:543
+#: pulse.c:539
 #, c-format
 msgid "Read %d bytes of IF-T/TLS record\n"
 msgstr "Прочитано %d байтів із запису IF-T/TLS\n"
 
-#: pulse.c:560
+#: pulse.c:556
 msgid "Short write to IF-T/TLS\n"
 msgstr "Недостатньо даних для запису до IF-T/TLS\n"
 
-#: pulse.c:573
+#: pulse.c:569
 msgid "Error creating IF-T packet\n"
 msgstr "Помилка під час спроби створення пакета IF-T\n"
 
-#: pulse.c:593
+#: pulse.c:589
 msgid "Error creating EAP packet\n"
 msgstr "Помилка під час спроби створення пакета EAP\n"
 
-#: pulse.c:628 pulse.c:1436 pulse.c:1499
+#: pulse.c:624 pulse.c:1432 pulse.c:1495
 msgid "Unexpected IF-T/TLS authentication challenge:\n"
 msgstr "Неочікуваний виклик розпізнавання IF-T/TLS:\n"
 
-#: pulse.c:646
+#: pulse.c:642
 msgid "Unexpected EAP-TTLS payload:\n"
 msgstr "Неочікуваний вміст EAP-TTLS:\n"
 
-#: pulse.c:679
+#: pulse.c:675
 #, c-format
 msgid "AVP 0x%x/0x%x:%s\n"
 msgstr "AVP 0x%x/0x%x:%s\n"
 
-#: pulse.c:681
+#: pulse.c:677
 #, c-format
 msgid "AVP %d:%s\n"
 msgstr "AVP %d:%s\n"
 
-#: pulse.c:748
+#: pulse.c:744
 msgid "Enter Pulse user realm:"
 msgstr "Введіть область користувача Pulse:"
 
-#: pulse.c:753 pulse.c:796
+#: pulse.c:749 pulse.c:792
 msgid "Realm:"
 msgstr "Область:"
 
-#: pulse.c:791
+#: pulse.c:787
 msgid "Choose Pulse user realm:"
 msgstr "Виберіть область користувача Pulse:"
 
-#: pulse.c:807 pulse.c:1566 pulse.c:1635
+#: pulse.c:803 pulse.c:1562 pulse.c:1631
 msgid "Failed to parse AVP\n"
 msgstr "Не вдалося обробити AVP\n"
 
-#: pulse.c:874
+#: pulse.c:870
 msgid "Session limit reached. Choose session to kill:\n"
 msgstr ""
 "Досягнуто максимальної кількості сеансів. Виберіть сеанс, який слід "
 "завершити:\n"
 
-#: pulse.c:879
+#: pulse.c:875
 msgid "Session:"
 msgstr "Сеанс:"
 
-#: pulse.c:899
+#: pulse.c:895
 msgid "Failed to parse session list\n"
 msgstr "Не вдалося обробити список сеансів\n"
 
-#: pulse.c:994
+#: pulse.c:990
 msgid "Enter secondary credentials:"
 msgstr "Введіть вторинні реєстраційні дані:"
 
 #. Point to password prompt in case that's all we use
-#: pulse.c:994
+#: pulse.c:990
 msgid "Enter user credentials:"
 msgstr "Введіть реєстраційні дані користувача:"
 
-#: pulse.c:1004 pulse.c:1196
+#: pulse.c:1000 pulse.c:1192
 msgid "Secondary username:"
 msgstr "Вторинне ім'я користувача:"
 
-#: pulse.c:1004 pulse.c:1196
+#: pulse.c:1000 pulse.c:1192
 msgid "Username:"
 msgstr "Користувач:"
 
-#: pulse.c:1014 stoken.c:114
+#: pulse.c:1010 stoken.c:114
 msgid "Password:"
 msgstr "Пароль:"
 
-#: pulse.c:1014
+#: pulse.c:1010
 msgid "Secondary password:"
 msgstr "Вторинний пароль:"
 
-#: pulse.c:1085
+#: pulse.c:1081
 msgid "Password expired. Please change password:"
 msgstr "Строк дії пароля вичерпано. Будь ласка, змініть пароль:"
 
-#: pulse.c:1089
+#: pulse.c:1085
 msgid "Current password:"
 msgstr "Поточний пароль:"
 
-#: pulse.c:1094
+#: pulse.c:1090
 msgid "New password:"
 msgstr "Новий пароль:"
 
-#: pulse.c:1099
+#: pulse.c:1095
 msgid "Verify new password:"
 msgstr "Підтвердження нового пароля:"
 
-#: pulse.c:1111
+#: pulse.c:1107
 msgid "Passwords not provided.\n"
 msgstr "Не вказано паролі.\n"
 
-#: pulse.c:1117
+#: pulse.c:1113
 msgid "Passwords do not match.\n"
 msgstr "Вказано різні паролі.\n"
 
-#: pulse.c:1122
+#: pulse.c:1118
 msgid "Current password too long.\n"
 msgstr "Поточний пароль є надто довгим.\n"
 
-#: pulse.c:1127
+#: pulse.c:1123
 msgid "New password too long.\n"
 msgstr "Новий пароль є надто довгим.\n"
 
-#: pulse.c:1186
+#: pulse.c:1182
 msgid "Token code request:"
 msgstr "Запит щодо коду ключа:"
 
-#: pulse.c:1210
+#: pulse.c:1206
 msgid "Please enter response:"
 msgstr "Будь ласка, введіть відповідь:"
 
-#: pulse.c:1214
+#: pulse.c:1210
 msgid "Please enter your passcode:"
 msgstr "Будь ласка, введіть ваш пароль:"
 
-#: pulse.c:1216
+#: pulse.c:1212
 msgid "Please enter your secondary token information:"
 msgstr "Будь ласка, введіть відомості щодо вашого вторинного ключа:"
 
-#: pulse.c:1353
+#: pulse.c:1349
 msgid "Error creating Pulse connection request\n"
 msgstr "Помилка під час спроби створити запит щодо з'єднання Pulse\n"
 
-#: pulse.c:1396
+#: pulse.c:1392
 msgid "Unexpected response to IF-T/TLS version negotiation:\n"
 msgstr "Неочікувана відповідь на узгодження версії IF-T/TLS:\n"
 
-#: pulse.c:1401
+#: pulse.c:1397
 #, c-format
 msgid "IF-T/TLS version from server: %d\n"
 msgstr "Версія IF-T/TLS з сервера: %d\n"
 
-#: pulse.c:1528
+#: pulse.c:1524
 msgid "Failed to establish EAP-TTLS session\n"
 msgstr "Не вдалося встановити сеанс EAP-TTLS\n"
 
-#: pulse.c:1651
+#: pulse.c:1647
 msgid ""
 "WARNING: Server provided certificate MD5 does not match its actual "
 "certificate.\n"
@@ -5879,20 +5892,20 @@ msgstr ""
 "УВАГА: надана сервером контрольна сума MD5 сертифіката не відповідає "
 "контрольній сумі сертифіката.\n"
 
-#: pulse.c:1665
+#: pulse.c:1661
 msgid "Authentication failure: Account locked out\n"
 msgstr "Помилка під час розпізнавання: обліковий запис заблоковано\n"
 
-#: pulse.c:1668
+#: pulse.c:1664
 msgid "Authentication failure: Client certificate required\n"
 msgstr "Помилка розпізнавання: потрібен клієнтський сертифікат\n"
 
-#: pulse.c:1671
+#: pulse.c:1667
 #, c-format
 msgid "Authentication failure: Code 0x%02x\n"
 msgstr "Помилка під час розпізнавання: код 0x%02x\n"
 
-#: pulse.c:1705
+#: pulse.c:1701
 #, c-format
 msgid ""
 "Unknown D73 prompt value 0x%x. Will prompt for both username and password.\n"
@@ -5900,18 +5913,18 @@ msgstr ""
 "Невідоме значення запиту D73 0x%x. Буде надіслано запит щодо імені "
 "користувача і пароля.\n"
 
-#: pulse.c:1708
+#: pulse.c:1704
 msgid "Please report this value and the behaviour of the official client.\n"
 msgstr ""
 "Будь ласка, повідомте про це значення та поведінку програми розробникам "
 "офіційного клієнта.\n"
 
-#: pulse.c:1777
+#: pulse.c:1773
 #, c-format
 msgid "Authentication failure: %.*s\n"
 msgstr "Критична помилка розпізнавання: %.*s\n"
 
-#: pulse.c:1787
+#: pulse.c:1783
 msgid ""
 "Pulse server requested Host Checker; not yet supported\n"
 "Try Juniper mode (--protocol=nc)\n"
@@ -5920,127 +5933,127 @@ msgstr ""
 "це ще не реалізовано\n"
 "Спробуйте режим Juniper (--protocol=nc)\n"
 
-#: pulse.c:1807
+#: pulse.c:1803
 msgid "Unhandled Pulse authentication packet, or authentication failure\n"
 msgstr ""
 "Непридатний до обробки пакет розпізнавання Pulse або критична помилка під "
 "час спроби розпізнавання\n"
 
-#: pulse.c:1823
+#: pulse.c:1819
 msgid "Pulse authentication cookie not accepted\n"
 msgstr "Куку розпізнавання Pulse не прийнято\n"
 
-#: pulse.c:1829
+#: pulse.c:1825
 msgid "Pulse realm entry\n"
 msgstr "Вхід до області Pulse\n"
 
-#: pulse.c:1835
+#: pulse.c:1831
 msgid "Pulse realm choice\n"
 msgstr "Вибір області Pulse\n"
 
-#: pulse.c:1842
+#: pulse.c:1838
 #, c-format
 msgid "Pulse password auth request, code 0x%02x\n"
 msgstr "Запит щодо розпізнавання за паролем у Pulse, код 0x%02x\n"
 
-#: pulse.c:1855
+#: pulse.c:1851
 #, c-format
 msgid "Pulse password request with unknown code 0x%02x. Please report.\n"
 msgstr ""
 "Запит щодо пароля Pulse із невідомим кодом 0x%02x. Будь ласка, повідомте про "
 "це розробникам.\n"
 
-#: pulse.c:1864
+#: pulse.c:1860
 msgid "Pulse password general token code request\n"
 msgstr "Запит щодо коду загального ключа пароля Pulse\n"
 
-#: pulse.c:1875
+#: pulse.c:1871
 #, c-format
 msgid "Pulse session limit, %d sessions\n"
 msgstr "Обмеження на кількість сеансів Pulse, %d сеансів\n"
 
-#: pulse.c:1884
+#: pulse.c:1880
 msgid "Unhandled Pulse auth request\n"
 msgstr "Непридатний до обробки запит щодо розпізнавання у Pulse\n"
 
-#: pulse.c:1921
+#: pulse.c:1917
 msgid "Unexpected response instead of IF-T/TLS auth success:\n"
 msgstr ""
 "Неочікувана відповідь замість повідомлення про успіх розпізнавання IF-T/"
 "TLS:\n"
 
-#: pulse.c:1984
+#: pulse.c:1980
 msgid "EAP-TTLS failure: Flushing output with pending input bytes\n"
 msgstr ""
 "Помилка EAP-TTLS: спорожнення виведених даних із вхідними байтами у черзі "
 "обробки\n"
 
-#: pulse.c:2007
+#: pulse.c:2003
 msgid "Error creating EAP-TTLS buffer\n"
 msgstr "Помилка під час спроби створити буфер EAP-TTLS\n"
 
-#: pulse.c:2056
+#: pulse.c:2052
 #, c-format
 msgid "Failed to read EAP-TTLS Acknowledge: %s\n"
 msgstr "Не вдалося прочитати Acknowledge EAP-TTLS: %s\n"
 
-#: pulse.c:2064 pulse.c:2106
+#: pulse.c:2060 pulse.c:2102
 #, c-format
 msgid "Read %d bytes of IF-T/TLS EAP-TTLS record\n"
 msgstr "Прочитано %d байтів із запису EAP-TTLS IF-T/TLS\n"
 
-#: pulse.c:2075
+#: pulse.c:2071
 msgid "Bad EAP-TTLS Acknowledge packet\n"
 msgstr "Помилковий пакет Acknowledge EAP-TTLS\n"
 
-#: pulse.c:2117
+#: pulse.c:2113
 #, c-format
 msgid "Bad EAP-TTLS packet (len %d, left %d)\n"
 msgstr "Помилковий пакет EAP-TTLS (довжина %d, лишилося %d)\n"
 
-#: pulse.c:2274
+#: pulse.c:2298
 msgid "Unexpected Pulse config packet:\n"
 msgstr "Неочікуваний пакет налаштування Pulse:\n"
 
-#: pulse.c:2334
+#: pulse.c:2392
 #, c-format
 msgid "Receive route of unknown type 0x%08x\n"
 msgstr "Отримано маршрут невідомого типу 0x%08x\n"
 
-#: pulse.c:2411
+#: pulse.c:2450
 msgid "Invalid ESP config packet:\n"
 msgstr "Некоректній пакет налаштовування ESP:\n"
 
-#: pulse.c:2423
+#: pulse.c:2462
 msgid "Invalid ESP setup\n"
 msgstr "Некоректне налаштування ESP\n"
 
-#: pulse.c:2498
+#: pulse.c:2537
 msgid "Bad IF-T/TLS packet when expecting configuration:\n"
 msgstr "Помилковий пакет IF-T/TLS, а мали бути налаштування:\n"
 
-#: pulse.c:2506
+#: pulse.c:2545
 msgid "Unexpected IF-T/TLS packet when expecting configuration.\n"
 msgstr "Неочікуваний пакет IF-T/TLS, а мали бути налаштування:\n"
 
-#: pulse.c:2571
+#: pulse.c:2611
 msgid "Insufficient configuration found\n"
 msgstr "Виявлено недостатність налаштувань\n"
 
-#: pulse.c:2683
+#: pulse.c:2723
 msgid "ESP rekey failed\n"
 msgstr "Помилка під час спроби зміни ключів ESP\n"
 
-#: pulse.c:2712
+#: pulse.c:2752
 #, c-format
 msgid "Pulse fatal error (reason: %ld): %s\n"
 msgstr "Критична помилка Pulse (причина: %ld): %s\n"
 
-#: pulse.c:2730
+#: pulse.c:2770
 msgid "Unknown Pulse packet\n"
 msgstr "Невідомий пакет Pulse\n"
 
-#: pulse.c:2908
+#: pulse.c:2948
 #, c-format
 msgid "Sending IF-T/TLS data packet of %d bytes\n"
 msgstr "Надсилаємо пакет даних IF-T/TLS у %d байтів\n"
