@@ -930,10 +930,14 @@ static inline void __remove_epoll_fd(struct openconnect_info *vpninfo, int fd)
 {
 	struct epoll_event ev = { 0 };
 	if (vpninfo->epoll_fd >= 0 &&
-	    epoll_ctl(vpninfo->epoll_fd, EPOLL_CTL_DEL, fd, &ev) < 0)
+	    epoll_ctl(vpninfo->epoll_fd, EPOLL_CTL_DEL, fd, &ev) < 0 &&
+	    errno != ENOENT)
 		vpn_perror(vpninfo, "EPOLL_CTL_DEL");
-	/* No other action on error; if it truly matters we'll bail
-	 * later and fall back to select() */
+	/* No other action on error; if it truly matters we'll bail later
+	 * and fall back to select(). We also explicitly ignore ENOENT
+	 * because openconnect_close_https() will always unmonitor the
+	 * ssl_fd even when we never got to the point of using it in the
+	 * main loop and actually monitoring it. */
 }
 
 #define __unmonitor_fd(_v, _n) do {		    \
