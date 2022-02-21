@@ -38,11 +38,7 @@ AC_PROG_CC_C99
 have_vhost=no
 case $host_os in
  *linux* | *gnu* | *nacl*)
-    case $host_cpu in
-	x86_64|amd64)
-	    have_vhost=yes
-	    ;;
-    esac
+    have_vhost=yes
     AC_MSG_NOTICE([Applying feature macros for GNU build])
     AC_DEFINE(_GNU_SOURCE, 1, [_GNU_SOURCE])
     ;;
