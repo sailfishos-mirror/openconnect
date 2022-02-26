@@ -287,6 +287,9 @@ int buf_append_utf16le(struct oc_text_buf *buf, const char *utf8)
 {
 	int utfchar, len = 0;
 
+	if (!utf8)
+		return 0;
+
 	/* Ick. Now I'm implementing my own UTF8 handling too. Perhaps it's
 	   time to bite the bullet and start requiring something like glib? */
 	while (*utf8) {
