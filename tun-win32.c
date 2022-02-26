@@ -477,9 +477,12 @@ static intptr_t open_tun(struct openconnect_info *vpninfo, int adapter_type, cha
 	return ret;
 }
 
-static intptr_t create_ifname_w(struct openconnect_info *vpninfo, const char *ifname) {
+static intptr_t create_ifname_w(struct openconnect_info *vpninfo,
+				const char *ifname)
+{
 	struct oc_text_buf *ifname_buf = buf_alloc();
-	buf_append_utf16le(ifname_buf, vpninfo->ifname);
+
+	buf_append_utf16le(ifname_buf, ifname);
 
 	if (buf_error(ifname_buf)) {
 		vpn_progress(vpninfo, PRG_ERR, _("Could not construct interface name\n"));
