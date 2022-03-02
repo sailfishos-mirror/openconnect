@@ -1229,10 +1229,17 @@ AC_CHECK_HEADER([endian.h],
             [AC_DEFINE([ENDIAN_HDR], [<sys/isa_defs.h>])])])])
 
 build_www=yes
-AC_PATH_PROGS(PYTHON, [python3 python2 python], [], $PATH:/bin:/usr/bin)
-if test -z "${ac_cv_path_PYTHON}"; then
-   AC_MSG_NOTICE([Python not found; not building HTML pages])
-   build_www=no
+AC_ARG_ENABLE([docs],
+    [AS_HELP_STRING([--enable-docs],
+        [enable militant API assertions])],
+    [build_www=$enableval],
+    [])
+if test "${build_www}" = "yes"; then
+   AC_PATH_PROGS(PYTHON, [python3 python2 python], [], $PATH:/bin:/usr/bin)
+   if test -z "${ac_cv_path_PYTHON}"; then
+	AC_MSG_NOTICE([Python not found; not building HTML pages])
+	build_www=no
+   fi
 fi
 if test "${build_www}" = "yes"; then
    AC_MSG_CHECKING([if groff can create UTF-8 XHTML])
