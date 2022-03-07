@@ -66,7 +66,7 @@ if_path2name = {'global-protect': 'portal', 'ssl-vpn': 'gateway'}
 # Get parameters into the initial session setup in order to configure:
 #   gateways: list of gateway names for portal to offer (all will point to same HOST:PORT as portal)
 #   portal_2fa: if set, require challenge-based 2FA to complete /global-protect/getconfig.esp request
-#   gateway_2fa: if set, require challenge-based 2FA to complete /ssl-vpn/login.esp request
+#   gw_2fa: if set, require challenge-based 2FA to complete /ssl-vpn/login.esp request
 #   portal_saml: set to 'portal-userauthcookie' or 'prelogin-cookie' to require SAML on portal (and
 #                expect the named cookie to be provided to signal SAML completion)
 #   gateway_saml: likewise, set to require SAML on gateway

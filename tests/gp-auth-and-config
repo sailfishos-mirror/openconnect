@@ -54,7 +54,7 @@ echo -n "Authenticating with username/password via gateway... "
 echo ok
 
 echo -n "Authenticating with username/password/token via portal, then using portal-userauthcookie to continue through gateway... "
-( echo "test" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT --protocol=gp -q "$ADDRESS:443/global-protect/testconfig.esp?portal_2fa=1&gateway_2fa=1&portal_cookie=portal-userauthcookie" -u test --token-mode=totp --token-secret=FAKE $FINGERPRINT --cookieonly >/dev/null 2>&1) ||
+( echo "test" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT --protocol=gp -q "$ADDRESS:443/global-protect/testconfig.esp?portal_2fa=1&gw_2fa=1&portal_cookie=portal-userauthcookie" -u test --token-mode=totp --token-secret=FAKE $FINGERPRINT --cookieonly >/dev/null 2>&1) ||
     fail $PID "Could not receive cookie from fake GlobalProtect server"
 
 echo ok
