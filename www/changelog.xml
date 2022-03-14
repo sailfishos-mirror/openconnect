@@ -16,6 +16,7 @@
    <li><b>OpenConnect HEAD</b>
      <ul>
        <li>On Windows, fix crash on tunnel setup. (<a href="https://gitlab.com/openconnect/openconnect/-/issues/370">#370</a>, <a href="https://gitlab.com/openconnect/openconnect/commit/6a2ffbbcd1c4ef0b689cce3d17154f6d4c2e3bc0">6a2ffbb</a>)</li>
+       <li>Bugfix RSA SecurID token decryption and PIN entry forms, broken in v8.20. (<a href="https://gitlab.com/openconnect/openconnect/-/issues/388">#388</a>, <a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/344">!344</a>)</li>
      </ul><br/>
   </li>
   <li><b><a href="https://www.infradead.org/openconnect/download/openconnect-8.20.tar.gz">OpenConnect v8.20</a></b>
