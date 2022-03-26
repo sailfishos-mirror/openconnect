@@ -892,8 +892,8 @@ static inline void free_pkt(struct openconnect_info *vpninfo, struct pkt *pkt)
 		free(pkt);
 }
 
-#define vpn_progress(_v, lvl, ...) do {					\
-	if ((_v)->verbose >= (lvl))					\
+#define vpn_progress(_v, lvl, ...) do {				\
+	if ((_v)->verbose >= (lvl))				\
 		(_v)->progress((_v)->cbdata, lvl, __VA_ARGS__);	\
 	} while(0)
 #define vpn_perror(vpninfo, msg) vpn_progress((vpninfo), PRG_ERR, "%s: %s\n", (msg), strerror(errno))
@@ -1520,8 +1520,8 @@ void buf_append_from_utf16le(struct oc_text_buf *buf, const void *utf16);
 void buf_append_base64(struct oc_text_buf *buf, const void *bytes, int len, int line_len);
 
 /* http.c */
-void dump_buf(struct openconnect_info *vpninfo, char prefix, char *buf);
-void dump_buf_hex(struct openconnect_info *vpninfo, int loglevel, char prefix, unsigned char *buf, int len);
+void do_dump_buf(struct openconnect_info *vpninfo, char prefix, char *buf);
+void do_dump_buf_hex(struct openconnect_info *vpninfo, int loglevel, char prefix, unsigned char *buf, int len);
 char *openconnect_create_useragent(const char *base);
 int process_proxy(struct openconnect_info *vpninfo, int ssl_sock);
 int internal_parse_url(const char *url, char **res_proto, char **res_host,
@@ -1539,6 +1539,16 @@ int process_http_response(struct openconnect_info *vpninfo, int connect,
 			  struct oc_text_buf *body);
 int handle_redirect(struct openconnect_info *vpninfo);
 void http_common_headers(struct openconnect_info *vpninfo, struct oc_text_buf *buf);
+#define dump_buf(vpninfo, prefix, buf) do {			\
+		if ((vpninfo)->verbose >= PRG_DEBUG) {		\
+			do_dump_buf(vpninfo, prefix, buf);	\
+		}						\
+	} while(0)
+#define dump_buf_hex(vpninfo, loglevel, prefix, buf, len) do {			\
+		if ((vpninfo)->verbose >= (loglevel)) {				\
+			do_dump_buf_hex(vpninfo, loglevel, prefix, buf, len);	\
+		}								\
+	} while(0)
 
 /* http-auth.c */
 void *openconnect_base64_decode(int *len, const char *in);

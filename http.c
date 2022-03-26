@@ -699,7 +699,7 @@ int handle_redirect(struct openconnect_info *vpninfo)
 	}
 }
 
-void dump_buf(struct openconnect_info *vpninfo, char prefix, char *buf)
+void do_dump_buf(struct openconnect_info *vpninfo, char prefix, char *buf)
 {
 	while (*buf) {
 		char *eol = buf;
@@ -725,12 +725,14 @@ void dump_buf(struct openconnect_info *vpninfo, char prefix, char *buf)
 	}
 }
 
-void dump_buf_hex(struct openconnect_info *vpninfo, int loglevel, char prefix, unsigned char *buf, int len)
+void do_dump_buf_hex(struct openconnect_info *vpninfo, int loglevel, char prefix, unsigned char *buf, int len)
 {
 	struct oc_text_buf *line = buf_alloc();
-	int i, j;
+	int i;
 
 	for (i = 0; i < len; i+=16) {
+		int j;
+
 		buf_truncate(line);
 		buf_append(line, "%04x:", i);
 		for (j = i; j < i+16; j++) {
