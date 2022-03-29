@@ -952,7 +952,7 @@ static void usage(void)
 #ifndef LIBPROXY_HDR
 	printf("                                  %s\n", _("(NOTE: libproxy disabled in this build)"));
 #endif
-	printf("      --reconnect-timeout         %s\n", _("Connection retry timeout in seconds"));
+	printf("      --reconnect-timeout=SECONDS %s\n", _("Reconnection retry timeout (default is 300 seconds)"));
 	printf("      --resolve=HOST:IP           %s\n", _("Use IP when connecting to HOST"));
 	printf("      --passtos                   %s\n", _("Copy TOS / TCLASS field into DTLS and ESP packets"));
 	printf("      --dtls-local-port=PORT      %s\n", _("Set local port for DTLS and ESP datagrams"));
