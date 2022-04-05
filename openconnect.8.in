@@ -68,7 +68,7 @@ openconnect \- Multi-protocol VPN client, for Cisco AnyConnect VPNs and others
 .OP \-\-servercert sha1
 .OP \-\-useragent string
 .OP \-\-version\-string string
-.OP \-\-local-hostname string
+.OP \-\-local\-hostname string
 .OP \-\-os string
 .B [\-\-server] [https://]\fIhost\fB[:\fIport\fB][/\fIgroup\fB]
 .YS
@@ -262,7 +262,7 @@ Run
 .I SCRIPT
 instead of the trojan binary or script.
 .TP
-.B \-\-force-trojan=INTERVAL
+.B \-\-force\-trojan=INTERVAL
 Use
 .I INTERVAL
 as interval (in seconds) for repeat execution of Trojan binary or script, overriding default and/or
@@ -672,7 +672,7 @@ Use
 as the software version reported to the head end.
 (e.g. \-\-version\-string '2.2.0133')
 .TP
-.B \-\-local-hostname=STRING
+.B \-\-local\-hostname=STRING
 Use
 .I STRING
 as 'X\-CSTP\-Hostname:' field value in HTTP header. For example \-\-local\-hostname 'mypc',
