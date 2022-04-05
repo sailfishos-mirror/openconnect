@@ -2155,6 +2155,8 @@ int main(int argc, char **argv)
 	if (vpninfo->dump_http_traffic && verbose < PRG_DEBUG)
 		verbose = PRG_DEBUG;
 
+	openconnect_set_loglevel(vpninfo, verbose);
+
 	if (autoproxy) {
 #ifdef LIBPROXY_HDR
 		vpninfo->proxy_factory = px_proxy_factory_new();
@@ -2291,7 +2293,6 @@ int main(int argc, char **argv)
 	}
 
 
-	openconnect_set_loglevel(vpninfo, verbose);
 	openconnect_set_setup_tun_handler(vpninfo, fully_up_cb);
 	openconnect_set_stats_handler(vpninfo, print_connection_stats);
 
