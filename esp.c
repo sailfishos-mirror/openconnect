@@ -169,8 +169,15 @@ int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		}
 		pkt = vpninfo->dtls_pkt;
 		len = recv(vpninfo->dtls_fd, (void *)&pkt->esp, len + sizeof(pkt->esp), 0);
-		if (len <= 0)
-			break;
+		if (len <= 0) {
+			if (!len || errno == EAGAIN || errno == EWOULDBLOCK)
+				break;
+
+			/* On *real* errors, close the UDP socket and try again later. */
+			vpn_perror(vpninfo, "ESP recv()");
+			vpninfo->proto->udp_close(vpninfo);
+			return 0;
+		}
 
 		work_done = 1;
 
