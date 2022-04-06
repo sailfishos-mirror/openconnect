@@ -372,7 +372,7 @@ int openconnect_mainloop(struct openconnect_info *vpninfo,
 				nfds = 0;
 			}
 			while (nfds--) {
-				if (evs[nfds].events & EPOLLIN) {
+				if (evs[nfds].events & (EPOLLIN|EPOLLERR)) {
 					if (evs[nfds].data.fd == vpninfo->tun_fd)
 						tun_r = 1;
 					else if (evs[nfds].data.fd == vpninfo->ssl_fd)
