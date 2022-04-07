@@ -573,13 +573,19 @@ struct openconnect_info {
 	SSL_CTX *https_ctx;
 	SSL *https_ssl;
 	BIO_METHOD *ttls_bio_meth;
+	EC_KEY *strap_key;
+	EC_KEY *strap_dh_key;
 #elif defined(OPENCONNECT_GNUTLS)
 	gnutls_session_t https_sess;
 	gnutls_session_t eap_ttls_sess;
 	gnutls_certificate_credentials_t https_cred;
 	gnutls_psk_client_credentials_t psk_cred;
 	char local_cert_md5[MD5_SIZE * 2 + 1]; /* For CSD */
+	gnutls_privkey_t strap_key;
+	gnutls_privkey_t strap_dh_key;
 #endif /* OPENCONNECT_GNUTLS */
+	char *strap_pubkey;
+	char *strap_dh_pubkey;
 	char *ciphersuite_config;
 	struct oc_text_buf *ttls_pushbuf;
 	uint8_t ttls_eap_ident;
@@ -1424,6 +1430,8 @@ int hotp_hmac(struct openconnect_info *vpninfo, const void *challenge);
 int openconnect_install_ctx_verify(struct openconnect_info *vpninfo,
 				   SSL_CTX *ctx);
 #endif
+void free_strap_keys(struct openconnect_info *vpninfo);
+int generate_strap_keys(struct openconnect_info *vpninfo);
 
 /* mainloop.c */
 int tun_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable, int did_work);

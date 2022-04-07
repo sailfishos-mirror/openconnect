@@ -1246,6 +1246,19 @@ void cstp_common_headers(struct openconnect_info *vpninfo, struct oc_text_buf *b
 	if (vpninfo->try_http_auth)
 		buf_append(buf, "X-Support-HTTP-Auth: true\r\n");
 
+	if (!vpninfo->strap_pubkey || !vpninfo->strap_dh_pubkey) {
+		int err = generate_strap_keys(vpninfo);
+		if (err) {
+			buf->error = err;
+			return;
+		}
+	}
+
+	buf_append(buf, "X-AnyConnect-STRAP-Pubkey: %s\r\n",
+		   vpninfo->strap_pubkey);
+	buf_append(buf, "X-AnyConnect-STRAP-DH-Pubkey: %s\r\n",
+		   vpninfo->strap_dh_pubkey);
+
 	append_mobile_headers(vpninfo, buf);
 }
 

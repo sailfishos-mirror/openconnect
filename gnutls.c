@@ -2797,3 +2797,93 @@ void destroy_eap_ttls(struct openconnect_info *vpninfo, void *sess)
 {
 	gnutls_deinit(sess);
 }
+
+static int generate_strap_key(gnutls_privkey_t *key, char **pubkey)
+{
+	int bits, pk, err;
+	gnutls_pubkey_t pkey = NULL;
+	gnutls_datum_t pdata = { };
+	struct oc_text_buf *buf = NULL;
+
+#if GNUTLS_VERSION_NUMBER >= 0x030500
+	pk = gnutls_ecc_curve_get_pk(GNUTLS_ECC_CURVE_SECP256R1);
+#else
+	pk = GNUTLS_PK_EC;
+#endif
+	bits = GNUTLS_CURVE_TO_BITS(GNUTLS_ECC_CURVE_SECP256R1);
+
+	err = gnutls_privkey_init(key);
+	if (err)
+		goto out;
+
+	err = gnutls_privkey_generate(*key, pk, bits, 0);
+	if (err)
+		goto out;
+
+	err = gnutls_pubkey_init(&pkey);
+	if (err)
+		goto out;
+
+	err = gnutls_pubkey_import_privkey(pkey, *key,
+					   GNUTLS_KEY_KEY_AGREEMENT, 0);
+	if (err)
+		goto out;
+
+	err = gnutls_pubkey_export2(pkey, GNUTLS_X509_FMT_DER, &pdata);
+	if (err)
+		goto out;
+
+	buf = buf_alloc();
+	buf_append_base64(buf, pdata.data, pdata.size, 0);
+	if (buf_error(buf)) {
+		err = GNUTLS_E_MEMORY_ERROR;
+		goto out;
+	}
+
+	*pubkey = buf->data;
+	buf->data = NULL;
+ out:
+	buf_free(buf);
+	gnutls_free(pdata.data);
+	gnutls_pubkey_deinit(pkey);
+	if (err) {
+		gnutls_privkey_deinit(*key);
+		*key = NULL;
+		*pubkey = NULL;
+	}
+	return err;
+}
+
+int generate_strap_keys(struct openconnect_info *vpninfo)
+{
+	int err;
+
+	err = generate_strap_key(&vpninfo->strap_key, &vpninfo->strap_pubkey);
+	if (err) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Failed to generate STRAP key: %s\n"),
+			     gnutls_strerror(err));
+		free_strap_keys(vpninfo);
+		return -EIO;
+	}
+
+	err = generate_strap_key(&vpninfo->strap_dh_key, &vpninfo->strap_dh_pubkey);
+	if (err) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Failed to generate STRAP DH key: %s\n"),
+			     gnutls_strerror(err));
+		free_strap_keys(vpninfo);
+		return -EIO;
+	}
+	return 0;
+}
+
+void free_strap_keys(struct openconnect_info *vpninfo)
+{
+	if (vpninfo->strap_key)
+		gnutls_privkey_deinit(vpninfo->strap_key);
+	if (vpninfo->strap_dh_key)
+		gnutls_privkey_deinit(vpninfo->strap_dh_key);
+
+	vpninfo->strap_key = vpninfo->strap_dh_key = NULL;
+}

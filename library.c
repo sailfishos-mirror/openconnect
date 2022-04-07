@@ -590,11 +590,12 @@ void openconnect_vpninfo_free(struct openconnect_info *vpninfo)
 		closesocket(vpninfo->cmd_fd);
 		closesocket(vpninfo->cmd_fd_write);
 	}
-
+	free_strap_keys(vpninfo);
+	free(vpninfo->strap_pubkey);
+	free(vpninfo->strap_dh_pubkey);
 	free(vpninfo->ppp);
 	buf_free(vpninfo->ppp_tls_connect_req);
 	buf_free(vpninfo->ppp_dtls_connect_req);
-
 #ifdef HAVE_ICONV
 	if (vpninfo->ic_utf8_to_legacy != (iconv_t)-1)
 		iconv_close(vpninfo->ic_utf8_to_legacy);

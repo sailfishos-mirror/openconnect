@@ -2247,3 +2247,76 @@ void destroy_eap_ttls(struct openconnect_info *vpninfo, void *ttls)
 	/* Leave the BIO_METH for now. It may get reused and we don't want to
 	 * have to call BIO_get_new_index() more times than is necessary */
 }
+
+static int generate_strap_key(EC_KEY **key, EC_GROUP *grp, char **pubkey)
+{
+	struct oc_text_buf *buf = NULL;
+	unsigned char *der = NULL;
+	int len;
+
+	*key = EC_KEY_new();
+	if (!*key)
+		return -EIO;
+
+	if (!EC_KEY_set_group(*key, grp))
+		return -EIO;
+
+	if (!EC_KEY_generate_key(*key))
+		return -EIO;
+
+	len = i2d_EC_PUBKEY(*key, &der);
+	buf = buf_alloc();
+	buf_append_base64(buf, der, len, 0);
+	free(der);
+	if (buf_error(buf))
+		return buf_free(buf);
+
+	*pubkey = buf->data;
+	buf->data = NULL;
+	buf_free(buf);
+	return 0;
+}
+
+int generate_strap_keys(struct openconnect_info *vpninfo)
+{
+	int err;
+	EC_GROUP *grp = EC_GROUP_new_by_curve_name(NID_X9_62_prime256v1);
+
+	if (!grp) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Failed to create prime256v1 EC group\n"));
+		return -EIO;
+	}
+
+	err = generate_strap_key(&vpninfo->strap_key, grp, &vpninfo->strap_pubkey);
+	if (err) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Failed to generate STRAP key"));
+		openconnect_report_ssl_errors(vpninfo);
+		free_strap_keys(vpninfo);
+		EC_GROUP_free(grp);
+		return -EIO;
+	}
+
+	err = generate_strap_key(&vpninfo->strap_dh_key, grp, &vpninfo->strap_dh_pubkey);
+	if (err) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Failed to generate STRAP DH key\n"));
+		openconnect_report_ssl_errors(vpninfo);
+		free_strap_keys(vpninfo);
+		EC_GROUP_free(grp);
+		return -EIO;
+	}
+	EC_GROUP_free(grp);
+	return 0;
+}
+
+void free_strap_keys(struct openconnect_info *vpninfo)
+{
+	if (vpninfo->strap_key)
+		EC_KEY_free(vpninfo->strap_key);
+	if (vpninfo->strap_dh_key)
+		EC_KEY_free(vpninfo->strap_dh_key);
+
+	vpninfo->strap_key = vpninfo->strap_dh_key = NULL;
+}
