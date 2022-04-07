@@ -428,6 +428,7 @@ static int parse_auth_node(struct openconnect_info *vpninfo, xmlNode *xml_node,
 		xmlnode_get_text(xml_node, "sso-v2-login-final", &vpninfo->sso_login_final);
 		xmlnode_get_text(xml_node, "sso-v2-token-cookie-name", &vpninfo->sso_token_cookie);
 		xmlnode_get_text(xml_node, "sso-v2-error-cookie-name", &vpninfo->sso_error_cookie);
+		xmlnode_get_text(xml_node, "sso-v2-browser-mode", &vpninfo->sso_browser_mode);
 
 		if (xmlnode_is_named(xml_node, "form")) {
 
@@ -808,6 +809,12 @@ static xmlDocPtr xmlpost_new_query(struct openconnect_info *vpninfo, const char 
 	node = xmlNewTextChild(capabilities, NULL, XCAST("auth-method"), XCAST("single-sign-on-v2"));
 	if (!node)
 		goto bad;
+
+#ifdef HAVE_HPKE_SUPPORT
+	node = xmlNewTextChild(capabilities, NULL, XCAST("auth-method"), XCAST("single-sign-on-external-browser"));
+	if (!node)
+		goto bad;
+#endif
 
 	*rootp = root;
 	return doc;

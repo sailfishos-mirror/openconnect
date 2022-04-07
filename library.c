@@ -593,6 +593,15 @@ void openconnect_vpninfo_free(struct openconnect_info *vpninfo)
 	free_strap_keys(vpninfo);
 	free(vpninfo->strap_pubkey);
 	free(vpninfo->strap_dh_pubkey);
+
+	free(vpninfo->sso_username);
+	free(vpninfo->sso_cookie_value);
+	free(vpninfo->sso_browser_mode);
+	free(vpninfo->sso_login);
+	free(vpninfo->sso_login_final);
+	free(vpninfo->sso_error_cookie);
+	free(vpninfo->sso_token_cookie);
+
 	free(vpninfo->ppp);
 	buf_free(vpninfo->ppp_tls_connect_req);
 	buf_free(vpninfo->ppp_dtls_connect_req);
@@ -1613,28 +1622,40 @@ retry:
 		nuke_opt_values(form->opts);
 
 	if (do_sso) {
-		if (vpninfo->open_webview) {
-			free(vpninfo->sso_cookie_value);
-			free(vpninfo->sso_username);
-			vpninfo->sso_cookie_value = NULL;
-			vpninfo->sso_username = NULL;
+		free(vpninfo->sso_cookie_value);
+		free(vpninfo->sso_username);
+		vpninfo->sso_cookie_value = NULL;
+		vpninfo->sso_username = NULL;
+
+		/* Handle the special Cisco external browser mode */
+		if (vpninfo->sso_browser_mode && !strcmp(vpninfo->sso_browser_mode, "external")) {
+			ret = handle_external_browser(vpninfo);
+		} else if (vpninfo->open_webview) {
 			ret = vpninfo->open_webview(vpninfo, vpninfo->sso_login, vpninfo->cbdata);
-			for (opt = form->opts; opt; opt = opt->next) {
-				if (opt->type == OC_FORM_OPT_SSO_TOKEN) {
-					free(opt->_value);
-					opt->_value = vpninfo->sso_cookie_value;
-				} else if (opt->type == OC_FORM_OPT_SSO_USER) {
-					free(opt->_value);
-					opt->_value = vpninfo->sso_username;
-				}
-			}
-			vpninfo->sso_username = NULL;
-			vpninfo->sso_cookie_value = NULL;
 		} else {
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("No SSO handler\n")); /* XX: print more debugging info */
 			ret = -EINVAL;
 		}
+		if (!ret) {
+			for (opt = form->opts; opt; opt = opt->next) {
+				if (opt->type == OC_FORM_OPT_SSO_TOKEN) {
+					free(opt->_value);
+					opt->_value = vpninfo->sso_cookie_value;
+					vpninfo->sso_cookie_value = NULL;
+				} else if (opt->type == OC_FORM_OPT_SSO_USER) {
+					free(opt->_value);
+					opt->_value = vpninfo->sso_username;
+					vpninfo->sso_username = NULL;
+				}
+			}
+		}
+		free(vpninfo->sso_username);
+		vpninfo->sso_username = NULL;
+		free(vpninfo->sso_cookie_value);
+		vpninfo->sso_cookie_value = NULL;
+		free(vpninfo->sso_browser_mode);
+		vpninfo->sso_browser_mode = NULL;
 	}
 
 	return ret;

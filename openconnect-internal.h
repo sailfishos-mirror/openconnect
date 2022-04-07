@@ -773,6 +773,7 @@ struct openconnect_info {
 	char *sso_token_cookie;
 	char *sso_error_cookie;
 	char *sso_cookie_value;
+	char *sso_browser_mode;
 
 	int verbose;
 	void *cbdata;
@@ -1597,6 +1598,9 @@ void free_optlist(struct oc_vpn_option *opt);
 int process_auth_form(struct openconnect_info *vpninfo, struct oc_auth_form *form);
 /* This is private for now since we haven't yet worked out what the API will be */
 void openconnect_set_juniper(struct openconnect_info *vpninfo);
+
+/* hpke.c */
+int handle_external_browser(struct openconnect_info *vpninfo);
 
 /* version.c */
 extern const char openconnect_version_str[];
