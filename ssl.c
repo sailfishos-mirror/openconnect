@@ -156,6 +156,62 @@ static int cancellable_connect(struct openconnect_info *vpninfo, int sockfd,
 	return err;
 }
 
+
+static inline int accept_pending(void)
+{
+#ifdef _WIN32
+	return WSAGetLastError() == WSAEWOULDBLOCK;
+#else
+	return errno == EAGAIN || errno == EWOULDBLOCK;
+#endif
+}
+
+int cancellable_accept(struct openconnect_info *vpninfo, int sockfd)
+{
+	fd_set wr_set, rd_set, ex_set;
+	int accept_fd, maxfd = sockfd;
+	char *errstr;
+
+	do {
+		accept_fd = accept(sockfd, NULL, NULL);
+		if (accept_fd >= 0)
+			return accept_fd;
+
+		if (!accept_pending())
+			break;
+
+		FD_ZERO(&wr_set);
+		FD_ZERO(&rd_set);
+		FD_ZERO(&ex_set);
+		FD_SET(sockfd, &rd_set);
+
+		cmd_fd_set(vpninfo, &rd_set, &maxfd);
+		if (select(maxfd + 1, &rd_set, &wr_set, &ex_set, NULL) < 0 &&
+		    errno != EINTR) {
+			vpn_perror(vpninfo, _("Failed select() for socket accept"));
+			return -EIO;
+		}
+
+		if (is_cancel_pending(vpninfo, &rd_set)) {
+			vpn_progress(vpninfo, PRG_ERR, _("Socket accept cancelled\n"));
+			return -EINTR;
+		}
+	} while (!FD_ISSET(sockfd, &ex_set) && !vpninfo->got_pause_cmd);
+
+#ifdef _WIN32
+	errstr = openconnect__win32_strerror(WSAGetLastError());
+#else
+	errstr = strerror(errno);
+#endif
+	vpn_progress(vpninfo, PRG_ERR,
+		     _("Failed to accept local connection: %s\n"),
+		     errstr);
+#ifdef _WIN32
+	free(errstr);
+#endif
+	return -1;
+}
+
 /* checks whether the provided string is an IP or a hostname.
  */
 unsigned string_is_hostname(const char *str)
@@ -1212,7 +1268,7 @@ int cancellable_gets(struct openconnect_info *vpninfo, int fd,
 }
 
 int cancellable_send(struct openconnect_info *vpninfo, int fd,
-		     char *buf, size_t len)
+		     const char *buf, size_t len)
 {
 	size_t count;
 
