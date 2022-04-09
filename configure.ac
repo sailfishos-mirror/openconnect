@@ -631,6 +631,9 @@ perhaps consider building with GnuTLS instead.)])
 					  pkcs11_support=GnuTLS
 					  AC_SUBST(P11KIT_PC, p11-kit-1)],
 					 [:])], [])
+	# From GnuTLS 3.6.13
+	AC_CHECK_FUNC(gnutls_hkdf_expand, [have_hkdf=yes], [have_hkdf=no])
+
 	LIBS="-ltspi $oldlibs"
 	AC_MSG_CHECKING([for Trousers tss library])
 	AC_LINK_IFELSE([AC_LANG_PROGRAM([
@@ -643,8 +646,31 @@ perhaps consider building with GnuTLS instead.)])
 			AC_SUBST([TSS_CFLAGS], [])
 			AC_DEFINE(HAVE_TROUSERS, 1, [Have Trousers TSS library])],
 		       [AC_MSG_RESULT(no)])
+
 	LIBS="$oldlibs"
 	CFLAGS="$oldcflags"
+
+	if test "$have_hkdf" = "yes"; then
+		PKG_CHECK_MODULES(HOGWEED, [hogweed],
+			[AC_MSG_CHECKING([For hogweed built-in mini-gmp])
+			 LIBS="$oldlibs $HOGWEED_LIBS"
+			 CFLAGS="$oldcflags $HOGWEED_CFLAGS"
+			 AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <nettle/ecc.h>],
+							 [mpz_clear((void *)0);])],
+					[AC_MSG_RESULT(yes)
+					 AC_SUBST(HPKE_CFLAGS, ['$(HOGWEED_FLAGS)'])
+					 AC_SUBST(HPKE_LIBS, ['$(HOGWEED_LIBS)'])
+					 hpke=yes],
+					[AC_MSG_RESULT(no)
+					 PKG_CHECK_MODULES(GMP, [gmp],
+						[hpke=yes
+						 AC_SUBST(HPKE_CFLAGS, ['$(HOGWEED_FLAGS) $(GMP_CFLAGS)'])
+						 AC_SUBST(HPKE_LIBS, ['$(HOGWEED_LIBS) $(GMP_LIBS)'])], [:])])
+			 LIBS="$oldlibs"
+			 CFLAGS="$oldcflags"],
+			[:])
+
+	fi
 
 	PKG_CHECK_MODULES(TASN1, [libtasn1], [have_tasn1=yes], [have_tasn1=no])
 	if test "$have_tasn1" = "yes"; then
@@ -688,8 +714,8 @@ perhaps consider building with GnuTLS instead.)])
 
 	AC_DEFINE(OPENCONNECT_GNUTLS, 1, [Using GnuTLS])
 	AC_SUBST(SSL_PC, [gnutls])
-	AC_SUBST(SSL_LIBS, ['$(GNUTLS_LIBS) $(TPM2_LIBS)'])
-	AC_SUBST(SSL_CFLAGS, ['$(GNUTLS_CFLAGS) $(TPM2_CFLAGS)'])
+	AC_SUBST(SSL_LIBS, ['$(GNUTLS_LIBS) $(TPM2_LIBS) $(HKPE_LIBS)'])
+	AC_SUBST(SSL_CFLAGS, ['$(GNUTLS_CFLAGS) $(TPM2_CFLAGS) $(HKPE_CFLAGS)'])
 	;;
 
     *)

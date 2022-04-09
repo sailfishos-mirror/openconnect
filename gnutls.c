@@ -2887,3 +2887,163 @@ void free_strap_keys(struct openconnect_info *vpninfo)
 
 	vpninfo->strap_key = vpninfo->strap_dh_key = NULL;
 }
+
+#ifdef HAVE_HPKE_SUPPORT
+
+#include <nettle/ecc.h>
+#include <nettle/ecc-curve.h>
+
+int ecdh_compute_secp256r1(struct openconnect_info *vpninfo, const unsigned char *pubkey_der,
+			   int pubkey_len, unsigned char *secret)
+{
+	int err, ret = -EIO;
+	gnutls_pubkey_t pubkey;
+	gnutls_datum_t d = { (void *)pubkey_der, pubkey_len };
+
+	if ((err = gnutls_pubkey_init(&pubkey)) ||
+	    (err = gnutls_pubkey_import(pubkey, &d, GNUTLS_X509_FMT_DER))) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Failed to decode server DH key: %s\n"),
+			     gnutls_strerror(err));
+		goto out_pubkey;
+	}
+
+	/* Yay, we have to do ECDH for ourselves. */
+	gnutls_datum_t pub_x, pub_y, priv_k;
+	gnutls_ecc_curve_t pub_curve, priv_curve;
+
+	if ((err = gnutls_privkey_export_ecc_raw(vpninfo->strap_dh_key, &priv_curve,
+						 NULL, NULL, &priv_k))) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Failed to export DH private key parameters: %s\n"),
+			     gnutls_strerror(err));
+		goto out_pubkey;
+	}
+	if ((err = gnutls_pubkey_export_ecc_raw(pubkey, &pub_curve, &pub_x, &pub_y))) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Failed to export server DH key parameters: %s\n"),
+			     gnutls_strerror(err));
+		goto out_priv_data;
+	}
+
+	if (pub_curve != GNUTLS_ECC_CURVE_SECP256R1 ||
+	    priv_curve != GNUTLS_ECC_CURVE_SECP256R1) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("HPKE uses unsupported EC curve (%d, %d)\n"),
+			     pub_curve, priv_curve);
+		goto out_pub_data;
+	}
+
+	mpz_t mx, my;
+	nettle_mpz_init_set_str_256_u(mx, pub_x.size, pub_x.data);
+	nettle_mpz_init_set_str_256_u(my, pub_y.size, pub_y.data);
+
+	struct ecc_point point;
+	ecc_point_init(&point, nettle_get_secp_256r1());
+	if (!ecc_point_set(&point, mx, my)) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Failed to create ECC public point for ECDH\n"));
+		goto out_point;
+	}
+
+	mpz_t mk;
+	nettle_mpz_init_set_str_256_u(mk, priv_k.size, priv_k.data);
+
+	struct ecc_scalar priv;
+	ecc_scalar_init(&priv, nettle_get_secp_256r1());
+	ecc_scalar_set(&priv, mk);
+
+	ecc_point_mul(&point, &priv, &point);
+	ecc_point_get(&point, mx, my);
+
+	nettle_mpz_get_str_256(32, secret, mx);
+
+	ret = 0;
+
+	ecc_scalar_clear(&priv);
+	mpz_clear(mk);
+ out_point:
+	ecc_point_clear(&point);
+	mpz_clear(mx);
+	mpz_clear(my);
+ out_pub_data:
+	gnutls_free(pub_x.data);
+	gnutls_free(pub_y.data);
+ out_priv_data:
+	gnutls_free(priv_k.data);
+ out_pubkey:
+	gnutls_pubkey_deinit(pubkey);
+
+	return ret;
+}
+
+int hkdf_sha256_extract_expand(struct openconnect_info *vpninfo, unsigned char *buf,
+			       const char *info, int infolen)
+{
+	gnutls_datum_t d;
+	d.data = buf;
+	d.size = SHA256_SIZE;
+
+	int err = gnutls_hkdf_extract(GNUTLS_MAC_SHA256, &d, NULL, buf);
+	if (err) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("HKDF extract failed: %s\n"),
+			     gnutls_strerror(err));
+		return -EIO;
+	}
+
+	gnutls_datum_t info_d;
+	info_d.data = (void *)info;
+	info_d.size = infolen;
+
+	err = gnutls_hkdf_expand(GNUTLS_MAC_SHA256, &d, &info_d, d.data, d.size);
+	if (err) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("HKDF expand failed: %s\n"),
+			     gnutls_strerror(err));
+		return -EIO;
+	}
+	return 0;
+}
+
+int aes_256_gcm_decrypt(struct openconnect_info *vpninfo, unsigned char *key,
+			unsigned char *data, int len,
+			unsigned char *iv, unsigned char *tag)
+ {
+	gnutls_cipher_hd_t h = NULL;
+
+	gnutls_datum_t d = { key, SHA256_SIZE };
+	gnutls_datum_t iv_d = { iv, 12 };
+
+	int err = gnutls_cipher_init(&h, GNUTLS_CIPHER_AES_256_GCM, &d, &iv_d);
+	if (err) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Failed to init AES-256-GCM cipher: %s\n"),
+			     gnutls_strerror(err));
+		return -EIO;
+	}
+
+	err = gnutls_cipher_decrypt(h, data, len);
+	if (err) {
+	dec_fail:
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("SSO token decryption failed: %s\n"),
+			     gnutls_strerror(err));
+		gnutls_cipher_deinit(h);
+		return -EIO;
+	}
+
+	/* Reusing the key buffer to fetch the auth tag */
+	err = gnutls_cipher_tag(h, d.data, 12);
+	if (err)
+		goto dec_fail;
+
+	if (memcmp(d.data, tag, 12)) {
+		err = GNUTLS_E_MAC_VERIFY_FAILED;
+		goto dec_fail;
+	}
+
+	gnutls_cipher_deinit(h);
+	return 0;
+}
+#endif /* HAVE_HPKE_SUPPORT */
