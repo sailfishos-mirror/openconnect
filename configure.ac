@@ -378,6 +378,7 @@ AC_ARG_WITH([openssl],
 ssl_library=
 esp=
 dtls=
+hpke=
 
 if test "$with_openssl" != "" -a "$with_openssl" != "no"; then
     if test "$with_gnutls" = ""; then
@@ -577,6 +578,15 @@ perhaps consider building with GnuTLS instead.)])
 					[SSL_CIPHER_find((void *)0, "");])],
 		       [AC_MSG_RESULT(yes)
 			AC_DEFINE(HAVE_SSL_CIPHER_FIND, [1], [OpenSSL has SSL_CIPHER_find() function])],
+		       [AC_MSG_RESULT(no)])
+
+	AC_MSG_CHECKING([for HKDF support in OpenSSL])
+	AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <openssl/ssl.h>
+					 #include <openssl/kdf.h>],
+					[EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_HKDF, NULL);
+					 EVP_PKEY_CTX_hkdf_mode(ctx, EVP_PKEY_HKDEF_MODE_EXTRACT_AND_EXPAND);])],
+		       [AC_MSG_RESULT(yes)
+			hpke=yes],
 		       [AC_MSG_RESULT(no)])
 
 	LIBS="${oldLIBS}"
@@ -782,6 +792,9 @@ if test "$esp" != ""; then
 fi
 if test "$dtls" != ""; then
     AC_DEFINE(HAVE_DTLS, 1, [Build with DTLS support])
+fi
+if test "$hpke" != ""; then
+   AC_DEFINE(HAVE_HPKE_SUPPORT, 1, [Support Cisco external browser HPKE (ECDH+HKDF+AES-256-GCM)])
 fi
 
 AC_ARG_WITH(lz4,
@@ -1370,6 +1383,7 @@ if test "$ssl_library" = "GnuTLS"; then
 fi
 SUMMARY([DTLS support], [$dtls])
 SUMMARY([ESP support], [$esp])
+SUMMARY([HPKE support], [$hpke])
 SUMMARY([libproxy support], [$libproxy_pkg])
 SUMMARY([RSA SecurID support], [$libstoken_pkg])
 SUMMARY([PSKC OATH file support], [$libpskc_pkg])

@@ -2320,3 +2320,80 @@ void free_strap_keys(struct openconnect_info *vpninfo)
 
 	vpninfo->strap_key = vpninfo->strap_dh_key = NULL;
 }
+
+#ifdef HAVE_HPKE_SUPPORT
+
+#include <openssl/kdf.h>
+
+int ecdh_compute_secp256r1(struct openconnect_info *vpninfo, const unsigned char *pubkey,
+			   int pubkey_len, unsigned char *secret)
+{
+	const EC_POINT *point;
+	EC_KEY *pkey;
+	int ret = 0;
+
+	if (!(pkey = d2i_EC_PUBKEY(NULL, &pubkey, pubkey_len)) ||
+	    !(point = EC_KEY_get0_public_key(pkey))) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Failed to decode server DH key\n"));
+		openconnect_report_ssl_errors(vpninfo);
+		ret = -EIO;
+		goto out;
+
+	}
+
+	/* Perform the DH secret derivation from our STRAP-DH key
+	 * and the one the server returned to us in the payload. */
+	if (ECDH_compute_key(secret, 32, point, vpninfo->strap_dh_key, NULL) <= 0) {
+		vpn_progress(vpninfo, PRG_ERR, _("Failed to compute DH secret\n"));
+		openconnect_report_ssl_errors(vpninfo);
+		ret = -EIO;
+	}
+ out:
+	EC_KEY_free(pkey);
+	return ret;
+}
+
+int hkdf_sha256_extract_expand(struct openconnect_info *vpninfo, unsigned char *buf,
+			       const char *info, int infolen)
+{
+	size_t buflen = 32;
+	int ret = 0;
+
+	/* Next, use HKDF to generate the actual key used for encryption. */
+	EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_HKDF, NULL);
+	if (!ctx || !EVP_PKEY_derive_init(ctx) ||
+	    !EVP_PKEY_CTX_set_hkdf_md(ctx, EVP_sha256()) ||
+	    !EVP_PKEY_CTX_set1_hkdf_key(ctx, buf, buflen) ||
+	    !EVP_PKEY_CTX_hkdf_mode(ctx, EVP_PKEY_HKDEF_MODE_EXTRACT_AND_EXPAND) ||
+	    !EVP_PKEY_CTX_add1_hkdf_info(ctx, info, infolen) ||
+	    EVP_PKEY_derive(ctx, buf, &buflen) != 1) {
+		vpn_progress(vpninfo, PRG_ERR, _("HKDF key derivation failed\n"));
+		openconnect_report_ssl_errors(vpninfo);
+		ret = -EINVAL;
+	}
+	EVP_PKEY_CTX_free(ctx);
+	return ret;
+}
+
+int aes_256_gcm_decrypt(struct openconnect_info *vpninfo, unsigned char *key,
+			unsigned char *data, int len,
+			unsigned char *iv, unsigned char *tag)
+{
+	/* Finally, we actually decrypt the sso-token */
+	EVP_CIPHER_CTX *cctx = EVP_CIPHER_CTX_new();
+	int ret = 0, i = 0;
+
+	if (!cctx ||
+	    !EVP_DecryptInit_ex(cctx, EVP_aes_256_gcm(), NULL, key, iv) ||
+	    !EVP_CIPHER_CTX_ctrl(cctx, EVP_CTRL_AEAD_SET_TAG, 12, tag) ||
+	    !EVP_DecryptUpdate(cctx, data, &len, data, len) ||
+	    !EVP_DecryptFinal(cctx, NULL, &i)) {
+		vpn_progress(vpninfo, PRG_ERR, _("SSO token decryption failed\n"));
+		openconnect_report_ssl_errors(vpninfo);
+		ret = -EINVAL;
+	}
+	EVP_CIPHER_CTX_free(cctx);
+	return ret;
+}
+#endif /* HAVE_HPKE_SUPPORT */
