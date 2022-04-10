@@ -826,6 +826,15 @@ static void handle_signal(int sig)
 	if (sig_vpninfo)
 		sig_vpninfo->need_poll_cmd_fd = 1;
 }
+
+static int checked_sigaction(int signum, const struct sigaction *act, struct sigaction *oldact)
+{
+	int ret = sigaction(signum, act, oldact);
+	if (ret)
+		fprintf(stderr, _("WARNING: Cannot set handler for signal %d: %s\n"),
+			signum, strerror(errno));
+	return ret;
+}
 #else /* _WIN32 */
 static const char *default_vpncscript;
 static void set_default_vpncscript(void)
@@ -2176,11 +2185,11 @@ int main(int argc, char **argv)
 	memset(&sa, 0, sizeof(sa));
 
 	sa.sa_handler = handle_signal;
-	sigaction(SIGTERM, &sa, NULL);
-	sigaction(SIGINT, &sa, NULL);
-	sigaction(SIGHUP, &sa, NULL);
-	sigaction(SIGUSR1, &sa, NULL);
-	sigaction(SIGUSR2, &sa, NULL);
+	checked_sigaction(SIGTERM, &sa, NULL);
+	checked_sigaction(SIGINT, &sa, NULL);
+	checked_sigaction(SIGHUP, &sa, NULL);
+	checked_sigaction(SIGUSR1, &sa, NULL);
+	checked_sigaction(SIGUSR2, &sa, NULL);
 #else /* _WIN32 */
 	SetConsoleCtrlHandler(console_ctrl_handler, TRUE /* Add */);
 #endif
