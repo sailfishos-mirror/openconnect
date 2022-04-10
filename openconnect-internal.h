@@ -1584,7 +1584,7 @@ int process_auth_form(struct openconnect_info *vpninfo, struct oc_auth_form *for
 void openconnect_set_juniper(struct openconnect_info *vpninfo);
 
 /* version.c */
-extern const char *openconnect_version_str;
+extern const char openconnect_version_str[];
 
 
 static inline int certinfo_is_primary(struct cert_info *certinfo)

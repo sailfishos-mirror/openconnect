@@ -17,5 +17,5 @@ else # XXX: Equivalent for .deb packages?
 	v="$v"-unknown
 fi
 
-echo "const char *openconnect_version_str = \"$v\";" > $1
+echo "const char openconnect_version_str[] = \"$v\";" > $1
 echo "New version: $v"

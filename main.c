@@ -658,7 +658,7 @@ static void helpmessage(void)
 
 static void print_build_opts(void)
 {
-	const char *comma = ", ", *sep = comma + 1;
+	const char comma[] = ", ", *sep = comma + 1;
 
 	printf(_("Using %s. Features present:"), openconnect_get_tls_library_version());
 
@@ -717,7 +717,7 @@ static void print_build_opts(void)
 
 static void print_supported_protocols(void)
 {
-	const char *comma = ", ", *sep = comma + 1;
+	const char comma[] = ", ", *sep = comma + 1;
 	struct oc_vpn_proto *protos, *p;
 	int n;
 

@@ -380,7 +380,7 @@ int openconnect_make_cstp_connection(struct openconnect_info *vpninfo)
 int openconnect_set_reported_os(struct openconnect_info *vpninfo,
 				const char *os)
 {
-	const char *allowed[] = {"linux", "linux-64", "win", "mac-intel", "android", "apple-ios"};
+	static const char * const allowed[] = {"linux", "linux-64", "win", "mac-intel", "android", "apple-ios"};
 
 	if (!os) {
 #if defined(__APPLE__)
@@ -1349,7 +1349,7 @@ int openconnect_setup_tun_device(struct openconnect_info *vpninfo,
 	return openconnect_setup_tun_fd(vpninfo, tun_fd);
 }
 
-static const char *compr_name_map[] = {
+static const char * const compr_name_map[] = {
 	[COMPR_DEFLATE] = "Deflate",
 	[COMPR_LZS] = "LZS",
 	[COMPR_LZ4] = "LZ4",
