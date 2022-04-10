@@ -394,12 +394,12 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 						check_ip_src = atoi(s);
 					if (!xmlnode_get_prop(xml_node, "tun-user-ses-timeout", &s))
 						dropped_session_cleanup = atoi(s);
-					vpn_progress(vpninfo, PRG_ERR,
+					vpn_progress(vpninfo, PRG_INFO,
 						     _("Server reports that reconnect-after-drop is allowed within %d seconds, %s\n"),
 						     dropped_session_cleanup,
 						     check_ip_src ? _("but only from the same source IP address") : _("even if source IP address changes"));
 				} else
-					vpn_progress(vpninfo, PRG_ERR,
+					vpn_progress(vpninfo, PRG_INFO,
 						     _("Server reports that reconnect-after-drop is not allowed. OpenConnect will not\n"
 						       "be able to reconnect if dead peer is detected. If reconnection DOES work,\n"
 						       "please report to <openconnect-devel@lists.infradead.org>\n"));
