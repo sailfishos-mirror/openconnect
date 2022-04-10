@@ -1,0 +1,8 @@
+pull_request:
+  steps:
+    - branch_package:
+        source_project: home:bluca:openconnect
+        source_package: openconnect
+        target_project: home:bluca:openconnect:ci
+  filters:
+    event: pull_request
