@@ -1738,7 +1738,7 @@ int main(int argc, char **argv)
 
 	openconnect_init_ssl();
 
-	vpninfo = openconnect_vpninfo_new((char *)"Open AnyConnect VPN Agent",
+	vpninfo = openconnect_vpninfo_new("Open AnyConnect VPN Agent",
 		validate_peer_cert, NULL, process_auth_form_cb, write_progress, NULL);
 	if (!vpninfo) {
 		fprintf(stderr, _("Failed to allocate vpninfo structure\n"));
