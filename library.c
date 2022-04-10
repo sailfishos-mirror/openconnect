@@ -1668,6 +1668,13 @@ void openconnect_set_webview_callback(struct openconnect_info *vpninfo,
 	vpninfo->try_http_auth = 0;
 }
 
+void openconnect_set_external_browser_callback(struct openconnect_info *vpninfo,
+					       openconnect_open_webview_vfn browser_fn)
+{
+	vpninfo->open_ext_browser = browser_fn;
+	vpninfo->try_http_auth = 0;
+}
+
 int openconnect_webview_load_changed(struct openconnect_info *vpninfo,
 				      const struct oc_webview_result *result)
 {

@@ -36,6 +36,9 @@ extern "C" {
 #define OPENCONNECT_API_VERSION_MINOR 7
 
 /*
+ * API version 5.8:
+ *  - Add openconnect_set_external_browser_callback()
+ *
  * API version 5.7 (v8.20; 2022-02-20):
  *  - Add openconnect_get_connect_url()
  *  - Add openconnect_set_cookie()
@@ -756,6 +759,9 @@ void openconnect_set_webview_callback(struct openconnect_info *vpninfo,
 
 int openconnect_webview_load_changed(struct openconnect_info *vpninfo,
                                      const struct oc_webview_result *result);
+
+void openconnect_set_external_browser_callback(struct openconnect_info *vpninfo,
+					       openconnect_open_webview_vfn);
 
 /* Callback to allow binding a newly created socket's file descriptor to
    a specific interface, e.g. with SO_BINDTODEVICE. This tells the kernel

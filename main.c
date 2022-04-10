@@ -96,6 +96,8 @@ static int allow_stdin_read;
 static char *token_filename;
 static int allowed_fingerprints;
 
+static char *ext_browser;
+
 struct accepted_cert {
 	struct accepted_cert *next;
 	char *fingerprint;
@@ -178,6 +180,7 @@ enum {
 	OPT_DTLS_CIPHERS,
 	OPT_DTLS12_CIPHERS,
 	OPT_DUMP_HTTP,
+	OPT_EXT_BROWSER,
 	OPT_FORCE_DPD,
 	OPT_FORCE_TROJAN,
 	OPT_GNUTLS_DEBUG,
@@ -234,6 +237,9 @@ static const struct option long_options[] = {
 	OPTION("syslog", 0, 'l'),
 	OPTION("csd-user", 1, OPT_CSD_USER),
 	OPTION("csd-wrapper", 1, OPT_CSD_WRAPPER),
+#endif
+#ifdef HAVE_POSIX_SPAWN
+	OPTION("external-browser", 1, OPT_EXT_BROWSER),
 #endif
 	OPTION("pfs", 0, OPT_PFS),
 	OPTION("allow-insecure-crypto", 0, OPT_ALLOW_INSECURE_CRYPTO),
@@ -885,7 +891,24 @@ static BOOL WINAPI console_ctrl_handler(DWORD dwCtrlType)
 	return TRUE;
 }
 #endif
+#ifdef HAVE_POSIX_SPAWN
+#include <spawn.h>
+static int spawn_browser(struct openconnect_info *vpninfo, const char *url, void *cbdata)
+{
+	vpn_progress(vpninfo, PRG_TRACE,
+		     _("Main Spawning external browser '%s'\n"),
+		     ext_browser);
+	pid_t pid = 0;
+	char *browser_argv[3] = { ext_browser, (char *)url, NULL };
 
+	if (posix_spawn(&pid, ext_browser, NULL, NULL, browser_argv, environ)) {
+		vpn_perror(vpninfo, _("Spawn browser"));
+		return -errno;
+	}
+
+	return 0;
+}
+#endif
 static void print_default_vpncscript(void)
 {
 	printf("%s %s\n", _("Default vpnc-script (override with --script):"),
@@ -937,6 +960,7 @@ static void usage(void)
 	printf("  -e, --cert-expire-warning=DAYS  %s\n", _("Warn when certificate lifetime < DAYS"));
 	printf("  -g, --usergroup=GROUP           %s\n", _("Set login usergroup"));
 	printf("  -p, --key-password=PASS         %s\n", _("Set key passphrase or TPM SRK PIN"));
+	printf("      --external-browser=BROWSER  %s\n", _("Set external browser executable"));
 	printf("      --key-password-from-fsid    %s\n", _("Key passphrase is fsid of file system"));
 	printf("      --token-mode=MODE           %s\n", _("Software token type: rsa, totp, hotp or oidc"));
 	printf("      --token-secret=STRING       %s\n", _("Software token secret or oidc token"));
@@ -1386,6 +1410,7 @@ static int autocomplete(int argc, char **argv)
 
 			case 's': /* --script */
 			case OPT_CSD_WRAPPER: /* --csd-wrapper */
+			case OPT_EXT_BROWSER: /* --external-browser */
 				autocomplete_special("EXECUTABLE", comp_opt, prefixlen, NULL);
 				break;
 
@@ -2013,6 +2038,9 @@ int main(int argc, char **argv)
 		case 's':
 			vpnc_script = dup_config_arg();
 			break;
+		case OPT_EXT_BROWSER:
+			ext_browser = dup_config_arg();
+			break;
 		case 'u':
 			free(username);
 			username = dup_config_arg();
@@ -2165,7 +2193,6 @@ int main(int argc, char **argv)
 		verbose = PRG_DEBUG;
 
 	openconnect_set_loglevel(vpninfo, verbose);
-
 	if (autoproxy) {
 #ifdef LIBPROXY_HDR
 		vpninfo->proxy_factory = px_proxy_factory_new();
@@ -2180,6 +2207,11 @@ int main(int argc, char **argv)
 
 	if (proxy && openconnect_set_http_proxy(vpninfo, strdup(proxy)))
 		exit(1);
+
+#ifdef HAVE_POSIX_SPAWN
+	if (ext_browser)
+		openconnect_set_external_browser_callback(vpninfo, spawn_browser);
+#endif
 
 #ifndef _WIN32
 	memset(&sa, 0, sizeof(sa));

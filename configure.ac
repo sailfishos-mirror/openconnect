@@ -129,6 +129,22 @@ fi
 AM_CONDITIONAL(BUILD_NSIS, [ test "$build_nsis" = "yes" ])
 AM_CONDITIONAL(OPENCONNECT_WINTUN, [ test "${wintun_arch}" != "" ])
 
+AC_ARG_WITH([external-browser],
+	[AS_HELP_STRING([--with-external-browser],
+	  [command to use for spawning external web browser])])
+
+if test "$with_external_browser" = "yes" || test "$with_external_browser" = ""; then
+   AC_MSG_CHECKING([for xdg-open])
+   AC_PATH_PROG(with_external_browser, xdg-open, no)
+fi
+if test "$with_external_browser" != "no"; then
+   if test -x "${with_external_browser}"; then
+      AC_DEFINE_UNQUOTED(DEFAULT_EXTERNAL_BROWSER, "${with_external_browser}", [External browser executable])
+   else
+      AC_MSG_ERROR([${with_external_browser} does not seem to be executable.])
+   fi
+fi
+
 AC_ARG_WITH([vpnc-script],
 	[AS_HELP_STRING([--with-vpnc-script],
 	  [default location of vpnc-script helper])])
@@ -307,6 +323,8 @@ AC_ENABLE_SHARED
 AC_DISABLE_STATIC
 
 AC_CHECK_FUNC(nl_langinfo, [AC_DEFINE(HAVE_NL_LANGINFO, 1, [Have nl_langinfo() function])], [])
+
+AC_CHECK_FUNC(posix_spawn, [AC_DEFINE(HAVE_POSIX_SPAWN, 1, [Have posix_spawn() function])], [])
 
 if test "$ac_cv_func_nl_langinfo" = "yes"; then
     AM_ICONV

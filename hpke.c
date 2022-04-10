@@ -24,6 +24,10 @@ int handle_external_browser(struct openconnect_info *vpninfo)
 }
 #else
 
+#ifdef HAVE_POSIX_SPAWN
+#include <spawn.h>
+#endif
+
 #include <ctype.h>
 
 #define HPKE_TAG_PUBKEY		1
@@ -102,12 +106,30 @@ int handle_external_browser(struct openconnect_info *vpninfo)
 	if (set_sock_nonblock(listen_fd))
 		goto sockerr;
 
+	/* Now that we are listening on the socket, we can spawn the browser */
+	if (vpninfo->open_ext_browser) {
+		ret = vpninfo->open_ext_browser(vpninfo, vpninfo->sso_login, vpninfo->cbdata);
+#if defined(HAVE_POSIX_SPAWN) && defined(DEFAULT_EXTERNAL_BROWSER)
+	} else {
+		vpn_progress(vpninfo, PRG_TRACE, _("Spawning external browser '%s'\n"),
+			     DEFAULT_EXTERNAL_BROWSER);
 
-	/* Now that we are listening on the socket, we can spawn the browser...
-	   or just tell the user to, for now */
-	vpn_progress(vpninfo, PRG_ERR,
-		     _("Point browser to this URL:\n%s\n"),
-		     vpninfo->sso_login);
+		pid_t pid = 0;
+		char * browser_argv[3] = { (char *)DEFAULT_EXTERNAL_BROWSER, vpninfo->sso_login, NULL };
+
+		if (posix_spawn(&pid, DEFAULT_EXTERNAL_BROWSER, NULL, NULL, browser_argv, environ)) {
+			ret = -errno;
+			vpn_perror(vpninfo, _("Spawn browser"));
+		}
+#else
+	} else {
+		ret = -EINVAL;
+#endif
+	}
+	if (ret)
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Failed to spawn external browser for %s\n"),
+			     vpninfo->sso_login);
 
 	char *returl = NULL;
 	struct oc_text_buf *b64_buf = NULL;
