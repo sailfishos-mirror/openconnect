@@ -186,35 +186,12 @@ intptr_t os_setup_tun(struct openconnect_info *vpninfo)
 
 #else /* !__sun__ && !__native_client__ */
 
-/* MTU setting code for both Linux and BSD systems */
 static void ifreq_set_ifname(struct openconnect_info *vpninfo, struct ifreq *ifr)
 {
 	char *ifname = openconnect_utf8_to_legacy(vpninfo, vpninfo->ifname);
 	strncpy(ifr->ifr_name, ifname, sizeof(ifr->ifr_name) - 1);
 	if (ifname != vpninfo->ifname)
 		free(ifname);
-}
-
-static int set_tun_mtu(struct openconnect_info *vpninfo)
-{
-	struct ifreq ifr;
-	int net_fd;
-
-	net_fd = socket(PF_INET, SOCK_DGRAM, 0);
-	if (net_fd < 0) {
-		vpn_perror(vpninfo, _("open net"));
-		return -EINVAL;
-	}
-
-	memset(&ifr, 0, sizeof(ifr));
-	ifreq_set_ifname(vpninfo, &ifr);
-	ifr.ifr_mtu = vpninfo->ip_info.mtu;
-
-	if (ioctl(net_fd, SIOCSIFMTU, &ifr) < 0)
-		vpn_perror(vpninfo, _("SIOCSIFMTU"));
-
-	close(net_fd);
-	return 0;
 }
 
 #ifdef IFF_TUN /* Linux */
@@ -262,9 +239,6 @@ intptr_t os_setup_tun(struct openconnect_info *vpninfo)
 	}
 	if (!vpninfo->ifname)
 		vpninfo->ifname = strdup(ifr.ifr_name);
-
-	/* Ancient vpnc-scripts might not get this right */
-	set_tun_mtu(vpninfo);
 
 	return tun_fd;
 }
@@ -439,9 +413,6 @@ intptr_t os_setup_tun(struct openconnect_info *vpninfo)
 		return -EIO;
 	}
 #endif
-
-	/* Ancient vpnc-scripts might not get this right */
-	set_tun_mtu(vpninfo);
 
 	return tun_fd;
 }
