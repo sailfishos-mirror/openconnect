@@ -140,7 +140,7 @@ intptr_t open_wintun(struct openconnect_info *vpninfo, char *guid, wchar_t *wnam
 	}
 
 	DWORD ver = WintunGetRunningDriverVersion();
-	vpn_progress(vpninfo, PRG_DEBUG, _("Loaded Wintun v%u.%u\n"),
+	vpn_progress(vpninfo, PRG_DEBUG, _("Loaded Wintun v%lu.%lu\n"),
 		     (ver >> 16) & 0xff, ver & 0xff);
 
 	vpninfo->wintun_session = WintunStartSession(vpninfo->wintun_adapter,
