@@ -169,7 +169,7 @@ int os_read_wintun(struct openconnect_info *vpninfo, struct pkt *pkt)
 	if (!tun_pkt) {
 		DWORD err = GetLastError();
 		if (err != ERROR_NO_MORE_ITEMS) {
-			const char *errstr = openconnect__win32_strerror(err);
+			char *errstr = openconnect__win32_strerror(err);
 			vpn_progress(vpninfo, PRG_ERR, _("Could not retrieve packet from Wintun adapter '%S': %s\n"),
 				     vpninfo->ifname_w, errstr);
 			free(errstr);
@@ -196,7 +196,7 @@ int os_write_wintun(struct openconnect_info *vpninfo, struct pkt *pkt)
 						 pkt->len);
 	if (!tun_pkt) {
 		DWORD err = GetLastError();
-		const char *errstr = openconnect__win32_strerror(err);
+		char *errstr = openconnect__win32_strerror(err);
 		vpn_progress(vpninfo, PRG_ERR, _("Could not send packet through Wintun adapter '%S': %s\n"),
 			     vpninfo->ifname_w, errstr);
 		free(errstr);
