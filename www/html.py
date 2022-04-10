@@ -133,32 +133,20 @@ class docHandler(xml.sax.ContentHandler):
             writeHtml("<" + name)
             if attrs.getLength() > 0:
                 names = attrs.getNames()
-                for name in names:
-                    writeHtml(" " + name + "=\"" + attrs.get(name) + "\"")
+                for n in names:
+                    v = attrs.get(n)
+                    writeHtml(" " + n + "=\"" + v + "\"")
             writeHtml(" />" if name == "br" else ">")
 
-    def characters(self, ch):
-        self.content += ch
+    def characters(self, content):
+        self.content += content
 
     def endElement(self, name):
 
-        if name == "PAGE":
-            return
-        elif name == 'INCLUDE':
-            return
-        elif name == 'PARSE':
-            return
-        elif name == 'PAGE':
-            return
-        elif name == 'STARTMENU':
-            return
-        elif name == 'ENDMENU':
-            return
-        elif name == 'MENU':
-            return
-        elif name == 'VAR':
-            return
-        elif name == 'br':
+        if name in {
+            "PAGE", "INCLUDE", "PARSE", "STARTMENU", "ENDMENU", "MENU",
+            "VAR", "br",
+        }:
             return
 
         if len(self.content) > 0:
