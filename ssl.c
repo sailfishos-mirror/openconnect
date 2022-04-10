@@ -343,9 +343,17 @@ int connect_https_socket(struct openconnect_info *vpninfo)
 			err = getaddrinfo(hostname, port, &hints, &result);
 
 		if (err) {
+#ifdef _WIN32
+			char *errstr = openconnect__win32_strerror(WSAGetLastError());
+#else
+			const char *errstr = gai_strerror(err);
+#endif
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("getaddrinfo failed for host '%s': %s\n"),
-				     hostname, gai_strerror(err));
+				     hostname, errstr);
+#ifdef _WIN32
+			free(errstr);
+#endif
 			if (hints.ai_flags & AI_NUMERICHOST)
 				free(hostname);
 			ssl_sock = -EINVAL;
