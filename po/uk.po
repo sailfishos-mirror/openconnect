@@ -6939,8 +6939,8 @@ msgstr "Не вдалося визначити назви функцій з wint
 
 #: wintun.c:143
 #, c-format
-msgid "Loaded Wintun v%u.%u\n"
-msgstr "Завантажено Wintun v%u.%u\n"
+msgid "Loaded Wintun v%lu.%lu\n"
+msgstr "Завантажено Wintun v%lu.%lu\n"
 
 #: wintun.c:150
 #, c-format

@@ -6856,8 +6856,8 @@ msgstr "Não foi possível solucionar as funções de wintun.dll\n"
 
 #: wintun.c:143
 #, c-format
-msgid "Loaded Wintun v%u.%u\n"
-msgstr "Carregado Wintun v%u.%u\n"
+msgid "Loaded Wintun v%lu.%lu\n"
+msgstr "Carregado Wintun v%lu.%lu\n"
 
 #: wintun.c:150
 #, c-format

@@ -6740,7 +6740,7 @@ msgstr "Tak bisa mengurai fungsi dari wintun.dll\n"
 
 #: wintun.c:143
 #, c-format
-msgid "Loaded Wintun v%u.%u\n"
+msgid "Loaded Wintun v%lu.%lu\n"
 msgstr ""
 
 #: wintun.c:150
