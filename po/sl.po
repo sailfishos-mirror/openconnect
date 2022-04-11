@@ -3996,8 +3996,7 @@ msgid ""
 msgstr ""
 "Zaradi uporabe možnosti --no-http-keepalive je onemogočena ponovna uporaba "
 "povezav HTTP.\n"
-"V kolikor možnost deluje, pošljite poročilo na <openconnect-devel@lists."
-"infradead.org>.\n"
+"V kolikor možnost deluje, pošljite poročilo na <%s>.\n"
 
 #: main.c:2036
 #, c-format

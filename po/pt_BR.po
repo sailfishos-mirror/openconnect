@@ -1385,6 +1385,16 @@ msgid ""
 "    report results to <%s>\n"
 msgstr ""
 
+#: fortinet.c:559
+#, c-format
+msgid ""
+"Server did not send <auth-ses tun-connect-without-reauth=\"0/1\"/>. "
+"OpenConnect will\n"
+"probably not be able to reconnect if dead peer is detected. If reconnection "
+"DOES,\n"
+"work please report to <%s>\n"
+msgstr ""
+
 #: fortinet.c:619
 msgid "No cookie named SVPNCOOKIE.\n"
 msgstr "Não há cookie nomeado como SVPNCOOKIE.\n"
@@ -4103,8 +4113,7 @@ msgid ""
 msgstr ""
 "Desabilitando todo reuso de conexões HTTP devido ao parâmetro --no-http-"
 "keepalive.\n"
-"Se isso ajuda, por favor relate para <openconnect-devel@lists.infradead."
-"org>.\n"
+"Se isso ajuda, por favor relate para <%s>.\n"
 
 #: main.c:2036
 #, c-format

@@ -3975,7 +3975,7 @@ msgid ""
 "If this helps, please report to <%s>.\n"
 msgstr ""
 "Isključivanje svih HTTP konekcija ponovna upotreba uslijed --no-http-"
-"keepalive opcije.\n"
+"keepalive opcije. If this helps, please report to <%s>\n"
 
 #: main.c:2036
 #, c-format

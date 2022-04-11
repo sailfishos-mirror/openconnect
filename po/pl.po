@@ -4109,8 +4109,7 @@ msgid ""
 msgstr ""
 "Wyłączanie wszystkich ponownych użyć połączeń HTTP z powodu opcji --no-http-"
 "keepalive.\n"
-"Jeśli to pomoże, to prosimy to zgłosić na adres <openconnect-devel@lists."
-"infradead.org> (w języku angielskim).\n"
+"Jeśli to pomoże, to prosimy to zgłosić na adres <%s> (w języku angielskim).\n"
 
 #: main.c:2036
 #, c-format

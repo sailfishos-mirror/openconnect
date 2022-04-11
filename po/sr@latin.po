@@ -4004,8 +4004,7 @@ msgid ""
 msgstr ""
 "Isključujem ponovno korišćenje svih HTTP veza zbog opcije „--no-http-"
 "keepalive“.\n"
-"Ako ovo pomogne, izvestite o tome na „<openconnect-devel@lists.infradead."
-"org>“.\n"
+"Ako ovo pomogne, izvestite o tome na „<%s>“.\n"
 
 #: main.c:2036
 #, c-format

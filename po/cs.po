@@ -4021,8 +4021,7 @@ msgid ""
 msgstr ""
 "Vypíná se přepoužití všech HTTP spojení kvůli předvolbě   --no-http-"
 "keepalive.\n"
-"Pokud to pomůže, pošlete hlášení na adresu <openconnect-devel@lists."
-"infradead.org>.\n"
+"Pokud to pomůže, pošlete hlášení na adresu <%s>.\n"
 
 #: main.c:2036
 #, c-format

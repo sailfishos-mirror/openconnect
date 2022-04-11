@@ -4068,8 +4068,7 @@ msgid ""
 "If this helps, please report to <%s>.\n"
 msgstr ""
 "Išjungiami visi HTTP ryšių pakartotiniai naudojimai dėl --no-http-keepalive\n"
-"parametro. Jei tai padės, praneškite <openconnect-devel@lists.infradead."
-"org>.\n"
+"parametro. Jei tai padės, praneškite <%s>.\n"
 
 #: main.c:2036
 #, c-format
@@ -6701,6 +6700,13 @@ msgstr "Nepavyko atverti tun įrenginio: %s\n"
 #, c-format
 msgid "Failed to bind local tun device (TUNSETIFF): %s\n"
 msgstr "Nepavyko prijungti vietinio tun įrenginio (TUNSETIFF): %s\n"
+
+#: tun.c:234
+#, c-format
+msgid ""
+"To configure local networking, openconnect must be running as root\n"
+"See %s for more information\n"
+msgstr ""
 
 #: tun.c:297
 #, c-format

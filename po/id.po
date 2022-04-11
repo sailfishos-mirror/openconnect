@@ -4050,8 +4050,7 @@ msgid ""
 msgstr ""
 "Mematikan penggunaan ulang semua koneksi HTTP karena opsi --no-http-"
 "keepalive.\n"
-"Bila ini membantu, harap laporkan ke <openconnect-devel@lists.infradead."
-"org>.\n"
+"Bila ini membantu, harap laporkan ke <%s>.\n"
 
 #: main.c:2036
 #, c-format

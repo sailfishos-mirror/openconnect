@@ -4117,8 +4117,7 @@ msgid ""
 "If this helps, please report to <%s>.\n"
 msgstr ""
 "Deshabiliteu la reutilització de totes les connexions HTTP degut a \n"
-"l'opció --no-http-keepalive. Si això ajuda, informeu <openconnect-"
-"devel@lists.infradead.org>.\n"
+"l'opció --no-http-keepalive. Si això ajuda, informeu <%s>.\n"
 
 #: main.c:2036
 #, c-format

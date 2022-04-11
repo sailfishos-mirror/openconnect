@@ -4058,8 +4058,7 @@ msgid ""
 msgstr ""
 "Deaktiverer al genbrug af HTTP-forbindelse pga. tilvalget --no-http-"
 "keepalive.\n"
-"Hvis det hjælper, så rapportér det venligst til <openconnect-devel@lists."
-"infradead.org>.\n"
+"Hvis det hjælper, så rapportér det venligst til <%s>.\n"
 
 #: main.c:2036
 #, c-format

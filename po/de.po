@@ -4062,8 +4062,7 @@ msgid ""
 msgstr ""
 "Wiederverwendung jeglicher HTTP-Verbindungen wird wegen der Option »--no-"
 "http-keepalive« abgeschaltet.\n"
-"Falls dies hilft, so berichten Sie bitte davon auf <openconnect-devel@lists."
-"infradead.org>.\n"
+"Falls dies hilft, so berichten Sie bitte davon auf <%s>.\n"
 
 #: main.c:2036
 #, c-format
