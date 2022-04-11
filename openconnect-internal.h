@@ -182,7 +182,6 @@ struct pkt {
 			uint32_t spi;
 			uint32_t seq;
 			unsigned char iv[16];
-			unsigned char payload[];
 		} esp;
 		struct {
 			unsigned char pad[2];
