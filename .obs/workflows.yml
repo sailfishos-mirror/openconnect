@@ -6,3 +6,13 @@ pull_request:
         target_project: home:bluca:openconnect:ci
   filters:
     event: pull_request
+rebuild:
+  steps:
+    - trigger_services:
+        project: home:bluca:openconnect
+        package: openconnect
+  filters:
+    event: push
+    branches:
+      only:
+        - master
