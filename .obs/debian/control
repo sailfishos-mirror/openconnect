@@ -23,6 +23,7 @@ Build-Depends: debhelper-compat (= 12),
                pkg-config,
                python3:any,
                softhsm2 [!hurd-i386] <!nocheck>,
+               xdg-utils,
                zlib1g-dev
 Standards-Version: 4.6.0
 Rules-Requires-Root: no
