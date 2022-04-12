@@ -668,11 +668,11 @@ int script_config_tun(struct openconnect_info *vpninfo, const char *reason)
 		exit(127);
 	}
 	if (pid == -1 || waitpid(pid, &ret, 0) == -1) {
-		int e = errno;
+		int err = errno;
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Failed to spawn script '%s' for %s: %s\n"),
-			     vpninfo->vpnc_script, reason, strerror(e));
-		return -e;
+			     vpninfo->vpnc_script, reason, strerror(err));
+		return -err;
 	}
 
 	if (!WIFEXITED(ret)) {

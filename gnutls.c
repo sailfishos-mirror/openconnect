@@ -408,7 +408,7 @@ static int load_datum(struct openconnect_info *vpninfo,
 		      gnutls_datum_t *datum, const char *fname)
 {
 	struct stat st;
-	int fd, err;
+	int fd;
 
 #ifdef ANDROID_KEYSTORE
 	if (!strncmp(fname, "keystore:", 9)) {
@@ -435,17 +435,15 @@ static int load_datum(struct openconnect_info *vpninfo,
 
 	fd = openconnect_open_utf8(vpninfo, fname, O_RDONLY|O_CLOEXEC|O_BINARY);
 	if (fd == -1) {
-		err = errno;
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Failed to open key/certificate file %s: %s\n"),
-			     fname, strerror(err));
+			     fname, strerror(errno));
 		return -ENOENT;
 	}
 	if (fstat(fd, &st)) {
-		err = errno;
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Failed to stat key/certificate file %s: %s\n"),
-			     fname, strerror(err));
+			     fname, strerror(errno));
 		close(fd);
 		return -EIO;
 	}
@@ -459,10 +457,9 @@ static int load_datum(struct openconnect_info *vpninfo,
 	}
 	errno = EAGAIN;
 	if (read(fd, datum->data, datum->size) != datum->size) {
-		err = errno;
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Failed to read certificate into memory: %s\n"),
-			     strerror(err));
+			     strerror(errno));
 		close(fd);
 		gnutls_free(datum->data);
 		return -EIO;

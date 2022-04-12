@@ -395,7 +395,7 @@ static char *convert_arg_to_utf8(char **argv, char *arg)
 		argv_w = CommandLineToArgvW(GetCommandLineW(), &argc_w);
 		if (!argv_w) {
 			char *errstr = openconnect__win32_strerror(GetLastError());
-			fprintf(stderr, _("CommandLineToArgvW() failed: %s\n"),
+			fprintf(stderr, _("CommandLineToArgv() failed: %s\n"),
 				errstr);
 			free(errstr);
 			exit(1);
@@ -475,9 +475,7 @@ static void read_stdin(char **string, int hidden, int allow_fail)
 	} else {
 		/* Not a console; maybe reading from a piped stdin? */
 		if (!fgetws(wbuf, ARRAY_SIZE(wbuf), stdin)) {
-			char *errstr = openconnect__win32_strerror(GetLastError());
-			fprintf(stderr, _("fgetws() failed: %s\n"), errstr);
-			free(errstr);
+			perror(_("fgetws (stdin)"));
 			*string = NULL;
 			return;
 		}
@@ -503,7 +501,7 @@ static void read_stdin(char **string, int hidden, int allow_fail)
 	}
 	buf = malloc(nr_read);
 	if (!buf) {
-		fprintf(stderr, _("Allocation failure for string from stdin\n"));
+		perror(_("Allocation failure for string from stdin"));
 		exit(1);
 	}
 
@@ -1240,15 +1238,13 @@ static void get_uids(const char *config_arg, uid_t *uid, gid_t *gid)
 {
 	char *strend;
 	struct passwd *pw;
-	int e;
 
 	*uid = strtol(config_arg, &strend, 0);
 	if (strend[0]) {
 		pw = getpwnam(config_arg);
 		if (!pw) {
-			e = errno;
 			fprintf(stderr, _("Invalid user \"%s\": %s\n"),
-				config_arg, strerror(e));
+				config_arg, strerror(errno));
 			exit(1);
 		}
 		*uid = pw->pw_uid;
@@ -1256,9 +1252,8 @@ static void get_uids(const char *config_arg, uid_t *uid, gid_t *gid)
 	} else {
 		pw = getpwuid(*uid);
 		if (!pw) {
-			e = errno;
 			fprintf(stderr, _("Invalid user ID \"%d\": %s\n"),
-				(int)*uid, strerror(e));
+				(int)*uid, strerror(errno));
 			exit(1);
 		}
 		*gid = pw->pw_gid;
@@ -1656,7 +1651,7 @@ static int background_self(struct openconnect_info *vpninfo, char *pidfile)
 	}
 	pid = fork();
 	if (pid == -1) {
-		vpn_perror(vpninfo, "Failed to continue in background\n");
+		vpn_perror(vpninfo, _("Failed to continue in background"));
 		exit(1);
 	} else if (pid > 0) {
 		if (fp) {
