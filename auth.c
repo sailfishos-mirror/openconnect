@@ -1059,41 +1059,41 @@ int set_csd_user(struct openconnect_info *vpninfo)
 
 	if (vpninfo->uid_csd_given && vpninfo->uid_csd != getuid()) {
 		struct passwd *pw;
-		int e;
+		int err;
 
 		if (setgid(vpninfo->gid_csd)) {
-			e = errno;
+			err = errno;
 			fprintf(stderr, _("Failed to set gid %ld: %s\n"),
-				(long)vpninfo->uid_csd, strerror(e));
-			return -e;
+				(long)vpninfo->uid_csd, strerror(err));
+			return -err;
 		}
 
 		if (setgroups(1, &vpninfo->gid_csd)) {
-			e = errno;
+			err = errno;
 			fprintf(stderr, _("Failed to set groups to %ld: %s\n"),
-				(long)vpninfo->uid_csd, strerror(e));
-			return -e;
+				(long)vpninfo->uid_csd, strerror(err));
+			return -err;
 		}
 
 		if (setuid(vpninfo->uid_csd)) {
-			e = errno;
+			err = errno;
 			fprintf(stderr, _("Failed to set uid %ld: %s\n"),
-				(long)vpninfo->uid_csd, strerror(e));
-			return -e;
+				(long)vpninfo->uid_csd, strerror(err));
+			return -err;
 		}
 
 		if (!(pw = getpwuid(vpninfo->uid_csd))) {
-			e = errno;
+			err = errno;
 			fprintf(stderr, _("Invalid user uid=%ld: %s\n"),
-				(long)vpninfo->uid_csd, strerror(e));
-			return -e;
+				(long)vpninfo->uid_csd, strerror(err));
+			return -err;
 		}
 		setenv("HOME", pw->pw_dir, 1);
 		if (chdir(pw->pw_dir)) {
-			e = errno;
+			err = errno;
 			fprintf(stderr, _("Failed to change to CSD home directory '%s': %s\n"),
-				pw->pw_dir, strerror(e));
-			return -e;
+				pw->pw_dir, strerror(err));
+			return -err;
 		}
 	}
 	return 0;
