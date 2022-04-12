@@ -2,8 +2,6 @@
 
 #include "openconnect-internal.h"
 
-#define NELEM(array)	(sizeof(array)/sizeof(array[0]))
-
 static const struct {
 	openconnect_hash_type id;
 	const char *name;
@@ -17,7 +15,7 @@ const char *multicert_hash_get_name(int id)
 {
 	size_t i;
 
-	if (id > 0 && (size_t) id < NELEM(digest_table)) {
+	if (id > 0 && (size_t) id < ARRAY_SIZE(digest_table)) {
 		i = (size_t) id;
 		if (digest_table[i].id)
 			return digest_table[i].name;
@@ -30,7 +28,7 @@ openconnect_hash_type multicert_hash_get_id(const char *name)
 	size_t i;
 
 	if (name) {
-		for (i = 1; i < NELEM(digest_table); i++) {
+		for (i = 1; i < ARRAY_SIZE(digest_table); i++) {
 			if (digest_table[i].name &&
 			    !strcmp(digest_table[i].name, name))
 				return digest_table[i].id;

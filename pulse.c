@@ -2197,7 +2197,8 @@ int pulse_obtain_cookie(struct openconnect_info *vpninfo)
 static int handle_attr_elements(struct openconnect_info *vpninfo,
 				unsigned char *bytes, int len,
 				struct oc_vpn_option **new_opts,
-				struct oc_ip_info *new_ip_info) {
+				struct oc_ip_info *new_ip_info)
+{
 	unsigned char *p = bytes;
 	int l = len;
 

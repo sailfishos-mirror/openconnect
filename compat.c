@@ -381,11 +381,10 @@ WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH 
 #include <afunix.h>
 #else
 #define UNIX_PATH_MAX 108
-struct sockaddr_un
-{
+struct sockaddr_un {
     ADDRESS_FAMILY sun_family;     /* AF_UNIX */
     char sun_path[UNIX_PATH_MAX];  /* pathname */
-} SOCKADDR_UN, *PSOCKADDR_UN;;
+} SOCKADDR_UN, *PSOCKADDR_UN;
 #endif /* HAS_AFUNIX_H */
 
 /* dumb_socketpair:
@@ -488,7 +487,7 @@ int dumb_socketpair(OPENCONNECT_CMD_SOCKET socks[2], int make_overlapped)
 
             if (setsockopt(listener, SOL_SOCKET, SO_REUSEADDR,
                            (char *) &reuse, (socklen_t) sizeof(reuse)) == -1)
-                goto fallback;;
+                goto fallback;
 
             if (bind(listener, &a.addr, addrlen) == SOCKET_ERROR)
                 goto fallback;

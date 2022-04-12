@@ -45,8 +45,7 @@ enum {
 	CERT2_REQUESTED = (1<<2),
 };
 
-struct cert_request
-{
+struct cert_request {
 	unsigned int state:16;
 	unsigned int hashes:16;
 };
@@ -1844,7 +1843,7 @@ void parse_multicert_request(struct openconnect_info *vpninfo,
 		if (hash == OPENCONNECT_HASH_UNKNOWN) {
 			vpn_progress(vpninfo, PRG_INFO,
 			    _("Unsupported hash algorithm '%s' requested.\n"),
-			    (char*) content);
+			    (char *) content);
 			goto next;
 		}
 
@@ -1853,7 +1852,7 @@ void parse_multicert_request(struct openconnect_info *vpninfo,
 		if (oldhashes == cert_rq->hashes)
 			vpn_progress(vpninfo, PRG_INFO,
 			   _("Duplicate hash algorithm '%s' requested.\n"),
-			   (char*) content);
+			   (char *) content);
 
 	next:
 		xmlFree(content);
@@ -1871,7 +1870,7 @@ static int post_multicert_response(struct openconnect_info *vpninfo, const xmlCh
 	const xmlChar *hashname;
 	xmlDocPtr doc;
 	xmlNodePtr root, auth, node, chain;
-	
+
 	doc = xmlpost_new_query(vpninfo, "auth-reply", &root);
 	if (!doc)
 		goto bad;
