@@ -149,7 +149,7 @@ def handle_xmlpost(usergroup=None):
 
 def initial_request(dict_req):
     config_auth = dict_req['config-auth']
-    assert config_auth['capabilities']['auth-method'] == 'multiple-cert'
+#    assert config_auth['capabilities']['auth-method'] == 'multiple-cert'
     return INITIAL_RESPONSE
 
 
