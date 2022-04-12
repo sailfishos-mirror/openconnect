@@ -124,7 +124,7 @@ static const struct vpn_proto openconnect_protos[] = {
 		.pretty_name = N_("Cisco AnyConnect or openconnect"),
 		.description = N_("Compatible with Cisco AnyConnect SSL VPN, as well as ocserv"),
 		.proto = PROTO_ANYCONNECT,
-		.flags = OC_PROTO_PROXY | OC_PROTO_CSD | OC_PROTO_AUTH_CERT | OC_PROTO_AUTH_OTP | OC_PROTO_AUTH_STOKEN,
+		.flags = OC_PROTO_PROXY | OC_PROTO_CSD | OC_PROTO_AUTH_CERT | OC_PROTO_AUTH_OTP | OC_PROTO_AUTH_STOKEN | OC_PROTO_AUTH_MCA,
 		.vpn_close_session = cstp_bye,
 		.tcp_connect = cstp_connect,
 		.tcp_mainloop = cstp_mainloop,
@@ -579,6 +579,24 @@ int install_vpn_opts(struct openconnect_info *vpninfo, struct oc_vpn_option *opt
 	return 0;
 }
 
+static void free_certinfo(struct cert_info *certinfo)
+{
+	/**
+	 * Ensure resources are released
+	 */
+
+	unload_certificate(certinfo, 1);
+
+	/* These are const in openconnect itself, but for consistency of
+	   the library API we do take ownership of the strings we're given,
+	   and thus we have to free them too. */
+	if (certinfo->cert != certinfo->key)
+		free((void *)certinfo->key);
+	free((void *)certinfo->cert);
+
+	free_pass(&certinfo->password);
+}
+
 void openconnect_vpninfo_free(struct openconnect_info *vpninfo)
 {
 	openconnect_close_https(vpninfo, 1);
@@ -639,7 +657,6 @@ void openconnect_vpninfo_free(struct openconnect_info *vpninfo)
 	free(vpninfo->proxy);
 	free(vpninfo->proxy_user);
 	free_pass(&vpninfo->proxy_pass);
-	free_pass(&vpninfo->certinfo[0].password);
 	free(vpninfo->vpnc_script);
 	free(vpninfo->cafile);
 	free(vpninfo->ifname);
@@ -682,12 +699,9 @@ void openconnect_vpninfo_free(struct openconnect_info *vpninfo)
 	free(vpninfo->profile_url);
 	free(vpninfo->profile_sha1);
 
-	/* These are const in openconnect itself, but for consistency of
-	   the library API we do take ownership of the strings we're given,
-	   and thus we have to free them too. */
-	if (vpninfo->certinfo[0].cert != vpninfo->certinfo[0].key)
-		free((void *)vpninfo->certinfo[0].key);
-	free((void *)vpninfo->certinfo[0].cert);
+	free_certinfo(&vpninfo->certinfo[0]);
+	free_certinfo(&vpninfo->certinfo[1]);
+
 	if (vpninfo->peer_cert) {
 #if defined(OPENCONNECT_OPENSSL)
 		X509_free(vpninfo->peer_cert);
@@ -980,6 +994,34 @@ int openconnect_set_client_cert(struct openconnect_info *vpninfo,
 	} else {
 		vpninfo->certinfo[0].key = vpninfo->certinfo[0].cert;
 	}
+
+	return 0;
+}
+
+int openconnect_set_mca_cert(struct openconnect_info *vpninfo,
+			     const char *cert, const char *key)
+{
+	UTF8CHECK(cert);
+	UTF8CHECK(key);
+
+	/* Avoid freeing it twice if it's the same */
+	if (vpninfo->certinfo[1].key == vpninfo->certinfo[1].cert)
+		vpninfo->certinfo[1].key = NULL;
+
+	STRDUP(vpninfo->certinfo[1].cert, cert);
+
+	if (key) {
+		STRDUP(vpninfo->certinfo[1].key, key);
+	} else {
+		vpninfo->certinfo[1].key = vpninfo->certinfo[1].cert;
+	}
+
+	return 0;
+}
+
+int openconnect_set_mca_key_password(struct openconnect_info *vpninfo, const char *pass)
+{
+	STRDUP(vpninfo->certinfo[1].password, pass);
 
 	return 0;
 }

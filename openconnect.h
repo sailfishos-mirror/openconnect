@@ -38,6 +38,7 @@ extern "C" {
 /*
  * API version 5.8:
  *  - Add openconnect_set_external_browser_callback()
+ *  - Add openconnect_set_mca_cert() and openconnect_set_mca_key_password()
  *
  * API version 5.7 (v8.20; 2022-02-20):
  *  - Add openconnect_get_connect_url()
@@ -200,6 +201,7 @@ extern "C" {
 #define OC_PROTO_AUTH_STOKEN	(1<<4)
 #define OC_PROTO_PERIODIC_TROJAN	(1<<5)
 #define OC_PROTO_HIDDEN	(1<<6)
+#define OC_PROTO_AUTH_MCA	(1<<7)
 
 struct oc_vpn_proto {
 	const char *name;
@@ -625,6 +627,14 @@ int openconnect_set_mobile_info(struct openconnect_info *vpninfo,
 int openconnect_set_client_cert(struct openconnect_info *, const char *cert,
 				const char *sslkey);
 int openconnect_set_key_password(struct openconnect_info *vpninfo, const char *pass);
+/**
+ * Multiple certificate authentication (MCA): the client cert _and_ the
+ * mca_cert are used for authentication. The mca_cert is used to sign a
+ * challenge sent by the server.
+ */
+int openconnect_set_mca_cert(struct openconnect_info *, const char *cert,
+			     const char *key);
+int openconnect_set_mca_key_password(struct openconnect_info *vpninfo, const char *pass);
 const char *openconnect_get_ifname(struct openconnect_info *);
 void openconnect_set_reqmtu(struct openconnect_info *, int reqmtu);
 void openconnect_set_dpd(struct openconnect_info *, int min_seconds);

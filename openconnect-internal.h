@@ -239,7 +239,7 @@ struct pkt {
 #define DTLS_CONNECTED	5	/* Transport connected but not yet enabled */
 #define DTLS_ESTABLISHED 6	/* Data path fully established */
 
-/* Not to be confused with OC_PROTO_xxx flags which are library-visible */
+/* Not to be confused with MULTICERT_PROTO_xxx flags which are library-visible */
 #define PROTO_ANYCONNECT	0
 #define PROTO_NC		1
 #define PROTO_GPST		2
@@ -386,6 +386,8 @@ struct cert_info {
 	char *cert;
 	char *key;
 	char *password;
+
+	void *priv_info;
 #if defined(OPENCONNECT_GNUTLS) && defined(HAVE_TROUSERS)
 	struct oc_tpm1_ctx *tpm1;
 #endif
@@ -487,7 +489,7 @@ struct openconnect_info {
 
 	int cert_expire_warning;
 
-	struct cert_info certinfo[1];
+	struct cert_info certinfo[2];
 
 	char *cafile;
 	unsigned no_system_trust;
@@ -1162,6 +1164,39 @@ int dumb_socketpair(OPENCONNECT_CMD_SOCKET socks[2], int make_overlapped);
     } while (0)
 
 /****************************************************************************/
+typedef enum {
+	MULTICERT_COMPAT = (1<<0),
+} cert_flag_t;
+
+typedef enum {
+	CERT_FORMAT_ASN1 = 0,
+	CERT_FORMAT_PEM = 1,
+} cert_format_t;
+
+typedef enum {
+	OPENCONNECT_HASH_UNKNOWN = 0,
+#define OPENCONNECT_HASH_NONE OPENCONNECT_HASH_NONE
+	OPENCONNECT_HASH_SHA256 = 1,
+#define OPENCONNECT_HASH_SHA256 OPENCONNECT_HASH_SHA256
+	OPENCONNECT_HASH_SHA384 = 2,
+#define OPENCONNECT_HASH_SHA384 OPENCONNECT_HASH_SHA384
+	OPENCONNECT_HASH_SHA512 = 3,
+#define OPENCONNECT_HASH_SHA512 OPENCONNECT_HASH_SHA512
+	OPENCONNECT_HASH_MAX = OPENCONNECT_HASH_SHA512
+} openconnect_hash_type;
+
+int load_certificate(struct openconnect_info *, struct cert_info *, int flags);
+void unload_certificate(struct cert_info *, int final);
+int export_certificate_pkcs7(struct openconnect_info *, struct cert_info *, cert_format_t format, struct oc_text_buf **);
+
+/* multiple certificate authentication */
+#define MULTICERT_HASH_FLAG(v)	((v)?(1<<((v)-1)):0)
+
+int multicert_sign_data(struct openconnect_info *, struct cert_info *certinfo, unsigned int hashes,
+			const void *data, size_t datalen, struct oc_text_buf **signature);
+
+const char *multicert_hash_get_name(int id);
+openconnect_hash_type multicert_hash_get_id(const char *name);
 
 /* iconv.c */
 #ifdef HAVE_ICONV

@@ -525,15 +525,25 @@ struct ossl_cert_info {
 	const char *certs_from;
 };
 
-static void free_ossl_cert_info(struct ossl_cert_info *oci)
+void unload_certificate(struct cert_info *certinfo, int finalize)
 {
-	if (oci->key)
-		EVP_PKEY_free(oci->key);
-	if (oci->cert)
-		X509_free(oci->cert);
-	if (oci->extra_certs)
-		sk_X509_pop_free(oci->extra_certs, X509_free);
-	memset(oci, 0, sizeof(*oci));
+	(void) finalize;
+
+	if (!certinfo)
+		return;
+
+	if (certinfo->priv_info) {
+		struct ossl_cert_info *oci = certinfo->priv_info;
+
+		certinfo->priv_info = NULL;
+		if (oci->key)
+			EVP_PKEY_free(oci->key);
+		if (oci->cert)
+			X509_free(oci->cert);
+		if (oci->extra_certs)
+			sk_X509_pop_free(oci->extra_certs, X509_free);
+		free(oci);
+	}
 }
 
 static int install_ssl_ctx_certs(struct openconnect_info *vpninfo, struct ossl_cert_info *oci)
@@ -674,7 +684,7 @@ static int load_pkcs12_certificate(struct openconnect_info *vpninfo, struct cert
 	PKCS12_free(p12);
 
 	if (ret)
-		free_ossl_cert_info(oci);
+		unload_certificate(certinfo, 1);
 
 	return ret;
 }
@@ -905,14 +915,12 @@ static int is_pem_password_error(struct openconnect_info *vpninfo, struct cert_i
 	return 0;
 }
 
-static int load_certificate(struct openconnect_info *vpninfo, struct cert_info *certinfo,
+static int xload_certificate(struct openconnect_info *vpninfo, struct cert_info *certinfo,
 			    struct ossl_cert_info *oci)
 {
 	FILE *f;
 	char buf[256];
 	int ret;
-
-	certinfo->vpninfo = vpninfo;
 
 	if (!strncmp(certinfo->cert, "pkcs11:", 7)) {
 		int ret = load_pkcs11_certificate(vpninfo, certinfo, &oci->cert);
@@ -1122,6 +1130,29 @@ static int load_certificate(struct openconnect_info *vpninfo, struct cert_info *
 		     _("Failed to identify private key type in '%s'\n"),
 		     certinfo->key);
 	return -EINVAL;
+}
+
+int load_certificate(struct openconnect_info *vpninfo, struct cert_info *certinfo, int flags)
+{
+	struct ossl_cert_info *oci;
+	int ret;
+
+	(void) flags;
+
+	certinfo->priv_info = oci = calloc(1, sizeof *oci);
+	if (!oci) {
+		ret = -ENOMEM;
+		goto done;
+	}
+	certinfo->vpninfo = vpninfo;
+
+	ret = xload_certificate(vpninfo, certinfo, oci);
+
+done:
+	if (ret)
+		unload_certificate(certinfo, 1);
+
+	return ret;
 }
 
 static int get_cert_fingerprint(struct openconnect_info *vpninfo,
@@ -1698,11 +1729,13 @@ static int check_certificate_expiry(struct openconnect_info *vpninfo, struct cer
 
 static int load_primary_certificate(struct openconnect_info *vpninfo)
 {
-	struct ossl_cert_info oci = { };
+	struct cert_info *certinfo = &vpninfo->certinfo[0];
+	struct ossl_cert_info *oci;
 
-	int ret = load_certificate(vpninfo, &vpninfo->certinfo[0], &oci);
+	int ret = load_certificate(vpninfo, certinfo, 0);
+	oci = certinfo->priv_info;
 	if (!ret)
-		ret = install_ssl_ctx_certs(vpninfo, &oci);
+		ret = install_ssl_ctx_certs(vpninfo, oci);
 
 	if (!ret && !SSL_CTX_check_private_key(vpninfo->https_ctx)) {
 		vpn_progress(vpninfo, PRG_ERR,
@@ -1710,9 +1743,9 @@ static int load_primary_certificate(struct openconnect_info *vpninfo)
 		ret = -EINVAL;
 	}
 	if (!ret)
-		check_certificate_expiry(vpninfo, &vpninfo->certinfo[0], &oci);
+		check_certificate_expiry(vpninfo, &vpninfo->certinfo[0], oci);
 
-	free_ossl_cert_info(&oci);
+	unload_certificate(certinfo, 1);
 	return ret;
 }
 
@@ -2397,3 +2430,174 @@ int aes_256_gcm_decrypt(struct openconnect_info *vpninfo, unsigned char *key,
 	return ret;
 }
 #endif /* HAVE_HPKE_SUPPORT */
+
+int export_certificate_pkcs7(struct openconnect_info *vpninfo,
+			     struct cert_info *certinfo,
+			     cert_format_t format,
+			     struct oc_text_buf **pp7b)
+{
+	struct ossl_cert_info *oci;
+	PKCS7 *p7 = NULL;
+	BIO *bio = NULL;
+	BUF_MEM *bptr = NULL;
+	struct oc_text_buf *p7b = NULL;
+	int ret, ok;
+
+	if (!(certinfo && (oci = certinfo->priv_info) && pp7b))
+		return -EINVAL;
+
+	/* We have the client certificate in 'oci.cert' and *optionally*
+	 * a stack of intermediate certs in oci.extra_certs. For the TLS
+	 * connection those would be used by SSL_CTX_use_certificate() and
+	 * SSL_CTX_add_extra_chain_cert() respectively. For PKCS7_sign()
+	 * we need the actual cert at the head of the stack, so *create*
+	 * one if needed, and insert oci.cert at position zero. */
+
+	if (!oci->extra_certs)
+		oci->extra_certs = sk_X509_new_null();
+	if (!oci->extra_certs)
+		goto err;
+	if (!sk_X509_insert(oci->extra_certs, oci->cert, 0))
+		goto err;
+	X509_up_ref(oci->cert);
+
+	p7 = PKCS7_sign(NULL, NULL, oci->extra_certs, NULL, PKCS7_DETACHED);
+	if (!p7) {
+	err:
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Failed to create PKCS#7 structure\n"));
+		ret = -EIO;
+		goto out;
+	}
+
+	ret = 0;
+
+	bio = BIO_new(BIO_s_mem());
+	if (!bio) {
+		ret = -ENOMEM;
+		goto pkcs7_error;
+	}
+
+	if (format == CERT_FORMAT_ASN1) {
+		ok = i2d_PKCS7_bio(bio, p7);
+	} else if (format == CERT_FORMAT_PEM) {
+		ok = PEM_write_bio_PKCS7(bio, p7);
+	} else {
+		ret = -EINVAL;
+		goto pkcs7_error;
+	}
+
+	if (!ok) {
+		ret = -EIO;
+		goto pkcs7_error;
+	}
+
+	BIO_get_mem_ptr(bio, &bptr);
+
+	p7b = buf_alloc();
+	if (!p7b)
+		ret = -ENOMEM;
+
+	if (ret < 0) {
+pkcs7_error:
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Failed to output PKCS#7 structure\n"));
+		goto out;
+	}
+
+	BIO_set_close(bio, BIO_NOCLOSE);
+
+	p7b->data = bptr->data;
+	p7b->pos = bptr->length;
+
+	*pp7b = p7b;
+	p7b = NULL;
+
+out:
+	buf_free(p7b);
+	BIO_free(bio);
+	if (p7)
+		PKCS7_free(p7);
+	return ret;
+}
+
+int multicert_sign_data(struct openconnect_info *vpninfo,
+			struct cert_info *certinfo,
+			unsigned int hashes,
+			const void *chdata, size_t chdata_len,
+			struct oc_text_buf **psignature)
+{
+	struct table_entry {
+		openconnect_hash_type id;
+		const EVP_MD *(*evp_md_fn)(void);
+	};
+	static struct table_entry table[] = {
+		{ OPENCONNECT_HASH_SHA512, &EVP_sha512 },
+		{ OPENCONNECT_HASH_SHA384, &EVP_sha384 },
+		{ OPENCONNECT_HASH_SHA256, &EVP_sha256 },
+		{ OPENCONNECT_HASH_UNKNOWN },
+	};
+	struct ossl_cert_info *oci;
+	struct oc_text_buf *signature;
+	openconnect_hash_type hash;
+	int ret;
+
+	/**
+	 * Check preconditions...
+	 */
+	if (!(certinfo && (oci = certinfo->priv_info)
+	      && hashes && chdata && chdata_len && psignature))
+		return -EINVAL;
+
+	*psignature = NULL;
+
+	signature = buf_alloc();
+	if (!signature)
+		goto out_of_memory;
+
+	for (const struct table_entry *entry = table;
+	     (hash = entry->id) != OPENCONNECT_HASH_UNKNOWN;
+	     entry++) {
+		if ((hashes & MULTICERT_HASH_FLAG(hash)) == 0)
+			continue;
+
+		EVP_MD_CTX *mdctx = EVP_MD_CTX_new();
+		if (!mdctx)
+			goto out_of_memory;
+
+		const EVP_MD *md = (*entry->evp_md_fn)();
+
+		size_t siglen = 0;
+		int ok = (EVP_DigestSignInit(mdctx, NULL, md, NULL, oci->key) > 0 &&
+			  EVP_DigestSignUpdate(mdctx, chdata, chdata_len) > 0 &&
+			  EVP_DigestSignFinal(mdctx, NULL, &siglen) > 0 &&
+			  !buf_ensure_space(signature, siglen) &&
+			  EVP_DigestSignFinal(mdctx, (void *)signature->data, &siglen) > 0);
+
+		EVP_MD_CTX_free(mdctx);
+
+		if (ok) {
+			signature->pos = siglen;
+			*psignature = signature;
+			return hash;
+		}
+	}
+
+	/** Error path */
+
+	ret = -EIO;
+
+	if (buf_error(signature)) {
+out_of_memory:
+		ret = -ENOMEM;
+	}
+
+	buf_free(signature);
+
+	vpn_progress(vpninfo, PRG_ERR,
+		     _("Failed to generate signature for multiple certificate authentication\n"));
+	openconnect_report_ssl_errors(vpninfo);
+
+	return ret;
+}
+

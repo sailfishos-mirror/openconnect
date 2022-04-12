@@ -837,21 +837,44 @@ err:
 }
 
 /* special handling: two string arguments */
-JNIEXPORT void JNICALL Java_org_infradead_libopenconnect_LibOpenConnect_setClientCert(
+JNIEXPORT int JNICALL Java_org_infradead_libopenconnect_LibOpenConnect_setClientCert(
 	JNIEnv *jenv, jobject jobj, jstring jcert, jstring jsslkey)
 {
+	int ret;
 	struct libctx *ctx = getctx(jenv, jobj);
 	const char *cert = NULL, *sslkey = NULL;
 
 	if (!ctx)
-		return;
+		return -EINVAL;
 
-	if (!get_cstring(ctx->jenv, jcert, &cert) &&
-	    !get_cstring(ctx->jenv, jsslkey, &sslkey))
-		openconnect_set_client_cert(ctx->vpninfo, cert, sslkey);
+	if (get_cstring(ctx->jenv, jcert, &cert) ||
+	    get_cstring(ctx->jenv, jsslkey, &sslkey))
+		return -ENOMEM;
+	ret = openconnect_set_client_cert(ctx->vpninfo, cert, sslkey);
 
 	release_cstring(ctx->jenv, jcert, cert);
 	release_cstring(ctx->jenv, jsslkey, sslkey);
+	return ret;
+}
+
+JNIEXPORT int JNICALL Java_org_infradead_libopenconnect_LibOpenConnect_setMCACert(
+	JNIEnv *jenv, jobject jobj, jstring jcert, jstring jsslkey)
+{
+	int ret;
+	struct libctx *ctx = getctx(jenv, jobj);
+	const char *cert = NULL, *sslkey = NULL;
+
+	if (!ctx)
+		return -EINVAL;
+
+	if (get_cstring(ctx->jenv, jcert, &cert) ||
+	    get_cstring(ctx->jenv, jsslkey, &sslkey))
+		return -ENOMEM;
+	ret = openconnect_set_mca_cert(ctx->vpninfo, cert, sslkey);
+
+	release_cstring(ctx->jenv, jcert, cert);
+	release_cstring(ctx->jenv, jsslkey, sslkey);
+	return ret;
 }
 
 /* special handling: multiple string arguments */
@@ -1579,4 +1602,26 @@ nomem:
 err:
 	openconnect_free_supported_protocols(protos);
 	return NULL;
+}
+
+JNIEXPORT jint JNICALL Java_org_infradead_libopenconnect_LibOpenConnect_setKeyPassword(
+	JNIEnv *jenv, jobject jobj, jstring jarg, jstring jarg2)
+{
+	int ret;
+	SET_STRING_START();
+	ret = openconnect_set_key_password(ctx->vpninfo, arg);
+	SET_STRING_END();
+
+	return ret;
+}
+
+JNIEXPORT jint JNICALL Java_org_infradead_libopenconnect_LibOpenConnect_setMCAKeyPassword(
+	JNIEnv *jenv, jobject jobj, jstring jarg, jstring jarg2)
+{
+	int ret;
+	SET_STRING_START();
+	ret = openconnect_set_mca_key_password(ctx->vpninfo, arg);
+	SET_STRING_END();
+
+	return ret;
 }

@@ -122,6 +122,8 @@ OPENCONNECT_5_7 {
 OPENCONNECT_5_8 {
  global:
 	openconnect_set_external_browser_callback;
+	openconnect_set_mca_cert;
+	openconnect_set_mca_key_password;
 } OPENCONNECT_5_7;
 
 OPENCONNECT_PRIVATE {

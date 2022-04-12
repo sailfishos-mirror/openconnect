@@ -216,6 +216,9 @@ enum {
 	OPT_PASSTOS,
 	OPT_VERSION,
 	OPT_SERVER,
+	OPT_MULTICERT_CERT,
+	OPT_MULTICERT_KEY,
+	OPT_MULTICERT_KEY_PASSWORD,
 };
 
 #ifdef __sun__
@@ -312,6 +315,9 @@ static const struct option long_options[] = {
 	OPTION("openssl-ciphers", 1, OPT_CIPHERSUITES),
 #endif
 	OPTION("server", 1, OPT_SERVER),
+	OPTION("mca-certificate", 1, OPT_MULTICERT_CERT),
+	OPTION("mca-key", 1, OPT_MULTICERT_KEY),
+	OPTION("mca-key-password", 1, OPT_MULTICERT_KEY_PASSWORD),
 	OPTION(NULL, 0, 0)
 };
 
@@ -1055,6 +1061,11 @@ static void usage(void)
 	printf("      --no-xmlpost                %s\n", _("Do not attempt XML POST authentication"));
 	printf("      --allow-insecure-crypto     %s\n", _("Allow use of the ancient, insecure 3DES and RC4 ciphers"));
 
+	printf("\n%s:\n", _("Multiple certificate authentication (MCA)"));
+	printf("      --mca-certificate=MCACERT   %s\n", _("Use MCA certificate MCACERT"));
+	printf("      --mca-key=MCAKEY           %s\n", _("Use MCA key MCAKEY"));
+	printf("      --mca-key-password=MCAPASS  %s\n", _("Passphrase MCAPASS for MCACERT/MCAKEY"));
+
 	printf("\n");
 
 	helpmessage();
@@ -1517,6 +1528,17 @@ static int autocomplete(int argc, char **argv)
 			case OPT_DTLS12_CIPHERS: /* --dtls12-ciphers */
 				break;
 
+			case OPT_MULTICERT_CERT: /* --mca-certificate */
+			case OPT_MULTICERT_KEY: /* --mca-key */
+				if (!strncmp(comp_opt + prefixlen, "pkcs11:", 7)) {
+					/* We could do clever things here... */
+					return 0; /* .. but we don't. */
+				}
+				autocomplete_special("FILENAME", comp_opt, prefixlen, "!*.@(pem|der|p12|crt)");
+				break;
+			/* disable password autocomplete */
+			case OPT_MULTICERT_KEY_PASSWORD: /* --mca-key-password */
+				break;
 			default:
 				fprintf(stderr, _("Unhandled autocomplete for option %d '--%s'. Please report.\n"),
 					opt, long_options[longidx].name);
@@ -2168,6 +2190,18 @@ int main(int argc, char **argv)
 
 			vpninfo->ciphersuite_config = dup_config_arg();
 			break;
+		case OPT_MULTICERT_CERT:
+			free(vpninfo->certinfo[1].cert);
+			vpninfo->certinfo[1].cert = dup_config_arg();
+			break;
+		case OPT_MULTICERT_KEY:
+			free(vpninfo->certinfo[1].key);
+			vpninfo->certinfo[1].key = dup_config_arg();
+			break;
+		case OPT_MULTICERT_KEY_PASSWORD:
+			free(vpninfo->certinfo[1].password);
+			vpninfo->certinfo[1].password = dup_config_arg();
+			break;
 		case OPT_SERVER:
 			if (openconnect_parse_url(vpninfo, config_arg))
 				exit(1);
@@ -2190,6 +2224,9 @@ int main(int argc, char **argv)
 
 	if (!vpninfo->certinfo[0].key)
 		vpninfo->certinfo[0].key = vpninfo->certinfo[0].cert;
+
+	if (!vpninfo->certinfo[1].key)
+		vpninfo->certinfo[1].key = vpninfo->certinfo[1].cert;
 
 	if (vpninfo->dump_http_traffic && verbose < PRG_DEBUG)
 		verbose = PRG_DEBUG;
