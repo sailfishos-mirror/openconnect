@@ -1901,13 +1901,10 @@ int openconnect_open_https(struct openconnect_info *vpninfo)
 			struct oc_text_buf *buf = buf_alloc();
 			if (vpninfo->pfs)
 				buf_append(buf, "HIGH:!aNULL:!eNULL:-RSA");
+			else if (vpninfo->allow_insecure_crypto)
+				buf_append(buf, "ALL");
 			else
-				buf_append(buf, "DEFAULT");
-
-			if (vpninfo->allow_insecure_crypto)
-				buf_append(buf, ":+3DES:+RC4");
-			else
-				buf_append(buf, ":-3DES:-RC4");
+				buf_append(buf, "DEFAULT:-3DES:-RC4");
 
 			if (buf_error(buf)) {
 				vpn_progress(vpninfo, PRG_ERR,
