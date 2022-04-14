@@ -33,7 +33,7 @@ echo "Testing Juniper SSO auth against fake server ..."
 
 ${srcdir}/fake-juniper-sso-server.py $ADDRESS 1443 $CERT $KEY >/dev/null 2>&1 &
 PID=$!
-wait_server $PID 1
+wait_server $PID
 
 echo -n "Azure SSO with MFA. "
 (
