@@ -34,7 +34,7 @@ echo "Testing Juniper auth against fake server ..."
 OCSERV=${srcdir}/fake-juniper-server.py
 launch_simple_sr_server $ADDRESS 443 $CERT $KEY > /dev/null 2>&1
 PID=$!
-wait_server $PID 1
+wait_server $PID
 
 echo -n "frmLogin with username/password"
 ( echo "test" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT --protocol=nc -q $ADDRESS:443 -u test $FINGERPRINT --cookieonly >/dev/null 2>&1) ||
