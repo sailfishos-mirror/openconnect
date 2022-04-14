@@ -1139,7 +1139,7 @@ int load_certificate(struct openconnect_info *vpninfo, struct cert_info *certinf
 
 	(void) flags;
 
-	certinfo->priv_info = oci = calloc(1, sizeof *oci);
+	certinfo->priv_info = oci = calloc(1, sizeof(*oci));
 	if (!oci) {
 		ret = -ENOMEM;
 		goto done;

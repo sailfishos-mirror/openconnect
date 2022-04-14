@@ -115,7 +115,7 @@ int handle_external_browser(struct openconnect_info *vpninfo)
 			     DEFAULT_EXTERNAL_BROWSER);
 
 		pid_t pid = 0;
-		char * browser_argv[3] = { (char *)DEFAULT_EXTERNAL_BROWSER, vpninfo->sso_login, NULL };
+		char *browser_argv[3] = { (char *)DEFAULT_EXTERNAL_BROWSER, vpninfo->sso_login, NULL };
 
 		if (posix_spawn(&pid, DEFAULT_EXTERNAL_BROWSER, NULL, NULL, browser_argv, environ)) {
 			ret = -errno;

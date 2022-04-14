@@ -1085,7 +1085,7 @@ int load_certificate(struct openconnect_info *vpninfo, struct cert_info *certinf
 	}
 #endif /* HAVE_PKCS11 */
 
-	certinfo->priv_info = gci = calloc(1, sizeof *gci);
+	certinfo->priv_info = gci = calloc(1, sizeof(*gci));
 	if (!gci) {
 		ret = -ENOMEM;
 		goto out;
@@ -1902,7 +1902,7 @@ static int load_primary_certificate(struct openconnect_info *vpninfo)
 		 * If not, disable TLSv1.3 which would make PSS mandatory.
 		 * https://bugzilla.redhat.com/show_bug.cgi?id=1663058
 		 */
-		gnutls_datum_t fdata= { (void *)gci, sizeof *gci };
+		gnutls_datum_t fdata= { (void *)gci, sizeof(*gci) };
 		gnutls_datum_t pkey_sig = { NULL, 0 };
 
 		err = gnutls_privkey_sign_data2(gci->pkey, GNUTLS_SIGN_RSA_PSS_RSAE_SHA256, 0, &fdata, &pkey_sig);
@@ -3033,7 +3033,7 @@ int hkdf_sha256_extract_expand(struct openconnect_info *vpninfo, unsigned char *
 int aes_256_gcm_decrypt(struct openconnect_info *vpninfo, unsigned char *key,
 			unsigned char *data, int len,
 			unsigned char *iv, unsigned char *tag)
- {
+{
 	gnutls_cipher_hd_t h = NULL;
 
 	gnutls_datum_t d = { key, SHA256_SIZE };
@@ -3080,17 +3080,16 @@ static int app_error(int err)
 	if (err >= 0)
 		return 0;
 
-	switch (err)
-	{
+	switch (err) {
 	case GNUTLS_E_MEMORY_ERROR:
-		  return -ENOMEM;
+		return -ENOMEM;
 	case GNUTLS_E_ILLEGAL_PARAMETER:
 	case GNUTLS_E_INVALID_REQUEST:
-		  return -EINVAL;
+		return -EINVAL;
 	case GNUTLS_E_CONSTRAINT_ERROR:
 	case GNUTLS_E_UNSUPPORTED_SIGNATURE_ALGORITHM:
 	default:
-		  return -EIO;
+		return -EIO;
 	}
 }
 
@@ -3175,7 +3174,7 @@ static int check_multicert_compat(struct openconnect_info *vpninfo,
 	 */
 
 	for (kp = 0; ; kp++) {
-		size_t oid_size = sizeof oid;
+		size_t oid_size = sizeof(oid);
 		err = gnutls_x509_crt_get_key_purpose_oid(crt, kp,
 							  oid, &oid_size,
 							  &critical);
@@ -3230,8 +3229,7 @@ static int check_multicert_compat(struct openconnect_info *vpninfo,
 	 */
 	if (kp > 0 || usage != 0) {
 		vpn_progress(vpninfo, PRG_INFO,
-			     _("The certificate specifies key usages "
-			       "incompatible with authentication.\n"));
+			     _("The certificate specifies key usages incompatible with authentication.\n"));
 		return 0;
 	}
 
