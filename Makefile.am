@@ -245,6 +245,69 @@ tag: uncommitted-check
 	@git tag v$(VERSION)
 	@cd $(srcdir) && ./autogen.sh
 
+NMO_DIR := $(srcdir)/../NetworkManager-openconnect
+NMO_POT := $(NMO_DIR)/po/NetworkManager-openconnect.pot
+NMO_STRINGS := $(NMO_DIR)/openconnect-strings.txt
+
+# Generate the openconnect-strings.txt file in the NetworkManager-openconnect
+# repository, which 'injects' our strings there to be translated.
+$(NMO_STRINGS): po/$(PACKAGE).pot uncommitted-check
+	$(srcdir)/export-strings.sh $@ $<
+
+.PHONY: $(NMO_POT)
+$(NMO_POT): $(NMO_STRINGS)
+	make -C $(NMO_DIR)/po NetworkManager-openconnect.pot
+
+# Sync translations from our own po/ directory to NetworkManager-openconnect,
+# with theirs taking precedence. Use a strange path with extra 'po/..' to
+# avoid circular dependencies.
+$(NMO_DIR)/po/../po/%.po: $(srcdir)/po/%.po $(NMO_POT) po/$(PACKAGE).pot
+	@msgattrib -F --no-fuzzy $< > $@.openconnect
+# Merge using local strings as additional compendium
+	@msgmerge -q -N -F $@ -C $@.openconnect ${NMO_POT} > $@.merged
+# Dummy merge (cleanup) for comparison.
+	@msgmerge -q -N -F $@ ${NMO_POT} > $@.unmerged
+# If the result is different, update the NM version.
+	@if ! cmp $@.merged $@.unmerged; then \
+		echo "New changes for NetworkManager-openconnect $(notdir $@)"; \
+		mv $@.merged $@; \
+	else \
+		echo "No changes for NetworkManager-openconnect $(notdir $@)"; \
+	fi
+	@rm -f $@.openconnect $@.merged $@.unmerged
+
+# Sync translations from NetworkManager-openconnect, with theirs taking
+# precedence.
+$(srcdir)/po/../po/%.po: $(NMO_DIR)/po/%.po $(NMO_POT) po/$(PACKAGE).pot
+	@msgattrib -F --no-fuzzy $< > $@.nmo
+# Merge NM against openconnect.pot, using local strings as additional compendium
+	@msgmerge -q -N -C $@ -F $@.nmo po/$(PACKAGE).pot > $@.merged1
+# Remove fuzzy and obsolete translations
+	@msgattrib -F --no-fuzzy --no-obsolete $@.merged1 > $@.merged2
+# Unmerged, clean up for simple comparison
+	@msgmerge -q -N -F $@ po/$(PACKAGE).pot > $@.unmerged
+	@if ! cmp $@.merged2 $@.unmerged; then \
+		echo "New changes for $(notdir $@)"; \
+		mv $@.merged2 $@; \
+	else \
+		echo "No changes for $(notdir $@)"; \
+	fi
+	@rm -f $@.nmo $@.merged1 $@.merged2 $@.unmerged
+
+NMO_LINGUAS = $(wildcard $(NMO_DIR)/po/*.po)
+OC_LINGUAS = $(shell grep -v ^\# $(srcdir)/po/LINGUAS)
+
+# For each NM-openconnect .po file, import to ours
+import-strings: $(patsubst $(NMO_DIR)/%,$(srcdir)/po/../%,$(NMO_LINGUAS))
+	if ! git update-index -q --refresh --unmerged || \
+	   ! git diff-index --name-only --exit-code HEAD -- $(srcdir)/po/ >/dev/null; then \
+		git commit -s -m "Import translations from GNOME" -- $(srcdir)/po/ ; \
+	else \
+		echo No changes to commit ; \
+	fi
+
+export-strings: $(patsubst $(NMO_DIR)/%,$(NMO_DIR)/po/../%,$(NMO_LINGUAS))
+
 update-po: po/$(PACKAGE).pot
 	@cd $(top_srcdir); if ! git diff-index --name-only --exit-code HEAD -- po/; then \
 		echo "*** ERROR: Uncommitted changes in above files"; exit 1; \
