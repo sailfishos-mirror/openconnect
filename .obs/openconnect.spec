@@ -48,12 +48,8 @@ BuildRequires:  pkgconfig(json-parser)
 # SoftHSM doesn't install on EPEL8: https://bugzilla.redhat.com/show_bug.cgi?id=1829480
 BuildRequires:  softhsm
 %endif
-%if 0%{?fedora} || 0%{?rhel_version} >= 700
 Obsoletes:	openconnect-lib-compat < %{version}-%{release}
 Requires:	vpnc-script
-%else
-Requires:	vpnc
-%endif
 
 %if 0%{?fedora} || 0%{?suse_version}
 BuildRequires: pkgconfig(libp11) pkgconfig(p11-kit-1)
