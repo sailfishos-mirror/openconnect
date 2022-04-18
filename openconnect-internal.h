@@ -127,6 +127,14 @@
 #include <string.h>
 #include <errno.h>
 
+#ifdef HAVE_POSIX_SPAWN
+#ifdef __APPLE__
+#include <crt_externs.h>
+#define environ (*_NSGetEnviron())
+#endif
+#include <spawn.h>
+#endif
+
 /* Equivalent of "/dev/null" on Windows.
  * See https://stackoverflow.com/a/44163934
  */

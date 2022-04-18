@@ -896,8 +896,8 @@ static BOOL WINAPI console_ctrl_handler(DWORD dwCtrlType)
 	return TRUE;
 }
 #endif
+
 #ifdef HAVE_POSIX_SPAWN
-#include <spawn.h>
 static int spawn_browser(struct openconnect_info *vpninfo, const char *url, void *cbdata)
 {
 	vpn_progress(vpninfo, PRG_TRACE,

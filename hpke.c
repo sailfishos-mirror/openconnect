@@ -24,10 +24,6 @@ int handle_external_browser(struct openconnect_info *vpninfo)
 }
 #else
 
-#ifdef HAVE_POSIX_SPAWN
-#include <spawn.h>
-#endif
-
 #include <ctype.h>
 
 #define HPKE_TAG_PUBKEY		1
