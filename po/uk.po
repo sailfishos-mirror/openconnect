@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: network-manager-openconnect\n"
 "Report-Msgid-Bugs-To: openconnect-devel@lists.infradead.org\n"
-"POT-Creation-Date: 2022-04-15 09:58+0100\n"
-"PO-Revision-Date: 2022-04-11 21:45+0300\n"
+"POT-Creation-Date: 2022-04-18 15:45+0100\n"
+"PO-Revision-Date: 2022-04-16 18:57+0300\n"
 "Last-Translator: Yuri Chornoivan <yurchor@ukr.net>\n"
 "Language-Team: Ukrainian <kde-i18n-uk@kde.org>\n"
 "Language: uk\n"
@@ -530,12 +530,12 @@ msgstr "Отримано неочікуване <client-cert-request>.\n"
 
 #: auth.c:645
 msgid "Received <multiple-client-cert-request> when not expected.\n"
-msgstr ""
+msgstr "Отримано неочікуване <multiple-client-cert-request>.\n"
 
 #: auth.c:680
 #, c-format
 msgid "Server reported certificate error: %s.\n"
-msgstr ""
+msgstr "Сервером повідомлено про помилку із сертифікатом: %s.\n"
 
 #: auth.c:687
 msgid "XML response has no \"auth\" node\n"
@@ -706,6 +706,8 @@ msgid ""
 "Multiple-certificate authentication requires a second certificate; none were "
 "configured.\n"
 msgstr ""
+"Для розпізнавання за декількома сертифікатами потрібен другий сертифікат; "
+"жодного такого сертифіката не налаштовано.\n"
 
 #: auth.c:1547
 msgid "XML POST enabled\n"
@@ -730,26 +732,30 @@ msgstr "Оновлюємо %s за 1 секунду…\n"
 #: auth.c:1845
 #, c-format
 msgid "Unsupported hash algorithm '%s' requested.\n"
-msgstr ""
+msgstr "Запит щодо непідтримуваного алгоритму хешування «%s».\n"
 
 #: auth.c:1854
 #, c-format
 msgid "Duplicate hash algorithm '%s' requested.\n"
-msgstr ""
+msgstr "Запит щодо дублікати алгоритму хешування «%s».\n"
 
 #: auth.c:1940
 msgid ""
 "Multiple-certificate authentication signature hash algorithm negotiation "
 "failed.\n"
 msgstr ""
+"Не вдалося узгодити алгоритм хешування для підпису у розпізнаванні за "
+"декількома сертифікатами.\n"
 
 #: auth.c:1954
 msgid "Error exporting multiple-certificate signer's certificate chain.\n"
 msgstr ""
+"Помилка при експортуванні ланцюжка сертифікації підписника декількох "
+"сертифікатів.\n"
 
 #: auth.c:1968
 msgid "Error encoding the challenge response.\n"
-msgstr ""
+msgstr "Помилка під час кодування відповіді на виклик.\n"
 
 #: compat.c:250
 #, c-format
@@ -2292,50 +2298,54 @@ msgstr "невдала спроба розшифрування жетона SSO:
 #: gnutls.c:3154
 msgid "Certificate may be multiple certificate authentication incompatible.\n"
 msgstr ""
+"Сертифікат може бути несумісним із розпізнаванням за декількома "
+"сертифікатами.\n"
 
 #: gnutls.c:3192
 #, c-format
 msgid "gnutls_x509_crt_get_key_purpose_oid: %s.\n"
-msgstr ""
+msgstr "gnutls_x509_crt_get_key_purpose_oid: %s.\n"
 
 #: gnutls.c:3215
 #, c-format
 msgid "gnutls_X509_crt_get_key_usage: %s.\n"
-msgstr ""
+msgstr "gnutls_X509_crt_get_key_usage: %s.\n"
 
 #: gnutls.c:3232
 msgid ""
 "The certificate specifies key usages incompatible with authentication.\n"
 msgstr ""
+"У сертифікаті вказано використання ключів, яке є несумісним із "
+"розпізнаванням.\n"
 
 #: gnutls.c:3241
 msgid "Certificate doesn't specify key usage.\n"
-msgstr ""
+msgstr "У сертифікаті не вказано використання ключів.\n"
 
 #: gnutls.c:3259
 #, c-format
 msgid "Precondition failed %s[%s]:%d\n"
-msgstr ""
+msgstr "Не виконано попередню умову %s[%s]:%d\n"
 
 #: gnutls.c:3313
 #, c-format
 msgid "Failed to generate the PKCS#7 structure: %s.\n"
-msgstr ""
+msgstr "Не вдалося створити структуру PKCS#7: %s.\n"
 
 #: gnutls.c:3347
 #, c-format
 msgid "Precondition failed %s[%s]:%d.\n"
-msgstr ""
+msgstr "Не виконано попередню умову %s[%s]:%d.\n"
 
 #: gnutls.c:3382
 #, c-format
 msgid "gnutls_privkey_sign_data: %s.\n"
-msgstr ""
+msgstr "gnutls_privkey_sign_data: %s.\n"
 
 #: gnutls.c:3407
 #, c-format
 msgid "Failed to sign data with second certificate: %s.\n"
-msgstr ""
+msgstr "Не вдалося підписати дані другим сертифікатом: %s.\n"
 
 #: gnutls_tpm.c:56
 #, c-format
@@ -3081,44 +3091,44 @@ msgstr ""
 msgid "SOCKS proxy demands protection unknown type 0x%02x\n"
 msgstr "Проксі-сервер SOCKS вимагає захисту невідомого типу 0x%02x\n"
 
-#: hpke.c:87
+#: hpke.c:83
 #, c-format
 msgid "Failed to listen on local port 29786: %s\n"
 msgstr "Не вдалося почати очікування на дані на локальному порту 29786: %s\n"
 
-#: hpke.c:114
+#: hpke.c:110
 #, c-format
 msgid "Spawning external browser '%s'\n"
 msgstr "Відкриття зовнішнього переглядача «%s»\n"
 
-#: hpke.c:122 main.c:910
+#: hpke.c:118 main.c:910
 msgid "Spawn browser"
 msgstr "Відкрити переглядач"
 
-#: hpke.c:131
+#: hpke.c:127
 #, c-format
 msgid "Failed to spawn external browser for %s\n"
 msgstr "Не вдалося відкрити зовнішній переглядач для %s\n"
 
-#: hpke.c:146
+#: hpke.c:142
 msgid "Accepted incoming external-browser connection on port 29786\n"
 msgstr "Прийнято вхідне з'єднання від зовнішнього переглядача на порту 29786\n"
 
-#: hpke.c:153
+#: hpke.c:149
 msgid "Invalid incoming external-browser request\n"
 msgstr "Некоректний вхідний запит щодо зовнішнього переглядача\n"
 
-#: hpke.c:229
+#: hpke.c:225
 #, c-format
 msgid "Got encrypted SSO token of %d bytes\n"
 msgstr "Отримано зашифрований жетон SSO з %d байтів\n"
 
-#: hpke.c:297
+#: hpke.c:293
 #, c-format
 msgid "Failed to decode SSO token at %d:\n"
 msgstr "Не вдалося декодувати жетон SSO у %d:\n"
 
-#: hpke.c:324
+#: hpke.c:320
 msgid "SSO token not alphanumeric\n"
 msgstr "Жетон SSO не складається з літер та цифр\n"
 
@@ -3576,7 +3586,7 @@ msgstr "Немає обробника SSO\n"
 #: main.c:398
 #, c-format
 msgid "CommandLineToArgv() failed: %s\n"
-msgstr ""
+msgstr "Помилка CommandLineToArgv(): %s\n"
 
 #: main.c:411
 #, c-format
@@ -3601,7 +3611,7 @@ msgstr "ReadConsole() не прочитано жодних вхідних дан
 
 #: main.c:478
 msgid "fgetws (stdin)"
-msgstr ""
+msgstr "fgetws (stdin)"
 
 #: main.c:497 main.c:510
 #, c-format
@@ -3611,6 +3621,8 @@ msgstr "Помилка під час спроби перетворити вхі�
 #: main.c:504
 msgid "Allocation failure for string from stdin"
 msgstr ""
+"Не вдалося розмістити у пам'яті рядок зі стандартного джерела вхідних даних "
+"(stdin)"
 
 #: main.c:665
 #, c-format
@@ -4055,19 +4067,19 @@ msgstr ""
 
 #: main.c:1062
 msgid "Multiple certificate authentication (MCA)"
-msgstr ""
+msgstr "Розпізнавання за декількома сертифікатами (MCA)"
 
 #: main.c:1063
 msgid "Use MCA certificate MCACERT"
-msgstr ""
+msgstr "Використати сертифікат MCA MCACERT"
 
 #: main.c:1064
 msgid "Use MCA key MCAKEY"
-msgstr ""
+msgstr "Використати ключ MCA MCAKEY"
 
 #: main.c:1065
 msgid "Passphrase MCAPASS for MCACERT/MCAKEY"
-msgstr ""
+msgstr "Пароль MCAPASS до MCACERT/MCAKEY"
 
 #: main.c:1087
 #, c-format
@@ -4197,7 +4209,7 @@ msgstr "Не вдалося відкрити «%s» для запису: %s\n"
 
 #: main.c:1654
 msgid "Failed to continue in background"
-msgstr ""
+msgstr "Не вдалося продовжити у фоновому режимі"
 
 #: main.c:1662
 #, c-format
@@ -4998,7 +5010,7 @@ msgstr "Вихідний пакет:\n"
 msgid "Sent ESP enable control packet\n"
 msgstr "Надіслано пакет вмикання керування ESP\n"
 
-#: openconnect-internal.h:1678 openconnect-internal.h:1688
+#: openconnect-internal.h:1686 openconnect-internal.h:1696
 #, c-format
 msgid "ERROR: %s() called with invalid UTF-8 for '%s' argument\n"
 msgstr "Помилка: викликано %s() із некоректним UTF-8 у аргументі «%s»\n"
@@ -5594,15 +5606,16 @@ msgstr "невдала спроба розшифрування жетона SSO\
 
 #: openssl.c:2465
 msgid "Failed to create PKCS#7 structure\n"
-msgstr ""
+msgstr "Не вдалося створити структуру PKCS#7\n"
 
 #: openssl.c:2501
 msgid "Failed to output PKCS#7 structure\n"
-msgstr ""
+msgstr "Не вдалося вивести структуру PKCS#7\n"
 
 #: openssl.c:2595
 msgid "Failed to generate signature for multiple certificate authentication\n"
 msgstr ""
+"Не вдалося створити підпис для розпізнавання за декількома сертифікатами\n"
 
 #: ppp.c:113
 msgid "HDLC initial flag sequence (0x7e) is missing\n"
@@ -7071,126 +7084,135 @@ msgstr "(скрипт)"
 msgid "Failed to write incoming packet: %s\n"
 msgstr "Не вдалося записати вхідний пакет: %s\n"
 
-#: vhost.c:77
+#: vhost.c:78
 #, c-format
 msgid "Failed to set vring #%d size: %s\n"
 msgstr "Не вдалося встановити розмір vring %d: %s\n"
 
-#: vhost.c:85 vhost.c:97
+#: vhost.c:86 vhost.c:98
 #, c-format
 msgid "Failed to set vring #%d base: %s\n"
 msgstr "Не вдалося встановити основу vring %d: %s\n"
 
-#: vhost.c:107
+#: vhost.c:108
 #, c-format
 msgid "Failed to set vring #%d RX backend: %s\n"
 msgstr "Не вдалося встановити модуль приймача vring %d: %s\n"
 
-#: vhost.c:115
+#: vhost.c:116
 #, c-format
 msgid "Failed to set vring #%d call eventfd: %s\n"
 msgstr "Не вдалося встановити дескриптор файла події виклику vring %d: %s\n"
 
-#: vhost.c:123
+#: vhost.c:124
 #, c-format
 msgid "Failed to set vring #%d kick eventfd: %s\n"
 msgstr "Не вдалося встановити дескриптор файла події відкидання vring %d: %s\n"
 
-#: vhost.c:142
+#: vhost.c:183
+msgid "Failed to find virtual task size; search reached zero"
+msgstr ""
+
+#: vhost.c:233
+#, c-format
+msgid "Detected virtual address range 0x%lx-0x%lx\n"
+msgstr ""
+
+#: vhost.c:250
 #, c-format
 msgid "Not using vhost-net due to low queue length %d\n"
 msgstr "Не використовуємо vhost-net через низьку довжину черги, %d\n"
 
-#: vhost.c:156
+#: vhost.c:264
 #, c-format
 msgid "Failed to open /dev/vhost-net: %s\n"
 msgstr "Не вдалося відкрити /dev/vhost-net: %s\n"
 
-#: vhost.c:163
+#: vhost.c:271
 #, c-format
 msgid "Failed to set vhost ownership: %s\n"
 msgstr "Не вдалося встановити власника vhost: %s\n"
 
-#: vhost.c:172
+#: vhost.c:280
 #, c-format
 msgid "Failed to get vhost features: %s\n"
 msgstr "Не вдалося отримати можливості vhost: %s\n"
 
-#: vhost.c:177
+#: vhost.c:285
 #, c-format
 msgid "vhost-net lacks required features: %llx\n"
 msgstr "vhost-net не вистачає потрібних можливостей: %llx\n"
 
-#: vhost.c:185
+#: vhost.c:293
 #, c-format
 msgid "Failed to set vhost features: %s\n"
 msgstr "Не вдалося встановити можливості vhost: %s\n"
 
-#: vhost.c:193
+#: vhost.c:301
 #, c-format
 msgid "Failed to open vhost kick eventfd: %s\n"
 msgstr "Не вдалося відкрити дескриптор файла події відкидання vhost: %s\n"
 
-#: vhost.c:200
+#: vhost.c:308
 #, c-format
 msgid "Failed to open vhost call eventfd: %s\n"
 msgstr "Не вдалося відкрити дескриптор файла події виклику vhost: %s\n"
 
-#: vhost.c:218
+#: vhost.c:324
 #, c-format
 msgid "Failed to set vhost memory map: %s\n"
 msgstr "Не вдалося встановити прив'язку до пам'яті vhost: %s\n"
 
-#: vhost.c:241
+#: vhost.c:347
 #, c-format
 msgid "Failed to set tun sndbuf: %s\n"
 msgstr "Не вдалося встановити sndbuf tun: %s\n"
 
-#: vhost.c:246
+#: vhost.c:352
 #, c-format
 msgid "Using vhost-net for tun acceleration, ring size %d\n"
 msgstr "Використовуємо vhost-net для прискорення tun, розмір кільця %d\n"
 
-#: vhost.c:369
+#: vhost.c:475
 #, c-format
 msgid "Error: vhost gave back invalid descriptor %d, len %d\n"
 msgstr "Помилка: vhost повернуто некоректний дескриптор %d, довжина %d\n"
 
-#: vhost.c:379
+#: vhost.c:485
 #, c-format
 msgid "vhost gave back empty descriptor %d\n"
 msgstr "vhost повернуто порожній дескриптор %d\n"
 
-#: vhost.c:390
+#: vhost.c:496
 #, c-format
 msgid "Free TX packet %p [%d] [used %d]\n"
 msgstr "Вільний пакет передавання %p [%d] [використано %d]\n"
 
-#: vhost.c:402
+#: vhost.c:508
 #, c-format
 msgid "RX packet %p(%d) [%d] [used %d]\n"
 msgstr "Пакет отримання %p(%d) [%d] [використано %d]\n"
 
-#: vhost.c:467
+#: vhost.c:573
 #, c-format
 msgid "Queue TX packet %p at desc %d avail %d\n"
 msgstr "Пакет передавання черги %p із описом %d, доступно %d\n"
 
-#: vhost.c:475
+#: vhost.c:581
 #, c-format
 msgid "Queue RX packet %p at desc %d avail %d\n"
 msgstr "Пакет отримання черги %p із описом %d, доступно %d\n"
 
-#: vhost.c:509
+#: vhost.c:615
 #, c-format
 msgid "Immediate wake because vhost ring moved on from 0x%x to 0x%x\n"
 msgstr "Негайне пробудження через пересування кільця vhost з 0x%x до 0x%x\n"
 
-#: vhost.c:536
+#: vhost.c:642
 msgid "Failed to kick vhost-net eventfd\n"
 msgstr "Не вдалося викинути дескриптор файла події vhost-net\n"
 
-#: vhost.c:539
+#: vhost.c:645
 msgid "Kick vhost ring\n"
 msgstr "Викинути кільце vhost\n"
 
