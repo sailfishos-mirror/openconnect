@@ -35,6 +35,7 @@ symver_win32_setenv=
 AC_PROG_CC
 AC_PROG_CC_C99
 
+default_browser=xdg-open
 have_vhost=no
 case $host_os in
  *linux* | *gnu* | *nacl*)
@@ -70,6 +71,7 @@ case $host_os in
     system_pcsc_cflags=
     AC_CHECK_TOOL([WINDRES], [windres], [])
     AC_CHECK_TOOL([MAKENSIS], [makensis], [])
+    default_browser=
 
     case $host_cpu in
 	x86_64|amd64)
@@ -100,6 +102,7 @@ case $host_os in
  *darwin*)
     system_pcsc_libs="-Wl,-framework -Wl,PCSC"
     system_pcsc_cflags=
+    default_browser=open
     ;;
  *)
     # On FreeBSD the only way to get vsyslog() visible is to define
@@ -130,8 +133,12 @@ AC_ARG_WITH([external-browser],
 	  [command to use for spawning external web browser])])
 
 if test "$with_external_browser" = "yes" || test "$with_external_browser" = ""; then
-   AC_MSG_CHECKING([for xdg-open])
-   AC_PATH_PROG(with_external_browser, xdg-open, no)
+   if test "$default_browser" != ""; then
+      AC_MSG_CHECKING([for ${default_browser}])
+      AC_PATH_PROG(with_external_browser, ${default_browser}, no)
+   else
+      with_external_browser=no
+   fi
 fi
 if test "$with_external_browser" != "no"; then
    if test -x "${with_external_browser}"; then
