@@ -1061,7 +1061,7 @@ static void usage(void)
 
 	printf("\n%s:\n", _("Multiple certificate authentication (MCA)"));
 	printf("      --mca-certificate=MCACERT   %s\n", _("Use MCA certificate MCACERT"));
-	printf("      --mca-key=MCAKEY           %s\n", _("Use MCA key MCAKEY"));
+	printf("      --mca-key=MCAKEY            %s\n", _("Use MCA key MCAKEY"));
 	printf("      --mca-key-password=MCAPASS  %s\n", _("Passphrase MCAPASS for MCACERT/MCAKEY"));
 
 	printf("\n");
