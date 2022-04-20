@@ -149,7 +149,16 @@ def handle_xmlpost(usergroup=None):
 
 def initial_request(dict_req):
     config_auth = dict_req['config-auth']
-#    assert config_auth['capabilities']['auth-method'] == 'multiple-cert'
+    # Expected:
+    # <config-auth client="vpn" type="init">
+    #   <capabilities>
+    #     <auth-method>single-sign-on</auth-method>
+    #     <auth-method>single-sign-on-v2</auth-method>
+    #     <auth-method>...</auth-method>
+    #     <auth-method>multiple-cert</auth-method>
+    #   </capabilities>
+    # </config-auth>
+    assert 'multiple-cert' in config_auth['capabilities']['auth-method']
     return INITIAL_RESPONSE
 
 
