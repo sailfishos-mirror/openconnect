@@ -1607,7 +1607,7 @@ static void print_connection_stats(void *_vpninfo, const struct oc_stats *stats)
 
 	print_connection_info(vpninfo);
 	vpn_progress(vpninfo, PRG_INFO,
-		     _("RX: %"PRId64" packets (%"PRId64" B); TX: %"PRId64" packets (%"PRId64" B)\n"),
+		     _("RX: %"PRIu64" packets (%"PRIu64" B); TX: %"PRIu64" packets (%"PRIu64" B)\n"),
 		       stats->rx_pkts, stats->rx_bytes, stats->tx_pkts, stats->tx_bytes);
 
 	if (vpninfo->ssl_fd != -1)
