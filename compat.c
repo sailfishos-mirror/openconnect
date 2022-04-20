@@ -474,7 +474,7 @@ int dumb_socketpair(OPENCONNECT_CMD_SOCKET socks[2], int make_overlapped)
                  */
                 QueryPerformanceCounter(&ticks);
                 snprintf(a.unaddr.sun_path + n, UNIX_PATH_MAX - n,
-                         "%"PRIx64"-%"PRId32".$$$", ticks.QuadPart, GetCurrentProcessId());
+                         "%"PRIx64"-%lu.$$$", ticks.QuadPart, GetCurrentProcessId());
                 a.unaddr.sun_family = AF_UNIX;
 
                 if (bind(listener, &a.addr, addrlen) != SOCKET_ERROR)
