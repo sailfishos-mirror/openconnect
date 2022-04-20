@@ -57,8 +57,6 @@ static int cstp_can_gen_tokencode(struct openconnect_info *vpninfo,
 				  struct oc_form_opt *opt);
 
 /* multiple certificate-based authentication */
-static int announce_multicert_capability(struct openconnect_info *vpninfo,
-					 xmlNodePtr root);
 static void parse_multicert_request(struct openconnect_info *vpninfo,
 				    xmlNodePtr node, struct cert_request *cert_rq);
 static int prepare_multicert_response(struct openconnect_info *vpninfo,
@@ -863,6 +861,12 @@ static xmlDocPtr xmlpost_new_query(struct openconnect_info *vpninfo, const char 
 		goto bad;
 #endif
 
+	if (vpninfo->certinfo[1].cert) {
+		node = xmlNewTextChild(capabilities, NULL, XCAST("auth-method"), XCAST("multiple-cert"));
+		if (!node)
+			goto bad;
+	}
+
 	*rootp = root;
 	return doc;
 
@@ -911,9 +915,6 @@ static int xmlpost_initial_req(struct openconnect_info *vpninfo,
 
 	node = xmlNewTextChild(root, NULL, XCAST("group-access"), XCAST(url));
 	if (!node)
-		goto bad;
-
-	if (announce_multicert_capability(vpninfo, root) < 0)
 		goto bad;
 
 	if (cert_fail) {
@@ -1789,30 +1790,6 @@ static int to_base64(struct oc_text_buf **result,
 out:
 	buf_free(buf);
 	return ret;
-}
-
- /**
-  * Announce multicert capability
-  */
-int announce_multicert_capability(struct openconnect_info *vpninfo,
-	xmlNodePtr root)
-{
-	xmlNodePtr node;
-
-	if (vpninfo->certinfo[1].cert) {
-		node = xmlNewChild(root, NULL, XCAST("capabilities"), NULL);
-		if (node)
-			node = xmlNewTextChild(node, NULL, XCAST("auth-method"),
-			     XCAST("multiple-cert"));
-		if (!node)
-			goto bad;
-	}
-
-	return 0;
-
- bad:
-
-	return -ENOMEM;
 }
 
 /**
