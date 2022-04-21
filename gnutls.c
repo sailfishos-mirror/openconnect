@@ -3141,7 +3141,7 @@ static int check_multicert_compat(struct openconnect_info *vpninfo,
 	int err;
 
 	/**
-	 * Multiple certificate authentication protocol parameterizes the
+	 * Multiple certificate authentication protocol parametrizes the
 	 * digest independently of the pk algorithm. Warn if the signature
 	 * algorithm doesn't operate this way. Warn if this isn't so.
 	 */
