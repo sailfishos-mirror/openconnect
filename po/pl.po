@@ -4090,9 +4090,9 @@ msgstr ""
 #: main.c:1610
 #, c-format
 msgid ""
-"RX: %<PRId64> packets (%<PRId64> B); TX: %<PRId64> packets (%<PRId64> B)\n"
+"RX: %<PRIu64> packets (%<PRIu64> B); TX: %<PRIu64> packets (%<PRIu64> B)\n"
 msgstr ""
-"RX: %<PRId64> pakietów (%<PRId64> B); TX: %<PRId64> pakietów (%<PRId64> B)\n"
+"RX: %<PRIu64> pakietów (%<PRIu64> B); TX: %<PRIu64> pakietów (%<PRIu64> B)\n"
 
 #: main.c:1614
 #, c-format

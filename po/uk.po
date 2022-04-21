@@ -4172,10 +4172,10 @@ msgstr "Строк дії розпізнавання у сеансі буде в
 #: main.c:1610
 #, c-format
 msgid ""
-"RX: %<PRId64> packets (%<PRId64> B); TX: %<PRId64> packets (%<PRId64> B)\n"
+"RX: %<PRIu64> packets (%<PRIu64> B); TX: %<PRIu64> packets (%<PRIu64> B)\n"
 msgstr ""
-"Отримання: %<PRId64> пакетів (%<PRId64> Б); передавання: %<PRId64> пакети "
-"(%<PRId64> Б)\n"
+"Отримання: %<PRIu64> пакетів (%<PRIu64> Б); передавання: %<PRIu64> пакети "
+"(%<PRIu64> Б)\n"
 
 #: main.c:1614
 #, c-format
