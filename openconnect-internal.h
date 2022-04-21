@@ -593,6 +593,8 @@ struct openconnect_info {
 	char local_cert_md5[MD5_SIZE * 2 + 1]; /* For CSD */
 	gnutls_privkey_t strap_key;
 	gnutls_privkey_t strap_dh_key;
+	unsigned char finished[64];
+	int finished_len;
 #endif /* OPENCONNECT_GNUTLS */
 	char *strap_pubkey;
 	char *strap_dh_pubkey;
@@ -1485,6 +1487,7 @@ int hkdf_sha256_extract_expand(struct openconnect_info *vpninfo, unsigned char *
 int aes_256_gcm_decrypt(struct openconnect_info *vpninfo, unsigned char *key,
 			unsigned char *data, int len,
 			unsigned char *iv, unsigned char *tag);
+void append_strap_verify(struct openconnect_info *vpninfo, struct oc_text_buf *buf, int rekey);
 
 /* mainloop.c */
 int tun_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable, int did_work);

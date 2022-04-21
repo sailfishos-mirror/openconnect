@@ -209,6 +209,17 @@ static int parse_hex_val(const char *str, unsigned char *storage, unsigned int m
 	return len/2;
 }
 
+static void append_connect_strap_headers(struct openconnect_info *vpninfo,
+					 struct oc_text_buf *buf, int rekey)
+{
+	buf_append(buf, "X-AnyConnect-STRAP-Verify: ");
+	append_strap_verify(vpninfo, buf, rekey);
+	buf_append(buf, "\r\n");
+
+	if (rekey)
+		buf_append(buf, "X-AnyConnect-STRAP-Pubkey: %s\r\n", vpninfo->strap_pubkey);
+}
+
 static int start_cstp_connection(struct openconnect_info *vpninfo)
 {
 	struct oc_text_buf *reqbuf;
@@ -235,6 +246,9 @@ static int start_cstp_connection(struct openconnect_info *vpninfo)
 	buf_append(reqbuf, "Cookie: webvpn=%s\r\n", vpninfo->cookie);
 	buf_append(reqbuf, "X-CSTP-Version: 1\r\n");
 	buf_append(reqbuf, "X-CSTP-Hostname: %s\r\n", vpninfo->localname);
+
+	if (vpninfo->strap_pubkey)
+		append_connect_strap_headers(vpninfo, reqbuf, 0);
 
 	append_mobile_headers(vpninfo, reqbuf);
 	append_compr_types(reqbuf, "CSTP", vpninfo->req_compr);

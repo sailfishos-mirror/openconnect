@@ -2278,30 +2278,49 @@ void destroy_eap_ttls(struct openconnect_info *vpninfo, void *ttls)
 	 * have to call BIO_get_new_index() more times than is necessary */
 }
 
-static int generate_strap_key(EC_KEY **key, EC_GROUP *grp, char **pubkey)
+static int generate_strap_key(EC_KEY **key, char **pubkey,
+			      unsigned char **pubder, int *pubderlen)
 {
+	EC_KEY *lkey;
 	struct oc_text_buf *buf = NULL;
 	unsigned char *der = NULL;
 	int len;
 
-	*key = EC_KEY_new();
-	if (!*key)
+	lkey = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
+	if (!lkey)
 		return -EIO;
 
-	if (!EC_KEY_set_group(*key, grp))
+	if (!EC_KEY_generate_key(lkey)) {
+		EC_KEY_free(lkey);
 		return -EIO;
+	}
 
-	if (!EC_KEY_generate_key(*key))
-		return -EIO;
-
-	len = i2d_EC_PUBKEY(*key, &der);
+	len = i2d_EC_PUBKEY(lkey, &der);
 	buf = buf_alloc();
 	buf_append_base64(buf, der, len, 0);
-	free(der);
-	if (buf_error(buf))
+	if (buf_error(buf)) {
+		EC_KEY_free(lkey);
+		free(der);
 		return buf_free(buf);
+	}
 
+	/* All done. There are no failure modes from here on, so
+	 * install the resulting key/pubkey/etc. where the caller
+	 * asked us to, freeing the previous ones if needed. */
+	EC_KEY_free(*key);
+	*key = lkey;
+
+	free(*pubkey);
 	*pubkey = buf->data;
+
+	/* If the caller wants the DER, give it to them */
+	if (pubder && pubderlen) {
+		*pubder = der;
+		*pubderlen = len;
+	} else {
+		free(der);
+	}
+
 	buf->data = NULL;
 	buf_free(buf);
 	return 0;
@@ -2310,34 +2329,24 @@ static int generate_strap_key(EC_KEY **key, EC_GROUP *grp, char **pubkey)
 int generate_strap_keys(struct openconnect_info *vpninfo)
 {
 	int err;
-	EC_GROUP *grp = EC_GROUP_new_by_curve_name(NID_X9_62_prime256v1);
 
-	if (!grp) {
-		vpn_progress(vpninfo, PRG_ERR,
-			     _("Failed to create prime256v1 EC group\n"));
-		return -EIO;
-	}
-
-	err = generate_strap_key(&vpninfo->strap_key, grp, &vpninfo->strap_pubkey);
+	err = generate_strap_key(&vpninfo->strap_key, &vpninfo->strap_pubkey, NULL, NULL);
 	if (err) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Failed to generate STRAP key"));
 		openconnect_report_ssl_errors(vpninfo);
 		free_strap_keys(vpninfo);
-		EC_GROUP_free(grp);
 		return -EIO;
 	}
 
-	err = generate_strap_key(&vpninfo->strap_dh_key, grp, &vpninfo->strap_dh_pubkey);
+	err = generate_strap_key(&vpninfo->strap_dh_key, &vpninfo->strap_dh_pubkey, NULL, NULL);
 	if (err) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Failed to generate STRAP DH key\n"));
 		openconnect_report_ssl_errors(vpninfo);
 		free_strap_keys(vpninfo);
-		EC_GROUP_free(grp);
 		return -EIO;
 	}
-	EC_GROUP_free(grp);
 	return 0;
 }
 
@@ -2427,6 +2436,71 @@ int aes_256_gcm_decrypt(struct openconnect_info *vpninfo, unsigned char *key,
 	return ret;
 }
 #endif /* HAVE_HPKE_SUPPORT */
+
+void append_strap_verify(struct openconnect_info *vpninfo,
+			 struct oc_text_buf *buf, int rekey)
+{
+	unsigned char finished[64];
+	size_t flen = SSL_get_finished(vpninfo->https_ssl, finished, sizeof(finished));
+
+	if (flen > sizeof(finished)) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("SSL Finished message too large (%zd bytes)\n"), flen);
+		if (!buf_error(buf))
+			buf->error = -EIO;
+		return;
+	}
+
+	/* If we're rekeying, we need to sign the Verify header with the *old* key. */
+	EVP_PKEY *evpkey = EVP_PKEY_new();
+	if (!evpkey || EVP_PKEY_set1_EC_KEY(evpkey, vpninfo->strap_key) <= 0) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("STRAP signature failed\n"));
+		openconnect_report_ssl_errors(vpninfo);
+		if (!buf_error(buf))
+			buf->error = -EIO;
+		EVP_PKEY_free(evpkey);
+		return;
+	}
+
+	unsigned char *pubkey_der = NULL;
+	int pubkey_derlen = 0;
+	if (rekey && generate_strap_key(&vpninfo->strap_key, &vpninfo->strap_pubkey,
+					&pubkey_der, &pubkey_derlen)) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Failed to regenerate STRAP key\n"));
+		openconnect_report_ssl_errors(vpninfo);
+		EVP_PKEY_free(evpkey);
+		if (!buf->error)
+			buf->error = -EIO;
+	}
+
+	EVP_MD_CTX *mdctx = EVP_MD_CTX_new();
+	const EVP_MD *md = EVP_sha256(); /* We only support prime256v1 for now */
+
+	unsigned char signature_bin[128];
+	size_t siglen = sizeof(signature_bin);
+	int ok = (mdctx &&
+		  EVP_DigestSignInit(mdctx, NULL, md, NULL, evpkey) > 0 &&
+		  EVP_DigestSignUpdate(mdctx, finished, flen) > 0 &&
+		  EVP_DigestSignUpdate(mdctx, pubkey_der, pubkey_derlen) > 0 &&
+		  EVP_DigestSignFinal(mdctx, (void *)signature_bin, &siglen) > 0);
+
+	EVP_MD_CTX_free(mdctx);
+	EVP_PKEY_free(evpkey);
+	free(pubkey_der);
+
+	if (!ok) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("STRAP signature failed\n"));
+		openconnect_report_ssl_errors(vpninfo);
+		if (!buf_error(buf))
+			buf->error = -EIO;
+		return;
+	}
+
+	buf_append_base64(buf, signature_bin, siglen, 0);
+}
 
 int export_certificate_pkcs7(struct openconnect_info *vpninfo,
 			     struct cert_info *certinfo,

@@ -2205,6 +2205,25 @@ static int verify_peer(gnutls_session_t session)
 
 	return err;
 }
+static int finished_fn(gnutls_session_t session, unsigned int htype, unsigned when,
+		       unsigned int incoming, const gnutls_datum_t *msg)
+{
+	struct openconnect_info *vpninfo = gnutls_session_get_ptr(session);
+
+	if (incoming)
+		return 0;
+
+	if (msg->size > sizeof(vpninfo->finished)) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("TLS Finished message larger than expected (%u bytes)\n"),
+			     msg->size);
+		vpninfo->finished_len = sizeof(vpninfo->finished);
+	} else
+		vpninfo->finished_len = msg->size;
+
+	memcpy(vpninfo->finished, msg->data, vpninfo->finished_len);
+	return 0;
+}
 
 int openconnect_open_https(struct openconnect_info *vpninfo)
 {
@@ -2419,6 +2438,13 @@ int openconnect_open_https(struct openconnect_info *vpninfo)
 	gnutls_handshake_set_timeout(vpninfo->https_sess,
 				     GNUTLS_DEFAULT_HANDSHAKE_TIMEOUT);
 #endif
+	/*
+	 * The AnyConnect STRAP protocol needs the Finished message from the
+	 * TLS connection. It isn't clear if this is a misguided attempt at
+	 * MITM protection or just a convenient nonce known to both sides.
+	 */
+	gnutls_handshake_set_hook_function(vpninfo->https_sess, GNUTLS_HANDSHAKE_FINISHED,
+					   GNUTLS_HOOK_POST, finished_fn);
 
 	err = cstp_handshake(vpninfo, 1);
 	if (err)
@@ -2822,9 +2848,10 @@ void destroy_eap_ttls(struct openconnect_info *vpninfo, void *sess)
 	gnutls_deinit(sess);
 }
 
-static int generate_strap_key(gnutls_privkey_t *key, char **pubkey)
+static int generate_strap_key(gnutls_privkey_t *key, char **pubkey, gnutls_datum_t *pubder)
 {
 	int bits, pk, err;
+	gnutls_privkey_t lkey = NULL;
 	gnutls_pubkey_t pkey = NULL;
 	gnutls_datum_t pdata = { };
 	struct oc_text_buf *buf = NULL;
@@ -2836,11 +2863,11 @@ static int generate_strap_key(gnutls_privkey_t *key, char **pubkey)
 #endif
 	bits = GNUTLS_CURVE_TO_BITS(GNUTLS_ECC_CURVE_SECP256R1);
 
-	err = gnutls_privkey_init(key);
+	err = gnutls_privkey_init(&lkey);
 	if (err)
 		goto out;
 
-	err = gnutls_privkey_generate(*key, pk, bits, 0);
+	err = gnutls_privkey_generate(lkey, pk, bits, 0);
 	if (err)
 		goto out;
 
@@ -2848,7 +2875,7 @@ static int generate_strap_key(gnutls_privkey_t *key, char **pubkey)
 	if (err)
 		goto out;
 
-	err = gnutls_pubkey_import_privkey(pkey, *key,
+	err = gnutls_pubkey_import_privkey(pkey, lkey,
 					   GNUTLS_KEY_KEY_AGREEMENT, 0);
 	if (err)
 		goto out;
@@ -2864,17 +2891,26 @@ static int generate_strap_key(gnutls_privkey_t *key, char **pubkey)
 		goto out;
 	}
 
+	gnutls_privkey_deinit(*key);
+	*key = lkey;
+
+	free(*pubkey);
 	*pubkey = buf->data;
 	buf->data = NULL;
  out:
 	buf_free(buf);
-	gnutls_free(pdata.data);
 	gnutls_pubkey_deinit(pkey);
 	if (err) {
-		gnutls_privkey_deinit(*key);
+		gnutls_privkey_deinit(lkey);
 		*key = NULL;
 		*pubkey = NULL;
+		pubder = NULL; /* So we don't return it... */
 	}
+	if (pubder)
+		*pubder = pdata;
+	else
+		gnutls_free(pdata.data);
+
 	return err;
 }
 
@@ -2882,7 +2918,7 @@ int generate_strap_keys(struct openconnect_info *vpninfo)
 {
 	int err;
 
-	err = generate_strap_key(&vpninfo->strap_key, &vpninfo->strap_pubkey);
+	err = generate_strap_key(&vpninfo->strap_key, &vpninfo->strap_pubkey, NULL);
 	if (err) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Failed to generate STRAP key: %s\n"),
@@ -2891,7 +2927,7 @@ int generate_strap_keys(struct openconnect_info *vpninfo)
 		return -EIO;
 	}
 
-	err = generate_strap_key(&vpninfo->strap_dh_key, &vpninfo->strap_dh_pubkey);
+	err = generate_strap_key(&vpninfo->strap_dh_key, &vpninfo->strap_dh_pubkey, NULL);
 	if (err) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Failed to generate STRAP DH key: %s\n"),
@@ -3071,6 +3107,67 @@ int aes_256_gcm_decrypt(struct openconnect_info *vpninfo, unsigned char *key,
 	return 0;
 }
 #endif /* HAVE_HPKE_SUPPORT */
+
+void append_strap_verify(struct openconnect_info *vpninfo,
+			 struct oc_text_buf *buf, int rekey)
+{
+	gnutls_datum_t nd = { (void *)vpninfo->finished, vpninfo->finished_len };
+	struct oc_text_buf *nonce = NULL;
+	gnutls_privkey_t sign_key = vpninfo->strap_key;
+	int err;
+
+	if (rekey) {
+		gnutls_datum_t pubkey_der;
+
+		/* We have a copy and we don't want it freed just yet */
+		vpninfo->strap_key = NULL;
+
+		err = generate_strap_key(&vpninfo->strap_key, &vpninfo->strap_pubkey,
+					 &pubkey_der);
+		if (err) {
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("Failed to regenerate STRAP key: %s\n"),
+				     gnutls_strerror(err));
+			vpninfo->strap_key = sign_key;
+			if (!buf_error(buf))
+				buf->error = -EIO;
+			return;
+		}
+
+		/* Concatenate our Finished message with our pubkey to be signed */
+		nonce = buf_alloc();
+		buf_append_bytes(nonce, vpninfo->finished, vpninfo->finished_len);
+		buf_append_bytes(nonce, pubkey_der.data, pubkey_der.size);
+		free(pubkey_der.data);
+
+		err = GNUTLS_E_MEMORY_ERROR;
+		if (buf_error(nonce)) {
+			buf_free(nonce);
+			goto fail;
+		}
+
+		nd.data = (void *)nonce->data;
+		nd.size = nonce->pos;
+	}
+
+	gnutls_datum_t sig = { NULL, 0 };
+	err = gnutls_privkey_sign_data(sign_key, GNUTLS_DIG_SHA256,
+					   0, &nd, &sig);
+	if (rekey)
+		gnutls_privkey_deinit(sign_key);
+	buf_free(nonce);
+	if (err) {
+	fail:
+		vpn_progress(vpninfo, PRG_ERR, _("STRAP signature failed: %s\n"),
+			     gnutls_strerror(err));
+		if (!buf_error(buf))
+			buf->error = -EIO;
+		return;
+	}
+
+	buf_append_base64(buf, sig.data, sig.size, 0);
+	gnutls_free(sig.data);
+}
 
 /**
   * multiple-client certificate authentication
