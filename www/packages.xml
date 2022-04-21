@@ -38,11 +38,6 @@
       The <tt>openconnect</tt> and <tt>network-manager-openconnect</tt> packages are included in Ubuntu
       but bug fixes are sometimes very slow.
     </p>
-    <p>
-      OpenConnect releases for Ubuntu LTS distributions can be found in the
-      <a href="https://launchpad.net/~dwmw2/+archive/ubuntu/openconnect">dwmw2/openconnect</a>
-      PPA.
-    </p>
   </li>
   <li><h2>NetBSD, DragonFly BSD, Solaris, etc. <i>(pkgsrc)</i></h2>
     <p>
