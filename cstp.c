@@ -168,10 +168,9 @@ static void append_compr_types(struct oc_text_buf *buf, const char *proto, int a
 			buf_append(buf, "%clzs", sep);
 			sep = ',';
 		}
-		if (avail & COMPR_DEFLATE) {
+		if (avail & COMPR_DEFLATE)
 			buf_append(buf, "%cdeflate", sep);
-			sep = ',';
-		}
+
 		buf_append(buf, "\r\n");
 	}
 }
