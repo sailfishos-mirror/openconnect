@@ -2205,6 +2205,8 @@ static int verify_peer(gnutls_session_t session)
 
 	return err;
 }
+
+#ifdef HAVE_HPKE_SUPPORT
 static int finished_fn(gnutls_session_t session, unsigned int htype, unsigned when,
 		       unsigned int incoming, const gnutls_datum_t *msg)
 {
@@ -2224,6 +2226,7 @@ static int finished_fn(gnutls_session_t session, unsigned int htype, unsigned wh
 	memcpy(vpninfo->finished, msg->data, vpninfo->finished_len);
 	return 0;
 }
+#endif
 
 int openconnect_open_https(struct openconnect_info *vpninfo)
 {
@@ -2438,6 +2441,7 @@ int openconnect_open_https(struct openconnect_info *vpninfo)
 	gnutls_handshake_set_timeout(vpninfo->https_sess,
 				     GNUTLS_DEFAULT_HANDSHAKE_TIMEOUT);
 #endif
+#ifdef HAVE_HPKE_SUPPORT
 	/*
 	 * The AnyConnect STRAP protocol needs the Finished message from the
 	 * TLS connection. It isn't clear if this is a misguided attempt at
@@ -2445,7 +2449,7 @@ int openconnect_open_https(struct openconnect_info *vpninfo)
 	 */
 	gnutls_handshake_set_hook_function(vpninfo->https_sess, GNUTLS_HANDSHAKE_FINISHED,
 					   GNUTLS_HOOK_POST, finished_fn);
-
+#endif
 	err = cstp_handshake(vpninfo, 1);
 	if (err)
 		return err;
@@ -3112,7 +3116,6 @@ int aes_256_gcm_decrypt(struct openconnect_info *vpninfo, unsigned char *key,
 	gnutls_cipher_deinit(h);
 	return 0;
 }
-#endif /* HAVE_HPKE_SUPPORT */
 
 void append_strap_privkey(struct openconnect_info *vpninfo,
 			  struct oc_text_buf *buf)
@@ -3204,6 +3207,7 @@ void append_strap_verify(struct openconnect_info *vpninfo,
 	buf_append_base64(buf, sig.data, sig.size, 0);
 	gnutls_free(sig.data);
 }
+#endif /* HAVE_HPKE_SUPPORT */
 
 /**
   * multiple-client certificate authentication

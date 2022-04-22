@@ -608,9 +608,12 @@ void openconnect_vpninfo_free(struct openconnect_info *vpninfo)
 		closesocket(vpninfo->cmd_fd);
 		closesocket(vpninfo->cmd_fd_write);
 	}
+
+#ifdef HAVE_HPKE_SUPPORT
 	free_strap_keys(vpninfo);
 	free(vpninfo->strap_pubkey);
 	free(vpninfo->strap_dh_pubkey);
+#endif /* HAVE_HPKE_SUPPORT */
 
 	free(vpninfo->sso_username);
 	free(vpninfo->sso_cookie_value);

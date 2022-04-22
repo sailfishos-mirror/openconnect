@@ -2278,6 +2278,7 @@ void destroy_eap_ttls(struct openconnect_info *vpninfo, void *ttls)
 	 * have to call BIO_get_new_index() more times than is necessary */
 }
 
+#ifdef HAVE_HPKE_SUPPORT
 static int generate_strap_key(EC_KEY **key, char **pubkey,
 			      unsigned char *privder_in, int privderlen,
 			      unsigned char **pubder, int *pubderlen)
@@ -2390,8 +2391,6 @@ void append_strap_privkey(struct openconnect_info *vpninfo,
 		buf_append_base64(buf, der, derlen, 0);
 }
 
-#ifdef HAVE_HPKE_SUPPORT
-
 #include <openssl/kdf.h>
 
 int ecdh_compute_secp256r1(struct openconnect_info *vpninfo, const unsigned char *pubkey,
@@ -2465,7 +2464,6 @@ int aes_256_gcm_decrypt(struct openconnect_info *vpninfo, unsigned char *key,
 	EVP_CIPHER_CTX_free(cctx);
 	return ret;
 }
-#endif /* HAVE_HPKE_SUPPORT */
 
 void append_strap_verify(struct openconnect_info *vpninfo,
 			 struct oc_text_buf *buf, int rekey)
@@ -2531,6 +2529,7 @@ void append_strap_verify(struct openconnect_info *vpninfo,
 
 	buf_append_base64(buf, signature_bin, siglen, 0);
 }
+#endif /* HAVE_HPKE_SUPPORT */
 
 int export_certificate_pkcs7(struct openconnect_info *vpninfo,
 			     struct cert_info *certinfo,
