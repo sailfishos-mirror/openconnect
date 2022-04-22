@@ -2484,7 +2484,9 @@ void append_strap_verify(struct openconnect_info *vpninfo,
 	if (!evpkey || EVP_PKEY_set1_EC_KEY(evpkey, vpninfo->strap_key) <= 0) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("STRAP signature failed\n"));
+	fail_errors:
 		openconnect_report_ssl_errors(vpninfo);
+	fail_pkey:
 		if (!buf_error(buf))
 			buf->error = -EIO;
 		EVP_PKEY_free(evpkey);
@@ -2493,14 +2495,20 @@ void append_strap_verify(struct openconnect_info *vpninfo,
 
 	unsigned char *pubkey_der = NULL;
 	int pubkey_derlen = 0;
-	if (rekey && generate_strap_key(&vpninfo->strap_key, &vpninfo->strap_pubkey,
-					NULL, 0, &pubkey_der, &pubkey_derlen)) {
-		vpn_progress(vpninfo, PRG_ERR,
-			     _("Failed to regenerate STRAP key\n"));
-		openconnect_report_ssl_errors(vpninfo);
-		EVP_PKEY_free(evpkey);
-		if (!buf->error)
-			buf->error = -EIO;
+	if (rekey) {
+		if (generate_strap_key(&vpninfo->strap_key, &vpninfo->strap_pubkey,
+				       NULL, 0, &pubkey_der, &pubkey_derlen)) {
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("Failed to regenerate STRAP key\n"));
+			goto fail_errors;
+		}
+	} else {
+		pubkey_der = openconnect_base64_decode(&pubkey_derlen, vpninfo->strap_pubkey);
+		if (!pubkey_der) {
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("Failed to generate STRAP key DER\n"));
+			goto fail_pkey;
+		}
 	}
 
 	EVP_MD_CTX *mdctx = EVP_MD_CTX_new();
@@ -2521,10 +2529,7 @@ void append_strap_verify(struct openconnect_info *vpninfo,
 	if (!ok) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("STRAP signature failed\n"));
-		openconnect_report_ssl_errors(vpninfo);
-		if (!buf_error(buf))
-			buf->error = -EIO;
-		return;
+		goto fail_errors;
 	}
 
 	buf_append_base64(buf, signature_bin, siglen, 0);

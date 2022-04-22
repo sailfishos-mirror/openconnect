@@ -3150,17 +3150,18 @@ int ingest_strap_privkey(struct openconnect_info *vpninfo,
 void append_strap_verify(struct openconnect_info *vpninfo,
 			 struct oc_text_buf *buf, int rekey)
 {
-	gnutls_datum_t nd = { (void *)vpninfo->finished, vpninfo->finished_len };
-	struct oc_text_buf *nonce = NULL;
 	gnutls_privkey_t sign_key = vpninfo->strap_key;
 	int err;
 
-	if (rekey) {
-		gnutls_datum_t pubkey_der;
+	/* Concatenate our Finished message with our pubkey to be signed */
+	struct oc_text_buf *nonce = buf_alloc();
+	buf_append_bytes(nonce, vpninfo->finished, vpninfo->finished_len);
 
+	if (rekey) {
 		/* We have a copy and we don't want it freed just yet */
 		vpninfo->strap_key = NULL;
 
+		gnutls_datum_t pubkey_der;
 		err = generate_strap_key(&vpninfo->strap_key, &vpninfo->strap_pubkey,
 					 NULL, &pubkey_der);
 		if (err) {
@@ -3170,25 +3171,33 @@ void append_strap_verify(struct openconnect_info *vpninfo,
 			vpninfo->strap_key = sign_key;
 			if (!buf_error(buf))
 				buf->error = -EIO;
+			buf_free(nonce);
 			return;
 		}
-
-		/* Concatenate our Finished message with our pubkey to be signed */
-		nonce = buf_alloc();
-		buf_append_bytes(nonce, vpninfo->finished, vpninfo->finished_len);
 		buf_append_bytes(nonce, pubkey_der.data, pubkey_der.size);
-		free(pubkey_der.data);
-
-		err = GNUTLS_E_MEMORY_ERROR;
-		if (buf_error(nonce)) {
+		gnutls_free(pubkey_der.data);
+	} else {
+		int len;
+		unsigned char *der = openconnect_base64_decode(&len, vpninfo->strap_pubkey);
+		if (!der) {
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("Failed to generate STRAP key DER\n"));
+			if (!buf_error(buf))
+				buf->error = -EIO;
 			buf_free(nonce);
-			goto fail;
+			return;
 		}
-
-		nd.data = (void *)nonce->data;
-		nd.size = nonce->pos;
+		buf_append_bytes(nonce, der, len);
+		free(der);
 	}
 
+	err = GNUTLS_E_MEMORY_ERROR;
+	if (buf_error(nonce)) {
+		buf_free(nonce);
+		goto fail;
+	}
+
+	gnutls_datum_t nd = { (void *)nonce->data, nonce->pos };
 	gnutls_datum_t sig = { NULL, 0 };
 	err = gnutls_privkey_sign_data(sign_key, GNUTLS_DIG_SHA256,
 					   0, &nd, &sig);

@@ -219,12 +219,11 @@ static void append_connect_strap_headers(struct openconnect_info *vpninfo,
 	append_strap_verify(vpninfo, buf, rekey);
 	buf_append(buf, "\r\n");
 
-	if (rekey)
-		buf_append(buf, "X-AnyConnect-STRAP-Pubkey: %s\r\n", vpninfo->strap_pubkey);
+	buf_append(buf, "X-AnyConnect-STRAP-Pubkey: %s\r\n", vpninfo->strap_pubkey);
 }
 #endif
 
-static int start_cstp_connection(struct openconnect_info *vpninfo)
+static int start_cstp_connection(struct openconnect_info *vpninfo, int strap_rekey)
 {
 	struct oc_text_buf *reqbuf;
 	char buf[65536];
@@ -253,7 +252,7 @@ static int start_cstp_connection(struct openconnect_info *vpninfo)
 
 #ifdef HAVE_HPKE_SUPPORT
 	if (vpninfo->strap_pubkey)
-		append_connect_strap_headers(vpninfo, reqbuf, 0);
+		append_connect_strap_headers(vpninfo, reqbuf, strap_rekey);
 #endif
 
 	append_mobile_headers(vpninfo, reqbuf);
@@ -687,6 +686,7 @@ int cstp_connect(struct openconnect_info *vpninfo)
 	int ret;
 	int deflate_bufsize = 0;
 	int compr_type;
+	int strap_rekey = 1;
 
 	if (!vpninfo->cookies) {
 		internal_split_cookies(vpninfo, 0, "webvpn");
@@ -695,10 +695,12 @@ int cstp_connect(struct openconnect_info *vpninfo)
 		if (strap_privkey && *strap_privkey) {
 			int derlen;
 			void *der = openconnect_base64_decode(&derlen, strap_privkey);
-			if (der && !ingest_strap_privkey(vpninfo, der, derlen))
+			if (der && !ingest_strap_privkey(vpninfo, der, derlen)) {
+				strap_rekey = 0;
 				vpn_progress(vpninfo, PRG_DEBUG,
 					     _("Ingested STRAP public key %s\n"),
 					     vpninfo->strap_pubkey);
+			}
 		}
 #endif
 		http_add_cookie(vpninfo, "openconnect_strapkey", "", 1);
@@ -717,7 +719,7 @@ int cstp_connect(struct openconnect_info *vpninfo)
 	if (ret)
 		return ret;
 
-	ret = start_cstp_connection(vpninfo);
+	ret = start_cstp_connection(vpninfo, strap_rekey);
 	if (ret)
 		goto out;
 
