@@ -2848,7 +2848,9 @@ void destroy_eap_ttls(struct openconnect_info *vpninfo, void *sess)
 	gnutls_deinit(sess);
 }
 
-static int generate_strap_key(gnutls_privkey_t *key, char **pubkey, gnutls_datum_t *pubder)
+static int generate_strap_key(gnutls_privkey_t *key, char **pubkey,
+			      gnutls_datum_t *privder_in,
+			      gnutls_datum_t *pubder)
 {
 	int bits, pk, err;
 	gnutls_privkey_t lkey = NULL;
@@ -2867,7 +2869,11 @@ static int generate_strap_key(gnutls_privkey_t *key, char **pubkey, gnutls_datum
 	if (err)
 		goto out;
 
-	err = gnutls_privkey_generate(lkey, pk, bits, 0);
+	if (privder_in)
+		err = gnutls_privkey_import_x509_raw(lkey, privder_in, GNUTLS_X509_FMT_DER,
+						     NULL, 0);
+	else
+		err = gnutls_privkey_generate(lkey, pk, bits, 0);
 	if (err)
 		goto out;
 
@@ -2918,7 +2924,7 @@ int generate_strap_keys(struct openconnect_info *vpninfo)
 {
 	int err;
 
-	err = generate_strap_key(&vpninfo->strap_key, &vpninfo->strap_pubkey, NULL);
+	err = generate_strap_key(&vpninfo->strap_key, &vpninfo->strap_pubkey, NULL, NULL);
 	if (err) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Failed to generate STRAP key: %s\n"),
@@ -2927,7 +2933,7 @@ int generate_strap_keys(struct openconnect_info *vpninfo)
 		return -EIO;
 	}
 
-	err = generate_strap_key(&vpninfo->strap_dh_key, &vpninfo->strap_dh_pubkey, NULL);
+	err = generate_strap_key(&vpninfo->strap_dh_key, &vpninfo->strap_dh_pubkey, NULL, NULL);
 	if (err) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Failed to generate STRAP DH key: %s\n"),
@@ -3108,6 +3114,36 @@ int aes_256_gcm_decrypt(struct openconnect_info *vpninfo, unsigned char *key,
 }
 #endif /* HAVE_HPKE_SUPPORT */
 
+void append_strap_privkey(struct openconnect_info *vpninfo,
+			  struct oc_text_buf *buf)
+{
+	gnutls_x509_privkey_t xk = NULL;
+	gnutls_datum_t d = { NULL, 0 };
+
+
+	if (!gnutls_privkey_export_x509(vpninfo->strap_key, &xk) &&
+	    !gnutls_x509_privkey_export2(xk, GNUTLS_X509_FMT_DER, &d)) {
+		buf_append_base64(buf, d.data, d.size, 0);
+		gnutls_free(d.data);
+	}
+	gnutls_x509_privkey_deinit(xk);
+}
+
+int ingest_strap_privkey(struct openconnect_info *vpninfo,
+			 unsigned char *der, int len)
+{
+	gnutls_datum_t d = { der, len };
+
+	int err = generate_strap_key(&vpninfo->strap_key, &vpninfo->strap_pubkey, &d, NULL);
+	if (err) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Failed to decode STRAP key: %s\n"),
+			     gnutls_strerror(err));
+		return -EIO;
+	}
+	return 0;
+}
+
 void append_strap_verify(struct openconnect_info *vpninfo,
 			 struct oc_text_buf *buf, int rekey)
 {
@@ -3123,7 +3159,7 @@ void append_strap_verify(struct openconnect_info *vpninfo,
 		vpninfo->strap_key = NULL;
 
 		err = generate_strap_key(&vpninfo->strap_key, &vpninfo->strap_pubkey,
-					 &pubkey_der);
+					 NULL, &pubkey_der);
 		if (err) {
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("Failed to regenerate STRAP key: %s\n"),

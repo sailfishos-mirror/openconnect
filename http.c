@@ -100,6 +100,17 @@ int http_add_cookie(struct openconnect_info *vpninfo, const char *option,
 	return 0;
 }
 
+const char *http_get_cookie(struct openconnect_info *vpninfo, const char *name)
+{
+	struct oc_vpn_option *this;
+
+	for (this = vpninfo->cookies; this; this = this->next) {
+		if (!strcmp(this->option, name))
+			return this->value;
+	}
+	return NULL;
+}
+
 /* Some protocols use an "authentication cookie" which needs
  * to be split into multiple HTTP cookies. (For example, oNCP
  * 'DSSignInUrl=/; DSID=xxx; DSFirstAccess=xxx; DSLastAccess=xxx')

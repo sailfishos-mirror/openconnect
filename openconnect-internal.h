@@ -1488,6 +1488,8 @@ int aes_256_gcm_decrypt(struct openconnect_info *vpninfo, unsigned char *key,
 			unsigned char *data, int len,
 			unsigned char *iv, unsigned char *tag);
 void append_strap_verify(struct openconnect_info *vpninfo, struct oc_text_buf *buf, int rekey);
+void append_strap_privkey(struct openconnect_info *vpninfo, struct oc_text_buf *buf);
+int ingest_strap_privkey(struct openconnect_info *vpninfo, unsigned char *der, int len);
 
 /* mainloop.c */
 int tun_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable, int did_work);
@@ -1595,6 +1597,7 @@ int do_https_request(struct openconnect_info *vpninfo, const char *method, const
 		     int (*header_cb)(struct openconnect_info *, char *, char *), int flags);
 int http_add_cookie(struct openconnect_info *vpninfo, const char *option,
 		    const char *value, int replace);
+const char *http_get_cookie(struct openconnect_info *vpninfo, const char *name);
 int internal_split_cookies(struct openconnect_info *vpninfo, int replace, const char *def_cookie);
 int urldecode_inplace(char *p);
 int process_http_response(struct openconnect_info *vpninfo, int connect,

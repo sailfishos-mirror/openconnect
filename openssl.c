@@ -2279,6 +2279,7 @@ void destroy_eap_ttls(struct openconnect_info *vpninfo, void *ttls)
 }
 
 static int generate_strap_key(EC_KEY **key, char **pubkey,
+			      unsigned char *privder_in, int privderlen,
 			      unsigned char **pubder, int *pubderlen)
 {
 	EC_KEY *lkey;
@@ -2286,13 +2287,19 @@ static int generate_strap_key(EC_KEY **key, char **pubkey,
 	unsigned char *der = NULL;
 	int len;
 
-	lkey = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
-	if (!lkey)
-		return -EIO;
+	if (privder_in) {
+		lkey = d2i_ECPrivateKey(NULL, (const unsigned char **)&privder_in, privderlen);
+		if (!lkey)
+			return -EIO;
+	} else {
+		lkey = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
+		if (!lkey)
+			return -EIO;
 
-	if (!EC_KEY_generate_key(lkey)) {
-		EC_KEY_free(lkey);
-		return -EIO;
+		if (!EC_KEY_generate_key(lkey)) {
+			EC_KEY_free(lkey);
+			return -EIO;
+		}
 	}
 
 	len = i2d_EC_PUBKEY(lkey, &der);
@@ -2330,7 +2337,8 @@ int generate_strap_keys(struct openconnect_info *vpninfo)
 {
 	int err;
 
-	err = generate_strap_key(&vpninfo->strap_key, &vpninfo->strap_pubkey, NULL, NULL);
+	err = generate_strap_key(&vpninfo->strap_key, &vpninfo->strap_pubkey,
+				 NULL, 0, NULL, NULL);
 	if (err) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Failed to generate STRAP key"));
@@ -2339,7 +2347,8 @@ int generate_strap_keys(struct openconnect_info *vpninfo)
 		return -EIO;
 	}
 
-	err = generate_strap_key(&vpninfo->strap_dh_key, &vpninfo->strap_dh_pubkey, NULL, NULL);
+	err = generate_strap_key(&vpninfo->strap_dh_key, &vpninfo->strap_dh_pubkey,
+				 NULL, 0, NULL, NULL);
 	if (err) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Failed to generate STRAP DH key\n"));
@@ -2358,6 +2367,27 @@ void free_strap_keys(struct openconnect_info *vpninfo)
 		EC_KEY_free(vpninfo->strap_dh_key);
 
 	vpninfo->strap_key = vpninfo->strap_dh_key = NULL;
+}
+
+int ingest_strap_privkey(struct openconnect_info *vpninfo, unsigned char *der, int len)
+{
+	if (generate_strap_key(&vpninfo->strap_key,
+			       &vpninfo->strap_pubkey, der, len, NULL, 0)) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Failed to decode STRAP key\n"));
+		openconnect_report_ssl_errors(vpninfo);
+		return -EIO;
+	}
+	return 0;
+}
+
+void append_strap_privkey(struct openconnect_info *vpninfo,
+			  struct oc_text_buf *buf)
+{
+	unsigned char *der = NULL;
+	int derlen = i2d_ECPrivateKey(vpninfo->strap_key, &der);
+	if (derlen > 0)
+		buf_append_base64(buf, der, derlen, 0);
 }
 
 #ifdef HAVE_HPKE_SUPPORT
@@ -2466,7 +2496,7 @@ void append_strap_verify(struct openconnect_info *vpninfo,
 	unsigned char *pubkey_der = NULL;
 	int pubkey_derlen = 0;
 	if (rekey && generate_strap_key(&vpninfo->strap_key, &vpninfo->strap_pubkey,
-					&pubkey_der, &pubkey_derlen)) {
+					NULL, 0, &pubkey_der, &pubkey_derlen)) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Failed to regenerate STRAP key\n"));
 		openconnect_report_ssl_errors(vpninfo);

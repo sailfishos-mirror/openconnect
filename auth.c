@@ -663,8 +663,10 @@ static int parse_xml_response(struct openconnect_info *vpninfo,
 			ret = parse_host_scan_node(vpninfo, xml_node);
 		} else if (xmlnode_is_named(xml_node, "config")) {
 			parse_config_node(vpninfo, xml_node);
+		} else if (xmlnode_is_named(xml_node, "session-token")) {
+			http_add_cookie(vpninfo, "webvpn",
+					(const char *)xmlNodeGetContent(xml_node), 1);
 		} else {
-			xmlnode_get_text(xml_node, "session-token", &vpninfo->cookie);
 			xmlnode_get_text(xml_node, "error", &form->error);
 		}
 
@@ -1055,12 +1057,13 @@ static int fetch_config(struct openconnect_info *vpninfo)
 	else
 		buf_append(buf, "GET %s HTTP/1.1\r\n", vpninfo->profile_url);
 	cstp_common_headers(vpninfo, buf);
-	if (vpninfo->xmlpost)
-		buf_append(buf, "Cookie: webvpn=%s\r\n", vpninfo->cookie);
 	buf_append(buf, "\r\n");
 
 	if (buf_error(buf))
 		return buf_free(buf);
+
+	if (vpninfo->dump_http_traffic)
+		dump_buf(vpninfo, '>', buf->data);
 
 	if (vpninfo->ssl_write(vpninfo, buf->data, buf->pos) != buf->pos) {
 		vpn_progress(vpninfo, PRG_ERR,
@@ -1653,11 +1656,15 @@ newgroup:
 	/* A return value of 2 means the XML form indicated
 	   success. We _should_ have a cookie... */
 
+	struct oc_text_buf *cookie_buf = buf_alloc();
+	if (vpninfo->strap_key) {
+		buf_append(cookie_buf, "openconnect_strapkey=");
+		append_strap_privkey(vpninfo, cookie_buf);
+		buf_append(cookie_buf, "; webvpn=");
+	}
 	for (opt = vpninfo->cookies; opt; opt = opt->next) {
-
 		if (!strcmp(opt->option, "webvpn")) {
-			free(vpninfo->cookie);
-			vpninfo->cookie = strdup(opt->value);
+			buf_append(cookie_buf, "%s", opt->value);
 		} else if (vpninfo->write_new_config && !strcmp(opt->option, "webvpnc")) {
 			char *tok = opt->value;
 			char *bu = NULL, *fu = NULL, *sha = NULL;
@@ -1683,10 +1690,19 @@ newgroup:
 			}
 		}
 	}
+	if (buf_error(cookie_buf)) {
+		result = buf_free(cookie_buf);
+		goto out;
+	}
+
+	free(vpninfo->cookie);
+	vpninfo->cookie = cookie_buf->data;
+	cookie_buf->data = NULL;
+	buf_free(cookie_buf);
+
 	result = 0;
 
 	fetch_config(vpninfo);
-
 out:
 	buf_free(request_body);
 

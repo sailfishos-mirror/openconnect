@@ -243,7 +243,7 @@ static int start_cstp_connection(struct openconnect_info *vpninfo)
 	else
 		buf_append(reqbuf, "Host: %s\r\n", vpninfo->hostname);
 	buf_append(reqbuf, "User-Agent: %s\r\n", vpninfo->useragent);
-	buf_append(reqbuf, "Cookie: webvpn=%s\r\n", vpninfo->cookie);
+	buf_append(reqbuf, "Cookie: webvpn=%s\r\n", http_get_cookie(vpninfo, "webvpn"));
 	buf_append(reqbuf, "X-CSTP-Version: 1\r\n");
 	buf_append(reqbuf, "X-CSTP-Hostname: %s\r\n", vpninfo->localname);
 
@@ -682,6 +682,19 @@ int cstp_connect(struct openconnect_info *vpninfo)
 	int deflate_bufsize = 0;
 	int compr_type;
 
+	if (!vpninfo->cookies) {
+		internal_split_cookies(vpninfo, 0, "webvpn");
+		const char *strap_privkey = http_get_cookie(vpninfo, "openconnect_strapkey");
+		if (strap_privkey && *strap_privkey) {
+			int derlen;
+			void *der = openconnect_base64_decode(&derlen, strap_privkey);
+			http_add_cookie(vpninfo, "openconnect_strapkey", "", 1);
+			if (der && !ingest_strap_privkey(vpninfo, der, derlen))
+				vpn_progress(vpninfo, PRG_DEBUG,
+					     _("Ingested STRAP public key %s\n"),
+					     vpninfo->strap_pubkey);
+		}
+	}
 	/* This needs to be done before openconnect_setup_dtls() because it's
 	   sent with the CSTP CONNECT handshake. Even if we don't end up doing
 	   DTLS. */
