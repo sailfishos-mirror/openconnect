@@ -21,6 +21,7 @@
        <li>Bugfix RSA SecurID token decryption and PIN entry forms, broken in v8.20. (<a href="https://gitlab.com/openconnect/openconnect/-/issues/388">#388</a>, <a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/344">!344</a>)</li>
        <li>Support <a href="https://www.cisco.com/c/en/us/support/docs/security/anyconnect-secure-mobility-client-v4x/212483-configure-asa-as-the-ssl-gateway-for-any.html">Cisco's multiple-certificate authentication</a> (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/194">!194</a>).</li>
        <li>Append <tt>internal=no</tt> to GlobalProtect authentication/configuration forms, for compatibility with servers which apparently require this to function properly. (<a href="https://gitlab.com/openconnect/openconnect/-/issues/246">#246</a>, <a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/337">!337</a>)</li>
+       <li>Revert GlobalProtect default route handling change from v8.20. (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/367">!367</a>)</li>
      </ul><br/>
   </li>
   <li><b><a href="https://www.infradead.org/openconnect/download/openconnect-8.20.tar.gz">OpenConnect v8.20</a></b>
