@@ -3321,8 +3321,8 @@ msgid "Only http or socks(5) proxies supported\n"
 msgstr "Hanya proksi http atau socks(5) yang didukung\n"
 
 #: library.c:124
-msgid "Cisco AnyConnect or openconnect"
-msgstr "Cisco AnyConnect atau openconnect"
+msgid "Cisco AnyConnect or OpenConnect"
+msgstr "Cisco AnyConnect atau OpenConnect"
 
 #: library.c:125
 msgid "Compatible with Cisco AnyConnect SSL VPN, as well as ocserv"
@@ -4083,7 +4083,7 @@ msgstr "PERINGATAN: Tidak dapat mengatur lokal: %s\n"
 #: main.c:1741
 #, c-format
 msgid ""
-"WARNING: This version of openconnect was built without iconv\n"
+"WARNING: This version of OpenConnect was built without iconv\n"
 "         support but you appear to be using the legacy character\n"
 "         set \"%s\". Expect strangeness.\n"
 msgstr ""
@@ -4094,7 +4094,7 @@ msgstr ""
 #: main.c:1748
 #, c-format
 msgid ""
-"WARNING: This version of openconnect is %s but\n"
+"WARNING: This version of OpenConnect is %s but\n"
 "         the libopenconnect library is %s\n"
 msgstr ""
 "PERINGATAN: Versi openconnect ini adalah %s tapi\n"
@@ -4219,8 +4219,8 @@ msgstr "Tak ada server yang dinyatakan\n"
 
 #: main.c:2234
 #, c-format
-msgid "This version of openconnect was built without libproxy support\n"
-msgstr "Versi openconnect ini dibangun tanpa dukungan libproxy\n"
+msgid "This version of OpenConnect was built without libproxy support\n"
+msgstr "Versi OpenConnect ini dibangun tanpa dukungan libproxy\n"
 
 #: main.c:2271
 #, c-format

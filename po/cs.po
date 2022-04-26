@@ -3297,8 +3297,8 @@ msgid "Only http or socks(5) proxies supported\n"
 msgstr "Podporovány pouze proxy HTTP nebo socks(5)\n"
 
 #: library.c:124
-msgid "Cisco AnyConnect or openconnect"
-msgstr "Cisco AnyConnect nebo openconnect"
+msgid "Cisco AnyConnect or OpenConnect"
+msgstr "Cisco AnyConnect nebo OpenConnect"
 
 #: library.c:125
 msgid "Compatible with Cisco AnyConnect SSL VPN, as well as ocserv"
@@ -4057,7 +4057,7 @@ msgstr "POZOR: nelze nastavit národní prostředí: %s\n"
 #: main.c:1741
 #, c-format
 msgid ""
-"WARNING: This version of openconnect was built without iconv\n"
+"WARNING: This version of OpenConnect was built without iconv\n"
 "         support but you appear to be using the legacy character\n"
 "         set \"%s\". Expect strangeness.\n"
 msgstr ""
@@ -4068,7 +4068,7 @@ msgstr ""
 #: main.c:1748
 #, c-format
 msgid ""
-"WARNING: This version of openconnect is %s but\n"
+"WARNING: This version of OpenConnect is %s but\n"
 "         the libopenconnect library is %s\n"
 msgstr ""
 "POZOR: openconnect je ve verzi %s,\n"
@@ -4185,8 +4185,8 @@ msgstr "Nebyl zadán žádný server\n"
 
 #: main.c:2234
 #, c-format
-msgid "This version of openconnect was built without libproxy support\n"
-msgstr "Tato verze openconnect byla sestavena bez podpory pro libproxy\n"
+msgid "This version of OpenConnect was built without libproxy support\n"
+msgstr "Tato verze OpenConnect byla sestavena bez podpory pro libproxy\n"
 
 #: main.c:2271
 #, c-format

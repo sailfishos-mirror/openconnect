@@ -3301,8 +3301,8 @@ msgid "Only http or socks(5) proxies supported\n"
 msgstr "Csak http vagy socks(5) proxyk támogatottak\n"
 
 #: library.c:124
-msgid "Cisco AnyConnect or openconnect"
-msgstr "Cisco AnyConnect vagy openconnect"
+msgid "Cisco AnyConnect or OpenConnect"
+msgstr "Cisco AnyConnect vagy OpenConnect"
 
 #: library.c:125
 msgid "Compatible with Cisco AnyConnect SSL VPN, as well as ocserv"
@@ -4064,7 +4064,7 @@ msgstr "FIGYELMEZTETÉS: a területi beállítás nem adható meg: %s\n"
 #: main.c:1741
 #, c-format
 msgid ""
-"WARNING: This version of openconnect was built without iconv\n"
+"WARNING: This version of OpenConnect was built without iconv\n"
 "         support but you appear to be using the legacy character\n"
 "         set \"%s\". Expect strangeness.\n"
 msgstr ""
@@ -4075,7 +4075,7 @@ msgstr ""
 #: main.c:1748
 #, c-format
 msgid ""
-"WARNING: This version of openconnect is %s but\n"
+"WARNING: This version of OpenConnect is %s but\n"
 "         the libopenconnect library is %s\n"
 msgstr ""
 "FIGYELEM: Az openconnect ezen verziója %s, de\n"
@@ -4193,8 +4193,8 @@ msgstr "Nincs megadva kiszolgáló\n"
 
 #: main.c:2234
 #, c-format
-msgid "This version of openconnect was built without libproxy support\n"
-msgstr "Az openconnect ezen verziója libproxy támogatás nélkül készült\n"
+msgid "This version of OpenConnect was built without libproxy support\n"
+msgstr "Az OpenConnect ezen verziója libproxy támogatás nélkül készült\n"
 
 #: main.c:2271
 #, c-format

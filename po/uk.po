@@ -3438,8 +3438,8 @@ msgid "Only http or socks(5) proxies supported\n"
 msgstr "Передбачено підтримку лише проксі-серверів http або socks(5)\n"
 
 #: library.c:124
-msgid "Cisco AnyConnect or openconnect"
-msgstr "Cisco AnyConnect або openconnect"
+msgid "Cisco AnyConnect or OpenConnect"
+msgstr "Cisco AnyConnect або OpenConnect"
 
 #: library.c:125
 msgid "Compatible with Cisco AnyConnect SSL VPN, as well as ocserv"
@@ -4224,7 +4224,7 @@ msgstr "Попередження: не вдалося встановити ло�
 #: main.c:1742
 #, c-format
 msgid ""
-"WARNING: This version of openconnect was built without iconv\n"
+"WARNING: This version of OpenConnect was built without iconv\n"
 "         support but you appear to be using the legacy character\n"
 "         set \"%s\". Expect strangeness.\n"
 msgstr ""
@@ -4235,7 +4235,7 @@ msgstr ""
 #: main.c:1749
 #, c-format
 msgid ""
-"WARNING: This version of openconnect is %s but\n"
+"WARNING: This version of OpenConnect is %s but\n"
 "         the libopenconnect library is %s\n"
 msgstr ""
 "УВАГА: Маємо версію openconnect %s, але\n"
@@ -4365,8 +4365,8 @@ msgstr "Не вказано сервер\n"
 
 #: main.c:2235
 #, c-format
-msgid "This version of openconnect was built without libproxy support\n"
-msgstr "Цю версію openconnect було зібрано без підтримки libproxy\n"
+msgid "This version of OpenConnect was built without libproxy support\n"
+msgstr "Цю версію OpenConnect було зібрано без підтримки libproxy\n"
 
 #: main.c:2272
 #, c-format

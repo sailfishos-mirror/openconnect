@@ -121,7 +121,7 @@ err:
 static const struct vpn_proto openconnect_protos[] = {
 	{
 		.name = "anyconnect",
-		.pretty_name = N_("Cisco AnyConnect or openconnect"),
+		.pretty_name = N_("Cisco AnyConnect or OpenConnect"),
 		.description = N_("Compatible with Cisco AnyConnect SSL VPN, as well as ocserv"),
 		.proto = PROTO_ANYCONNECT,
 		.flags = OC_PROTO_PROXY | OC_PROTO_CSD | OC_PROTO_AUTH_CERT | OC_PROTO_AUTH_OTP | OC_PROTO_AUTH_STOKEN | OC_PROTO_AUTH_MCA,

@@ -3374,8 +3374,8 @@ msgid "Only http or socks(5) proxies supported\n"
 msgstr "Obsługiwane są tylko pośredniki HTTP i SOCKS(5)\n"
 
 #: library.c:124
-msgid "Cisco AnyConnect or openconnect"
-msgstr "Cisco AnyConnect lub openconnect"
+msgid "Cisco AnyConnect or OpenConnect"
+msgstr "Cisco AnyConnect lub OpenConnect"
 
 #: library.c:125
 msgid "Compatible with Cisco AnyConnect SSL VPN, as well as ocserv"
@@ -4141,7 +4141,7 @@ msgstr "OSTRZEŻENIE: nie można ustawić lokalizacji: %s\n"
 #: main.c:1741
 #, c-format
 msgid ""
-"WARNING: This version of openconnect was built without iconv\n"
+"WARNING: This version of OpenConnect was built without iconv\n"
 "         support but you appear to be using the legacy character\n"
 "         set \"%s\". Expect strangeness.\n"
 msgstr ""
@@ -4152,7 +4152,7 @@ msgstr ""
 #: main.c:1748
 #, c-format
 msgid ""
-"WARNING: This version of openconnect is %s but\n"
+"WARNING: This version of OpenConnect is %s but\n"
 "         the libopenconnect library is %s\n"
 msgstr ""
 "OSTRZEŻENIE: ta wersja OpenConnect to %s, ale\n"
@@ -4279,7 +4279,7 @@ msgstr "Nie podano serwera\n"
 
 #: main.c:2234
 #, c-format
-msgid "This version of openconnect was built without libproxy support\n"
+msgid "This version of OpenConnect was built without libproxy support\n"
 msgstr ""
 "Ta wersja OpenConnect została zbudowana bez obsługi biblioteki libproxy\n"
 

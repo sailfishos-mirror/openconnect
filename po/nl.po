@@ -3298,8 +3298,8 @@ msgid "Only http or socks(5) proxies supported\n"
 msgstr "Alleen http- of socks(5)-proxy’s ondersteund\n"
 
 #: library.c:124
-msgid "Cisco AnyConnect or openconnect"
-msgstr "Cisco AnyConnect of openconnect"
+msgid "Cisco AnyConnect or OpenConnect"
+msgstr "Cisco AnyConnect of OpenConnect"
 
 #: library.c:125
 msgid "Compatible with Cisco AnyConnect SSL VPN, as well as ocserv"
@@ -4058,7 +4058,7 @@ msgstr "WAARSCHUWING: kan locale niet instellen: %s\n"
 #: main.c:1741
 #, c-format
 msgid ""
-"WARNING: This version of openconnect was built without iconv\n"
+"WARNING: This version of OpenConnect was built without iconv\n"
 "         support but you appear to be using the legacy character\n"
 "         set \"%s\". Expect strangeness.\n"
 msgstr ""
@@ -4070,7 +4070,7 @@ msgstr ""
 #: main.c:1748
 #, c-format
 msgid ""
-"WARNING: This version of openconnect is %s but\n"
+"WARNING: This version of OpenConnect is %s but\n"
 "         the libopenconnect library is %s\n"
 msgstr ""
 "WAARSCHUWING: deze versie van openconnect is %s, maar de\n"
@@ -4188,9 +4188,9 @@ msgstr "Geen server opgegeven\n"
 
 #: main.c:2234
 #, c-format
-msgid "This version of openconnect was built without libproxy support\n"
+msgid "This version of OpenConnect was built without libproxy support\n"
 msgstr ""
-"Deze versie van openconnect werd gecompileerd zonder libproxy-ondersteuning\n"
+"Deze versie van OpenConnect werd gecompileerd zonder libproxy-ondersteuning\n"
 
 #: main.c:2271
 #, c-format
