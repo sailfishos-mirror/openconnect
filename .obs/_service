@@ -4,7 +4,7 @@
     <param name="url">https://gitlab.com/openconnect/openconnect.git</param>
     <param name="revision">master</param>
     <param name="version">_auto_</param>
-    <param name="versionformat">@PARENT_TAG@+git%cd</param>
+    <param name="versionformat">@PARENT_TAG@+@TAG_OFFSET@+g%h</param>
     <param name="versionrewrite-pattern">v(.*)</param>
     <param name="versionrewrite-replacement">\1</param>
     <param name="exclude">.git</param>
