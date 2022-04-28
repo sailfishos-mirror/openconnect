@@ -1685,6 +1685,7 @@ newgroup:
 
 			if (bu && fu && sha) {
 				if (asprintf(&vpninfo->profile_url, "%s%s", bu, fu) == -1) {
+					buf_free(cookie_buf);
 					result = -ENOMEM;
 					goto out;
 				}
