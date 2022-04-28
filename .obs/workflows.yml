@@ -16,3 +16,10 @@ rebuild:
     branches:
       only:
         - master
+release:
+  steps:
+    - trigger_services:
+        project: home:bluca:openconnect:release
+        package: openconnect
+  filters:
+    event: tag_push
