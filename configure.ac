@@ -686,7 +686,18 @@ perhaps consider building with GnuTLS instead.)])
 					 PKG_CHECK_MODULES(GMP, [gmp],
 						[hpke=yes
 						 AC_SUBST(HPKE_CFLAGS, ['$(HOGWEED_FLAGS) $(GMP_CFLAGS)'])
-						 AC_SUBST(HPKE_LIBS, ['$(HOGWEED_LIBS) $(GMP_LIBS)'])], [:])])
+						 AC_SUBST(HPKE_LIBS, ['$(HOGWEED_LIBS) $(GMP_LIBS)'])],
+						[AC_MSG_CHECKING([for gmp without pkgconfig])
+						 LIBS="$LIBS -lgmp"
+						 AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <gmp.h>],
+										 [mpz_clear((void *)0);])],
+								[AC_MSG_RESULT(yes)
+								 AC_SUBST(HPKE_CFLAGS, ['$(HOGWEED_FLAGS)'])
+								 AC_SUBST(HPKE_LIBS, ['$(HOGWEED_LIBS) -lgmp'])
+								 hpke=yes],
+								[AC_MSG_RESULT(no)])
+						 ])
+					 ])
 			 LIBS="$oldlibs"
 			 CFLAGS="$oldcflags"],
 			[:])
