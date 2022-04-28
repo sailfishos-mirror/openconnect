@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: network-manager-openconnect master\n"
 "Report-Msgid-Bugs-To: openconnect-devel@lists.infradead.org\n"
-"POT-Creation-Date: 2022-04-15 09:58+0100\n"
+"POT-Creation-Date: 2022-04-28 22:04+0100\n"
 "PO-Revision-Date: 2021-09-07 22:10+0300\n"
 "Last-Translator: Aurimas Černius <aurisc4@gmail.com>\n"
 "Language-Team: Lietuvių <gnome-lt@lists.akl.lt>\n"
@@ -24,7 +24,7 @@ msgstr ""
 msgid "No ANsession cookie found\n"
 msgstr "Nerastas ANsession slapukas\n"
 
-#: array.c:158 http.c:128
+#: array.c:158 http.c:139
 #, c-format
 msgid "Invalid cookie '%s'\n"
 msgstr "Netinkamas slapukas „%s“\n"
@@ -69,7 +69,7 @@ msgstr "Nepavyko išanalizuoti masyvo JSON atsako\n"
 msgid "Error creating array negotiation request\n"
 msgstr "Klaida kuriant masyvo derybų užklausą\n"
 
-#: array.c:675 f5.c:679 http.c:954 oncp.c:524 pulse.c:1366
+#: array.c:675 f5.c:679 http.c:965 oncp.c:524 pulse.c:1366
 #, c-format
 msgid "Unexpected %d result from server\n"
 msgstr "Netikėtas %d rezultatas iš serverio\n"
@@ -99,13 +99,13 @@ msgstr "Atsisakoma ne-DTLS UDP tunelio\n"
 msgid "Failed to read ipff response\n"
 msgstr "Nepavyko perskaityti ipff atsako\n"
 
-#: array.c:825 array.c:1060 array.c:1170 cstp.c:927 dtls.c:283 dtls.c:642
-#: esp.c:166 gpst.c:1126 mainloop.c:63 oncp.c:869 ppp.c:1089 ppp.c:1676
+#: array.c:825 array.c:1060 array.c:1170 cstp.c:964 dtls.c:283 dtls.c:642
+#: esp.c:166 gpst.c:1082 mainloop.c:63 oncp.c:869 ppp.c:1089 ppp.c:1676
 #: pulse.c:2657
 msgid "Allocation failed\n"
 msgstr "Nepavyko išskirti atminties\n"
 
-#: array.c:836 cstp.c:938 gpst.c:1139 pulse.c:2669
+#: array.c:836 cstp.c:975 gpst.c:1095 pulse.c:2669
 #, c-format
 msgid "Short packet received (%d bytes)\n"
 msgstr "Gautas trumpas paketas (%d baitai)\n"
@@ -120,19 +120,19 @@ msgstr "Gaunamas %x tipo valdymo paketas:\n"
 msgid "Received data packet of %d bytes\n"
 msgstr "Gautas %d baitų duomenų paketas\n"
 
-#: array.c:902 cstp.c:1068 gpst.c:1228 oncp.c:1083 ppp.c:1376 pulse.c:2835
+#: array.c:902 cstp.c:1105 gpst.c:1184 oncp.c:1083 ppp.c:1376 pulse.c:2835
 #, c-format
 msgid "SSL wrote too few bytes! Asked for %d, sent %d\n"
 msgstr "SSL įrašė per mažai baitų! Prašyta %d, išsiųsta %d\n"
 
 #. Not that this will ever happen; we don't even process
 #. the setting when we're asked for it.
-#: array.c:920 cstp.c:1096 oncp.c:1118 pulse.c:2862
+#: array.c:920 cstp.c:1133 oncp.c:1118 pulse.c:2862
 msgid "CSTP rekey due\n"
 msgstr "Atliekamas CSTP raktų pakeitimas\n"
 
 #. if we failed rehandshake try establishing a new-tunnel instead of failing
-#: array.c:927 cstp.c:1103 oncp.c:1125 pulse.c:2869
+#: array.c:927 cstp.c:1140 oncp.c:1125 pulse.c:2869
 msgid "Rehandshake failed; attempting new-tunnel\n"
 msgstr ""
 "Pakartotinis išankstinis suderinimas nepavyko; bandomas naujas tunelis\n"
@@ -157,7 +157,7 @@ msgstr "Siųsti TCP Keepalive\n"
 msgid "Sending DTLS off packet\n"
 msgstr "Siunčiamas DTLS išjungimo paketas\n"
 
-#: array.c:1000 cstp.c:1182 oncp.c:1201
+#: array.c:1000 cstp.c:1219 oncp.c:1201
 #, c-format
 msgid "Sending uncompressed data packet of %d bytes\n"
 msgstr "Siunčiamas nespaustų duomenų paketas iš %d baitų\n"
@@ -368,7 +368,7 @@ msgstr "Nepaisoma nežinomo formos įvesties tipo „%s“\n"
 msgid "Discarding duplicate option '%s'\n"
 msgstr "Išmetamas pakartotinis parametras „%s“\n"
 
-#: auth-html.c:216 auth.c:465
+#: auth-html.c:216 auth.c:463
 #, c-format
 msgid "Cannot handle form method='%s', action='%s'\n"
 msgstr "Negalima apdoroti formos method='%s', action='%s'\n"
@@ -476,46 +476,46 @@ msgstr "Nežinoma forma (pavadinimas „%s“, id „%s“)\n"
 msgid "Dumping unknown HTML form:\n"
 msgstr "Išmetama nežinoma HTML forma\n"
 
-#: auth.c:125
+#: auth.c:123
 msgid "Form choice has no name\n"
 msgstr "Formos pasirinkimas neturi pavadinimo\n"
 
-#: auth.c:208
+#: auth.c:206
 #, c-format
 msgid "name %s not input\n"
 msgstr "pavadinimas %s neturi įvesties\n"
 
-#: auth.c:215
+#: auth.c:213
 msgid "No input type in form\n"
 msgstr "Nėra įvesties tipo formoje\n"
 
-#: auth.c:227
+#: auth.c:225
 msgid "No input name in form\n"
 msgstr "Nėra įvesties pavadinimo formoje\n"
 
-#: auth.c:259
+#: auth.c:257
 #, c-format
 msgid "Unknown input type %s in form\n"
 msgstr "Nežinomas įvesties tipas %s formoje\n"
 
-#: auth.c:601 gpst.c:187
+#: auth.c:599 gpst.c:187
 msgid "Empty response from server\n"
 msgstr "Tuščias atsakymas iš serverio\n"
 
-#: auth.c:612 gpst.c:262
+#: auth.c:610 gpst.c:262
 msgid "Failed to parse server response\n"
 msgstr "Nepavyko perskaityti serverio atsakymo\n"
 
-#: auth.c:614 f5.c:257 f5.c:299 f5.c:342 f5.c:487 fortinet.c:351 fortinet.c:579
+#: auth.c:612 f5.c:257 f5.c:299 f5.c:342 f5.c:487 fortinet.c:351 fortinet.c:579
 #, c-format
 msgid "Response was:%s\n"
 msgstr "Atsakymas buvo:%s\n"
 
-#: auth.c:636
+#: auth.c:634
 msgid "Received <client-cert-request> when not expected.\n"
 msgstr "Gautas <client-cert-request>, nors jo nesitikėta.\n"
 
-#: auth.c:645
+#: auth.c:643
 msgid "Received <multiple-client-cert-request> when not expected.\n"
 msgstr ""
 
@@ -538,28 +538,28 @@ msgid ""
 msgstr ""
 "Kliento liudijimo trūksta arba jis neteisingas (liudijimo tikrinimo klaida)"
 
-#: auth.c:1039
+#: auth.c:1042
 msgid "Not downloading XML profile because SHA1 already matches\n"
 msgstr "Neparsiunčiamas XML profilis, nes SHA1 jau atitinka\n"
 
-#: auth.c:1045 cstp.c:329 http.c:888
+#: auth.c:1048 cstp.c:348 http.c:899
 #, c-format
 msgid "Failed to open HTTPS connection to %s\n"
 msgstr "Nepavyko atverti HTTPS ryšio į %s\n"
 
-#: auth.c:1066
+#: auth.c:1070
 msgid "Failed to send GET request for new config\n"
 msgstr "Nepavyko išsiųsti GET užklausos naujai konfigūracijai\n"
 
-#: auth.c:1090
+#: auth.c:1094
 msgid "Downloaded config file did not match intended SHA1\n"
 msgstr "Parsiųstas konfigūracijos failas neatitiko siekiamo SHA1\n"
 
-#: auth.c:1095
+#: auth.c:1099
 msgid "Downloaded new XML profile\n"
 msgstr "Parsiųstas naujas XML profilis\n"
 
-#: auth.c:1106 auth.c:1158
+#: auth.c:1110 auth.c:1162
 msgid ""
 "Error: Running the 'Cisco Secure Desktop' trojan on this platform is not yet "
 "implemented.\n"
@@ -567,32 +567,32 @@ msgstr ""
 "Klaida: „Cisco Secure Desktop“ trojos arklio vykdymas šioje platformoje dar "
 "nerealizuotas.\n"
 
-#: auth.c:1117 mainloop.c:137
+#: auth.c:1121 mainloop.c:137
 #, c-format
 msgid "Failed to set gid %ld: %s\n"
 msgstr "Nepavyko nustatyti gid %ld: %s\n"
 
-#: auth.c:1124 mainloop.c:143
+#: auth.c:1128 mainloop.c:143
 #, c-format
 msgid "Failed to set groups to %ld: %s\n"
 msgstr "Nepavyko nustatyti grupių į %ld: %s\n"
 
-#: auth.c:1131 mainloop.c:149
+#: auth.c:1135 mainloop.c:149
 #, c-format
 msgid "Failed to set uid %ld: %s\n"
 msgstr "Nepavyko nustatyti uid %ld: %s\n"
 
-#: auth.c:1138
+#: auth.c:1142
 #, c-format
 msgid "Invalid user uid=%ld: %s\n"
 msgstr "Netinkamas naudotojo uid=%ld: %s\n"
 
-#: auth.c:1145
+#: auth.c:1149
 #, c-format
 msgid "Failed to change to CSD home directory '%s': %s\n"
 msgstr "Nepavyko pakeisti CSD namų katalogo „%s“: %s\n"
 
-#: auth.c:1167
+#: auth.c:1171
 msgid ""
 "Error: Server asked us to run CSD hostscan.\n"
 "You need to provide a suitable --csd-wrapper argument.\n"
@@ -600,7 +600,7 @@ msgstr ""
 "Klaida: Serveris prašė vykdyti CSD serverio paiešką.\n"
 "Jums reikia pateikti tinkamą --csd-wrapper argumentą.\n"
 
-#: auth.c:1174
+#: auth.c:1178
 msgid ""
 "Error: Server asked us to download and run a 'Cisco Secure Desktop' trojan.\n"
 "This facility is disabled by default for security reasons, so you may wish "
@@ -611,37 +611,37 @@ msgstr ""
 "Ši funkcija pagal numatymą yra išjungta saugumo sumetimai, tad jūs galite "
 "norėti ją įjungti.\n"
 
-#: auth.c:1203
+#: auth.c:1207
 #, c-format
 msgid "Temporary directory '%s' is not writable: %s\n"
 msgstr "Laikinasis katalogas „%s“ nėra rašomas: %s\n"
 
-#: auth.c:1211
+#: auth.c:1215
 #, c-format
 msgid "Failed to open temporary CSD script file: %s\n"
 msgstr "Nepavyko atverti laikinojo CSD scenarijaus failo: %s\n"
 
-#: auth.c:1220
+#: auth.c:1224
 #, c-format
 msgid "Failed to write temporary CSD script file: %s\n"
 msgstr "Nepavyko įrašyti laikinojo CSD scenarijaus failo: %s\n"
 
-#: auth.c:1229
+#: auth.c:1233
 #, c-format
 msgid "Trying to run CSD Trojan script '%s'.\n"
 msgstr "Bandoma vykdyti Linux CSD trojos arklio scenarijų „%s“.\n"
 
-#: auth.c:1241
+#: auth.c:1245
 #, c-format
 msgid "CSD script '%s' exited abnormally\n"
 msgstr "CSD scenarijus „%s“ išėjo nenormaliai\n"
 
-#: auth.c:1247
+#: auth.c:1251
 #, c-format
 msgid "CSD script '%s' returned non-zero status: %d\n"
 msgstr "CSD scenarijus „%s“ grąžino nenulinę būseną: %d\n"
 
-#: auth.c:1252
+#: auth.c:1256
 msgid ""
 "Authentication may fail. If your script is not returning zero, fix it.\n"
 "Future versions of openconnect will abort on this error.\n"
@@ -650,12 +650,12 @@ msgstr ""
 "pataisykite jį.\n"
 "Ateities openconnect versijos nutrauks veikimą po šios klaidos.\n"
 
-#: auth.c:1256
+#: auth.c:1260
 #, c-format
 msgid "CSD script '%s' completed successfully.\n"
 msgstr "CSD scenarijus „%s“ sėkmingai baigė darbą.\n"
 
-#: auth.c:1284
+#: auth.c:1288
 #, c-format
 msgid ""
 "Warning: you are running insecure CSD code with root privileges\n"
@@ -664,70 +664,70 @@ msgstr ""
 "Įspėjimas: jūs vykdote nesaugų CSD kodą root teisėmis\n"
 "\t Naudokite komandų eilutės parametrą „--csd-user“\n"
 
-#: auth.c:1344
+#: auth.c:1348
 #, c-format
 msgid "Failed to exec CSD script %s\n"
 msgstr "Nepavyko įvykdyti CSD scenarijaus %s\n"
 
-#: auth.c:1364
+#: auth.c:1368
 msgid "Unknown response from server\n"
 msgstr "Nežinomas atsakymas iš serverio\n"
 
-#: auth.c:1494
+#: auth.c:1498
 msgid "Server requested SSL client certificate after one was provided\n"
 msgstr "Serveris paprašė SSL kliento liudijimo po to, kai jis buvo pateiktas\n"
 
-#: auth.c:1498
+#: auth.c:1502
 msgid "Server requested SSL client certificate; none was configured\n"
 msgstr "Serveris paprašė SSL kliento liudijimo; joks nebuvo sukonfigūruotas\n"
 
-#: auth.c:1516
+#: auth.c:1520
 msgid ""
 "Multiple-certificate authentication requires a second certificate; none were "
 "configured.\n"
 msgstr ""
 
-#: auth.c:1547
+#: auth.c:1551
 msgid "XML POST enabled\n"
 msgstr "XML POST įjungtas\n"
 
-#: auth.c:1571
+#: auth.c:1575
 msgid "Couldn't fetch CSD stub. Proceeding anyway with CSD wrapper script.\n"
 msgstr ""
 "Nepavyko gauti CSD scenarijaus. Vis tiek tęsiama su CSD dengenčiu "
 "scenarijumi.\n"
 
-#: auth.c:1579
+#: auth.c:1583
 #, c-format
 msgid "Fetched CSD stub for %s platform (size is %d bytes).\n"
 msgstr "Gautas CSD %s platformai (dydis %d baitų).\n"
 
-#: auth.c:1599
+#: auth.c:1603
 #, c-format
 msgid "Refreshing %s after 1 second...\n"
 msgstr "Atnaujinama %s po 1 sekundės...\n"
 
-#: auth.c:1845
+#: auth.c:1841
 #, c-format
 msgid "Unsupported hash algorithm '%s' requested.\n"
 msgstr ""
 
-#: auth.c:1854
+#: auth.c:1850
 #, c-format
 msgid "Duplicate hash algorithm '%s' requested.\n"
 msgstr ""
 
-#: auth.c:1940
+#: auth.c:1936
 msgid ""
 "Multiple-certificate authentication signature hash algorithm negotiation "
 "failed.\n"
 msgstr ""
 
-#: auth.c:1954
+#: auth.c:1950
 msgid "Error exporting multiple-certificate signer's certificate chain.\n"
 msgstr ""
 
-#: auth.c:1968
+#: auth.c:1964
 msgid "Error encoding the challenge response.\n"
 msgstr ""
 
@@ -755,181 +755,186 @@ msgstr "TCP_INFO rcv mss %d, snd mss %d, adv mss %d, pmtu %d\n"
 msgid "TCP_MAXSEG %d\n"
 msgstr "TCP_MAXSEG %d\n"
 
-#: cstp.c:273
+#: cstp.c:292
 msgid ""
 "CRITICAL ERROR: DTLS master secret is uninitialised. Please report this.\n"
 msgstr ""
 "KRITINĖ KLAIDA: DTLS pagrindinė paslaptis neinicializuota. Praneškite apie "
 "tai.\n"
 
-#: cstp.c:306
+#: cstp.c:325
 msgid "Error creating HTTPS CONNECT request\n"
 msgstr "Klaida kuriant HTTPS CONNECT užklausą\n"
 
-#: cstp.c:322
+#: cstp.c:341
 msgid "Error fetching HTTPS response\n"
 msgstr "Klaida parsiunčiant HTTPS atsakymą\n"
 
-#: cstp.c:349
+#: cstp.c:368
 #, c-format
 msgid "VPN service unavailable; reason: %s\n"
 msgstr "VPN tarnyba neprieinama; priežastis: %s\n"
 
-#: cstp.c:354
+#: cstp.c:373
 #, c-format
 msgid "Got inappropriate HTTP CONNECT response: %s\n"
 msgstr "Gautas netinkamas HTTP CONNECT atsakymas: %s\n"
 
-#: cstp.c:361
+#: cstp.c:380
 #, c-format
 msgid "Got CONNECT response: %s\n"
 msgstr "Gautas CONNECT atsakymas: %s\n"
 
-#: cstp.c:397 cstp.c:406
+#: cstp.c:416 cstp.c:425
 msgid "No memory for options\n"
 msgstr "Nėra atminties parametrams\n"
 
-#: cstp.c:416 http.c:313
+#: cstp.c:435 http.c:324
 msgid "<elided>"
 msgstr "<elided>"
 
-#: cstp.c:435
+#: cstp.c:454
 #, c-format
 msgid "X-DTLS-Session-ID not 64 characters; is: \"%s\"\n"
 msgstr "X-DTLS-Session-ID ne 64 simboliai; yra: „%s“\n"
 
-#: cstp.c:453
+#: cstp.c:472
 #, c-format
 msgid "X-DTLS-Session-ID is invalid; is: \"%s\"\n"
 msgstr "X-DTLS-Session-ID yra netinkama; yra: „%s“\n"
 
-#: cstp.c:472
+#: cstp.c:491
 #, c-format
 msgid "Unknown DTLS-Content-Encoding %s\n"
 msgstr "Nežinomas CSTP-Content-Encoding %s\n"
 
-#: cstp.c:547
+#: cstp.c:566
 #, c-format
 msgid "Unknown CSTP-Content-Encoding %s\n"
 msgstr "Nežinomas CSTP-Content-Encoding %s\n"
 
-#: cstp.c:624
+#: cstp.c:643
 msgid "No MTU received. Aborting\n"
 msgstr "Negauta MTU. Nutraukiama\n"
 
-#: cstp.c:645
+#: cstp.c:664
 #, c-format
 msgid "CSTP connected. DPD %d, Keepalive %d\n"
 msgstr "Prisijungta prie CSTP. DPD %d, keepalive %d\n"
 
-#: cstp.c:707
+#: cstp.c:701
+#, c-format
+msgid "Ingested STRAP public key %s\n"
+msgstr ""
+
+#: cstp.c:744
 msgid "Compression setup failed\n"
 msgstr "Nepavyko nustatyti suspaudimo\n"
 
-#: cstp.c:724
+#: cstp.c:761
 msgid "Allocation of deflate buffer failed\n"
 msgstr "Nepavyko išskirti buferio\n"
 
-#: cstp.c:786
+#: cstp.c:823
 msgid "inflate failed\n"
 msgstr "buferis nepavyko\n"
 
-#: cstp.c:809
+#: cstp.c:846
 #, c-format
 msgid "LZS decompression failed: %s\n"
 msgstr "LZS išskleidimas nepavyko: %s\n"
 
-#: cstp.c:822
+#: cstp.c:859
 msgid "LZ4 decompression failed\n"
 msgstr "LZ4 išskleidimas nepavyko\n"
 
-#: cstp.c:829
+#: cstp.c:866
 #, c-format
 msgid "Unknown compression type %d\n"
 msgstr "Nežinomas suspaudimo tipas %d\n"
 
-#: cstp.c:834
+#: cstp.c:871
 #, c-format
 msgid "Received %s compressed data packet of %d bytes (was %d)\n"
 msgstr "Gautas %s suspaustas %d baitų duomenų paketas (buvo %d)\n"
 
-#: cstp.c:854
+#: cstp.c:891
 #, c-format
 msgid "deflate failed %d\n"
 msgstr "nepavyko išskleisti %d\n"
 
-#: cstp.c:951
+#: cstp.c:988
 #, c-format
 msgid "Unexpected packet length. SSL_read returned %d but packet is\n"
 msgstr "Nelauktas paketo ilgis. SSL_read grąžino %d, bet paketas yra\n"
 
-#: cstp.c:965
+#: cstp.c:1002
 msgid "Got CSTP DPD request\n"
 msgstr "Gauta CSTP DPD užklausa\n"
 
-#: cstp.c:971
+#: cstp.c:1008
 msgid "Got CSTP DPD response\n"
 msgstr "Gautas CSTP DPD atsakymas\n"
 
-#: cstp.c:976
+#: cstp.c:1013
 msgid "Got CSTP Keepalive\n"
 msgstr "Gautas CSTP Keepalive\n"
 
-#: cstp.c:981 oncp.c:958
+#: cstp.c:1018 oncp.c:958
 #, c-format
 msgid "Received uncompressed data packet of %d bytes\n"
 msgstr "Gautas nespaustų duomenų paketas iš %d baitų\n"
 
-#: cstp.c:998
+#: cstp.c:1035
 #, c-format
 msgid "Received server disconnect: %02x '%s'\n"
 msgstr "Gautas serverio atsijungimas: %02x „%s“\n"
 
-#: cstp.c:1001
+#: cstp.c:1038
 msgid "Received server disconnect\n"
 msgstr "Gautas serverio atsijungimas\n"
 
-#: cstp.c:1009
+#: cstp.c:1046
 msgid "Compressed packet received in !deflate mode\n"
 msgstr "Suspaustas paketas gautas ne spaudimo veiksenoje\n"
 
-#: cstp.c:1018
+#: cstp.c:1055
 msgid "received server terminate packet\n"
 msgstr "gautas serverio pabaigos paketas\n"
 
-#: cstp.c:1025
+#: cstp.c:1062
 #, c-format
 msgid "Unknown packet %02x %02x %02x %02x %02x %02x %02x %02x\n"
 msgstr "Nežinomas paketas %02x %02x %02x %02x %02x %02x %02x %02x\n"
 
-#: cstp.c:1114 oncp.c:1136 pulse.c:2880
+#: cstp.c:1151 oncp.c:1136 pulse.c:2880
 msgid "CSTP Dead Peer Detection detected dead peer!\n"
 msgstr "CSTO negyvų porininkų aptikimas aptiko negyvą porininką!\n"
 
-#: cstp.c:1118 gpst.c:1276 oncp.c:1053 oncp.c:1140 ppp.c:1406 pulse.c:2805
+#: cstp.c:1155 gpst.c:1232 oncp.c:1053 oncp.c:1140 ppp.c:1406 pulse.c:2805
 #: pulse.c:2885
 msgid "Reconnect failed\n"
 msgstr "Nepavyko persijungimas\n"
 
-#: cstp.c:1134 oncp.c:1156 pulse.c:2901
+#: cstp.c:1171 oncp.c:1156 pulse.c:2901
 msgid "Send CSTP DPD\n"
 msgstr "Siųsti CSTO DPD\n"
 
-#: cstp.c:1146 oncp.c:1167 pulse.c:2913
+#: cstp.c:1183 oncp.c:1167 pulse.c:2913
 msgid "Send CSTP Keepalive\n"
 msgstr "Siųsti CSTO Keepalive\n"
 
-#: cstp.c:1171
+#: cstp.c:1208
 #, c-format
 msgid "Sending compressed data packet of %d bytes (was %d)\n"
 msgstr "Siunčiamas suspaustų duomenų paketas iš %d baitų (buvo %d)\n"
 
-#: cstp.c:1222
+#: cstp.c:1259
 #, c-format
 msgid "Send BYE packet: %s\n"
 msgstr "Siųsti BYE paketą: %s\n"
 
-#: cstp.c:1229
+#: cstp.c:1266
 msgid "Short write writing BYE packet\n"
 msgstr "Greitai įrašomas BYE paketas\n"
 
@@ -1339,7 +1344,7 @@ msgstr "Gauta prisijungimo sritis „%s“\n"
 msgid "Failed to parse Fortinet config XML\n"
 msgstr "Nepavyko perskaityti Fortinet konfigūracijos XML\n"
 
-#: fortinet.c:378 gpst.c:389
+#: fortinet.c:378 gpst.c:384
 #, c-format
 msgid "Idle timeout is %d minutes.\n"
 msgstr "Neveiksnumo laiko limitas yra %d minutės.\n"
@@ -1577,7 +1582,7 @@ msgstr "Nepavyko dešifruoti ESP paketo: %s\n"
 msgid "Failed to encrypt ESP packet: %s\n"
 msgstr "Nepavyko užšifruoti ESP paketo: %s\n"
 
-#: gnutls.c:116 gnutls.c:267 gnutls.c:2459
+#: gnutls.c:116 gnutls.c:267 gnutls.c:2489
 msgid "Failed select() for TLS"
 msgstr "Nepavyko TLS select()"
 
@@ -2071,204 +2076,228 @@ msgstr "liudijimas neatitinka serverio vardo"
 msgid "Server certificate verify failed: %s\n"
 msgstr "Nepavyko serverio liudijimo patikrinimas: %s\n"
 
-#: gnutls.c:2260
+#: gnutls.c:2220
+#, c-format
+msgid "TLS Finished message larger than expected (%u bytes)\n"
+msgstr ""
+
+#: gnutls.c:2282
 msgid "Failed to allocate memory for cafile certs\n"
 msgstr "Klaida išskiriant atmintį cafile liudijimams\n"
 
-#: gnutls.c:2281
+#: gnutls.c:2303
 #, c-format
 msgid "Failed to read certs from cafile: %s\n"
 msgstr "Nepavyko perskaityti liudijimų iš cafile: %s\n"
 
-#: gnutls.c:2297
+#: gnutls.c:2319
 #, c-format
 msgid "Failed to open CA file '%s': %s\n"
 msgstr "Nepavyko atverti LŠ failo „%s“: %s\n"
 
-#: gnutls.c:2310 openssl.c:1892
+#: gnutls.c:2332 openssl.c:1892
 msgid "Loading certificate failed. Aborting.\n"
 msgstr "Nepavyko įkelti liudijimo. Nutraukiama.\n"
 
-#: gnutls.c:2391
+#: gnutls.c:2413
 msgid "Failed to construct GnuTLS priority string\n"
 msgstr "Nepavyko sugeneruoti GnuTLS prioriteto eilutės\n"
 
-#: gnutls.c:2403
+#: gnutls.c:2425
 #, c-format
 msgid "Failed to set GnuTLS priority string (\"%s\"): %s\n"
 msgstr "Nepavyko nustatyti GnuTLS prioriteto eilutės („%s“): %s\n"
 
-#: gnutls.c:2415 openssl.c:1972
+#: gnutls.c:2437 openssl.c:1972
 #, c-format
 msgid "SSL negotiation with %s\n"
 msgstr "SSL derybos su %s\n"
 
-#: gnutls.c:2463 openssl.c:1998
+#: gnutls.c:2493 openssl.c:1998
 msgid "SSL connection cancelled\n"
 msgstr "SSL ryšys nutrauktas\n"
 
-#: gnutls.c:2470
+#: gnutls.c:2500
 #, c-format
 msgid "SSL connection failure: %s\n"
 msgstr "SSL ryšio klaida: %s\n"
 
-#: gnutls.c:2479
+#: gnutls.c:2509
 #, c-format
 msgid "GnuTLS non-fatal return during handshake: %s\n"
 msgstr "GnuTLS nelemtingas grįžimas išankstinio suderinimo metu: %s\n"
 
-#: gnutls.c:2488 openssl.c:2020
+#: gnutls.c:2518 openssl.c:2020
 #, c-format
 msgid "Connected to HTTPS on %s with ciphersuite %s\n"
 msgstr "Prisijungta prie HTTPS adresu %s su šifru %s\n"
 
-#: gnutls.c:2491
+#: gnutls.c:2521
 #, c-format
 msgid "Renegotiated SSL on %s with ciphersuite %s\n"
 msgstr "Naujos SSL derybos su %s naudojant šifrą %s\n"
 
-#: gnutls.c:2640 openssl-pkcs11.c:206
+#: gnutls.c:2670 openssl-pkcs11.c:206
 #, c-format
 msgid "PIN required for %s"
 msgstr "%s būtinas PIN"
 
-#: gnutls.c:2644 openssl-pkcs11.c:209
+#: gnutls.c:2674 openssl-pkcs11.c:209
 msgid "Wrong PIN"
 msgstr "Neteisingas PIN"
 
-#: gnutls.c:2647
+#: gnutls.c:2677
 msgid "This is the final try before locking!"
 msgstr "Tai yra galutinis bandymas prie užrakinant!"
 
-#: gnutls.c:2649
+#: gnutls.c:2679
 msgid "Only a few tries left before locking!"
 msgstr "Liko tik keli bandymai prieš užrakinimą!"
 
-#: gnutls.c:2654 openssl-pkcs11.c:213
+#: gnutls.c:2684 openssl-pkcs11.c:213
 msgid "Enter PIN:"
 msgstr "Įveskite PIN:"
 
-#: gnutls.c:2740 openssl.c:2148
+#: gnutls.c:2770 openssl.c:2148
 msgid "Unsupported OATH HMAC algorithm\n"
 msgstr "Nepalaikomas OATH HMAC algoritmas\n"
 
-#: gnutls.c:2749
+#: gnutls.c:2779
 #, c-format
 msgid "Failed to calculate OATH HMAC: %s\n"
 msgstr "Nepavyko suskaičiuoti OATH HMAC: %s\n"
 
-#: gnutls.c:2763
+#: gnutls.c:2793
 #, c-format
 msgid "%s %dms\n"
 msgstr ""
 
-#: gnutls.c:2804
+#: gnutls.c:2834
 #, c-format
 msgid "Could not set ciphersuites: %s\n"
 msgstr "Nepavyko nustatyti šifravimo rinkinių: %s\n"
 
-#: gnutls.c:2811 openssl.c:2263
+#: gnutls.c:2841 openssl.c:2263
 msgid "Established EAP-TTLS session\n"
 msgstr "Užmegstas EAP-TTLS seansas\n"
 
-#: gnutls.c:2888
+#: gnutls.c:2934
 #, c-format
 msgid "Failed to generate STRAP key: %s\n"
 msgstr ""
 
-#: gnutls.c:2897
+#: gnutls.c:2943
 #, c-format
 msgid "Failed to generate STRAP DH key: %s\n"
 msgstr ""
 
-#: gnutls.c:2930
+#: gnutls.c:2976
 #, c-format
 msgid "Failed to decode server DH key: %s\n"
 msgstr ""
 
-#: gnutls.c:2942
+#: gnutls.c:2988
 #, c-format
 msgid "Failed to export DH private key parameters: %s\n"
 msgstr ""
 
-#: gnutls.c:2948
+#: gnutls.c:2994
 #, c-format
 msgid "Failed to export server DH key parameters: %s\n"
 msgstr ""
 
-#: gnutls.c:2956
+#: gnutls.c:3002
 #, c-format
 msgid "HPKE uses unsupported EC curve (%d, %d)\n"
 msgstr ""
 
-#: gnutls.c:2969
+#: gnutls.c:3015
 msgid "Failed to create ECC public point for ECDH\n"
 msgstr ""
 
-#: gnutls.c:3014
+#: gnutls.c:3060
 #, c-format
 msgid "HKDF extract failed: %s\n"
 msgstr ""
 
-#: gnutls.c:3026
+#: gnutls.c:3072
 #, c-format
 msgid "HKDF expand failed: %s\n"
 msgstr ""
 
-#: gnutls.c:3045
+#: gnutls.c:3091
 #, c-format
 msgid "Failed to init AES-256-GCM cipher: %s\n"
 msgstr ""
 
-#: gnutls.c:3054
+#: gnutls.c:3100
 #, c-format
 msgid "SSO token decryption failed: %s\n"
 msgstr ""
 
-#: gnutls.c:3154
+#: gnutls.c:3143
+#, c-format
+msgid "Failed to decode STRAP key: %s\n"
+msgstr ""
+
+#: gnutls.c:3169
+#, c-format
+msgid "Failed to regenerate STRAP key: %s\n"
+msgstr ""
+
+#: gnutls.c:3184 openssl.c:2509
+msgid "Failed to generate STRAP key DER\n"
+msgstr ""
+
+#: gnutls.c:3209
+#, c-format
+msgid "STRAP signature failed: %s\n"
+msgstr ""
+
+#: gnutls.c:3300
 msgid "Certificate may be multiple certificate authentication incompatible.\n"
 msgstr ""
 
-#: gnutls.c:3192
+#: gnutls.c:3338
 #, c-format
 msgid "gnutls_x509_crt_get_key_purpose_oid: %s.\n"
 msgstr ""
 
-#: gnutls.c:3215
+#: gnutls.c:3361
 #, c-format
 msgid "gnutls_X509_crt_get_key_usage: %s.\n"
 msgstr ""
 
-#: gnutls.c:3232
+#: gnutls.c:3378
 msgid ""
 "The certificate specifies key usages incompatible with authentication.\n"
 msgstr ""
 
-#: gnutls.c:3241
+#: gnutls.c:3387
 msgid "Certificate doesn't specify key usage.\n"
 msgstr ""
 
-#: gnutls.c:3259
+#: gnutls.c:3405
 #, c-format
 msgid "Precondition failed %s[%s]:%d\n"
 msgstr ""
 
-#: gnutls.c:3313
+#: gnutls.c:3459
 #, c-format
 msgid "Failed to generate the PKCS#7 structure: %s.\n"
 msgstr ""
 
-#: gnutls.c:3347
+#: gnutls.c:3493
 #, c-format
 msgid "Precondition failed %s[%s]:%d.\n"
 msgstr ""
 
-#: gnutls.c:3382
+#: gnutls.c:3528
 #, c-format
 msgid "gnutls_privkey_sign_data: %s.\n"
 msgstr ""
 
-#: gnutls.c:3407
+#: gnutls.c:3553
 #, c-format
 msgid "Failed to sign data with second certificate: %s.\n"
 msgstr ""
@@ -2619,7 +2648,7 @@ msgstr ""
 msgid "Unknown ESP encryption algorithm: %s\n"
 msgstr ""
 
-#: gpst.c:385
+#: gpst.c:380
 #, c-format
 msgid ""
 "WARNING: Config XML contains <quarantine> tag with value of \"%s\".\n"
@@ -2628,17 +2657,17 @@ msgstr ""
 "ĮSPĖJIMAS: konfigūracijos XML turi <quarantine> žymą su verte „%s“.\n"
 "    VPN ryšys gali būti išjungtas arba apribotas.\n"
 
-#: gpst.c:395
+#: gpst.c:390
 #, c-format
 msgid "Non-standard SSL tunnel path: %s\n"
 msgstr "Nestandartinis SSL tunelio kelias: %s\n"
 
-#: gpst.c:399
+#: gpst.c:394
 #, c-format
 msgid "Tunnel timeout (rekey interval) is %d minutes.\n"
 msgstr "Tunelio laiko limitas (raktų keitimo intervalas) yra %d minutės.\n"
 
-#: gpst.c:411
+#: gpst.c:406
 #, c-format
 msgid ""
 "Gateway address in config XML (%s) differs from external gateway address "
@@ -2647,7 +2676,7 @@ msgstr ""
 "Tinklų sietuvo adresas konfigūracijos XML (%s) skiriasi nuo išorinio tinklų "
 "sietuvo adreso (%s).\n"
 
-#: gpst.c:418
+#: gpst.c:413
 #, c-format
 msgid ""
 "IPv6 gateway address in config XML (%s) differs from external gateway "
@@ -2656,7 +2685,7 @@ msgstr ""
 "IPv6 kelvedžio adresas konfigūracijos XML (%s) skiriasi nuo išorinio "
 "kelvedžio adreso (%s).\n"
 
-#: gpst.c:423
+#: gpst.c:418
 #, c-format
 msgid ""
 "Config XML <connected-gw-ip> address (%s) differs from external\n"
@@ -2665,28 +2694,28 @@ msgid ""
 "with ESP or other apparent loss of connectivity or performance.\n"
 msgstr ""
 
-#: gpst.c:501
+#: gpst.c:486
 #, c-format
 msgid "GlobalProtect config sent ipsec-mode=%s (expected esp-tunnel)\n"
 msgstr ""
 "GlobalProtect konfigūratorius atsiuntė ipsec-mode=%s (laukta esp-tunnel)\n"
 
-#: gpst.c:509 oncp.c:779
+#: gpst.c:494 oncp.c:779
 msgid "Ignoring ESP keys since ESP support not available in this build\n"
 msgstr "Nepaisoma ESP raktų, kadangi ESP palaikymo nėra šioje versijoje\n"
 
-#: gpst.c:527
+#: gpst.c:512
 #, c-format
 msgid "Potential IPv6-related GlobalProtect config tag <%s>: %s\n"
 msgstr ""
 "Potenciali su IPv6 susijusi GlobalProtect konfigūracijos žyma <%s>: %s\n"
 
-#: gpst.c:529
+#: gpst.c:514
 #, c-format
 msgid "Unknown GlobalProtect config tag <%s>: %s\n"
 msgstr "Nežinoma GlobalProtect konfigūracijos žyma <%s>: %s\n"
 
-#: gpst.c:571
+#: gpst.c:527
 #, c-format
 msgid ""
 "GlobalProtect IPv6 support is experimental. Please report results to <%s>.\n"
@@ -2694,7 +2723,7 @@ msgstr ""
 "GlobalProtect IPv6 palaikymas yra eksperimentinis. Praneškite apie "
 "rezultatus <%s>.\n"
 
-#: gpst.c:594
+#: gpst.c:550
 msgid ""
 "Did not receive ESP keys and matching gateway in GlobalProtect config; "
 "tunnel will be TLS only.\n"
@@ -2702,41 +2731,41 @@ msgstr ""
 "Negauta ESP raktų bei atitinkamo kelvedžio GlobalProtect konfigūracijoje; "
 "tunelis bus tik TLS.\n"
 
-#: gpst.c:658
+#: gpst.c:614
 msgid "ESP disabled"
 msgstr "ESP išjungtas"
 
-#: gpst.c:660
+#: gpst.c:616
 msgid "No ESP keys received"
 msgstr "Negauta ESP raktų"
 
-#: gpst.c:662
+#: gpst.c:618
 msgid "ESP support not available in this build"
 msgstr "ESP palaikymo nėra šioje versijoje"
 
-#: gpst.c:674
+#: gpst.c:630
 #, c-format
 msgid "No MTU received. Calculated %d for %s%s\n"
 msgstr "Negauta MTU. Suskaičiuota %d %s%s\n"
 
-#: gpst.c:701
+#: gpst.c:657
 msgid "Connecting to HTTPS tunnel endpoint ...\n"
 msgstr "Jungiamasi prie HTTPS tunelio jungties ...\n"
 
-#: gpst.c:723
+#: gpst.c:679
 msgid "Error fetching GET-tunnel HTTPS response.\n"
 msgstr "Klaida parsiunčiant GET-tunnel HTTPS atsakymą.\n"
 
-#: gpst.c:732
+#: gpst.c:688
 msgid "Gateway disconnected immediately after GET-tunnel request.\n"
 msgstr "Tinklų sietuvas atsijungė iš karto po GET-tunnel užklausos.\n"
 
-#: gpst.c:744 ppp.c:1130
+#: gpst.c:700 ppp.c:1130
 #, c-format
 msgid "Got unexpected HTTP response: %.*s\n"
 msgstr "Gautas nalauktas HTTP atsakymas: %.*s\n"
 
-#: gpst.c:890
+#: gpst.c:846
 #, c-format
 msgid ""
 "WARNING: Server asked us to submit HIP report with md5sum %s.\n"
@@ -2748,7 +2777,7 @@ msgstr ""
 "    VPN ryšys gali būti išjungtas arba ribotas be HIP ataskaitos pateikimo.\n"
 "    %s\n"
 
-#: gpst.c:894
+#: gpst.c:850
 msgid ""
 "However, running the HIP report submission script on this platform is not "
 "yet implemented."
@@ -2756,7 +2785,7 @@ msgstr ""
 "Tačiau, HIP ataskaitos pateikimo scenarijaus vykdymas šioje platformoje dar "
 "nerealizuotas."
 
-#: gpst.c:896
+#: gpst.c:852
 msgid ""
 "You need to provide a --csd-wrapper argument with the HIP report submission "
 "script."
@@ -2764,7 +2793,7 @@ msgstr ""
 "Reikia pateikti --csd-wrapper argumentą su HIP ataskaitos pateikimo "
 "scenarijumi."
 
-#: gpst.c:906
+#: gpst.c:862
 msgid ""
 "Error: Running the 'HIP Report' script on this platform is not yet "
 "implemented.\n"
@@ -2772,69 +2801,69 @@ msgstr ""
 "Klaida: „HIP Report“ scenarijaus vykdymas šioje platformoje dar "
 "nerealizuotas.\n"
 
-#: gpst.c:911
+#: gpst.c:867
 #, c-format
 msgid "Trying to run HIP Trojan script '%s'.\n"
 msgstr "Bandoma vykdyti HIP trojos arklio scenarijų „%s“.\n"
 
-#: gpst.c:919
+#: gpst.c:875
 msgid "Failed to create pipe for HIP script\n"
 msgstr "Nepavyko sukurti kanalo HIP scenarijui\n"
 
-#: gpst.c:927
+#: gpst.c:883
 msgid "Failed to fork for HIP script\n"
 msgstr "Nepavyko atsišakoti HIP scenarijui\n"
 
-#: gpst.c:943
+#: gpst.c:899
 #, c-format
 msgid "HIP script '%s' exited abnormally\n"
 msgstr "HIP scenarijus „%s“ išėjo nenormaliai\n"
 
-#: gpst.c:948
+#: gpst.c:904
 #, c-format
 msgid "HIP script '%s' returned non-zero status: %d\n"
 msgstr "HIP scenarijus „%s“ grąžino nenulinę būseną: %d\n"
 
-#: gpst.c:953
+#: gpst.c:909
 #, c-format
 msgid "HIP script '%s' completed successfully (report is %d bytes).\n"
 msgstr "HIP scenarijus „%s“ sėkmingai baigtas (%d baitų ataskaita).\n"
 
-#: gpst.c:958
+#: gpst.c:914
 msgid "HIP report submission failed.\n"
 msgstr "Nepavyko pateikti HIP ataskaitos.\n"
 
-#: gpst.c:960
+#: gpst.c:916
 msgid "HIP report submitted successfully.\n"
 msgstr "HIP ataskaita sėkmingai pateikta.\n"
 
-#: gpst.c:996
+#: gpst.c:952
 #, c-format
 msgid "Failed to exec HIP script %s\n"
 msgstr "Nepavyko įvykdyti HIP scenarijaus %s\n"
 
-#: gpst.c:1010
+#: gpst.c:966
 msgid "Gateway says HIP report submission is needed.\n"
 msgstr "Tinklų sietuvas sako, kad reikia HIP ataskaita.\n"
 
-#: gpst.c:1014
+#: gpst.c:970
 msgid "Gateway says no HIP report submission is needed.\n"
 msgstr "Tinklų sietuvas sako, kad HIP ataskaitos nereikia.\n"
 
-#: gpst.c:1071
+#: gpst.c:1027
 msgid "ESP tunnel connected; exiting HTTPS mainloop.\n"
 msgstr "Prisijungta prie ESP tunelio; išeinama iš HTTPS pagrindinio ciklo.\n"
 
-#: gpst.c:1098
+#: gpst.c:1054
 msgid "Failed to connect ESP tunnel; using HTTPS instead.\n"
 msgstr "Nepavyko prisijungti prie ESP tunelio; vietoj to naudojamas HTTPS.\n"
 
-#: gpst.c:1135
+#: gpst.c:1091
 #, c-format
 msgid "Packet receive error: %s\n"
 msgstr "Paketo gavimo klaida: %s\n"
 
-#: gpst.c:1156
+#: gpst.c:1112
 #, c-format
 msgid ""
 "Unexpected packet length. SSL_read returned %d (includes 16 header bytes) "
@@ -2843,11 +2872,11 @@ msgstr ""
 "Nelauktas paketo ilgis. SSL_read grąžino %d (įskaitant 16 antraštės baitų), "
 "bet antraštė payload_len yra %d\n"
 
-#: gpst.c:1166
+#: gpst.c:1122
 msgid "Got GPST DPD/keepalive response\n"
 msgstr "Gautas CSTP DPD/keepalive atsakymas\n"
 
-#: gpst.c:1170
+#: gpst.c:1126
 msgid ""
 "Expected 0000000000000000 as last 8 bytes of DPD/keepalive packet header, "
 "but got:\n"
@@ -2855,53 +2884,53 @@ msgstr ""
 "Laukta 0000000000000000 kaip paskutinių 8 baitų DPD/keepalive paketo "
 "antraštėje, bet gauta:\n"
 
-#: gpst.c:1177
+#: gpst.c:1133
 #, c-format
 msgid "Received IPv%d data packet of %d bytes\n"
 msgstr "Gautas IPv%d duomenų paketas su %d baitų\n"
 
-#: gpst.c:1182
+#: gpst.c:1138
 msgid ""
 "Expected 0100000000000000 as last 8 bytes of data packet header, but got:\n"
 msgstr ""
 "Laukta 0100000000000000 kaip paskutinių 8 baitų duomenų paketo antraštėje, "
 "bet gauta:\n"
 
-#: gpst.c:1195
+#: gpst.c:1151
 msgid "Unknown packet. Header dump follows:\n"
 msgstr "Nežinomas paketas. Antraštė yra:\n"
 
-#: gpst.c:1242
+#: gpst.c:1198
 msgid "GlobalProtect HIP check due\n"
 msgstr "GlobalProtect HIP bus patikrintas\n"
 
-#: gpst.c:1254
+#: gpst.c:1210
 msgid "HIP check or report failed\n"
 msgstr "HIP patikrinimas arba ataskaita nepavyko\n"
 
-#: gpst.c:1267
+#: gpst.c:1223
 msgid "GlobalProtect rekey due\n"
 msgstr "GlobalProtect raktų pakeitimas\n"
 
-#: gpst.c:1272
+#: gpst.c:1228
 msgid "GPST Dead Peer Detection detected dead peer!\n"
 msgstr "GPST negyvų porininkų aptikimas aptiko negyvą porininką!\n"
 
-#: gpst.c:1292
+#: gpst.c:1248
 msgid "Send GPST DPD/keepalive request\n"
 msgstr "Siųsti GPST DPD/keepalive užklausą\n"
 
-#: gpst.c:1315
+#: gpst.c:1271
 #, c-format
 msgid "Sending IPv%d data packet of %d bytes\n"
 msgstr "Siunčiamas IPv%d duomenų paketas su %d baitų\n"
 
-#: gpst.c:1509
+#: gpst.c:1465
 #, c-format
 msgid "ICMPv%d probe packet (seq %d) for GlobalProtect ESP:\n"
 msgstr "ICMPv%d zondo paketas (seka %d) GlobalProtect ESP:\n"
 
-#: gpst.c:1517 oncp.c:1275
+#: gpst.c:1473 oncp.c:1275
 msgid "Failed to send ESP probe\n"
 msgstr "Nepavyko išsiųsti ESP zondo\n"
 
@@ -3006,44 +3035,44 @@ msgstr ""
 msgid "SOCKS proxy demands protection unknown type 0x%02x\n"
 msgstr "SOCKS įgaliotasis serveris prašo nežinomo tipo 0x%02x apsaugos\n"
 
-#: hpke.c:87
+#: hpke.c:83
 #, c-format
 msgid "Failed to listen on local port 29786: %s\n"
 msgstr ""
 
-#: hpke.c:114
+#: hpke.c:110
 #, c-format
 msgid "Spawning external browser '%s'\n"
 msgstr ""
 
-#: hpke.c:122 main.c:910
+#: hpke.c:118 main.c:911
 msgid "Spawn browser"
 msgstr ""
 
-#: hpke.c:131
+#: hpke.c:127
 #, c-format
 msgid "Failed to spawn external browser for %s\n"
 msgstr ""
 
-#: hpke.c:146
+#: hpke.c:142
 msgid "Accepted incoming external-browser connection on port 29786\n"
 msgstr ""
 
-#: hpke.c:153
+#: hpke.c:149
 msgid "Invalid incoming external-browser request\n"
 msgstr ""
 
-#: hpke.c:229
+#: hpke.c:225
 #, c-format
 msgid "Got encrypted SSO token of %d bytes\n"
 msgstr ""
 
-#: hpke.c:297
+#: hpke.c:293
 #, c-format
 msgid "Failed to decode SSO token at %d:\n"
 msgstr ""
 
-#: hpke.c:324
+#: hpke.c:320
 msgid "SSO token not alphanumeric\n"
 msgstr ""
 
@@ -3061,7 +3090,7 @@ msgstr "Bandomas HTTP Basic tapatybės nustatymas serveryje „%s“\n"
 msgid "Attempting HTTP Bearer authentication to server '%s'\n"
 msgstr "Bandomas HTTP Bearer tapatybės nustatymas serveryje „%s“\n"
 
-#: http-auth.c:112 http.c:1156
+#: http-auth.c:112 http.c:1167
 msgid "This version of OpenConnect was built without GSSAPI support\n"
 msgstr "Ši OpenConnect versija sukurta be GSSAPI palaikymo\n"
 
@@ -3087,255 +3116,255 @@ msgstr "Daugiau nebėra bandomų tapatybės nustatymo metodų\n"
 msgid "No memory for allocating cookies\n"
 msgstr "Nėra atminties slapukams\n"
 
-#: http.c:244 http.c:270
+#: http.c:255 http.c:281
 #, c-format
 msgid "Error reading HTTP response: %s\n"
 msgstr "Klaida skaitant HTTP atsakymą: %s\n"
 
-#: http.c:255
+#: http.c:266
 #, c-format
 msgid "Failed to parse HTTP response '%s'\n"
 msgstr "Nepavyko perskaityti HTTP atsakymo „%s“\n"
 
-#: http.c:261
+#: http.c:272
 #, c-format
 msgid "Got HTTP response: %s\n"
 msgstr "Gautas HTTP atsakymas: %s\n"
 
-#: http.c:284
+#: http.c:295
 #, c-format
 msgid "Ignoring unknown HTTP response line '%s'\n"
 msgstr "Nepaisoma nežinomo HTTP atsakymo eilutėje „%s“\n"
 
-#: http.c:303
+#: http.c:314
 #, c-format
 msgid "Invalid cookie offered: %s\n"
 msgstr "Pasiūlytas neteisingas slapukas: %s\n"
 
-#: http.c:323
+#: http.c:334
 msgid "SSL certificate authentication failed\n"
 msgstr "SSL liudijimo tapatybės nustatymas nepavyko\n"
 
-#: http.c:356
+#: http.c:367
 #, c-format
 msgid "Response body has negative size (%d)\n"
 msgstr "Atsakymo pagrindinė dalis yra neigiamo dydžio (%d)\n"
 
-#: http.c:367
+#: http.c:378
 #, c-format
 msgid "Unknown Transfer-Encoding: %s\n"
 msgstr "Nežinoma perdavimo koduotė: %s\n"
 
 #. Now the body, if there is one
-#: http.c:388
+#: http.c:399
 #, c-format
 msgid "HTTP body %s (%d)\n"
 msgstr "HTTP pagrindinė dalis %s (%d)\n"
 
-#: http.c:404 http.c:448
+#: http.c:415 http.c:459
 msgid "Error reading HTTP response body\n"
 msgstr "Klaida skaitant HTTP atsakymo pagrindinę dalį\n"
 
-#: http.c:419
+#: http.c:430
 msgid "Error fetching chunk header\n"
 msgstr "Klaida parsiunčiant dalies antraštę\n"
 
-#: http.c:430
+#: http.c:441
 #, c-format
 msgid "HTTP chunk length is negative (%ld)\n"
 msgstr "HTTP bloko ilgis yra neigiamas (%ld)\n"
 
-#: http.c:436
+#: http.c:447
 #, c-format
 msgid "HTTP chunk length is too large (%ld)\n"
 msgstr "HTTP bloko dydis yra per didelis (%ld)\n"
 
-#: http.c:459
+#: http.c:470
 msgid "Error fetching HTTP response body\n"
 msgstr "Klaida parsiunčiant HTTP atsakymo pagrindinę dalį\n"
 
-#: http.c:463
+#: http.c:474
 #, c-format
 msgid "Error in chunked decoding. Expected '', got: '%s'\n"
 msgstr "Klaida padalintame dekodavime. Tikėtasi „“, gauta: „%s“\n"
 
-#: http.c:476
+#: http.c:487
 msgid "Cannot receive HTTP 1.0 body without closing connection\n"
 msgstr "Negalima gauti HTTP 1.0 pagrindinės dalies neužveriant ryšio\n"
 
-#: http.c:638
+#: http.c:649
 #, c-format
 msgid "Failed to parse redirected URL '%s': %s\n"
 msgstr "Nepavyko perskaityti nukreiptojo URL „%s“: %s\n"
 
-#: http.c:669
+#: http.c:680
 #, c-format
 msgid "Cannot follow redirection to non-https URL '%s'\n"
 msgstr "Negalima sekti nukreipimu į ne https URL „%s“\n"
 
-#: http.c:690
+#: http.c:701
 #, c-format
 msgid "Allocating new path for relative redirect failed: %s\n"
 msgstr "Nepavyko išskirti naujo kelio santykiniam nukreipimui: %s\n"
 
-#: http.c:767
+#: http.c:778
 msgid "HTTPS socket closed by peer; reopening\n"
 msgstr "HTTPS lizdą užvėrė porininkas; vėl atveriama\n"
 
-#: http.c:921
+#: http.c:932
 #, c-format
 msgid "Retrying failed %s request on new connection\n"
 msgstr "Vėl bandoma nepavykusi %s užklausa nauja ryšiu\n"
 
-#: http.c:1004
+#: http.c:1015
 msgid "request granted"
 msgstr "prašymas patvirtintas"
 
-#: http.c:1005
+#: http.c:1016
 msgid "general failure"
 msgstr "bendroji klaida"
 
-#: http.c:1006
+#: http.c:1017
 msgid "connection not allowed by ruleset"
 msgstr "ryšis neleistas pagal taisykles"
 
-#: http.c:1007
+#: http.c:1018
 msgid "network unreachable"
 msgstr "tinklas nepasiekiamas"
 
-#: http.c:1008
+#: http.c:1019
 msgid "host unreachable"
 msgstr "serveris nepasiekiamas"
 
-#: http.c:1009
+#: http.c:1020
 msgid "connection refused by destination host"
 msgstr "ryšį atmetė paskirties serveris"
 
-#: http.c:1010
+#: http.c:1021
 msgid "TTL expired"
 msgstr "TTL laikas baigėsi"
 
-#: http.c:1011
+#: http.c:1022
 msgid "command not supported / protocol error"
 msgstr "komanda nepalaikoma / protokolo klaida"
 
-#: http.c:1012
+#: http.c:1023
 msgid "address type not supported"
 msgstr "adreso tipas nepalaikomas"
 
-#: http.c:1022
+#: http.c:1033
 msgid "SOCKS server requested username/password but we have none\n"
 msgstr ""
 "SOCKS serveris paprašė naudotojo vardo/slaptažodžio, bet mes jokių neturime\n"
 
-#: http.c:1030
+#: http.c:1041
 msgid "Username and password for SOCKS authentication must be < 255 bytes\n"
 msgstr ""
 "Naudotojo vardas ir slaptažodis SOCKS tapatybės nustatymui turi būti < 255 "
 "baitai\n"
 
-#: http.c:1045 http.c:1108
+#: http.c:1056 http.c:1119
 #, c-format
 msgid "Error writing auth request to SOCKS proxy: %s\n"
 msgstr "Klaida rašant auth užklausą į SOCKS įgaliotąjį serverį: %s\n"
 
-#: http.c:1053 http.c:1115
+#: http.c:1064 http.c:1126
 #, c-format
 msgid "Error reading auth response from SOCKS proxy: %s\n"
 msgstr "Klaida skaitant auth atsakymą iš SOCKS įgaliotojo serverio: %s\n"
 
-#: http.c:1060 http.c:1121
+#: http.c:1071 http.c:1132
 #, c-format
 msgid "Unexpected auth response from SOCKS proxy: %02x %02x\n"
 msgstr "Netikėtas auth atsakymas iš SOCKS įgaliotojo serverio: %02x %02x\n"
 
-#: http.c:1066
+#: http.c:1077
 msgid "Authenticated to SOCKS server using password\n"
 msgstr "Tapatybė nustatyta SOCKS serveryje naudojant slaptažodį\n"
 
-#: http.c:1070
+#: http.c:1081
 msgid "Password authentication to SOCKS server failed\n"
 msgstr "Nepavyko nustatyti tapatybės slaptažodžius SOCKS serveryje\n"
 
-#: http.c:1133 http.c:1140
+#: http.c:1144 http.c:1151
 msgid "SOCKS server requested GSSAPI authentication\n"
 msgstr "Socks serveris paprašė GSSAPI tapatybės nustatymo\n"
 
-#: http.c:1146
+#: http.c:1157
 msgid "SOCKS server requested password authentication\n"
 msgstr "Socks serveris paprašė tapatybės nustatymo slaptažodžiu\n"
 
-#: http.c:1153
+#: http.c:1164
 msgid "SOCKS server requires authentication\n"
 msgstr "Socks serveris paprašė tapatybės nustatymo\n"
 
-#: http.c:1162
+#: http.c:1173
 #, c-format
 msgid "SOCKS server requested unknown authentication type %02x\n"
 msgstr "Socks serveris paprašė nežinomo tipo %02x tapatybės nustatymo\n"
 
-#: http.c:1168
+#: http.c:1179
 #, c-format
 msgid "Requesting SOCKS proxy connection to %s:%d\n"
 msgstr "Užklausiamas SOCKS įgaliotojo serverio ryšio su %s:%d\n"
 
-#: http.c:1183
+#: http.c:1194
 #, c-format
 msgid "Error writing connect request to SOCKS proxy: %s\n"
 msgstr "Klaida rašant ryšio užklausą į SOCKS įgaliotąjį serverį: %s\n"
 
-#: http.c:1191 http.c:1233
+#: http.c:1202 http.c:1244
 #, c-format
 msgid "Error reading connect response from SOCKS proxy: %s\n"
 msgstr "Klaida skaitant jungimosi atsakymą iš SOCKS įgaliotojo serverio: %s\n"
 
-#: http.c:1197
+#: http.c:1208
 #, c-format
 msgid "Unexpected connect response from SOCKS proxy: %02x %02x...\n"
 msgstr ""
 "Nelauktas jungimosi atsakymas iš SOCKS įgaliotojo serverio: %02x %02x...\n"
 
-#: http.c:1205
+#: http.c:1216
 #, c-format
 msgid "SOCKS proxy error %02x: %s\n"
 msgstr "SOCKS įgaliotojo serverio klaida %02x: %s\n"
 
-#: http.c:1209
+#: http.c:1220
 #, c-format
 msgid "SOCKS proxy error %02x\n"
 msgstr "SOCKS įgaliotojo serverio klaida %02x\n"
 
-#: http.c:1226
+#: http.c:1237
 #, c-format
 msgid "Unexpected address type %02x in SOCKS connect response\n"
 msgstr "Nelauktas adreso tipas %02x SOCKS jungimosi atsakyme\n"
 
-#: http.c:1249
+#: http.c:1260
 #, c-format
 msgid "Requesting HTTP proxy connection to %s:%d\n"
 msgstr "Užklausiamas HTTP įgaliotojo serverio ryšio su %s:%d\n"
 
-#: http.c:1284
+#: http.c:1295
 #, c-format
 msgid "Sending proxy request failed: %s\n"
 msgstr "Įgaliotojo serverio užklausos siuntimas nepavyko: %s\n"
 
-#: http.c:1307
+#: http.c:1318
 #, c-format
 msgid "Proxy CONNECT request failed: %d\n"
 msgstr "Įgaliotojo serverio CONNECT užklausa nepavyko: %d\n"
 
-#: http.c:1326
+#: http.c:1337
 #, c-format
 msgid "Unknown proxy type '%s'\n"
 msgstr "Nežinomas įgaliotojo serverio tipas „%s“\n"
 
-#: http.c:1352
+#: http.c:1363
 #, c-format
 msgid "Failed to parse proxy '%s'\n"
 msgstr "Nepavyko perskaityti tarpinio serverio „%s“\n"
 
-#: http.c:1376
+#: http.c:1387
 msgid "Only http or socks(5) proxies supported\n"
 msgstr "Palaikomi tik http arba socks(5) įgaliotieji serveriai\n"
 
@@ -3445,21 +3474,21 @@ msgstr "Persijungimas gavo skirtingą IPv6 tinklo kaukę (%s != %s)\n"
 msgid "IPv6 configuration received but MTU %d is too small.\n"
 msgstr "Gauta IPv6 konfigūracija, bet MTU %d yra per mažas.\n"
 
-#: library.c:1084
+#: library.c:1087
 #, c-format
 msgid "Failed to parse server URL '%s'\n"
 msgstr "Nepavyko perskaityti serverio URL „%s“\n"
 
-#: library.c:1090
+#: library.c:1093
 msgid "Only https:// permitted for server URL\n"
 msgstr "Leidžiami tik https:// serverio URL\n"
 
-#: library.c:1513
+#: library.c:1516
 #, c-format
 msgid "Unknown certificate hash: %s.\n"
 msgstr "Nežinoma liudijimo maiša: %s.\n"
 
-#: library.c:1547
+#: library.c:1550
 #, c-format
 msgid ""
 "The size of the provided fingerprint is less than the minimum required "
@@ -3468,15 +3497,15 @@ msgstr ""
 "Pateikto kontrolinio kodo dydis yra mažesnis nei mažiausias reikalaujamas "
 "dydis (%u).\n"
 
-#: library.c:1604
+#: library.c:1607
 msgid "No form handler; cannot authenticate.\n"
 msgstr "Nėra formos apdorotojo; negalima nustatyti tapatybės.\n"
 
-#: library.c:1608
+#: library.c:1611
 msgid "No form ID. This is a bug in OpenConnect's authentication code.\n"
 msgstr ""
 
-#: library.c:1679
+#: library.c:1682
 msgid "No SSO handler\n"
 msgstr ""
 
@@ -3578,527 +3607,527 @@ msgstr ""
 msgid "Cannot process this executable path \"%s\""
 msgstr "Negalima apdoroti šio vykdomojo failo kelio „%s“"
 
-#: main.c:862
+#: main.c:863
 #, c-format
 msgid "Allocation for vpnc-script path failed\n"
 msgstr "Nepavyko išskirti vpnc-script keliui\n"
 
-#: main.c:904
+#: main.c:905
 #, c-format
 msgid "Main Spawning external browser '%s'\n"
 msgstr ""
 
-#: main.c:919
+#: main.c:920
 msgid "Default vpnc-script (override with --script):"
 msgstr ""
 
-#: main.c:934
+#: main.c:935
 #, c-format
 msgid "Override hostname '%s' to '%s'\n"
 msgstr "Perrašomas serverio pavadinimas iš „%s“ į „%s“\n"
 
-#: main.c:947
+#: main.c:948
 #, c-format
 msgid "Usage:  openconnect [options] <server>\n"
 msgstr "Naudojimas:  openconnect [parametrai] <serveris>\n"
 
-#: main.c:948
+#: main.c:949
 #, c-format
 msgid ""
 "Open client for multiple VPN protocols, version %s\n"
 "\n"
 msgstr "Atverti klientą, skirtą keliems VPN protokolams, versiją %s\n"
 
-#: main.c:950
+#: main.c:951
 msgid "Read options from config file"
 msgstr "Skaityti parametrus iš konfigūracijos failo"
 
-#: main.c:951
+#: main.c:952
 msgid "Report version number"
 msgstr "Pranešti versijos numerį"
 
-#: main.c:952
+#: main.c:953
 msgid "Display help text"
 msgstr "Rodyti pagalbos tekstą"
 
-#: main.c:956
+#: main.c:957
 msgid "Authentication"
 msgstr "Tapatybės patvirtinimas"
 
-#: main.c:957
+#: main.c:958
 msgid "Set login username"
 msgstr "Nustatyti prisijungimo naudotojo vardą"
 
-#: main.c:958
+#: main.c:959
 msgid "Disable password/SecurID authentication"
 msgstr "Išjungti slaptažodžio/SecurID tapatybės nustatymą"
 
-#: main.c:959
+#: main.c:960
 msgid "Do not expect user input; exit if it is required"
 msgstr "Nelaukti naudotojo įvesties; išeiti, jei ji būtina"
 
-#: main.c:960
+#: main.c:961
 msgid "Read password from standard input"
 msgstr "Skaityti slaptažodį iš standartinės įvesties"
 
-#: main.c:961
+#: main.c:962
 msgid "Choose authentication login selection"
 msgstr "Pasirinkite tapatybės nustatymo prisijungimo pasirinkimą"
 
-#: main.c:962
+#: main.c:963
 msgid "Provide authentication form responses"
 msgstr "Pateikite tapatybės patvirtinimo formos atsakymus"
 
-#: main.c:963
+#: main.c:964
 msgid "Use SSL client certificate CERT"
 msgstr "Naudoti SSL kliento liudijimą CERT"
 
-#: main.c:964
+#: main.c:965
 msgid "Use SSL private key file KEY"
 msgstr "Naudoti SSL privačiojo rakto failą RAKTAS"
 
-#: main.c:965
+#: main.c:966
 msgid "Warn when certificate lifetime < DAYS"
 msgstr "Įspėti, kai liudijimo galiojimas < DIENŲ"
 
-#: main.c:966
+#: main.c:967
 msgid "Set login usergroup"
 msgstr "Nustatyti prisijungimo naudotojo grupę"
 
-#: main.c:967
+#: main.c:968
 msgid "Set key passphrase or TPM SRK PIN"
 msgstr "Nustatyti rakto slaptafrazę arba TPM SRK PIN"
 
-#: main.c:968
+#: main.c:969
 msgid "Set external browser executable"
 msgstr ""
 
-#: main.c:969
+#: main.c:970
 msgid "Key passphrase is fsid of file system"
 msgstr "Rakto slaptafrazė yra failų sistemos fsid"
 
-#: main.c:970
+#: main.c:971
 msgid "Software token type: rsa, totp, hotp or oidc"
 msgstr "Programinės leksemos tipas: rsa, totp, hotp arba oidc"
 
-#: main.c:971
+#: main.c:972
 msgid "Software token secret or oidc token"
 msgstr "Programinės leksemos paslaptis arba oidc leksema"
 
-#: main.c:973
+#: main.c:974
 msgid "(NOTE: libstoken (RSA SecurID) disabled in this build)"
 msgstr "(PASTABA: libstoken (RSA SecurID) išjungta šioje programoje)"
 
-#: main.c:976
+#: main.c:977
 msgid "(NOTE: Yubikey OATH disabled in this build)"
 msgstr "(PASTABA: Yubikey OATH išjungtas šioje programoje)"
 
-#: main.c:979
+#: main.c:980
 msgid "Server validation"
 msgstr "Serverio tikrinimas"
 
-#: main.c:980
+#: main.c:981
 msgid "Accept only server certificate with this fingerprint"
 msgstr "Priimti tik serverio liudijimą su šiuo kontroliniu kodu"
 
-#: main.c:981
+#: main.c:982
 msgid "Disable default system certificate authorities"
 msgstr "Išjungti numatytąsias sistemos liudijimų įstaigas"
 
-#: main.c:982
+#: main.c:983
 msgid "Cert file for server verification"
 msgstr "Liudijimo failas serverio patikrinimui"
 
-#: main.c:984
+#: main.c:985
 msgid "Internet connectivity"
 msgstr "Interneto ryšys"
 
-#: main.c:985
+#: main.c:986
 msgid "Set VPN server"
 msgstr "Nustatyti VPN serverį"
 
-#: main.c:986
+#: main.c:987
 msgid "Set proxy server"
 msgstr "Nustatyti įgaliotąjį serverį"
 
-#: main.c:987
+#: main.c:988
 msgid "Set proxy authentication methods"
 msgstr "Nustatyti įgaliotojo serverio tapatybės nustatymo metodus"
 
-#: main.c:988
+#: main.c:989
 msgid "Disable proxy"
 msgstr "Išjungti įgaliotąjį serverį"
 
-#: main.c:989
+#: main.c:990
 msgid "Use libproxy to automatically configure proxy"
 msgstr "Naudoti libproxy automatiniam įgaliotojo serverio konfigūravimui"
 
-#: main.c:991
+#: main.c:992
 msgid "(NOTE: libproxy disabled in this build)"
 msgstr "(PASTABA: libproxy išjungtas šioje programoje)"
 
-#: main.c:993
+#: main.c:994
 msgid "Reconnection retry timeout (default is 300 seconds)"
 msgstr ""
 
-#: main.c:994
+#: main.c:995
 msgid "Use IP when connecting to HOST"
 msgstr "Naudoti IP jungiantis prie SERVERIO"
 
-#: main.c:995
+#: main.c:996
 msgid "Copy TOS / TCLASS field into DTLS and ESP packets"
 msgstr "Nukopijuoti TOS / TCLASS, kai naudojamas DTLS ar ESP paketai"
 
-#: main.c:996
+#: main.c:997
 msgid "Set local port for DTLS and ESP datagrams"
 msgstr "Nustatyti vietinį prievadą DTLS ir ESP datagramoms"
 
-#: main.c:998
+#: main.c:999
 msgid "Authentication (two-phase)"
 msgstr "Tapatybės patvirtinimas (dviejų fazių)"
 
-#: main.c:999
+#: main.c:1000
 msgid "Use authentication cookie COOKIE"
 msgstr "Naudoti tapatybės patvirtinimo slapuką SLAPUKAS"
 
-#: main.c:1000
+#: main.c:1001
 msgid "Read cookie from standard input"
 msgstr "Nuskaityti slapuką iš standartinės įvesties"
 
-#: main.c:1001
+#: main.c:1002
 msgid "Authenticate only and print login info"
 msgstr "Tik nustatyti tapatybę ir atspausdinti prisijungimo informaciją"
 
-#: main.c:1002
+#: main.c:1003
 msgid "Fetch and print cookie only; don't connect"
 msgstr "Tik parsisiųsti ir atspausdinti slapuką; neprisijungti"
 
-#: main.c:1003
+#: main.c:1004
 msgid "Print cookie before connecting"
 msgstr "Atspausdinti slapuką prieš jungiantis"
 
-#: main.c:1006
+#: main.c:1007
 msgid "Process control"
 msgstr "Proceso valdymas"
 
-#: main.c:1007
+#: main.c:1008
 msgid "Continue in background after startup"
 msgstr "Tęsti fone po paleidimo"
 
-#: main.c:1008
+#: main.c:1009
 msgid "Write the daemon's PID to this file"
 msgstr "Įrašyti tarnybos PID į šį failą"
 
-#: main.c:1009
+#: main.c:1010
 msgid "Drop privileges after connecting"
 msgstr "Atsisakyti privilegijų po prisijungimo"
 
-#: main.c:1012
+#: main.c:1013
 msgid "Logging (two-phase)"
 msgstr "Prisijungimas (dviejų fazių)"
 
-#: main.c:1014
+#: main.c:1015
 msgid "Use syslog for progress messages"
 msgstr "Naudoti syslog eigos pranešimams"
 
-#: main.c:1016
+#: main.c:1017
 msgid "More output"
 msgstr "Daugiau išvesties"
 
-#: main.c:1017
+#: main.c:1018
 msgid "Less output"
 msgstr "Mažiau išvesties"
 
-#: main.c:1018
+#: main.c:1019
 msgid "Dump HTTP authentication traffic (implies --verbose)"
 msgstr "Įrašyti HTTP tapatybės patvirtinimo srautą (įtraukia --verbose)"
 
-#: main.c:1019
+#: main.c:1020
 msgid "Prepend timestamp to progress messages"
 msgstr "Prie eigos pranešimų pridėti laiko žymą"
 
-#: main.c:1021
+#: main.c:1022
 msgid "VPN configuration script"
 msgstr "VPN konfigūracijos scenarijus"
 
-#: main.c:1022
+#: main.c:1023
 msgid "Use IFNAME for tunnel interface"
 msgstr "Naudoti IFNAME tunelio sąsajai"
 
-#: main.c:1023
+#: main.c:1024
 msgid "Shell command line for using a vpnc-compatible config script"
 msgstr ""
 "Apvalkalo komandų eilutė vpnc-suderinamam konfigūracijos scenarijui naudoti"
 
-#: main.c:1024
+#: main.c:1025
 msgid "default"
 msgstr "numatyta"
 
-#: main.c:1026
+#: main.c:1027
 msgid "Pass traffic to 'script' program, not tun"
 msgstr "Siųsti srautą į „scenarijaus“ programą, ne tun"
 
-#: main.c:1029
+#: main.c:1030
 msgid "Tunnel control"
 msgstr "Tunelio valdymas"
 
-#: main.c:1030
+#: main.c:1031
 msgid "Do not ask for IPv6 connectivity"
 msgstr "Neklausti IPv6 jungimosi"
 
-#: main.c:1031
+#: main.c:1032
 msgid "XML config file"
 msgstr "XML konfigūracijos failas"
 
-#: main.c:1032
+#: main.c:1033
 msgid "Request MTU from server (legacy servers only)"
 msgstr "Prašyti MTU iš serverio (tik pasenusiems serveriams)"
 
-#: main.c:1033
+#: main.c:1034
 msgid "Indicate path MTU to/from server"
 msgstr "Nurodyti kelią MTU į/iš serverio"
 
-#: main.c:1034
+#: main.c:1035
 msgid "Enable stateful compression (default is stateless only)"
 msgstr "Įjungti suspaudimą su būsena (numatyta yra tik be būsenos)"
 
-#: main.c:1035
+#: main.c:1036
 msgid "Disable all compression"
 msgstr "Išjungti visą suspaudimą"
 
-#: main.c:1036
+#: main.c:1037
 msgid "Set Dead Peer Detection interval (in seconds)"
 msgstr ""
 
-#: main.c:1037
+#: main.c:1038
 msgid "Require perfect forward secrecy"
 msgstr "Reikalauti tobulo pirminio slaptumo"
 
-#: main.c:1038
+#: main.c:1039
 msgid "Disable DTLS and ESP"
 msgstr "Išjungti DTLS ir ESP"
 
-#: main.c:1039
+#: main.c:1040
 msgid "OpenSSL ciphers to support for DTLS"
 msgstr "OpenSSL šifrais DTLS palaikymui"
 
-#: main.c:1040
+#: main.c:1041
 msgid "Set packet queue limit to LEN pkts"
 msgstr "Nustatyti paketų eilės ribą į LEN paketų"
 
-#: main.c:1042
+#: main.c:1043
 msgid "Local system information"
 msgstr "Vietinės sistemos informacija"
 
-#: main.c:1043
+#: main.c:1044
 msgid "HTTP header User-Agent: field"
 msgstr "HTTP antraštės User-Agent: laukas"
 
-#: main.c:1044
+#: main.c:1045
 msgid "Local hostname to advertise to server"
 msgstr "Vietinis vardas, pranešamas serveriui"
 
-#: main.c:1045
+#: main.c:1046
 msgid "OS type to report. Allowed values are the following:"
 msgstr ""
 
-#: main.c:1046
+#: main.c:1047
 msgid "linux, linux-64, win, mac-intel, android, apple-ios"
 msgstr ""
 
-#: main.c:1047
+#: main.c:1048
 msgid "reported version string during authentication"
 msgstr "pranešta versijos eilutė tapatybės patvirtinimo metu"
 
-#: main.c:1048
+#: main.c:1049
 msgid "default:"
 msgstr "numatyta:"
 
-#: main.c:1050
+#: main.c:1051
 msgid "Trojan binary (CSD) execution"
 msgstr "Trojos arklio (CSD) vykdymas"
 
-#: main.c:1052
+#: main.c:1053
 msgid "Drop privileges during trojan execution"
 msgstr "Atsisakyti privilegijų vykdant trojos arklį"
 
-#: main.c:1053
+#: main.c:1054
 msgid "Run SCRIPT instead of trojan binary"
 msgstr "Vykdyti SCENARIJŲ vietoj trojos arklio programos"
 
-#: main.c:1055
+#: main.c:1056
 msgid "Set minimum interval between trojan runs (in seconds)"
 msgstr ""
 
-#: main.c:1057
+#: main.c:1058
 msgid "Server bugs"
 msgstr "Serverio klaidos"
 
-#: main.c:1058
+#: main.c:1059
 msgid "Disable HTTP connection re-use"
 msgstr "Išjungti HTTP ryšio pakartotinį naudojimą"
 
-#: main.c:1059
+#: main.c:1060
 msgid "Do not attempt XML POST authentication"
 msgstr "Nemėginti XML POST tapatybės nustatymo"
 
-#: main.c:1060
+#: main.c:1061
 msgid "Allow use of the ancient, insecure 3DES and RC4 ciphers"
 msgstr "Leisti naudoti senus, nesaugius 3DES ir RC4 šifrus"
 
-#: main.c:1062
+#: main.c:1063
 msgid "Multiple certificate authentication (MCA)"
 msgstr ""
 
-#: main.c:1063
+#: main.c:1064
 msgid "Use MCA certificate MCACERT"
 msgstr ""
 
-#: main.c:1064
+#: main.c:1065
 msgid "Use MCA key MCAKEY"
 msgstr ""
 
-#: main.c:1065
+#: main.c:1066
 msgid "Passphrase MCAPASS for MCACERT/MCAKEY"
 msgstr ""
 
-#: main.c:1087
+#: main.c:1088
 #, c-format
 msgid "Failed to allocate string\n"
 msgstr "Nepavyko išskirti simbolių eilutės\n"
 
-#: main.c:1160
+#: main.c:1161
 #, c-format
 msgid "Failed to get line from config file: %s\n"
 msgstr "Nepavyko gauti eilutės iš konfigūracijos failo: %s\n"
 
-#: main.c:1200
+#: main.c:1201
 #, c-format
 msgid "Unrecognised option at line %d: '%s'\n"
 msgstr "Neatpažintas parametras eilutėje %d: „%s“\n"
 
-#: main.c:1210
+#: main.c:1211
 #, c-format
 msgid "Option '%s' does not take an argument at line %d\n"
 msgstr "Parametrui „%s“ nereikia argumento eilutėje %d\n"
 
-#: main.c:1214
+#: main.c:1215
 #, c-format
 msgid "Option '%s' requires an argument at line %d\n"
 msgstr "Parametrui „%s“ būtinas argumentas eilutėje %d\n"
 
 #. Should never happen
-#: main.c:1230
+#: main.c:1231
 #, c-format
 msgid "Internal error; option '%s' unexpectedly yielded null config_arg\n"
 msgstr ""
 
-#: main.c:1246
+#: main.c:1247
 #, c-format
 msgid "Invalid user \"%s\": %s\n"
 msgstr "Netinkamas naudotojas „%s“: %s\n"
 
-#: main.c:1255
+#: main.c:1256
 #, c-format
 msgid "Invalid user ID \"%d\": %s\n"
 msgstr "Netinkamas naudotojo ID „%d“: %s\n"
 
-#: main.c:1538
+#: main.c:1539
 #, c-format
 msgid "Unhandled autocomplete for option %d '--%s'. Please report.\n"
 msgstr ""
 "Nepadorotas automatinis užbaigimas parametrui %d. „--%s“. Praneškite.\n"
 
-#: main.c:1559 main.c:1574
+#: main.c:1560 main.c:1575
 msgid "connected"
 msgstr "prisijungta"
 
-#: main.c:1559
+#: main.c:1560
 msgid "disconnected"
 msgstr "atsijungta"
 
-#: main.c:1563
+#: main.c:1564
 msgid "unsuccessful"
 msgstr "nesėkminga"
 
-#: main.c:1568
+#: main.c:1569
 msgid "in progress"
 msgstr "vykdoma"
 
-#: main.c:1571
+#: main.c:1572
 msgid "disabled"
 msgstr "išjungta"
 
-#: main.c:1577
+#: main.c:1578
 msgid "established"
 msgstr "užmegzta"
 
-#: main.c:1580
+#: main.c:1581
 msgid "unknown"
 msgstr "nežinoma"
 
-#: main.c:1587
+#: main.c:1588
 #, c-format
 msgid "Configured as %s%s%s, with SSL%s%s %s and %s%s%s %s\n"
 msgstr "Sukonfigūruota kaip %s%s%s, naudojant SSL%s%s %s, su %s%s%s %s\n"
 
-#: main.c:1596
+#: main.c:1597
 #, c-format
 msgid "Session authentication will expire at %s\n"
 msgstr ""
 
-#: main.c:1610
+#: main.c:1611
 #, c-format
 msgid ""
 "RX: %<PRIu64> packets (%<PRIu64> B); TX: %<PRIu64> packets (%<PRIu64> B)\n"
 msgstr ""
 "RX: %<PRIu64> paketai (%<PRIu64> B); TX: %<PRIu64> paketai (%<PRIu64> B)\n"
 
-#: main.c:1614
+#: main.c:1615
 #, c-format
 msgid "SSL ciphersuite: %s\n"
 msgstr "SSL šifravimo rinkinys: %s\n"
 
-#: main.c:1616
+#: main.c:1617
 #, c-format
 msgid "%s ciphersuite: %s\n"
 msgstr "%s šifravimo rinkinys: %s\n"
 
-#: main.c:1619
+#: main.c:1620
 #, c-format
 msgid "Next SSL rekey in %ld seconds\n"
 msgstr "Kita SSL raktų keitimas po %ld sekundžių\n"
 
-#: main.c:1622
+#: main.c:1623
 #, c-format
 msgid "Next %s rekey in %ld seconds\n"
 msgstr "Kita %s raktų keitimas po %ld sekundžių\n"
 
-#: main.c:1626
+#: main.c:1627
 #, c-format
 msgid "Next Trojan invocation in %ld seconds\n"
 msgstr "Kitas Trojos arklio iškvietimas po %ld sekundžių\n"
 
-#: main.c:1645
+#: main.c:1646
 #, c-format
 msgid "Failed to open '%s' for write: %s\n"
 msgstr "Nepavyko atverti „%s“ rašymui: %s\n"
 
-#: main.c:1654
+#: main.c:1655
 msgid "Failed to continue in background"
 msgstr ""
 
-#: main.c:1662
+#: main.c:1663
 #, c-format
 msgid "Continuing in background; pid %d\n"
 msgstr "Tęsiama fone; pid %d\n"
 
-#: main.c:1728
+#: main.c:1729
 #, c-format
 msgid "WARNING: Cannot set locale: %s\n"
 msgstr "ĮSPĖJIMAS: nepavyko nustatyti lokalės: %s\n"
 
-#: main.c:1741
+#: main.c:1742
 #, c-format
 msgid ""
 "WARNING: This version of OpenConnect was built without iconv\n"
@@ -4109,7 +4138,7 @@ msgstr ""
 "           palaikymo, bet atrodo, kad naudojate seną simbolių\n"
 "           koduotę „%s“. Tikėkitės keistumų.\n"
 
-#: main.c:1748
+#: main.c:1749
 #, c-format
 msgid ""
 "WARNING: This version of OpenConnect is %s but\n"
@@ -4118,7 +4147,7 @@ msgstr ""
 "ĮSPĖJIMAS: Ši openconnect versija yra %s, bet\n"
 "           libopenconnect biblioteka yra %s\n"
 
-#: main.c:1755
+#: main.c:1756
 #, c-format
 msgid ""
 "WARNING: This build is intended only for debugging purposes and\n"
@@ -4127,27 +4156,27 @@ msgstr ""
 "ĮSPĖJIMAS: ši versija skirta tik derinimui ir\n"
 "           gali leisti užmegzti nesaugius ryšius.\n"
 
-#: main.c:1787
+#: main.c:1788
 #, c-format
 msgid "Failed to allocate vpninfo structure\n"
 msgstr "Nepavyko išskirti vpninfo struktūros\n"
 
-#: main.c:1847
+#: main.c:1848
 #, c-format
 msgid "Cannot use 'config' option inside config file\n"
 msgstr "Nepavyko naudoti „config“ parametro konfigūracijos faile\n"
 
-#: main.c:1855
+#: main.c:1856
 #, c-format
 msgid "Cannot open config file '%s': %s\n"
 msgstr "Nepavyko atverti konfigūracijos failo „%s“: %s\n"
 
-#: main.c:1872
+#: main.c:1873
 #, c-format
 msgid "Invalid compression mode '%s'\n"
 msgstr "Netinkama suspaudimo veiksena „%s“\n"
 
-#: main.c:1890
+#: main.c:1891
 #, c-format
 msgid ""
 "Cannot enable insecure 3DES or RC4 ciphers, because the library\n"
@@ -4156,22 +4185,22 @@ msgstr ""
 "Nepavyksta įjungti nesaugaus 3DES arba RC4 šifro, nes biblioteka\n"
 "%s jų nebepalaiko.\n"
 
-#: main.c:1898 main.c:1919
+#: main.c:1899 main.c:1920
 #, c-format
 msgid "Failed to allocate memory\n"
 msgstr "Nepavyko išskirti atminties\n"
 
-#: main.c:1914
+#: main.c:1915
 #, c-format
 msgid "Missing colon in resolve option\n"
 msgstr "Trūksta dvitaškio resolve parametre\n"
 
-#: main.c:2006 main.c:2016
+#: main.c:2007 main.c:2017
 #, c-format
 msgid "MTU %d too small\n"
 msgstr "MTU %d per mažas\n"
 
-#: main.c:2046
+#: main.c:2047
 #, c-format
 msgid ""
 "Disabling all HTTP connection re-use due to --no-http-keepalive option.\n"
@@ -4180,7 +4209,7 @@ msgstr ""
 "Išjungiami visi HTTP ryšių pakartotiniai naudojimai dėl --no-http-keepalive\n"
 "parametro. Jei tai padės, praneškite <%s>.\n"
 
-#: main.c:2053
+#: main.c:2054
 #, c-format
 msgid ""
 "The --no-cert-check option was insecure and has been removed.\n"
@@ -4190,29 +4219,29 @@ msgstr ""
 "Pataisykite savo serverio liugijimą arba naudokite --servercert is juo "
 "pasitikėkite.\n"
 
-#: main.c:2074
+#: main.c:2075
 #, c-format
 msgid "Queue length zero not permitted; using 1\n"
 msgstr "Neleidžiamas nulinis eilės ilgis; naudojamas 1\n"
 
-#: main.c:2088
+#: main.c:2089
 #, c-format
 msgid "OpenConnect version %s\n"
 msgstr "OpenConnect versija %s\n"
 
-#: main.c:2136
+#: main.c:2137
 #, c-format
 msgid "Invalid software token mode \"%s\"\n"
 msgstr "Netinkama programinės leksemos veiksena „%s“\n"
 
-#: main.c:2147
+#: main.c:2148
 #, c-format
 msgid ""
 "Invalid OS identity \"%s\"\n"
 "Allowed values: linux, linux-64, win, mac-intel, android, apple-ios\n"
 msgstr ""
 
-#: main.c:2175
+#: main.c:2176
 #, c-format
 msgid ""
 "WARNING: You specified %s. This should not be\n"
@@ -4225,92 +4254,92 @@ msgstr ""
 "           perrašymas yra būtinas prisijungimui prie serverio\n"
 "           adresu <%s>.\n"
 
-#: main.c:2213
+#: main.c:2214
 #, c-format
 msgid "Too many arguments on command line\n"
 msgstr "Per daug argumentų komandų eilutėje\n"
 
-#: main.c:2216
+#: main.c:2217
 #, c-format
 msgid "No server specified\n"
 msgstr "Nenurodytas serveris\n"
 
-#: main.c:2234
+#: main.c:2235
 #, c-format
 msgid "This version of OpenConnect was built without libproxy support\n"
 msgstr "Ši OpenConnect versija sukurta be libproxy palaikymo\n"
 
-#: main.c:2271
+#: main.c:2272
 #, c-format
 msgid "Error opening cmd pipe: %s\n"
 msgstr ""
 
-#: main.c:2308
+#: main.c:2309
 #, c-format
 msgid "Failed to complete authentication\n"
 msgstr "Nepavyko užbaigti tapatybės patvirtinimo\n"
 
-#: main.c:2344
+#: main.c:2345
 #, c-format
 msgid "Creating SSL connection failed\n"
 msgstr "Nepavyko sukurti SSL ryšio\n"
 
-#: main.c:2359
+#: main.c:2360
 #, c-format
 msgid "Set up UDP failed; using SSL instead\n"
 msgstr "Nepavyko nustatyti UDP; vietoj to naudojama SSL\n"
 
-#: main.c:2365
+#: main.c:2366
 msgid "No --script argument provided; DNS and routing are not configured\n"
 msgstr ""
 "Nepateiktas --script argumentas; DNS ir maršrutizavimas nesukonfigūruoti\n"
 
-#: main.c:2367
+#: main.c:2368
 #, c-format
 msgid "See %s\n"
 msgstr "Žiūrėkite %s\n"
 
-#: main.c:2380
+#: main.c:2381
 msgid "User requested reconnect\n"
 msgstr "Naudotojas paprašė persijungti\n"
 
-#: main.c:2391
+#: main.c:2392
 msgid "Cookie was rejected by server; exiting.\n"
 msgstr "Serveris atmetė slapuką; išeinama.\n"
 
-#: main.c:2395
+#: main.c:2396
 msgid "Session terminated by server; exiting.\n"
 msgstr "Serveris nutraukė seansą; išeinama.\n"
 
-#: main.c:2399
+#: main.c:2400
 #, c-format
 msgid "User cancelled (%s); exiting.\n"
 msgstr "Naudotojas atsisakė (%s); išeinama.\n"
 
-#: main.c:2409
+#: main.c:2410
 #, c-format
 msgid "User detached from session (%s); exiting.\n"
 msgstr "Naudotojas atsijungė nuo seanso (%s); išeinama.\n"
 
-#: main.c:2419
+#: main.c:2420
 msgid "Unrecoverable I/O error; exiting.\n"
 msgstr "Neatstatoma I/O klaida; išeinama.\n"
 
-#: main.c:2426
+#: main.c:2427
 msgid "Unknown error; exiting.\n"
 msgstr "Nežinoma klaida; išeinama.\n"
 
-#: main.c:2446
+#: main.c:2447
 #, c-format
 msgid "Failed to open %s for write: %s\n"
 msgstr "Nepavyko atverti %s rašymui: %s\n"
 
-#: main.c:2454
+#: main.c:2455
 #, c-format
 msgid "Failed to write config to %s: %s\n"
 msgstr "Nepavyko įrašyti konfigūracijos į %s: %s\n"
 
-#: main.c:2501
+#: main.c:2502
 #, c-format
 msgid ""
 "Insecurely accepting certificate from VPN server \"%s\" because you ran with "
@@ -4319,12 +4348,12 @@ msgstr ""
 "Nesaugiai priimamas liudijimas iš VPN serverio „%s“, kadangi jūs paleidote "
 "su --servercert=ACCEPT.\n"
 
-#: main.c:2514
+#: main.c:2515
 #, c-format
 msgid "Could not check server's certificate against %s\n"
 msgstr "Nepavyko patikrinti serverio liudijimo naudojant %s\n"
 
-#: main.c:2522
+#: main.c:2523
 #, c-format
 msgid ""
 "None of the %d fingerprint(s) specified via --servercert match server's "
@@ -4333,7 +4362,7 @@ msgstr ""
 "Nei vienas iš %d kontrolinių kodų, nurodytų per --servercert, neatitinka "
 "serverio liudijimo: %s\n"
 
-#: main.c:2531
+#: main.c:2532
 #, c-format
 msgid ""
 "\n"
@@ -4344,7 +4373,7 @@ msgstr ""
 "Liudijimas iš VPN serverio „%s“ nepraėjo patikrinimo.\n"
 "Priežastis: %s\n"
 
-#: main.c:2534
+#: main.c:2535
 #, c-format
 msgid ""
 "To trust this server in future, perhaps add this to your command line:\n"
@@ -4352,109 +4381,109 @@ msgstr ""
 "Norėdami pasitikėti šiuo serveriu ateityje, galite pridėti prie savo komandų "
 "eilutės:\n"
 
-#: main.c:2535
+#: main.c:2536
 #, c-format
 msgid "    --servercert %s\n"
 msgstr "    --servercert %s\n"
 
-#: main.c:2540
+#: main.c:2541
 #, c-format
 msgid "Enter '%s' to accept, '%s' to abort; anything else to view: "
 msgstr "Įveskite „%s“ sutikimui, „%s“ nutraukimui; bet ką kitą peržiūrai: "
 
-#: main.c:2541 main.c:2560
+#: main.c:2542 main.c:2561
 msgid "no"
 msgstr "ne"
 
-#: main.c:2541 main.c:2547
+#: main.c:2542 main.c:2548
 msgid "yes"
 msgstr "taip"
 
-#: main.c:2569
+#: main.c:2570
 #, c-format
 msgid "Server key hash: %s\n"
 msgstr "Serverio rakto maišos vertė: %s\n"
 
-#: main.c:2603
+#: main.c:2604
 #, c-format
 msgid "Auth choice \"%s\" matches multiple options\n"
 msgstr "Auth pasirinkimas „%s“ atitinka kelis parametrus\n"
 
-#: main.c:2606
+#: main.c:2607
 #, c-format
 msgid "Auth choice \"%s\" not available\n"
 msgstr "Auth pasirinkimo „%s“ nėra\n"
 
-#: main.c:2627
+#: main.c:2628
 msgid "User input required in non-interactive mode\n"
 msgstr "Būtina naudotojo įvestis neinteraktyvioje veiksenoje\n"
 
-#: main.c:2869
+#: main.c:2870
 #, c-format
 msgid "Failed to open token file for write: %s\n"
 msgstr "Nepavyko atverti leksemos failo rašymui: %s\n"
 
-#: main.c:2877
+#: main.c:2878
 #, c-format
 msgid "Failed to write token: %s\n"
 msgstr "Nepavyko įrašyti leksemos: %s\n"
 
-#: main.c:2924 main.c:2948
+#: main.c:2925 main.c:2949
 #, c-format
 msgid "Soft token string is invalid\n"
 msgstr "Švelni leksemos eilutė netinkama\n"
 
-#: main.c:2928
+#: main.c:2929
 #, c-format
 msgid "Can't open stoken file\n"
 msgstr "Nepavyko atverti stoken failo\n"
 
-#: main.c:2930
+#: main.c:2931
 #, c-format
 msgid "Can't open ~/.stokenrc file\n"
 msgstr "Nepavyko atverti ~/.stokenrc failo\n"
 
-#: main.c:2933
+#: main.c:2934
 #, c-format
 msgid "OpenConnect was not built with libstoken support\n"
 msgstr "OpenConnect nebuvo sukurtas su libstoken palaikymu\n"
 
-#: main.c:2936
+#: main.c:2937
 #, c-format
 msgid "General failure in libstoken\n"
 msgstr "Bendra libstoken klaida\n"
 
-#: main.c:2951
+#: main.c:2952
 #, c-format
 msgid "OpenConnect was not built with liboath support\n"
 msgstr "OpenConnect nebuvo sukurta su liboath palaikymu\n"
 
-#: main.c:2954
+#: main.c:2955
 #, c-format
 msgid "General failure in liboath\n"
 msgstr "Bendra liboath klaida\n"
 
-#: main.c:2965
+#: main.c:2966
 #, c-format
 msgid "Yubikey token not found\n"
 msgstr "Yubikey leksema nerasta\n"
 
-#: main.c:2968
+#: main.c:2969
 #, c-format
 msgid "OpenConnect was not built with Yubikey support\n"
 msgstr "OpenConnect nebuvo sukurtas su Yubikey palaikymu\n"
 
-#: main.c:2971
+#: main.c:2972
 #, c-format
 msgid "General Yubikey failure: %s\n"
 msgstr "Bendroji Yubikey klaida: %s\n"
 
-#: main.c:2980
+#: main.c:2981
 #, c-format
 msgid "Can't open oidc file\n"
 msgstr "Nepavyko atverti oidc failo\n"
 
-#: main.c:2983
+#: main.c:2984
 #, c-format
 msgid "General failure in oidc token\n"
 msgstr "Bendra oidc leksemos klaida\n"
@@ -4878,7 +4907,7 @@ msgstr "Išeinantys paketai:\n"
 msgid "Sent ESP enable control packet\n"
 msgstr "Išsiųsta ESP įjungimo kontrolinis paketas\n"
 
-#: openconnect-internal.h:1678 openconnect-internal.h:1688
+#: openconnect-internal.h:1692 openconnect-internal.h:1702
 #, c-format
 msgid "ERROR: %s() called with invalid UTF-8 for '%s' argument\n"
 msgstr "KLAIDA: %s() iškviesta su netinkamu UTF-8 „%s“ argumentui\n"
@@ -5425,43 +5454,56 @@ msgstr "EAP-TTLS derybos su %s\n"
 msgid "EAP-TTLS connection failure %d\n"
 msgstr "EAP-TTLS ryšio klaida %d\n"
 
-#: openssl.c:2317
-msgid "Failed to create prime256v1 EC group\n"
-msgstr ""
-
-#: openssl.c:2324
+#: openssl.c:2345
 msgid "Failed to generate STRAP key"
 msgstr ""
 
-#: openssl.c:2334
+#: openssl.c:2355
 msgid "Failed to generate STRAP DH key\n"
 msgstr ""
 
-#: openssl.c:2368
+#: openssl.c:2378
+msgid "Failed to decode STRAP key\n"
+msgstr ""
+
+#: openssl.c:2406
 msgid "Failed to decode server DH key\n"
 msgstr ""
 
-#: openssl.c:2378
+#: openssl.c:2416
 msgid "Failed to compute DH secret\n"
 msgstr ""
 
-#: openssl.c:2401
+#: openssl.c:2439
 msgid "HKDF key derivation failed\n"
 msgstr ""
 
-#: openssl.c:2422
+#: openssl.c:2460
 msgid "SSO token decryption failed\n"
 msgstr ""
 
-#: openssl.c:2465
+#: openssl.c:2476
+#, c-format
+msgid "SSL Finished message too large (%zd bytes)\n"
+msgstr ""
+
+#: openssl.c:2486 openssl.c:2531
+msgid "STRAP signature failed\n"
+msgstr ""
+
+#: openssl.c:2502
+msgid "Failed to regenerate STRAP key\n"
+msgstr ""
+
+#: openssl.c:2573
 msgid "Failed to create PKCS#7 structure\n"
 msgstr ""
 
-#: openssl.c:2501
+#: openssl.c:2609
 msgid "Failed to output PKCS#7 structure\n"
 msgstr ""
 
-#: openssl.c:2595
+#: openssl.c:2703
 msgid "Failed to generate signature for multiple certificate authentication\n"
 msgstr ""
 
@@ -6899,126 +6941,135 @@ msgstr "(scenarijus)"
 msgid "Failed to write incoming packet: %s\n"
 msgstr "Nepavyko įrašyti įeinančio paketo: %s\n"
 
-#: vhost.c:77
+#: vhost.c:78
 #, c-format
 msgid "Failed to set vring #%d size: %s\n"
 msgstr ""
 
-#: vhost.c:85 vhost.c:97
+#: vhost.c:86 vhost.c:98
 #, c-format
 msgid "Failed to set vring #%d base: %s\n"
 msgstr ""
 
-#: vhost.c:107
+#: vhost.c:108
 #, c-format
 msgid "Failed to set vring #%d RX backend: %s\n"
 msgstr ""
 
-#: vhost.c:115
+#: vhost.c:116
 #, c-format
 msgid "Failed to set vring #%d call eventfd: %s\n"
 msgstr ""
 
-#: vhost.c:123
+#: vhost.c:124
 #, c-format
 msgid "Failed to set vring #%d kick eventfd: %s\n"
 msgstr ""
 
-#: vhost.c:142
+#: vhost.c:183
+msgid "Failed to find virtual task size; search reached zero"
+msgstr ""
+
+#: vhost.c:233
+#, c-format
+msgid "Detected virtual address range 0x%lx-0x%lx\n"
+msgstr ""
+
+#: vhost.c:250
 #, c-format
 msgid "Not using vhost-net due to low queue length %d\n"
 msgstr ""
 
-#: vhost.c:156
+#: vhost.c:264
 #, c-format
 msgid "Failed to open /dev/vhost-net: %s\n"
 msgstr ""
 
-#: vhost.c:163
+#: vhost.c:271
 #, c-format
 msgid "Failed to set vhost ownership: %s\n"
 msgstr ""
 
-#: vhost.c:172
+#: vhost.c:280
 #, c-format
 msgid "Failed to get vhost features: %s\n"
 msgstr ""
 
-#: vhost.c:177
+#: vhost.c:285
 #, c-format
 msgid "vhost-net lacks required features: %llx\n"
 msgstr ""
 
-#: vhost.c:185
+#: vhost.c:293
 #, c-format
 msgid "Failed to set vhost features: %s\n"
 msgstr ""
 
-#: vhost.c:193
+#: vhost.c:301
 #, c-format
 msgid "Failed to open vhost kick eventfd: %s\n"
 msgstr ""
 
-#: vhost.c:200
+#: vhost.c:308
 #, c-format
 msgid "Failed to open vhost call eventfd: %s\n"
 msgstr ""
 
-#: vhost.c:218
+#: vhost.c:324
 #, c-format
 msgid "Failed to set vhost memory map: %s\n"
 msgstr ""
 
-#: vhost.c:241
+#: vhost.c:347
 #, c-format
 msgid "Failed to set tun sndbuf: %s\n"
 msgstr ""
 
-#: vhost.c:246
+#: vhost.c:352
 #, c-format
 msgid "Using vhost-net for tun acceleration, ring size %d\n"
 msgstr ""
 
-#: vhost.c:369
+#: vhost.c:475
 #, c-format
 msgid "Error: vhost gave back invalid descriptor %d, len %d\n"
 msgstr ""
 
-#: vhost.c:379
+#: vhost.c:485
 #, c-format
 msgid "vhost gave back empty descriptor %d\n"
 msgstr ""
 
-#: vhost.c:390
+#: vhost.c:496
 #, c-format
 msgid "Free TX packet %p [%d] [used %d]\n"
 msgstr ""
 
-#: vhost.c:402
+#: vhost.c:508
 #, c-format
 msgid "RX packet %p(%d) [%d] [used %d]\n"
 msgstr ""
 
-#: vhost.c:467
+#: vhost.c:573
 #, c-format
 msgid "Queue TX packet %p at desc %d avail %d\n"
 msgstr ""
 
-#: vhost.c:475
+#: vhost.c:581
 #, c-format
 msgid "Queue RX packet %p at desc %d avail %d\n"
 msgstr ""
 
-#: vhost.c:509
+#: vhost.c:615
 #, c-format
 msgid "Immediate wake because vhost ring moved on from 0x%x to 0x%x\n"
 msgstr ""
 
-#: vhost.c:536
+#: vhost.c:642
 msgid "Failed to kick vhost-net eventfd\n"
 msgstr ""
 
-#: vhost.c:539
+#: vhost.c:645
 msgid "Kick vhost ring\n"
 msgstr ""
 
