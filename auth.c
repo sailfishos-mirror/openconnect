@@ -675,7 +675,7 @@ static int parse_xml_response(struct openconnect_info *vpninfo,
 		xml_node = xml_node->next;
 	}
 
-	if (old_cert_rq_state && form->error) {
+	if ((old_cert_rq_state & CERT2_REQUESTED) && form->error) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Server reported certificate error: %s.\n"), form->error);
 		ret = -EINVAL;
