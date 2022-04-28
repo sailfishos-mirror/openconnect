@@ -91,7 +91,7 @@ int handle_external_browser(struct openconnect_info *vpninfo)
 	}
 
 	int optval = 1;
-	setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
+	(void)setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, (void *)&optval, sizeof(optval));
 
 	if (bind(listen_fd, (void *)&sin6, sizeof(sin6)) < 0)
 		goto sockerr;
