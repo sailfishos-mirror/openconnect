@@ -1739,14 +1739,14 @@ int main(int argc, char **argv)
 #ifndef HAVE_ICONV
 	if (legacy_charset)
 		fprintf(stderr,
-			_("WARNING: This version of openconnect was built without iconv\n"
+			_("WARNING: This version of OpenConnect was built without iconv\n"
 			  "         support but you appear to be using the legacy character\n"
 			  "         set \"%s\". Expect strangeness.\n"), legacy_charset);
 #endif /* !HAVE_ICONV */
 #endif /* HAVE_NL_LANGINFO */
 
 	if (strcmp(openconnect_version_str, openconnect_binary_version)) {
-		fprintf(stderr, _("WARNING: This version of openconnect is %s but\n"
+		fprintf(stderr, _("WARNING: This version of OpenConnect is %s but\n"
 				  "         the libopenconnect library is %s\n"),
 			openconnect_binary_version, openconnect_version_str);
 	}
@@ -2232,7 +2232,7 @@ int main(int argc, char **argv)
 #ifdef LIBPROXY_HDR
 		vpninfo->proxy_factory = px_proxy_factory_new();
 #else
-		fprintf(stderr, _("This version of openconnect was built without libproxy support\n"));
+		fprintf(stderr, _("This version of OpenConnect was built without libproxy support\n"));
 		exit(1);
 #endif
 	}

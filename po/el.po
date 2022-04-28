@@ -1806,7 +1806,7 @@ msgstr "Χρήση αρχείου ιδιωτικού κλειδιού %s\n"
 
 #: gnutls.c:1370 openssl.c:747
 msgid "This version of OpenConnect was built without TPM support\n"
-msgstr "Αυτή η έκδοση του openconnect δομήθηκε χωρίς υποστήριξη TPM\n"
+msgstr "Αυτή η έκδοση του OpenConnect δομήθηκε χωρίς υποστήριξη TPM\n"
 
 #: gnutls.c:1386
 msgid "This version of OpenConnect was built without TPM2 support\n"
@@ -3185,7 +3185,7 @@ msgid "Only http or socks(5) proxies supported\n"
 msgstr "Υποστηρίζονται μόνο διαμεσολαβητές http ή socks(5)\n"
 
 #: library.c:124
-msgid "Cisco AnyConnect or openconnect"
+msgid "Cisco AnyConnect or OpenConnect"
 msgstr ""
 
 #: library.c:125
@@ -3919,7 +3919,7 @@ msgstr ""
 #: main.c:1724
 #, c-format
 msgid ""
-"WARNING: This version of openconnect was built without iconv\n"
+"WARNING: This version of OpenConnect was built without iconv\n"
 "         support but you appear to be using the legacy character\n"
 "         set \"%s\". Expect strangeness.\n"
 msgstr ""
@@ -3927,7 +3927,7 @@ msgstr ""
 #: main.c:1731
 #, c-format
 msgid ""
-"WARNING: This version of openconnect is %s but\n"
+"WARNING: This version of OpenConnect is %s but\n"
 "         the libopenconnect library is %s\n"
 msgstr ""
 
@@ -4040,8 +4040,8 @@ msgstr "Δεν ορίστηκε διακομιστής\n"
 
 #: main.c:2202
 #, c-format
-msgid "This version of openconnect was built without libproxy support\n"
-msgstr "Αυτή η έκδοση του openconnect δομήθηκε χωρίς υποστήριξη libproxy\n"
+msgid "This version of OpenConnect was built without libproxy support\n"
+msgstr "Αυτή η έκδοση του OpenConnect δομήθηκε χωρίς υποστήριξη libproxy\n"
 
 #: main.c:2239
 #, c-format

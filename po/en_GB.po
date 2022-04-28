@@ -3166,7 +3166,7 @@ msgid "Only http or socks(5) proxies supported\n"
 msgstr "Only http or socks(5) proxies supported\n"
 
 #: library.c:124
-msgid "Cisco AnyConnect or openconnect"
+msgid "Cisco AnyConnect or OpenConnect"
 msgstr ""
 
 #: library.c:125
@@ -3895,7 +3895,7 @@ msgstr ""
 #: main.c:1724
 #, c-format
 msgid ""
-"WARNING: This version of openconnect was built without iconv\n"
+"WARNING: This version of OpenConnect was built without iconv\n"
 "         support but you appear to be using the legacy character\n"
 "         set \"%s\". Expect strangeness.\n"
 msgstr ""
@@ -3903,7 +3903,7 @@ msgstr ""
 #: main.c:1731
 #, c-format
 msgid ""
-"WARNING: This version of openconnect is %s but\n"
+"WARNING: This version of OpenConnect is %s but\n"
 "         the libopenconnect library is %s\n"
 msgstr ""
 
@@ -4015,8 +4015,8 @@ msgstr "No server specified\n"
 
 #: main.c:2202
 #, c-format
-msgid "This version of openconnect was built without libproxy support\n"
-msgstr "This version of openconnect was built without libproxy support\n"
+msgid "This version of OpenConnect was built without libproxy support\n"
+msgstr "This version of OpenConnect was built without libproxy support\n"
 
 #: main.c:2239
 #, c-format

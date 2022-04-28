@@ -3279,8 +3279,8 @@ msgid "Only http or socks(5) proxies supported\n"
 msgstr "Podržani su samo http ili socks(5) posrednici\n"
 
 #: library.c:124
-msgid "Cisco AnyConnect or openconnect"
-msgstr "Cisko Eni Konekt ili openkonekt"
+msgid "Cisco AnyConnect or OpenConnect"
+msgstr "Cisko Eni Konekt ili OpenKonekt"
 
 #: library.c:125
 msgid "Compatible with Cisco AnyConnect SSL VPN, as well as ocserv"
@@ -4040,7 +4040,7 @@ msgstr ""
 #: main.c:1741
 #, c-format
 msgid ""
-"WARNING: This version of openconnect was built without iconv\n"
+"WARNING: This version of OpenConnect was built without iconv\n"
 "         support but you appear to be using the legacy character\n"
 "         set \"%s\". Expect strangeness.\n"
 msgstr ""
@@ -4051,7 +4051,7 @@ msgstr ""
 #: main.c:1748
 #, c-format
 msgid ""
-"WARNING: This version of openconnect is %s but\n"
+"WARNING: This version of OpenConnect is %s but\n"
 "         the libopenconnect library is %s\n"
 msgstr ""
 "UPOZORENJE: Ovo izdanje „openconnect“-a je %s ali\n"
@@ -4169,7 +4169,7 @@ msgstr "Nije naveden server\n"
 
 #: main.c:2234
 #, c-format
-msgid "This version of openconnect was built without libproxy support\n"
+msgid "This version of OpenConnect was built without libproxy support\n"
 msgstr ""
 "Ovo izdanje otvorenog povezivanja je izgrađeno bez podrške biblioteke "
 "posrednika\n"

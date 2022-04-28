@@ -643,7 +643,7 @@ msgid ""
 msgstr ""
 "Потврђивање идентитета може да не успе. Ако ваша скрипта није вратила нулу, "
 "поправите то.\n"
-"Будућа издања опенконекта ће прекинути са овом грешком.\n"
+"Будућа издања ОпенКонекта ће прекинути са овом грешком.\n"
 
 #: auth.c:1256
 #, c-format
@@ -3315,8 +3315,8 @@ msgid "Only http or socks(5) proxies supported\n"
 msgstr "Подржани су само хттп или соцкс(5) посредници\n"
 
 #: library.c:124
-msgid "Cisco AnyConnect or openconnect"
-msgstr "Циско Ени Конект или опенконект"
+msgid "Cisco AnyConnect or OpenConnect"
+msgstr "Циско Ени Конект или ОпенКонект"
 
 #: library.c:125
 msgid "Compatible with Cisco AnyConnect SSL VPN, as well as ocserv"
@@ -4077,7 +4077,7 @@ msgstr "УПОЗОРЕЊЕ: Не могу да поставим језик: %s\n
 #: main.c:1741
 #, c-format
 msgid ""
-"WARNING: This version of openconnect was built without iconv\n"
+"WARNING: This version of OpenConnect was built without iconv\n"
 "         support but you appear to be using the legacy character\n"
 "         set \"%s\". Expect strangeness.\n"
 msgstr ""
@@ -4088,7 +4088,7 @@ msgstr ""
 #: main.c:1748
 #, c-format
 msgid ""
-"WARNING: This version of openconnect is %s but\n"
+"WARNING: This version of OpenConnect is %s but\n"
 "         the libopenconnect library is %s\n"
 msgstr ""
 "УПОЗОРЕЊЕ: Ово издање „openconnect“-а је %s али\n"
@@ -4209,7 +4209,7 @@ msgstr "Није наведен сервер\n"
 
 #: main.c:2234
 #, c-format
-msgid "This version of openconnect was built without libproxy support\n"
+msgid "This version of OpenConnect was built without libproxy support\n"
 msgstr ""
 "Ово издање отвореног повезивања је изграђено без подршке библиотеке "
 "посредника\n"
@@ -6778,7 +6778,7 @@ msgid ""
 "To configure local networking, openconnect must be running as root\n"
 "See %s for more information\n"
 msgstr ""
-"За подешавање месног умрежавања, опенконект мора бити покренут као "
+"За подешавање месног умрежавања, ОпенКонект мора бити покренут као "
 "администратор\n"
 "Видите „%s“ за више података\n"
 
