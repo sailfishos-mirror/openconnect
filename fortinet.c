@@ -301,6 +301,54 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 	return ret;
 }
 
+static int parse_split_routes(struct openconnect_info *vpninfo, xmlNode *split_tunnel_info,
+			      struct oc_vpn_option *new_opts, struct oc_ip_info *new_ip_info)
+{
+	int negate = 0, ret = 0;
+	int ip_version = !strcmp((char *)split_tunnel_info->parent->name, "ipv6") ? 6 : 4;
+	char *s = NULL, *s2 = NULL;
+
+	if (!xmlnode_get_prop(split_tunnel_info, "negate", &s))
+		negate = atoi(s);
+	for (xmlNode *x = split_tunnel_info->children; x; x=x->next) {
+		if (xmlnode_is_named(x, "addr")) {
+			if (!xmlnode_get_prop(x, ip_version == 6 ? "ipv6" : "ip", &s) &&
+			    !xmlnode_get_prop(x, ip_version == 6 ? "prefix-len" : "mask", &s2) &&
+			    s && s2 && *s && *s2) {
+				struct oc_split_include *inc = malloc(sizeof(*inc));
+				char *route = NULL;
+
+				if (!inc || asprintf(&route, "%s/%s", s, s2) == -1) {
+					free(route);
+					free(inc);
+					free_optlist(new_opts);
+					free_split_routes(new_ip_info);
+					ret = -ENOMEM;
+					goto out;
+				}
+
+				if (negate) {
+					vpn_progress(vpninfo, PRG_INFO, _("Got IPv%d exclude route %s\n"), ip_version, route);
+					inc->route = add_option_steal(&new_opts, "split-exclude", &route);
+					inc->next = new_ip_info->split_excludes;
+					new_ip_info->split_excludes = inc;
+				} else {
+					vpn_progress(vpninfo, PRG_INFO, _("Got IPv%d route %s\n"), ip_version, route);
+					inc->route = add_option_steal(&new_opts, "split-include", &route);
+					inc->next = new_ip_info->split_includes;
+					new_ip_info->split_includes = inc;
+				}
+				/* XX: static analyzer doesn't realize that add_option_steal will steal route's reference, so... */
+				free(route);
+			}
+		}
+	}
+ out:
+	free(s);
+	free(s2);
+	return ret;
+}
+
 /* Parse this:
 <?xml version="1.0" encoding="utf-8"?>
 <sslvpn-tunnel ver="2" dtls="1" patch="1">
@@ -319,11 +367,17 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
       <addr ip="10.11.10.10" mask="255.255.255.255"/>
       <addr ip="10.11.1.0" mask="255.255.255.0"/>
     </split-tunnel-info>
+    <split-tunnel-info negate="1">
+      <addr ip="1.2.3.4" mask="255.255.255.255"/>
+    </split-tunnel-info>
   </ipv4>
   <ipv6>
     <assigned-addr ipv6='fdff:ffff::1' prefix-len='120'/>
     <split-tunnel-info>
       <addr ipv6='fdff:ffff::' prefix-len='120'/>
+    </split-tunnel-info>
+    <split-tunnel-info negate="1">
+      <addr ipv6='2011:abcd::' prefix-len='32'/>
     </split-tunnel-info>
   </ipv6>
   <idle-timeout val="3600"/>
@@ -332,9 +386,9 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 */
 static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf, int len)
 {
-	xmlNode *xml_node, *x, *x2;
+	xmlNode *xml_node, *x;
 	xmlDocPtr xml_doc;
-	int ret = 0, n_dns = 0, default_route = 1;
+	int ret = 0, n_dns = 0;
 	char *s = NULL, *s2 = NULL;
 	int reconnect_after_drop = -1;
 	struct oc_text_buf *domains = NULL;
@@ -445,32 +499,9 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 							break;
 					}
 				} else if (xmlnode_is_named(x, "split-tunnel-info")) {
-					for (x2 = x->children; x2; x2=x2->next) {
-						if (xmlnode_is_named(x2, "addr")) {
-							if (!xmlnode_get_prop(x2, "ip", &s) &&
-							    !xmlnode_get_prop(x2, "mask", &s2) &&
-							    s && s2 && *s && *s2) {
-								struct oc_split_include *inc = malloc(sizeof(*inc));
-								char *route = malloc(32);
-								default_route = 0;
-								if (!route || !inc) {
-									free(route);
-									free(inc);
-									free_optlist(new_opts);
-									free_split_routes(&new_ip_info);
-									ret = -ENOMEM;
-									goto out;
-								}
-								snprintf(route, 32, "%s/%s", s, s2);
-								vpn_progress(vpninfo, PRG_INFO, _("Got IPv%d route %s\n"), 4, route);
-								inc->route = add_option_steal(&new_opts, "split-include", &route);
-								inc->next = new_ip_info.split_includes;
-								new_ip_info.split_includes = inc;
-								/* XX: static analyzer doesn't realize that add_option_steal will steal route's reference, so... */
-								free(route);
-							}
-						}
-					}
+					ret = parse_split_routes(vpninfo, x, new_opts, &new_ip_info);
+					if (ret < 0)
+						goto out;
 				}
 			}
 		} else if (xmlnode_is_named(xml_node, "ipv6")) {
@@ -513,34 +544,9 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 							break;
 					}
 				} else if (xmlnode_is_named(x, "split-tunnel-info")) {
-					for (x2 = x->children; x2; x2=x2->next) {
-						if (xmlnode_is_named(x2, "addr")) {
-							if (!xmlnode_get_prop(x2, "ipv6", &s) &&
-							    !xmlnode_get_prop(x2, "prefix-len", &s2) &&
-							    s && s2 && *s && *s2) {
-								struct oc_split_include *inc = malloc(sizeof(*inc));
-								char *route = NULL;
-
-								default_route = 0;
-
-								if (!inc || asprintf(&route, "%s/%s", s, s2) == -1) {
-									free(route);
-									free(inc);
-									free_optlist(new_opts);
-									free_split_routes(&new_ip_info);
-									ret = -ENOMEM;
-									goto out;
-								}
-
-								vpn_progress(vpninfo, PRG_INFO, _("Got IPv%d route %s\n"), 6, route);
-								inc->route = add_option_steal(&new_opts, "split-include", &route);
-								inc->next = new_ip_info.split_includes;
-								new_ip_info.split_includes = inc;
-								/* XX: static analyzer doesn't realize that add_option_steal will steal route's reference, so... */
-								free(route);
-							}
-						}
-					}
+					ret = parse_split_routes(vpninfo, x, new_opts, &new_ip_info);
+					if (ret != 0)
+						goto out;
 				}
 			}
 		}
@@ -561,8 +567,14 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 			       "work please report to <%s>\n"),
 			     "openconnect-devel@lists.infradead.org");
 
-	if (default_route && new_ip_info.addr)
-		new_ip_info.netmask = add_option_dup(&new_opts, "full-netmask", "0.0.0.0", -1);
+	if (new_ip_info.addr) {
+		if (new_ip_info.split_includes)
+			vpn_progress(vpninfo, PRG_INFO, _("Received split routes; not setting default Legacy IP route\n"));
+		else {
+			vpn_progress(vpninfo, PRG_INFO, _("No split routes received; setting default Legacy IP route\n"));
+			new_ip_info.netmask = add_option_dup(&new_opts, "full-netmask", "0.0.0.0", -1);
+		}
+	}
 	if (buf_error(domains) == 0 && domains->pos > 0) {
 		domains->data[domains->pos-1] = '\0';
 		new_ip_info.domain = add_option_steal(&new_opts, "search", &domains->data);
