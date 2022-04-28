@@ -105,7 +105,27 @@ int handle_external_browser(struct openconnect_info *vpninfo)
 	/* Now that we are listening on the socket, we can spawn the browser */
 	if (vpninfo->open_ext_browser) {
 		ret = vpninfo->open_ext_browser(vpninfo, vpninfo->sso_login, vpninfo->cbdata);
-#if defined(HAVE_POSIX_SPAWN) && defined(DEFAULT_EXTERNAL_BROWSER)
+#if defined(_WIN32)
+	} else {
+		vpn_progress(vpninfo, PRG_TRACE, _("Spawning external browser via 'cmd'x\n"));
+
+		struct oc_text_buf *urlbuf = buf_alloc();
+		char *p = vpninfo->sso_login;
+		while (p && *p) {
+			if (*p == '&')
+				buf_append(urlbuf, "^&");
+			else
+				buf_append_bytes(urlbuf, p, 1);
+			p++;
+		}
+		if (buf_error(urlbuf))
+			ret = buf_free(urlbuf);
+		else {
+			ret = _spawnlp(_P_NOWAIT, "cmd", "/c", "start", urlbuf->data, NULL);
+			printf("spawnlp returns %d (%s)\n", ret, openconnect__win32_strerror(ret));
+			buf_free(urlbuf);
+		}
+#elif defined(HAVE_POSIX_SPAWN) && defined(DEFAULT_EXTERNAL_BROWSER)
 	} else {
 		vpn_progress(vpninfo, PRG_TRACE, _("Spawning external browser '%s'\n"),
 			     DEFAULT_EXTERNAL_BROWSER);
