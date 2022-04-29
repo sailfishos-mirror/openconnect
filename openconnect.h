@@ -33,7 +33,7 @@ extern "C" {
 #endif
 
 #define OPENCONNECT_API_VERSION_MAJOR 5
-#define OPENCONNECT_API_VERSION_MINOR 7
+#define OPENCONNECT_API_VERSION_MINOR 8
 
 /*
  * API version 5.8 (v9.00; 2022-04-29):
