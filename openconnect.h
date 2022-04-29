@@ -37,6 +37,7 @@ extern "C" {
 
 /*
  * API version 5.8:
+ *  - Add openconnect_set_useragent()
  *  - Add openconnect_set_external_browser_callback()
  *  - Add openconnect_set_mca_cert() and openconnect_set_mca_key_password()
  *
@@ -457,6 +458,14 @@ int openconnect_set_proxy_auth(struct openconnect_info *vpninfo,
 			       const char *methods);
 int openconnect_set_http_proxy(struct openconnect_info *vpninfo,
 			       const char *proxy);
+
+/* Passing a useragent string to openconnect_vpninfo_new() will still
+ * append the OpenConnect version number. This function allows the
+ * full string to be set, for those cases where a VPN server might
+ * require an *exact* match. */
+int openconnect_set_useragent(struct openconnect_info *vpninfo,
+			      const char *useragent);
+
 int openconnect_passphrase_from_fsid(struct openconnect_info *vpninfo);
 int openconnect_obtain_cookie(struct openconnect_info *vpninfo);
 int openconnect_init_ssl(void);

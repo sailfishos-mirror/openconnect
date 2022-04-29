@@ -839,6 +839,15 @@ char *openconnect_get_urlpath(struct openconnect_info *vpninfo)
 	return vpninfo->urlpath;
 }
 
+int openconnect_set_useragent(struct openconnect_info *vpninfo,
+			      const char *useragent)
+{
+	UTF8CHECK(useragent);
+
+	STRDUP(vpninfo->useragent, useragent);
+	return 0;
+}
+
 int openconnect_set_urlpath(struct openconnect_info *vpninfo,
 			    const char *urlpath)
 {

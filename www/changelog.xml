@@ -23,6 +23,7 @@
        <li>Append <tt>internal=no</tt> to GlobalProtect authentication/configuration forms, for compatibility with servers which apparently require this to function properly. (<a href="https://gitlab.com/openconnect/openconnect/-/issues/246">#246</a>, <a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/337">!337</a>)</li>
        <li>Revert GlobalProtect default route handling change from v8.20. (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/367">!367</a>)</li>
        <li>Support split-exclude routes for Fortinet. (<a href="https://gitlab.com/openconnect/openconnect/-/issues/394">#394</a>, <a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/345">!345</a>)</li>
+       <li>Add <tt>openconnect_set_useragent()</tt> function.</li>
      </ul><br/>
   </li>
   <li><b><a href="https://www.infradead.org/openconnect/download/openconnect-8.20.tar.gz">OpenConnect v8.20</a></b>
