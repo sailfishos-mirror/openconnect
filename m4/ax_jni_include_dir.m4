@@ -1,65 +1,3 @@
-dnl as-compiler-flag.m4 0.1.0
-
-dnl autostars m4 macro for detection of compiler flags
-
-dnl David Schleef <ds@schleef.org>
-
-dnl $Id: as-compiler-flag.m4,v 1.1 2005/12/15 23:35:19 ds Exp $
-
-dnl AS_COMPILER_FLAG(CFLAGS, ACTION-IF-ACCEPTED, [ACTION-IF-NOT-ACCEPTED])
-dnl Tries to compile with the given CFLAGS.
-dnl Runs ACTION-IF-ACCEPTED if the compiler can compile with the flags,
-dnl and ACTION-IF-NOT-ACCEPTED otherwise.
-
-AC_DEFUN([AS_COMPILER_FLAG],
-[
-  AC_MSG_CHECKING([to see if compiler understands $1])
-
-  save_CFLAGS="$CFLAGS"
-  CFLAGS="$CFLAGS $1"
-
-  AC_TRY_COMPILE([ ], [], [flag_ok=yes], [flag_ok=no])
-  CFLAGS="$save_CFLAGS"
-
-  if test "X$flag_ok" = Xyes ; then
-    m4_ifvaln([$2],[$2])
-    true
-  else
-    m4_ifvaln([$3],[$3])
-    true
-  fi
-  AC_MSG_RESULT([$flag_ok])
-])
-
-dnl AS_COMPILER_FLAGS(VAR, FLAGS)
-dnl Tries to compile with the given CFLAGS.
-
-AC_DEFUN([AS_COMPILER_FLAGS],
-[
-  list=$2
-  flags_supported=""
-  flags_unsupported=""
-  AC_MSG_CHECKING([for supported compiler flags])
-  for each in $list
-  do
-    save_CFLAGS="$CFLAGS"
-    CFLAGS="$CFLAGS $each"
-    AC_TRY_COMPILE([ ], [], [flag_ok=yes], [flag_ok=no])
-    CFLAGS="$save_CFLAGS"
-
-    if test "X$flag_ok" = Xyes ; then
-      flags_supported="$flags_supported $each"
-    else
-      flags_unsupported="$flags_unsupported $each"
-    fi
-  done
-  AC_MSG_RESULT([$flags_supported])
-  if test "X$flags_unsupported" != X ; then
-    AC_MSG_WARN([unsupported compiler flags: $flags_unsupported])
-  fi
-  $1="$$1 $flags_supported"
-])
-
 # ===========================================================================
 #    https://www.gnu.org/software/autoconf-archive/ax_jni_include_dir.html
 # ===========================================================================
@@ -74,9 +12,9 @@ AC_DEFUN([AS_COMPILER_FLAGS],
 #   programs using the JNI interface.
 #
 #   JNI include directories are usually in the Java distribution. This is
-#   deduced from the value of $JAVA_HOME, $JAVAC, or the path to "javac",
-#   in that order. When this macro completes, a list of directories is left
-#   in the variable JNI_INCLUDE_DIRS.
+#   deduced from the value of $JAVA_HOME, $JAVAC, or the path to "javac", in
+#   that order. When this macro completes, a list of directories is left in
+#   the variable JNI_INCLUDE_DIRS.
 #
 #   Example usage follows:
 #
@@ -94,6 +32,10 @@ AC_DEFUN([AS_COMPILER_FLAGS],
 #
 #   - at the configure level, setenv JAVAC
 #
+#   This macro depends on AC_CANONICAL_HOST which requires that config.guess
+#   and config.sub be distributed along with the source code.  See autoconf
+#   manual for details.
+#
 #   Note: This macro can work with the autoconf M4 macros for Java programs.
 #   This particular macro is not part of the original set of macros.
 #
@@ -106,8 +48,12 @@ AC_DEFUN([AS_COMPILER_FLAGS],
 #   and this notice are preserved. This file is offered as-is, without any
 #   warranty.
 
+#serial 15
+
 AU_ALIAS([AC_JNI_INCLUDE_DIR], [AX_JNI_INCLUDE_DIR])
 AC_DEFUN([AX_JNI_INCLUDE_DIR],[
+
+AC_REQUIRE([AC_CANONICAL_HOST])
 
 JNI_INCLUDE_DIRS=""
 
@@ -126,9 +72,17 @@ else
 fi
 
 case "$host_os" in
-        darwin*)        _JTOPDIR=`echo "$_JTOPDIR" | sed -e 's:/[[^/]]*$::'`
-                        _JINC="$_JTOPDIR/Headers";;
-        *)              _JINC="$_JTOPDIR/include";;
+        darwin*)        # Apple Java headers are inside the Xcode bundle.
+            macos_version=$(sw_vers -productVersion | sed -n -e 's/^@<:@0-9@:>@*.\(@<:@0-9@:>@*\).@<:@0-9@:>@*/\1/p')
+            if @<:@ "$macos_version" -gt "7" @:>@; then
+                _JTOPDIR="$(xcrun --show-sdk-path)/System/Library/Frameworks/JavaVM.framework"
+                _JINC="$_JTOPDIR/Headers"
+            else
+                _JTOPDIR="/System/Library/Frameworks/JavaVM.framework"
+                _JINC="$_JTOPDIR/Headers"
+            fi
+            ;;
+        *) _JINC="$_JTOPDIR/include";;
 esac
 _AS_ECHO_LOG([_JTOPDIR=$_JTOPDIR])
 _AS_ECHO_LOG([_JINC=$_JINC])
@@ -136,18 +90,27 @@ _AS_ECHO_LOG([_JINC=$_JINC])
 # On Mac OS X 10.6.4, jni.h is a symlink:
 # /System/Library/Frameworks/JavaVM.framework/Versions/Current/Headers/jni.h
 # -> ../../CurrentJDK/Headers/jni.h.
-AC_CHECK_FILE([$_JINC/jni.h],
-	[JNI_INCLUDE_DIRS="$JNI_INCLUDE_DIRS $_JINC"],
-	[_JTOPDIR=`echo "$_JTOPDIR" | sed -e 's:/[[^/]]*$::'`
-	 AC_CHECK_FILE([$_JTOPDIR/include/jni.h],
-		[JNI_INCLUDE_DIRS="$JNI_INCLUDE_DIRS $_JTOPDIR/include"],
-                AC_MSG_ERROR([cannot find JDK header files]))
-	])
+AC_CACHE_CHECK(jni headers, ac_cv_jni_header_path,
+[
+  if test -f "$_JINC/jni.h"; then
+    ac_cv_jni_header_path="$_JINC"
+    JNI_INCLUDE_DIRS="$JNI_INCLUDE_DIRS $ac_cv_jni_header_path"
+  else
+    _JTOPDIR=`echo "$_JTOPDIR" | sed -e 's:/[[^/]]*$::'`
+    if test -f "$_JTOPDIR/include/jni.h"; then
+      ac_cv_jni_header_path="$_JTOPDIR/include"
+      JNI_INCLUDE_DIRS="$JNI_INCLUDE_DIRS $ac_cv_jni_header_path"
+    else
+      ac_cv_jni_header_path=none
+    fi
+  fi
+])
 
 # get the likely subdirectories for system specific java includes
 case "$host_os" in
 bsdi*)          _JNI_INC_SUBDIRS="bsdos";;
 freebsd*)       _JNI_INC_SUBDIRS="freebsd";;
+darwin*)        _JNI_INC_SUBDIRS="darwin";;
 linux*)         _JNI_INC_SUBDIRS="linux genunix";;
 osf*)           _JNI_INC_SUBDIRS="alpha";;
 solaris*)       _JNI_INC_SUBDIRS="solaris";;
@@ -156,13 +119,15 @@ cygwin*)	_JNI_INC_SUBDIRS="win32";;
 *)              _JNI_INC_SUBDIRS="genunix";;
 esac
 
-# add any subdirectories that are present
-for JINCSUBDIR in $_JNI_INC_SUBDIRS
-do
+if test "x$ac_cv_jni_header_path" != "xnone"; then
+  # add any subdirectories that are present
+  for JINCSUBDIR in $_JNI_INC_SUBDIRS
+  do
     if test -d "$_JTOPDIR/include/$JINCSUBDIR"; then
          JNI_INCLUDE_DIRS="$JNI_INCLUDE_DIRS $_JTOPDIR/include/$JINCSUBDIR"
     fi
-done
+  done
+fi
 ])
 
 # _ACJNI_FOLLOW_SYMLINKS <path>

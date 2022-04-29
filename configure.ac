@@ -1,4 +1,4 @@
-AC_INIT(openconnect, 8.20)
+AC_INIT([openconnect], [8.20])
 AC_LANG([C])
 AC_CONFIG_HEADERS([config.h])
 m4_ifdef([AC_CONFIG_MACRO_DIRS], [AC_CONFIG_MACRO_DIRS([m4])])
@@ -33,7 +33,9 @@ symver_win32_setenv=
 # is conditional (as it is here for some of the MinGW checks), it forgets
 # to ever look for one in the other code paths. Do it explicitly here.
 AC_PROG_CC
-AC_PROG_CC_C99
+# Before autoconf 2.70, AC_PROG_CC_C99 appears to be necessary for some
+# compilers if you want C99 support. Starting with 2.70, it is obsolete.
+m4_version_prereq([2.70], [:], [AC_PROG_CC_C99])
 
 default_browser=xdg-open
 have_vhost=no
