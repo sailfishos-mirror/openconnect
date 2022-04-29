@@ -82,10 +82,6 @@ SSL VPN.
 %package devel
 Summary: Development package for OpenConnect VPN authentication tools
 Requires: %{name}%{?_isa} = %{version}-%{release}
-# RHEL5 needs these spelled out because it doesn't automatically infer from pkgconfig
-%if 0%{?rhel} && 0%{?rhel} <= 5
-Requires: openssl-devel zlib-devel
-%endif
 
 %description devel
 This package provides the core HTTP and authentication support from
