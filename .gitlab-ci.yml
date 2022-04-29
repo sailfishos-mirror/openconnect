@@ -123,30 +123,6 @@ CentOS8/OpenSSL:
     paths:
       - tests/*.log
 
-CentOS6/OpenSSL:
-  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$CENTOS6_BUILD
-  script:
-  - ./autogen.sh
-# We should --enable-ppp-tests here, but they just aren't working. For reasons that are not
-# clear, OpenConnect fails to handshake a TLS connection to socat 1.7.2 (from CentOS 6 EPEL).
-  - ./configure --with-java --without-openssl-version-check --enable-dtls-xfail CFLAGS=-g
-  - make -j4
-# we don't want pppd to invoke any actual connection scripts
-  - mv /etc/ppp /etc/ppp.DISABLED
-# auth-nonascii: UTF-8 support is not available in distro's ocserv package
-# ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
-  - make VERBOSE=1 XFAIL_TESTS="bad_dtls_test auth-nonascii ppp-over-tls-sync" -j4 check
-  tags:
-  - shared
-  except:
-  - tags
-  - schedules
-  artifacts:
-    expire_in: 1 week
-    when: on_failure
-    paths:
-      - tests/*.log
-
 Signoff:
   script:
   # Quoted to work around https://gitlab.com/gitlab-org/gitlab-foss/-/issues/20177
