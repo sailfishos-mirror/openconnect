@@ -11,16 +11,6 @@
 # RHEL6 still has ancient GnuTLS
 %define use_gnutls 0%{?fedora} || 0%{?rhel} >= 7
 
-# RHEL5 has no libproxy, and no %%make_install macro
-%if 0%{?rhel} && 0%{?rhel} <= 5
-%define use_libproxy 0
-%define make_install %{__make} install DESTDIR=%{?buildroot}
-%define use_tokens 0
-%else
-%define use_libproxy 1
-%define use_tokens 1
-%endif
-
 # Fedora has tss2-sys from F29 onwards, and RHEL from 8 onwards.
 %if 0%{?fedora} >= 29 || 0%{?rhel} >= 8
 %define use_tss2_esys 1
@@ -49,6 +39,8 @@ Source3:	macros.gpg
 BuildRequires:	pkgconfig(libxml-2.0) pkgconfig(libpcsclite) krb5-devel gnupg2
 BuildRequires:	autoconf automake libtool gettext pkgconfig(liblz4)
 BuildRequires:	pkgconfig(uid_wrapper) pkgconfig(socket_wrapper)
+BuildRequires:	pkgconfig(libproxy-1.0)
+BuildRequires:  pkgconfig(stoken) pkgconfig(libpskc)
 %if 0%{?fedora}
 BuildRequires:  pkgconfig(json-parser)
 %endif
@@ -62,7 +54,6 @@ Requires:	vpnc-script
 %else
 Requires:	vpnc
 %endif
-
 %if 0%{?fedora} >= 30
 BuildRequires: glibc-langpack-cs
 %endif
@@ -72,12 +63,6 @@ BuildRequires:	pkgconfig(gnutls) trousers-devel
 BuildRequires:	ocserv
 %else
 BuildRequires:	pkgconfig(openssl) pkgconfig(libp11) pkgconfig(p11-kit-1)
-%endif
-%if %{use_libproxy}
-BuildRequires:	pkgconfig(libproxy-1.0)
-%endif
-%if %{use_tokens}
-BuildRequires:  pkgconfig(stoken) pkgconfig(libpskc)
 %endif
 %if %{use_tss2_esys}
 BuildRequires: pkgconfig(tss2-esys) pkgconfig(tss2-tctildr) pkgconfig(tss2-mu)
