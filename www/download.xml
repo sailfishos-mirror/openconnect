@@ -20,51 +20,20 @@
 
 <p>
 <!-- latest-release-start -->
-The latest release is <a href="https://www.infradead.org/openconnect/download/openconnect-8.20.tar.gz">OpenConnect v8.20</a>
-<i>(<a href="https://www.infradead.org/openconnect/download/openconnect-8.20.tar.gz.asc">PGP signature</a>)</i>,
-released on 2022-02-20 with the following changelog:</p>
+The latest release is <a href="https://www.infradead.org/openconnect/download/openconnect-9.00.tar.gz">OpenConnect v9.00</a>
+<i>(<a href="https://www.infradead.org/openconnect/download/openconnect-9.00.tar.gz.asc">PGP signature</a>)</i>,
+released on 2022-04-29 with the following changelog:</p>
      <ul>
-       <li>When the queue length <i>(<tt>-Q</tt> option)</i> is 16 or more, try using <a
-       href="https://www.redhat.com/en/blog/virtqueues-and-virtio-ring-how-data-travels">vhost-net</a> to accelerate tun device access.</li>
-       <li>Use <tt>epoll()</tt> where available.</li>
-       <li>Support non-AEAD ciphersuites in DTLSv1.2 with AnyConnect. (<a href="https://gitlab.com/openconnect/openconnect/-/issues/249">#249</a>)</li>
-       <li>Make <tt>tncc-emulate.py</tt> work with Python 3.7+. (<a href="https://gitlab.com/openconnect/openconnect/-/issues/152">#152</a>, <a href="https://gitlab.com/openconnect/openconnect/merge_requests/120">!120</a>)</li>
-       <li>Emulated a newer version of GlobalProtect official clients, 5.1.5-8; was 4.0.2-19 (<a href="https://gitlab.com/openconnect/openconnect/merge_requests/131">!131</a>)</li>
-       <li>Support Juniper login forms containing both password and 2FA token (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/121">!121</a>)</li>
-       <li>Explicitly disable 3DES and RC4, unless enabled with <tt>--allow-insecure-crypto</tt> (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/114">!114</a>)</li>
-       <li>Add obsolete-server-crypto test (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/114">!114</a>)</li>
-       <li>Allow protocols to delay tunnel setup and shutdown (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/117">!117</a>)</li>
-       <li>Support for GlobalProtect IPv6 (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/155">!155</a> and <a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/188">!188</a>; previous work in <a href="https://gitlab.com/openconnect/openconnect/commit/d6db0ec03394234d41fbec7ffc794ceeb486a8f0">d6db0ec</a>)</li>
-       <li>SIGUSR1 causes OpenConnect to log detailed connection information and statistics (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/154">!154</a>)</li>
-       <li>Allow <tt>--servercert</tt> to be specified multiple times in order to accept server certificates matching more than one possible fingerprint (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/162">!162</a>, <a href="https://gitlab.com/openconnect/openconnect/-/issues/25">#25</a>)</li>
-       <li>Add insecure debugging build mode for developers (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/112">!112</a>)</li>
-       <li>Demangle default routes sent as split routes by GlobalProtect (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/118">!118</a>)</li>
-       <li>Improve GlobalProtect login argument decoding (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/143">!143</a>)</li>
-       <li>Add detection of authentication expiration date, intended to allow front-ends to cache and reuse authentication cookies/sessions (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/156">!156</a>)</li>
-       <li>Small bug fixes and clarification of many logging messages.</li>
-       <li>Support more Juniper login forms, including some SSO forms (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/171">!171</a>)</li>
-       <li>Automatically build Windows installers for OpenConnect command-line interface (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/176">!176</a>)</li>
-       <li>Restore compatibility with newer Cisco servers, by no longer sending them the <tt>X-AnyConnect-Platform</tt> header (<a href="https://gitlab.com/openconnect/openconnect/-/issues/101">#101</a>, <a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/175">!175</a>)</li>
-       <li>Add support for PPP-based protocols, currently over TLS only (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/165">!165</a>).</li>
-       <li>Add support for two PPP-based protocols, F5 with <tt>--protocol=f5</tt> and Fortinet with <tt>--protocol=fortinet</tt> (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/169">!169</a>).</li>
-       <li>Add experimental support for <a href="https://www.wintun.net/">Wintun</a> Layer 3 TUN driver under Windows (<a href="https://gitlab.com/openconnect/openconnect/-/issues/231">#231</a>, <a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/178">!178</a>).</li>
-       <li>Clean up and improve Windows routing/DNS configuration script (<a href="https://gitlab.com/openconnect/vpnc-scripts/-/merge_requests/26">vpnc-scripts!26</a>, <a href="https://gitlab.com/openconnect/vpnc-scripts/-/merge_requests/41">vpnc-scripts!41</a>, <a href="https://gitlab.com/openconnect/vpnc-scripts/-/merge_requests/44">vpnc-scripts!44</a>).</li>
-       <li>On Windows, reclaim needed IP addresses from down network interfaces so that configuration script can succeed (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/178">!178</a>).</li>
-       <li>Fix output redirection under Windows (<a href="https://gitlab.com/openconnect/openconnect/-/issues/229">#229</a>)</li>
-       <li>More gracefully handle idle timeouts and other fatal errors for Juniper and Pulse (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/187">!187</a>)</li>
-       <li>Ignore failures to fetch the Juniper/oNCP landing page if the authentication was successful (<a href="https://gitlab.com/openconnect/openconnect/-/commit/3e77943692b511719d9217d2ecc43588b7c6c08b">3e779436</a>).</li>
-       <li>Add support for <a href="https://arraynetworks.com/products-secure-access-gateways-ag-series.html">Array Networks SSL VPN</a> (<a href="https://gitlab.com/openconnect/openconnect/-/issues/102">#102</a>)</li>
-       <li>Support TLSv1.3 with TPMv2 EC and RSA keys, add test cases for swtpm and hardware TPM. (<a href="https://gitlab.com/openconnect/openconnect/-/compare/ed80bfacf6baa17a6f5f4a5ec7e11aee541cba95...ee1cd782ab0d91d34785c81425ee27217a66d0aa">ed80bfac...ee1cd782</a>)</li>
-       <li>Add <tt>openconnect_get_connect_url()</tt> to simplify passing correct server information to the connecting <tt>openconnect</tt> process. <i>(NetworkManager-openconnect <a href="https://gitlab.gnome.org/GNOME/NetworkManager-openconnect/-/issues/46">#46</a>, <a href="https://gitlab.gnome.org/GNOME/NetworkManager-openconnect/-/issues/53">#53</a>)</i></li>
-       <li>Disable brittle "system policy" enforcement where it cannot be gracefully overridden at user request. <a href="https://bugzilla.redhat.com/show_bug.cgi?id=1960763"><i>(RH#1960763)</i></a>.</li>
-       <li>Pass "portal cookie" fields from GlobalProtect portal to gateway to avoid repetition of password- or SAML-based login (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/199">!199</a>)</li>
-       <li>With <tt>--user</tt>, enter username supplied via command-line into all authentication forms, not just the first. (<a href="https://gitlab.com/openconnect/openconnect/-/issues/267">#267</a>, <a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/220">!220</a>).</li>
-       <li>Fix a subtle bug which has prevented ESP rekey and ESP-to-TLS fallback from working reliably with the Juniper/oNCP protocol since v8.04. (<a href="https://gitlab.com/openconnect/openconnect/-/issues/322">#322</a>, <a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/293">!293</a>).</li>
-       <li>Fix a bug in <tt>csd-wrapper.sh</tt> which has prevented it from correctly downloading compressed Trojan binaries since at least v8.00. (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/305">!305</a>)</li>
-       <li>Make Windows socketpair emulation more robust in the face of Windows's ability to break its localhost routes. (<a href="https://gitlab.com/openconnect/openconnect/-/issues/228">#228</a>, <a href="https://gitlab.com/openconnect/openconnect/-/issues/361">#361</a>, <a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/320">!320</a>)</li>
-       <li>Perform proper disconnect and routes cleanup on Windows when receiving Ctrl+C or Ctrl+Break. (<a href="https://gitlab.com/openconnect/openconnect/-/issues/362">#362</a>, <a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/323">!323</a>)</li>
-       <li>Improve logging in routing/DNS configuration scripts. (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/328">!328</a>, <a href="https://gitlab.com/openconnect/vpnc-scripts/-/merge_requests/45">vpnc-scripts!45</a>)</li>
-       <li>Support modified configuration packet from Pulse 9.1R14 servers (<a href="https://gitlab.com/openconnect/openconnect/-/issues/379">#379</a>, <a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/331">!331</a>)</li>
+       <li>Add support for AnyConnect "Session Token Re-use Anchor Protocol" (STRAP) (<a href="https://gitlab.com/openconnect/openconnect/-/issues/410">#410</a>).</li>
+       <li>Add support for AnyConnect "external browser" SSO mode (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/354">!354</a>).</li>
+       <li>On Windows, fix crash on tunnel setup. (<a href="https://gitlab.com/openconnect/openconnect/-/issues/370">#370</a>, <a href="https://gitlab.com/openconnect/openconnect/commit/6a2ffbbcd1c4ef0b689cce3d17154f6d4c2e3bc0">6a2ffbb</a>)</li>
+       <li>Bugfix RSA SecurID token decryption and PIN entry forms, broken in v8.20. (<a href="https://gitlab.com/openconnect/openconnect/-/issues/388">#388</a>, <a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/344">!344</a>)</li>
+       <li>Support <a href="https://www.cisco.com/c/en/us/support/docs/security/anyconnect-secure-mobility-client-v4x/212483-configure-asa-as-the-ssl-gateway-for-any.html">Cisco's multiple-certificate authentication</a> (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/194">!194</a>).</li>
+       <li>Append <tt>internal=no</tt> to GlobalProtect authentication/configuration forms, for compatibility with servers which apparently require this to function properly. (<a href="https://gitlab.com/openconnect/openconnect/-/issues/246">#246</a>, <a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/337">!337</a>)</li>
+       <li>Revert GlobalProtect default route handling change from v8.20. (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/367">!367</a>)</li>
+       <li>Support split-exclude routes for Fortinet. (<a href="https://gitlab.com/openconnect/openconnect/-/issues/394">#394</a>, <a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/345">!345</a>)</li>
+       <li>Add <tt>openconnect_set_useragent()</tt> function.</li>
+       <li>Add webview callback and SAML/SSO support for AnyConnect, GlobalProtect. (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/126">!126</a>).</li>
      </ul>
 <!-- latest-release-end -->
 

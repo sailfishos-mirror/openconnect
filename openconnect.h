@@ -36,7 +36,7 @@ extern "C" {
 #define OPENCONNECT_API_VERSION_MINOR 7
 
 /*
- * API version 5.8:
+ * API version 5.8 (v9.00; 2022-04-29):
  *  - Add openconnect_set_useragent()
  *  - Add openconnect_set_external_browser_callback()
  *  - Add openconnect_set_mca_cert() and openconnect_set_mca_key_password()

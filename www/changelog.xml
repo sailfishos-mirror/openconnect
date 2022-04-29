@@ -15,6 +15,12 @@
 <ul>
    <li><b>OpenConnect HEAD</b>
      <ul>
+       <li><i>No changelog entries yet</i></li>
+     </ul><br/>
+  </li>
+  <li><b><a href="https://www.infradead.org/openconnect/download/openconnect-9.00.tar.gz">OpenConnect v9.00</a></b>
+     <i>(<a href="https://www.infradead.org/openconnect/download/openconnect-9.00.tar.gz.asc">PGP signature</a>)</i> &#8212; 2022-04-29
+     <ul>
        <li>Add support for AnyConnect "Session Token Re-use Anchor Protocol" (STRAP) (<a href="https://gitlab.com/openconnect/openconnect/-/issues/410">#410</a>).</li>
        <li>Add support for AnyConnect "external browser" SSO mode (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/354">!354</a>).</li>
        <li>On Windows, fix crash on tunnel setup. (<a href="https://gitlab.com/openconnect/openconnect/-/issues/370">#370</a>, <a href="https://gitlab.com/openconnect/openconnect/commit/6a2ffbbcd1c4ef0b689cce3d17154f6d4c2e3bc0">6a2ffbb</a>)</li>
