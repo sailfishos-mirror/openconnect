@@ -54,7 +54,7 @@ Requires:	vpnc-script
 %else
 Requires:	vpnc
 %endif
-%if 0%{?fedora} >= 30
+%if 0%{?fedora} >= 30 || 0%{?rhel} >= 9
 BuildRequires: glibc-langpack-cs
 %endif
 %if %{use_gnutls}
