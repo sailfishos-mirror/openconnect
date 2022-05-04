@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: network-manager-openconnect\n"
 "Report-Msgid-Bugs-To: openconnect-devel@lists.infradead.org\n"
-"POT-Creation-Date: 2022-04-28 22:04+0100\n"
-"PO-Revision-Date: 2022-04-28 18:28+0300\n"
+"POT-Creation-Date: 2022-05-04 07:44+0100\n"
+"PO-Revision-Date: 2022-05-02 12:09+0300\n"
 "Last-Translator: Yuri Chornoivan <yurchor@ukr.net>\n"
 "Language-Team: Ukrainian <kde-i18n-uk@kde.org>\n"
 "Language: uk\n"
@@ -69,7 +69,7 @@ msgstr "Не вдалося обробити відповідь у формат�
 msgid "Error creating array negotiation request\n"
 msgstr "Помилка під час спроби створити запити щодо узгодження масиву\n"
 
-#: array.c:675 f5.c:679 http.c:965 oncp.c:524 pulse.c:1366
+#: array.c:675 f5.c:679 http.c:965 oncp.c:520 pulse.c:1366
 #, c-format
 msgid "Unexpected %d result from server\n"
 msgstr "Неочікуваний результат %d від сервера\n"
@@ -101,7 +101,7 @@ msgid "Failed to read ipff response\n"
 msgstr "Не вдалося прочитати відповідь ipff\n"
 
 #: array.c:825 array.c:1060 array.c:1170 cstp.c:964 dtls.c:283 dtls.c:642
-#: esp.c:166 gpst.c:1082 mainloop.c:63 oncp.c:869 ppp.c:1089 ppp.c:1676
+#: esp.c:166 gpst.c:1082 mainloop.c:63 oncp.c:865 ppp.c:1089 ppp.c:1676
 #: pulse.c:2657
 msgid "Allocation failed\n"
 msgstr "Помилка розподілу пам'яті\n"
@@ -121,19 +121,19 @@ msgstr "Отримання керівного пакета типу %x:\n"
 msgid "Received data packet of %d bytes\n"
 msgstr "Отримано пакет даних у %d байтів\n"
 
-#: array.c:902 cstp.c:1105 gpst.c:1184 oncp.c:1083 ppp.c:1376 pulse.c:2835
+#: array.c:902 cstp.c:1105 gpst.c:1184 oncp.c:1079 ppp.c:1376 pulse.c:2835
 #, c-format
 msgid "SSL wrote too few bytes! Asked for %d, sent %d\n"
 msgstr "SSL записано надто мало байтів! Мало бути %d, надіслано %d\n"
 
 #. Not that this will ever happen; we don't even process
 #. the setting when we're asked for it.
-#: array.c:920 cstp.c:1133 oncp.c:1118 pulse.c:2862
+#: array.c:920 cstp.c:1133 oncp.c:1114 pulse.c:2862
 msgid "CSTP rekey due\n"
 msgstr "Потрібен повторний обмін ключами CSTP\n"
 
 #. if we failed rehandshake try establishing a new-tunnel instead of failing
-#: array.c:927 cstp.c:1140 oncp.c:1125 pulse.c:2869
+#: array.c:927 cstp.c:1140 oncp.c:1121 pulse.c:2869
 msgid "Rehandshake failed; attempting new-tunnel\n"
 msgstr ""
 "Не вдалося виконати повторне узгодження; намагаємося використати new-tunnel\n"
@@ -158,7 +158,7 @@ msgstr "Надсилання Keepalive TCP\n"
 msgid "Sending DTLS off packet\n"
 msgstr "Надсилаємо пакет вимикання DTLS\n"
 
-#: array.c:1000 cstp.c:1219 oncp.c:1201
+#: array.c:1000 cstp.c:1219 oncp.c:1197
 #, c-format
 msgid "Sending uncompressed data packet of %d bytes\n"
 msgstr "Надсилаємо розпакований пакунок даних з %d байтів\n"
@@ -230,11 +230,11 @@ msgstr ""
 "Надіслано пакет DTLS розміром %d байтів; функцією надсилання DTLS повернуто "
 "%d\n"
 
-#: array.c:1303 auth-globalprotect.c:813 f5.c:714 fortinet.c:835 oncp.c:1229
+#: array.c:1303 auth-globalprotect.c:813 f5.c:714 fortinet.c:847 oncp.c:1225
 msgid "Logout failed.\n"
 msgstr "Не вдалося вийти.\n"
 
-#: array.c:1305 auth-globalprotect.c:815 f5.c:716 fortinet.c:837 oncp.c:1231
+#: array.c:1305 auth-globalprotect.c:815 f5.c:716 fortinet.c:849 oncp.c:1227
 msgid "Logout successful.\n"
 msgstr "Успішний вихід.\n"
 
@@ -519,7 +519,7 @@ msgstr "Порожня відповідь від сервера\n"
 msgid "Failed to parse server response\n"
 msgstr "Не вдалося обробити відповідь сервера\n"
 
-#: auth.c:612 f5.c:257 f5.c:299 f5.c:342 f5.c:487 fortinet.c:351 fortinet.c:579
+#: auth.c:612 f5.c:257 f5.c:299 f5.c:342 f5.c:487 fortinet.c:405 fortinet.c:591
 #, c-format
 msgid "Response was:%s\n"
 msgstr "Відповідь: %s\n"
@@ -851,7 +851,7 @@ msgstr "З'єднано CSTP. DPD %d, Keepalive %d\n"
 #: cstp.c:701
 #, c-format
 msgid "Ingested STRAP public key %s\n"
-msgstr ""
+msgstr "Вбудований відкритий ключ STRAP %s\n"
 
 #: cstp.c:744
 msgid "Compression setup failed\n"
@@ -906,7 +906,7 @@ msgstr "Отримано відповідь DPD CSTP\n"
 msgid "Got CSTP Keepalive\n"
 msgstr "Отримано Keepalive CSTP\n"
 
-#: cstp.c:1018 oncp.c:958
+#: cstp.c:1018 oncp.c:954
 #, c-format
 msgid "Received uncompressed data packet of %d bytes\n"
 msgstr "Отримано розпакований пакунок даних з %d байтів\n"
@@ -933,20 +933,20 @@ msgstr "отримано пакет переривання зв'язку від 
 msgid "Unknown packet %02x %02x %02x %02x %02x %02x %02x %02x\n"
 msgstr "Невідомий пакет %02x %02x %02x %02x %02x %02x %02x %02x\n"
 
-#: cstp.c:1151 oncp.c:1136 pulse.c:2880
+#: cstp.c:1151 oncp.c:1132 pulse.c:2880
 msgid "CSTP Dead Peer Detection detected dead peer!\n"
 msgstr "DPD CSTP виявлено непрацездатний вузол!\n"
 
-#: cstp.c:1155 gpst.c:1232 oncp.c:1053 oncp.c:1140 ppp.c:1406 pulse.c:2805
+#: cstp.c:1155 gpst.c:1232 oncp.c:1049 oncp.c:1136 ppp.c:1406 pulse.c:2805
 #: pulse.c:2885
 msgid "Reconnect failed\n"
 msgstr "Не вдалося повторно встановити з'єднання\n"
 
-#: cstp.c:1171 oncp.c:1156 pulse.c:2901
+#: cstp.c:1171 oncp.c:1152 pulse.c:2901
 msgid "Send CSTP DPD\n"
 msgstr "Надсилання DPD CSTP\n"
 
-#: cstp.c:1183 oncp.c:1167 pulse.c:2913
+#: cstp.c:1183 oncp.c:1163 pulse.c:2913
 msgid "Send CSTP Keepalive\n"
 msgstr "Надсилання Keepalive CSTP\n"
 
@@ -1312,7 +1312,7 @@ msgstr "Отримано запис сервера DNS %s\n"
 msgid "Got WINS/NBNS server %s\n"
 msgstr "Отримано сервер WINS/NBNS %s\n"
 
-#: f5.c:410 fortinet.c:428 fortinet.c:496
+#: f5.c:410 fortinet.c:482 fortinet.c:527
 #, c-format
 msgid "Got search domain %s\n"
 msgstr "Отримано домен пошуку %s\n"
@@ -1328,7 +1328,7 @@ msgid "Got split include route %s\n"
 msgstr "Отримано маршрут включення поділу %s\n"
 
 #. XX: DTLS always uses same port as TLS?
-#: f5.c:452 fortinet.c:367
+#: f5.c:452 fortinet.c:421
 #, c-format
 msgid "DTLS is enabled on port %d\n"
 msgstr "На порту %d увімкнено DTLS\n"
@@ -1342,16 +1342,16 @@ msgstr ""
 "DTLS,\n"
 "    оскільки HDLC заважає визначенню ефективного і сумісного MTU.\n"
 
-#: f5.c:485 fortinet.c:577
+#: f5.c:485 fortinet.c:589
 msgid "Failed to find VPN options\n"
 msgstr "Не вдалося знайти параметри VPN\n"
 
-#: f5.c:508 fortinet.c:424
+#: f5.c:508 fortinet.c:478
 #, c-format
 msgid "Got Legacy IP address %s\n"
 msgstr "Отримано застарілу IP-адресу %s\n"
 
-#: f5.c:513 fortinet.c:485 fortinet.c:490
+#: f5.c:513 fortinet.c:516 fortinet.c:521
 #, c-format
 msgid "Got IPv6 address %s\n"
 msgstr "Отримано IPv6-адресу %s\n"
@@ -1375,16 +1375,26 @@ msgstr "Помилка під час встановлення з'єднання 
 msgid "Got login realm '%s'\n"
 msgstr "Отримано область входу «%s»\n"
 
-#: fortinet.c:349
+#: fortinet.c:331
+#, c-format
+msgid "Got IPv%d exclude route %s\n"
+msgstr "Отримано маршрут виключення IPv%d %s\n"
+
+#: fortinet.c:336
+#, c-format
+msgid "Got IPv%d route %s\n"
+msgstr "Отримано маршрут IPv%d %s\n"
+
+#: fortinet.c:403
 msgid "Failed to parse Fortinet config XML\n"
 msgstr "Не вдалося обробити налаштування XML Fortinet\n"
 
-#: fortinet.c:378 gpst.c:384
+#: fortinet.c:432 gpst.c:384
 #, c-format
 msgid "Idle timeout is %d minutes.\n"
 msgstr "Час очікування на завершення бездіяльності дорівнює %d хвилин.\n"
 
-#: fortinet.c:398
+#: fortinet.c:452
 #, c-format
 msgid ""
 "Server reports that reconnect-after-drop is allowed within %d seconds, %s\n"
@@ -1392,15 +1402,15 @@ msgstr ""
 "Сервером повідомлення, що reconnect-after-drop дозволено у межах %d секунд, "
 "%s\n"
 
-#: fortinet.c:400
+#: fortinet.c:454
 msgid "but only from the same source IP address"
 msgstr "але лише із тієї самої початкової IP-адреси"
 
-#: fortinet.c:400
+#: fortinet.c:454
 msgid "even if source IP address changes"
 msgstr "навіть якщо початкову IP-адресу буде змінено"
 
-#: fortinet.c:403
+#: fortinet.c:457
 #, c-format
 msgid ""
 "Server reports that reconnect-after-drop is not allowed. OpenConnect will "
@@ -1414,32 +1424,27 @@ msgstr ""
 "з'єднання ПРАЦЮЄ,\n"
 "будь ласка, повідомте про це на адресу <%s>\n"
 
-#: fortinet.c:419
+#: fortinet.c:473
 #, c-format
 msgid "Reported platform is %s\n"
 msgstr "Повідомлено про платформу %s\n"
 
-#: fortinet.c:432 fortinet.c:500
+#: fortinet.c:486 fortinet.c:531
 #, c-format
 msgid "Got IPv%d DNS server %s\n"
 msgstr "Отримано IPv%d сервера DNS %s\n"
 
-#: fortinet.c:438 fortinet.c:506
+#: fortinet.c:492 fortinet.c:537
 #, c-format
 msgid "WARNING: Got split-DNS domains %s (not yet implemented)\n"
 msgstr "УВАГА: отримано домени split-DNS %s (ще не реалізовано)\n"
 
-#: fortinet.c:443 fortinet.c:511
+#: fortinet.c:497 fortinet.c:542
 #, c-format
 msgid "WARNING: Got split-DNS server %s (not yet implemented)\n"
 msgstr "УВАГА: отримано сервер split-DNS %s (ще не реалізовано)\n"
 
-#: fortinet.c:465 fortinet.c:535
-#, c-format
-msgid "Got IPv%d route %s\n"
-msgstr "Отримано маршрут IPv%d %s\n"
-
-#: fortinet.c:551
+#: fortinet.c:557
 #, c-format
 msgid ""
 "WARNING: Fortinet server does not specifically enable or disable "
@@ -1452,7 +1457,7 @@ msgstr ""
 "працює,\n"
 "    будь ласка, повідомте результати за адресою <%s>\n"
 
-#: fortinet.c:559
+#: fortinet.c:565
 #, c-format
 msgid ""
 "Server did not send <auth-ses tun-connect-without-reauth=\"0/1\"/>. "
@@ -1468,11 +1473,23 @@ msgstr ""
 "повторне з'єднання ПРАЦЮЄ,\n"
 "будь ласка, повідомте про це на адресу <%s>\n"
 
-#: fortinet.c:619
+#: fortinet.c:572
+msgid "Received split routes; not setting default Legacy IP route\n"
+msgstr ""
+"Отримано поділені маршрути; продовжуємо без встановлення типового маршруту "
+"за застарілим IP\n"
+
+#: fortinet.c:574
+msgid "No split routes received; setting default Legacy IP route\n"
+msgstr ""
+"Не отримано жодного поділеного маршруту; встановлюємо типовий маршрут за "
+"застарілим IP\n"
+
+#: fortinet.c:631
 msgid "No cookie named SVPNCOOKIE.\n"
 msgstr "Немає куки із назвою SVPNCOOKIE.\n"
 
-#: fortinet.c:644
+#: fortinet.c:656
 msgid ""
 "Ancient Fortinet server (<v5?) only supports ancient HTML config, which is "
 "not implemented by OpenConnect.\n"
@@ -1480,7 +1497,7 @@ msgstr ""
 "На давньому сервері Fortinet (<v5?) передбачено підтримку лише давніх "
 "налаштувань у форматі HTML, підтримку яких не реалізовано в OpenConnect.\n"
 
-#: fortinet.c:647
+#: fortinet.c:659
 #, c-format
 msgid ""
 "Fortinet server is rejecting request for connection options. This\n"
@@ -1496,15 +1513,15 @@ msgstr ""
 "%s та\n"
 "%s.\n"
 
-#: fortinet.c:686
+#: fortinet.c:698
 msgid "Error establishing Fortinet connection\n"
 msgstr "Помилка під час встановлення з'єднання Fortinet\n"
 
-#: fortinet.c:787
+#: fortinet.c:799
 msgid "Did not receive expected svrhello response.\n"
 msgstr "Не отримано очікуваної відповіді svrhello.\n"
 
-#: fortinet.c:798
+#: fortinet.c:810
 #, c-format
 msgid "svrhello status was \"%.*s\" rather than \"ok\"\n"
 msgstr "Станом svrhello був «%.*s», а не «ok»\n"
@@ -2149,6 +2166,7 @@ msgstr "Сертифікат не пройшов перевірки: %s\n"
 #, c-format
 msgid "TLS Finished message larger than expected (%u bytes)\n"
 msgstr ""
+"Розмір повідомлення щодо завершення TLS є занадто великим (%u байтів)\n"
 
 #: gnutls.c:2282
 msgid "Failed to allocate memory for cafile certs\n"
@@ -2308,21 +2326,21 @@ msgstr "невдала спроба розшифрування жетона SSO:
 #: gnutls.c:3143
 #, c-format
 msgid "Failed to decode STRAP key: %s\n"
-msgstr ""
+msgstr "Не вдалося декодувати ключ STRAP: %s\n"
 
 #: gnutls.c:3169
 #, c-format
 msgid "Failed to regenerate STRAP key: %s\n"
-msgstr ""
+msgstr "Не вдалося повторно створити ключ STRAP: %s\n"
 
 #: gnutls.c:3184 openssl.c:2509
 msgid "Failed to generate STRAP key DER\n"
-msgstr ""
+msgstr "Не вдалося створити DER ключа STRAP\n"
 
 #: gnutls.c:3209
 #, c-format
 msgid "STRAP signature failed: %s\n"
-msgstr ""
+msgstr "Не вдалося виконати підписування STRAP: %s\n"
 
 #: gnutls.c:3300
 msgid "Certificate may be multiple certificate authentication incompatible.\n"
@@ -2783,7 +2801,7 @@ msgid "GlobalProtect config sent ipsec-mode=%s (expected esp-tunnel)\n"
 msgstr ""
 "Налаштування GlobalProtect надіслано ipsec-mode=%s (мало бути esp-tunnel)\n"
 
-#: gpst.c:494 oncp.c:779
+#: gpst.c:494 oncp.c:775
 msgid "Ignoring ESP keys since ESP support not available in this build\n"
 msgstr "Імпортуємо ключі ESP, оскільки у цій збірці недоступна підтримка ESP\n"
 
@@ -3015,7 +3033,7 @@ msgstr "Надсилаємо пакет даних IPv%d розміру %d ба�
 msgid "ICMPv%d probe packet (seq %d) for GlobalProtect ESP:\n"
 msgstr "Пакет зондування ICMPv%d (посл. %d) для GlobalProtect ESP:\n"
 
-#: gpst.c:1473 oncp.c:1275
+#: gpst.c:1473 oncp.c:1271
 msgid "Failed to send ESP probe\n"
 msgstr "Не вдалося надіслати зондування ESP\n"
 
@@ -3578,37 +3596,37 @@ msgstr ""
 msgid "IPv6 configuration received but MTU %d is too small.\n"
 msgstr "Отримано налаштування IPv6, але значення MTU %d є надто малим.\n"
 
-#: library.c:1087
+#: library.c:1096
 #, c-format
 msgid "Failed to parse server URL '%s'\n"
 msgstr "Не вдалося обробити адресу сервера «%s»\n"
 
-#: library.c:1093
+#: library.c:1102
 msgid "Only https:// permitted for server URL\n"
 msgstr "Для адреси сервера можна використовувати лише https://\n"
 
-#: library.c:1516
+#: library.c:1525
 #, c-format
 msgid "Unknown certificate hash: %s.\n"
 msgstr "Невідомий хеш сертифіката: %s.\n"
 
-#: library.c:1550
+#: library.c:1559
 #, c-format
 msgid ""
 "The size of the provided fingerprint is less than the minimum required "
 "(%u).\n"
 msgstr "Розмір наданого відбитка є меншим за мінімальний потрібний (%u).\n"
 
-#: library.c:1607
+#: library.c:1616
 msgid "No form handler; cannot authenticate.\n"
 msgstr "Немає обробника форми; розпізнавання неможливе.\n"
 
-#: library.c:1611
+#: library.c:1620
 msgid "No form ID. This is a bug in OpenConnect's authentication code.\n"
 msgstr ""
 "Немає ідентифікатора форми. Це вада у коді розпізнавання OpenConnect.\n"
 
-#: library.c:1682
+#: library.c:1691
 msgid "No SSO handler\n"
 msgstr "Немає обробника SSO\n"
 
@@ -4806,114 +4824,114 @@ msgstr "Отримано внутрішню адресу шлюзу %s\n"
 msgid "Received split include route %s\n"
 msgstr "Отримано маршрут включення поділу %s\n"
 
-#: oncp.c:170 pulse.c:2382
+#: oncp.c:168 pulse.c:2382
 #, c-format
 msgid "Received split exclude route %s\n"
 msgstr "Отримано маршрут виключення поділу %s\n"
 
-#: oncp.c:190 pulse.c:268
+#: oncp.c:186 pulse.c:268
 #, c-format
 msgid "Received WINS server %s\n"
 msgstr "Отримано сервер WINS %s\n"
 
-#: oncp.c:213
+#: oncp.c:209
 #, c-format
 msgid "ESP encryption: 0x%02x (%s)\n"
 msgstr "Шифрування ESP: 0x%02x (%s)\n"
 
-#: oncp.c:232
+#: oncp.c:228
 #, c-format
 msgid "ESP HMAC: 0x%02x (%s)\n"
 msgstr "HMAC ESP: 0x%02x (%s)\n"
 
-#: oncp.c:243
+#: oncp.c:239
 #, c-format
 msgid "ESP compression: %d\n"
 msgstr "Стискання ESP: %d\n"
 
-#: oncp.c:251 pulse.c:475
+#: oncp.c:247 pulse.c:475
 #, c-format
 msgid "ESP port: %d\n"
 msgstr "Порт ESP: %d\n"
 
-#: oncp.c:258 pulse.c:458
+#: oncp.c:254 pulse.c:458
 #, c-format
 msgid "ESP key lifetime: %u bytes\n"
 msgstr "Строк дії ключа ESP: %u байтів\n"
 
-#: oncp.c:266 pulse.c:450
+#: oncp.c:262 pulse.c:450
 #, c-format
 msgid "ESP key lifetime: %u seconds\n"
 msgstr "Строк дії ключа ESP: %u секунд\n"
 
-#: oncp.c:274 pulse.c:482
+#: oncp.c:270 pulse.c:482
 #, c-format
 msgid "ESP to SSL fallback: %u seconds\n"
 msgstr "Резервний варіант ESP до SSL: %u секунд\n"
 
-#: oncp.c:282 pulse.c:466
+#: oncp.c:278 pulse.c:466
 #, c-format
 msgid "ESP replay protection: %d\n"
 msgstr "Захист від відтворення ESP: %d\n"
 
-#: oncp.c:290 pulse.c:2470
+#: oncp.c:286 pulse.c:2470
 #, c-format
 msgid "ESP SPI (outbound): %x\n"
 msgstr "SPI ESP (вихідний): %x\n"
 
-#: oncp.c:299 pulse.c:2458
+#: oncp.c:295 pulse.c:2458
 #, c-format
 msgid "%d bytes of ESP secrets\n"
 msgstr "%d байтів реєстраційних даних ESP\n"
 
-#: oncp.c:311
+#: oncp.c:307
 #, c-format
 msgid "Unknown TLV group %d attr %d len %d:%s\n"
 msgstr "Невідома група TLV %d атрибут %d довжина %d:%s\n"
 
-#: oncp.c:393
+#: oncp.c:389
 msgid "Failed to parse KMP header\n"
 msgstr "Не вдалося обробити заголовок KMP\n"
 
-#: oncp.c:412
+#: oncp.c:408
 msgid "Failed to parse KMP message\n"
 msgstr "Не вдалося обробити повідомлення KMP\n"
 
-#: oncp.c:421
+#: oncp.c:417
 #, c-format
 msgid "Got KMP message %d of size %d\n"
 msgstr "Отримано повідомлення KMP %d розміру %d\n"
 
-#: oncp.c:437
+#: oncp.c:433
 #, c-format
 msgid "Received non-ESP TLVs (group %d) in ESP negotiation KMP\n"
 msgstr "Отримано TLV поза ESP (група %d) під час узгодження ESP KMP\n"
 
-#: oncp.c:508 oncp.c:542 oncp.c:686
+#: oncp.c:504 oncp.c:538 oncp.c:682
 msgid "Error creating oNCP negotiation request\n"
 msgstr "Помилка під час спроби створити запити щодо узгодження oNCP\n"
 
-#: oncp.c:551 oncp.c:721
+#: oncp.c:547 oncp.c:717
 msgid "Short write in oNCP negotiation\n"
 msgstr "Недостатньо даних для запису під час узгодження oNCP\n"
 
-#: oncp.c:564 oncp.c:605
+#: oncp.c:560 oncp.c:601
 #, c-format
 msgid "Read %d bytes of SSL record\n"
 msgstr "Прочитано %d байтів запису SSL\n"
 
-#: oncp.c:569
+#: oncp.c:565
 #, c-format
 msgid "Unexpected response of size %d after hostname packet\n"
 msgstr "Неочікувана відповідь розміру %d після пакета назви вузла\n"
 
-#: oncp.c:576
+#: oncp.c:572
 #, c-format
 msgid "Server response to hostname packet is error 0x%02x\n"
 msgstr ""
 "Відповіддю сервера на пакет назви вузла є повідомлення про помилку 0x%02x\n"
 
-#: oncp.c:580
+#: oncp.c:576
 msgid ""
 "This seems to indicate that the server has disabled support for\n"
 "Juniper's older oNCP protocol, and only allows connections using\n"
@@ -4925,117 +4943,117 @@ msgstr ""
 "за допомогою новішого протоколу Pulse Junos. У цій версії OpenConnect\n"
 "передбачено ЕКСПЕРИМЕНТАЛЬНУ підтримку Pulse за допомогою --prot=pulse\n"
 
-#: oncp.c:609
+#: oncp.c:605
 msgid "Invalid packet waiting for KMP 301\n"
 msgstr "Некоректний пакет очікування на KMP 301\n"
 
-#: oncp.c:622
+#: oncp.c:618
 #, c-format
 msgid "Expected KMP message 301 from server but got %d\n"
 msgstr "Мало бути повідомлення KMP 301 від сервера, але отримано %d\n"
 
-#: oncp.c:631
+#: oncp.c:627
 #, c-format
 msgid "KMP message 301 from server too large (%d bytes)\n"
 msgstr "Повідомлення KMP 301 від сервера є надто великим (%d байтів)\n"
 
-#: oncp.c:637
+#: oncp.c:633
 #, c-format
 msgid "Got KMP message 301 of length %d\n"
 msgstr "Отримано повідомлення KMP 301 довжини %d\n"
 
-#: oncp.c:644
+#: oncp.c:640
 msgid "Failed to read continuation record length\n"
 msgstr "Не вдалося прочитати запис продовження довжини\n"
 
-#: oncp.c:650
+#: oncp.c:646
 #, c-format
 msgid "Record of additional %d bytes too large; would make %d\n"
 msgstr "Запис додаткових %d байтів є надто великим; мав би складати %d\n"
 
-#: oncp.c:659
+#: oncp.c:655
 #, c-format
 msgid "Failed to read continuation record of length %d\n"
 msgstr "Не вдалося прочитати запис продовження довжини %d\n"
 
-#: oncp.c:665
+#: oncp.c:661
 #, c-format
 msgid "Read additional %d bytes of KMP 301 message\n"
 msgstr "Читання додаткових %d байтів повідомлення KMP 301\n"
 
-#: oncp.c:706
+#: oncp.c:702
 msgid "Error negotiating ESP keys\n"
 msgstr "Помилка під час узгодження ключів ESP\n"
 
-#: oncp.c:715
+#: oncp.c:711
 msgid "oNCP negotiation request outgoing:\n"
 msgstr "Вихідний запит узгодження oNCP:\n"
 
-#: oncp.c:773 pulse.c:2732
+#: oncp.c:769 pulse.c:2732
 msgid "new incoming"
 msgstr "нове вхідне"
 
-#: oncp.c:774 pulse.c:2733
+#: oncp.c:770 pulse.c:2733
 msgid "new outgoing"
 msgstr "нове вихідне"
 
-#: oncp.c:799
+#: oncp.c:795
 msgid "Read only 1 byte of oNCP length field\n"
 msgstr "Прочитано лише 1 байт поля довжини oNCP\n"
 
-#: oncp.c:808
+#: oncp.c:804
 msgid "Server terminated connection (session expired)\n"
 msgstr "З'єднання перервано сервером (строк дії сеансу вичерпано)\n"
 
-#: oncp.c:812
+#: oncp.c:808
 msgid "Server terminated connection (idle timeout)\n"
 msgstr ""
 "З'єднання перервано сервером (перевищено час очікування бездіяльності)\n"
 
-#: oncp.c:816
+#: oncp.c:812
 #, c-format
 msgid "Server terminated connection (reason: %d)\n"
 msgstr "З'єднання перервано сервером (причина: %d)\n"
 
-#: oncp.c:823
+#: oncp.c:819
 msgid "Server sent zero-length oNCP record\n"
 msgstr "Сервером надіслано запис oNCP нульової довжини\n"
 
-#: oncp.c:924
+#: oncp.c:920
 #, c-format
 msgid "Incoming KMP message %d of size %d (got %d)\n"
 msgstr "Вхідне повідомлення KMP %d розміру %d (отримано %d)\n"
 
-#: oncp.c:927
+#: oncp.c:923
 #, c-format
 msgid "Continuing to process KMP message %d now size %d (got %d)\n"
 msgstr ""
 "Продовжуємо обробку повідомлення KMP %d тепер розміру %d (отримано %d)\n"
 
-#: oncp.c:946
+#: oncp.c:942
 msgid "Unrecognised data packet\n"
 msgstr "Нерозпізнаний пакет даних\n"
 
-#: oncp.c:1005
+#: oncp.c:1001
 #, c-format
 msgid "Failed to set up ESP: %s\n"
 msgstr "Не вдалося налаштувати ESP: %s\n"
 
-#: oncp.c:1015
+#: oncp.c:1011
 #, c-format
 msgid "Unknown KMP message %d of size %d:\n"
 msgstr "Невідоме повідомлення KMP %d розміру %d:\n"
 
-#: oncp.c:1020
+#: oncp.c:1016
 #, c-format
 msgid ".... + %d more bytes unreceived\n"
 msgstr ".... + отримано ще %d байтів\n"
 
-#: oncp.c:1035 pulse.c:2787
+#: oncp.c:1031 pulse.c:2787
 msgid "Packet outgoing:\n"
 msgstr "Вихідний пакет:\n"
 
-#: oncp.c:1097
+#: oncp.c:1093
 msgid "Sent ESP enable control packet\n"
 msgstr "Надіслано пакет вмикання керування ESP\n"
 
@@ -5615,7 +5633,7 @@ msgstr "Не вдалося створити ключ DH STRAP\n"
 
 #: openssl.c:2378
 msgid "Failed to decode STRAP key\n"
-msgstr ""
+msgstr "Не вдалося декодувати ключ STRAP\n"
 
 #: openssl.c:2406
 msgid "Failed to decode server DH key\n"
@@ -5637,14 +5655,15 @@ msgstr "невдала спроба розшифрування жетона SSO\
 #, c-format
 msgid "SSL Finished message too large (%zd bytes)\n"
 msgstr ""
+"Розмір повідомлення про завершення SSL є занадто великим (%zd байтів)\n"
 
 #: openssl.c:2486 openssl.c:2531
 msgid "STRAP signature failed\n"
-msgstr ""
+msgstr "Не вдалося виконати підписування STRAP\n"
 
 #: openssl.c:2502
 msgid "Failed to regenerate STRAP key\n"
-msgstr ""
+msgstr "Не вдалося повторно створити ключ STRAP\n"
 
 #: openssl.c:2573
 msgid "Failed to create PKCS#7 structure\n"

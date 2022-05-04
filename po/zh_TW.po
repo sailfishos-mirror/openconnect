@@ -1,4 +1,4 @@
-# Traditional Chinese translation of NetworkManager-openconnect.
+# Traditional Chinese translation of Network Manager openconnect.
 # Copyright (C) 2009 Free Software Foundation, Inc.
 # Chao-Hsiung Liao <j_h_liau@yahoo.com.tw>, 2009.
 # Wei-Lun Chao <chaoweilun@gmail.com>, 2010.
@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: network-manager-openconnect 0.8.1\n"
 "Report-Msgid-Bugs-To: openconnect-devel@lists.infradead.org\n"
-"POT-Creation-Date: 2022-04-28 22:04+0100\n"
+"POT-Creation-Date: 2022-05-04 07:44+0100\n"
 "PO-Revision-Date: 2011-01-25 17:24+0800\n"
 "Last-Translator: Chao-Hsiung Liao <j_h_liau@yahoo.com.tw>\n"
 "Language-Team: \n"
@@ -65,7 +65,7 @@ msgstr ""
 msgid "Error creating array negotiation request\n"
 msgstr ""
 
-#: array.c:675 f5.c:679 http.c:965 oncp.c:524 pulse.c:1366
+#: array.c:675 f5.c:679 http.c:965 oncp.c:520 pulse.c:1366
 #, c-format
 msgid "Unexpected %d result from server\n"
 msgstr ""
@@ -96,7 +96,7 @@ msgid "Failed to read ipff response\n"
 msgstr ""
 
 #: array.c:825 array.c:1060 array.c:1170 cstp.c:964 dtls.c:283 dtls.c:642
-#: esp.c:166 gpst.c:1082 mainloop.c:63 oncp.c:869 ppp.c:1089 ppp.c:1676
+#: esp.c:166 gpst.c:1082 mainloop.c:63 oncp.c:865 ppp.c:1089 ppp.c:1676
 #: pulse.c:2657
 msgid "Allocation failed\n"
 msgstr ""
@@ -116,19 +116,19 @@ msgstr ""
 msgid "Received data packet of %d bytes\n"
 msgstr ""
 
-#: array.c:902 cstp.c:1105 gpst.c:1184 oncp.c:1083 ppp.c:1376 pulse.c:2835
+#: array.c:902 cstp.c:1105 gpst.c:1184 oncp.c:1079 ppp.c:1376 pulse.c:2835
 #, c-format
 msgid "SSL wrote too few bytes! Asked for %d, sent %d\n"
 msgstr ""
 
 #. Not that this will ever happen; we don't even process
 #. the setting when we're asked for it.
-#: array.c:920 cstp.c:1133 oncp.c:1118 pulse.c:2862
+#: array.c:920 cstp.c:1133 oncp.c:1114 pulse.c:2862
 msgid "CSTP rekey due\n"
 msgstr ""
 
 #. if we failed rehandshake try establishing a new-tunnel instead of failing
-#: array.c:927 cstp.c:1140 oncp.c:1125 pulse.c:2869
+#: array.c:927 cstp.c:1140 oncp.c:1121 pulse.c:2869
 msgid "Rehandshake failed; attempting new-tunnel\n"
 msgstr ""
 
@@ -152,7 +152,7 @@ msgstr ""
 msgid "Sending DTLS off packet\n"
 msgstr ""
 
-#: array.c:1000 cstp.c:1219 oncp.c:1201
+#: array.c:1000 cstp.c:1219 oncp.c:1197
 #, c-format
 msgid "Sending uncompressed data packet of %d bytes\n"
 msgstr ""
@@ -219,11 +219,11 @@ msgstr ""
 msgid "Sent DTLS packet of %d bytes; DTLS send returned %d\n"
 msgstr ""
 
-#: array.c:1303 auth-globalprotect.c:813 f5.c:714 fortinet.c:835 oncp.c:1229
+#: array.c:1303 auth-globalprotect.c:813 f5.c:714 fortinet.c:847 oncp.c:1225
 msgid "Logout failed.\n"
 msgstr ""
 
-#: array.c:1305 auth-globalprotect.c:815 f5.c:716 fortinet.c:837 oncp.c:1231
+#: array.c:1305 auth-globalprotect.c:815 f5.c:716 fortinet.c:849 oncp.c:1227
 msgid "Logout successful.\n"
 msgstr ""
 
@@ -489,7 +489,7 @@ msgstr ""
 msgid "Failed to parse server response\n"
 msgstr "無法解析伺服器回應\n"
 
-#: auth.c:612 f5.c:257 f5.c:299 f5.c:342 f5.c:487 fortinet.c:351 fortinet.c:579
+#: auth.c:612 f5.c:257 f5.c:299 f5.c:342 f5.c:487 fortinet.c:405 fortinet.c:591
 #, c-format
 msgid "Response was:%s\n"
 msgstr "回應為：%s\n"
@@ -845,7 +845,7 @@ msgstr ""
 msgid "Got CSTP Keepalive\n"
 msgstr ""
 
-#: cstp.c:1018 oncp.c:958
+#: cstp.c:1018 oncp.c:954
 #, c-format
 msgid "Received uncompressed data packet of %d bytes\n"
 msgstr ""
@@ -872,20 +872,20 @@ msgstr ""
 msgid "Unknown packet %02x %02x %02x %02x %02x %02x %02x %02x\n"
 msgstr ""
 
-#: cstp.c:1151 oncp.c:1136 pulse.c:2880
+#: cstp.c:1151 oncp.c:1132 pulse.c:2880
 msgid "CSTP Dead Peer Detection detected dead peer!\n"
 msgstr ""
 
-#: cstp.c:1155 gpst.c:1232 oncp.c:1053 oncp.c:1140 ppp.c:1406 pulse.c:2805
+#: cstp.c:1155 gpst.c:1232 oncp.c:1049 oncp.c:1136 ppp.c:1406 pulse.c:2805
 #: pulse.c:2885
 msgid "Reconnect failed\n"
 msgstr ""
 
-#: cstp.c:1171 oncp.c:1156 pulse.c:2901
+#: cstp.c:1171 oncp.c:1152 pulse.c:2901
 msgid "Send CSTP DPD\n"
 msgstr ""
 
-#: cstp.c:1183 oncp.c:1167 pulse.c:2913
+#: cstp.c:1183 oncp.c:1163 pulse.c:2913
 msgid "Send CSTP Keepalive\n"
 msgstr ""
 
@@ -1240,7 +1240,7 @@ msgstr ""
 msgid "Got WINS/NBNS server %s\n"
 msgstr ""
 
-#: f5.c:410 fortinet.c:428 fortinet.c:496
+#: f5.c:410 fortinet.c:482 fortinet.c:527
 #, c-format
 msgid "Got search domain %s\n"
 msgstr ""
@@ -1256,7 +1256,7 @@ msgid "Got split include route %s\n"
 msgstr ""
 
 #. XX: DTLS always uses same port as TLS?
-#: f5.c:452 fortinet.c:367
+#: f5.c:452 fortinet.c:421
 #, c-format
 msgid "DTLS is enabled on port %d\n"
 msgstr ""
@@ -1267,16 +1267,16 @@ msgid ""
 "    because HDLC prevents determination of efficient and consistent MTU.\n"
 msgstr ""
 
-#: f5.c:485 fortinet.c:577
+#: f5.c:485 fortinet.c:589
 msgid "Failed to find VPN options\n"
 msgstr ""
 
-#: f5.c:508 fortinet.c:424
+#: f5.c:508 fortinet.c:478
 #, c-format
 msgid "Got Legacy IP address %s\n"
 msgstr ""
 
-#: f5.c:513 fortinet.c:485 fortinet.c:490
+#: f5.c:513 fortinet.c:516 fortinet.c:521
 #, c-format
 msgid "Got IPv6 address %s\n"
 msgstr ""
@@ -1300,30 +1300,40 @@ msgstr ""
 msgid "Got login realm '%s'\n"
 msgstr ""
 
-#: fortinet.c:349
+#: fortinet.c:331
+#, c-format
+msgid "Got IPv%d exclude route %s\n"
+msgstr ""
+
+#: fortinet.c:336
+#, c-format
+msgid "Got IPv%d route %s\n"
+msgstr ""
+
+#: fortinet.c:403
 msgid "Failed to parse Fortinet config XML\n"
 msgstr ""
 
-#: fortinet.c:378 gpst.c:384
+#: fortinet.c:432 gpst.c:384
 #, c-format
 msgid "Idle timeout is %d minutes.\n"
 msgstr ""
 
-#: fortinet.c:398
+#: fortinet.c:452
 #, c-format
 msgid ""
 "Server reports that reconnect-after-drop is allowed within %d seconds, %s\n"
 msgstr ""
 
-#: fortinet.c:400
+#: fortinet.c:454
 msgid "but only from the same source IP address"
 msgstr ""
 
-#: fortinet.c:400
+#: fortinet.c:454
 msgid "even if source IP address changes"
 msgstr ""
 
-#: fortinet.c:403
+#: fortinet.c:457
 #, c-format
 msgid ""
 "Server reports that reconnect-after-drop is not allowed. OpenConnect will "
@@ -1332,32 +1342,27 @@ msgid ""
 "please report to <%s>\n"
 msgstr ""
 
-#: fortinet.c:419
+#: fortinet.c:473
 #, c-format
 msgid "Reported platform is %s\n"
 msgstr ""
 
-#: fortinet.c:432 fortinet.c:500
+#: fortinet.c:486 fortinet.c:531
 #, c-format
 msgid "Got IPv%d DNS server %s\n"
 msgstr ""
 
-#: fortinet.c:438 fortinet.c:506
+#: fortinet.c:492 fortinet.c:537
 #, c-format
 msgid "WARNING: Got split-DNS domains %s (not yet implemented)\n"
 msgstr ""
 
-#: fortinet.c:443 fortinet.c:511
+#: fortinet.c:497 fortinet.c:542
 #, c-format
 msgid "WARNING: Got split-DNS server %s (not yet implemented)\n"
 msgstr ""
 
-#: fortinet.c:465 fortinet.c:535
-#, c-format
-msgid "Got IPv%d route %s\n"
-msgstr ""
-
-#: fortinet.c:551
+#: fortinet.c:557
 #, c-format
 msgid ""
 "WARNING: Fortinet server does not specifically enable or disable "
@@ -1366,7 +1371,7 @@ msgid ""
 "    report results to <%s>\n"
 msgstr ""
 
-#: fortinet.c:559
+#: fortinet.c:565
 #, c-format
 msgid ""
 "Server did not send <auth-ses tun-connect-without-reauth=\"0/1\"/>. "
@@ -1376,17 +1381,25 @@ msgid ""
 "work please report to <%s>\n"
 msgstr ""
 
-#: fortinet.c:619
+#: fortinet.c:572
+msgid "Received split routes; not setting default Legacy IP route\n"
+msgstr ""
+
+#: fortinet.c:574
+msgid "No split routes received; setting default Legacy IP route\n"
+msgstr ""
+
+#: fortinet.c:631
 msgid "No cookie named SVPNCOOKIE.\n"
 msgstr ""
 
-#: fortinet.c:644
+#: fortinet.c:656
 msgid ""
 "Ancient Fortinet server (<v5?) only supports ancient HTML config, which is "
 "not implemented by OpenConnect.\n"
 msgstr ""
 
-#: fortinet.c:647
+#: fortinet.c:659
 #, c-format
 msgid ""
 "Fortinet server is rejecting request for connection options. This\n"
@@ -1396,15 +1409,15 @@ msgid ""
 "%s.\n"
 msgstr ""
 
-#: fortinet.c:686
+#: fortinet.c:698
 msgid "Error establishing Fortinet connection\n"
 msgstr ""
 
-#: fortinet.c:787
+#: fortinet.c:799
 msgid "Did not receive expected svrhello response.\n"
 msgstr ""
 
-#: fortinet.c:798
+#: fortinet.c:810
 #, c-format
 msgid "svrhello status was \"%.*s\" rather than \"ok\"\n"
 msgstr ""
@@ -2641,7 +2654,7 @@ msgstr ""
 msgid "GlobalProtect config sent ipsec-mode=%s (expected esp-tunnel)\n"
 msgstr ""
 
-#: gpst.c:494 oncp.c:779
+#: gpst.c:494 oncp.c:775
 msgid "Ignoring ESP keys since ESP support not available in this build\n"
 msgstr ""
 
@@ -2851,7 +2864,7 @@ msgstr ""
 msgid "ICMPv%d probe packet (seq %d) for GlobalProtect ESP:\n"
 msgstr ""
 
-#: gpst.c:1473 oncp.c:1275
+#: gpst.c:1473 oncp.c:1271
 msgid "Failed to send ESP probe\n"
 msgstr ""
 
@@ -3379,36 +3392,36 @@ msgstr ""
 msgid "IPv6 configuration received but MTU %d is too small.\n"
 msgstr ""
 
-#: library.c:1087
+#: library.c:1096
 #, c-format
 msgid "Failed to parse server URL '%s'\n"
 msgstr ""
 
-#: library.c:1093
+#: library.c:1102
 msgid "Only https:// permitted for server URL\n"
 msgstr ""
 
-#: library.c:1516
+#: library.c:1525
 #, c-format
 msgid "Unknown certificate hash: %s.\n"
 msgstr ""
 
-#: library.c:1550
+#: library.c:1559
 #, c-format
 msgid ""
 "The size of the provided fingerprint is less than the minimum required "
 "(%u).\n"
 msgstr ""
 
-#: library.c:1607
+#: library.c:1616
 msgid "No form handler; cannot authenticate.\n"
 msgstr ""
 
-#: library.c:1611
+#: library.c:1620
 msgid "No form ID. This is a bug in OpenConnect's authentication code.\n"
 msgstr ""
 
-#: library.c:1682
+#: library.c:1691
 msgid "No SSO handler\n"
 msgstr ""
 
@@ -4538,113 +4551,113 @@ msgstr ""
 msgid "Received split include route %s\n"
 msgstr ""
 
-#: oncp.c:170 pulse.c:2382
+#: oncp.c:168 pulse.c:2382
 #, c-format
 msgid "Received split exclude route %s\n"
 msgstr ""
 
-#: oncp.c:190 pulse.c:268
+#: oncp.c:186 pulse.c:268
 #, c-format
 msgid "Received WINS server %s\n"
 msgstr ""
 
-#: oncp.c:213
+#: oncp.c:209
 #, c-format
 msgid "ESP encryption: 0x%02x (%s)\n"
 msgstr ""
 
-#: oncp.c:232
+#: oncp.c:228
 #, c-format
 msgid "ESP HMAC: 0x%02x (%s)\n"
 msgstr ""
 
-#: oncp.c:243
+#: oncp.c:239
 #, c-format
 msgid "ESP compression: %d\n"
 msgstr ""
 
-#: oncp.c:251 pulse.c:475
+#: oncp.c:247 pulse.c:475
 #, c-format
 msgid "ESP port: %d\n"
 msgstr ""
 
-#: oncp.c:258 pulse.c:458
+#: oncp.c:254 pulse.c:458
 #, c-format
 msgid "ESP key lifetime: %u bytes\n"
 msgstr ""
 
-#: oncp.c:266 pulse.c:450
+#: oncp.c:262 pulse.c:450
 #, c-format
 msgid "ESP key lifetime: %u seconds\n"
 msgstr ""
 
-#: oncp.c:274 pulse.c:482
+#: oncp.c:270 pulse.c:482
 #, c-format
 msgid "ESP to SSL fallback: %u seconds\n"
 msgstr ""
 
-#: oncp.c:282 pulse.c:466
+#: oncp.c:278 pulse.c:466
 #, c-format
 msgid "ESP replay protection: %d\n"
 msgstr ""
 
-#: oncp.c:290 pulse.c:2470
+#: oncp.c:286 pulse.c:2470
 #, c-format
 msgid "ESP SPI (outbound): %x\n"
 msgstr ""
 
-#: oncp.c:299 pulse.c:2458
+#: oncp.c:295 pulse.c:2458
 #, c-format
 msgid "%d bytes of ESP secrets\n"
 msgstr ""
 
-#: oncp.c:311
+#: oncp.c:307
 #, c-format
 msgid "Unknown TLV group %d attr %d len %d:%s\n"
 msgstr ""
 
-#: oncp.c:393
+#: oncp.c:389
 msgid "Failed to parse KMP header\n"
 msgstr ""
 
-#: oncp.c:412
+#: oncp.c:408
 msgid "Failed to parse KMP message\n"
 msgstr ""
 
-#: oncp.c:421
+#: oncp.c:417
 #, c-format
 msgid "Got KMP message %d of size %d\n"
 msgstr ""
 
-#: oncp.c:437
+#: oncp.c:433
 #, c-format
 msgid "Received non-ESP TLVs (group %d) in ESP negotiation KMP\n"
 msgstr ""
 
-#: oncp.c:508 oncp.c:542 oncp.c:686
+#: oncp.c:504 oncp.c:538 oncp.c:682
 msgid "Error creating oNCP negotiation request\n"
 msgstr ""
 
-#: oncp.c:551 oncp.c:721
+#: oncp.c:547 oncp.c:717
 msgid "Short write in oNCP negotiation\n"
 msgstr ""
 
-#: oncp.c:564 oncp.c:605
+#: oncp.c:560 oncp.c:601
 #, c-format
 msgid "Read %d bytes of SSL record\n"
 msgstr ""
 
-#: oncp.c:569
+#: oncp.c:565
 #, c-format
 msgid "Unexpected response of size %d after hostname packet\n"
 msgstr ""
 
-#: oncp.c:576
+#: oncp.c:572
 #, c-format
 msgid "Server response to hostname packet is error 0x%02x\n"
 msgstr ""
 
-#: oncp.c:580
+#: oncp.c:576
 msgid ""
 "This seems to indicate that the server has disabled support for\n"
 "Juniper's older oNCP protocol, and only allows connections using\n"
@@ -4652,115 +4665,115 @@ msgid ""
 "EXPERIMENTAL support for Pulse using --prot=pulse\n"
 msgstr ""
 
-#: oncp.c:609
+#: oncp.c:605
 msgid "Invalid packet waiting for KMP 301\n"
 msgstr ""
 
-#: oncp.c:622
+#: oncp.c:618
 #, c-format
 msgid "Expected KMP message 301 from server but got %d\n"
 msgstr ""
 
-#: oncp.c:631
+#: oncp.c:627
 #, c-format
 msgid "KMP message 301 from server too large (%d bytes)\n"
 msgstr ""
 
-#: oncp.c:637
+#: oncp.c:633
 #, c-format
 msgid "Got KMP message 301 of length %d\n"
 msgstr ""
 
-#: oncp.c:644
+#: oncp.c:640
 msgid "Failed to read continuation record length\n"
 msgstr ""
 
-#: oncp.c:650
+#: oncp.c:646
 #, c-format
 msgid "Record of additional %d bytes too large; would make %d\n"
 msgstr ""
 
-#: oncp.c:659
+#: oncp.c:655
 #, c-format
 msgid "Failed to read continuation record of length %d\n"
 msgstr ""
 
-#: oncp.c:665
+#: oncp.c:661
 #, c-format
 msgid "Read additional %d bytes of KMP 301 message\n"
 msgstr ""
 
-#: oncp.c:706
+#: oncp.c:702
 msgid "Error negotiating ESP keys\n"
 msgstr ""
 
-#: oncp.c:715
+#: oncp.c:711
 msgid "oNCP negotiation request outgoing:\n"
 msgstr ""
 
-#: oncp.c:773 pulse.c:2732
+#: oncp.c:769 pulse.c:2732
 msgid "new incoming"
 msgstr ""
 
-#: oncp.c:774 pulse.c:2733
+#: oncp.c:770 pulse.c:2733
 msgid "new outgoing"
 msgstr ""
 
-#: oncp.c:799
+#: oncp.c:795
 msgid "Read only 1 byte of oNCP length field\n"
 msgstr ""
 
-#: oncp.c:808
+#: oncp.c:804
 msgid "Server terminated connection (session expired)\n"
 msgstr ""
 
-#: oncp.c:812
+#: oncp.c:808
 msgid "Server terminated connection (idle timeout)\n"
 msgstr ""
 
-#: oncp.c:816
+#: oncp.c:812
 #, c-format
 msgid "Server terminated connection (reason: %d)\n"
 msgstr ""
 
-#: oncp.c:823
+#: oncp.c:819
 msgid "Server sent zero-length oNCP record\n"
 msgstr ""
 
-#: oncp.c:924
+#: oncp.c:920
 #, c-format
 msgid "Incoming KMP message %d of size %d (got %d)\n"
 msgstr ""
 
-#: oncp.c:927
+#: oncp.c:923
 #, c-format
 msgid "Continuing to process KMP message %d now size %d (got %d)\n"
 msgstr ""
 
-#: oncp.c:946
+#: oncp.c:942
 msgid "Unrecognised data packet\n"
 msgstr ""
 
-#: oncp.c:1005
+#: oncp.c:1001
 #, c-format
 msgid "Failed to set up ESP: %s\n"
 msgstr ""
 
-#: oncp.c:1015
+#: oncp.c:1011
 #, c-format
 msgid "Unknown KMP message %d of size %d:\n"
 msgstr ""
 
-#: oncp.c:1020
+#: oncp.c:1016
 #, c-format
 msgid ".... + %d more bytes unreceived\n"
 msgstr ""
 
-#: oncp.c:1035 pulse.c:2787
+#: oncp.c:1031 pulse.c:2787
 msgid "Packet outgoing:\n"
 msgstr ""
 
-#: oncp.c:1097
+#: oncp.c:1093
 msgid "Sent ESP enable control packet\n"
 msgstr ""
 
