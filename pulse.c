@@ -2716,7 +2716,7 @@ int pulse_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			    load_be16(pkt->data + 0x28) != 0x40)
 				goto unknown_pkt;
 
-			dump_buf_hex(vpninfo, PRG_ERR, '<', (void *)&vpninfo->cstp_pkt->pulse.vendor, len);
+			dump_buf_hex(vpninfo, PRG_TRACE, '<', (void *)&vpninfo->cstp_pkt->pulse.vendor, len);
 
 			ret = handle_esp_config_packet(vpninfo, (void *)&pkt->pulse.vendor, len);
 			if (ret) {
