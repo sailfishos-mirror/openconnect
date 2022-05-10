@@ -169,12 +169,27 @@ int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		}
 		pkt = vpninfo->dtls_pkt;
 		len = recv(vpninfo->dtls_fd, (void *)&pkt->esp, len + sizeof(pkt->esp), 0);
-		if (len <= 0) {
-			if (!len || errno == EAGAIN || errno == EWOULDBLOCK)
+		if (!len)
+			break;
+		if (len < 0) {
+#ifdef _WIN32
+			int err = WSAGetLastError();
+			if (err == WSAEWOULDBLOCK)
 				break;
 
+			char *errstr = openconnect__win32_strerror(err);
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("ESP receive error: %s\n"),
+				     errstr);
+			free(errstr);
+#else
+			if (errno == EAGAIN || errno == EWOULDBLOCK)
+				break;
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("ESP receive error: %s\n"),
+				     strerror(errno));
+#endif
 			/* On *real* errors, close the UDP socket and try again later. */
-			vpn_perror(vpninfo, "ESP recv()");
 			vpninfo->proto->udp_close(vpninfo);
 			return 0;
 		}
