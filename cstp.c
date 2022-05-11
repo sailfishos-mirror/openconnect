@@ -1283,7 +1283,17 @@ void cstp_common_headers(struct openconnect_info *vpninfo, struct oc_text_buf *b
 	if (vpninfo->try_http_auth)
 		buf_append(buf, "X-Support-HTTP-Auth: true\r\n");
 #ifdef HAVE_HPKE_SUPPORT
-	if (!vpninfo->strap_pubkey || !vpninfo->strap_dh_pubkey) {
+	/* XX: offering STRAP keys appears to restrict the ability to reconnect to other servers
+	 * of the same VPN using the same webvpn.
+	 *
+	 * Therefore, we should offer STRAP keys only if either:
+	 *   a) We are prepared to do external browser authentication; we don't yet have a
+	 *      cookie, but we do have external browser support.
+	 *   b) We already have a STRAP key; in this case we have to continue offering it to
+	 *      the server for verification, otherwise the webvpn cookie may be rejected.
+	 */
+	if (vpninfo->open_ext_browser && !vpninfo->cookie &&
+	    (!vpninfo->strap_pubkey || !vpninfo->strap_dh_pubkey)) {
 		int err = generate_strap_keys(vpninfo);
 		if (err) {
 			buf->error = err;
@@ -1291,10 +1301,12 @@ void cstp_common_headers(struct openconnect_info *vpninfo, struct oc_text_buf *b
 		}
 	}
 
-	buf_append(buf, "X-AnyConnect-STRAP-Pubkey: %s\r\n",
-		   vpninfo->strap_pubkey);
-	buf_append(buf, "X-AnyConnect-STRAP-DH-Pubkey: %s\r\n",
-		   vpninfo->strap_dh_pubkey);
+	if (vpninfo->strap_pubkey && vpninfo->strap_dh_pubkey) {
+		buf_append(buf, "X-AnyConnect-STRAP-Pubkey: %s\r\n",
+			   vpninfo->strap_pubkey);
+		buf_append(buf, "X-AnyConnect-STRAP-DH-Pubkey: %s\r\n",
+			   vpninfo->strap_dh_pubkey);
+	}
 #endif
 	append_mobile_headers(vpninfo, buf);
 }
