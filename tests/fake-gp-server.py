@@ -83,6 +83,7 @@ class TestConfiguration:
     portal_saml: str = None
     gateway_saml: str = None
 C = TestConfiguration()
+OUTSTANDING_SAML_TOKENS = set()
 
 
 @app.route('/CONFIGURE', methods=('POST', 'GET'))
@@ -107,8 +108,13 @@ def prelogin(interface):
     ifname = if_path2name[interface]
     demand_saml = getattr(C, ifname + '_saml')
     if demand_saml:
+        # The (cookie-based) session isn't shared between OpenConnect and the external browser
+        # that does the SAML auth, so we need another way to track that the SAML form gets
+        # returned. Use a global variable for now.
+        token = '%08x' % randint(0x10000000, 0xffffffff)
+        OUTSTANDING_SAML_TOKENS.add((ifname, token))
         saml = '<saml-auth-method>REDIRECT</saml-auth-method><saml-request>{}</saml-request>'.format(
-            base64.standard_b64encode(url_for('saml_form', interface=interface, _external=True).encode()).decode())
+            base64.standard_b64encode(url_for('saml_handler', ifname=ifname, token=token, _external=True).encode()).decode())
     else:
         saml = ''
     session.update(step='%s-prelogin' % ifname)
@@ -127,10 +133,50 @@ def prelogin(interface):
 </prelogin-response>'''.format(ifname=ifname, saml=saml)
 
 
-# Simple SAML form (not actually hooked up, for now)
-@app.route('/<any("global-protect", "ssl-vpn"):interface>/SAML_FORM')
-def saml_form(interface):
-    abort(503)
+# In a "real" GP VPN with SAML, this lives on a completely different server like subdomain.okta.com
+# or login.microsoft.com.
+# It will be opened by an external browser or SAML-wrangling script, *not* by OpenConnect.
+@app.route('/ANOTHER-HOST/SAML-ENDPOINT')
+def saml_handler():
+    ifname, token = request.args.get('ifname'), request.args.get('token')
+
+    # Submit to saml_complete endpoint
+    # In a "real" GP setup, this would be on a different server which is why we use _external=True
+    saml_complete = url_for('saml_complete', _external=True)
+
+    return '''<html><body><p>Please login to this fake GP VPN {ifname} interface via SAML</p>
+<form name="saml" method="post" action="{saml_complete}">
+<input type="text" name="username" autofocus="1"/><br/>
+<input type="password" name="password"/><br/>
+<input type="hidden" name="token" value="{token}"/>
+<input type="hidden" name="ifname" value="{ifname}"/>
+<input type="submit" value="Login"/>
+</form></body></html>'''.format(ifname=ifname, saml_complete=saml_complete, token=token)
+
+
+# This is the "return path" where SAML authentication ends up on real GP servers after
+# successfully completing.
+# It will be opened by an external browser or SAML-wrangling script, *not* by OpenConnect.
+@app.route('/SAML20/SP/ACS', methods=('POST',))
+def saml_complete():
+    ifname, token = request.form.get('ifname'), request.form.get('token')
+    assert ifname in ('portal', 'gateway')
+
+    try:
+        OUTSTANDING_SAML_TOKENS.remove((ifname, token))
+    except KeyError:
+        # Token and/or endpoint were bogus
+        abort(401)
+
+    # Build a response containing the magical headers that indicate SAML completion
+    saml_headers = {
+        'saml-auth-status': 1,
+        'saml-username': request.form.get('username'),
+        getattr(C, ifname + '_saml'): 'FAKE_username_{username}_password_{password}'.format(**request.form),
+    }
+
+    body = '<html><body>Login Successful!</body><!-- {} --></html>'.format(''.join('<{0}>{1}</{0}>'.format(*kv) for kv in saml_headers.items()))
+    return body, saml_headers
 
 
 def challenge_2fa(where):
