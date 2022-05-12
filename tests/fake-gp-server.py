@@ -23,7 +23,8 @@ from random import randint
 import base64
 from json import dumps
 from functools import wraps
-from flask import Flask, request, abort, redirect, url_for, session
+from flask import Flask, request, abort, url_for, session
+from dataclasses import dataclass
 
 host, port, *cert_and_maybe_keyfile = sys.argv[1:]
 
@@ -63,7 +64,7 @@ def check_form_against_session(*fields, use_query=False, on_failure=None):
 
 if_path2name = {'global-protect': 'portal', 'ssl-vpn': 'gateway'}
 
-# Get parameters into the initial session setup in order to configure:
+# Configure the fake server. These settings will persist unless/until reconfigured or restarted:
 #   gateways: list of gateway names for portal to offer (all will point to same HOST:PORT as portal)
 #   portal_2fa: if set, require challenge-based 2FA to complete /global-protect/getconfig.esp request
 #   gw_2fa: if set, require challenge-based 2FA to complete /ssl-vpn/login.esp request
@@ -73,21 +74,39 @@ if_path2name = {'global-protect': 'portal', 'ssl-vpn': 'gateway'}
 #   portal_cookie: if set (to 'portal-userauthcookie' or 'portal-prelogonuserauthcookie'), then
 #                  the portal getconfig response will include the named "cookie" field which should
 #                  be used to automatically continue login on the gateway
-@app.route('/<any("global-protect", "ssl-vpn"):interface>/testconfig.esp', methods=('GET','POST',))
-def testconfig(interface):
-    gateways, portal_2fa, gw_2fa, portal_cookie, portal_saml, gateway_saml = request.args.get('gateways'), request.args.get('portal_2fa'), request.args.get('gw_2fa'), request.args.get('portal_cookie'), request.args.get('portal_saml'), request.args.get('gateway_saml')
-    session.update(gateways=gateways and gateways.split(','), portal_cookie=portal_cookie,
-                   portal_2fa=portal_2fa and bool(portal_2fa), gw_2fa=gw_2fa and bool(gw_2fa),
-                   portal_saml=portal_saml, gateway_saml=gateway_saml)
-    prelogin = url_for('prelogin', interface=interface)
-    return redirect(prelogin)
+@dataclass
+class TestConfiguration:
+    gateways: list = ('Default gateway',)
+    portal_2fa: bool = False
+    gw_2fa: bool = False
+    portal_cookie: str = None
+    portal_saml: str = None
+    gateway_saml: str = None
+C = TestConfiguration()
+
+
+@app.route('/CONFIGURE', methods=('POST', 'GET'))
+def configure():
+    global C
+    if request.method == 'POST':
+        gateways, portal_2fa, gw_2fa, portal_cookie, portal_saml, gateway_saml = request.form.get('gateways'), request.form.get('portal_2fa'), request.form.get('gw_2fa'), request.form.get('portal_cookie'), request.form.get('portal_saml'), request.form.get('gateway_saml')
+        C.gateways = gateways.split(',') if gateways else ('Default gateway',)
+        C.portal_cookie = portal_cookie
+        C.portal_2fa = bool(portal_2fa)
+        C.gw_2fa = bool(gw_2fa)
+        C.portal_saml = portal_saml
+        C.gateway_saml = gateway_saml
+        return '', 201
+    else:
+        return 'Current configuration of fake GP server configuration:\n{}\n'.format(C)
 
 
 # Respond to initial prelogin requests
 @app.route('/<any("global-protect", "ssl-vpn"):interface>/prelogin.esp', methods=('GET','POST',))
 def prelogin(interface):
     ifname = if_path2name[interface]
-    if session.get(ifname + '_saml'):
+    demand_saml = getattr(C, ifname + '_saml')
+    if demand_saml:
         saml = '<saml-auth-method>REDIRECT</saml-auth-method><saml-request>{}</saml-request>'.format(
             base64.standard_b64encode(url_for('saml_form', interface=interface, _external=True).encode()).decode())
     else:
@@ -130,16 +149,13 @@ def challenge_2fa(where):
 # Respond to portal getconfig request
 @app.route('/global-protect/getconfig.esp', methods=('POST',))
 def portal_config():
-    portal_2fa = session.get('portal_2fa')
-    portal_saml = session.get('portal_saml')
-    portal_cookie = session.get('portal_cookie')
     inputStr = request.form.get('inputStr') or None
 
-    if portal_2fa and not inputStr:
+    if C.portal_2fa and not inputStr:
         return challenge_2fa('portal')
 
     okay = False
-    if portal_saml and request.form.get('user') and request.form.get(portal_saml):
+    if C.portal_saml and request.form.get('user') and request.form.get(C.portal_saml):
         okay = True
     elif request.form.get('user') and request.form.get('passwd') and inputStr == session.get('inputStr'):
         okay = True
@@ -151,12 +167,11 @@ def portal_config():
                    saml_user=None, saml_value=None,
                    # clear inputStr to ensure failure if same form fields are blindly retried on another challenge form:
                    inputStr=None)
-    gateways = session.get('gateways') or ('Default gateway',)
     gwlist = ''.join('<entry name="{}:{}"><description>{}</description></entry>'.format(app.config['HOST'], app.config['PORT'], gw)
-                     for gw in gateways)
-    if portal_cookie:
-        val = session[portal_cookie] = 'portal-cookie-%d' % randint(1, 10)
-        pc = '<{0}>{1}</{0}>'.format(portal_cookie, val)
+                     for gw in C.gateways)
+    if C.portal_cookie:
+        val = session[C.portal_cookie] = 'portal-cookie-%d' % randint(1, 10)
+        pc = '<{0}>{1}</{0}>'.format(C.portal_cookie, val)
     else:
         pc = ''
 
@@ -169,18 +184,16 @@ def portal_config():
 # Respond to gateway login request
 @app.route('/ssl-vpn/login.esp', methods=('POST',))
 def gateway_login():
-    gw_2fa = session.get('gw_2fa')
-    gateway_saml = session.get('gateway_saml')
     inputStr = request.form.get('inputStr') or None
 
-    if session.get('portal_cookie') and request.form.get(session['portal_cookie']) == session.get(session['portal_cookie']):
+    if C.portal_cookie and request.form.get(C.portal_cookie) == session.get(C.portal_cookie):
         # a correct portal_cookie explicitly allows us to bypass other gateway login forms
         pass
-    elif gw_2fa and not inputStr:
+    elif C.gw_2fa and not inputStr:
         return challenge_2fa('gateway')
     else:
         okay = False
-        if gateway_saml and request.form.get('user') and request.form.get(gateway_saml):
+        if C.gateway_saml and request.form.get('user') and request.form.get(C.gateway_saml):
             okay = True
         elif request.form.get('user') and request.form.get('passwd') and inputStr == session.get('inputStr'):
             okay = True

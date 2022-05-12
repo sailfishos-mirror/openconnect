@@ -108,7 +108,10 @@ auth-hwtpm: $(HWTPM_CERTS) $(HWTPM_KEYS)
 endif
 
 if HAVE_PYTHON36_FLASK
-TESTS += fortinet-auth-and-config f5-auth-and-config juniper-auth juniper-sso-auth gp-auth-and-config auth-multicert
+TESTS += fortinet-auth-and-config f5-auth-and-config juniper-auth juniper-sso-auth auth-multicert
+if HAVE_PYTHON37_DATACLASSES
+TESTS += gp-auth-and-config
+endif
 endif
 
 if TEST_PKCS11

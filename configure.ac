@@ -1347,6 +1347,19 @@ if test "$enable_flask_tests" = "yes" -a -n "${ac_cv_path_PYTHON}"; then
 fi
 AM_CONDITIONAL(HAVE_PYTHON36_FLASK, test "$have_python36_flask" = yes)
 
+have_python37_dataclasses=no
+if test "$enable_flask_tests" = "yes" -a -n "${ac_cv_path_PYTHON}"; then
+    AC_MSG_CHECKING([for Python 3.7+ or 3.6 with dataclasses backport])
+    python3 -c 'import sys; assert sys.version_info >= (3,6); import dataclasses' 2>/dev/null
+    if test $? -ne 0 ; then
+        AC_MSG_RESULT(not found)
+    else
+        have_python37_dataclasses=yes
+        AC_MSG_RESULT(found)
+    fi
+fi
+AM_CONDITIONAL(HAVE_PYTHON37_DATACLASSES, test "$have_python37_dataclasses" = yes)
+
 if test "$enable_ppp_tests" = "yes"; then
     AC_PATH_PROGS(SOCAT, [socat], [], $PATH:/bin:/usr/bin)
     AC_PATH_PROGS(PPPD, [pppd], [], $PATH:/bin:/usr/bin:/sbin:/usr/sbin/)
