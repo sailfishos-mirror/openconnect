@@ -49,6 +49,8 @@
 typedef int (*X509_STORE_CTX_get_issuer_fn)(X509 **issuer,
 					    X509_STORE_CTX *ctx, X509 *x);
 #define X509_STORE_CTX_get_get_issuer(ctx) ((ctx)->get_issuer)
+#define OpenSSL_version SSLeay_version
+#define OPENSSL_VERSION SSLEAY_VERSION
 #endif
 
 static char tls_library_version[32] = "";
@@ -56,7 +58,9 @@ static char tls_library_version[32] = "";
 const char *openconnect_get_tls_library_version(void)
 {
 	if (!*tls_library_version) {
-		strncpy(tls_library_version, SSLeay_version(SSLEAY_VERSION), sizeof(tls_library_version));
+		strncpy(tls_library_version,
+			OpenSSL_version(OPENSSL_VERSION),
+			sizeof(tls_library_version));
 		tls_library_version[sizeof(tls_library_version)-1]='\0';
 	}
 	return tls_library_version;
