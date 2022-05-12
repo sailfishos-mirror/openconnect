@@ -89,7 +89,7 @@ def prelogin(interface):
     ifname = if_path2name[interface]
     if session.get(ifname + '_saml'):
         saml = '<saml-auth-method>REDIRECT</saml-auth-method><saml-request>{}</saml-request>'.format(
-            base64.urlsafe_b64encode(url_for('saml_form', interface=interface, _external=True).encode()).decode())
+            base64.standard_b64encode(url_for('saml_form', interface=interface, _external=True).encode()).decode())
     else:
         saml = ''
     session.update(step='%s-prelogin' % ifname)
