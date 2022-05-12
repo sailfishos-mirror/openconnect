@@ -60,14 +60,14 @@ echo -n "Authenticating with username/password/token via portal, then using port
 echo ok
 
 echo -n "Simulating completed SAML to portal, then using portal-userauthcookie to continue through SAML-requiring gateway... "
-( echo "prelogin-cookie" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT --protocol=gp --disable-ipv6 -q "$ADDRESS:443/global-protect/testconfig.esp?portal_cookie=portal-userauthcookie&portal_saml=prelogin-cookie&gateway_saml=prelogin-cookie:prelogin-cookie" -u test $FINGERPRINT --cookieonly >/dev/null 2>&1) ||
+( echo "prelogin-cookie" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT --protocol=gp -q "$ADDRESS:443/global-protect/testconfig.esp?portal_cookie=portal-userauthcookie&portal_saml=prelogin-cookie&gateway_saml=prelogin-cookie:prelogin-cookie" -u test $FINGERPRINT --cookieonly >/dev/null 2>&1) ||
 test $? = 2 || # what OpenConnect returns when server rejects cookie upon tunnel connection, as the fake server does
     fail $PID "Something went wrong in fake GlobalProtect server (other than the expected rejection of cookie)"
 
 echo ok
 
 echo -n "Simulating completed SAML to gateway... "
-( echo "prelogin-cookie" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT --protocol=gp --disable-ipv6 -q "$ADDRESS:443/ssl-vpn/testconfig.esp?gateway_saml=prelogin-cookie:prelogin-cookie" -u test $FINGERPRINT --cookieonly >/dev/null 2>&1) ||
+( echo "prelogin-cookie" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT --protocol=gp -q "$ADDRESS:443/ssl-vpn/testconfig.esp?gateway_saml=prelogin-cookie:prelogin-cookie" -u test $FINGERPRINT --cookieonly >/dev/null 2>&1) ||
 test $? = 2 || # what OpenConnect returns when server rejects cookie upon tunnel connection, as the fake server does
     fail $PID "Something went wrong in fake GlobalProtect server (other than the expected rejection of cookie)"
 
