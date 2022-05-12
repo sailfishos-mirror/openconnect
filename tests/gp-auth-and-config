@@ -35,83 +35,87 @@ launch_simple_sr_server $ADDRESS 443 $CERT $KEY >/dev/null 2>&1
 PID=$!
 wait_server $PID
 
+SERVURL="https://$ADDRESS:443"
+CLIENT="$OPENCONNECT -q --protocol=gp $FINGERPRINT -u test"
+export LD_PRELOAD=libsocket_wrapper.so
+
 echo -n "Authenticating with username/password via portal... "
-( echo "test" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT --protocol=gp -q $ADDRESS:443/portal -u test $FINGERPRINT --cookieonly >/dev/null 2>&1) ||
+( echo "test" | $CLIENT $SERVURL/portal --cookieonly >/dev/null 2>&1) ||
     fail $PID "Could not receive cookie from fake GlobalProtect server"
 
 echo ok
 
 echo -n "Authenticating with username/password via gateway... "
-( echo "test" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT --protocol=gp -q $ADDRESS:443/gateway -u test $FINGERPRINT --cookieonly >/dev/null 2>&1) ||
+( echo "test" | $CLIENT $SERVURL/gateway --cookieonly >/dev/null 2>&1) ||
     fail $PID "Could not receive cookie from fake GlobalProtect server"
 
 echo ok
 
 echo "Configuring fake server to present a choice of 3 gateways in the portal."
-LD_PRELOAD=libsocket_wrapper.so curl -sk "https://$ADDRESS:443/CONFIGURE" -d gateways=foo,bar,baz
+curl -sk $SERVURL/CONFIGURE -d gateways=foo,bar,baz
 
 echo -n "Authenticating with username/password, and selecting gateway, via portal... "
-( echo "test" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT --protocol=gp -q $ADDRESS:443/portal --authgroup=bar -u test $FINGERPRINT --cookieonly >/dev/null 2>&1) ||
+( echo "test" | $CLIENT $SERVURL/portal --authgroup=bar --cookieonly >/dev/null 2>&1) ||
     fail $PID "Could not receive cookie from fake GlobalProtect server"
 
 echo ok
 
 echo "Configuring fake server to require 2FA-token and to propagate portal authentication to gateway."
-LD_PRELOAD=libsocket_wrapper.so curl -sk "https://$ADDRESS:443/CONFIGURE" -d portal_2fa=1 -d gw_2fa=1 -d portal_cookie=portal-userauthcookie
+curl -sk $SERVURL/CONFIGURE -d portal_2fa=1 -d gw_2fa=1 -d portal_cookie=portal-userauthcookie
 
 echo -n "Authenticating with username/password/2FA-token via portal, then continuing through 2FA-requiring gateway... "
-( echo "test" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT --protocol=gp -q $ADDRESS:443/portal -u test --token-mode=totp --token-secret=FAKE $FINGERPRINT --cookieonly >/dev/null 2>&1) ||
+( echo "test" | $CLIENT $SERVURL/portal --token-mode=totp --token-secret=FAKE --cookieonly >/dev/null 2>&1) ||
     fail $PID "Could not receive cookie from fake GlobalProtect server"
 
 echo ok
 
 echo "Configuring fake server to require SAML for portal and gateway authentication, and to propagate portal authentication to gateway."
-LD_PRELOAD=libsocket_wrapper.so curl -sk "https://$ADDRESS:443/CONFIGURE" -d portal_cookie=portal-userauthcookie -d portal_saml=prelogin-cookie -d gateway_saml=prelogin-cookie
+curl -sk $SERVURL/CONFIGURE -d portal_saml=prelogin-cookie -d gateway_saml=prelogin-cookie -d portal_cookie=portal-userauthcookie
 
 echo -n "Simulating completed SAML to portal, then continuing through SAML-requiring gateway... "
-( echo "prelogin-cookie" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT --protocol=gp -q $ADDRESS:443/portal:prelogin-cookie -u test $FINGERPRINT --cookieonly >/dev/null 2>&1) ||
+( echo "prelogin-cookie" | $CLIENT $SERVURL/portal:prelogin-cookie --cookieonly >/dev/null 2>&1) ||
 test $? = 2 || # what OpenConnect returns when server rejects cookie upon tunnel connection, as the fake server does
     fail $PID "Something went wrong in fake GlobalProtect server (other than the expected rejection of cookie)"
 
 echo ok
 
 echo "Configuring fake server to require SAML for gateway authentication only."
-LD_PRELOAD=libsocket_wrapper.so curl -sk "https://$ADDRESS:443/CONFIGURE" -d gateway_saml=prelogin-cookie
+curl -sk $SERVURL/CONFIGURE -d gateway_saml=prelogin-cookie
 
 echo -n "Simulating completed SAML to gateway... "
-( echo "prelogin-cookie" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT --protocol=gp -q $ADDRESS:443/gateway:prelogin-cookie -u test $FINGERPRINT --cookieonly >/dev/null 2>&1) ||
+( echo "prelogin-cookie" | $CLIENT $SERVURL/gateway:prelogin-cookie --cookieonly >/dev/null 2>&1) ||
 test $? = 2 || # what OpenConnect returns when server rejects cookie upon tunnel connection, as the fake server does
     fail $PID "Something went wrong in fake GlobalProtect server (other than the expected rejection of cookie)"
 
 echo ok
 
 echo "Configuring fake server to require 2FA-token for gateway authentication."
-LD_PRELOAD=libsocket_wrapper.so curl -sk "https://$ADDRESS:443/CONFIGURE" -d gw_2fa=1
+curl -sk $SERVURL/CONFIGURE -d gw_2fa=1
 
 echo -n "Authenticating with username/password via portal, then +token via gateway... "
-( echo "test" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT --protocol=gp -q $ADDRESS:443/portal -u test --token-mode=totp --token-secret=FAKE $FINGERPRINT --cookieonly >/dev/null 2>&1) ||
+( echo "test" | $CLIENT $SERVURL/portal --token-mode=totp --token-secret=FAKE --cookieonly >/dev/null 2>&1) ||
     fail $PID "Could not receive cookie from fake GlobalProtect server"
 
 echo ok
 
 echo -n "Authenticating with username/password/token via gateway... "
-( echo "test" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT --protocol=gp -q $ADDRESS:443/gateway -u test --token-mode=totp --token-secret=FAKE $FINGERPRINT --cookieonly >/dev/null 2>&1) ||
+( echo "test" | $CLIENT $SERVURL/gateway --token-mode=totp --token-secret=FAKE --cookieonly >/dev/null 2>&1) ||
     fail $PID "Could not receive cookie from fake GlobalProtect server"
 
 echo ok
 
 echo "Resetting fake server to default configuration."
-LD_PRELOAD=libsocket_wrapper.so curl -sk -X POST "https://$ADDRESS:443/CONFIGURE"
+curl -sk $SERVURL/CONFIGURE -d ''
 
 echo -n "Authenticating with username/password via portal, then proceeding to tunnel stage... "
-echo "test" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT --protocol=gp -q $ADDRESS:443/portal -u test $FINGERPRINT >/dev/null 2>&1
+echo "test" | $CLIENT $SERVURL/portal >/dev/null 2>&1
 test $? = 2 || # what OpenConnect returns when server rejects cookie upon tunnel connection, as the fake server does
     fail $PID "Something went wrong in fake GlobalProtect server (other than the expected rejection of cookie)"
 
 echo ok
 
 echo -n "Authenticating with username/password via portal, then proceeding to tunnel stage (with IPv6 disabled)... "
-echo "test" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT --protocol=gp --disable-ipv6 -q $ADDRESS:443/portal -u test $FINGERPRINT >/dev/null 2>&1
+echo "test" | $CLIENT $SERVURL/portal --disable-ipv6 >/dev/null 2>&1
 test $? = 2 || # what OpenConnect returns when server rejects cookie upon tunnel connection, as the fake server does
     fail $PID "Something went wrong in fake GlobalProtect server (other than the expected rejection of cookie)"
 
