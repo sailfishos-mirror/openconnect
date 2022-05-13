@@ -162,6 +162,61 @@ Other items on the TODO list include:
   Likewise, using keys stored in the OS X keychain would be extremely useful.</li>
 </ul>
 
+<h2>Simplify OpenConnect's approach to interacting with external scripts and program</h2>
+
+Currently we have a vast proliferation of slightly different interfaces for OpenConnect to call scripts with slightly different interfaces, despite serving similar purposes.
+
+<h3>Routing and DNS configuration</h3>
+
+<ul>
+  <li><a href="https://gitlab.com/openconnect/vpnc-scripts">vpnc-script and vpnc-script-win.js</a>
+  handle this in a <i>relatively</i> uniform cross-protocol way, but there are still bugs tied to
+  historical assumptions based on the Cisco AnyConnect protocol (e.g. <a
+  href="https://gitlab.com/openconnect/openconnect/-/commit/a2b8134edf8e5f8e942dedf105e2813a0824b919">a2b8134e</a>
+  and <a href="https://gitlab.com/openconnect/openconnect/-/issues/433">#433</a>).</li>
+
+  <li>Need ways to <b>test</b> these scripts on operating systems other than Linux.</li>
+</ul>
+
+<h3>Trojans / security scanners</h3>
+
+<ul>
+  <li>Cisco <a href="csd.html">CSD</a>. Historically, this involved running a black-box binary provided by the server, then running it with a wrapper, and now running a "wrapper" script that doesn't
+  actually invoke the binary at all but just emulates its behavior and output. For backwards-compatibility with the binary version, the script receives <b>input</b> via a mixture of CLI args and
+  environment variables.  It connects to the VPN server independently from the main client process. It doesn't actually return any meaningful <b>output</b>. Instead, the main client process must
+  continue running in the background, reloading a "wait" URL in a loop, until the server's response to that wait URL indicates that the CSD process has completed successfully.</li>
+
+  <li>Juniper/Pulse <a href="tncc.html">TNCC (Host Checker)</a>. Historically, this involved running a black-box Java binary provided by the server, now a "wrapper" script that emulate's the binary's
+  behavior. The script receives <b>input</b> via a mixture of environment variables and standard input. It connects to the VPN server independently from the main client process, receives a token,
+  and pipes its <b>output</b> back to the main client process.</li>
+
+  <li>GlobalProtect <a href="hip.html">HIP</a>. The script receives <b>input</b> via a mixture of command-line arguments and environment variables (due to a mistaken attempt to closely copy the
+  interface of CSD). The script does not communicate independently with the VPN server. It merely generates a blob of XML, and pipes that <b>output</b> back to the main client process.</li>
+</ul>
+
+<h3>External/SAML/SSO authentication scripts</h3>
+
+<p>Most VPN protocols have some authentication modes which OpenConnect cannot handle on its own using its usual techniques of creating and submitting authentication forms from server-provided data (or
+screen-scraping).  These essentially require running a full web browser environment, due to requiring JavaScript or browser plugins for the authentication to complete.</p>
+
+<p>The individual VPN protocols vary substantially in how the VPN client is expected to communicate with the web browser doing the authentication:</p>
+<ul>
+  <li>Cisco HPKE: the VPN client launches a browser with the URL for the SSO entry point. When the authentication is complete, the browser redirects to an HTTP GET of
+  <tt>http://localhost:29786/...</tt>. This means the client has to run its own HTTP <b>server</b> in order to capture the output.</li>
+
+  <li>GlobalProtect SAML: the VPN client either launches a browser with either (a) the URL for the SSO entry point (<tt>saml-auth-method=REDIRECT</tt>) or (b) an HTML page containing the SSO entry
+  point (<tt>saml-auth-method=POST</tt>). The authentication is complete when the browser opens a page containing special HTTP headers. This means that the <b>browser</b> has to be specially instrumented
+  in order to capture the output.</li>
+
+  <li>Juniper, Pulse, F5, Fortinet: needs discovery documentation</li>
+</ul>
+
+<p>The <tt>open_webview</tt> hook needs implementing for Qt/KDE and Windows GUIs.</p>
+
+<p>The webview/external-browser options and API functions should perhaps be renamed to something like "external auth handler",
+since one of the goals and strong points of OpenConnect is to make VPN login interfaces scriptable without relying on a
+graphical browser in many cases.</p>
+
 </p>
 
 <INCLUDE file="inc/footer.tmpl" />
