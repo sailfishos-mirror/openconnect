@@ -2427,7 +2427,7 @@ int ecdh_compute_secp256r1(struct openconnect_info *vpninfo, const unsigned char
 }
 
 int hkdf_sha256_extract_expand(struct openconnect_info *vpninfo, unsigned char *buf,
-			       const char *info, int infolen)
+			       const unsigned char *info, int infolen)
 {
 	size_t buflen = 32;
 	int ret = 0;

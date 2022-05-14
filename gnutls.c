@@ -3048,7 +3048,7 @@ int ecdh_compute_secp256r1(struct openconnect_info *vpninfo, const unsigned char
 }
 
 int hkdf_sha256_extract_expand(struct openconnect_info *vpninfo, unsigned char *buf,
-			       const char *info, int infolen)
+			       const unsigned char *info, int infolen)
 {
 	gnutls_datum_t d;
 	d.data = buf;
@@ -3063,7 +3063,7 @@ int hkdf_sha256_extract_expand(struct openconnect_info *vpninfo, unsigned char *
 	}
 
 	gnutls_datum_t info_d;
-	info_d.data = (void *)info;
+	info_d.data = info;
 	info_d.size = infolen;
 
 	err = gnutls_hkdf_expand(GNUTLS_MAC_SHA256, &d, &info_d, d.data, d.size);

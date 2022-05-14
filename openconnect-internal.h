@@ -1483,7 +1483,7 @@ int generate_strap_keys(struct openconnect_info *vpninfo);
 int ecdh_compute_secp256r1(struct openconnect_info *vpninfo, const unsigned char *pubkey,
 			   int pubkey_len, unsigned char *secret);
 int hkdf_sha256_extract_expand(struct openconnect_info *vpninfo, unsigned char *buf,
-			       const char *info, int infolen);
+			       const unsigned char *info, int infolen);
 int aes_256_gcm_decrypt(struct openconnect_info *vpninfo, unsigned char *key,
 			unsigned char *data, int len,
 			unsigned char *iv, unsigned char *tag);

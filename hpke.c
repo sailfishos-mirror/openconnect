@@ -302,7 +302,8 @@ int handle_external_browser(struct openconnect_info *vpninfo)
 	if (ret)
 		goto out_b64;
 
-	ret = hkdf_sha256_extract_expand(vpninfo, secret, "AC_ECIES", 8);
+	const unsigned char info[] = "AC_ECIES";
+	ret = hkdf_sha256_extract_expand(vpninfo, secret, info, 8);
 	if (ret)
 		goto out_b64;
 
