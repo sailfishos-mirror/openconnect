@@ -785,6 +785,7 @@ case x"$with_gnutls_tss2" in
 	;;
 esac
 
+AM_CONDITIONAL(OPENCONNECT_SYSTEM_KEYS, [ test "$ac_cv_func_gnutls_system_key_add_x509" = "yes" ])
 AM_CONDITIONAL(OPENCONNECT_TSS2_ESYS, [ test "$tss2lib" = "tss2-esys" ])
 AM_CONDITIONAL(OPENCONNECT_TSS2_IBM, [ test "$tss2lib" = "ibmtss" -o "$tss2lib" = "tss" ])
 
