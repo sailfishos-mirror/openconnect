@@ -666,6 +666,12 @@ static int parse_xml_response(struct openconnect_info *vpninfo,
 		} else if (xmlnode_is_named(xml_node, "session-token")) {
 			http_add_cookie(vpninfo, "webvpn",
 					(const char *)xmlNodeGetContent(xml_node), 1);
+			/*
+			 * Some servers apparently don't give an <auth> at all on success
+			 * https://gitlab.gnome.org/GNOME/NetworkManager-openconnect/-/issues/72
+			 */
+			if (!form->auth_id)
+				form->auth_id = strdup("success");
 		} else {
 			xmlnode_get_text(xml_node, "error", &form->error);
 		}
