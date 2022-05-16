@@ -22,11 +22,32 @@ int main(void)
 {
         gnutls_system_key_iter_t iter = NULL;
 	char *cert, *key, *label;
+	gnutls_datum_t der = { };
 	int err;
 
 	while ((err = gnutls_system_key_iter_get_info(&iter, GNUTLS_CRT_X509,
-						      &cert, &key, &label, NULL, 0)) >= 0)
-		printf("Label: %s\nCert: %s\nKey: %s\n\n", label, cert, key);
+						      &cert, &key, &label, &der, 0)) >= 0) {
+		/* Skip anything without a key */
+		if (cert && key) {
+			printf("Label: %s\nCert URI: %s\nKey URI: %s\n", label, cert, key);
+			gnutls_x509_crt_t crt = NULL;
+			gnutls_datum_t buf = { };
+
+			if (!gnutls_x509_crt_init(&crt) &&
+			    !gnutls_x509_crt_import(crt, &der, GNUTLS_X509_FMT_DER) &&
+			    !gnutls_x509_crt_print(crt, GNUTLS_CRT_PRINT_ONELINE, &buf))
+				printf("Cert info: %s\n", buf.data);
+
+			gnutls_free(buf.data);
+			gnutls_x509_crt_deinit(crt);
+			printf("\n");
+		}
+		gnutls_free(der.data);
+		der.data = NULL;
+		gnutls_free(label);
+		gnutls_free(key);
+		gnutls_free(cert);
+	}
 
 	if (err == GNUTLS_E_REQUESTED_DATA_NOT_AVAILABLE)
 		err = 0;
