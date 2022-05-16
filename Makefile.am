@@ -18,6 +18,7 @@ endif
 lib_LTLIBRARIES = libopenconnect.la
 sbin_PROGRAMS = openconnect
 man8_MANS = openconnect.8
+noinst_PROGRAMS :=
 
 AM_CFLAGS = @WFLAGS@
 AM_CPPFLAGS = -DLOCALEDIR="\"$(localedir)\""
@@ -419,13 +420,26 @@ vpnc-script-win.js:
 file-list-%.txt: %
 	echo $< > $@
 
+if OPENCONNECT_SYSTEM_KEYS
+noinst_PROGRAMS += list-system-keys
+list_system_keys_SOURCES = list-system-keys.c
+list_system_keys_CFLAGS = $(GNUTLS_CFLAGS)
+list_system_keys_LDADD = $(GNUTLS_LIBS)
+
+file-list-system-keys.txt: list-system-keys$(EXEEXT)
+	echo $< > $@
+
+FILE_LIST_SYSTEM_KEYS = file-list-system-keys.txt
+endif
+
+
 # Rather than trying to get clever in NSIS and iterate over lists,
 # just emit raw snippets to be included separately in the install
 # and uninstall sections.
-instfiles.nsh: file-list.txt file-list-vpnc-script-win.js.txt file-list-$(TAPDRIVER).txt
+instfiles.nsh: file-list.txt file-list-vpnc-script-win.js.txt file-list-$(TAPDRIVER).txt $(FILE_LIST_SYSTEM_KEYS)
 	$(AM_V_GEN) cat $^ | while read FILE; do echo "File \"$${FILE}\"" ; done > $@
 
-uninstfiles.nsh: file-list.txt file-list-vpnc-script-win.js.txt file-list-$(TAPDRIVER).txt
+uninstfiles.nsh: file-list.txt file-list-vpnc-script-win.js.txt file-list-$(TAPDRIVER).txt $(FILE_LIST_SYSTEM_KEYS)
 	$(AM_V_GEN) cat $^ | while read FILE; do echo "Delete /rebootok \"\$$INSTDIR\\\\$${FILE##*/}\"" ; done > $@
 
 # Theoretically makensis can define symbols with the -D command line
