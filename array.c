@@ -843,28 +843,68 @@ int array_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		 * and be prepared to *split* IP packets received in the same read() call. */
 
 		vpninfo->ssl_times.last_rx = time(NULL);
+		work_done = 1;
 
 		unsigned char *buf = vpninfo->cstp_pkt->data;
-		if (len >= sizeof(struct ip) && buf[0] == 0x45 &&
-		    load_be16(buf + 2) == len && buf[9] == 0xff) {
+		int iplen;
+	next_ip:
+		if (len < sizeof(struct ip))
+			goto badiplen;
+
+		switch(buf[0] >> 4) {
+		case 4:
+			iplen = load_be16(buf + 2);
+			break;
+		case 6:
+			iplen = load_be16(buf + 4) + 40;
+			break;
+		default:
+		badiplen:
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("Unrecognised data packet, len %d\n"), len);
+			dump_buf_hex(vpninfo, PRG_DEBUG, '<', buf, len);
+			continue;
+		}
+
+		/* We don't believe Array splits IP packets across TLS records. */
+		if (iplen > len)
+			goto badiplen;
+
+		/* Dump control packets but don't queue them */
+		if (buf[0] == 0x45 && buf[9] == 0xff) {
 			uint16_t ctrl_type = load_be16(buf + 12);
 			vpn_progress(vpninfo, PRG_DEBUG,
 				     _("Receive control packet of type %x:\n"),
 				     ctrl_type);
 			dump_buf_hex(vpninfo, PRG_DEBUG, '<', buf, len);
-			continue;
+			if (iplen == len)
+				continue;
+		} else {
+			vpn_progress(vpninfo, PRG_TRACE,
+				     _("Received data packet of %d bytes\n"),
+				     iplen);
+			if (iplen == len) {
+				/* This buffer (now) contains just a single IP packet */
+				vpninfo->cstp_pkt->len = iplen;
+				queue_packet(&vpninfo->incoming_queue, vpninfo->cstp_pkt);
+				vpninfo->cstp_pkt = NULL;
+				continue;
+			} else {
+				/* Awfully inefficient for now. We *copy* the packet into
+				 * a new buffer and then memmove the subsequent one(s)
+				 * down in the original buffer. */
+				queue_new_packet(vpninfo, &vpninfo->incoming_queue,
+						 buf, iplen);
+			}
 		}
 
+		/* Move the next packet(s) up to the head of the existing buffer */
+		len -= iplen;
+		memmove(buf, buf + iplen, len);
 		vpn_progress(vpninfo, PRG_TRACE,
-			     _("Received data packet of %d bytes\n"),
-			     len);
-		vpninfo->cstp_pkt->len = len;
-		queue_packet(&vpninfo->incoming_queue, vpninfo->cstp_pkt);
-		vpninfo->cstp_pkt = NULL;
-		work_done = 1;
-		continue;
+			     _("Moved down %d bytes after previous packet\n"), len);
+		goto next_ip;
 	}
-
 
 	/* If SSL_write() fails we are expected to try again. With exactly
 	   the same data, at exactly the same location. So we keep the
