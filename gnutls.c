@@ -2563,11 +2563,9 @@ char *get_gnutls_cipher(gnutls_session_t session)
 
 int openconnect_sha1(unsigned char *result, void *data, int datalen)
 {
-	gnutls_datum_t d;
+	const gnutls_datum_t d = { data, datalen };
 	size_t shalen = SHA1_SIZE;
 
-	d.data = data;
-	d.size = datalen;
 	if (gnutls_fingerprint(GNUTLS_DIG_SHA1, &d, result, &shalen))
 		return -1;
 
@@ -2576,11 +2574,9 @@ int openconnect_sha1(unsigned char *result, void *data, int datalen)
 
 int openconnect_sha256(unsigned char *result, void *data, int datalen)
 {
-	gnutls_datum_t d;
+	const gnutls_datum_t d = { data, datalen };
 	size_t shalen = SHA256_SIZE;
 
-	d.data = data;
-	d.size = datalen;
 	if (gnutls_fingerprint(GNUTLS_DIG_SHA256, &d, result, &shalen))
 		return -1;
 
@@ -2589,11 +2585,9 @@ int openconnect_sha256(unsigned char *result, void *data, int datalen)
 
 int openconnect_md5(unsigned char *result, void *data, int datalen)
 {
-	gnutls_datum_t d;
+	const gnutls_datum_t d = { data, datalen };
 	size_t md5len = MD5_SIZE;
 
-	d.data = data;
-	d.size = datalen;
 	if (gnutls_fingerprint(GNUTLS_DIG_MD5, &d, result, &md5len))
 		return -1;
 
@@ -3050,9 +3044,7 @@ int ecdh_compute_secp256r1(struct openconnect_info *vpninfo, const unsigned char
 int hkdf_sha256_extract_expand(struct openconnect_info *vpninfo, unsigned char *buf,
 			       const unsigned char *info, int infolen)
 {
-	gnutls_datum_t d;
-	d.data = buf;
-	d.size = SHA256_SIZE;
+	const gnutls_datum_t d = { buf, SHA256_SIZE };
 
 	int err = gnutls_hkdf_extract(GNUTLS_MAC_SHA256, &d, NULL, buf);
 	if (err) {
@@ -3062,9 +3054,7 @@ int hkdf_sha256_extract_expand(struct openconnect_info *vpninfo, unsigned char *
 		return -EIO;
 	}
 
-	gnutls_datum_t info_d;
-	info_d.data = info;
-	info_d.size = infolen;
+	const gnutls_datum_t info_d = { info, infolen };
 
 	err = gnutls_hkdf_expand(GNUTLS_MAC_SHA256, &d, &info_d, d.data, d.size);
 	if (err) {
@@ -3082,8 +3072,8 @@ int aes_256_gcm_decrypt(struct openconnect_info *vpninfo, unsigned char *key,
 {
 	gnutls_cipher_hd_t h = NULL;
 
-	gnutls_datum_t d = { key, SHA256_SIZE };
-	gnutls_datum_t iv_d = { iv, 12 };
+	const gnutls_datum_t d = { key, SHA256_SIZE };
+	const gnutls_datum_t iv_d = { iv, 12 };
 
 	int err = gnutls_cipher_init(&h, GNUTLS_CIPHER_AES_256_GCM, &d, &iv_d);
 	if (err) {
