@@ -18,7 +18,7 @@ endif
 lib_LTLIBRARIES = libopenconnect.la
 sbin_PROGRAMS = openconnect
 man8_MANS = openconnect.8
-noinst_PROGRAMS :=
+bin_PROGRAMS :=
 
 AM_CFLAGS = @WFLAGS@
 AM_CPPFLAGS = -DLOCALEDIR="\"$(localedir)\""
@@ -164,6 +164,13 @@ libopenconnect_wrapper_la_SOURCES = jni.c
 libopenconnect_wrapper_la_CFLAGS = $(AM_CFLAGS) $(JNI_CFLAGS) -Wno-missing-declarations
 libopenconnect_wrapper_la_LIBADD = libopenconnect.la
 endif
+endif
+
+if OPENCONNECT_SYSTEM_KEYS
+bin_PROGRAMS += list-system-keys
+list_system_keys_SOURCES = list-system-keys.c
+list_system_keys_CFLAGS = $(GNUTLS_CFLAGS)
+list_system_keys_LDADD = $(GNUTLS_LIBS)
 endif
 
 pkgconfig_DATA = openconnect.pc
@@ -368,17 +375,38 @@ ACLOCAL_AMFLAGS = -I m4
 if BUILD_NSIS
 DISTCLEANFILES += .*.dll.d .*.exe.d file-list*.txt instfiles.nsh uninstfiles.nsh vpnc-script-win.js openconnect.nsi openconnect-installer.exe
 
+# Including openconnect-gui.exe and Qt bits (as a hack)
+#EXTRA_EXECUTABLES := openconnect-gui.exe qwindows.dll qwindowsvistastyle.dll
+#EXTRA_NSIS_FILES := $(OPENCONNECT_GUI_DIR)/nsis/qt.conf
+#EXTRA_DLLDIRS := $(OPENCONNECT_GUI_DIR)/bin $(libdir)/qt5/plugins/platforms $(libdir)/qt5/plugins/styles
+
+DLL_EXECUTABLES := openconnect$(EXEEXT) $(EXTRA_EXECUTABLES)
+
 if OPENCONNECT_WINTUN
 WINTUN_DLL = .libs/wintun.dll
 DISTCLEANFILES += $(WINTUN_DLL)
+DLL_EXECUTABLES += wintun.dll
 endif
 
-export V AM_DEFAULT_VERBOSITY bindir OBJDUMP
+if OPENCONNECT_SYSTEM_KEYS
+DLL_EXECUTABLES += list-system-keys$(EXEEXT)
+endif
 
-# This Makefile has no rules to create these, just uses them to track
-# dependencies on file-list.txt if it already exists.
--include .openconnect.exe.d
--include .wintun.dll.d
+# DLL dependencies are found recursively with make, with each .foo.dll.d being
+# generated automatically from foo.dll by a pattern rule. However, we don't
+# want the normal top-level Makefile doing that directly because it would try
+# to do so *every* time it's invoked, just because of the -include directives.
+# So we split it out to a *separate* Makefile.dlldeps to be invoked only when
+# we are actually building the NSIS installer.
+#
+# The 'file-list.txt' contains the full transitive list of executables and
+# DLLs to be included in the installer. It potentially needs to be rebuilt if
+# any of them change (as they may now link against a different set of DLLs),
+# and *that* much does need to be visible to this top-level Makefile, so
+# include them if they exist.
+-include $(patsubst %,.%.d,$(DLL_EXECUTABLES))
+
+export V AM_DEFAULT_VERBOSITY bindir libdir OBJDUMP DLL_EXECUTABLES EXTRA_DLLDIRS
 
 file-list.txt: Makefile.dlldeps openconnect$(EXEEXT) libopenconnect.la $(WINTUN_DLL)
 	@$(MAKE) --no-print-directory -f $< $@
@@ -420,27 +448,19 @@ vpnc-script-win.js:
 file-list-%.txt: %
 	echo $< > $@
 
-if OPENCONNECT_SYSTEM_KEYS
-noinst_PROGRAMS += list-system-keys
-list_system_keys_SOURCES = list-system-keys.c
-list_system_keys_CFLAGS = $(GNUTLS_CFLAGS)
-list_system_keys_LDADD = $(GNUTLS_LIBS)
-
-file-list-system-keys.txt: list-system-keys$(EXEEXT)
-	echo $< > $@
-
-FILE_LIST_SYSTEM_KEYS = file-list-system-keys.txt
-endif
-
+file-list-extra.txt:
+	$(AM_V_GEN) for f in $(EXTRA_NSIS_FILES); do echo "$${f}" ; done > $@
 
 # Rather than trying to get clever in NSIS and iterate over lists,
 # just emit raw snippets to be included separately in the install
 # and uninstall sections.
-instfiles.nsh: file-list.txt file-list-vpnc-script-win.js.txt file-list-$(TAPDRIVER).txt $(FILE_LIST_SYSTEM_KEYS)
-	$(AM_V_GEN) cat $^ | while read FILE; do echo "File \"$${FILE}\"" ; done > $@
+instfiles.nsh: file-list.txt file-list-vpnc-script-win.js.txt file-list-$(TAPDRIVER).txt file-list-extra.txt
+	$(AM_V_GEN) ( grep -hv "^$(libdir)/qt5/plugins" $^ | sed 's%\(.*\)%File "\1"%' ; \
+	grep -h "^$(libdir)/qt5/plugins" $^ | sed 's%\(.*/qt5/plugins\)/\([^/]*\)/\([^/]*\)%SetOutPath "$$INSTDIR\\\\\2"\nFile "\1/\2/\3"%' ) > $@
 
-uninstfiles.nsh: file-list.txt file-list-vpnc-script-win.js.txt file-list-$(TAPDRIVER).txt $(FILE_LIST_SYSTEM_KEYS)
-	$(AM_V_GEN) cat $^ | while read FILE; do echo "Delete /rebootok \"\$$INSTDIR\\\\$${FILE##*/}\"" ; done > $@
+uninstfiles.nsh: file-list.txt file-list-vpnc-script-win.js.txt file-list-$(TAPDRIVER).txt file-list-extra.txt
+	$(AM_V_GEN) ( grep -hv "^$(libdir)/qt5/plugins" $^ | sed 's%\(.*/\)\?\([^/]*\)%Delete /rebootok "$$INSTDIR\\\\\2"%' ; \
+	grep -h "^$(libdir)/qt5/plugins" $^ | sed 's%.*/qt5/plugins/\([^/]*\)/\([^/]*\)%Delete /rebootok "$$INSTDIR\\\\\1\\\\\2"\nRMDir "$$INSTDIR\\\\\1"%' ) > $@
 
 # Theoretically makensis can define symbols with the -D command line
 # option and much of this could just be done that way, but I couldn't

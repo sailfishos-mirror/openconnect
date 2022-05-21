@@ -135,7 +135,7 @@ rm -rf $RPM_BUILD_ROOT/%{mingw64_datadir}/bash-completion
 %files -n mingw32-openconnect -f mingw32-openconnect.lang
 %license COPYING.LGPL
 %{mingw32_bindir}/libopenconnect*.dll
-%{mingw32_bindir}/openconnect.exe
+%{mingw32_bindir}/*.exe
 %{mingw32_includedir}/openconnect.h
 %{mingw32_libdir}/libopenconnect*.dll.a
 %{mingw32_libdir}/pkgconfig/openconnect.pc
@@ -147,7 +147,7 @@ rm -rf $RPM_BUILD_ROOT/%{mingw64_datadir}/bash-completion
 %files -n mingw64-openconnect -f mingw64-openconnect.lang
 %license COPYING.LGPL
 %{mingw64_bindir}/libopenconnect*.dll
-%{mingw64_bindir}/openconnect.exe
+%{mingw64_bindir}/*.exe
 %{mingw64_includedir}/openconnect.h
 %{mingw64_libdir}/libopenconnect*.dll.a
 %{mingw64_libdir}/pkgconfig/openconnect.pc
