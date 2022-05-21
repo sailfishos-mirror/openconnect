@@ -18,7 +18,7 @@ endif
 lib_LTLIBRARIES = libopenconnect.la
 sbin_PROGRAMS = openconnect
 man8_MANS = openconnect.8
-bin_PROGRAMS :=
+noinst_PROGRAMS :=
 
 AM_CFLAGS = @WFLAGS@
 AM_CPPFLAGS = -DLOCALEDIR="\"$(localedir)\""
@@ -167,7 +167,7 @@ endif
 endif
 
 if OPENCONNECT_SYSTEM_KEYS
-bin_PROGRAMS += list-system-keys
+noinst_PROGRAMS += list-system-keys
 list_system_keys_SOURCES = list-system-keys.c
 list_system_keys_CFLAGS = $(GNUTLS_CFLAGS)
 list_system_keys_LDADD = $(GNUTLS_LIBS)
