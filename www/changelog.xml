@@ -15,14 +15,15 @@
 <ul>
    <li><b>OpenConnect HEAD</b>
      <ul>
-       <li><i>No changelog entries yet</i></li>
+       <li>Fix receiving multiple packets in one TLS frame for Array (<a href="https://gitlab.com/openconnect/openconnect/-/issues/435">#435</a>).</li>
+       <li>Fix ESP failures under Windows (<a href="https://gitlab.com/openconnect/openconnect/-/issues/427">#427</a>).</li>
+       <li>Add <tt>list-system-keys</tt> tool to assist Windows/MacOS users in setup.</li>
      </ul><br/>
   </li>
   <li><b><a href="https://www.infradead.org/openconnect/download/openconnect-9.01.tar.gz">OpenConnect v9.01</a></b>
      <i>(<a href="https://www.infradead.org/openconnect/download/openconnect-9.01.tar.gz.asc">PGP signature</a>)</i> &#8212; 2022-04-29
      <ul>
        <li>Fix library minor version (missing bump to 5.8).</li>
-       <li>Fix ESP failures under Windows (<a href="https://gitlab.com/openconnect/openconnect/-/issues/427">#427</a>).</li>
      </ul><br/>
   </li>
   <li><b><a href="https://www.infradead.org/openconnect/download/openconnect-9.00.tar.gz">OpenConnect v9.00</a></b>
