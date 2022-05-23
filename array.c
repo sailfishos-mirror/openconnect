@@ -674,7 +674,12 @@ int array_connect(struct openconnect_info *vpninfo)
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Unexpected %d result from server\n"),
 			     ret);
-		ret = -EINVAL;
+		/* We get a redirect to /prx/000/http/localhost/cookietest when
+		 * the cookie has expired. */
+		if (ret == 302 || vpninfo->redirect_url)
+			ret = -EPERM;
+		else
+			ret = -EINVAL;
 		goto out;
 	}
 
