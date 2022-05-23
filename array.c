@@ -820,6 +820,7 @@ int array_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		int len;
 
 		if (!vpninfo->cstp_pkt) {
+			vpninfo->partial_rec_size = 0;
 			vpninfo->cstp_pkt = alloc_pkt(vpninfo, receive_mtu);
 			if (!vpninfo->cstp_pkt) {
 				vpn_progress(vpninfo, PRG_ERR, _("Allocation failed\n"));
@@ -827,20 +828,21 @@ int array_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			}
 		}
 
-		len = ssl_nonblock_read(vpninfo, 0, vpninfo->cstp_pkt->data, receive_mtu);
+		len = ssl_nonblock_read(vpninfo, 0,
+					vpninfo->cstp_pkt->data + vpninfo->partial_rec_size,
+					receive_mtu - vpninfo->partial_rec_size);
 		if (!len)
 			break;
 		if (len < 0)
 			goto do_reconnect;
-		if (len < 8) {
-			vpn_progress(vpninfo, PRG_ERR, _("Short packet received (%d bytes)\n"), len);
-			vpninfo->quit_reason = "Short packet received";
-			return 1;
-		}
 
-		/* Check it looks like a valid IP packet, and then check for the special
-		 * IP protocol 255 that is used for control stuff. Maybe also look at length
-		 * and be prepared to *split* IP packets received in the same read() call. */
+		if (vpninfo->partial_rec_size) {
+			vpn_progress(vpninfo, PRG_DEBUG,
+				     _("Received %d more bytes after partial %d\n"),
+				     len, vpninfo->partial_rec_size);
+			len += vpninfo->partial_rec_size;
+			vpninfo->partial_rec_size = 0;
+		}
 
 		vpninfo->ssl_times.last_rx = time(NULL);
 		work_done = 1;
@@ -848,8 +850,12 @@ int array_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		unsigned char *buf = vpninfo->cstp_pkt->data;
 		int iplen;
 	next_ip:
-		if (len < sizeof(struct ip))
-			goto badiplen;
+		if (len < sizeof(struct ip)) {
+			vpn_progress(vpninfo, PRG_DEBUG,
+				     _("Received partial packet, %d bytes\n"), len);
+			vpninfo->partial_rec_size = len;
+			continue;
+		}
 
 		switch(buf[0] >> 4) {
 		case 4:
@@ -866,9 +872,17 @@ int array_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			continue;
 		}
 
-		/* We don't believe Array splits IP packets across TLS records. */
-		if (iplen > len)
+		if (iplen > receive_mtu)
 			goto badiplen;
+
+		/* Argh. It even splits IP packets across TLS records. */
+		if (iplen > len) {
+			vpn_progress(vpninfo, PRG_DEBUG,
+				     _("Received partial packet, %d of %d bytes\n"),
+				     len, iplen);
+			vpninfo->partial_rec_size = len;
+			continue;
+		}
 
 		/* Dump control packets but don't queue them */
 		if (buf[0] == 0x45 && buf[9] == 0xff) {
