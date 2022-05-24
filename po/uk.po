@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: network-manager-openconnect\n"
 "Report-Msgid-Bugs-To: openconnect-devel@lists.infradead.org\n"
-"POT-Creation-Date: 2022-05-04 07:44+0100\n"
-"PO-Revision-Date: 2022-05-02 12:09+0300\n"
+"POT-Creation-Date: 2022-05-24 17:13+0100\n"
+"PO-Revision-Date: 2022-05-22 21:25+0300\n"
 "Last-Translator: Yuri Chornoivan <yurchor@ukr.net>\n"
 "Language-Team: Ukrainian <kde-i18n-uk@kde.org>\n"
 "Language: uk\n"
@@ -74,167 +74,187 @@ msgstr "Помилка під час спроби створити запити 
 msgid "Unexpected %d result from server\n"
 msgstr "Неочікуваний результат %d від сервера\n"
 
-#: array.c:698
+#: array.c:703
 msgid "Error building Array DTLS negotiation packet\n"
 msgstr ""
 "Помилка під час спроби побудувати пакет узгодження у форматі Array JSON\n"
 
-#: array.c:716 array.c:763
+#: array.c:721 array.c:768
 msgid "Short write in array negotiation\n"
 msgstr "Недостатньо даних для запису під час узгодження масиву\n"
 
-#: array.c:726
+#: array.c:731
 msgid "Failed to read UDP negotiation response\n"
 msgstr "Не вдалося прочитати відповідь щодо узгодження UDP\n"
 
-#: array.c:738
+#: array.c:743
 #, c-format
 msgid "DTLS enabled on port %d\n"
 msgstr "На порту %d увімкнено DTLS\n"
 
-#: array.c:750
+#: array.c:755
 msgid "Refusing non-DTLS UDP tunnel\n"
 msgstr "Відмовляємо в UDP-тунелі без DTLS\n"
 
-#: array.c:772
+#: array.c:777
 msgid "Failed to read ipff response\n"
 msgstr "Не вдалося прочитати відповідь ipff\n"
 
-#: array.c:825 array.c:1060 array.c:1170 cstp.c:964 dtls.c:283 dtls.c:642
+#: array.c:831 array.c:1119 array.c:1229 cstp.c:964 dtls.c:283 dtls.c:642
 #: esp.c:166 gpst.c:1082 mainloop.c:63 oncp.c:865 ppp.c:1089 ppp.c:1676
 #: pulse.c:2657
 msgid "Allocation failed\n"
 msgstr "Помилка розподілу пам'яті\n"
 
-#: array.c:836 cstp.c:975 gpst.c:1095 pulse.c:2669
+#: array.c:846
 #, c-format
-msgid "Short packet received (%d bytes)\n"
-msgstr "Отримано надто короткий пакет (%d байтів)\n"
+msgid "Received %d more bytes after partial %d\n"
+msgstr ""
 
-#: array.c:852 array.c:1197
+#: array.c:860
+#, c-format
+msgid "Received partial packet, %d bytes\n"
+msgstr ""
+
+#: array.c:875
+#, c-format
+msgid "Unrecognised data packet, len %d\n"
+msgstr "Нерозпізнаний пакет даних, довжина %d\n"
+
+#: array.c:886
+#, c-format
+msgid "Received partial packet, %d of %d bytes\n"
+msgstr ""
+
+#: array.c:896 array.c:1256
 #, c-format
 msgid "Receive control packet of type %x:\n"
 msgstr "Отримання керівного пакета типу %x:\n"
 
-#: array.c:859 pulse.c:2702
+#: array.c:903 pulse.c:2702
 #, c-format
 msgid "Received data packet of %d bytes\n"
 msgstr "Отримано пакет даних у %d байтів\n"
 
-#: array.c:902 cstp.c:1105 gpst.c:1184 oncp.c:1079 ppp.c:1376 pulse.c:2835
+#: array.c:924
+#, c-format
+msgid "Moved down %d bytes after previous packet\n"
+msgstr "Пересунуто на %d байтів нижче після попереднього пакета\n"
+
+#: array.c:961 cstp.c:1105 gpst.c:1184 oncp.c:1079 ppp.c:1376 pulse.c:2835
 #, c-format
 msgid "SSL wrote too few bytes! Asked for %d, sent %d\n"
 msgstr "SSL записано надто мало байтів! Мало бути %d, надіслано %d\n"
 
 #. Not that this will ever happen; we don't even process
 #. the setting when we're asked for it.
-#: array.c:920 cstp.c:1133 oncp.c:1114 pulse.c:2862
+#: array.c:979 cstp.c:1133 oncp.c:1114 pulse.c:2862
 msgid "CSTP rekey due\n"
 msgstr "Потрібен повторний обмін ключами CSTP\n"
 
 #. if we failed rehandshake try establishing a new-tunnel instead of failing
-#: array.c:927 cstp.c:1140 oncp.c:1121 pulse.c:2869
+#: array.c:986 cstp.c:1140 oncp.c:1121 pulse.c:2869
 msgid "Rehandshake failed; attempting new-tunnel\n"
 msgstr ""
 "Не вдалося виконати повторне узгодження; намагаємося використати new-tunnel\n"
 
-#: array.c:937
+#: array.c:996
 msgid "TCP Dead Peer Detection detected dead peer!\n"
 msgstr "DPD TCP виявлено непрацездатний вузол!\n"
 
-#: array.c:941
+#: array.c:1000
 msgid "TCP reconnect failed\n"
 msgstr "Не вдалося повторно встановити з'єднання TCP\n"
 
-#: array.c:957
+#: array.c:1016
 msgid "Send TCP DPD\n"
 msgstr "Надсилання DPD TCP\n"
 
-#: array.c:974
+#: array.c:1033
 msgid "Send TCP Keepalive\n"
 msgstr "Надсилання Keepalive TCP\n"
 
-#: array.c:990
+#: array.c:1049
 msgid "Sending DTLS off packet\n"
 msgstr "Надсилаємо пакет вимикання DTLS\n"
 
-#: array.c:1000 cstp.c:1219 oncp.c:1197
+#: array.c:1059 cstp.c:1219 oncp.c:1197
 #, c-format
 msgid "Sending uncompressed data packet of %d bytes\n"
 msgstr "Надсилаємо розпакований пакунок даних з %d байтів\n"
 
-#: array.c:1038 dtls.c:259 ppp.c:1790
+#: array.c:1097 dtls.c:259 ppp.c:1790
 msgid "Attempt new DTLS connection\n"
 msgstr "Спроба встановити нове з'єднання DTLS\n"
 
-#: array.c:1072 ppp.c:1688
+#: array.c:1131 ppp.c:1688
 msgid "Failed to receive authentication response from DTLS\n"
 msgstr "Не вдалося отримати відповідь щодо розпізнавання від DTLS\n"
 
-#: array.c:1084
+#: array.c:1143
 msgid "DTLS session established\n"
 msgstr "Встановлено сеанс DTLS\n"
 
-#: array.c:1097
+#: array.c:1156
 msgid "Received Legacy IP over DTLS; assuming established\n"
 msgstr ""
 "Отримано застарілий IP з використанням DTLS; припускаємо встановлення\n"
 
-#: array.c:1105
+#: array.c:1164
 msgid "Received IPv6 over DTLS; assuming established\n"
 msgstr "Отримано IPv6 з використанням DTLS; припускаємо встановлення\n"
 
-#: array.c:1111
+#: array.c:1170
 msgid "Received unknown DTLS packet\n"
 msgstr "Отримано невідомий пакет DTLS\n"
 
-#: array.c:1119 ppp.c:1742
+#: array.c:1178 ppp.c:1742
 msgid "Error creating connect request for DTLS session\n"
 msgstr "Помилка під час спроби створення запиту на з'єднання для сеансу DTLS\n"
 
-#: array.c:1135 ppp.c:1758
+#: array.c:1194 ppp.c:1758
 msgid "Failed to write connect request to DTLS session\n"
 msgstr "Не вдалося записати запит на з'єднання до сеансу DTLS\n"
 
-#: array.c:1188 dtls.c:294
+#: array.c:1247 dtls.c:294
 #, c-format
 msgid "Received DTLS packet 0x%02x of %d bytes\n"
 msgstr "Отримано пакет DTLS 0x%02x розміром %d байтів\n"
 
-#: array.c:1212 dtls.c:358
+#: array.c:1271 dtls.c:358
 msgid "DTLS rekey due\n"
 msgstr "Потрібен повторний обмін ключами DTLS\n"
 
-#: array.c:1219 dtls.c:365
+#: array.c:1278 dtls.c:365
 msgid "DTLS Rehandshake failed; reconnecting.\n"
 msgstr ""
 "Не вдалося виконати повторне узгодження DTLS; намагаємося встановити зв'язок "
 "ще раз\n"
 
-#: array.c:1228 dtls.c:374
+#: array.c:1287 dtls.c:374
 msgid "DTLS Dead Peer Detection detected dead peer!\n"
 msgstr "DPD DTLS виявлено непрацездатний вузол!\n"
 
-#: array.c:1234 dtls.c:380
+#: array.c:1293 dtls.c:380
 msgid "Send DTLS DPD\n"
 msgstr "Надсилання DPD DTLS\n"
 
-#: array.c:1238 dtls.c:385
+#: array.c:1297 dtls.c:385
 msgid "Failed to send DPD request. Expect disconnect\n"
 msgstr "Не вдалося надіслати запит DPD. Очікуємо на від'єднання.\n"
 
-#: array.c:1277 dtls.c:452
+#: array.c:1336 dtls.c:452
 #, c-format
 msgid "Sent DTLS packet of %d bytes; DTLS send returned %d\n"
 msgstr ""
 "Надіслано пакет DTLS розміром %d байтів; функцією надсилання DTLS повернуто "
 "%d\n"
 
-#: array.c:1303 auth-globalprotect.c:813 f5.c:714 fortinet.c:847 oncp.c:1225
+#: array.c:1362 auth-globalprotect.c:813 f5.c:714 fortinet.c:847 oncp.c:1225
 msgid "Logout failed.\n"
 msgstr "Не вдалося вийти.\n"
 
-#: array.c:1305 auth-globalprotect.c:815 f5.c:716 fortinet.c:849 oncp.c:1227
+#: array.c:1364 auth-globalprotect.c:815 f5.c:716 fortinet.c:849 oncp.c:1227
 msgid "Logout successful.\n"
 msgstr "Успішний вихід.\n"
 
@@ -889,6 +909,11 @@ msgstr "Отримано пакет стиснених даних %s з %d ба�
 msgid "deflate failed %d\n"
 msgstr "не вдалося запакувати %d\n"
 
+#: cstp.c:975 gpst.c:1095 pulse.c:2669
+#, c-format
+msgid "Short packet received (%d bytes)\n"
+msgstr "Отримано надто короткий пакет (%d байтів)\n"
+
 #: cstp.c:988
 #, c-format
 msgid "Unexpected packet length. SSL_read returned %d but packet is\n"
@@ -1167,99 +1192,104 @@ msgstr "вихідні"
 msgid "Send ESP probes\n"
 msgstr "Надсилання зондування ESP\n"
 
-#: esp.c:197
+#: esp.c:182 esp.c:189
+#, c-format
+msgid "ESP receive error: %s\n"
+msgstr "Помилка під час отримання ESP: %s\n"
+
+#: esp.c:212
 #, c-format
 msgid "Received ESP packet from old SPI 0x%x, seq %u\n"
 msgstr "Отримано пакет ESP від застарілого SPI 0x%x, послідовність %u\n"
 
-#: esp.c:203
+#: esp.c:218
 #, c-format
 msgid "Received ESP packet with invalid SPI 0x%08x\n"
 msgstr "Отримано пакет ESP із некоректним SPI 0x%08x\n"
 
-#: esp.c:214
+#: esp.c:229
 #, c-format
 msgid "Received ESP Legacy IP packet of %d bytes\n"
 msgstr "Отримано пакет застарілого IP ESP розміром %d байтів\n"
 
-#: esp.c:217
+#: esp.c:232
 #, c-format
 msgid "Received ESP Legacy IP packet of %d bytes (LZO-compressed)\n"
 msgstr "Отримано пакет застарілого IP ESP розміром %d байтів (стиснено LZO)\n"
 
-#: esp.c:220
+#: esp.c:235
 #, c-format
 msgid "Received ESP IPv6 packet of %d bytes\n"
 msgstr "Отримано пакет IPv6 ESP розміром %d байтів\n"
 
-#: esp.c:224
+#: esp.c:239
 #, c-format
 msgid "Received ESP packet of %d bytes with unrecognised payload type %02x\n"
 msgstr "Отримано пакет ESP у %d байтів із нерозпізнаним типом вмісту %02x\n"
 
-#: esp.c:231
+#: esp.c:246
 #, c-format
 msgid "Invalid padding length %02x in ESP\n"
 msgstr "Некоректна довжина доповнення %02x в ESP\n"
 
-#: esp.c:243
+#: esp.c:258
 msgid "Invalid padding bytes in ESP\n"
 msgstr "Некоректні байти доповнення в ESP\n"
 
-#: esp.c:252
+#: esp.c:267
 msgid "ESP session established with server\n"
 msgstr "Встановлено сеанс ESP із сервером\n"
 
-#: esp.c:263
+#: esp.c:278
 msgid "Failed to allocate memory to decrypt ESP packet\n"
 msgstr "Не вдалося отримати пам'ять для розшифрування пакета ESP\n"
 
-#: esp.c:269
+#: esp.c:284
 msgid "LZO decompression of ESP packet failed\n"
 msgstr "Не вдалося розпакувати пакет ESP за допомогою LZO\n"
 
-#: esp.c:275
+#: esp.c:290
 #, c-format
 msgid "LZO decompressed %d bytes into %d\n"
 msgstr "Розпаковано %d байтів LZO у %d\n"
 
-#: esp.c:289
+#: esp.c:304
 msgid "Rekey not implemented for ESP\n"
 msgstr "Заміну ключів для ESP не реалізовано\n"
 
-#: esp.c:293
+#: esp.c:308
 msgid "ESP detected dead peer\n"
 msgstr "ESP виявлено непрацездатний вузол\n"
 
-#: esp.c:301
+#: esp.c:316
 msgid "Send ESP probes for DPD\n"
 msgstr "Надсилання зондів ESP для DPD\n"
 
-#: esp.c:308
+#: esp.c:323
 msgid "Keepalive not implemented for ESP\n"
 msgstr "Для ESP не реалізовано keepalive\n"
 
-#: esp.c:380
+#: esp.c:395
 #, c-format
 msgid "Requeueing failed ESP send: %s\n"
 msgstr ""
 "Повторно додаємо до черги дій надсилання ESP, яке завершилося помилкою: %s\n"
 
-#: esp.c:387
+#: esp.c:402
 #, c-format
 msgid "Failed to send ESP packet: %s\n"
 msgstr "Не вдалося надіслати пакет ESP: %s\n"
 
-#: esp.c:393
+#: esp.c:408
 #, c-format
 msgid "Sent ESP IPv%d packet of %d bytes\n"
 msgstr "Надіслано пакет IPv%d ESP розміром %d байтів\n"
 
-#: esp.c:462
+#: esp.c:477
 msgid "Failed to generate random keys for ESP\n"
 msgstr "Не вдалося створити випадкові ключі для ESP\n"
 
-#: esp.c:469
+#: esp.c:484
 msgid "Failed to generate initial IV for ESP\n"
 msgstr "Не вдалося створити початковий IV для ESP\n"
 
@@ -1665,7 +1695,7 @@ msgstr "Не вдалося зашифрувати пакет ESP: %s\n"
 msgid "Failed select() for TLS"
 msgstr "Помилка select() для TLS"
 
-#: gnutls.c:120 openssl.c:175
+#: gnutls.c:120 openssl.c:179
 msgid "TLS/DTLS write cancelled\n"
 msgstr "Запис TLS/DTLS скасовано\n"
 
@@ -1678,7 +1708,7 @@ msgstr "Не вдалося виконати запис до сокета TLS/DT
 msgid "Failed select() for TLS/DTLS"
 msgstr "Не вдалося виконати select() для TLS/DTLS"
 
-#: gnutls.c:175 gnutls.c:271 openssl.c:225 openssl.c:292
+#: gnutls.c:175 gnutls.c:271 openssl.c:229 openssl.c:296
 msgid "TLS/DTLS read cancelled\n"
 msgstr "Читання TLS/DTLS скасовано\n"
 
@@ -1694,7 +1724,7 @@ msgstr "Сокет TLS/DTLS закрито нештатно\n"
 msgid "Failed to read from TLS/DTLS socket: %s\n"
 msgstr "Не вдалося виконати читання з сокета TLS/DTLS: %s\n"
 
-#: gnutls.c:297 openssl.c:309
+#: gnutls.c:297 openssl.c:313
 #, c-format
 msgid "Attempted to read from non-existent %s session\n"
 msgstr "Спроба читання із сеансу %s, якого не існує\n"
@@ -1704,7 +1734,7 @@ msgstr "Спроба читання із сеансу %s, якого не існ
 msgid "Read error on %s session: %s\n"
 msgstr "Помилка читання у сеансі %s: %s\n"
 
-#: gnutls.c:321 openssl.c:334
+#: gnutls.c:321 openssl.c:338
 #, c-format
 msgid "Attempted to write to non-existent %s session\n"
 msgstr "Спроба записати сеанс %s, якого не існує\n"
@@ -1718,23 +1748,23 @@ msgstr "Помилка запису у сеансі %s: %s\n"
 msgid "Could not extract expiration time of certificate\n"
 msgstr "Не вдалося видобути час завершення строку дії сертифіката\n"
 
-#: gnutls.c:374 openssl.c:1702
+#: gnutls.c:374 openssl.c:1706
 msgid "Client certificate has expired at"
 msgstr "Строк дії сертифіката збігає"
 
-#: gnutls.c:375 openssl.c:1703
+#: gnutls.c:375 openssl.c:1707
 msgid "Secondary client certificate has expired at"
 msgstr "Строк дії вторинного сертифіката збігає"
 
-#: gnutls.c:377 openssl.c:1708
+#: gnutls.c:377 openssl.c:1712
 msgid "Client certificate expires soon at"
 msgstr "Строк дії сертифіката клієнта збігає"
 
-#: gnutls.c:378 openssl.c:1709
+#: gnutls.c:378 openssl.c:1713
 msgid "Secondary client certificate expires soon at"
 msgstr "Строк дії вторинного сертифіката клієнта збігає"
 
-#: gnutls.c:427 openssl.c:873
+#: gnutls.c:427 openssl.c:877
 #, c-format
 msgid "Failed to load item '%s' from keystore: %s\n"
 msgstr "Не вдалося завантажити запис «%s» зі сховища ключів: %s\n"
@@ -1764,15 +1794,15 @@ msgstr "Не вдалося прочитати сертифікат до пам�
 msgid "Failed to setup PKCS#12 data structure: %s\n"
 msgstr "Не вдалося налаштувати структуру даних PKCS#12: %s\n"
 
-#: gnutls.c:516 openssl.c:631
+#: gnutls.c:516 openssl.c:635
 msgid "Failed to decrypt PKCS#12 certificate file\n"
 msgstr "Не вдалося розшифрувати файл сертифіката PKCS#12\n"
 
-#: gnutls.c:523 openssl.c:637
+#: gnutls.c:523 openssl.c:641
 msgid "Enter PKCS#12 pass phrase:"
 msgstr "Введіть пароль PKCS#12:"
 
-#: gnutls.c:524 openssl.c:638
+#: gnutls.c:524 openssl.c:642
 msgid "Enter secondary PKCS#12 pass phrase:"
 msgstr "Введіть вторинний пароль PKCS#12:"
 
@@ -1843,11 +1873,11 @@ msgstr "Не вдалося розшифрувати ключ PEM: %s\n"
 msgid "Decrypting PEM key failed\n"
 msgstr "Не вдалося розшифрувати ключ PEM\n"
 
-#: gnutls.c:889 gnutls.c:1488 openssl.c:502
+#: gnutls.c:889 gnutls.c:1488 openssl.c:506
 msgid "Enter PEM pass phrase:"
 msgstr "Введіть пароль до PEM:"
 
-#: gnutls.c:890 openssl.c:503
+#: gnutls.c:890 openssl.c:507
 msgid "Enter secondary PEM pass phrase:"
 msgstr "Введіть вторинний пароль до PEM:"
 
@@ -1879,12 +1909,12 @@ msgstr "Помилка під час завантаження сертифіка
 msgid "Error loading system certificate: %s\n"
 msgstr "Помилка під час спроби завантажити загальносистемний сертифікат: %s\n"
 
-#: gnutls.c:1129 openssl.c:933
+#: gnutls.c:1129 openssl.c:937
 #, c-format
 msgid "Using certificate file %s\n"
 msgstr "Використовуємо файл сертифіката %s\n"
 
-#: gnutls.c:1130 openssl.c:934
+#: gnutls.c:1130 openssl.c:938
 #, c-format
 msgid "Using secondary certificate file %s\n"
 msgstr "Використовуємо вторинний файл сертифіката %s\n"
@@ -1959,7 +1989,7 @@ msgstr ""
 msgid "Using private key file %s\n"
 msgstr "Використовуємо файл закритого ключа %s\n"
 
-#: gnutls.c:1393 openssl.c:757
+#: gnutls.c:1393 openssl.c:761
 msgid "This version of OpenConnect was built without TPM support\n"
 msgstr "Цю версію OpenConnect зібрано без підтримки TPM\n"
 
@@ -1981,7 +2011,7 @@ msgstr "Не вдалося завантажити закритий ключ PKC
 msgid "Failed to load private key as PKCS#8: %s\n"
 msgstr "Не вдалося завантажити закритий ключ як PKCS#8: %s\n"
 
-#: gnutls.c:1484 gnutls.c:1517 openssl.c:1083 openssl.c:1098
+#: gnutls.c:1484 gnutls.c:1517 openssl.c:1087 openssl.c:1102
 msgid "Failed to decrypt PKCS#8 certificate file\n"
 msgstr "Не вдалося розшифрувати файл сертифіката PKCS#8\n"
 
@@ -1990,7 +2020,7 @@ msgstr "Не вдалося розшифрувати файл сертифіка
 msgid "Failed to determine type of private key %s\n"
 msgstr "Не вдалося визначити тип закритого ключа %s\n"
 
-#: gnutls.c:1521 openssl.c:1093
+#: gnutls.c:1521 openssl.c:1097
 msgid "Enter PKCS#8 pass phrase:"
 msgstr "Введіть пароль PKCS#8:"
 
@@ -2027,12 +2057,12 @@ msgid "Error creating an abstract privkey from /x509_privkey: %s\n"
 msgstr ""
 "Помилка під час спроби створення абстрактного privkey з /x509_privkey: %s\n"
 
-#: gnutls.c:1677 openssl.c:662 openssl.c:817
+#: gnutls.c:1677 openssl.c:666 openssl.c:821
 #, c-format
 msgid "Using client certificate '%s'\n"
 msgstr "Використовуємо клієнтський сертифікат «%s»\n"
 
-#: gnutls.c:1678 openssl.c:663 openssl.c:818
+#: gnutls.c:1678 openssl.c:667 openssl.c:822
 #, c-format
 msgid "Using secondary certificate '%s'\n"
 msgstr "Використовуємо вторинний сертифікат «%s»\n"
@@ -2097,11 +2127,11 @@ msgstr ""
 "Помилка під час спроби порівняти сертифікат сервера при повторному "
 "узгодженні з'єднання: %s\n"
 
-#: gnutls.c:2089 openssl.c:1623
+#: gnutls.c:2089 openssl.c:1627
 msgid "Server presented different cert on rehandshake\n"
 msgstr "Сервером надано інший сертифікат при повторному узгодженні з'єднання\n"
 
-#: gnutls.c:2094 openssl.c:1626
+#: gnutls.c:2094 openssl.c:1630
 msgid "Server presented identical cert on rehandshake\n"
 msgstr ""
 "Сервером надано той самий сертифікат при повторному узгодженні з'єднання\n"
@@ -2153,11 +2183,11 @@ msgstr "строк дії сертифіката збіг"
 msgid "signature verification failed"
 msgstr "не вдалося перевірити підпис"
 
-#: gnutls.c:2189 openssl.c:1503 openssl.c:1659
+#: gnutls.c:2189 openssl.c:1507 openssl.c:1663
 msgid "certificate does not match hostname"
 msgstr "сертифікат не відповідає назві вузла"
 
-#: gnutls.c:2194 openssl.c:1502 openssl.c:1665
+#: gnutls.c:2194 openssl.c:1506 openssl.c:1669
 #, c-format
 msgid "Server certificate verify failed: %s\n"
 msgstr "Сертифікат не пройшов перевірки: %s\n"
@@ -2182,7 +2212,7 @@ msgstr "Не вдалося прочитати сертифікати з cafile:
 msgid "Failed to open CA file '%s': %s\n"
 msgstr "Не вдалося відкрити файл служби сертифікації «%s»: %s\n"
 
-#: gnutls.c:2332 openssl.c:1892
+#: gnutls.c:2332 openssl.c:1896
 msgid "Loading certificate failed. Aborting.\n"
 msgstr "Не вдалося завантажити сертифікат. Перериваємо обробку.\n"
 
@@ -2195,12 +2225,12 @@ msgstr "Не вдалося побудувати рядок пріоритетн
 msgid "Failed to set GnuTLS priority string (\"%s\"): %s\n"
 msgstr "Не вдалося встановити рядок пріоритетності GnuTLS («%s»): %s\n"
 
-#: gnutls.c:2437 openssl.c:1972
+#: gnutls.c:2437 openssl.c:1976
 #, c-format
 msgid "SSL negotiation with %s\n"
 msgstr "Узгодження SSL з %s\n"
 
-#: gnutls.c:2493 openssl.c:1998
+#: gnutls.c:2493 openssl.c:2002
 msgid "SSL connection cancelled\n"
 msgstr "Спробу з’єднання SSL скасовано\n"
 
@@ -2214,7 +2244,7 @@ msgstr "Критична помилка у з'єднанні SSL: %s\n"
 msgid "GnuTLS non-fatal return during handshake: %s\n"
 msgstr "Некритичний стан повернення GnuTLS під час узгодження з'єднання: %s\n"
 
-#: gnutls.c:2518 openssl.c:2020
+#: gnutls.c:2518 openssl.c:2024
 #, c-format
 msgid "Connected to HTTPS on %s with ciphersuite %s\n"
 msgstr ""
@@ -2225,171 +2255,171 @@ msgstr ""
 msgid "Renegotiated SSL on %s with ciphersuite %s\n"
 msgstr "Повторно узгоджено SSL на %s за допомогою комплексу шифрування %s\n"
 
-#: gnutls.c:2670 openssl-pkcs11.c:206
+#: gnutls.c:2664 openssl-pkcs11.c:206
 #, c-format
 msgid "PIN required for %s"
 msgstr "Потрібен пінкод для %s"
 
-#: gnutls.c:2674 openssl-pkcs11.c:209
+#: gnutls.c:2668 openssl-pkcs11.c:209
 msgid "Wrong PIN"
 msgstr "Помилковий код"
 
-#: gnutls.c:2677
+#: gnutls.c:2671
 msgid "This is the final try before locking!"
 msgstr "Це остання спроба перед блокуванням!"
 
-#: gnutls.c:2679
+#: gnutls.c:2673
 msgid "Only a few tries left before locking!"
 msgstr "Лишилося лише декілька спроб перед блокуванням!"
 
-#: gnutls.c:2684 openssl-pkcs11.c:213
+#: gnutls.c:2678 openssl-pkcs11.c:213
 msgid "Enter PIN:"
 msgstr "Вкажіть пінкод: "
 
-#: gnutls.c:2770 openssl.c:2148
+#: gnutls.c:2764 openssl.c:2152
 msgid "Unsupported OATH HMAC algorithm\n"
 msgstr "Непідтримуваний алгоритм HMAC OATH\n"
 
-#: gnutls.c:2779
+#: gnutls.c:2773
 #, c-format
 msgid "Failed to calculate OATH HMAC: %s\n"
 msgstr "Не вдалося обчислити HMAC OATH: %s\n"
 
-#: gnutls.c:2793
+#: gnutls.c:2787
 #, c-format
 msgid "%s %dms\n"
 msgstr "%s %dмс\n"
 
-#: gnutls.c:2834
+#: gnutls.c:2828
 #, c-format
 msgid "Could not set ciphersuites: %s\n"
 msgstr "Не вдалося встановити комплекси шифрування: %s\n"
 
-#: gnutls.c:2841 openssl.c:2263
+#: gnutls.c:2835 openssl.c:2267
 msgid "Established EAP-TTLS session\n"
 msgstr "Встановлено сеанс EAP-TTLS\n"
 
-#: gnutls.c:2934
+#: gnutls.c:2928
 #, c-format
 msgid "Failed to generate STRAP key: %s\n"
 msgstr "Не вдалося створити ключ STRAP: %s\n"
 
-#: gnutls.c:2943
+#: gnutls.c:2937
 #, c-format
 msgid "Failed to generate STRAP DH key: %s\n"
 msgstr "Не вдалося створити ключ DH STRAP: %s\n"
 
-#: gnutls.c:2976
+#: gnutls.c:2970
 #, c-format
 msgid "Failed to decode server DH key: %s\n"
 msgstr "Не вдалося декодувати ключ DH сервера: %s\n"
 
-#: gnutls.c:2988
+#: gnutls.c:2982
 #, c-format
 msgid "Failed to export DH private key parameters: %s\n"
 msgstr "Не вдалося експортувати параметри закритого ключа DH: %s\n"
 
-#: gnutls.c:2994
+#: gnutls.c:2988
 #, c-format
 msgid "Failed to export server DH key parameters: %s\n"
 msgstr "Не вдалося експортувати параметри ключа DH сервера: %s\n"
 
-#: gnutls.c:3002
+#: gnutls.c:2996
 #, c-format
 msgid "HPKE uses unsupported EC curve (%d, %d)\n"
 msgstr "У HPKE використано непідтримувану еліптичну криву (%d, %d)\n"
 
-#: gnutls.c:3015
+#: gnutls.c:3009
 msgid "Failed to create ECC public point for ECDH\n"
 msgstr "Не вдалося створити відкриту точку ECC для ECDH\n"
 
-#: gnutls.c:3060
+#: gnutls.c:3052
 #, c-format
 msgid "HKDF extract failed: %s\n"
 msgstr "Помилка видобування HKDF: %s\n"
 
-#: gnutls.c:3072
+#: gnutls.c:3062
 #, c-format
 msgid "HKDF expand failed: %s\n"
 msgstr "Помилка розгортання HKDF: %s\n"
 
-#: gnutls.c:3091
+#: gnutls.c:3081
 #, c-format
 msgid "Failed to init AES-256-GCM cipher: %s\n"
 msgstr "Не вдалося ініціалізувати шифр AES-256-GCM: %s\n"
 
-#: gnutls.c:3100
+#: gnutls.c:3090
 #, c-format
 msgid "SSO token decryption failed: %s\n"
 msgstr "невдала спроба розшифрування жетона SSO: %s\n"
 
-#: gnutls.c:3143
+#: gnutls.c:3133
 #, c-format
 msgid "Failed to decode STRAP key: %s\n"
 msgstr "Не вдалося декодувати ключ STRAP: %s\n"
 
-#: gnutls.c:3169
+#: gnutls.c:3159
 #, c-format
 msgid "Failed to regenerate STRAP key: %s\n"
 msgstr "Не вдалося повторно створити ключ STRAP: %s\n"
 
-#: gnutls.c:3184 openssl.c:2509
+#: gnutls.c:3174 openssl.c:2513
 msgid "Failed to generate STRAP key DER\n"
 msgstr "Не вдалося створити DER ключа STRAP\n"
 
-#: gnutls.c:3209
+#: gnutls.c:3199
 #, c-format
 msgid "STRAP signature failed: %s\n"
 msgstr "Не вдалося виконати підписування STRAP: %s\n"
 
-#: gnutls.c:3300
+#: gnutls.c:3290
 msgid "Certificate may be multiple certificate authentication incompatible.\n"
 msgstr ""
 "Сертифікат може бути несумісним із розпізнаванням за декількома "
 "сертифікатами.\n"
 
-#: gnutls.c:3338
+#: gnutls.c:3328
 #, c-format
 msgid "gnutls_x509_crt_get_key_purpose_oid: %s.\n"
 msgstr "gnutls_x509_crt_get_key_purpose_oid: %s.\n"
 
-#: gnutls.c:3361
+#: gnutls.c:3351
 #, c-format
 msgid "gnutls_X509_crt_get_key_usage: %s.\n"
 msgstr "gnutls_X509_crt_get_key_usage: %s.\n"
 
-#: gnutls.c:3378
+#: gnutls.c:3368
 msgid ""
 "The certificate specifies key usages incompatible with authentication.\n"
 msgstr ""
 "У сертифікаті вказано використання ключів, яке є несумісним із "
 "розпізнаванням.\n"
 
-#: gnutls.c:3387
+#: gnutls.c:3377
 msgid "Certificate doesn't specify key usage.\n"
 msgstr "У сертифікаті не вказано використання ключів.\n"
 
-#: gnutls.c:3405
+#: gnutls.c:3395
 #, c-format
 msgid "Precondition failed %s[%s]:%d\n"
 msgstr "Не виконано попередню умову %s[%s]:%d\n"
 
-#: gnutls.c:3459
+#: gnutls.c:3449
 #, c-format
 msgid "Failed to generate the PKCS#7 structure: %s.\n"
 msgstr "Не вдалося створити структуру PKCS#7: %s.\n"
 
-#: gnutls.c:3493
+#: gnutls.c:3483
 #, c-format
 msgid "Precondition failed %s[%s]:%d.\n"
 msgstr "Не виконано попередню умову %s[%s]:%d.\n"
 
-#: gnutls.c:3528
+#: gnutls.c:3518
 #, c-format
 msgid "gnutls_privkey_sign_data: %s.\n"
 msgstr "gnutls_privkey_sign_data: %s.\n"
 
-#: gnutls.c:3553
+#: gnutls.c:3543
 #, c-format
 msgid "Failed to sign data with second certificate: %s.\n"
 msgstr "Не вдалося підписати дані другим сертифікатом: %s.\n"
@@ -3175,7 +3205,7 @@ msgstr "Отримано зашифрований жетон SSO з %d байт�
 msgid "Failed to decode SSO token at %d:\n"
 msgstr "Не вдалося декодувати жетон SSO у %d:\n"
 
-#: hpke.c:320
+#: hpke.c:321
 msgid "SSO token not alphanumeric\n"
 msgstr "Жетон SSO не складається з літер та цифр\n"
 
@@ -5310,370 +5340,370 @@ msgstr "Не вдалося встановити вторинний закрит
 msgid "This version of OpenConnect was built without PKCS#11 support\n"
 msgstr "Цю версію OpenConnect зібрано без підтримки PKCS#11\n"
 
-#: openssl.c:168
+#: openssl.c:172
 msgid "Failed to write to TLS/DTLS socket\n"
 msgstr "Не вдалося виконати запис до сокета TLS/DTLS\n"
 
-#: openssl.c:218 openssl.c:284
+#: openssl.c:222 openssl.c:288
 msgid "Failed to read from TLS/DTLS socket\n"
 msgstr "Не вдалося виконати читання з сокета TLS/DTLS\n"
 
-#: openssl.c:322
+#: openssl.c:326
 #, c-format
 msgid "Read error on %s session: %d\n"
 msgstr "Помилка читання у сеансі %s: %d\n"
 
-#: openssl.c:357
+#: openssl.c:361
 #, c-format
 msgid "Write error on %s session: %d\n"
 msgstr "Помилка запису у сеансі %s: %d\n"
 
-#: openssl.c:430
+#: openssl.c:434
 #, c-format
 msgid "Unhandled SSL UI request type %d\n"
 msgstr "Непридатний до обробки тип запиту щодо інтерфейсу SSL, %d\n"
 
-#: openssl.c:510
+#: openssl.c:514
 #, c-format
 msgid "PEM password too long (%d >= %d)\n"
 msgstr "Пароль PEM є надто довгим (%d >= %d)\n"
 
-#: openssl.c:556
+#: openssl.c:560
 msgid "Client certificate or key missing\n"
 msgstr "Не вистачає сертифіката або ключа клієнта\n"
 
-#: openssl.c:562 openssl.c:1027
+#: openssl.c:566 openssl.c:1031
 msgid "Loading private key failed\n"
 msgstr "Не вдалося завантажити закритий ключ\n"
 
-#: openssl.c:569
+#: openssl.c:573
 msgid "Failed to install certificate in OpenSSL context\n"
 msgstr "Не вдалося встановити сертифікат у контексті OpenSSL\n"
 
-#: openssl.c:593
+#: openssl.c:597
 #, c-format
 msgid "Extra cert from %s: '%s'\n"
 msgstr "Зайвий сертифікат від %s: «%s»\n"
 
-#: openssl.c:649
+#: openssl.c:653
 msgid "Parse PKCS#12 failed (see above errors)\n"
 msgstr ""
 "Не вдалося обробити PKCS#12 (див. наведені вище повідомлення про помилки)\n"
 
-#: openssl.c:650
+#: openssl.c:654
 msgid "Parse secondary PKCS#12 failed (see above errors)\n"
 msgstr ""
 "Не вдалося обробити вторинний PKCS#12 (див. наведені вище повідомлення про "
 "помилки)\n"
 
-#: openssl.c:667
+#: openssl.c:671
 msgid "PKCS#12 contained no certificate!\n"
 msgstr "PKCS#12 не містить сертифіката!\n"
 
-#: openssl.c:668
+#: openssl.c:672
 msgid "Secondary PKCS#12 contained no certificate!\n"
 msgstr "Вторинний PKCS#12 не містить сертифіката!\n"
 
-#: openssl.c:674
+#: openssl.c:678
 msgid "PKCS#12 contained no private key!\n"
 msgstr "PKCS#12 не містить закритого ключа!\n"
 
-#: openssl.c:675
+#: openssl.c:679
 msgid "Secondary PKCS#12 contained no private key!\n"
 msgstr "Вторинний PKCS#12 не містить закритого ключа!\n"
 
-#: openssl.c:682
+#: openssl.c:686
 msgid "PKCS#12"
 msgstr "PKCS#12"
 
-#: openssl.c:709
+#: openssl.c:713
 msgid "Can't load TPM engine.\n"
 msgstr "Не вдалося завантажити рушій TPM.\n"
 
-#: openssl.c:715
+#: openssl.c:719
 msgid "Failed to init TPM engine\n"
 msgstr "Не вдалося ініціалізувати рушій TPM\n"
 
-#: openssl.c:725
+#: openssl.c:729
 msgid "Failed to set TPM SRK password\n"
 msgstr "Не вдалося встановити пароль SRK TPM\n"
 
-#: openssl.c:739
+#: openssl.c:743
 msgid "Failed to load TPM private key\n"
 msgstr "Не вдалося завантажити закритий ключ TPM\n"
 
-#: openssl.c:740
+#: openssl.c:744
 msgid "Failed to load secondary TPM private key\n"
 msgstr "Не вдалося завантажити вторинний закритий ключ TPM\n"
 
-#: openssl.c:794 openssl.c:943
+#: openssl.c:798 openssl.c:947
 #, c-format
 msgid "Failed to open certificate file %s: %s\n"
 msgstr "Не вдалося відкрити файл сертифіката %s: %s\n"
 
-#: openssl.c:795
+#: openssl.c:799
 #, c-format
 msgid "Failed to open secondary certificate file %s: %s\n"
 msgstr "Не вдалося відкрити файл вторинного сертифіката %s: %s\n"
 
-#: openssl.c:805
+#: openssl.c:809
 msgid "Loading certificate failed\n"
 msgstr "Не вдалося завантажити сертифікат\n"
 
-#: openssl.c:836
+#: openssl.c:840
 msgid "Failed to process all supporting certs. Trying anyway...\n"
 msgstr ""
 "Не вдалося обробити усі підтримувані сертифікати. Виконуємо спробу попри "
 "це...\n"
 
-#: openssl.c:837
+#: openssl.c:841
 msgid "Failed to process secondary supporting certs. Trying anyway...\n"
 msgstr ""
 "Не вдалося обробити вторинні підтримувані сертифікати. Виконуємо спробу "
 "попри це...\n"
 
-#: openssl.c:850
+#: openssl.c:854
 msgid "PEM file"
 msgstr "Файл PEM"
 
-#: openssl.c:879
+#: openssl.c:883
 #, c-format
 msgid "Failed to create BIO for keystore item '%s'\n"
 msgstr "Не вдалося створити BIO для запису сховища ключів «%s»\n"
 
-#: openssl.c:906
+#: openssl.c:910
 msgid "Loading private key failed (wrong passphrase?)\n"
 msgstr "Не вдалося завантажити закритий ключ (помилковий пароль?)\n"
 
-#: openssl.c:907
+#: openssl.c:911
 msgid "Loading secondary private key failed (wrong passphrase?)\n"
 msgstr "Не вдалося завантажити вторинний закритий ключ (помилковий пароль?)\n"
 
-#: openssl.c:913
+#: openssl.c:917
 msgid "Loading private key failed (see above errors)\n"
 msgstr ""
 "Не вдалося завантажити закритий ключ (див. наведені вище повідомлення про "
 "помилки)\n"
 
-#: openssl.c:914
+#: openssl.c:918
 msgid "Loading secondary private key failed (see above errors)\n"
 msgstr ""
 "Не вдалося завантажити вторинний закритий ключ (див. наведені вище "
 "повідомлення про помилки)\n"
 
-#: openssl.c:966
+#: openssl.c:970
 msgid "Failed to load X509 certificate from keystore\n"
 msgstr "Не вдалося завантажити сертифікат X509 зі сховища ключів\n"
 
-#: openssl.c:1003
+#: openssl.c:1007
 #, c-format
 msgid "Failed to open private key file %s: %s\n"
 msgstr "Не вдалося відкрити файл закритого ключа %s: %s\n"
 
-#: openssl.c:1028
+#: openssl.c:1032
 msgid "Loading secondary private key failed\n"
 msgstr "Не вдалося завантажити вторинний закритий ключ\n"
 
-#: openssl.c:1084 openssl.c:1099
+#: openssl.c:1088 openssl.c:1103
 msgid "Failed to decrypt secondary PKCS#8 certificate file\n"
 msgstr "Не вдалося розшифрувати файл вторинного сертифіката PKCS#8\n"
 
-#: openssl.c:1094
+#: openssl.c:1098
 msgid "Enter PKCS#8 secondary pass phrase:"
 msgstr "Введіть вторинний пароль PKCS#8:"
 
-#: openssl.c:1119
+#: openssl.c:1123
 msgid "Failed to convert PKCS#8 to OpenSSL EVP_PKEY\n"
 msgstr "Не вдалося перетворити PKCS#8 на EVP_PKEY OpenSSL\n"
 
-#: openssl.c:1120
+#: openssl.c:1124
 msgid "Failed to convert secondary PKCS#8 to OpenSSL EVP_PKEY\n"
 msgstr "Не вдалося перетворити вторинний PKCS#8 на EVP_PKEY OpenSSL\n"
 
-#: openssl.c:1130
+#: openssl.c:1134
 #, c-format
 msgid "Failed to identify private key type in '%s'\n"
 msgstr "Не вдалося ідентифікувати тип закритого ключа у «%s»\n"
 
-#: openssl.c:1307
+#: openssl.c:1311
 #, c-format
 msgid "Matched DNS altname '%s'\n"
 msgstr "Встановлено відповідність альтернативній назві DNS «%s»\n"
 
-#: openssl.c:1314
+#: openssl.c:1318
 #, c-format
 msgid "No match for altname '%s'\n"
 msgstr "Не знайдено відповідників серед альтернативних назв «%s»\n"
 
-#: openssl.c:1328
+#: openssl.c:1332
 #, c-format
 msgid "Certificate has GEN_IPADD altname with bogus length %d\n"
 msgstr ""
 "У сертифікаті містилася альтернативна назва GEN_IPADD із фіктивною довжиною "
 "%d\n"
 
-#: openssl.c:1339 openssl.c:1485
+#: openssl.c:1343 openssl.c:1489
 #, c-format
 msgid "Matched %s address '%s'\n"
 msgstr "Встановлено відповідність адреси %s «%s»\n"
 
-#: openssl.c:1346
+#: openssl.c:1350
 #, c-format
 msgid "No match for %s address '%s'\n"
 msgstr "Не знайдено відповідників адреси %s «%s»\n"
 
-#: openssl.c:1388
+#: openssl.c:1392
 #, c-format
 msgid "URI '%s' has non-empty path; ignoring\n"
 msgstr "Адреса «%s» містить непорожній шлях; ігноруємо\n"
 
-#: openssl.c:1393
+#: openssl.c:1397
 #, c-format
 msgid "Matched URI '%s'\n"
 msgstr "Встановлено відповідність адреси «%s»\n"
 
-#: openssl.c:1404
+#: openssl.c:1408
 #, c-format
 msgid "No match for URI '%s'\n"
 msgstr "Не знайдено відповідників адреси «%s»\n"
 
-#: openssl.c:1419
+#: openssl.c:1423
 #, c-format
 msgid "No altname in peer cert matched '%s'\n"
 msgstr ""
 "Жодна із альтернативних назв у сертифікаті вузла не збігається із «%s»\n"
 
-#: openssl.c:1427
+#: openssl.c:1431
 msgid "No subject name in peer cert!\n"
 msgstr "У сертифікаті вузла не вказано призначення!\n"
 
-#: openssl.c:1447
+#: openssl.c:1451
 msgid "Failed to parse subject name in peer cert\n"
 msgstr "Не вдалося обробити запис призначення у сертифікаті вузла\n"
 
-#: openssl.c:1454
+#: openssl.c:1458
 #, c-format
 msgid "Peer cert subject mismatch ('%s' != '%s')\n"
 msgstr "Невідповідність призначення сертифіката вузла («%s» != «%s»)\n"
 
-#: openssl.c:1459 openssl.c:1493
+#: openssl.c:1463 openssl.c:1497
 #, c-format
 msgid "Matched peer certificate subject name '%s'\n"
 msgstr "Встановлено відповідність призначення сертифіката вузла «%s»\n"
 
-#: openssl.c:1555
+#: openssl.c:1559
 #, c-format
 msgid "Extra cert from cafile: '%s'\n"
 msgstr "Зайвий сертифікат у файлі CA: «%s»\n"
 
-#: openssl.c:1698
+#: openssl.c:1702
 msgid "Error in client cert notAfter field\n"
 msgstr "Помилка у полі notAfter клієнтського сертифіката\n"
 
-#: openssl.c:1699
+#: openssl.c:1703
 msgid "Error in secondary client cert notAfter field\n"
 msgstr "Помилка у полі notAfter вторинного клієнтського сертифіката\n"
 
-#: openssl.c:1714
+#: openssl.c:1718
 msgid "<error>"
 msgstr "<помилка>"
 
-#: openssl.c:1742
+#: openssl.c:1746
 msgid "SSL certificate and key do not match\n"
 msgstr "Невідповідність сертифіката SSL ключу\n"
 
-#: openssl.c:1778
+#: openssl.c:1782
 #, c-format
 msgid "Failed to read certs from CA file '%s'\n"
 msgstr "Не вдалося прочитати сертифікати з файла CA «%s»\n"
 
-#: openssl.c:1808
+#: openssl.c:1812
 #, c-format
 msgid "Failed to open CA file '%s'\n"
 msgstr "Не вдалося відкрити файл CA «%s»\n"
 
-#: openssl.c:1856
+#: openssl.c:1860
 msgid "Create TLSv1 CTX failed\n"
 msgstr "Не вдалося створити CTX TLSv1\n"
 
-#: openssl.c:1911
+#: openssl.c:1915
 msgid "Failed to construct OpenSSL cipher list\n"
 msgstr "Не вдалося побудувати список шифрів OpenSSL\n"
 
-#: openssl.c:1922
+#: openssl.c:1926
 #, c-format
 msgid "Failed to set OpenSSL cipher list (\"%s\")\n"
 msgstr "Не вдалося встановити список шифрувань OpenSSL («%s»)\n"
 
-#: openssl.c:1988
+#: openssl.c:1992
 msgid "SSL connection failure\n"
 msgstr "Критична помилка у з'єднанні SSL\n"
 
-#: openssl.c:2154
+#: openssl.c:2158
 msgid "Failed to calculate OATH HMAC\n"
 msgstr "Не вдалося обчислити HMAC OATH\n"
 
-#: openssl.c:2257
+#: openssl.c:2261
 #, c-format
 msgid "EAP-TTLS negotiation with %s\n"
 msgstr "Узгодження EAP-TTLS з %s\n"
 
-#: openssl.c:2268
+#: openssl.c:2272
 #, c-format
 msgid "EAP-TTLS connection failure %d\n"
 msgstr "Критична помилка з'єднання EAP-TTLS %d\n"
 
-#: openssl.c:2345
+#: openssl.c:2349
 msgid "Failed to generate STRAP key"
 msgstr "Не вдалося створити ключ STRAP"
 
-#: openssl.c:2355
+#: openssl.c:2359
 msgid "Failed to generate STRAP DH key\n"
 msgstr "Не вдалося створити ключ DH STRAP\n"
 
-#: openssl.c:2378
+#: openssl.c:2382
 msgid "Failed to decode STRAP key\n"
 msgstr "Не вдалося декодувати ключ STRAP\n"
 
-#: openssl.c:2406
+#: openssl.c:2410
 msgid "Failed to decode server DH key\n"
 msgstr "Не вдалося декодувати ключ DH сервера\n"
 
-#: openssl.c:2416
+#: openssl.c:2420
 msgid "Failed to compute DH secret\n"
 msgstr "Не вдалося обчислити ключ DH\n"
 
-#: openssl.c:2439
+#: openssl.c:2443
 msgid "HKDF key derivation failed\n"
 msgstr "Не вдалося виконати обчислення ключа HKDF\n"
 
-#: openssl.c:2460
+#: openssl.c:2464
 msgid "SSO token decryption failed\n"
 msgstr "невдала спроба розшифрування жетона SSO\n"
 
-#: openssl.c:2476
+#: openssl.c:2480
 #, c-format
 msgid "SSL Finished message too large (%zd bytes)\n"
 msgstr ""
 "Розмір повідомлення про завершення SSL є занадто великим (%zd байтів)\n"
 
-#: openssl.c:2486 openssl.c:2531
+#: openssl.c:2490 openssl.c:2535
 msgid "STRAP signature failed\n"
 msgstr "Не вдалося виконати підписування STRAP\n"
 
-#: openssl.c:2502
+#: openssl.c:2506
 msgid "Failed to regenerate STRAP key\n"
 msgstr "Не вдалося повторно створити ключ STRAP\n"
 
-#: openssl.c:2573
+#: openssl.c:2577
 msgid "Failed to create PKCS#7 structure\n"
 msgstr "Не вдалося створити структуру PKCS#7\n"
 
-#: openssl.c:2609
+#: openssl.c:2613
 msgid "Failed to output PKCS#7 structure\n"
 msgstr "Не вдалося вивести структуру PKCS#7\n"
 
-#: openssl.c:2703
+#: openssl.c:2707
 msgid "Failed to generate signature for multiple certificate authentication\n"
 msgstr ""
 "Не вдалося створити підпис для розпізнавання за декількома сертифікатами\n"
