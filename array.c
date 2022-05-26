@@ -925,6 +925,7 @@ int array_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		goto next_ip;
 	}
 
+	int corked = -1;
 	/* If SSL_write() fails we are expected to try again. With exactly
 	   the same data, at exactly the same location. So we keep the
 	   packet we had before.... */
@@ -932,6 +933,20 @@ int array_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 	handle_outgoing:
 		vpninfo->ssl_times.last_tx = time(NULL);
 		unmonitor_write_fd(vpninfo, ssl);
+
+		if (corked && vpninfo->current_ssl_pkt->len + corked >= 16384) {
+			gnutls_record_uncork(vpninfo->https_sess, GNUTLS_RECORD_WAIT);
+			vpn_progress(vpninfo, PRG_DEBUG, _("Flush %d corked bytes for full record (next %d)\n"),
+				     corked, vpninfo->current_ssl_pkt->len);
+			corked = -1;
+		}
+
+		/* If there are more packets to come, cork */
+		if (vpninfo->dtls_state != DTLS_ESTABLISHED &&
+		    vpninfo->outgoing_queue.head && corked < 0) {
+			gnutls_record_cork(vpninfo->https_sess);
+			corked = 0;
+		}
 
 		ret = ssl_nonblock_write(vpninfo, 0,
 					 vpninfo->current_ssl_pkt->data,
@@ -963,6 +978,11 @@ int array_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			vpninfo->quit_reason = "Internal error";
 			return 1;
 		}
+		if (corked >= 0) {
+			corked += ret;
+			vpn_progress(vpninfo, PRG_TRACE, _("Corked %d bytes to make %d\n"), ret, corked);
+		}
+
 		/* Don't free the 'special' packets */
 		if (vpninfo->current_ssl_pkt != &dpd_pkt &&
 		    vpninfo->current_ssl_pkt != &nodtls_pkt)
@@ -1061,6 +1081,12 @@ int array_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 
 		vpninfo->current_ssl_pkt = this;
 		goto handle_outgoing;
+	}
+
+	if (corked >= 0) {
+		gnutls_record_uncork(vpninfo->https_sess, GNUTLS_RECORD_WAIT);
+		vpn_progress(vpninfo, PRG_DEBUG, _("Flush %d corked bytes on completion\n"),
+			     corked);
 	}
 
 	/* Work is not done if we just got rid of packets off the queue */
