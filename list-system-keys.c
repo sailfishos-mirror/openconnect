@@ -51,8 +51,9 @@ int main(void)
 
 	if (err == GNUTLS_E_REQUESTED_DATA_NOT_AVAILABLE)
 		err = 0;
-
-	if (err < 0)
+	else if (err == GNUTLS_E_UNIMPLEMENTED_FEATURE)
+		fprintf(stderr, "GnuTLS does not support a concept of system keys on this platform.\n");
+	else if (err < 0)
 		fprintf(stderr, "Error listing keys: %s\n", gnutls_strerror(err));
 
 	gnutls_system_key_iter_deinit(iter);
