@@ -503,6 +503,9 @@ static int parse_portal_xml(struct openconnect_info *vpninfo, xmlNode *xml_node,
 	}
 
 	if (!gateways) {
+no_gateways:
+		vpn_progress(vpninfo, PRG_ERR,
+					 _("GlobalProtect portal configuration lists no gateway servers.\n"));
 		result = -EINVAL;
 		goto out;
 	}
@@ -557,12 +560,8 @@ static int parse_portal_xml(struct openconnect_info *vpninfo, xmlNode *xml_node,
 				     choice->label, choice->name);
 		}
 	}
-	if (!opt->nr_choices) {
-		vpn_progress(vpninfo, PRG_ERR,
-					 _("GlobalProtect portal configuration lists no gateway servers.\n"));
-		result = -EINVAL;
-		goto out;
-	}
+	if (!opt->nr_choices)
+		goto no_gateways;
 	if (!vpninfo->authgroup && opt->nr_choices)
 		vpninfo->authgroup = strdup(opt->choices[0]->name);
 
