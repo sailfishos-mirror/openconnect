@@ -141,7 +141,8 @@ client:</p>
 
   <li><p>Run <tt>mitmproxy</tt> on the host system, and route traffic
   from the VM through it <i>transparently</i>, that is without setting
-  an explicit proxy.</p><p>With KVM/QEMU and user-mode networking, this
+  an explicit proxy. (See <a href="#antimitm">below</a>, for why an explicit proxy is unlikely to work.)</p>
+  <p>With KVM/QEMU and user-mode networking, this
   consists of setting the guest system's IPv4 gateway to
   <tt>10.0.2.2</tt> and setting up <tt>iptables</tt> rules on the
   Linux host to redirect traffic. (Described in more detail in
@@ -161,7 +162,7 @@ client:</p>
   <li><p>The client and/or server may employ various mechanisms to detect
   MITM and shut down the MITM'ed connection. <b>Trick,
   bludgeon, or confuse the client and server into ignoring this</b>;
-  see below for specific examples.</p><p>This usually works by
+  see <a href="#antimitm">below</a> for specific examples.</p><p>This usually works by
   sending a copy or hash/fingerprint of the server's TLS certificate
   as part of the in-band protocol data, and checking for differences
   from the certificate exchanged in the TLS handshake. </p></li>
@@ -169,6 +170,13 @@ client:</p>
   <li>Repeat these steps iteratively to understand how the VPN
   client's interaction with the VPN server works.</li>
 </ol>
+
+<h3 id="antimitm">Defeating anti-MITM measures</h3>
+
+<p>Many proprietary VPN clients will ignore <i>explicit</i> system/browser
+proxy settings and attempt to establish direct connections to VPN servers,
+which is why explicit proxy setups often will not work, and transparent
+proxying is required.</p>
 
 <p>In cases where your VPN client/server detect MITM'ed connections
 and stop communicating (6), it's typically necessary to write a script
