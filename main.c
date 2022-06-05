@@ -959,7 +959,8 @@ static void usage(void)
 	printf("      --no-passwd                 %s\n", _("Disable password/SecurID authentication"));
 	printf("      --non-inter                 %s\n", _("Do not expect user input; exit if it is required"));
 	printf("      --passwd-on-stdin           %s\n", _("Read password from standard input"));
-	printf("      --authgroup=GROUP           %s\n", _("Choose authentication login selection"));
+	printf("      --authgroup=GROUP           %s\n", _("Select GROUP from authentication dropdown (may be known"));
+	printf("                                  %s\n", _("as \"realm\", \"domain\", \"gateway\"; protocol-dependent)"));
 	printf("  -F, --form-entry=FORM:OPT=VALUE %s\n", _("Provide authentication form responses"));
 	printf("  -c, --certificate=CERT          %s\n", _("Use SSL client certificate CERT"));
 	printf("  -k, --sslkey=KEY                %s\n", _("Use SSL private key file KEY"));

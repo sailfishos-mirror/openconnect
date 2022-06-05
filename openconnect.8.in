@@ -421,7 +421,20 @@ More output (may be specified multiple times for additional output)
 XML config file
 .TP
 .B \-\-authgroup=GROUP
-Choose authentication login selection
+Select GROUP from authentication dropdown or list entry.
+
+Many VPNs require a selection from a dropdown or list during the
+authentication process. This selection may be known as
+.BR authgroup
+(on Cisco VPNs),
+.BR realm
+(Juniper, Pulse, Fortinet),
+.BR domain
+(F5), and
+.BR gateway
+(GlobalProtect).
+This option attempts to automatically fill the appropriate
+protocol-specific field with the desired value.
 .TP
 .B \-\-authenticate
 Authenticate to the VPN, output the information needed to make the connection in
