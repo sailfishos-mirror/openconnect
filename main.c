@@ -965,7 +965,7 @@ static void usage(void)
 	printf("  -c, --certificate=CERT          %s\n", _("Use SSL client certificate CERT"));
 	printf("  -k, --sslkey=KEY                %s\n", _("Use SSL private key file KEY"));
 	printf("  -e, --cert-expire-warning=DAYS  %s\n", _("Warn when certificate lifetime < DAYS"));
-	printf("  -g, --usergroup=GROUP           %s\n", _("Set login usergroup"));
+	printf("  -g, --usergroup=GROUP           %s\n", _("Set path of initial request URL"));
 	printf("  -p, --key-password=PASS         %s\n", _("Set key passphrase or TPM SRK PIN"));
 	printf("      --external-browser=BROWSER  %s\n", _("Set external browser executable"));
 	printf("      --key-password-from-fsid    %s\n", _("Key passphrase is fsid of file system"));

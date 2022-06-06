@@ -207,9 +207,16 @@ transmit a signal to the peer, requesting an immediate reply which can be used
 to confirm that the link between the two peers is still working.
 .TP
 .B \-g,\-\-usergroup=GROUP
-Use
-.I GROUP
-as login UserGroup
+Set the URL path of the initial HTTPS connection to the server.
+
+With some protocols, this path may function as a login group or realm,
+hence the naming of this option. For example, the following invocations
+of OpenConnect are equivalent:
+.nf
+.B openconnect \-\-usergroup=loginPath vpn.server.com
+.B openconnect https://vpn.server.com/loginPath
+.fi
+
 .TP
 .B \-F,\-\-form\-entry=FORM:OPTION=VALUE
 Provide authentication form input, where
@@ -394,16 +401,18 @@ tun/tap device. This allows the VPN IP traffic to be handled entirely in
 userspace, for example by a program which uses lwIP to provide SOCKS access
 into the VPN.
 .TP
-.B \-\-server=[https://]\fIHOST\fB[:\fIPORT\fB][/\fIGROUP\fB]
+.B \-\-server=[https://]\fIHOST\fB[:\fIPORT\fB][/\fIPATH\fB]
 Define the VPN server as a simple
 .I HOST
 or as an URL containing the
 . I HOST
 and optionally the
 .I PORT
-number and the login
-.I GROUP
-or realm.
+number and the
+.IR PATH ;
+with some protocols, the path may function as a login group or realm,
+and it may equivalently be specified with
+.BR \-\-usergroup .
 
 As an alternative, define the VPN server as non-option command line argument.
 .TP
@@ -456,7 +465,7 @@ for authentication, and then invoke openconnect separately to make the actual
 connection as root:
 .nf
 .B eval `openconnect --authenticate https://vpnserver.example.com`;
-.B [ -n "$COOKIE" ] && echo "$COOKIE" |
+.B [ -n \fR["$COOKIE"\fR] ] && echo \fR["$COOKIE"\fR] |
 .B \ \ sudo openconnect --cookie-on-stdin $CONNECT_URL --servercert $FINGERPRINT --resolve $RESOLVE
 .fi
 
