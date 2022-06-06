@@ -568,6 +568,21 @@ int install_vpn_opts(struct openconnect_info *vpninfo, struct oc_vpn_option *opt
 			     ip_info->mtu);
 	}
 
+	/* XX: Supported protocols and servers are inconsistent in how they send us
+	 * multiple search domains. Some provide domains via repeating fields which we
+	 * glom into a single space-separated string, some provide domains in single
+	 * fields which contain ',' or ';' as separators.
+	 *
+	 * Since neither ',' nor ';' is a legal character in a domain name, and since all
+	 * known routing configuration scripts support space-separated domains, we can
+	 * safely replace these characters with spaces, and thus support all known
+	 * combinations.
+	 */
+	for (char *p = (char *)ip_info->domain; p && *p; p++) {
+		if (*p == ';' || *p == ',')
+			*p = ' ';
+	}
+
 	/* Free the original options */
 	free_split_routes(&vpninfo->ip_info);
 	free_optlist(vpninfo->cstp_options);

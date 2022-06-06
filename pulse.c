@@ -380,11 +380,6 @@ static int process_attr(struct openconnect_info *vpninfo, struct oc_vpn_option *
 		vpn_progress(vpninfo, PRG_DEBUG, _("Received DNS search domain %.*s\n"),
 			     attrlen, (char *)data);
 		new_ip_info->domain = add_option_dup(new_opts, "search", (char *)data, attrlen);
-		if (new_ip_info->domain) {
-			char *p = (char *)new_ip_info->domain;
-			while ((p = strchr(p, ',')))
-				*p = ' ';
-		}
 		break;
 
 	case 0x400b:
