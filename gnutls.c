@@ -3054,7 +3054,7 @@ int hkdf_sha256_extract_expand(struct openconnect_info *vpninfo, unsigned char *
 		return -EIO;
 	}
 
-	const gnutls_datum_t info_d = { info, infolen };
+	const gnutls_datum_t info_d = { (unsigned char *)info, infolen };
 
 	err = gnutls_hkdf_expand(GNUTLS_MAC_SHA256, &d, &info_d, d.data, d.size);
 	if (err) {
