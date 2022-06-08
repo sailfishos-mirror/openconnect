@@ -121,7 +121,7 @@ static void add_form_field(char *field);
 static void __attribute__ ((format(printf, 3, 4)))
     syslog_progress(void *_vpninfo, int level, const char *fmt, ...)
 {
-	struct openconnect_info *vpninfo;
+	struct openconnect_info *vpninfo = _vpninfo;
 	static int l[4] = {
 		ANDROID_LOG_ERROR,	/* PRG_ERR   */
 		ANDROID_LOG_INFO,	/* PRG_INFO  */
