@@ -82,18 +82,17 @@ protocols for data transport.
 It was originally written to support Cisco "AnyConnect" VPN servers,
 and has since been extended with experimental support for Juniper
 Network Connect
-.RB ( \-\-protocol=nc )
-Junos Pulse VPN servers,
-.RB ( \-\-protocol=pulse )
-PAN GlobalProtect VPN servers,
-.RB ( \-\-protocol=gp )
-F5 Big-IP VPN servers,
-.RB ( \-\-protocol=f5 )
-Fortinet Fortigate VPN servers,
-.RB ( \-\-protocol=fortinet )
-and Array Networks SSL VPN servers,
-.RB ( \-\-protocol=array )
-.
+.RB ( \-\-protocol=nc ),
+Junos Pulse VPN servers
+.RB ( \-\-protocol=pulse ),
+PAN GlobalProtect VPN servers
+.RB ( \-\-protocol=gp ),
+F5 Big-IP VPN servers
+.RB ( \-\-protocol=f5 ),
+Fortinet Fortigate VPN servers
+.RB ( \-\-protocol=fortinet ),
+and Array Networks SSL VPN servers
+.RB ( \-\-protocol=array ).
 
 The connection happens in two phases. First there is a simple HTTPS
 connection over which the user authenticates somehow \- by using a
