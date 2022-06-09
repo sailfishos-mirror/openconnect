@@ -224,18 +224,19 @@ and
 are the identifiers from the form and the specific input field, and
 .I VALUE
 is the string to be filled in automatically. For example, the standard username field
-.I (also handled by the \-\-user option)
-could also be provided with this option thus:
-.I \-\-form\-entry
+(also handled by the
+.B \-\-user
+option) could also be provided with this option thus:
+.B \-\-form\-entry
 .IR main:username=joebloggs .
 
 This option should
 .I not
 be used to enter passwords.
-.I \-\-passwd\-on\-stdin
+.B \-\-passwd\-on\-stdin
 should be used for that purpose. Not only will this option expose the password value
 via the OpenConnect process's command line, but unlike
-.I \-\-passwd\-on\-stdin
+.B \-\-passwd\-on\-stdin
 this option will not recognize the case of an incorrect password, and stop trying
 to re-enter it repeatedly.
 .TP
@@ -682,8 +683,10 @@ instead of using the normal resolver to look it up.
 .TP
 .B \-\-servercert=HASH
 Accept server's SSL certificate only if it matches the provided fingerprint.
-This option implies \-\-no\-system\-trust, and may be specified multiple
-times in order to accept multiple possible fingerprints.
+This option implies
+.BR \-\-no\-system\-trust ,
+and may be specified multiple times in order to accept multiple possible
+fingerprints.
 
 The allowed fingerprint types are
 .IR SHA1 ,
