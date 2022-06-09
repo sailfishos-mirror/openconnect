@@ -159,8 +159,7 @@ version of GnuTLS, a PKCS#11 URL.
 The
 .B \-\-mca\-key
 option sets the private key for the secondary certificate (see
-.B \-\-mca\-certificate
-).
+.BR \-\-mca\-certificate ).
 .TP
 .B \-C,\-\-cookie=COOKIE
 Use authentication cookie
