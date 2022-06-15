@@ -95,6 +95,10 @@
 #define TTLS_MOREFRAGS	(1<<6)
 #define TTLS_START	(1<<5)
 
+/* FIXME: dedupe from gpst.c */
+#define ESP_HEADER_SIZE (4 /* SPI */ + 4 /* sequence number */)
+#define ESP_FOOTER_SIZE (1 /* pad length */ + 1 /* next header */)
+
 static void buf_append_ift_hdr(struct oc_text_buf *buf, uint32_t vendor, uint32_t type)
 {
 	uint32_t b[4];
@@ -2404,6 +2408,81 @@ static int handle_main_config_packet(struct openconnect_info *vpninfo,
 	l = load_be32(p);
 	if (handle_attr_elements(vpninfo, p, l, &new_opts, &new_ip_info) < 0)
 		goto bad_config;
+
+	/* XX: The Pulse servers always (or almost always?) send a constant value of 1400
+	 * for their proposed MTU. This is obviously bogus in many cases.
+	 *
+	 * We should calculate the MTU independently, as recent versions of the Pulse CLIENTs
+	 * apparently already do, and ignore the server's value if it's too high.
+	 * https://gitlab.com/openconnect/openconnect/-/issues/447#note_986184056
+	 *
+	 * 1. If using the ESP-over-UDP tunnel, the calculation should
+	 *    be identical to what GlobalProtect ESP already uses,
+	 *    because the encapsulation of the tunneled packets is
+	 *    identical.
+	 * 2. If using the TLS tunnel, we'll simply copy the Pulse clients' crude approach,
+	 *    rather than try to calculate the overhead of their insanely-layered protocol on
+	 *    our own. From https://kb.pulsesecure.net/articles/Pulse_Secure_Article/KB21481:
+	 *
+	 *    > Calculation of the MTU size for the virtual adapter is determined by the local physical interface of the client machine.
+	 *    > The virtual adapter will be 100 bytes less than the local physical adapter.
+	 *
+	 *    Note that this document (as well as https://docs.pulsesecure.net/WebHelp/PDC/9.1R5/pdc-admin-guide/ConfigPCS/ConfigPCS.htm#TOC_Advanced_Pulse_Client)
+	 *    completely elides any discussion of the substantially different overhead for
+	 *    TLS-based vs. ESP-based tunnel.
+	 *
+	 *    Furthermore, the estimate of 60 bytes of overhead for the TLS tunnel, from
+	 *    the "outer" TCP connection to the server to the tunneled "inner" packet, is
+	 *    an extremely poor one. The overhead of the TLS record layer is 5 bytes, and
+	 *    the overhead of the Pulse IF-T/TLS header is 16 bytes. So we can probably
+	 *    get away with shaving only 21 bytes when using TLS.
+	 */
+	char *no_esp_reason = NULL;
+#ifdef HAVE_ESP
+	if (vpninfo->dtls_state == DTLS_DISABLED)
+		no_esp_reason = _("ESP disabled");
+	else if (!vpninfo->esp_hmac) {
+		/* XX: we use esp_hmac as the sentinel here, because we NEED to know which HMAC algorithm is
+		 * being used in order to correctly determine the unpadded ESP overhead.
+		 */
+		no_esp_reason = _("No ESP parameters received");
+	}
+#else
+	no_esp_reason = _("ESP support not available in this build");
+#endif
+	int server_mtu = new_ip_info.mtu;
+	int calc_mtu;
+	if (!no_esp_reason) {
+		/* XX: We can't use vpninfo->hmac_out_len yet, because we haven't called
+		 * openconnect_setup_esp_keys() yet, and we can't call openconnect_setup_esp_keys()
+		 * yet because we don't know the SPIs yet, because those get sent in
+		 * a subsequent ESP config packet.
+		 *
+		 * See handle_esp_config_packet below.
+		 */
+		int hmac_out_len = (vpninfo->esp_hmac == HMAC_SHA256 ? 16 : 12 /* MD5 or SHA1 */);
+		calc_mtu = calculate_mtu(
+			vpninfo, /* is_udp */ 1,
+			ESP_HEADER_SIZE + hmac_out_len + MAX_IV_SIZE, /* ESP header size */
+			ESP_FOOTER_SIZE, /* ESP footer (contributes to payload before padding) */
+			16 /* blocksize for both AES-128 and AES-256 */ );
+	} else
+		calc_mtu = calculate_mtu(vpninfo,
+			/* is_udp */ 0,
+			/* unpadded_overhead */ 60,    /* 100 - 40, since calculate_mtu() already accounts for the TCP/IP (40 bytes for Legacy IP) */
+			/* padded_overhead */ 0,
+			/* block_size */ 1);
+	if (server_mtu == 0) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("No MTU received. Calculated %d for %s%s\n"), calc_mtu,
+			     no_esp_reason ? "SSL tunnel. " : "ESP tunnel", no_esp_reason ? : "");
+		new_ip_info.mtu = calc_mtu;
+	} else if (calc_mtu < server_mtu) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Server sent MTU of %d, which seems too big. Overriding to %d bytes, calculated for %s%s\n"), server_mtu, calc_mtu,
+			     no_esp_reason ? "SSL tunnel. " : "ESP tunnel", no_esp_reason ? : "");
+		new_ip_info.mtu = calc_mtu;
+	}
 
 	int ret = install_vpn_opts(vpninfo, new_opts, &new_ip_info);
 	if (ret) {
