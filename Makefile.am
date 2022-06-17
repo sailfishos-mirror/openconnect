@@ -18,7 +18,7 @@ endif
 lib_LTLIBRARIES = libopenconnect.la
 sbin_PROGRAMS = openconnect
 man8_MANS = openconnect.8
-noinst_PROGRAMS :=
+noinst_PROGRAMS := os-tcp-mtu
 
 AM_CFLAGS = @WFLAGS@
 AM_CPPFLAGS = -DLOCALEDIR="\"$(localedir)\""
@@ -172,6 +172,8 @@ list_system_keys_SOURCES = list-system-keys.c
 list_system_keys_CFLAGS = $(GNUTLS_CFLAGS)
 list_system_keys_LDADD = $(GNUTLS_LIBS)
 endif
+
+os_tcp_mtu_SOURCE = os-tcp-mtu.c
 
 pkgconfig_DATA = openconnect.pc
 
