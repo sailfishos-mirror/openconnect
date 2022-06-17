@@ -173,6 +173,11 @@ list_system_keys_CFLAGS = $(GNUTLS_CFLAGS)
 list_system_keys_LDADD = $(GNUTLS_LIBS)
 endif
 
+if !OPENCONNECT_WIN32
+noinst_PROGRAMS += os-tcp-mtu
+os_tcp_mtu_SOURCES = os-tcp-mtu.c
+endif
+
 pkgconfig_DATA = openconnect.pc
 
 EXTRA_DIST = AUTHORS version.sh COPYING.LGPL openconnect.ico $(POTFILES) openconnect.nsi.in
