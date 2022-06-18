@@ -2768,7 +2768,9 @@ int pulse_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		default:
 		unknown_pkt:
 			vpn_progress(vpninfo, PRG_ERR,
-				     _("Unknown Pulse packet\n"));
+				     _("Unknown Pulse packet of %d bytes (vendor 0x%03x, type 0x%02x, hdr_len %d, ident %d)\n"),
+				     len, load_be32(&pkt->pulse.vendor), load_be32(&pkt->pulse.type),
+				     load_be32(&pkt->pulse.len), load_be32(&pkt->pulse.ident));
 			dump_buf_hex(vpninfo, PRG_TRACE, '<', (void *)&vpninfo->cstp_pkt->pulse.vendor, len);
 			continue;
 		}
