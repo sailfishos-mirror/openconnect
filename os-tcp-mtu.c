@@ -168,6 +168,9 @@ int main(int argc, char **argv)
 	fprintf(stderr, "OS estimates of MTU/MSS for connected TCP socket:\n");
 
 #if defined(__linux__)
+	/**
+	 * TCP_INFO
+	 */
 	struct tcp_info ti;
 	opt_size = sizeof(ti);
 	ret = getsockopt(sock, IPPROTO_TCP, TCP_INFO, &ti, &opt_size);
@@ -177,9 +180,22 @@ int main(int argc, char **argv)
 	}
 
 	fprintf(stderr,
-		"  getsockopt TCP_INFO   -> rcv_mss %d, snd_mss %d, advmss %d, pmtu %d\n",
+		"  getsockopt TCP_INFO -> rcv_mss %d, snd_mss %d, advmss %d, pmtu %d\n",
 		ti.tcpi_rcv_mss, ti.tcpi_snd_mss, ti.tcpi_advmss, ti.tcpi_pmtu);
+	if (ti.tcpi_options & TCPI_OPT_TIMESTAMPS)
+		fprintf(stderr, "                         " "+ TCP timestamp option (10 bytes)\n");
+	if (ti.tcpi_options & TCPI_OPT_WSCALE)
+		fprintf(stderr, "                         " "+ TCP window scale option (3 bytes)\n");
+	if (ti.tcpi_options & TCPI_OPT_SACK)
+		fprintf(stderr, "                         " "+ TCP window scale option (2 + 10-34 bytes)\n");
+	if (ti.tcpi_options & (TCPI_OPT_ECN | TCPI_OPT_ECN_SEEN))
+		fprintf(stderr, "                         " "+ TCP ECN option (?)\n");
+	if (ti.tcpi_options & TCPI_OPT_SYN_DATA)
+		fprintf(stderr, "                         " "+ TCP SYN data option (?)\n");
 
+	/**
+	 * IP_MTU
+	 */
 	int mtu;
 	opt_size = sizeof(mtu);
 	ret = getsockopt(sock, IPPROTO_IP, IP_MTU, &mtu, &opt_size);
@@ -187,9 +203,23 @@ int main(int argc, char **argv)
 		perror("getsockopt IP_MTU");
 	else
 		fprintf(stderr, "  getsockopt IP_MTU     -> mtu %d\n", mtu);
+
+	/**
+	 * IP_OPTIONS
+	 */
+	char ip_options[40];
+	opt_size = sizeof(ip_options);
+	ret = getsockopt(sock, IPPROTO_IP, IP_OPTIONS, ip_options, &opt_size);
+	if (ret < 0)
+		perror("getsockopt IP_OPTIONS");
+	else
+		fprintf(stderr, "  getsockopt IP_OPTIONS -> options %d\n", opt_size);
 #endif
 
 #ifdef TCP_MAXSEG
+	/**
+	 * TCP_MAXSEG
+	 */
 	int mss;
 	opt_size = sizeof(mss);
 	ret = getsockopt(sock, IPPROTO_TCP, TCP_MAXSEG, &mss, &opt_size);
@@ -199,6 +229,9 @@ int main(int argc, char **argv)
 		fprintf(stderr, "  getsockopt TCP_MAXSEG -> mss %d\n", mss);
 #endif
 
+	/**
+	 * Interface MTU
+	 */
 	struct ifaddrs *ifaddr;
 	ret = getifaddrs(&ifaddr);
 	if (ret < 0) {
