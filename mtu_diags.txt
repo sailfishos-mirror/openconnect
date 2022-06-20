@@ -1,0 +1,89 @@
+
+
+
+                                                     ESP-over-UDP tunnel
+       VPN          +------------+-------------------------------------------------+----------------+---------+--------+---------+          VPN
+      client        | ESP footer |                                                 |  VPN protocol- |         |        |         |         server
+    (internet ------| (padding   |     Tunneled IP packet                          |  specific      |   ESP   |  UDP   |   IP    |------- (internet
+      facing        | and MAC)   |     			                           |  header        |         |        | (v4/v6) |          facing)
+    interface)      +------------+-------------------------------------------------+----------------+---------+--------+---------+
+
+                    |------------|-------------------------------------------------|----------------|---------|--------|---------|
+                         [3]           Tunnel MTU         	       	             This is ZERO       [2]       8B    IPv6: 40B
+                                                                                     for all known                      IPv4: 20B[10]
+                                                                                     VPN protocols
+
+
+
+                                                     DTLS-over-UDP tunnel
+       VPN          +------------+-------------------------------------------------+----------------+---------+--------+---------+          VPN
+      client        | DTLS footer|                                                 |  VPN protocol- |         |        |         |         server
+    (internet ------| (padding   |     Tunneled IP packet                          |  specific      |  DTLS   |  UDP   |   IP    |------- (internet
+      facing        | and MAC)   |                                                 |  header        |         |        | (v4/v6) |          facing)
+    interface)      +------------+-------------------------------------------------+----------------+---------+--------+---------+
+
+                    |------------|-------------------------------------------------|----------------|---------|--------|---------|
+                         [5]           Tunnel MTU                                         [1]          [4]        8B    IPv6: 40B
+                                                                                                                        IPv4: 20B[10]
+
+
+                                                      Outer IP packet
+       VPN          +------------+----------------------------------------------+----------------+---------+-----------+---------+          VPN
+      client        | TLS footer |                                              |  VPN protocol- |         |           |         |         server
+    (internet ------| (padding   |     Tunneled IP packet                       |  specific      |   TLS   |    TCP    |   IP    |------- (internet
+      facing        | and MAC)   |                                              |  header        |         |           | (v4/v6) |          facing)
+    interface)      +------------+----------------------------------------------+----------------+---------+-----------+---------+
+
+                    |------------|----------------------------------------------|----------------|---------|-----------|---------|
+                         [7]           Tunnel MTU                                       [1]          [6]      20B[11]   IPv6: 40B
+                                                                                                                        IPv4: 20B[10]
+
+                    |--------------------------------------------------------------------------------------|
+                                            TCP MSS of VPN client-server connection [8]
+                    |------------------------------------------------------------------------------------------------------------|
+                                            Path MTU of VPN client-server connection [9]
+
+
+================================================================================
+
+Stuff we ALREADY KNOW how to measure:
+
+[1] VPN protocol-specific headers.
+    OpenConnect knows how to compose these, so it knows their size.
+    Size is known and fixed by the time tunnel comes up.
+
+[2] ESP header is 8B (SPI and sequence number)
+
+[3] ESP footer consists of (https://datatracker.ietf.org/doc/html/rfc4303#page-5):
+      (a) Pad up to a multiple of block length (16 for either AES-128 or AES-256) minus 2B
+      (b) Append 1B pad length, 1B "next header field"
+      (c) Append MAC (16B for sha256, 12B for sha1 or md5)
+
+[4] DTLS 1.0/1.2 record layer header is 13 bytes (https://datatracker.ietf.org/doc/html/rfc4347#section-4.1, https://datatracker.ietf.org/doc/html/rfc6347#section-4.1)
+
+[6] TLS 1.0/1.1/1.2 record layer header is 5 bytes (https://datatracker.ietf.org/doc/html/rfc5246#section-6.2.1)
+
+[10] IPv4 can have extra options which increase the header size (https://en.wikipedia.org/wiki/IPv4#Header).
+     They're rarely used (maybe never on Linux?) but the size of these options can be calculated with getsockopt IP_OPTIONS. https://man7.org/linux/man-pages/man7/ip.7.html
+
+================================================================================
+
+Stuff I'm not sure about:
+
+[5, 7] DTLS and TLS "footers": I think these should be similar to ESP, but there are a lot
+       more algorithm versions and variants to get right.
+
+[11] TCP can have extra options which increase the header size by up to 40B. Some of these can be introspected with getsockopt TCP_INFO
+     (https://docs.huihoo.com/doxygen/linux/kernel/3.7/include_2uapi_2linux_2tcp_8h_source.html#l00127),
+     but it doesn't seem straightforward to precisely measure or predict the size in use for any outgoing packet.
+
+================================================================================
+
+Stuff the operating system can provide not-very-good measurements for:
+
+[8] TCP MSS. These are negotiated with the server, and tend to be on the conservative
+    side (that is, they "waste" some possible bytes).
+
+[9] PMTU.
+    Operating system's PMTU estimates tend to be on the conservative side.
+    Operating system's interface MTU estimates can be wrong in either direction without a feedback mechanism.
