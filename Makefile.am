@@ -467,7 +467,7 @@ uninstfiles.nsh: file-list.txt file-list-vpnc-script-win.js.txt file-list-$(TAPD
 # get it to work and life's too short.
 openconnect.nsi: version.c
 	$(AM_V_GEN) VERSION=$$(cut -f2 -d\" version.c); \
-	PROD_VERSION=$$(echo "$$VERSION" | perl -ne 'm|v(\d+)\.(\d+)(?:\.git\.\|\-)?(\d+)?(?:-g.+\|.*)|; print "$$1.$$2." . ($$3 or "0") . ".0"'); \
+	PROD_VERSION=$$(echo "$$VERSION" | perl -ne 'm|v(\d+)\.(\d+)(?:\.git\.\|\-)?(\d+)?(?:-g.+\|.*)|; printf("%1d.%1d.%1d.0",$$1,$$2,$$3)'); \
 	if egrep -q '^#define OPENCONNECT_GNUTLS' config.h; then \
 	    TLS_LIBRARY=GnuTLS; \
 	elif egrep -q '^#define OPENCONNECT_OPENSSL' config.h; then \

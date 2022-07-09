@@ -563,7 +563,6 @@ MinGW32/GnuTLS:
   tags:
   - shared
   except:
-  - tags
   - schedules
   artifacts:
     expire_in: 1 week
@@ -587,7 +586,6 @@ MinGW32/OpenSSL:
   tags:
   - shared
   except:
-  - tags
   - schedules
   artifacts:
     expire_in: 1 week
@@ -612,7 +610,6 @@ MinGW64/GnuTLS:
   tags:
   - shared
   except:
-  - tags
   - schedules
   artifacts:
     expire_in: 1 week
@@ -637,7 +634,6 @@ MinGW64/OpenSSL:
   tags:
   - shared
   except:
-  - tags
   - schedules
   artifacts:
     expire_in: 1 week
@@ -645,6 +641,26 @@ MinGW64/OpenSSL:
     paths:
       - tests/*.log
       - openconnect-installer.exe
+
+# Based on https://stackoverflow.com/a/65478446
+persist-windows-builds-for-tagged-releases:
+  # Use this job to specify artifacts that should never expire for tag pipelines.
+  stage: .post
+  # only load windows build artifacts
+  dependencies:
+    - "MinGW32/GnuTLS"
+    - "MinGW32/OpenSSL"
+    - "MinGW64/GnuTLS"
+    - "MinGW64/OpenSSL"
+  rules:
+    - if: '$CI_COMMIT_TAG != null'
+  script:
+    - echo "Preventing openconnect-installer.exe artifacts from expiring since this is a tagged build"
+  artifacts:
+    # Specify artifacts from previous jobs to be persisted indefinitely
+    paths:
+      - openconnect-installer.exe
+    expire_in: never
 
 ################################################################################
 # test-android
