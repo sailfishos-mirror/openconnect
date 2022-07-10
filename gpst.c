@@ -203,65 +203,66 @@ int gpst_xml_or_error(struct openconnect_info *vpninfo, char *response,
 			result = challenge_cb ? challenge_cb(vpninfo, prompt, inputStr, cb_data) : -EINVAL;
 			break;
 		default:
-			goto bad_xml;
-		}
-		free(prompt);
-		free(inputStr);
-		goto bad_xml;
-	}
-
-	xml_node = xmlDocGetRootElement(xml_doc);
-
-	/* is it <response status="error"><error>..</error></response> ? */
-	if (xmlnode_is_named(xml_node, "response")
-	    && !xmlnode_match_prop(xml_node, "status", "error")) {
-		for (xml_node=xml_node->children; xml_node; xml_node=xml_node->next) {
-			if (!xmlnode_get_val(xml_node, "error", &err))
-				goto out;
-		}
-		goto bad_xml;
-	}
-
-	/* Is it <prelogin-response><status>Error</status><msg>..</msg></prelogin-response> ? */
-	if (xmlnode_is_named(xml_node, "prelogin-response")) {
-		char *s = NULL;
-		int has_err = 0;
-		xmlNode *x;
-		for (x=xml_node->children; x; x=x->next) {
-			if (!xmlnode_get_val(x, "status", &s))
-				has_err = strcmp(s, "Success");
-			else
-				xmlnode_get_val(x, "msg", &err);
-		}
-		free(s);
-		if (has_err)
+			vpn_progress(vpninfo, PRG_ERR, _("Failed to parse non-XML server response\n"));
+			vpn_progress(vpninfo, PRG_DEBUG, _("Response was: %s\n"), response);
 			goto out;
-		free(err);
-		err = NULL;
-	}
-
-	/* is it <challenge><user>user.name</user><inputstr>...</inputstr><respmsg>...</respmsg></challenge> */
-	if (xmlnode_is_named(xml_node, "challenge")) {
-		for (xml_node=xml_node->children; xml_node; xml_node=xml_node->next) {
-			xmlnode_get_val(xml_node, "inputstr", &inputStr);
-			xmlnode_get_val(xml_node, "respmsg", &prompt);
-			/* XXX: override the username passed to the next form from <user> ? */
 		}
-		result = challenge_cb ? challenge_cb(vpninfo, prompt, inputStr, cb_data) : -EINVAL;
 		free(prompt);
 		free(inputStr);
-		goto bad_xml;
-	}
+	} else {
+		xml_node = xmlDocGetRootElement(xml_doc);
 
-	/* if it's XML, invoke callback (or default to success) */
-	result = xml_cb ? xml_cb(vpninfo, xml_node, cb_data) : 0;
+		/* is it <response status="error"><error>..</error></response> ? */
+		if (xmlnode_is_named(xml_node, "response")
+		    && !xmlnode_match_prop(xml_node, "status", "error")) {
+			for (xml_node=xml_node->children; xml_node; xml_node=xml_node->next) {
+				if (!xmlnode_get_val(xml_node, "error", &err))
+					goto out;
+			}
+		}
 
-bad_xml:
-	if (result == -EINVAL) {
-		vpn_progress(vpninfo, PRG_ERR,
-					 _("Failed to parse server response\n"));
-		vpn_progress(vpninfo, PRG_DEBUG,
-					 _("Response was: %s\n"), response);
+		/* Is it <prelogin-response><status>Error</status><msg>..</msg></prelogin-response> ? */
+		else if (xmlnode_is_named(xml_node, "prelogin-response")) {
+			char *s = NULL;
+			int has_err = 0;
+			xmlNode *x;
+			for (x=xml_node->children; x; x=x->next) {
+				if (!xmlnode_get_val(x, "status", &s))
+					has_err = strcmp(s, "Success");
+				else
+					xmlnode_get_val(x, "msg", &err);
+			}
+			free(s);
+			if (has_err)
+				goto out;
+			free(err);
+			err = NULL;
+			goto xml_callback;
+		}
+
+		/* is it <challenge><user>user.name</user><inputstr>...</inputstr><respmsg>...</respmsg></challenge> */
+	        else if (xmlnode_is_named(xml_node, "challenge")) {
+			for (xml_node=xml_node->children; xml_node; xml_node=xml_node->next) {
+				xmlnode_get_val(xml_node, "inputstr", &inputStr);
+				xmlnode_get_val(xml_node, "respmsg", &prompt);
+				/* XXX: override the username passed to the next form from <user> ? */
+			}
+			result = challenge_cb ? challenge_cb(vpninfo, prompt, inputStr, cb_data) : -EINVAL;
+			free(prompt);
+			free(inputStr);
+		}
+
+		/* invoke XML callback (or default to success) */
+		else
+		xml_callback:
+			result = xml_cb ? xml_cb(vpninfo, xml_node, cb_data) : 0;
+
+		if (result == -EINVAL) {
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("Failed to parse XML server response\n"));
+			vpn_progress(vpninfo, PRG_DEBUG,
+				     _("Response was: %s\n"), response);
+		}
 	}
 
 out:
