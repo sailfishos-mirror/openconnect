@@ -188,10 +188,20 @@ int gpst_xml_or_error(struct openconnect_info *vpninfo, char *response,
 		return -EINVAL;
 	}
 
-	/* is it XML? */
+	/* We need to distinguish XML from non-XML input, since GlobalProtect servers can
+	 * provide challenge-based 2FA in either XML or Javascript-y format with no
+	 * warning. See the discovery of this at
+	 * https://github.com/dlenski/openconnect/issues/109#issuecomment-391025707
+	 *
+	 * However, we also want to be able to use XML_PARSE_RECOVER in order to
+	 * parse XML leniently. With this flag, xmlReadMemory won't return NULL,
+	 * but will return an "empty" XML document, with a NULL root node.
+	 */
 	xml_doc = xmlReadMemory(response, strlen(response), NULL, NULL,
-				XML_PARSE_NOERROR);
-	if (!xml_doc) {
+				XML_PARSE_NOERROR|XML_PARSE_RECOVER);
+	xml_node = xmlDocGetRootElement(xml_doc);
+
+	if (!xml_node) {
 		/* is it Javascript? */
 		result = parse_javascript(response, &prompt, &inputStr);
 		switch (result) {

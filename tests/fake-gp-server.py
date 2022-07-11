@@ -184,10 +184,10 @@ def challenge_2fa(where):
     inputStr = '%04x' % randint(0x1000, 0xffff)
     session.update(step='%s-2FA' % where, inputStr=inputStr)
     if randint(1, 2) == 1:
-        tmpl = '<challenge><respmsg>2FA challenge from %s</respmsg><inputstr>%s</inputstr></challenge>'
+        tmpl = '<challenge><respmsg>XML 2FA challenge from %s & throw in an illegal unquoted ampersand</respmsg><inputstr>%s</inputstr></challenge>'
     else:
         tmpl = ('var respStatus = "Challenge";\n'
-                'var respMsg = "2FA challenge from %s";\n'
+                'var respMsg = "Javascript 2FA challenge from %s";\n'
                 'thisForm.inputStr.value = "%s";\n')
     return tmpl % (where, inputStr)
 
