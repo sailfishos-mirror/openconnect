@@ -668,6 +668,11 @@ int handle_redirect(struct openconnect_info *vpninfo)
 		vpninfo->redirect_url = NULL;
 
 		return 0;
+	} else if (vpninfo->redirect_url[0] == '\0' || vpninfo->redirect_url[0] == '#') {
+		/* Empty redirect, no op */
+		free(vpninfo->redirect_url);
+		vpninfo->redirect_url = NULL;
+		return 0;
         } else if (vpninfo->redirect_url[0] == '/') {
                 /* Absolute redirect within same host */
                 free(vpninfo->urlpath);
