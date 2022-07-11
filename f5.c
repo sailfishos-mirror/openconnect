@@ -248,7 +248,7 @@ static int parse_profile(struct openconnect_info *vpninfo, char *buf, int len,
 	if (!buf || !len)
 		return -EINVAL;
 
-	xml_doc = xmlReadMemory(buf, len, "noname.xml", NULL,
+	xml_doc = xmlReadMemory(buf, len, NULL, NULL,
 				XML_PARSE_NOERROR|XML_PARSE_RECOVER);
 	if (!xml_doc) {
 		vpn_progress(vpninfo, PRG_ERR,
@@ -333,7 +333,7 @@ static int parse_options(struct openconnect_info *vpninfo, char *buf, int len,
 	if (!buf || !len)
 		return -EINVAL;
 
-	xml_doc = xmlReadMemory(buf, len, "noname.xml", NULL,
+	xml_doc = xmlReadMemory(buf, len, NULL, NULL,
 				XML_PARSE_NOERROR|XML_PARSE_RECOVER);
 	if (!xml_doc) {
 		vpn_progress(vpninfo, PRG_ERR,

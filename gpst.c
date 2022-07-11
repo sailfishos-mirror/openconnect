@@ -189,7 +189,7 @@ int gpst_xml_or_error(struct openconnect_info *vpninfo, char *response,
 	}
 
 	/* is it XML? */
-	xml_doc = xmlReadMemory(response, strlen(response), "noname.xml", NULL,
+	xml_doc = xmlReadMemory(response, strlen(response), NULL, NULL,
 				XML_PARSE_NOERROR);
 	if (!xml_doc) {
 		/* is it Javascript? */

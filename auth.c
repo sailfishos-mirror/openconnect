@@ -603,7 +603,7 @@ static int parse_xml_response(struct openconnect_info *vpninfo,
 	form = calloc(1, sizeof(*form));
 	if (!form)
 		return -ENOMEM;
-	xml_doc = xmlReadMemory(response, strlen(response), "noname.xml", NULL,
+	xml_doc = xmlReadMemory(response, strlen(response), NULL, NULL,
 				XML_PARSE_NOERROR|XML_PARSE_RECOVER);
 	if (!xml_doc) {
 		vpn_progress(vpninfo, PRG_ERR,

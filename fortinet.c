@@ -396,7 +396,7 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 	if (!buf || !len)
 		return -EINVAL;
 
-	xml_doc = xmlReadMemory(buf, len, "noname.xml", NULL,
+	xml_doc = xmlReadMemory(buf, len, NULL, NULL,
 				XML_PARSE_NOERROR|XML_PARSE_RECOVER);
 	if (!xml_doc) {
 		vpn_progress(vpninfo, PRG_ERR,
