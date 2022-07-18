@@ -849,10 +849,6 @@ static xmlDocPtr xmlpost_new_query(struct openconnect_info *vpninfo, const char 
 	if (!capabilities)
 		goto bad;
 
-	node = xmlNewTextChild(capabilities, NULL, XCAST("auth-method"), XCAST("single-sign-on"));
-	if (!node)
-		goto bad;
-
 	node = xmlNewTextChild(capabilities, NULL, XCAST("auth-method"), XCAST("single-sign-on-v2"));
 	if (!node)
 		goto bad;
