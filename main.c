@@ -189,6 +189,7 @@ enum {
 	OPT_LIBPROXY,
 	OPT_NO_CERT_CHECK,
 	OPT_NO_DTLS,
+	OPT_NO_EXTERNAL_AUTH,
 	OPT_NO_HTTP_KEEPALIVE,
 	OPT_NO_SYSTEM_TRUST,
 	OPT_NO_PASSWD,
@@ -245,6 +246,7 @@ static const struct option long_options[] = {
 #ifdef HAVE_POSIX_SPAWN
 	OPTION("external-browser", 1, OPT_EXT_BROWSER),
 #endif
+	OPTION("no-external-auth", 0, OPT_NO_EXTERNAL_AUTH),
 	OPTION("pfs", 0, OPT_PFS),
 	OPTION("allow-insecure-crypto", 0, OPT_ALLOW_INSECURE_CRYPTO),
 	OPTION("certificate", 1, 'c'),
@@ -1071,6 +1073,7 @@ static void usage(void)
 	printf("      --force-trojan=INTERVAL     %s\n", _("Set minimum interval between trojan runs (in seconds)"));
 
 	printf("\n%s:\n", _("Server bugs"));
+	printf("      --no-external-auth          %s\n", _("Do not offer or use auth methods requiring external browser"));
 	printf("      --no-http-keepalive         %s\n", _("Disable HTTP connection re-use"));
 	printf("      --no-xmlpost                %s\n", _("Do not attempt XML POST authentication"));
 	printf("      --allow-insecure-crypto     %s\n", _("Allow use of the ancient, insecure 3DES and RC4 ciphers"));
@@ -2087,6 +2090,10 @@ int main(int argc, char **argv)
 			break;
 		case OPT_EXT_BROWSER:
 			ext_browser = dup_config_arg();
+			break;
+		case OPT_NO_EXTERNAL_AUTH:
+			/* XX: Is this a workaround for a server bug, or a "normal" authentication option? */
+			vpninfo->no_external_auth = 1;
 			break;
 		case 'u':
 			free(username);

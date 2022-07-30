@@ -633,6 +633,15 @@ mailing list.
 .TP
 .B \-\-no\-passwd
 Never attempt password (or SecurID) authentication.
+.TAG opt-no-external-auth
+.TP
+.B \-\-no\-external\-auth
+Prevent OpenConnect from advertising to the server that it supports
+any kind of authentication mode that requires an external browser.
+
+Some servers will force the client to use such an authentication mode
+if the client advertises it, but fallback to a more "scriptable"
+authentication mode if the client doesn't appear to support it.
 .TAG opt-no-xmlpost
 .TP
 .B \-\-no\-xmlpost
