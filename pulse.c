@@ -757,11 +757,13 @@ static int pulse_request_realm_entry(struct openconnect_info *vpninfo, struct oc
 }
 
 static int pulse_request_realm_choice(struct openconnect_info *vpninfo, struct oc_text_buf *reqbuf,
-				      int realms, unsigned char *eap)
+				      int realms, unsigned char *eap, int is_region)
 {
 	uint8_t avp_flags;
 	uint32_t avp_code;
 	uint32_t avp_vendor;
+	uint32_t expected_avp_code;
+	uint32_t reply_code;
 	int avp_len;
 	void *avp_p;
 	struct oc_auth_form f;
@@ -775,16 +777,27 @@ static int pulse_request_realm_choice(struct openconnect_info *vpninfo, struct o
 
 	memset(&f, 0, sizeof(f));
 	memset(&o, 0, sizeof(o));
-	f.auth_id = (char *)"pulse_realm_choice";
-	f.opts = &o.form;
-	f.authgroup_opt = &o;
-	f.authgroup_selection = 1;
-	f.message = _("Choose Pulse user realm:");
 
+	f.opts = &o.form;
 	o.form.next = NULL;
 	o.form.type = OC_FORM_OPT_SELECT;
-	o.form.name = (char *)"realm_choice";
-	o.form.label = (char *)_("Realm:");
+	if (!is_region) {
+		f.auth_id = (char *)"pulse_realm_choice";
+		f.authgroup_opt = &o;
+		f.authgroup_selection = 1;
+		f.message = _("Choose Pulse user realm:");
+		o.form.name = (char *)"realm_choice";
+		o.form.label = (char *)_("Realm:");
+		expected_avp_code = 0xd4e;
+		reply_code = 0xd50;
+	} else {
+		f.auth_id = (char *)"pulse_region_choice";
+		f.message = _("Choose Pulse region:");
+		o.form.name = (char *)"region_choice";
+		o.form.label = (char *)_("Region:");
+		expected_avp_code = 0xd51;
+		reply_code = 0xd52;
+	}
 
 	o.nr_choices = realms;
 	o.choices = calloc(realms, sizeof(*o.choices));
@@ -799,7 +812,7 @@ static int pulse_request_realm_choice(struct openconnect_info *vpninfo, struct o
 			ret = -EINVAL;
 			goto out;
 		}
-		if (avp_vendor != VENDOR_JUNIPER2 || avp_code != 0xd4e)
+		if (avp_vendor != VENDOR_JUNIPER2 || avp_code != expected_avp_code)
 			continue;
 
 		o.choices[i] = malloc(sizeof(struct oc_choice));
@@ -823,7 +836,7 @@ static int pulse_request_realm_choice(struct openconnect_info *vpninfo, struct o
 	} while (ret == OC_FORM_RESULT_NEWGROUP);
 
 	if (!ret)
-		buf_append_avp_string(reqbuf, 0xd50, o.form._value);
+		buf_append_avp_string(reqbuf, reply_code, o.form._value);
  out:
 	if (o.choices) {
 		for (i = 0; i < realms; i++) {
@@ -1319,7 +1332,7 @@ static int pulse_authenticate(struct openconnect_info *vpninfo, int connecting)
 	void *avp_p, *p;
 	unsigned char *eap;
 	int cookie_found = 0;
-	int j2_found = 0, realms_found = 0, realm_entry = 0, old_sessions = 0, gtc_found = 0;
+	int j2_found = 0, realms_found = 0, realm_entry = 0, old_sessions = 0, gtc_found = 0, regions_found = 0;
 	uint8_t j2_code = 0;
 	void *ttls = NULL;
 	char *user_prompt = NULL, *pass_prompt = NULL, *gtc_prompt = NULL, *signin_prompt = NULL;
@@ -1607,7 +1620,7 @@ static int pulse_authenticate(struct openconnect_info *vpninfo, int connecting)
 	else
 		prompt_flags &= ~PROMPT_GTC_NEXT;
 
-	realm_entry = realms_found = j2_found = old_sessions = 0, gtc_found = 0;
+	realm_entry = realms_found = j2_found = old_sessions = 0, gtc_found = 0, regions_found = 0;
 	eap = recv_eap_packet(vpninfo, ttls, (void *)bytes, sizeof(bytes));
 	if (!eap) {
 		ret = -EIO;
@@ -1707,6 +1720,8 @@ static int pulse_authenticate(struct openconnect_info *vpninfo, int connecting)
 			realms_found++;
 		} else if (avp_vendor == VENDOR_JUNIPER2 && avp_code == 0xd4f) {
 			realm_entry++;
+		} else if (avp_vendor == VENDOR_JUNIPER2 && avp_code == 0xd51) {
+			regions_found++;
 		} else if (avp_vendor == VENDOR_JUNIPER2 && avp_code == 0xd5c) {
 			if (avp_len != 4)
 				goto auth_unknown;
@@ -1791,7 +1806,7 @@ static int pulse_authenticate(struct openconnect_info *vpninfo, int connecting)
 	}
 
 	/* We want it to be precisely one type of request, not a mixture. */
-	if (realm_entry + !!realms_found + j2_found + gtc_found + cookie_found + !!old_sessions != 1 &&
+	if (realm_entry + !!realms_found + !!regions_found + j2_found + gtc_found + cookie_found + !!old_sessions != 1 &&
 	    !signin_prompt) {
 	auth_unknown:
 		vpn_progress(vpninfo, PRG_ERR,
@@ -1825,7 +1840,13 @@ static int pulse_authenticate(struct openconnect_info *vpninfo, int connecting)
 		} else if (realms_found) {
 			vpn_progress(vpninfo, PRG_TRACE, _("Pulse realm choice\n"));
 
-			ret = pulse_request_realm_choice(vpninfo, reqbuf, realms_found, eap);
+			ret = pulse_request_realm_choice(vpninfo, reqbuf, realms_found, eap, 0);
+			if (ret)
+				goto out;
+		} else if (regions_found) {
+			vpn_progress(vpninfo, PRG_TRACE, _("Pulse region choice\n"));
+
+			ret = pulse_request_realm_choice(vpninfo, reqbuf, regions_found, eap, 1);
 			if (ret)
 				goto out;
 		} else if (j2_found) {
