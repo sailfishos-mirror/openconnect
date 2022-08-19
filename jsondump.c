@@ -24,6 +24,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
+#include <inttypes.h>
 
 /*
  * Copyright (C) 2015 Mirko Pasqualetti  All rights reserved.
