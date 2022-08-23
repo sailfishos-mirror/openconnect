@@ -2327,20 +2327,27 @@ static int handle_main_config_packet(struct openconnect_info *vpninfo,
 	 *     00 0d           (length 13)
 	 *     03 00 00 00     (fixed)
 	 *     40 25 00 01 01  (unknown attr 0x4025, length 1, value 0x01)
+	 * Pulse 9.1R16: skip over a list of such attributes, ending with a 0x2c00
 	*/
 	if (bytes[0x20] == 0x2e) {
 		/* Length of attributes section */
-		int attr_len = load_be16(bytes + 0x2e);
-
-		/* Start of attributes */
-		if (load_be16(bytes + 0x2c) != 0x2c00 ||
-		    len < 0x2c + attr_len + 4 ||
-		    /* Process the attributes */
-		    handle_attr_elements(vpninfo, bytes + 0x2c, attr_len,
-					 &new_opts, &new_ip_info) < 0) {
-			goto bad_config;
-		}
-		offset += attr_len;
+		int attr_flag;
+		int attr_len;
+		do {
+			if (len < offset + 4)
+				goto bad_config;
+			/* Start of attributes */
+			attr_flag = load_be16(bytes + offset);
+			attr_len = load_be16(bytes + offset + 2);
+			if ((attr_flag != 0x2c00 && attr_flag != 0x2e00) ||
+			    len < offset + attr_len ||
+			    /* Process the attributes */
+			    handle_attr_elements(vpninfo, bytes + offset, attr_len,
+						 &new_opts, &new_ip_info) < 0) {
+				goto bad_config;
+			}
+			offset += attr_len;
+		} while (attr_flag != 0x2c00);
 	}
 
 	/* First part of header, similar to ESP, has already been checked */
