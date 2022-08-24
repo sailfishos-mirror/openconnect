@@ -2318,37 +2318,66 @@ static int handle_main_config_packet(struct openconnect_info *vpninfo,
 		free_split_routes(&new_ip_info);
 		return -EINVAL;
 	}
-
-	/* On Pulse 9.1R14, we see packet type 0x2e20f0000, whereas earlier
-	 * versions had 0x2c20f0000.
+	/* On Pulse 9.1R14 and 9.1R16, we see packet type 0x2e20f000, whereas
+	 * earlier versions had 0x2c20f000.
 	 * With the newer packet type, we seem to have a leading set of
-	 * attribute elements. Example:
-	 *     2c 00           (fixed)
-	 *     00 0d           (length 13)
-	 *     03 00 00 00     (fixed)
-	 *     40 25 00 01 01  (unknown attr 0x4025, length 1, value 0x01)
-	 * Pulse 9.1R16: skip over a list of such attributes, ending with a 0x2c00
-	*/
-	if (bytes[0x20] == 0x2e) {
-		/* Length of attributes section */
+	 * attribute elements.
+	 *
+	 * Example from earlier versions, starting at bytes+0x2c:
+	 *     2e 00           <start of routing information>
+	 *
+	 * Example from R14, starting at bytes+0x2c:
+	 *     2c 00           (fixed)                                      \
+	 *     00 0d                                             (length 13) |
+	 *     03 00 00 00     (fixed)                                       |
+	 *     40 25 00 01 01  (unknown attr 0x4025, length 1, value 0x01)  /
+	 *     2e 00           <start of routing information>
+	 *
+	 * Example from R16, starting at bytes+0x2c:
+	 *
+	 *     2e 00            (fixed)                                      \
+	 *     00 0d                                              (length 13) |
+	 *     03 00 00 00      (fixed)                                       |
+	 *     40 25 00 01 01   (unknown attr 0x4026, length 1, value 0x01)  /
+	 *     2c 00            (fixed)                                      \
+	 *     00 0d	                                          (length 13) |
+	 *     03 00 00 00      (fixed)                                       |
+	 *     40 26 00 01 01   (unknown attr 0x4025, length 1, value 0x01)  /
+	 *     2e 00            <start of routing information>
+	 */
+	if (load_be32(bytes + 0x20) == 0x2e20f000) {
 		int attr_flag;
 		int attr_len;
+		vpn_progress(vpninfo, PRG_TRACE,
+			     _("Processing Pulse main config packet for server version >= 9.1R14\n"));
 		do {
 			if (len < offset + 4)
 				goto bad_config;
+
 			/* Start of attributes */
 			attr_flag = load_be16(bytes + offset);
 			attr_len = load_be16(bytes + offset + 2);
+
 			if ((attr_flag != 0x2c00 && attr_flag != 0x2e00) ||
 			    len < offset + attr_len ||
-			    /* Process the attributes */
+			    /* Process the attributes, even though all the attrs that
+			     * we have ever seen in this section are unknown, and will
+			     * be logged and otherwise ignored. */
 			    handle_attr_elements(vpninfo, bytes + offset, attr_len,
 						 &new_opts, &new_ip_info) < 0) {
 				goto bad_config;
 			}
 			offset += attr_len;
 		} while (attr_flag != 0x2c00);
-	}
+		vpn_progress(vpninfo, PRG_TRACE,
+			     _("If any of the above attributes are meaningful, please report to <%s>\n"),
+			     "openconnect-devel@lists.infradead.org");
+
+	} else if (load_be32(bytes + 0x20) == 0x2c20f000)
+		vpn_progress(vpninfo, PRG_TRACE,
+			     _("Processing Pulse main config packet for server version < 9.1R14\n"));
+	else
+		goto bad_config;
 
 	/* First part of header, similar to ESP, has already been checked */
 	if (len < offset + 5 ||
@@ -2467,6 +2496,8 @@ static int handle_esp_config_packet(struct openconnect_info *vpninfo,
 	uint32_t spi;
 	int ret;
 
+	vpn_progress(vpninfo, PRG_TRACE,
+		     _("Processing Pulse ESP config packet\n"));
 	if (len < 0x6a ||
 	    load_be32(bytes + 0x2c) != len - 0x2c ||
 	    load_be32(bytes + 0x30) != 0x01000000 ||
