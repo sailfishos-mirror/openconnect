@@ -2353,6 +2353,7 @@ static int handle_main_config_packet(struct openconnect_info *vpninfo,
 	    len < offset + routes_len + 4 ||
 	    /* Another length field, must match to end of packet */
 	    load_be32(bytes + offset + routes_len) + routes_len + offset != len) {
+		goto bad_config;
 	}
 	p = bytes + offset + 8;
 	routes_len -= 8; /* The header including length and number of routes */
