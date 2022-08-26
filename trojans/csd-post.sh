@@ -23,13 +23,24 @@ fi
 
 # cURL 7.39 (https://bugzilla.redhat.com/show_bug.cgi?id=1195771)
 # is required to support pin-based certificate validation. Must set this
-# to false if using an older version of cURL.
+# to true if using an earlier version of cURL.
 
-INSECURE=false
-if [[ "$INSECURE" == "true" ]]; then
+MISSING_OPTION_PINNEDPUBKEY=false
+if [[ "$MISSING_OPTION_PINNEDPUBKEY" == "true" ]]; then
     echo "*********************************************************************" >&2
     echo "WARNING: running insecurely; will not validate CSD server certificate" >&2
     echo "*********************************************************************" >&2
+    PINNEDPUBKEY="-k"
+elif [[ -z "$CSD_SHA256" ]]; then
+    # We must be running with a version of OpenConnect prior to v8.00 if CSD_SHA256
+    # is unset. In that case, fallback to cURL's default certificate validation so
+    # as to fail-closed rather than fail-open in the case of an unknown or untrusted
+    # server certificate.
+    PINNEDPUBKEY=""
+else
+    # Validate certificate using pin-sha256 value in CSD_SHA256. OpenConnect v8.00
+    # and newer releases set the CSD_SHA256 variable unconditionally.
+    PINNEDPUBKEY="-k --pinnedpubkey sha256//$CSD_SHA256"
 fi
 
 
@@ -84,15 +95,6 @@ while [ "$1" ]; do
     if [ "$1" == "-stub" ];     then shift; STUB=${1//\"/}; fi
     shift
 done
-
-if [[ "$INSECURE" == "true" ]]; then
-    # Don't validate server certificate at all
-    PINNEDPUBKEY="-k"
-else
-    # Validate certificate using pin-sha256 value in CSD_SHA256, or fallback to
-    # cURL's default certificate validation if not set.
-    PINNEDPUBKEY="${CSD_SHA256:+"-k --pinnedpubkey sha256//$CSD_SHA256"}"
-fi
 
 URL="https://$CSD_HOSTNAME/+CSCOE+/sdesktop/token.xml?ticket=$TICKET&stub=$STUB"
 if [ -n "$XMLSTARLET" ]; then
