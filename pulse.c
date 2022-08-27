@@ -2358,8 +2358,22 @@ static int handle_main_config_packet(struct openconnect_info *vpninfo,
 			attr_flag = load_be16(bytes + offset);
 			attr_len = load_be16(bytes + offset + 2);
 
-			if ((attr_flag != 0x2c00 && attr_flag != 0x2e00) ||
-			    len < offset + attr_len ||
+			switch (attr_flag) {
+			case 0x2c00:
+				vpn_progress(vpninfo, PRG_TRACE,
+					     _("attr_flag 0x2c00: known for Pulse version >= 9.1R14\n"));
+				break;
+			case 0x2e00:
+				vpn_progress(vpninfo, PRG_TRACE,
+					     _("attr_flag 0x2e00: known for Pulse version >= 9.1R16\n"));
+				break;
+			default:
+				vpn_progress(vpninfo, PRG_ERR,
+					     _("attr_flag 0x%04x: unknown Pulse version. Please report to <%s>\n"),
+					     attr_flag, "openconnect-devel@lists.infradead.org");
+			}
+
+			if (len < offset + attr_len ||
 			    /* Process the attributes, even though all the attrs that
 			     * we have ever seen in this section are unknown, and will
 			     * be logged and otherwise ignored. */
