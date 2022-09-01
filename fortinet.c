@@ -288,6 +288,11 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 				goto out;
 			}
 		}
+		/* XX: We got "405 Method Not Allowed", which is strangely used to indicate invalid credentials */
+		else if (ret == -EOPNOTSUPP) {
+			free(form->message);
+			form->message = strdup(_("Invalid credentials; try again."));
+		}
 	}
 
  out:

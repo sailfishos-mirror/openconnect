@@ -973,6 +973,8 @@ int do_https_request(struct openconnect_info *vpninfo, const char *method, const
 			result = -EPERM;
 		else if (result == 512) /* GlobalProtect invalid username/password */
 			result = -EACCES;
+		else if (result == 405) /* Method not supported */
+			result = -EOPNOTSUPP;
 		else
 			result = -EINVAL;
 
