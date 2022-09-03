@@ -353,13 +353,16 @@ out:
 static int gpst_parse_config_xml(struct openconnect_info *vpninfo, xmlNode *xml_node, void *cb_data)
 {
 	xmlNode *member;
-	int n_dns = 0, esp_keys = 0, esp_v4 = 0, esp_v6 = 0;
+	int n_dns = 0;
 	int ret = 0;
 	char *s = NULL;
 	int ii;
 
-	uint32_t esp_magic = 0;
+#ifdef HAVE_ESP
+	int esp_keys = 0, esp_v4 = 0, esp_v6 = 0;
+	uint32_t esp_magic;
 	struct in6_addr esp6_magic;
+#endif /* HAVE_ESP */
 
 	if (!xml_node || !xmlnode_is_named(xml_node, "response"))
 		return -EINVAL;
@@ -415,15 +418,19 @@ static int gpst_parse_config_xml(struct openconnect_info *vpninfo, xmlNode *xml_
 			    vpninfo->ip_info.gateway_addr && strcmp(s, vpninfo->ip_info.gateway_addr))
 				vpn_progress(vpninfo, PRG_DEBUG,
 					     _("Gateway address in config XML (%s) differs from external gateway address (%s).\n"), s, vpninfo->ip_info.gateway_addr);
+#ifdef HAVE_ESP
 			esp_magic = inet_addr(s);
 			esp_v4 = 1;
+#endif /* HAVE_ESP */
 		} else if (!xmlnode_get_val(xml_node, "gw-address-v6", &s)) {
 			if (vpninfo->peer_addr->sa_family == IPPROTO_IPV6 &&
 			    vpninfo->ip_info.gateway_addr && strcmp(s, vpninfo->ip_info.gateway_addr))
 				vpn_progress(vpninfo, PRG_DEBUG,
 					     _("IPv6 gateway address in config XML (%s) differs from external gateway address (%s).\n"), s, vpninfo->ip_info.gateway_addr);
+#ifdef HAVE_ESP
 			inet_pton(AF_INET6, s, &esp6_magic);
 			esp_v6 = 1;
+#endif /* HAVE_ESP */
 		} else if (!xmlnode_get_val(xml_node, "connected-gw-ip", &s)) {
 			if (vpninfo->ip_info.gateway_addr && strcmp(s, vpninfo->ip_info.gateway_addr))
 				vpn_progress(vpninfo, PRG_DEBUG, _("Config XML <connected-gw-ip> address (%s) differs from external\n"

@@ -343,7 +343,6 @@ static const unsigned char esp_kmp_part2[] = {
 	0x00, 0x02, 0x00, 0x00, 0x00, 0x40, /* Attr 2 (secrets) */
 };
 /* And now 0x40 bytes of random secret for encryption and HMAC key */
-#endif
 
 static const struct pkt esp_enable_pkt = {
 	.next = NULL,
@@ -375,6 +374,7 @@ static int queue_esp_control(struct openconnect_info *vpninfo, int enable)
 	queue_packet(&vpninfo->tcp_control_queue, new);
 	return 0;
 }
+#endif /* HAVE_ESP */
 
 static int check_kmp_header(struct openconnect_info *vpninfo, unsigned char *bytes, int pktlen)
 {
@@ -1080,6 +1080,7 @@ int oncp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		if (vpninfo->current_ssl_pkt == vpninfo->deflate_pkt) {
 			free_pkt(vpninfo, vpninfo->pending_deflated_pkt);
 			vpninfo->pending_deflated_pkt = NULL;
+#ifdef HAVE_ESP
 		} else if (vpninfo->current_ssl_pkt == &esp_enable_pkt) {
 			/* Only set the ESP state to connected and actually start
 			   sending packets on it once the enable message has been
@@ -1088,6 +1089,7 @@ int oncp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 				     _("Sent ESP enable control packet\n"));
 			vpninfo->dtls_state = DTLS_ESTABLISHED;
 			work_done = 1;
+#endif /* HAVE_ESP */
 		} else {
 			free_pkt(vpninfo, vpninfo->current_ssl_pkt);
 		}
@@ -1164,6 +1166,7 @@ int oncp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		;
 	}
 #endif
+#ifdef HAVE_ESP
 	/* Queue the ESP enable message. We will start sending packets
 	 * via ESP once the enable message has been *sent* over the
 	 * TCP channel. Assign it directly to current_ssl_pkt so that
@@ -1172,6 +1175,7 @@ int oncp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		vpninfo->current_ssl_pkt = (struct pkt *)&esp_enable_pkt;
 		goto handle_outgoing;
 	}
+#endif /* HAVE_ESP */
 
 	vpninfo->current_ssl_pkt = dequeue_packet(&vpninfo->tcp_control_queue);
 	if (vpninfo->current_ssl_pkt)
