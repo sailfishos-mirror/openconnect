@@ -556,7 +556,7 @@ MinGW32/GnuTLS:
   - echo ':DOSWin:M::MZ::/usr/bin/wine:' > /proc/sys/fs/binfmt_misc/register
   - ./autogen.sh
   - mingw32-configure --without-gnutls-version-check CFLAGS=-g
-  - make -j4
+  - make -j4 INSTALLER_SUFFIX=MinGW32-GnuTLS
 # These tests seem to fail due to wine failing to start; setting as XFAIL
 # since these never run before this patch set.
   - make VERBOSE=1 -j4 check XFAIL_TESTS="sigterm dtls-psk"
@@ -569,7 +569,7 @@ MinGW32/GnuTLS:
     when: always
     paths:
       - tests/*.log
-      - openconnect-installer.exe
+      - openconnect-installer*.exe
 
 MinGW32/OpenSSL:
   stage: test-windows
@@ -579,7 +579,7 @@ MinGW32/OpenSSL:
   - echo ':DOSWin:M::MZ::/usr/bin/wine:' > /proc/sys/fs/binfmt_misc/register
   - ./autogen.sh
   - mingw32-configure --without-gnutls --with-openssl --without-openssl-version-check CFLAGS=-g
-  - make -j4
+  - make -j4 INSTALLER_SUFFIX=MinGW32-OpenSSL
 # These tests seem to fail due to wine failing to start; setting as XFAIL
 # since these never run before this patch set.
   - make VERBOSE=1 -j4 check XFAIL_TESTS="sigterm dtls-psk"
@@ -592,7 +592,7 @@ MinGW32/OpenSSL:
     when: always
     paths:
       - tests/*.log
-      - openconnect-installer.exe
+      - openconnect-installer*.exe
 
 MinGW64/GnuTLS:
   stage: test-windows
@@ -603,7 +603,7 @@ MinGW64/GnuTLS:
   - echo ':DOSWin:M::MZ::/usr/bin/wine:' > /proc/sys/fs/binfmt_misc/register
   - ./autogen.sh
   - mingw64-configure --without-gnutls-version-check CFLAGS=-g
-  - make -j4
+  - make -j4 INSTALLER_SUFFIX=MinGW64-GnuTLS
 # These tests seem to fail due to wine failing to start; setting as XFAIL
 # since these never run before this patch set.
   - make VERBOSE=1 -j4 check XFAIL_TESTS="sigterm dtls-psk"
@@ -616,7 +616,7 @@ MinGW64/GnuTLS:
     when: always
     paths:
       - tests/*.log
-      - openconnect-installer.exe
+      - openconnect-installer*.exe
 
 MinGW64/OpenSSL:
   stage: test-windows
@@ -627,7 +627,7 @@ MinGW64/OpenSSL:
   - echo ':DOSWin:M::MZ::/usr/bin/wine:' > /proc/sys/fs/binfmt_misc/register
   - ./autogen.sh
   - mingw64-configure --without-gnutls --with-openssl --without-openssl-version-check CFLAGS=-g
-  - make -j4
+  - make -j4 INSTALLER_SUFFIX=MinGW64-OpenSSL
 # These tests seem to fail due to wine failing to start; setting as XFAIL
 # since these never run before this patch set.
   - make VERBOSE=1 -j4 check XFAIL_TESTS="sigterm dtls-psk"
@@ -640,7 +640,7 @@ MinGW64/OpenSSL:
     when: always
     paths:
       - tests/*.log
-      - openconnect-installer.exe
+      - openconnect-installer*.exe
 
 # Based on https://stackoverflow.com/a/65478446
 persist-windows-builds-for-tagged-releases:
@@ -659,7 +659,7 @@ persist-windows-builds-for-tagged-releases:
   artifacts:
     # Specify artifacts from previous jobs to be persisted indefinitely
     paths:
-      - openconnect-installer.exe
+      - openconnect-installer*.exe
     expire_in: never
 
 ################################################################################

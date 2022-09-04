@@ -13,7 +13,6 @@
 # installer containing your program.
 
 Name "OpenConnect"
-OutFile "openconnect-installer.exe"
 InstallDir "$ProgramFiles\OpenConnect"
 InstallDirRegKey HKLM SOFTWARE\OpenConnect "Install_Dir"
 
