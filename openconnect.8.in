@@ -20,6 +20,7 @@ openconnect \- Multi-protocol VPN client, for Cisco AnyConnect VPNs and others
 .OP \-g,\-\-usergroup group
 .OP \-h,\-\-help
 .OP \-\-http\-auth methods
+.OP \-\-external\-browser browser
 .OP \-i,\-\-interface ifname
 .OP \-l,\-\-syslog
 .OP \-\-timestamp
@@ -275,6 +276,15 @@ argument is a comma-separated list of methods to be enabled. Note that the order
 does not matter: OpenConnect will use Negotiate, NTLM, Digest and Basic
 authentication in that order, if each is enabled, regardless of the order
 specified in the METHODS string.
+.TAG opt-external-browser
+.TP
+.B \-\-external\-browser=BROWSER
+Set
+.I BROWSER
+as the executable used by OpenConnect to handle the authentication process with
+gateways that support the
+.B single-sign-on-external-browser
+authentication method.
 .TAG opt-interface
 .TP
 .B \-i,\-\-interface=IFNAME
