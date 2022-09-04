@@ -414,7 +414,7 @@ static int gpst_parse_config_xml(struct openconnect_info *vpninfo, xmlNode *xml_
 			if (vpninfo->peer_addr->sa_family == IPPROTO_IP &&
 			    vpninfo->ip_info.gateway_addr && strcmp(s, vpninfo->ip_info.gateway_addr))
 				vpn_progress(vpninfo, PRG_DEBUG,
-					     _("Gateway address in config XML (%s) differs from external gateway address (%s).\n"), s, new_ip_info.gateway_addr);
+					     _("Gateway address in config XML (%s) differs from external gateway address (%s).\n"), s, vpninfo->ip_info.gateway_addr);
 			esp_magic = inet_addr(s);
 			esp_v4 = 1;
 		} else if (!xmlnode_get_val(xml_node, "gw-address-v6", &s)) {
