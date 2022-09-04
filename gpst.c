@@ -413,14 +413,21 @@ static int gpst_parse_config_xml(struct openconnect_info *vpninfo, xmlNode *xml_
 			/* As remarked in oncp.c, "this is a tunnel; having a
 			 * gateway is meaningless." See esp_send_probes_gp for the
 			 * gory details of what this field actually means.
+			 *
+			 * If we get both Legacy IP and IPv6 tags, then we must use the IPv6
+			 * value in order for both AFs to work over the tunnel (see 5b98b628
+			 * "GlobalProtect IPv6 ESP support").
 			 */
 			if (vpninfo->peer_addr->sa_family == IPPROTO_IP &&
 			    vpninfo->ip_info.gateway_addr && strcmp(s, vpninfo->ip_info.gateway_addr))
 				vpn_progress(vpninfo, PRG_DEBUG,
 					     _("Gateway address in config XML (%s) differs from external gateway address (%s).\n"), s, vpninfo->ip_info.gateway_addr);
 #ifdef HAVE_ESP
-			esp_magic = inet_addr(s);
-			esp_v4 = 1;
+			if (!esp_v6) {
+				/* We ignore the Legacy IP tag if we've already gotten the IPv6 tag. */
+				esp_magic = inet_addr(s);
+				esp_v4 = 1;
+			}
 #endif /* HAVE_ESP */
 		} else if (!xmlnode_get_val(xml_node, "gw-address-v6", &s)) {
 			if (vpninfo->peer_addr->sa_family == IPPROTO_IPV6 &&
