@@ -56,7 +56,7 @@ Token 7:
 	Serial: 108421384210c3f5
 </pre></td></tr></table>
 
-<p>This example shows the relatively common <a href="https://www.opensc-project.org/opensc/wiki/UnitedStatesPIV">PIV</a>
+<p>This example shows the relatively common <a href="https://github.com/OpenSC/OpenSC/wiki/US-PIV">PIV</a>
 SmartCard, in this case in a <a href="https://developers.yubico.com/yubico-piv-tool/YubiKey-NEO-PIV-Introduction.html">Yubikey NEO</a> device.</p>
 
 <h2>Locating the certificate</h2>

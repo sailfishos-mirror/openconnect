@@ -13,7 +13,7 @@
 <p>Support for Juniper's Network Connect protocol was added to
 OpenConnect in early 2015, for the 7.05 release. It is still
 experimental, and is quite likely to be deprecated in favour of the newer
-<a href="http://www.juniper.net/techpubs/en_US/junos-pulse4.0/topics/reference/a-c-c-nc-comparing.html">Junos
+<a href="https://www.juniper.net/content/dam/www/assets/solution-briefs/us/en/security/juniper-networks-and-pulse-secure-deliver-unified-secure-network-access.pdf">Junos
 Pulse</a> protocol.</p>
 
 <p>Juniper mode is requested by adding <tt>--protocol=nc</tt>
