@@ -2840,14 +2840,16 @@ static int process_auth_form_cb(void *_vpninfo,
 				vpn_progress(vpninfo, PRG_DEBUG, "Treating hidden form field '%s' as text entry\n", opt->name);
 				goto prompt;
 			}
-			empty = 0;
 		}
 	}
 
 	/* prevent infinite loops if the authgroup requires certificate auth only */
-	if (last_form_empty && empty)
+	if (!empty)
+		last_form_empty = 0;
+	else if (++last_form_empty >= 3) {
+		vpn_progress(vpninfo, PRG_ERR, "%d consecutive empty forms, aborting loop\n", last_form_empty);
 		return OC_FORM_RESULT_CANCELLED;
-	last_form_empty = empty;
+	}
 
 	return OC_FORM_RESULT_OK;
 
