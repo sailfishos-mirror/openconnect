@@ -80,7 +80,7 @@ static int parse_prelogin_xml(struct openconnect_info *vpninfo, xmlNode *xml_nod
 	struct oc_form_opt *opt, *opt2;
 	char *prompt = NULL, *username_label = NULL, *password_label = NULL;
 	char *s = NULL, *saml_method = NULL, *saml_path = NULL;
-	int result = 0;
+	int result = -EINVAL;
 
 	if (!xmlnode_is_named(xml_node, "prelogin-response"))
 		goto out;
@@ -110,41 +110,31 @@ static int parse_prelogin_xml(struct openconnect_info *vpninfo, xmlNode *xml_nod
 				if (len < 0) {
 					vpn_progress(vpninfo, PRG_ERR, "Could not decode SAML request as base64: %s\n", s);
 					free(s);
-					result = -EINVAL;
 					goto out;
 				}
 				free(s);
 				realloc_inplace(saml_path, len+1);
-				if (!saml_path) {
-					result = -ENOMEM;
-					goto out;
-				}
+				if (!saml_path)
+					goto nomem;
 				saml_path[len] = '\0';
 				vpninfo->sso_login = strdup(saml_path);
 				prompt = strdup("SAML REDIRECT authentication in progress");
-				if (!vpninfo->sso_login || !prompt) {
-					result = -ENOMEM;
-					goto out;
-				}
+				if (!vpninfo->sso_login || !prompt)
+					goto nomem;
 			} else if (!strcmp(saml_method, "POST")) {
 				const char *prefix = "data:text/html;base64,";
 				saml_path = s;
 				realloc_inplace(saml_path, strlen(saml_path)+strlen(prefix)+1);
-				if (!saml_path) {
-					result = -ENOMEM;
-					goto out;
-				}
+				if (!saml_path)
+					goto nomem;
 				memmove(saml_path + strlen(prefix), saml_path, strlen(saml_path) + 1);
 				memcpy(saml_path, prefix, strlen(prefix));
 				vpninfo->sso_login = strdup(saml_path);
 				prompt = strdup("SAML REDIRECT authentication in progress");
-				if (!vpninfo->sso_login || !prompt) {
-					result = -ENOMEM;
-					goto out;
-				}
+				if (!vpninfo->sso_login || !prompt)
+					goto nomem;
 			} else {
 				vpn_progress(vpninfo, PRG_ERR, "Unknown SAML method %s\n", saml_method);
-				result = -EINVAL;
 				goto out;
 			}
 
@@ -156,7 +146,6 @@ static int parse_prelogin_xml(struct openconnect_info *vpninfo, xmlNode *xml_nod
 			if (!vpninfo->open_webview) {
 				vpn_progress(vpninfo,
 					PRG_ERR, _("When SAML authentication is complete, specify destination form field by appending :field_name to login URL.\n"));
-				result = -EINVAL;
 				goto out;
 			}
 		}
@@ -217,6 +206,7 @@ static int parse_prelogin_xml(struct openconnect_info *vpninfo, xmlNode *xml_nod
 	else
 		opt2->type = OC_FORM_OPT_PASSWORD;
 
+	result = 0;
 	vpn_progress(vpninfo, PRG_TRACE, "Prelogin form %s: \"%s\" %s(%s)=%s, \"%s\" %s(%s)\n",
 	             form->auth_id,
 	             opt->label, opt->name, opt->type == OC_FORM_OPT_SSO_USER ? "SSO" : opt->type == OC_FORM_OPT_TEXT ? "TEXT" : "HIDDEN", opt->_value,
