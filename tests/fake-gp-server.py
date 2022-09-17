@@ -19,7 +19,7 @@
 
 import sys
 import ssl
-from random import randint
+from random import randint, choice
 import base64
 from json import dumps
 from functools import wraps
@@ -66,8 +66,12 @@ if_path2name = {'global-protect': 'portal', 'ssl-vpn': 'gateway'}
 
 # Configure the fake server. These settings will persist unless/until reconfigured or restarted:
 #   gateways: list of gateway names for portal to offer (all will point to same HOST:PORT as portal)
-#   portal_2fa: if set, require challenge-based 2FA to complete /global-protect/getconfig.esp request
-#   gw_2fa: if set, require challenge-based 2FA to complete /ssl-vpn/login.esp request
+#   {portal_2fa, gw_2fa}: require challenge-based 2FA to complete {/global-protect/getconfig.esp, /ssl-vpn/login.esp} request
+#     '': disabled
+#     xml: XML-based challenge
+#     js: JavaScript challenge
+#     html: JavaScript-wrapped-in-HTML challenge
+#     <any other value>: random
 #   portal_saml: set to 'portal-userauthcookie' or 'prelogin-cookie' to require SAML on portal (and
 #                expect the named cookie to be provided to signal SAML completion)
 #   gateway_saml: likewise, set to require SAML on gateway
@@ -77,8 +81,8 @@ if_path2name = {'global-protect': 'portal', 'ssl-vpn': 'gateway'}
 @dataclass
 class TestConfiguration:
     gateways: list = ('Default gateway',)
-    portal_2fa: bool = False
-    gw_2fa: bool = False
+    portal_2fa: str = None
+    gw_2fa: str = None
     portal_cookie: str = None
     portal_saml: str = None
     gateway_saml: str = None
@@ -93,8 +97,8 @@ def configure():
         gateways, portal_2fa, gw_2fa, portal_cookie, portal_saml, gateway_saml = request.form.get('gateways'), request.form.get('portal_2fa'), request.form.get('gw_2fa'), request.form.get('portal_cookie'), request.form.get('portal_saml'), request.form.get('gateway_saml')
         C.gateways = gateways.split(',') if gateways else ('Default gateway',)
         C.portal_cookie = portal_cookie
-        C.portal_2fa = bool(portal_2fa)
-        C.gw_2fa = bool(gw_2fa)
+        C.portal_2fa = portal_2fa and portal_2fa.strip().lower()
+        C.gw_2fa = gw_2fa and gw_2fa.strip().lower()
         C.portal_saml = portal_saml
         C.gateway_saml = gateway_saml
         return '', 201
@@ -179,17 +183,25 @@ def saml_complete():
     return body, saml_headers
 
 
-def challenge_2fa(where):
-    # select a random inputStr of 4 hex digits, and randomly return challenge in either XML or Javascript-y form
+def challenge_2fa(where, variant):
+    # select a random inputStr of 4 hex digits, and randomly return challenge in either XML or Javascript-y or HTML-wrapped Javascript-y form
     inputStr = '%04x' % randint(0x1000, 0xffff)
     session.update(step='%s-2FA' % where, inputStr=inputStr)
-    if randint(1, 2) == 1:
-        tmpl = '<challenge><respmsg>XML 2FA challenge from %s & throw in an illegal unquoted ampersand</respmsg><inputstr>%s</inputstr></challenge>'
+
+    variants = ('xml', 'js', 'html')
+    if variant not in variants:
+        variant = choice(variants)
+
+    if variant == 'xml':
+        return f'<challenge><respmsg>XML 2FA challenge from {where} & throw in an illegal unquoted ampersand</respmsg><inputstr>{inputStr}</inputstr></challenge>'
     else:
-        tmpl = ('var respStatus = "Challenge";\n'
-                'var respMsg = "Javascript 2FA challenge from %s";\n'
-                'thisForm.inputStr.value = "%s";\n')
-    return tmpl % (where, inputStr)
+        return ('var respStatus = "Challenge";\n'
+                f'''var respMsg = "Javascript 2FA challenge from '{where}'";\n'''
+                f'thisForm.inputStr.value = "{inputStr}";\n')
+        if variant == 'html':
+            return f'<html><head></head><body>{js}</body></html>'.replace("'", "&#39;")
+        else:
+            return js
 
 
 # Respond to portal getconfig request
@@ -198,7 +210,7 @@ def portal_config():
     inputStr = request.form.get('inputStr') or None
 
     if C.portal_2fa and not inputStr:
-        return challenge_2fa('portal')
+        return challenge_2fa('portal', C.portal_2fa)
 
     okay = False
     if C.portal_saml and request.form.get('user') and request.form.get(C.portal_saml):
@@ -236,7 +248,7 @@ def gateway_login():
         # a correct portal_cookie explicitly allows us to bypass other gateway login forms
         pass
     elif C.gw_2fa and not inputStr:
-        return challenge_2fa('gateway')
+        return challenge_2fa('gateway', C.gw_2fa)
     else:
         okay = False
         if C.gateway_saml and request.form.get('user') and request.form.get(C.gateway_saml):

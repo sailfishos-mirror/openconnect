@@ -61,7 +61,7 @@ echo -n "Authenticating with username/password, and selecting gateway, via porta
 echo ok
 
 echo "Configuring fake server to require 2FA-token and to propagate portal authentication to gateway."
-curl -sk $SERVURL/CONFIGURE -d portal_2fa=1 -d gw_2fa=1 -d portal_cookie=portal-userauthcookie
+curl -sk $SERVURL/CONFIGURE -d portal_2fa=random -d gw_2fa=random -d portal_cookie=portal-userauthcookie
 
 echo -n "Authenticating with username/password/2FA-token via portal, then continuing through 2FA-requiring gateway... "
 ( echo "test" | $CLIENT $SERVURL/portal --token-mode=totp --token-secret=FAKE --cookieonly >/dev/null 2>&1) ||
@@ -90,7 +90,7 @@ test $? = 2 || # what OpenConnect returns when server rejects cookie upon tunnel
 echo ok
 
 echo "Configuring fake server to require 2FA-token for gateway authentication."
-curl -sk $SERVURL/CONFIGURE -d gw_2fa=1
+curl -sk $SERVURL/CONFIGURE -d gw_2fa=random
 
 echo -n "Authenticating with username/password via portal, then +token via gateway... "
 ( echo "test" | $CLIENT $SERVURL/portal --token-mode=totp --token-secret=FAKE --cookieonly >/dev/null 2>&1) ||
@@ -98,11 +98,16 @@ echo -n "Authenticating with username/password via portal, then +token via gatew
 
 echo ok
 
-echo -n "Authenticating with username/password/token via gateway... "
-( echo "test" | $CLIENT $SERVURL/gateway --token-mode=totp --token-secret=FAKE --cookieonly >/dev/null 2>&1) ||
-    fail $PID "Could not receive cookie from fake GlobalProtect server"
+for cht in XML JS HTML; do
+    echo "Configuring fake server to require 2FA-token for gateway authentication ($cht-based challenge)."
+    curl -sk $SERVURL/CONFIGURE -d gw_2fa=$cht
 
-echo ok
+    echo -n "Authenticating with username/password/token via gateway... "
+    ( echo "test" | $CLIENT $SERVURL/gateway --token-mode=totp --token-secret=FAKE --cookieonly >/dev/null 2>&1) ||
+	fail $PID "Could not receive cookie from fake GlobalProtect server"
+
+    echo ok
+done
 
 echo "Resetting fake server to default configuration."
 curl -sk $SERVURL/CONFIGURE -d ''

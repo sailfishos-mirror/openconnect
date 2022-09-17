@@ -189,9 +189,14 @@ int gpst_xml_or_error(struct openconnect_info *vpninfo, char *response,
 	}
 
 	/* We need to distinguish XML from non-XML input, since GlobalProtect servers can
-	 * provide challenge-based 2FA in either XML or Javascript-y format with no
-	 * warning. See the discovery of this at
-	 * https://github.com/dlenski/openconnect/issues/109#issuecomment-391025707
+	 * provide challenge-based 2FA in any of the following formats with no warning:
+	 *   XML (reasonable)
+	 *   Javascript-y (stupid)
+	 *   Javascript wrapped in HTML (stupidest)
+	 * See the initial discovery of this at
+	 * https://github.com/dlenski/openconnect/issues/109#issuecomment-391025707,
+	 * and the HTML-wrapped version at
+	 * https://gitlab.com/openconnect/openconnect/-/issues/495
 	 *
 	 * However, we also want to be able to use XML_PARSE_RECOVER in order to
 	 * parse XML leniently. With this flag, xmlReadMemory won't return NULL,
@@ -202,6 +207,7 @@ int gpst_xml_or_error(struct openconnect_info *vpninfo, char *response,
 	xml_node = xmlDocGetRootElement(xml_doc);
 
 	if (!xml_node) {
+	try_javascript:
 		/* is it Javascript? */
 		result = parse_javascript(response, &prompt, &inputStr);
 		switch (result) {
@@ -260,6 +266,16 @@ int gpst_xml_or_error(struct openconnect_info *vpninfo, char *response,
 			result = challenge_cb ? challenge_cb(vpninfo, prompt, inputStr, cb_data) : -EINVAL;
 			free(prompt);
 			free(inputStr);
+		}
+
+		/* is it <html><head></head><body>$JAVASCRIPT_JAMMED_IN_HERE</body></html> ? */
+		else if (xmlnode_is_named(xml_node, "html")) {
+			for (xml_node=xml_node->children; xml_node; xml_node=xml_node->next) {
+				if (xmlnode_is_named(xml_node, "body")) {
+					response = (char *)xmlNodeGetContent(xml_node);
+					goto try_javascript;
+				}
+			}
 		}
 
 		/* invoke XML callback (or default to success) */
