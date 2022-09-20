@@ -60,7 +60,7 @@ res.raise_for_status()
 
 # Build openconnect --cookie argument from the result:
 url = urlparse(res.url)
-cookie = next(c.value for c in s.cookies if c.name == 'SVPNCOOKIE' and c.value, None)
+cookie = next((c.value for c in s.cookies if c.name == 'SVPNCOOKIE' and c.value), None)
 if cookie:
     if args.verbose:
         if cert:
