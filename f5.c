@@ -166,33 +166,35 @@ int f5_obtain_cookie(struct openconnect_info *vpninfo)
 				     _("WARNING: no HTML login form found; assuming username and password fields\n"));
 			if ((form = plain_auth_form()) == NULL)
 				goto nomem;
-		} else {
-			form = parse_form_node(vpninfo, node, NULL, NULL);
-			if (form_order==1 && (xmlnode_get_prop(node, "id", &form_id) || strcmp(form_id, "auth_form"))) {
-				vpn_progress(vpninfo, PRG_ERR, _("Unknown form ID '%s' (expected 'auth_form')\n"),
-					     form_id);
+		} else if (form_order==1 && (xmlnode_get_prop(node, "id", &form_id) || strcmp(form_id, "auth_form"))) {
+			/* XX: if first form isn't named auth_form, this probably isn't an F5 VPN */
+			vpn_progress(vpninfo, PRG_ERR, _("Unknown form ID '%s' (expected 'auth_form')\n"),
+				     form_id);
 
-				fprintf(stderr, _("Dumping unknown HTML form:\n"));
-				htmlNodeDumpFileFormat(stderr, node->doc, node, NULL, 1);
+			fprintf(stderr, _("Dumping unknown HTML form:\n"));
+			htmlNodeDumpFileFormat(stderr, node->doc, node, NULL, 1);
+			ret = -EINVAL;
+			goto out;
+		} else {
+			form = parse_form_node(vpninfo, node, NULL, form_order > 1 ? can_gen_tokencode : NULL);
+			if (!form) {
 				ret = -EINVAL;
-				break;
+				goto out;
 			}
 		}
-
-		if (!form) {
-			ret = -EINVAL;
-			break;
-		}
-
-		/* XX: do_gen_tokencode would go here, if we knew of any
-		 * token-based 2FA options for F5.
-		 */
 
 		do {
 			ret = process_auth_form(vpninfo, form);
 		} while (ret == OC_FORM_RESULT_NEWGROUP);
 		if (ret)
 			goto out;
+
+		ret = do_gen_tokencode(vpninfo, form);
+		if (ret) {
+			vpn_progress(vpninfo, PRG_ERR, _("Failed to generate OTP tokencode; disabling token\n"));
+			vpninfo->token_bypassed = 1;
+			goto out;
+		}
 
 		append_form_opts(vpninfo, form, req_buf);
 		if ((ret = buf_error(req_buf)))

@@ -39,6 +39,7 @@ import time
 from json import dumps
 from functools import wraps
 from flask import Flask, request, redirect, url_for, make_response, session
+from dataclasses import dataclass
 
 host, port, *cert_and_maybe_keyfile = sys.argv[1:]
 
@@ -80,17 +81,50 @@ def check_form_against_session(*fields, use_query=False):
 
 ########################################
 
+# Configure the fake server. These settings will persist unless/until reconfigured or restarted:
+#   domains: Comma-separated list of domains/authgroups to offer
+#   mock_dtls: Advertise DTLS capability (default False)
+#   no_html_login_form: Don't include a proper HTML login form (default False), with 'auth_form.username' and 'auth_form.password' fields
+#   hidden_form_then_2fa: After the login form is completed:
+#      1. Send a hidden_form with 'hidden_form.choice' fields
+#      2. Then send a 2FA form, with 'auth_form.username' and 'auth_form.otp_password' fields
+#   hidden_required_value: If set, then the 'hidden_form.choice' field must be overridden to this specific value
+#     (using '--form-entry hidden_form.choice=VALUE'; see https://gitlab.com/openconnect/openconnect/-/issues/493#note_1098016112
+#     for use of this in a real F5 VPN)
+@dataclass
+class TestConfiguration:
+    domains: list = ()
+    mock_dtls: bool = False
+    no_html_login_form: bool = False
+    hidden_form_then_2fa: bool = False
+    hidden_required_value: str = None
+    def __post_init__(self):
+        if self.domains:
+            assert not self.no_html_login_form, "Cannot set 'domains' with 'no_html_login_form=True'"
+        if self.hidden_required_value is not None:
+            assert self.hidden_form_then_2fa, "Cannot set 'hidden_required_value' without 'hidden_form_then_2fa'"
+C = TestConfiguration()
+
+
+@app.route('/CONFIGURE', methods=('POST', 'GET'))
+def configure():
+    global C
+    if request.method == 'POST':
+        C = TestConfiguration(
+            domains=request.form['domains'].split(',') if 'domains' in request.form else (),
+            mock_dtls=bool(request.form.get('mock_dtls')),
+            no_html_login_form=bool(request.form.get('no_html_login_form')),
+            hidden_form_then_2fa=bool(request.form.get('hidden_form_then_2fa')),
+            hidden_required_value=request.form.get('hidden_required_value'))
+        return '', 201
+    else:
+        return 'Current configuration of fake F5 server configuration:\n{}\n'.format(C)
+
+
 # Respond to initial 'GET /' with a redirect to '/my.policy'
-# [Save list of domains/authgroups in the session for use later]
 @app.route('/')
 def root():
-    domains, mock_dtls, no_html_login_form = request.args.get('domains'), request.args.get('mock_dtls'), request.args.get('no_html_login_form')
-    assert not (domains and no_html_login_form), \
-        f'combination of domains and no_html_login_form is not allow specified'
-    session.update(step='initial-GET', domains=domains and domains.split(','),
-                   mock_dtls=mock_dtls and bool(mock_dtls),
-                   no_html_login_form = no_html_login_form and bool(no_html_login_form))
-    # print(session)
+    session.update(step='initial-GET')
     return redirect(url_for('get_policy'))
 
 
@@ -98,15 +132,13 @@ def root():
 @app.route('/my.policy')
 def get_policy():
     session.update(step='GET-login-form')
-    no_html_login_form = session.get('no_html_login_form')
-    if no_html_login_form:
+    if C.no_html_login_form:
         return '''<html><body>It would be nice if F5 login pages consistently used actual HTML forms</body></html>'''
 
-    domains = session.get('domains')
     sel = ''
-    if domains:
+    if C.domains:
         sel = '<select name="domain">%s</select>' % ''.join(
-            '<option value="%d">%s</option>' % nv for nv in enumerate(domains))
+            '<option value="%d">%s</option>' % nv for nv in enumerate(C.domains))
 
     return '''
 <html><body><form id="auth_form" method="post">
@@ -119,13 +151,49 @@ def get_policy():
 # cookies (OpenConnect uses the combination of the two to detect successful authentication)
 @app.route('/my.policy', methods=['POST'])
 def post_policy():
-    domains = session.get('domains')
-    if domains:
-        assert 0 <= int(request.form.get('domain', -1)) < len(domains)
-    session.update(step='POST-login', username=request.form.get('username'),
-                   credential=request.form.get('password'),
+    if C.hidden_form_then_2fa:
+        if session.get('step') == 'GET-login-form':
+            # Initial login form
+            session.update(step='POST-login-form-get-hidden-form')
+
+        elif session.get('step') == 'POST-login-form-get-hidden-form':
+            # We're submitting the hidden form.
+            # Fling back to the login form if the hidden field doesn't have the
+            # expected/magic value. See https://gitlab.com/openconnect/openconnect/-/issues/493
+            if C.hidden_required_value is not None and request.form.get('choice') != C.hidden_required_value:
+                return redirect(url_for('get_policy'))
+
+            # Success. Continue to the 2FA form.
+            session.update(step='POST-hidden-form-get-2fa-form')
+            return '''
+<html><body>
+<form method="post" id="auth_form" name="auth_form" action="">
+<input type='password' name='otp_password' value=''>
+</form></body></html>'''
+
+        elif session.get('step') == 'POST-hidden-form-get-2fa-form':
+            # We're successfully submitting the 2FA form
+            session.update(step='POST-2fa-form', otp_password=request.form.get('otp_password'))
+
+        else:
+            assert f"Unexpected step {session.get('step')!r} for hidden form/2FA"
+
+    else:
+        session.update(step='POST-login-form')
+
+    if C.domains:
+        assert 0 <= int(request.form.get('domain', -1)) < len(C.domains)
+    session.update(username=request.form.get('username'),
+                   password=request.form.get('password'),
                    domain=request.form.get('domain'))
-    # print(session)
+
+    if session['step'] == 'POST-login-form-get-hidden-form':
+        return '''
+<html><body>
+<a href="#" onclick="javascript:var f=document.getElementById('hidden_form');f.my_result.value=1;f.submit();">Click here to submit hidden form with changed value of hidden field</a>
+<form method="post" id="hidden_form" name="hidden_form" action="">
+<input type='hidden' id="my_result" value='0' name='choice'>
+</form></body></html>'''
 
     resp = redirect(url_for('webtop'))
     resp.set_cookie('MRHSession', cookify(dict(session)))
@@ -146,11 +214,9 @@ def webtop():
 @app.route('/vdesk/vpn/index.php3')
 @require_MRHSession
 def profile_params():
-    print(request.args)
     assert request.args.get('outform') == 'xml' and request.args.get('client_version') == '2.0'
     vpn_name = 'demo%d_vpn_resource' % random.randint(1, 100)
     session.update(step='GET-profile-params', resourcename='/Common/'+vpn_name)
-    # print(session)
 
     return (f'''
             <?xml version="1.0" encoding="utf-8"?>
@@ -192,7 +258,7 @@ def options():
                 <idle_session_timeout>900</idle_session_timeout>
                 <IPV4_0>{int(session['ipv4']=='yes')}</IPV4_0>
                 <IPV6_0>{int(session['ipv6']=='yes')}</IPV6_0>
-                <tunnel_dtls>{int(session['mock_dtls'] or 0)}</tunnel_dtls>
+                <tunnel_dtls>{int(C.mock_dtls)}</tunnel_dtls>
                 <tunnel_port_dtls>{app.config['PORT']}</tunnel_port_dtls>
 
                 <DNS0>1.1.1.1</DNS0>

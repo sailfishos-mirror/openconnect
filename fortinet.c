@@ -224,11 +224,10 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 
 			/* Hide 'username' field */
 			opt->type = OC_FORM_OPT_HIDDEN;
-			free(opt2->label);
-			free(opt2->_value);
-			opt2->label = opt2->_value = NULL;
 
 			/* Change 'credential' field to 'code'. */
+			free(opt2->label);
+			free(opt2->_value);
 			opt2->_value = NULL;
 			opt2->name = strdup("code");
 			opt2->label = strdup("Code: ");

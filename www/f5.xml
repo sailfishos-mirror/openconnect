@@ -31,11 +31,24 @@ disabled via the <tt>--no-dtls</tt> argument.</p>
 
 <h2>Quirks and Issues</h2>
 
-<p>Currently, OpenConnect only supports basic username/password
+<p>Currently, OpenConnect should fully support basic username/password
 authentication for F5, along with an optional TLS client certificate
 and the "domain" dropdown used by some F5 VPNs. The domain form field
-can be automatically populated with the <tt>--authgroup</tt> command-line option.
-If you have access to an F5 VPN which uses other types of authentication (e.g.
+can be automatically populated with the <tt>--authgroup</tt> command-line option.</p>
+
+<p>Like <a href="juniper.html">Juniper</a>, the F5 VPN expects a full
+web browser environment for authentication, and uses HTML forms which
+rely heavily on JavaScript.  In some cases, JavaScript is used to
+inject modified values into hidden form fields, without which
+authentication will not complete successfully. If, as in <a
+href="https://gitlab.com/openconnect/openconnect/-/issues/493#note_1098089413">#493</a>,
+your F5 VPN uses a hidden form field with a value that must be
+overridden, you may be able to work around this by running
+<tt>openconnect --protocol=f5 <a
+href="manual.html#opt-form-entry">--form-entry</a>="hidden_form:choice=1"</tt>
+or similar (see issue for details on how this was determined).</p>
+
+<p>If you have access to an F5 VPN which uses other types of authentication (e.g.
 RSA or OATH tokens), please send information to <a href="mail.html">the mailing
 list</a> so that we add support to OpenConnect.</p>
 

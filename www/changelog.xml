@@ -21,6 +21,7 @@
        <li>Handle idiosyncratic variation in search domain separators for all protocols (<a href="https://gitlab.com/openconnect/openconnect/-/issues/433">#433</a>, <a href="https://gitlab.com/openconnect/openconnect/-/issues/443">#443</a>, <a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/388">!388</a>).</li>
        <li>Support region selection field for Pulse authentication (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/399">!399</a>).</li>
        <li>Support modified configuration packet from Pulse 9.1R16 servers (<a href="https://gitlab.com/openconnect/openconnect/-/issues/472">#472</a>, <a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/401">!401</a>)</li>
+       <li>Allow hidden form fields to be populated or converted to text fields on the command line (<a href="https://gitlab.com/openconnect/openconnect/-/issues/493">#493</a>, <a href="https://gitlab.com/openconnect/openconnect/-/issues/489">#489</a>, <a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/409">!409</a>)</li>
      </ul><br/>
   </li>
   <li><b><a href="https://www.infradead.org/openconnect/download/openconnect-9.01.tar.gz">OpenConnect v9.01</a></b>

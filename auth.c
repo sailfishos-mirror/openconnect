@@ -227,9 +227,12 @@ static int parse_form(struct openconnect_info *vpninfo, struct oc_auth_form *for
 			continue;
 		}
 		input_label = (char *)xmlGetProp(xml_node, (unsigned char *)"label");
+		if (!input_label && asprintf(&input_label, "%s:", input_name) == -1)
+			goto nomem;
 
 		opt = calloc(1, sizeof(*opt));
 		if (!opt) {
+		nomem:
 			free(input_type);
 			free(input_name);
 			free(input_label);

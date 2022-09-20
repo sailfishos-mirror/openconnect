@@ -232,7 +232,7 @@ of OpenConnect are equivalent:
 
 .TAG opt-form-entry
 .TP
-.B \-F,\-\-form\-entry=FORM:OPTION=VALUE
+.B \-F,\-\-form\-entry=FORM:OPTION[=VALUE]
 Provide authentication form input, where
 .I FORM
 and
@@ -245,6 +245,11 @@ is the string to be filled in automatically. For example, the standard username 
 option) could also be provided with this option thus:
 .B \-\-form\-entry
 .IR main:username=joebloggs .
+
+If
+.I VALUE
+is not specified, this option will cause a hidden form field to be
+treated as a standard text-input field.
 
 This option should
 .I not

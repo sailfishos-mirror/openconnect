@@ -2690,12 +2690,15 @@ static void add_form_field(char *arg)
 	struct form_field *ff;
 	char *opt, *value = strchr(arg, '=');
 
-	if (!value || value == arg) {
+	if (!value)
+		value = NULL; /* Just override hiddenness of form field */
+	else if (value == arg) {
 	bad_field:
 		fprintf(stderr, "Form field invalid. Use --form-entry=FORM_ID:OPT_NAME=VALUE\n");
 		exit(1);
-	}
-	*(value++) = 0;
+	} else
+		*(value++) = 0;
+
 	opt = strchr(arg, ':');
 	if (!opt || opt == arg)
 		goto bad_field;
@@ -2713,15 +2716,18 @@ static void add_form_field(char *arg)
 	form_fields = ff;
 }
 
-static char *saved_form_field(struct openconnect_info *vpninfo, const char *form_id, const char *opt_id)
+static char *saved_form_field(struct openconnect_info *vpninfo, const char *form_id, const char *opt_id, int *found)
 {
 	struct form_field *ff = form_fields;
 
 	while (ff) {
-		if (!strcmp(form_id, ff->form_id) && !strcmp(ff->opt_id, opt_id))
-			return strdup(ff->value);
+		if (!strcmp(form_id, ff->form_id) && !strcmp(ff->opt_id, opt_id)) {
+			if (found) *found = 1;
+			return ff->value ? strdup(ff->value) : NULL;
+		}
 		ff = ff->next;
 	}
+	if (found) *found = 0;
 	return NULL;
 }
 
@@ -2753,7 +2759,7 @@ static int process_auth_form_cb(void *_vpninfo,
 	   selections can make other fields disappear/reappear */
 	if (form->authgroup_opt) {
 		if (!authgroup)
-			authgroup = saved_form_field(vpninfo, form->auth_id, form->authgroup_opt->form.name);
+			authgroup = saved_form_field(vpninfo, form->auth_id, form->authgroup_opt->form.name, NULL);
 		if (!authgroup ||
 		    match_choice_label(vpninfo, form->authgroup_opt, authgroup) != 0) {
 			if (prompt_opt_select(vpninfo, form->authgroup_opt, &authgroup) < 0)
@@ -2779,7 +2785,7 @@ static int process_auth_form_cb(void *_vpninfo,
 			if (select_opt == form->authgroup_opt)
 				continue;
 
-			opt_response = saved_form_field(vpninfo, form->auth_id, select_opt->form.name);
+			opt_response = saved_form_field(vpninfo, form->auth_id, select_opt->form.name, NULL);
 			if (opt_response &&
 			    match_choice_label(vpninfo, select_opt, opt_response) == 0) {
 				free(opt_response);
@@ -2796,8 +2802,9 @@ static int process_auth_form_cb(void *_vpninfo,
 			     !strncasecmp(opt->name, "uname", 5))) {
 				opt->_value = strdup(username);
 			} else {
-				opt->_value = saved_form_field(vpninfo, form->auth_id, opt->name);
+				opt->_value = saved_form_field(vpninfo, form->auth_id, opt->name, NULL);
 				if (!opt->_value)
+				prompt:
 					opt->_value = prompt_for_input(opt->label, vpninfo, 0);
 			}
 
@@ -2810,7 +2817,7 @@ static int process_auth_form_cb(void *_vpninfo,
 				opt->_value = password;
 				password = NULL;
 			} else {
-				opt->_value = saved_form_field(vpninfo, form->auth_id, opt->name);
+				opt->_value = saved_form_field(vpninfo, form->auth_id, opt->name, NULL);
 				if (!opt->_value)
 					opt->_value = prompt_for_input(opt->label, vpninfo, 1);
 			}
@@ -2818,19 +2825,31 @@ static int process_auth_form_cb(void *_vpninfo,
 			if (!opt->_value)
 				goto err;
 			empty = 0;
-		} else if (opt->type == OC_FORM_OPT_TOKEN ||
-			   opt->type == OC_FORM_OPT_HIDDEN) {
+		} else if (opt->type == OC_FORM_OPT_TOKEN) {
 			/* Nothing to do here, but if the tokencode is being
 			 * automatically generated then don't treat it as an
 			 * empty form for the purpose of loop avoidance. */
 			empty = 0;
+		} else if (opt->type == OC_FORM_OPT_HIDDEN) {
+			int found;
+			char *value = saved_form_field(vpninfo, form->auth_id, opt->name, &found);
+			if (value) {
+				vpn_progress(vpninfo, PRG_DEBUG, "Overriding value of hidden form field '%s' to '%s'\n", opt->name, value);
+				opt->_value = value;
+			} else if (found) {
+				vpn_progress(vpninfo, PRG_DEBUG, "Treating hidden form field '%s' as text entry\n", opt->name);
+				goto prompt;
+			}
 		}
 	}
 
 	/* prevent infinite loops if the authgroup requires certificate auth only */
-	if (last_form_empty && empty)
+	if (!empty)
+		last_form_empty = 0;
+	else if (++last_form_empty >= 3) {
+		vpn_progress(vpninfo, PRG_ERR, "%d consecutive empty forms, aborting loop\n", last_form_empty);
 		return OC_FORM_RESULT_CANCELLED;
-	last_form_empty = empty;
+	}
 
 	return OC_FORM_RESULT_OK;
 
