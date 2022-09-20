@@ -50,9 +50,9 @@ fdout = sys.stdout
 def replaceVars(line):
     cnt = 0
     while cnt < len(replace):
-	# FIXME: this will match partial variable names, e.g. if XYZ and XYZ_ABC
-	# are both in the replacement list, and XYZ appears first, it will
-	# match and (partially) replace occurrences of XYZ_ABC.
+        # FIXME: this will match partial variable names, e.g. if XYZ and XYZ_ABC
+        # are both in the replacement list, and XYZ appears first, it will
+        # match and (partially) replace occurrences of XYZ_ABC.
         if line.find(replace[cnt]) >= 0:
             line = line.replace(replace[cnt], replace[cnt+1])
         cnt += 2
