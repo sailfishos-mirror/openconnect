@@ -501,6 +501,21 @@ static int process_attr(struct openconnect_info *vpninfo, struct oc_vpn_option *
 		add_option_dup(new_opts, "gateway6", buf, -1);
 		break;
 
+	case 0x4024:
+	        /* This flag is supposed to be available starting with Pulse server 9.1R9 (see
+		 * https://www-prev.pulsesecure.net/download/techpubs/current/2182/pulse-connect-secure/pcs/9.1rx/9.1r9/ps-pcs-sa-9.1r9.0-releasenotes.pdf),
+		 * but it appears that it also requires a certain minimum CLIENT version to
+		 * be advertised in order for the server to send it (22.2.1.1295 is insufficient;
+		 * see https://gitlab.com/openconnect/openconnect/-/issues/506#note_1146848739).
+		 */
+		if (attrlen != 1)
+			goto badlen;
+		vpninfo->pulse_esp_unstupid = data[0];
+		vpn_progress(vpninfo, PRG_DEBUG,
+			     _("Pulse ESP tunnel allowed to carry 6in4 or 4in6 traffic: %d\n"),
+			     vpninfo->pulse_esp_unstupid);
+		break;
+
 	/* 0x4022: disable proxy
 	   0x400a: preserve proxy
 	   0x4008: proxy (string)
