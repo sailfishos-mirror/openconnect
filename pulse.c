@@ -510,6 +510,7 @@ static int process_attr(struct openconnect_info *vpninfo, struct oc_vpn_option *
 	   0x401f:  tunnel routes with subnet access (also 4001 set)
 	   0x4020: Enforce IPv4
 	   0x4021: Enforce IPv6
+	   0x0014: Prefer FQDN resources over IP resources in case of a split tunneling conflict
 	*/
 
 	default:
