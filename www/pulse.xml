@@ -47,14 +47,16 @@ implemented for Pulse mode. The Juniper support may suffice for some users.</p>
 <h2>Connectivity</h2>
 
 <p>Once authentication is complete, the VPN connection can be
-established. Both Legacy IP and IPv6 should be working. However, some
+established. Both Legacy IP and IPv6 should be working. Many
 Pulse VPNs will not provide full IPv6 connectivity unless a recent
 version of the official Pulse client for Windows is spoofed (see
 <a href="https://gitlab.com/openconnect/openconnect/-/issues/254#note_661398964">comment
-on GitLab issue #254</a>. For example:</p>
+on GitLab issue #254</a>. Recent versions of OpenConnect will
+do this automatically, but for older versions it will need to be
+specified manually. For example:</p>
 
 <pre>
-  ./openconnect --protocol=pulse --useragent "Pulse-Secure/9.1.11.6725" --os=win
+  ./openconnect --protocol=pulse --useragent "Pulse-Secure/22.2.1.1295" --os=win
 </pre>
 
 	<INCLUDE file="inc/footer.tmpl" />
