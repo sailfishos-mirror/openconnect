@@ -200,6 +200,7 @@ enum {
 	OPT_RECONNECT_TIMEOUT,
 	OPT_SERVERCERT,
 	OPT_RESOLVE,
+	OPT_SNI,
 	OPT_USERAGENT,
 	OPT_NON_INTER,
 	OPT_DTLS_LOCAL_PORT,
@@ -287,6 +288,7 @@ static const struct option long_options[] = {
 	OPTION("authgroup", 1, OPT_AUTHGROUP),
 	OPTION("servercert", 1, OPT_SERVERCERT),
 	OPTION("resolve", 1, OPT_RESOLVE),
+	OPTION("sni", 1, OPT_SNI),
 	OPTION("key-password-from-fsid", 0, OPT_KEY_PASSWORD_FROM_FSID),
 	OPTION("useragent", 1, OPT_USERAGENT),
 	OPTION("version-string", 1, OPT_VERSION),
@@ -994,6 +996,7 @@ static void usage(void)
 #endif
 	printf("      --reconnect-timeout=SECONDS %s\n", _("Reconnection retry timeout (default is 300 seconds)"));
 	printf("      --resolve=HOST:IP           %s\n", _("Use IP when connecting to HOST"));
+	printf("      --sni=HOST                  %s\n", _("Always send HOST as TLS client SNI (domain fronting)"));
 	printf("      --passtos                   %s\n", _("Copy TOS / TCLASS field into DTLS and ESP packets"));
 	printf("      --dtls-local-port=PORT      %s\n", _("Set local port for DTLS and ESP datagrams"));
 
@@ -1513,6 +1516,7 @@ static int autocomplete(int argc, char **argv)
 			case OPT_RECONNECT_TIMEOUT: /* --reconnect-timeout */
 			case OPT_AUTHGROUP: /* --authgroup */
 			case OPT_RESOLVE: /* --resolve */
+			case OPT_SNI: /* --sni */
 			case OPT_USERAGENT: /* --useragent */
 			case OPT_VERSION: /* --version-string */
 			case OPT_FORCE_DPD: /* --force-dpd */
@@ -1927,6 +1931,9 @@ int main(int argc, char **argv)
 			memcpy(gai->option, config_arg, strlen(config_arg) + 1);
 			gai->option[ip - config_arg] = 0;
 			gai->value = gai->option + (ip - config_arg) + 1;
+			break;
+		case OPT_SNI:
+			vpninfo->sni = keep_config_arg();
 			break;
 		case OPT_NO_DTLS:
 			openconnect_disable_dtls(vpninfo);

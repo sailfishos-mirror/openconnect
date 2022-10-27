@@ -1278,8 +1278,8 @@ static int match_hostname(const char *hostname, const char *match)
 }
 
 /* cf. RFC2818 and RFC2459 */
-static int match_cert_hostname(struct openconnect_info *vpninfo, X509 *peer_cert,
-			       const unsigned char *ipaddr, int ipaddrlen)
+static int match_cert_hostname_or_ip(struct openconnect_info *vpninfo, X509 *peer_cert,
+				     char *hostname)
 {
 	STACK_OF(GENERAL_NAME) *altnames;
 	X509_NAME *subjname;
@@ -1287,6 +1287,21 @@ static int match_cert_hostname(struct openconnect_info *vpninfo, X509 *peer_cert
 	char *subjstr = NULL;
 	int i, altdns = 0;
 	int ret;
+
+	unsigned char ipaddr[sizeof(struct in6_addr)];
+	int ipaddrlen = 0;
+	if (inet_pton(AF_INET, hostname, ipaddr) > 0)
+		ipaddrlen = 4;
+	else if (inet_pton(AF_INET6, hostname, ipaddr) > 0)
+		ipaddrlen = 16;
+	else if (hostname[0] == '[' &&
+		 hostname[strlen(hostname)-1] == ']') {
+		char *p = &hostname[strlen(hostname)-1];
+		*p = 0;
+		if (inet_pton(AF_INET6, hostname + 1, ipaddr) > 0)
+			ipaddrlen = 16;
+		*p = ']';
+	}
 
 	altnames = X509_get_ext_d2i(peer_cert, NID_subject_alt_name,
 				    NULL, NULL);
@@ -1306,7 +1321,7 @@ static int match_cert_hostname(struct openconnect_info *vpninfo, X509 *peer_cert
 			if (strlen(str) != len)
 				continue;
 
-			if (!match_hostname(vpninfo->hostname, str)) {
+			if (!match_hostname(hostname, str)) {
 				vpn_progress(vpninfo, PRG_DEBUG,
 					     _("Matched DNS altname '%s'\n"),
 					     str);
@@ -1377,14 +1392,14 @@ static int match_cert_hostname(struct openconnect_info *vpninfo, X509 *peer_cert
 
 			/* Leave url_host as it was so that it can be freed */
 			url_host2 = url_host;
-			if (ipaddrlen == 16 && vpninfo->hostname[0] != '[' &&
+			if (ipaddrlen == 16 && hostname[0] != '[' &&
 			    url_host[0] == '[' && url_host[strlen(url_host)-1] == ']') {
 				/* Cope with https://[IPv6]/ when the hostname is bare IPv6 */
 				url_host[strlen(url_host)-1] = 0;
 				url_host2++;
 			}
 
-			if (strcasecmp(vpninfo->hostname, url_host2))
+			if (strcasecmp(hostname, url_host2))
 				goto no_uri_match;
 
 			if (url_path) {
@@ -1421,7 +1436,7 @@ static int match_cert_hostname(struct openconnect_info *vpninfo, X509 *peer_cert
 	if (altdns) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("No altname in peer cert matched '%s'\n"),
-			     vpninfo->hostname);
+			     hostname);
 		return -EINVAL;
 	}
 
@@ -1468,10 +1483,25 @@ static int match_cert_hostname(struct openconnect_info *vpninfo, X509 *peer_cert
 	return ret;
 }
 #else
-static int match_cert_hostname(struct openconnect_info *vpninfo, X509 *peer_cert,
-			       const unsigned char *ipaddr, int ipaddrlen)
+static int match_cert_hostname_or_ip(struct openconnect_info *vpninfo, X509 *peer_cert,
+				     char *hostname)
 {
 	char *matched = NULL;
+
+	unsigned char ipaddr[sizeof(struct in6_addr)];
+	int ipaddrlen = 0;
+	if (inet_pton(AF_INET, hostname, ipaddr) > 0)
+		ipaddrlen = 4;
+	else if (inet_pton(AF_INET6, hostname, ipaddr) > 0)
+		ipaddrlen = 16;
+	else if (hostname[0] == '[' &&
+		 hostname[strlen(hostname)-1] == ']') {
+		char *p = &hostname[strlen(hostname)-1];
+		*p = 0;
+		if (inet_pton(AF_INET6, hostname + 1, ipaddr) > 0)
+			ipaddrlen = 16;
+		*p = ']';
+	}
 
 	if (ipaddrlen && X509_check_ip(peer_cert, ipaddr, ipaddrlen, 0) == 1) {
 		if (vpninfo->verbose >= PRG_DEBUG) {
@@ -1492,7 +1522,7 @@ static int match_cert_hostname(struct openconnect_info *vpninfo, X509 *peer_cert
 		}
 		return 0;
 	}
-	if (X509_check_host(peer_cert, vpninfo->hostname, 0, 0, &matched) == 1) {
+	if (X509_check_host(peer_cert, hostname, 0, 0, &matched) == 1) {
 		vpn_progress(vpninfo, PRG_DEBUG,
 			     _("Matched peer certificate subject name '%s'\n"),
 			     matched);
@@ -1643,23 +1673,12 @@ static int ssl_app_verify_callback(X509_STORE_CTX *ctx, void *arg)
 	if (!X509_verify_cert(ctx)) {
 		err_string = X509_verify_cert_error_string(X509_STORE_CTX_get_error(ctx));
 	} else {
-		unsigned char addrbuf[sizeof(struct in6_addr)];
-		int addrlen = 0;
-
-		if (inet_pton(AF_INET, vpninfo->hostname, addrbuf) > 0)
-			addrlen = 4;
-		else if (inet_pton(AF_INET6, vpninfo->hostname, addrbuf) > 0)
-			addrlen = 16;
-		else if (vpninfo->hostname[0] == '[' &&
-			 vpninfo->hostname[strlen(vpninfo->hostname)-1] == ']') {
-			char *p = &vpninfo->hostname[strlen(vpninfo->hostname)-1];
-			*p = 0;
-			if (inet_pton(AF_INET6, vpninfo->hostname + 1, addrbuf) > 0)
-				addrlen = 16;
-			*p = ']';
-		}
-
-		if (match_cert_hostname(vpninfo, vpninfo->peer_cert, addrbuf, addrlen))
+		if (vpninfo->sni && vpninfo->sni[0]) {
+			if (match_cert_hostname_or_ip(vpninfo, vpninfo->peer_cert, vpninfo->sni))
+				err_string = _("certificate does not match SNI");
+			else
+				return 1;
+		} else if (match_cert_hostname_or_ip(vpninfo, vpninfo->peer_cert, vpninfo->hostname))
 			err_string = _("certificate does not match hostname");
 		else
 			return 1;
@@ -1968,7 +1987,9 @@ int openconnect_open_https(struct openconnect_info *vpninfo)
 	 * cd6bd5ffda616822b52104fee0c4c7d623fd4f53
 	 */
 #if OPENSSL_VERSION_NUMBER >= 0x10001070 && !defined(LIBRESSL_VERSION_NUMBER)
-	if (string_is_hostname(vpninfo->hostname))
+	if (vpninfo->sni)
+		SSL_set_tlsext_host_name(https_ssl, vpninfo->sni);
+	else if (string_is_hostname(vpninfo->hostname))
 		SSL_set_tlsext_host_name(https_ssl, vpninfo->hostname);
 #endif
 	SSL_set_verify(https_ssl, SSL_VERIFY_PEER, NULL);
