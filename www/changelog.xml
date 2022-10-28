@@ -24,6 +24,7 @@
        <li>Allow hidden form fields to be populated or converted to text fields on the command line (<a href="https://gitlab.com/openconnect/openconnect/-/issues/493">#493</a>, <a href="https://gitlab.com/openconnect/openconnect/-/issues/489">#489</a>, <a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/409">!409</a>)</li>
        <li>Support yet another strange way of encoding challenge-based 2FA for GlobalProtect (<a href="https://gitlab.com/openconnect/openconnect/-/issues/495">#495</a>, <a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/411">!411</a>)</li>
        <li>Add <tt>--sni</tt> option to allow <a href="https://en.wikipedia.org/wiki/Domain_fronting">domain-fronting</a> connections in censored/filtered network environments (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/297">!297</a>).</li>
+       <li>Parrot a GlobalProtect server's software version, if present, as the client version (<a href="https://gitlab.com/openconnect/openconnect/merge_requests/333">!333</a>)</li>
      </ul><br/>
   </li>
   <li><b><a href="https://www.infradead.org/openconnect/download/openconnect-9.01.tar.gz">OpenConnect v9.01</a></b>
@@ -55,7 +56,7 @@
        <li>Use <tt>epoll()</tt> where available.</li>
        <li>Support non-AEAD ciphersuites in DTLSv1.2 with AnyConnect. (<a href="https://gitlab.com/openconnect/openconnect/-/issues/249">#249</a>)</li>
        <li>Make <tt>tncc-emulate.py</tt> work with Python 3.7+. (<a href="https://gitlab.com/openconnect/openconnect/-/issues/152">#152</a>, <a href="https://gitlab.com/openconnect/openconnect/merge_requests/120">!120</a>)</li>
-       <li>Emulated a newer version of GlobalProtect official clients, 5.1.5-8; was 4.0.2-19 (<a href="https://gitlab.com/openconnect/openconnect/merge_requests/131">!131</a>)</li>
+       <li>Emulated a newer version of GlobalProtect official clients, 5.1.5-8; was 4.0.2-19 (<a href="https://gitlab.com/openconnect/openconnect/issues/176">#176</a>, <a href="https://gitlab.com/openconnect/openconnect/merge_requests/131">!131</a>)</li>
        <li>Support Juniper login forms containing both password and 2FA token (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/121">!121</a>)</li>
        <li>Explicitly disable 3DES and RC4, unless enabled with <tt>--allow-insecure-crypto</tt> (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/114">!114</a>)</li>
        <li>Add obsolete-server-crypto test (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/114">!114</a>)</li>

@@ -605,7 +605,8 @@ static int gpst_get_config(struct openconnect_info *vpninfo)
 
 
 	/* submit getconfig request */
-	buf_append(request_body, "client-type=1&protocol-version=p1&internal=no&app-version=5.1.5-8");
+	buf_append(request_body, "client-type=1&protocol-version=p1&internal=no");
+	append_opt(request_body, "app-version", vpninfo->csd_ticket ? : "5.1.5-8");
 	append_opt(request_body, "ipv6-support", vpninfo->disable_ipv6 ? "no" : "yes");
 	append_opt(request_body, "clientos", gpst_os_name(vpninfo));
 	append_opt(request_body, "os-version", vpninfo->platname);
@@ -978,8 +979,28 @@ static int run_hip_script(struct openconnect_info *vpninfo)
 		hip_argv[i++] = "--client-os";
 		hip_argv[i++] = gpst_os_name(vpninfo);
 		hip_argv[i++] = NULL;
+
+		/* XX: Sending the above parameters as --long-options was a mistake that was
+		 * based on overly-close replication of the invocation of the CSD script/binary
+		 * (see auth.c). In the case of CSD, some parameters *need* to be sent on the
+		 * command line to maintain compatibility with opaque Cisco CSD binaries.
+		 *
+		 * For GlobalProtect/HIP, we have no need to maintain compatibility with any
+		 * opaque binaries sent by the server.
+		 *
+		 * For anything that hasn't already shipped in a released version, we should use
+		 * environment variables as the standard way to send values to the HIP script,
+		 * particularly because it makes it easier for a shell script to parse them and
+		 * accept new ones.
+		 */
+		unsetenv("APP_VERSION");
+		if (vpninfo->csd_ticket)
+			if (setenv("APP_VERSION", vpninfo->csd_ticket, 1))
+				goto out;
+
 		execv(hip_argv[0], (char **)hip_argv);
 
+	out:
 		vpn_progress(vpninfo, PRG_ERR,
 				 _("Failed to exec HIP script %s\n"), hip_argv[0]);
 		exit(1);

@@ -21,6 +21,14 @@
 #                values are 'Linux', 'Mac' or 'Windows' ). Defaults to
 #                'Windows'.
 #
+# Sending these parameters as --long-options was a mistake (see
+# comments on run_hip_script in gpst.c for more details). New
+# parameters should be sent as environment variables instead:
+#
+#    APP_VERSION: client software version, labeled here in the HIP
+#      report as '<client-version>', but as 'app-version' or as
+#      'clientgpversion' elsewhere in the GlobalProtect wire protocol.
+#
 # This hipreport.sh does not work as-is on Android. The large here-doc
 # (cat <<EOF) does not appear to work with Android's /system/bin/sh,
 # likely due to an insufficient read buffer size.
@@ -53,11 +61,8 @@ USER=$(echo "$COOKIE" | sed -rn 's/(.+&|^)user=([^&]+)(&.+|$)/\2/p')
 DOMAIN=$(echo "$COOKIE" | sed -rn 's/(.+&|^)domain=([^&]+)(&.+|$)/\2/p')
 COMPUTER=$(echo "$COOKIE" | sed -rn 's/(.+&|^)computer=([^&]+)(&.+|$)/\2/p')
 
-# This value may need to be extracted from the official HIP report, if a made-up value is not accepted.
-HOSTID="deadbeef-dead-beef-dead-beefdeadbeef"
 case $CLIENTOS in
 	Linux)
-		CLIENT_VERSION="5.1.5-8"
 		OS="Linux Fedora 32"
 		OS_VENDOR="Linux"
 		NETWORK_INTERFACE_NAME="virbr0"
@@ -67,7 +72,6 @@ case $CLIENTOS in
 		;;
 
 	*)
-		CLIENT_VERSION="5.1.5-8"
 		OS="Microsoft Windows 10 Pro , 64-bit"
 		OS_VENDOR="Microsoft"
 		NETWORK_INTERFACE_NAME="{DEADBEEF-DEAD-BEEF-DEAD-BEEFDEADBEEF}"
@@ -76,6 +80,11 @@ case $CLIENTOS in
 		ENCDRIVE='C:\\'
 		;;
 esac
+
+# If default/made-up values are not accepted, these values may need to be extracted from the
+# HIP report sent by an official GlobalProtect client.
+HOST_ID="deadbeef-dead-beef-dead-beefdeadbeef"
+if [ -z "$APP_VERSION" ]; then APP_VERSION=5.1.5-8; fi
 
 # Timestamp in the format expected by GlobalProtect server
 NOW=$(date +'%m/%d/%Y %H:%M:%S')
@@ -90,19 +99,19 @@ cat <<EOF
 	<user-name>$USER</user-name>
 	<domain>$DOMAIN</domain>
 	<host-name>$COMPUTER</host-name>
-	<host-id>$HOSTID</host-id>
+	<host-id>$HOST_ID</host-id>
 	<ip-address>$IP</ip-address>
 	<ipv6-address>$IPV6</ipv6-address>
 	<generate-time>$NOW</generate-time>
 	<hip-report-version>4</hip-report-version>
 	<categories>
 		<entry name="host-info">
-			<client-version>$CLIENT_VERSION</client-version>
+			<client-version>$APP_VERSION</client-version>
 			<os>$OS</os>
 			<os-vendor>$OS_VENDOR</os-vendor>
 			<domain>$DOMAIN.internal</domain>
 			<host-name>$COMPUTER</host-name>
-			<host-id>$HOSTID</host-id>
+			<host-id>$HOST_ID</host-id>
 			<network-interface>
 				<entry name="$NETWORK_INTERFACE_NAME">
 					<description>$NETWORK_INTERFACE_DESCRIPTION</description>
