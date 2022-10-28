@@ -375,9 +375,11 @@ static int gpst_parse_config_xml(struct openconnect_info *vpninfo, xmlNode *xml_
 	int ii;
 
 #ifdef HAVE_ESP
-	int esp_keys = 0, esp_v4 = 0, esp_v6 = 0;
-	uint32_t esp_magic;
-	struct in6_addr esp6_magic;
+	int esp_keys = 0, esp_magic_af = 0;
+	union {
+		struct in6_addr v6;
+		struct in_addr v4;
+	} esp_magic;
 #endif /* HAVE_ESP */
 
 	if (!xml_node || !xmlnode_is_named(xml_node, "response"))
@@ -425,28 +427,28 @@ static int gpst_parse_config_xml(struct openconnect_info *vpninfo, xmlNode *xml_
 			vpninfo->ssl_times.last_rekey = time(NULL);
 			vpninfo->ssl_times.rekey = sec - 60;
 			vpninfo->ssl_times.rekey_method = REKEY_TUNNEL;
-		} else if (!xmlnode_get_val(xml_node, "gw-address", &s)) {
+		} else if (!xmlnode_get_val(xml_node, "gw-address", &s) ||
+			   !xmlnode_get_val(xml_node, "gw-address-v6", &s)) {
 			/* As remarked in oncp.c, "this is a tunnel; having a
 			 * gateway is meaningless." See esp_send_probes_gp for the
 			 * gory details of what this field actually means.
+			 *
+			 * If we get both Legacy IP and IPv6 tags, then we must use the IPv6
+			 * value in order for both AFs to work over the tunnel (see 5b98b628
+			 * "GlobalProtect IPv6 ESP support").
 			 */
-			if (vpninfo->peer_addr->sa_family == IPPROTO_IP &&
+			int legacy = xmlnode_is_named(xml_node, "gw-address");
+			if (vpninfo->peer_addr->sa_family == (legacy ? IPPROTO_IP : IPPROTO_IPV6) &&
 			    vpninfo->ip_info.gateway_addr && strcmp(s, vpninfo->ip_info.gateway_addr))
 				vpn_progress(vpninfo, PRG_DEBUG,
 					     _("Gateway address in config XML (%s) differs from external gateway address (%s).\n"), s, vpninfo->ip_info.gateway_addr);
 #ifdef HAVE_ESP
-			esp_magic = inet_addr(s);
-			esp_v4 = 1;
+			if (esp_magic_af == AF_INET6 && legacy) {
+				/* We ignore the Legacy IP tag if we've already gotten the IPv6 tag. */
+				esp_magic_af = legacy ? AF_INET : AF_INET6;
+				inet_pton(esp_magic_af, s, &esp_magic);
 #endif /* HAVE_ESP */
-		} else if (!xmlnode_get_val(xml_node, "gw-address-v6", &s)) {
-			if (vpninfo->peer_addr->sa_family == IPPROTO_IPV6 &&
-			    vpninfo->ip_info.gateway_addr && strcmp(s, vpninfo->ip_info.gateway_addr))
-				vpn_progress(vpninfo, PRG_DEBUG,
-					     _("IPv6 gateway address in config XML (%s) differs from external gateway address (%s).\n"), s, vpninfo->ip_info.gateway_addr);
-#ifdef HAVE_ESP
-			inet_pton(AF_INET6, s, &esp6_magic);
-			esp_v6 = 1;
-#endif /* HAVE_ESP */
+			}
 		} else if (!xmlnode_get_val(xml_node, "connected-gw-ip", &s)) {
 			if (vpninfo->ip_info.gateway_addr && strcmp(s, vpninfo->ip_info.gateway_addr))
 				vpn_progress(vpninfo, PRG_DEBUG, _("Config XML <connected-gw-ip> address (%s) differs from external\n"
@@ -561,12 +563,13 @@ static int gpst_parse_config_xml(struct openconnect_info *vpninfo, xmlNode *xml_
 			     _("GlobalProtect IPv6 support is experimental. Please report results to <%s>.\n"),
 			     "openconnect-devel@lists.infradead.org");
 #ifdef HAVE_ESP
-	if (esp_keys && esp_v6 && new_ip_info.addr6) {
-		/* We got ESP keys, an IPv6 esp_magic address, and an IPv6 address */
-		vpninfo->esp_magic_af = AF_INET6;
-		memcpy(vpninfo->esp_magic, &esp6_magic, sizeof(esp6_magic));
+	if (esp_keys &&
+	    ((esp_magic_af == AF_INET6 && new_ip_info.addr6) ||
+	     (esp_magic_af == AF_INET && new_ip_info.addr))) {
+		/* We got ESP keys, an IPvX esp_magic address, and an IPvX address */
+		vpninfo->esp_magic_af = esp_magic_af;
+		memcpy(vpninfo->esp_magic, &esp_magic, sizeof(esp_magic));
 
-	setup_esp_keys:
 		if (openconnect_setup_esp_keys(vpninfo, 0)) {
 			vpn_progress(vpninfo, PRG_ERR, "Failed to setup ESP keys.\n");
 		} else {
@@ -574,11 +577,6 @@ static int gpst_parse_config_xml(struct openconnect_info *vpninfo, xmlNode *xml_
 			vpninfo->dtls_times.last_rekey = time(&vpninfo->new_dtls_started);
 			vpninfo->delay_tunnel_reason = "awaiting GPST ESP connection";
 		}
-	} else if (esp_keys && esp_v4 && new_ip_info.addr) {
-		/* We got ESP keys, an IPv4 esp_magic address, and an IPv4 address */
-		vpninfo->esp_magic_af = AF_INET;
-		memcpy(vpninfo->esp_magic, &esp_magic, sizeof(esp_magic));
-		goto setup_esp_keys;
 	} else if (vpninfo->dtls_state != DTLS_DISABLED)
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Did not receive ESP keys and matching gateway in GlobalProtect config; tunnel will be TLS only.\n"));
