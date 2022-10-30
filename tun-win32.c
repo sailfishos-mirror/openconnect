@@ -116,7 +116,7 @@ static intptr_t search_taps(struct openconnect_info *vpninfo, tap_callback *cb)
 		}
 		if (!strcmp(buf, TAP_COMPONENT_ID) || !strcmp(buf, "root\\" TAP_COMPONENT_ID))
 			adapter_type = ADAPTER_TUNTAP;
-		else if (!strcmp(buf, "wintun"))
+		else if (!stricmp(buf, "Wintun"))
 			adapter_type = ADAPTER_WINTUN;
 		else {
 			vpn_progress(vpninfo, PRG_TRACE, _("%s\\ComponentId is unknown '%s'\n"),
