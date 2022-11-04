@@ -628,18 +628,9 @@ static int fortinet_configure(struct openconnect_info *vpninfo)
 		if (ret)
 			return ret;
 	}
-	for (svpncookie = vpninfo->cookies; svpncookie; svpncookie = svpncookie->next)
-		if (!strcmp(svpncookie->option, "SVPNCOOKIE"))
-			break;
-	if (!svpncookie) {
-		vpn_progress(vpninfo, PRG_ERR, _("No cookie named SVPNCOOKIE.\n"));
-		ret = -EINVAL;
-		goto out;
-	}
-
-	free(vpninfo->urlpath);
 
 	/* Fetch the connection options in XML format */
+	free(vpninfo->urlpath);
 	vpninfo->urlpath = strdup("remote/fortisslvpn_xml");
 	ret = do_https_request(vpninfo, "GET", NULL, NULL, &res_buf, NULL, HTTP_NO_FLAGS);
 	if (ret < 0) {
@@ -689,6 +680,7 @@ static int fortinet_configure(struct openconnect_info *vpninfo)
 	if (ret)
 		goto out;
 
+	/* Build TLS connection request (looks like HTTP GET, but acts as HTTP CONNECT) */
 	reqbuf = vpninfo->ppp_tls_connect_req;
 	if (!reqbuf)
 		reqbuf = buf_alloc();
@@ -705,10 +697,19 @@ static int fortinet_configure(struct openconnect_info *vpninfo)
 	vpninfo->ppp_tls_connect_req = reqbuf;
 	reqbuf = NULL;
 
+	/* Build DTLS connection request (bespoke Fortinet format) */
 	reqbuf = vpninfo->ppp_dtls_connect_req;
 	if (!reqbuf)
 		reqbuf = buf_alloc();
 	buf_truncate(reqbuf);
+	for (svpncookie = vpninfo->cookies; svpncookie; svpncookie = svpncookie->next)
+		if (!strcmp(svpncookie->option, "SVPNCOOKIE") && svpncookie->value)
+			break;
+	if (!svpncookie) {
+		vpn_progress(vpninfo, PRG_ERR, _("No cookie named SVPNCOOKIE.\n"));
+		ret = -EINVAL;
+		goto out;
+	}
 	buf_append_be16(reqbuf, 2 + sizeof(clthello) + strlen(svpncookie->value) + 1); /* length */
 	buf_append_bytes(reqbuf, clthello, sizeof(clthello));
 	buf_append(reqbuf, "%s%c", svpncookie->value, 0);
