@@ -13,7 +13,7 @@
 <p>The HIP ('Host Integrity Protection') mechanism is a security
 scanner for the <a href="globalprotect.html">PAN GlobalProtect</a>
 VPNs, in the same vein as <a href="csd.html">Cisco's CSD</a> and <a
-href="juniper.html">Juniper's Host Checker (tncc.jar)</a>.</p>
+href="tncc.html">Juniper's Host Checker (tncc.jar)</a>.</p>
 
 <h2>How it works</h2>
 
