@@ -12,7 +12,7 @@
 
 <p>The CSD ('Cisco Secure Desktop') mechanism is a security scanner
 for the <a href="anyconnect.html">Cisco AnyConnect</a> VPNs, in the
-same vein as <a href="juniper.html">Juniper's Host Checker (tncc.jar)</a>
+same vein as <a href="tncc.html">Juniper's Host Checker (tncc.jar)</a>
 and <a href="hip.html">GlobalProtect's HIP</a>.</p>
 
 <h2>Background</h2>
