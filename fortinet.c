@@ -607,7 +607,7 @@ static int fortinet_configure(struct openconnect_info *vpninfo)
 {
 	char *res_buf = NULL;
 	struct oc_text_buf *reqbuf = NULL;
-	struct oc_vpn_option *svpncookie = NULL;
+	char *svpncookie = NULL;
 	int ret;
 
 	/* XXX: We should use check_address_sanity to verify that addresses haven't
@@ -628,9 +628,13 @@ static int fortinet_configure(struct openconnect_info *vpninfo)
 		if (ret)
 			return ret;
 	}
-	for (svpncookie = vpninfo->cookies; svpncookie; svpncookie = svpncookie->next)
-		if (!strcmp(svpncookie->option, "SVPNCOOKIE"))
+
+	for (struct oc_vpn_option *cookie = vpninfo->cookies; cookie; cookie = cookie->next) {
+		if (!strcmp(cookie->option, "SVPNCOOKIE") && cookie->value) {
+			svpncookie = strdup(cookie->value);
 			break;
+		}
+	}
 	if (!svpncookie) {
 		vpn_progress(vpninfo, PRG_ERR, _("No cookie named SVPNCOOKIE.\n"));
 		ret = -EINVAL;
@@ -709,9 +713,9 @@ static int fortinet_configure(struct openconnect_info *vpninfo)
 	if (!reqbuf)
 		reqbuf = buf_alloc();
 	buf_truncate(reqbuf);
-	buf_append_be16(reqbuf, 2 + sizeof(clthello) + strlen(svpncookie->value) + 1); /* length */
+	buf_append_be16(reqbuf, 2 + sizeof(clthello) + strlen(svpncookie) + 1); /* length */
 	buf_append_bytes(reqbuf, clthello, sizeof(clthello));
-	buf_append(reqbuf, "%s%c", svpncookie->value, 0);
+	buf_append(reqbuf, "%s%c", svpncookie, 0);
 	if ((ret = buf_error(reqbuf)))
 		goto buf_err;
 	vpninfo->ppp_dtls_connect_req = reqbuf;
@@ -722,6 +726,7 @@ static int fortinet_configure(struct openconnect_info *vpninfo)
 	ret = openconnect_ppp_new(vpninfo, PPP_ENCAP_FORTINET, ipv4, ipv6);
 
  out:
+	free(svpncookie);
 	buf_free(reqbuf);
 	free(res_buf);
 
