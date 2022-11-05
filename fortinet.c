@@ -644,6 +644,7 @@ static int fortinet_configure(struct openconnect_info *vpninfo)
 			 * whether the SVPNCOOKIE is still valid/alive, until we are sure we've
 			 * worked out the weirdness with reconnects.
 			 */
+			free(vpninfo->urlpath);
 			vpninfo->urlpath = strdup("remote/fortisslvpn");
 			int ret2 = do_https_request(vpninfo, "GET", NULL, NULL, &res_buf, NULL, HTTP_NO_FLAGS);
 			if (ret2 > 0)
