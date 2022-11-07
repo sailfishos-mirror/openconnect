@@ -206,7 +206,7 @@ def html_config():
 @app.route('/remote/fortisslvpn_xml')
 @require_SVPNCOOKIE
 def xml_config():
-    return ('''
+    resp = make_response('''
             <?xml version="1.0" encoding="utf-8"?>
             <sslvpn-tunnel ver="2" dtls="1" patch="1">
               <dtls-config heartbeat-interval="10" heartbeat-fail-count="10" heartbeat-idle-timeout="10" client-hello-timeout="10"/>
@@ -243,6 +243,9 @@ def xml_config():
               <auth-timeout val="18000"/>
             </sslvpn-tunnel>''',
             {'content-type': 'application/xml'})
+    # Re-set the SVPNCOOKIE (this was causing a crash: https://gitlab.com/openconnect/openconnect/-/issues/514)
+    resp.set_cookie('SVPNCOOKIE', request.cookies['SVPNCOOKIE'])
+    return resp
 
 
 # Respond to faux-CONNECT 'GET /remote/sslvpn-tunnel' with 403 Forbidden
