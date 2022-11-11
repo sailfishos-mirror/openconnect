@@ -30,31 +30,27 @@
 #include <errno.h>
 #include <stdio.h>
 
-static WINTUN_CREATE_ADAPTER_FUNC WintunCreateAdapter;
-static WINTUN_DELETE_ADAPTER_FUNC WintunDeleteAdapter;
-static WINTUN_DELETE_POOL_DRIVER_FUNC WintunDeletePoolDriver;
-static WINTUN_ENUM_ADAPTERS_FUNC WintunEnumAdapters;
-static WINTUN_FREE_ADAPTER_FUNC WintunFreeAdapter;
-static WINTUN_OPEN_ADAPTER_FUNC WintunOpenAdapter;
-static WINTUN_GET_ADAPTER_LUID_FUNC WintunGetAdapterLUID;
-static WINTUN_GET_ADAPTER_NAME_FUNC WintunGetAdapterName;
-static WINTUN_SET_ADAPTER_NAME_FUNC WintunSetAdapterName;
-static WINTUN_GET_RUNNING_DRIVER_VERSION_FUNC WintunGetRunningDriverVersion;
-static WINTUN_SET_LOGGER_FUNC WintunSetLogger;
-static WINTUN_START_SESSION_FUNC WintunStartSession;
-static WINTUN_END_SESSION_FUNC WintunEndSession;
-static WINTUN_GET_READ_WAIT_EVENT_FUNC WintunGetReadWaitEvent;
-static WINTUN_RECEIVE_PACKET_FUNC WintunReceivePacket;
-static WINTUN_RELEASE_RECEIVE_PACKET_FUNC WintunReleaseReceivePacket;
-static WINTUN_ALLOCATE_SEND_PACKET_FUNC WintunAllocateSendPacket;
-static WINTUN_SEND_PACKET_FUNC WintunSendPacket;
+static WINTUN_CREATE_ADAPTER_FUNC *WintunCreateAdapter;
+static WINTUN_OPEN_ADAPTER_FUNC *WintunOpenAdapter;
+static WINTUN_CLOSE_ADAPTER_FUNC *WintunCloseAdapter;
+static WINTUN_DELETE_DRIVER_FUNC *WintunDeleteDriver;
+static WINTUN_GET_ADAPTER_LUID_FUNC *WintunGetAdapterLUID;
+static WINTUN_GET_RUNNING_DRIVER_VERSION_FUNC *WintunGetRunningDriverVersion;
+static WINTUN_SET_LOGGER_FUNC *WintunSetLogger;
+static WINTUN_START_SESSION_FUNC *WintunStartSession;
+static WINTUN_END_SESSION_FUNC *WintunEndSession;
+static WINTUN_GET_READ_WAIT_EVENT_FUNC *WintunGetReadWaitEvent;
+static WINTUN_RECEIVE_PACKET_FUNC *WintunReceivePacket;
+static WINTUN_RELEASE_RECEIVE_PACKET_FUNC *WintunReleaseReceivePacket;
+static WINTUN_ALLOCATE_SEND_PACKET_FUNC *WintunAllocateSendPacket;
+static WINTUN_SEND_PACKET_FUNC *WintunSendPacket;
 
 static struct openconnect_info *logger_vpninfo;
 
-#define WINTUN_POOL_NAME L"OpenConnect"
+#define WINTUN_TUNNEL_TYPE L"OpenConnect"
 #define WINTUN_RING_CAPACITY 0x400000 /* 4 MiB */
 
-static void CALLBACK wintun_log_fn(WINTUN_LOGGER_LEVEL wlvl, const WCHAR *wmsg)
+static void CALLBACK wintun_log_fn(WINTUN_LOGGER_LEVEL wlvl, DWORD64 wts, const WCHAR *wmsg)
 {
 	int lvl = (wlvl == WINTUN_LOG_INFO) ? PRG_INFO : PRG_ERR;
 
@@ -69,18 +65,17 @@ static int init_wintun(struct openconnect_info *vpninfo)
 {
 	if (!vpninfo->wintun) {
 		vpninfo->wintun = LoadLibraryExW(L"wintun.dll", NULL,
-						 LOAD_LIBRARY_SEARCH_APPLICATION_DIR);
+						 LOAD_LIBRARY_SEARCH_APPLICATION_DIR |
+						 LOAD_LIBRARY_SEARCH_SYSTEM32);
 		if (!vpninfo->wintun) {
 			vpn_progress(vpninfo, PRG_DEBUG, _("Could not load wintun.dll\n"));
 			return -ENOENT;
 		}
 
-#define Resolve(Name) ((Name = (void *)GetProcAddress(vpninfo->wintun, #Name)) == NULL)
-		if (Resolve(WintunCreateAdapter) || Resolve(WintunDeleteAdapter) ||
-		    Resolve(WintunDeletePoolDriver) || Resolve(WintunEnumAdapters) ||
-		    Resolve(WintunFreeAdapter) || Resolve(WintunOpenAdapter) ||
-		    Resolve(WintunGetAdapterLUID) || Resolve(WintunGetAdapterName) ||
-		    Resolve(WintunSetAdapterName) || Resolve(WintunGetRunningDriverVersion) ||
+#define Resolve(Name) ((*(FARPROC *)&Name = GetProcAddress(vpninfo->wintun, #Name)) == NULL)
+		if (Resolve(WintunCreateAdapter) || Resolve(WintunOpenAdapter) ||
+		    Resolve(WintunCloseAdapter) || Resolve(WintunDeleteDriver) ||
+		    Resolve(WintunGetAdapterLUID) || Resolve(WintunGetRunningDriverVersion) ||
 		    Resolve(WintunSetLogger) || Resolve(WintunStartSession) ||
 		    Resolve(WintunEndSession) || Resolve(WintunGetReadWaitEvent) ||
 		    Resolve(WintunReceivePacket) || Resolve(WintunReleaseReceivePacket) ||
@@ -105,8 +100,8 @@ int create_wintun(struct openconnect_info *vpninfo)
 	if (ret < 0)
 		return ret;
 
-	vpninfo->wintun_adapter = WintunCreateAdapter(WINTUN_POOL_NAME,
-						      vpninfo->ifname_w, NULL, NULL);
+	vpninfo->wintun_adapter = WintunCreateAdapter(vpninfo->ifname_w,
+						      WINTUN_TUNNEL_TYPE, NULL);
 	if (vpninfo->wintun_adapter)
 		return 0;
 
@@ -126,8 +121,7 @@ intptr_t open_wintun(struct openconnect_info *vpninfo, char *guid, wchar_t *wnam
 		return 0;
 
 	if (!vpninfo->wintun_adapter) {
-		vpninfo->wintun_adapter = WintunOpenAdapter(WINTUN_POOL_NAME,
-							    wname);
+		vpninfo->wintun_adapter = WintunOpenAdapter(wname);
 		if (!vpninfo->wintun_adapter) {
 			char *errstr = openconnect__win32_strerror(GetLastError());
 			vpn_progress(vpninfo, PRG_ERR, "Could not open Wintun adapter '%S': %s\n",
@@ -215,8 +209,7 @@ void os_shutdown_wintun(struct openconnect_info *vpninfo)
 		vpninfo->wintun_session = NULL;
 	}
 	if (vpninfo->wintun_adapter) {
-		WintunDeleteAdapter(vpninfo->wintun_adapter, FALSE, NULL);
-		WintunFreeAdapter(vpninfo->wintun_adapter);
+		WintunCloseAdapter(vpninfo->wintun_adapter);
 		vpninfo->wintun_adapter = NULL;
 	}
 	logger_vpninfo = NULL;
