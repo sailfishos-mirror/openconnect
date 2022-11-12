@@ -49,7 +49,10 @@
 #define TAP_IOCTL_CONFIG_DHCP_SET_OPT   _TAP_IOCTL(9)
 #define TAP_IOCTL_CONFIG_TUN            _TAP_IOCTL(10)
 
+/* TAP driver 9.21.2 we download from the OpenVPN download page */
 #define TAP_COMPONENT_ID "tap0901"
+/* TAP driver bundled with OpenVPN */
+#define TAP_OVPNCONNECT_COMPONENT_ID "tap_ovpnconnect"
 
 #define DEVTEMPLATE "\\\\.\\Global\\%s.tap"
 
@@ -114,7 +117,9 @@ static intptr_t search_taps(struct openconnect_info *vpninfo, tap_callback *cb)
 			RegCloseKey(hkey);
 			continue;
 		}
-		if (!strcmp(buf, TAP_COMPONENT_ID) || !strcmp(buf, "root\\" TAP_COMPONENT_ID))
+		if (!stricmp(buf, TAP_COMPONENT_ID) || !stricmp(buf, "root\\" TAP_COMPONENT_ID) ||
+		    !stricmp(buf, TAP_OVPNCONNECT_COMPONENT_ID) ||
+		    !stricmp(buf, "root\\" TAP_OVPNCONNECT_COMPONENT_ID))
 			adapter_type = ADAPTER_TUNTAP;
 		else if (!stricmp(buf, "Wintun"))
 			adapter_type = ADAPTER_WINTUN;
