@@ -125,10 +125,13 @@ Note that for IPv6 support, the Solaris tun/tap driver from 16th Nov 2009 or new
 <h3>Windows</h3>
 
 <p>On Windows, OpenConnect can use either the
-<a href="https://community.openvpn.net/openvpn/wiki/GettingTapWindows">TAP-Windows driver from OpenVPN</a> (version 9.9 or
-later; requires Windows 2003 or newer) or the <a href="https://www.wintun.net">Wintun layer-3 driver from Wireguard</a>
-(requires Windows 7 or newer). The more modern Wintun driver is included in the OpenConnect installer, starting
-with OpenConnect v9.00.</p>
+<a href="https://www.wintun.net">Wintun layer-3 driver from Wireguard</a>
+(requires Windows 7 or newer) or the
+<a href="https://community.openvpn.net/openvpn/wiki/GettingTapWindows">TAP-Windows driver from OpenVPN</a>
+(version 9.9 or later; requires Windows 2003 or newer). The more modern Wintun
+driver is included in the OpenConnect installer, starting with OpenConnect
+v9.00. If you wish to continue using TAP-Windows with OpenConnect, you will
+need to install it manually.</p>
 
 	<INCLUDE file="inc/footer.tmpl" />
 </PAGE>
