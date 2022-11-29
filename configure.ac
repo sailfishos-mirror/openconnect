@@ -918,6 +918,7 @@ AS_IF([test "$with_builtin_json" != "yes"],
 	[PKG_CHECK_MODULES(JSON, json-parser,
 			   [AC_SUBST(JSON_PC, [json-parser])
 			    json=system], [:])
+	 AC_DEFINE(HAVE_JSON, 1, [Have system json-parser package])
       ])
 
 AS_IF([test "$with_builtin_json" != "no"  && test "$json" = "" ],
@@ -927,6 +928,7 @@ AS_IF([test "$with_builtin_json" != "no"  && test "$json" = "" ],
 	 LIBS="$oldLIBS"
 	 AC_SUBST([JSON_LIBS], [$ac_cv_search_pow])
 	 AC_SUBST([JSON_CFLAGS], ['-I$(srcdir)/json'])
+	 AC_DEFINE(HAVE_JSON, 1, [Have builtin json-parser package])
       ])
 
 AS_IF([test "$json" = ""],

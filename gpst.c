@@ -19,6 +19,10 @@
 
 #include "openconnect-internal.h"
 
+#if HAVE_JSON
+#include "json.h"
+#endif
+
 #ifdef HAVE_LZ4
 #include <lz4.h>
 #endif
@@ -98,6 +102,34 @@ static int filter_opts(struct oc_text_buf *buf, const char *query, const char *i
 	return buf_error(buf);
 }
 
+/* Parse a JavaScript/JSON string to handle non-literal escape
+   characters.
+
+   Falls back to naïvely returning everything between the "..."
+   delimiters if JSON is not available in this build, or if the string
+   is mangled and not legal JavaScript/JSON (e.g. contains '\u' followed by
+   anything other than 4 hex digits).
+*/
+static char *json_get_string(const char *start, size_t length)
+{
+	char *s;
+	if (!length)
+		length = strlen(start);
+#if HAVE_JSON
+	json_value *val = json_parse(start, length);
+	if (val && val->type == json_string) {
+		/* XX: will need to switch to strdup() if we ever use a custom allocator for JSON */
+		s = val->u.string.ptr;
+		val->u.string.ptr = NULL;
+	} else
+#endif
+		s = length < 2 ? NULL : strndup(start+1, length-2);
+#if HAVE_JSON
+	json_value_free(val);
+#endif
+	return s;
+}
+
 /* Parse this JavaScript-y mess:
 
 	"var respStatus = \"Challenge|Error\";\n"
@@ -135,7 +167,7 @@ static int parse_javascript(char *buf, char **prompt, char **inputStr)
 	if (strncmp(end, pre_prompt, strlen(pre_prompt)))
 		goto err;
 
-	start = end = end+strlen(pre_prompt);
+	end = start = end+strlen(pre_prompt);
 	do {
 		end = strchr(end+1, '"');
 	} while (end && end[-1] == '\\');
@@ -143,7 +175,7 @@ static int parse_javascript(char *buf, char **prompt, char **inputStr)
 		goto err;
 
 	if (prompt)
-		*prompt = strndup(start, end-start);
+		*prompt = json_get_string(start-1, end-start+2);
 
 	/* inputStr */
 	end++;
