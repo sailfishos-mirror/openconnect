@@ -120,8 +120,8 @@ static int parse_javascript(char *buf, char **prompt, char **inputStr)
 		goto err;
 
 	start = end+strlen(pre_status);
-	end = strchr(start, '\n');
-	if (!end || end[-1] != ';' || end[-2] != '"')
+	end = strchr(start, '"');
+	if (!end)
 		goto err;
 
 	if (!strncmp(start, "Challenge", 8))    status = 0;
@@ -129,34 +129,39 @@ static int parse_javascript(char *buf, char **prompt, char **inputStr)
 	else                                    goto err;
 
 	/* Prompt */
-	while (isspace(*end))
+	end++;
+	while (*end == ';' || isspace(*end))
 		end++;
 	if (strncmp(end, pre_prompt, strlen(pre_prompt)))
 		goto err;
 
-	start = end+strlen(pre_prompt);
-	end = strchr(start, '\n');
-	if (!end || end[-1] != ';' || end[-2] != '"' || (end<start+2))
+	start = end = end+strlen(pre_prompt);
+	do {
+		end = strchr(end+1, '"');
+	} while (end && end[-1] == '\\');
+	if (!end)
 		goto err;
 
 	if (prompt)
-		*prompt = strndup(start, end-start-2);
+		*prompt = strndup(start, end-start);
 
 	/* inputStr */
-	while (isspace(*end))
+	end++;
+	while (*end == ';' || isspace(*end))
 		end++;
 	if (strncmp(end, pre_inputStr, strlen(pre_inputStr)))
 		goto err2;
 
 	start = end+strlen(pre_inputStr);
-	end = strchr(start, '\n');
-	if (!end || end[-1] != ';' || end[-2] != '"' || (end<start+2))
+	end = strchr(start, '"');
+	if (!end)
 		goto err2;
 
 	if (inputStr)
-		*inputStr = strndup(start, end-start-2);
+		*inputStr = strndup(start, end-start);
 
-	while (isspace(*end))
+	end++;
+	while (*end == ';' || isspace(*end))
 		end++;
 	if (*end != '\0')
 		goto err3;
@@ -215,7 +220,7 @@ int gpst_xml_or_error(struct openconnect_info *vpninfo, char *response,
 			vpn_progress(vpninfo, PRG_ERR, _("%s\n"), prompt);
 			break;
 		case 0:
-			vpn_progress(vpninfo, PRG_INFO, _("Challenge: %s\n"), prompt);
+			vpn_progress(vpninfo, PRG_DEBUG, _("Challenge: %s\n"), prompt);
 			result = challenge_cb ? challenge_cb(vpninfo, prompt, inputStr, cb_data) : -EINVAL;
 			break;
 		default:
