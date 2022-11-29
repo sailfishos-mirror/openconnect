@@ -195,9 +195,9 @@ def challenge_2fa(where, variant):
     if variant == 'xml':
         return f'<challenge><respmsg>XML 2FA challenge from {where} & throw in an illegal unquoted ampersand</respmsg><inputstr>{inputStr}</inputstr></challenge>'
     else:
-        return ('var respStatus = "Challenge";\n'
-                f'''var respMsg = "Javascript 2FA challenge from '{where}'";\n'''
-                f'thisForm.inputStr.value = "{inputStr}";\n')
+        js = ('var respStatus = "Challenge";\n'
+              f'''var respMsg = "Javascript 2FA challenge from '{where}'";\n'''
+              f'thisForm.inputStr.value = "{inputStr}";\n')
         if variant == 'html':
             return f'<html><head></head><body>{js}</body></html>'.replace("'", "&#39;")
         else:
