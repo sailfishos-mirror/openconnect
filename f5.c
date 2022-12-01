@@ -19,6 +19,10 @@
 
 #include "openconnect-internal.h"
 
+#if HAVE_JSON
+#include "json.h"
+#endif
+
 #include "ppp.h"
 
 #include <libxml/HTMLparser.h>
@@ -105,6 +109,137 @@ static int check_cookie_success(struct openconnect_info *vpninfo)
 	return -ENOENT;
 }
 
+#ifdef HAVE_JSON
+static json_value *find_appLoader_configure_json_form(xmlDocPtr doc)
+{
+	xmlNodePtr root, node;
+	json_value *v = NULL, *f = NULL;
+
+	/* We look for a <script> tag containing a call to 'appLoader.configure(...);', with
+	 * the assumption that there will be a newline right before the closing parenthesis,
+	 * and a semicolon right after, allowing us to clearly delimit it. Ick. Then we assume
+	 * that everything between the parentheses is a valid JSON object literal. Ick.
+	 */
+	for (root = node = xmlDocGetRootElement(doc); node; node = htmlnode_dive(root, node)) {
+		if (node->name && !strcasecmp((char *)node->name, "script")) {
+			const char *content = (char *)xmlNodeGetContent(node);
+			const char *start, *end;
+
+			if ((start = strstr(content, "appLoader.configure({"))
+			    && (end = strstr(start, "\n});"))) {
+				v = json_parse((json_char *)start + 20, (end + 2) - (start + 20));
+				break;
+			}
+		}
+	}
+
+	if (!v || v->type != json_object)
+		goto bad_json;
+
+	json_value *l = NULL;
+	for (int i = 0; i < v->u.object.length; i++) {
+		json_object_entry *oe = &v->u.object.values[i];
+		if (!strcmp(oe->name, "logon") && oe->value->type == json_object) {
+			l = oe->value;
+			break;
+		}
+	}
+
+	if (!l)
+		goto bad_json;
+
+	for (int i = 0; i < l->u.object.length; i++) {
+		json_object_entry *oe = &l->u.object.values[i];
+		if (!strcmp(oe->name, "form") && oe->value->type == json_object) {
+			f = oe->value;
+
+			/* "Detach" this sub-tree (XX: check for mem leaks here) */
+			f->parent = NULL;
+			oe->value = NULL;
+			break;
+		}
+	}
+
+ bad_json:
+	json_value_free(v);
+	return f;
+}
+
+static struct oc_auth_form *parse_json_form(struct openconnect_info *vpninfo, json_value *jform,
+					    int (*can_gen_tokencode)(struct openconnect_info *vpninfo, struct oc_auth_form *form, struct oc_form_opt *opt))
+{
+	struct oc_auth_form *form = calloc(1, sizeof(*form));
+	if (!form) {
+	nomem:
+		free_auth_form(form);
+		return NULL;
+	}
+
+	json_value *fields = NULL;
+
+	for (int i = 0; i < jform->u.object.length; i++) {
+		json_object_entry *oe = &jform->u.object.values[i];
+		if (!strcmp(oe->name, "id") && oe->value->type == json_string) {
+			form->auth_id = oe->value->u.string.ptr;
+			oe->value->type = json_null, oe->value->u.string.ptr = NULL; /* XX */
+		} else if (!strcmp(oe->name, "title") && oe->value->type == json_string) {
+			form->banner = oe->value->u.string.ptr;
+			oe->value->type = json_null, oe->value->u.string.ptr = NULL; /* XX */
+		} else if (!strcmp(oe->name, "fields") && oe->value->type == json_array)
+			fields = oe->value;
+	}
+
+	if (!fields) /* XX: Should we fail? */
+		return form;
+
+	struct oc_form_opt **next_opt = &form->opts;
+	for (int i = 0; i < fields->u.array.length; i++) {
+		json_value *f = fields->u.array.values[i];
+		if (f->type != json_object) /* XX: Should we fail? */
+			continue;
+
+		struct oc_form_opt *opt = calloc(1, sizeof(*opt));
+		if (!opt)
+			goto nomem;
+
+		for (int j = 0; j < f->u.object.length; j++) {
+			json_object_entry *oe = &f->u.object.values[j];
+			if (!strcmp(oe->name, "type") && oe->value->type == json_string) {
+				if (!strcmp(oe->value->u.string.ptr, "password"))
+					opt->type = OC_FORM_OPT_PASSWORD;
+				else if (!strcmp(oe->value->u.string.ptr, "text"))
+					opt->type = OC_FORM_OPT_TEXT;
+				else {
+					vpn_progress(vpninfo, PRG_ERR,
+						     _("WARNING: Unknown F5 JSON form field type '%s', treating as 'text'. Please report to <%s>"),
+						     oe->value->u.string.ptr, "openconnect-devel@lists.infradead.org");
+					opt->type = OC_FORM_OPT_TEXT;
+				}
+			} else if (!strcmp(oe->name, "name") && oe->value->type == json_string) {
+				opt->name = oe->value->u.string.ptr;
+				oe->value->type = json_null, oe->value->u.string.ptr = NULL; /* XX */
+			} else if (!strcmp(oe->name, "caption") && oe->value->type == json_string) {
+				if (asprintf(&opt->label, "%s:", oe->value->u.string.ptr) < 0)
+					goto nomem;
+			} else if (!strcmp(oe->name, "value") && oe->value->type == json_string && oe->value->u.string.length > 0) {
+				opt->_value = oe->value->u.string.ptr;
+				oe->value->type = json_null, oe->value->u.string.ptr = NULL; /* XX */
+			} else if (!strcmp(oe->name, "disabled") && oe->value->type == json_boolean) {
+				/* XX: Do we care if a field is disabled? */
+			}
+		}
+		if (opt->type == OC_FORM_OPT_PASSWORD && can_gen_tokencode && !can_gen_tokencode(vpninfo, form, opt))
+			opt->type = OC_FORM_OPT_TOKEN;
+
+		/* Append to the existing list */
+		*next_opt = opt;
+		next_opt = &opt->next;
+	}
+
+	return form;
+}
+#endif
+
 int f5_obtain_cookie(struct openconnect_info *vpninfo)
 {
 	int ret, form_order=0;
@@ -160,10 +295,27 @@ int f5_obtain_cookie(struct openconnect_info *vpninfo)
 		buf_truncate(req_buf);
 
 		node = find_form_node(doc);
-		if (!node && form_order==1) {
+#if HAVE_JSON
+		if (!node) {
 			/* XX: some F5 VPNs simply do not have a static HTML form to parse */
+			json_value *jform = find_appLoader_configure_json_form(doc);
+			if (jform) {
+				form = parse_json_form(vpninfo, jform, form_order > 1 ? can_gen_tokencode : NULL);
+				json_value_free(jform);
+			}
+			if (form) {
+				vpn_progress(vpninfo, PRG_ERR,
+				     _("WARNING: No HTML authentication form found. Extracted form from F5's embedded\n"
+				       "  JSON. This is EXPERIMENTAL. Please report results to <%s>.\n"),
+				       "openconnect-devel@lists.infradead.org");
+				goto process_form;
+			}
+		}
+#endif
+		if (!node && form_order==1) {
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("WARNING: no HTML login form found; assuming username and password fields\n"));
+
 			if ((form = plain_auth_form()) == NULL)
 				goto nomem;
 		} else if (form_order==1 && (xmlnode_get_prop(node, "id", &form_id) || strcmp(form_id, "auth_form"))) {
@@ -183,6 +335,9 @@ int f5_obtain_cookie(struct openconnect_info *vpninfo)
 			}
 		}
 
+#if HAVE_JSON
+	process_form:
+#endif
 		do {
 			ret = process_auth_form(vpninfo, form);
 		} while (ret == OC_FORM_RESULT_NEWGROUP);
