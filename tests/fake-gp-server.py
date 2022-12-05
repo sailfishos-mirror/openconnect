@@ -22,6 +22,7 @@ import ssl
 from random import randint, choice
 import base64
 from json import dumps
+from html import escape
 from functools import wraps
 from flask import Flask, request, abort, url_for, session
 from dataclasses import dataclass
@@ -193,13 +194,16 @@ def challenge_2fa(where, variant):
         variant = choice(variants)
 
     if variant == 'xml':
-        return f'<challenge><respmsg>XML 2FA challenge from {where} & throw in an illegal unquoted ampersand</respmsg><inputstr>{inputStr}</inputstr></challenge>'
+        return f'<challenge><respmsg>XML 2FA challenge from &apos;{where}&apos; & throw in an illegal unquoted ampersand</respmsg><inputstr>{inputStr}</inputstr></challenge>'
     else:
+        # Include literal '\n', JS-escaped ["'\n], and JS-unescaped '\'' in respMsg as a torture test;
+        # if wrapping in HTML, additionally add HTML entity escapes of [<>'"&]
         js = ('var respStatus = "Challenge";\n'
-              f'''var respMsg = "Javascript 2FA challenge from '{where}'";\n'''
+              f'''var respMsg = "\\n\\"Javascript\\" 2FA challenge <- \\'{where}'\n===========================";\n'''
               f'thisForm.inputStr.value = "{inputStr}";\n')
         if variant == 'html':
-            return f'<html><head></head><body>{js}</body></html>'.replace("'", "&#39;")
+            js = escape(js, quote=True)
+            return f'<html><head></head><body>{js}</body></html>'
         else:
             return js
 
