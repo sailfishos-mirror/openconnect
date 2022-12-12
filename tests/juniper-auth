@@ -36,51 +36,55 @@ launch_simple_sr_server $ADDRESS 443 $CERT $KEY > /dev/null 2>&1
 PID=$!
 wait_server $PID
 
+SERVURL="https://$ADDRESS:443"
+CLIENT="$OPENCONNECT --protocol=nc $FINGERPRINT -u test --passwd-on-stdin -q"
+export LD_PRELOAD=libsocket_wrapper.so
+
 echo -n "frmLogin with username/password"
-( echo "test" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT --protocol=nc -q $ADDRESS:443 -u test $FINGERPRINT --cookieonly >/dev/null 2>&1) ||
+( echo "test" | $CLIENT $SERVURL --cookieonly >/dev/null 2>&1) ||
     fail $PID "Could not receive cookie from fake Juniper server"
 
 echo ok
 
 echo -n "frmLogin with username/password/authgroup"
-( echo "test" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT --protocol=nc -q $ADDRESS:443/?realms=xyz,abc,def --authgroup=abc -u test $FINGERPRINT --cookieonly >/dev/null 2>&1) ||
+( echo "test" | $CLIENT $SERVURL/?realms=xyz,abc,def --authgroup=abc --cookieonly >/dev/null 2>&1) ||
     fail $PID "Could not receive cookie from fake Juniper server"
 
 echo ok
 
 echo -n "frmLogin with username/password/token-as-2nd-password"
-( echo "test" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT --protocol=nc -q $ADDRESS:443/?token_form=frmLogin -u test $FAKE_TOKEN $FINGERPRINT --cookieonly >/dev/null 2>&1) ||
+( echo "test" | $CLIENT $SERVURL/?token_form=frmLogin $FAKE_TOKEN --cookieonly >/dev/null 2>&1) ||
     fail $PID "Could not receive cookie from fake Juniper server"
 
 echo ok
 
 echo -n "frmLogin with username/password → frmTotpToken"
-( echo "test" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT --protocol=nc -q $ADDRESS:443/?token_form=frmTotpToken -u test $FAKE_TOKEN $FINGERPRINT --cookieonly >/dev/null 2>&1) ||
+( echo "test" | $CLIENT $SERVURL/?token_form=frmTotpToken $FAKE_TOKEN --cookieonly >/dev/null 2>&1) ||
     fail $PID "Could not receive cookie from fake Juniper server"
 
 echo ok
 
 echo -n "frmLogin with username/password → frmDefender → frmConfirmation"
-( echo "test" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT --protocol=nc -q "$ADDRESS:443/?token_form=frmDefender&confirm=1" -u test $FAKE_TOKEN $FINGERPRINT --cookieonly >/dev/null 2>&1) ||
+( echo "test" | $CLIENT "$SERVURL/?token_form=frmDefender&confirm=1" $FAKE_TOKEN --cookieonly >/dev/null 2>&1) ||
     fail $PID "Could not receive cookie from fake Juniper server"
 
 echo ok
 
 echo -n "frmLogin with username/password → frmNextToken"
-( echo "test" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT --protocol=nc -q $ADDRESS:443/?token_form=frmNextToken -u test $FAKE_TOKEN $FINGERPRINT --cookieonly >/dev/null 2>&1) ||
+( echo "test" | $CLIENT $SERVURL/?token_form=frmNextToken $FAKE_TOKEN --cookieonly >/dev/null 2>&1) ||
     fail $PID "Could not receive cookie from fake Juniper server"
 
 ok
 
 # --authgroup will now fill in EITHER the role and/or the realm
 echo -n "frmLogin with username/password → frmConfirmation → frmSelectRoles"
-( echo "test" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT --protocol=nc -q "$ADDRESS:443/?confirm=1&roles=foo,bar,baz" --authgroup=bar -u test $FINGERPRINT --cookieonly >/dev/null 2>&1) ||
+( echo "test" | $CLIENT "$SERVURL/?confirm=1&roles=foo,bar,baz" --authgroup=bar --cookieonly >/dev/null 2>&1) ||
     fail $PID "Could not receive cookie from fake Juniper server"
 
 echo ok
 
 echo -n "frmLogin with username/password, then proceeding to tunnel stage... "
-echo "test" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT --protocol=nc -q $ADDRESS:443 -u test $FINGERPRINT >/dev/null 2>&1
+echo "test" | $CLIENT $SERVURL >/dev/null 2>&1
 test $? = 2 || # what OpenConnect returns when server rejects cookie upon tunnel connection, as the fake server does
     fail $PID "Something went wrong in fake Juniper server (other than the expected rejection of cookie)"
 
