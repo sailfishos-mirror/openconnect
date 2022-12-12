@@ -35,44 +35,60 @@ launch_simple_sr_server $ADDRESS 443 $CERT $KEY > /dev/null 2>&1
 PID=$!
 wait_server $PID
 
+SERVURL="https://$ADDRESS:443"
+CLIENT="$OPENCONNECT --protocol=fortinet $FINGERPRINT -u test --passwd-on-stdin -q"
+export LD_PRELOAD=libsocket_wrapper.so
+
 echo -n "Authenticating with username/password and DEFAULT realm... "
-( echo "test" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT --protocol=fortinet -q $ADDRESS:443 -u test $FINGERPRINT --cookieonly >/dev/null 2>&1) ||
+( echo "test" | $CLIENT $SERVURL --cookieonly >/dev/null 2>&1) ||
     fail $PID "Could not receive cookie from fake Fortinet server"
 
 echo ok
 
 echo -n "Authenticating with username/password and NON-DEFAULT path... "
-( echo "test" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT --protocol=fortinet -q $ADDRESS:443/fakeRealm -u test $FINGERPRINT --cookieonly >/dev/null 2>&1) ||
+( echo "test" | $CLIENT $SERVURL/fakeRealm --cookieonly >/dev/null 2>&1) ||
     fail $PID "Could not receive cookie from fake Fortinet server"
 
 echo ok
+
+echo "Configuring fake server to require 1 round of tokeninfo-based 2FA."
+curl -sk $SERVURL/CONFIGURE -d want_2fa=1 -d type_2fa=tokeninfo
 
 echo -n "Authenticating with username/password/tokeninfo-2FA and DEFAULT path... "
-( echo "test" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT --protocol=fortinet -q $ADDRESS:443/?want_2fa=1 -u test --token-mode=totp --token-secret=FAKE $FINGERPRINT --cookieonly >/dev/null 2>&1) ||
-    fail $PID "Could not receive cookie from fake Fortinet server"
-
-echo ok
-
-echo -n "Authenticating with username/password/HTML-2FA and DEFAULT path... "
-( echo "test" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT --protocol=fortinet -q "$ADDRESS:443/?want_2fa=1&type_2fa=html" -u test --token-mode=totp --token-secret=FAKE $FINGERPRINT --cookieonly >/dev/null 2>&1) ||
-    fail $PID "Could not receive cookie from fake Fortinet server"
-
-echo ok
-
-echo -n "Authenticating with username/password/(2 rounds of tokeninfo-2FA) and DEFAULT path... "
-( echo "test" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT --protocol=fortinet -q $ADDRESS:443/?want_2fa=2 -u test --token-mode=totp --token-secret=FAKE $FINGERPRINT --cookieonly >/dev/null 2>&1) ||
+( echo "test" | $CLIENT $SERVURL --token-mode=totp --token-secret=FAKE --cookieonly >/dev/null 2>&1) ||
     fail $PID "Could not receive cookie from fake Fortinet server"
 
 echo ok
 
 echo -n "Authenticating with username/password/tokeninfo-2FA and NON-DEFAULT path... "
-( echo "test" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT --protocol=fortinet -q $ADDRESS:443/fake+Realm?want_2fa=1 -u test --token-mode=totp --token-secret=FAKE $FINGERPRINT --pfs --cookieonly >/dev/null 2>&1) ||
+( echo "test" | $CLIENT $SERVURL/fake+Realm --token-mode=totp --token-secret=FAKE --cookieonly >/dev/null 2>&1) ||
     fail $PID "Could not receive cookie from fake Fortinet server"
 
 echo ok
 
+echo "Configuring fake server to require 1 round of HTML-based 2FA."
+curl -sk $SERVURL/CONFIGURE -d want_2fa=1 -d type_2fa=html
+
+echo -n "Authenticating with username/password/HTML-2FA and DEFAULT path... "
+( echo "test" | $CLIENT $SERVURL --token-mode=totp --token-secret=FAKE --cookieonly >/dev/null 2>&1) ||
+    fail $PID "Could not receive cookie from fake Fortinet server"
+
+echo ok
+
+echo "Configuring fake server to require 2 round of tokeninfo-based 2FA."
+curl -sk $SERVURL/CONFIGURE -d want_2fa=2 -d type_2fa=tokeninfo
+
+echo -n "Authenticating with username/password/(2 rounds of tokeninfo-2FA) and DEFAULT path... "
+( echo "test" | $CLIENT $SERVURL --token-mode=totp --token-secret=FAKE --cookieonly >/dev/null 2>&1) ||
+    fail $PID "Could not receive cookie from fake Fortinet server"
+
+echo ok
+
+echo "Resetting fake server to default configuration."
+curl -sk $SERVURL/CONFIGURE -d ''
+
 echo -n "Authenticating with username/password, then proceeding to tunnel stage... "
-echo "test" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT --protocol=fortinet -q $ADDRESS:443 -u test $FINGERPRINT >/dev/null 2>&1
+echo "test" | $CLIENT $SERVURL >/dev/null 2>&1
 test $? = 2 || # what OpenConnect returns when server rejects cookie upon tunnel connection, as the fake server does
     fail $PID "Something went wrong in fake Fortinet server (other than the expected rejection of cookie)"
 
