@@ -28,6 +28,7 @@
        <li>Parrot a GlobalProtect server's software version, if present, as the client version (<a href="https://gitlab.com/openconnect/openconnect/merge_requests/333">!333</a>)</li>
        <li>Fix NULL pointer dereference that has left Android builds broken since v8.20 (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/389">!389</a>).</li>
        <li>Fix Fortinet authentication bug where repeated SVPNCOOKIE causes segfaults (<a href="https://gitlab.com/openconnect/openconnect/-/issues/514">#514</a>, <a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/418">!418</a>).</li>
+       <li>Support F5 VPNs which encode authentication forms only in JSON, not in HTML (<a href="https://gitlab.com/openconnect/openconnect/-/issues/512">#512</a>, <a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/431">!431</a>).</li>
      </ul><br/>
   </li>
   <li><b><a href="https://www.infradead.org/openconnect/download/openconnect-9.01.tar.gz">OpenConnect v9.01</a></b>
