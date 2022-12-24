@@ -2611,9 +2611,9 @@ int pulse_connect(struct openconnect_info *vpninfo)
 		}
 
 		if (load_be32(bytes) != VENDOR_JUNIPER) {
-		bad_pkt:
 			vpn_progress(vpninfo, PRG_INFO,
-				     _("Unexpected IF-T/TLS packet when expecting configuration.\n"));
+				     _("Unexpected IF-T/TLS packet when expecting configuration: wrong vendor\n"));
+		bad_pkt:
 			dump_buf_hex(vpninfo, PRG_DEBUG, '<', bytes, ret);
 			continue;
 		}
@@ -2634,11 +2634,29 @@ int pulse_connect(struct openconnect_info *vpninfo)
 		 * < 0020: 2c 20 f0 00 00 00 00 00  00 00 01 70 ...          |, .........|
 		 */
 
-		if (pkt_type != 1 || ret < 0x2c || load_be32(bytes +  0x10) ||
-		    load_be32(bytes + 0x14) || load_be32(bytes + 0x18) ||
-		    load_be32(bytes + 0x1c) || load_be32(bytes + 0x24) ||
-		    load_be32(bytes + 0x28) != ret - 0x10)
+		if (pkt_type != 1) {
+			vpn_progress(vpninfo, PRG_INFO,
+				     _("Unexpected Pulse configuration packet: %s\n"),
+				     _("wrong type field (!= 1)"));
 			goto bad_pkt;
+		} else if (ret < 0x2c) {
+			vpn_progress(vpninfo, PRG_INFO,
+				     _("Unexpected Pulse configuration packet: %s\n"),
+				     _("too short"));
+			goto bad_pkt;
+		} else if (load_be32(bytes + 0x10) || load_be32(bytes + 0x14) ||
+			   load_be32(bytes + 0x18) || load_be32(bytes + 0x1c) ||
+			   load_be32(bytes + 0x24)) {
+			vpn_progress(vpninfo, PRG_INFO,
+				     _("Unexpected Pulse configuration packet: %s\n"),
+				     _("non-zero values at offsets 0x10, 0x14, 0x18, 0x1c, or 0x24"));
+			goto bad_pkt;
+		} else if (load_be32(bytes + 0x28) != ret - 0x10) {
+			vpn_progress(vpninfo, PRG_INFO,
+				     _("Unexpected Pulse configuration packet: %s\n"),
+				     _("length at offset 0x28 != packet length - 0x10"));
+			goto bad_pkt;
+		}
 
 		switch(load_be32(bytes + 0x20)) {
 		case 0x2c20f000:
@@ -2673,6 +2691,9 @@ int pulse_connect(struct openconnect_info *vpninfo)
 			break;
 
 		default:
+			vpn_progress(vpninfo, PRG_INFO,
+				     _("Unexpected Pulse configuration packet: %s\n"),
+				     _("identifier at offset 0x20 is unknown"));
 			goto bad_pkt;
 		}
 	}
