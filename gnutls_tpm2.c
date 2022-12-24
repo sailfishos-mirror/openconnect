@@ -202,9 +202,9 @@ static int ec_key_info(gnutls_privkey_t key, unsigned int flags, void *_certinfo
 }
 #endif
 
-static int decode_data(ASN1_TYPE n, gnutls_datum_t *r)
+static int decode_data(asn1_node n, gnutls_datum_t *r)
 {
-	ASN1_DATA_NODE d;
+	asn1_data_node_st d;
 	int len, lenlen;
 
 	if (!n)
@@ -227,7 +227,7 @@ int load_tpm2_key(struct openconnect_info *vpninfo, struct cert_info *certinfo,
 		  gnutls_datum_t *fdata, gnutls_privkey_t *pkey, gnutls_datum_t *pkey_sig)
 {
 	gnutls_datum_t asn1, pubdata, privdata;
-	ASN1_TYPE tpmkey_def = ASN1_TYPE_EMPTY, tpmkey = ASN1_TYPE_EMPTY;
+	asn1_node tpmkey_def = NULL, tpmkey = NULL;
 	const char *oid = NULL;
 	char value_buf[16];
 	int value_buflen;
