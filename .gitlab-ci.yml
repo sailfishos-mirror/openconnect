@@ -93,11 +93,8 @@ Fedora/GnuTLS:
   - sysctl net.ipv6.conf.all.disable_ipv6=0
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
-# obsolete-server-crypto: system-wide crypto policy prevents --allow-insecure-crypto from working, and the
-#   library-reinitialization hack does not reliably work (https://gitlab.com/openconnect/openconnect/-/issues/243#note_576194663)
-#   XFAIL until we get a solution for https://bugzilla.redhat.com/show_bug.cgi?id=1960763
 # ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
-  - make VERBOSE=1 XFAIL_TESTS="obsolete-server-crypto ppp-over-tls-sync" -j4 check
+  - make VERBOSE=1 XFAIL_TESTS="ppp-over-tls-sync" -j4 check
   tags:
   - shared
   except:
