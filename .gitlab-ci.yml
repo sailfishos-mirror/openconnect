@@ -125,10 +125,11 @@ Fedora/OpenSSL:
   - sysctl net.ipv6.conf.all.disable_ipv6=0
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
-# auth-nonascii: UTF-8 support is not available in distro's ocserv package
+# auth-certificate: obsolete crypto has been removed from LEGACY crypto policies
 # auth-swtpm: XFAIL until we understand the TPM error
+# obsolete-server-crypto: obsolete crypto has been removed from LEGACY crypto policies
 # ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
-  - make VERBOSE=1 XFAIL_TESTS="auth-swtpm ppp-over-tls-sync" -j4 check
+  - make VERBOSE=1 XFAIL_TESTS="auth-certificate auth-swtpm obsolete-server-crypto ppp-over-tls-sync" -j4 check
   tags:
   - shared
   except:
@@ -338,9 +339,11 @@ Fedora/OpenSSL/clang:
   - sysctl net.ipv6.conf.all.disable_ipv6=0
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
+# auth-certificate: obsolete crypto has been removed from LEGACY crypto policies
 # auth-swtpm: XFAIL until we understand the TPM error
+# obsolete-server-crypto: obsolete crypto has been removed from LEGACY crypto policies
 # ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
-  - make VERBOSE=1 XFAIL_TESTS="auth-swtpm ppp-over-tls-sync" -j4 check
+  - make VERBOSE=1 XFAIL_TESTS="auth-certificate auth-swtpm obsolete-server-crypto ppp-over-tls-sync" -j4 check
   tags:
   - shared
   except:
@@ -476,8 +479,10 @@ ubsan/OpenSSL/Fedora:
   - export UBCFLAGS="-Wall -Wextra -fsanitize=undefined -fsanitize=bool -fsanitize=alignment -fsanitize=null -fsanitize=bounds-strict -fsanitize=enum -fno-sanitize-recover -g -O2"
   - CFLAGS="$UBCFLAGS" ./configure --without-gnutls --with-openssl --without-openssl-version-check --disable-dsa-tests
   - make -j4
+# auth-certificate: obsolete crypto has been removed from LEGACY crypto policies
 # auth-swtpm: XFAIL until we understand the TPM error
-  - make VERBOSE=1 XFAIL_TESTS="auth-swtpm" -j4 check
+# obsolete-server-crypto: obsolete crypto has been removed from LEGACY crypto policies
+  - make VERBOSE=1 XFAIL_TESTS="auth-certificate auth-swtpm obsolete-server-crypto" -j4 check
   tags:
   - shared
   - linux
