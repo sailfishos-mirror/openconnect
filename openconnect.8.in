@@ -84,7 +84,7 @@ It was originally written to support Cisco "AnyConnect" VPN servers,
 and has since been extended with experimental support for Juniper
 Network Connect
 .RB ( \-\-protocol=nc ),
-Junos Pulse VPN servers
+Junos/Ivanti Pulse VPN servers
 .RB ( \-\-protocol=pulse ),
 PAN GlobalProtect VPN servers
 .RB ( \-\-protocol=gp ),
@@ -674,9 +674,9 @@ to be used for the connection. Supported protocols are
 for Cisco AnyConnect (the default),
 .I nc
 for experimental support for Juniper Network Connect (also supported
-by most Junos Pulse servers),
+by most Junos/Ivanti Pulse servers),
 .I pulse
-for experimental support for Junos Pulse,
+for experimental support for Junos/Ivanti Pulse,
 .I gp
 for experimental support for PAN GlobalProtect,
 .I f5
@@ -693,7 +693,7 @@ protocols.
 
 OpenConnect does not yet support all of the authentication options used
 by Pulse, nor does it support Host Checker/TNCC with Pulse. If your
-Junos Pulse VPN is not yet supported with
+Junos/Ivanti Pulse VPN is not yet supported with
 .BR \-\-protocol=pulse ,
 then
 .B \-\-protocol=nc

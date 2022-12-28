@@ -11,8 +11,13 @@
 <h1>Pulse Connect Secure</h1>
 
 <p>Support for Pulse Connect Secure was added to OpenConnect in June 2019,
-for the 8.04 release. In most cases it supersedes the older Juniper Network
-Connect support. It is a much saner protocol.</p>
+for the 8.04 release. It has also been known as Junos Pulse and Ivanti Pulse Connect
+Secure, as its corporate ownership has changed.</p>
+
+<p>In most cases, Pulse servers also support the older
+<a href="juniper.html">Juniper Network Connect protocol</a>. The Pulse
+and Juniper protocols are extremely different from each other, and both extremely
+convoluted; the clearest improvement in the Pulse protocol is that it supports IPv6.</p>
 
 <p>Pulse mode is requested by adding <tt>--protocol=pulse</tt>
 to the command line:
