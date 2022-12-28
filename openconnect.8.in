@@ -792,7 +792,14 @@ be accepted, if it is at least 4 characters past the prefix.
 Use
 .I STRING
 as 'User\-Agent:' field value in HTTP header.
-(e.g. \-\-useragent 'Cisco AnyConnect VPN Agent for Windows 2.2.0133')
+
+Some VPN servers may require specific values matching those sent by proprietary VPN
+clients in order to successfully authenticate or connect. For example, when connecting
+to a Cisco VPN server,
+\-\-useragent 'AnyConnect Windows 4.10.06079' or
+\-\-useragent 'Cisco AnyConnect VPN Agent for Windows 2.2.0133',
+or when connecting to a Pulse server,
+\-\-useragent 'Pulse-Secure/9.1.11.6725'.
 .TAG opt-version-string
 .TP
 .B \-\-version\-string=STRING
