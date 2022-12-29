@@ -656,6 +656,9 @@ Android/x86_64:
   script:
   tags:
   - shared
+  except:
+  - tags
+  - schedules
   script:
   - make -C android ARCH=x86_64 TOOLCHAIN=$ANDROID_TOOLCHAINDIR/'$(TRIPLET)-$(API_LEVEL)'
   artifacts:
@@ -669,6 +672,9 @@ Android/x86:
   script:
   tags:
   - shared
+  except:
+  - tags
+  - schedules
   script:
   - make -C android ARCH=x86 TOOLCHAIN=$ANDROID_TOOLCHAINDIR/'$(TRIPLET)-$(API_LEVEL)'
   artifacts:
@@ -682,6 +688,9 @@ Android/arm:
   script:
   tags:
   - shared
+  except:
+  - tags
+  - schedules
   script:
   - make -C android ARCH=arm TOOLCHAIN=$ANDROID_TOOLCHAINDIR/'$(TRIPLET)-$(API_LEVEL)'
   artifacts:
@@ -695,6 +704,9 @@ Android/arm64:
   script:
   tags:
   - shared
+  except:
+  - tags
+  - schedules
   script:
   - make -C android ARCH=arm64 TOOLCHAIN=$ANDROID_TOOLCHAINDIR/'$(TRIPLET)-$(API_LEVEL)'
   artifacts:
