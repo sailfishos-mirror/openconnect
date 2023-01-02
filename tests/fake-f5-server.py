@@ -133,7 +133,20 @@ def root():
 def get_policy():
     session.update(step='GET-login-form')
     if C.no_html_login_form:
-        return '''<html><body>It would be nice if F5 login pages consistently used actual HTML forms</body></html>'''
+        json = dumps({
+            "logon": {
+                "form": {
+                    "id": "auth_form",
+                    "title": "Fake JSON login form",
+                    "fields": [
+                        {"type": "text", "name": "username", "caption": "Username"},
+                        {"type": "password", "name": "password", "caption": "Password"}
+                    ]
+                }
+            }
+        }, indent='  ')
+        return f'''<html><head><script type="text/javascript">appLoader.configure({json});</script></head>
+<body>It would be nice if F5 login pages consistently used actual HTML forms</body></html>'''
 
     sel = ''
     if C.domains:
@@ -142,6 +155,7 @@ def get_policy():
 
     return '''
 <html><body><form id="auth_form" method="post">
+<table><tr><td id="credentials_table_header">Fake HTML login form</td></tr></table>
 <input type="text" name="username"/>
 <input type="password" name="password"/>
 %s</form></body></html>''' % sel
