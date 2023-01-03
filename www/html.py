@@ -14,13 +14,7 @@ import getopt
 import xml.sax
 import codecs
 
-if sys.version_info >= (3, 0):
-    sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())
-else:
-    # reload() always needed because of https://docs.python.org/2.7/library/sys.html#sys.setdefaultencoding
-    reload(sys)
-    sys.setdefaultencoding('utf-8')
-    sys.stdout = codecs.getwriter("utf-8")(sys.stdout)
+sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())
 
 lookupdir = ''
 
@@ -50,9 +44,9 @@ fdout = sys.stdout
 def replaceVars(line):
     cnt = 0
     while cnt < len(replace):
-        # FIXME: this will match partial variable names, e.g. if XYZ and XYZ_ABC
-        # are both in the replacement list, and XYZ appears first, it will
-        # match and (partially) replace occurrences of XYZ_ABC.
+	# FIXME: this will match partial variable names, e.g. if XYZ and XYZ_ABC
+	# are both in the replacement list, and XYZ appears first, it will
+	# match and (partially) replace occurrences of XYZ_ABC.
         if line.find(replace[cnt]) >= 0:
             line = line.replace(replace[cnt], replace[cnt+1])
         cnt += 2
@@ -64,7 +58,7 @@ def writeHtml(line):
 
 
 def startMenu(level):
-    writeHtml("<div id=\"menu%s\">\n" % (level))
+    writeHtml(f"<div id=\"menu{level}\">\n")
 
 
 def placeMenu(topic, link, mode):
@@ -73,14 +67,14 @@ def placeMenu(topic, link, mode):
     mode = replaceVars(mode)
 
     if mode == 'text':
-        writeHtml("<p>%s</p>\n" % (topic))
+        writeHtml(f"<p>{topic}</p>\n")
         return
     if mode == 'selected':
         writeHtml("<span class=\"sel\">\n")
     else:
         writeHtml("<span class=\"nonsel\">\n")
 
-    writeHtml("<a href=\"%s\"><span>%s</span></a>\n" % (link, topic))
+    writeHtml(f"<a href=\"{link}\"><span>{topic}</span></a>\n")
     writeHtml("</span>\n")
 
 
@@ -88,7 +82,7 @@ def placeMenu(topic, link, mode):
 class docHandler(xml.sax.ContentHandler):
 
     def __init__(self):
-        xml.sax.ContentHandler.__init__(self)
+        super().__init__()
         self.content = ""
 
     def startElement(self, name, attrs):
@@ -158,11 +152,11 @@ class docHandler(xml.sax.ContentHandler):
 # error handler
 class errHandler(xml.sax.ErrorHandler):
     def error(self, exception):
-        sys.stderr.write("%s\n" % exception)
+        sys.stderr.write(f"{exception}\n")
 
     def fatalError(self, exception):
         sys.stderr.write("Fatal error while parsing configuration\n")
-        sys.stderr.write("%s\n" % exception)
+        sys.stderr.write(f"{exception}\n")
         sys.exit(1)
 
 
