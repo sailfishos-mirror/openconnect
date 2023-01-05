@@ -324,7 +324,7 @@ static const SSL_CIPHER *SSL_CIPHER_find(SSL *ssl, const unsigned char *ptr)
 
 int start_dtls_handshake(struct openconnect_info *vpninfo, int dtls_fd)
 {
-	method_const SSL_METHOD *dtls_method;
+	const SSL_METHOD *dtls_method;
 	SSL_SESSION *dtls_session;
 	SSL *dtls_ssl;
 	BIO *dtls_bio;
@@ -826,7 +826,7 @@ void gather_dtls_ciphers(struct openconnect_info *vpninfo, struct oc_text_buf *b
 void gather_dtls_ciphers(struct openconnect_info *vpninfo, struct oc_text_buf *buf,
 			 struct oc_text_buf *buf12)
 {
-	method_const SSL_METHOD *dtls_method;
+	const SSL_METHOD *dtls_method;
 	SSL_CTX *ctx;
 	SSL *ssl;
 	STACK_OF(SSL_CIPHER) *ciphers;

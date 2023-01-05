@@ -1705,7 +1705,7 @@ static int ssl_app_verify_callback(X509_STORE_CTX *ctx, void *arg)
 static int check_certificate_expiry(struct openconnect_info *vpninfo, struct cert_info *certinfo,
 				    struct ossl_cert_info *oci)
 {
-	method_const ASN1_TIME *notAfter;
+	const ASN1_TIME *notAfter;
 	const char *reason = NULL;
 	time_t t;
 	int i;
@@ -1986,7 +1986,7 @@ int openconnect_open_https(struct openconnect_info *vpninfo)
 	 * 4fcdd66fff5fea0cfa1055c6680a76a4303f28a2
 	 * cd6bd5ffda616822b52104fee0c4c7d623fd4f53
 	 */
-#if OPENSSL_VERSION_NUMBER >= 0x10001070 && !defined(LIBRESSL_VERSION_NUMBER)
+#if OPENSSL_VERSION_NUMBER >= 0x10001070L && !defined(LIBRESSL_VERSION_NUMBER)
 	if (vpninfo->sni)
 		SSL_set_tlsext_host_name(https_ssl, vpninfo->sni);
 	else if (string_is_hostname(vpninfo->hostname))

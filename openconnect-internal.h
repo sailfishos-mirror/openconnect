@@ -38,12 +38,6 @@
 #if defined(OPENCONNECT_OPENSSL)
 #include <openssl/ssl.h>
 #include <openssl/err.h>
-/* Ick */
-#if OPENSSL_VERSION_NUMBER >= 0x00909000L
-#define method_const const
-#else
-#define method_const
-#endif
 #endif
 
 #if defined(OPENCONNECT_GNUTLS)
