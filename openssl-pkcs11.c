@@ -486,7 +486,7 @@ static PKCS11_KEY *slot_find_key(struct openconnect_info *vpninfo, PKCS11_CTX *c
 }
 
 #ifndef OPENSSL_NO_EC
-#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 #define EVP_PKEY_id(k) ((k)->type)
 #endif
 static int validate_ecdsa_key(struct openconnect_info *vpninfo, struct cert_info *certinfo,

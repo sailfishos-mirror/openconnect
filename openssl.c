@@ -38,7 +38,7 @@
 #include <string.h>
 #include <ctype.h>
 
-#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 #define X509_up_ref(x) CRYPTO_add(&(x)->references, 1, CRYPTO_LOCK_X509)
 #define X509_get0_notAfter(x) X509_get_notAfter(x)
 #define EVP_MD_CTX_new EVP_MD_CTX_create
@@ -1209,7 +1209,7 @@ static int set_peer_cert_hash(struct openconnect_info *vpninfo)
 	return 0;
 }
 
-#if OPENSSL_VERSION_NUMBER < 0x10002000L || defined(LIBRESSL_VERSION_NUMBER)
+#if OPENSSL_VERSION_NUMBER < 0x10002000L
 static int match_hostname_elem(const char *hostname, int helem_len,
 			       const char *match, int melem_len)
 {
@@ -1862,7 +1862,7 @@ int openconnect_open_https(struct openconnect_info *vpninfo)
 		return ssl_sock;
 
 	if (!vpninfo->https_ctx) {
-#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 		vpninfo->https_ctx = SSL_CTX_new(SSLv23_client_method());
 		if (vpninfo->https_ctx)
 			SSL_CTX_set_options(vpninfo->https_ctx, SSL_OP_NO_SSLv2|SSL_OP_NO_SSLv3);
@@ -1986,7 +1986,7 @@ int openconnect_open_https(struct openconnect_info *vpninfo)
 	 * 4fcdd66fff5fea0cfa1055c6680a76a4303f28a2
 	 * cd6bd5ffda616822b52104fee0c4c7d623fd4f53
 	 */
-#if OPENSSL_VERSION_NUMBER >= 0x10001070L && !defined(LIBRESSL_VERSION_NUMBER)
+#if OPENSSL_VERSION_NUMBER >= 0x10001070L
 	if (vpninfo->sni)
 		SSL_set_tlsext_host_name(https_ssl, vpninfo->sni);
 	else if (string_is_hostname(vpninfo->hostname))
@@ -2083,7 +2083,7 @@ int openconnect_init_ssl(void)
 	if (ret)
 		return ret;
 #endif
-#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 	SSL_library_init();
 	ERR_clear_error();
 	SSL_load_error_strings();

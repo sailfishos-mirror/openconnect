@@ -52,7 +52,7 @@ extern void dtls1_stop_timer(SSL *);
 static int dtls_get_data_mtu(struct openconnect_info *vpninfo, int mtu)
 {
 	int ivlen, maclen, blocksize = 0, pad = 0;
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined(LIBRESSL_VERSION_NUMBER)
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
 	const SSL_CIPHER *s_ciph = SSL_get_current_cipher(vpninfo->dtls_ssl);
 	int cipher_nid;
 	const EVP_CIPHER *e_ciph;
@@ -140,7 +140,7 @@ unsigned dtls_set_mtu(struct openconnect_info *vpninfo, unsigned mtu)
 #endif
 }
 
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined(LIBRESSL_VERSION_NUMBER)
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
 /* Since OpenSSL 1.1, the SSL_SESSION structure is opaque and we can't
  * just fill it in directly. So we have to generate the OpenSSL ASN.1
  * representation of the SSL_SESSION, and use d2i_SSL_SESSION() to
@@ -808,7 +808,7 @@ void dtls_ssl_free(struct openconnect_info *vpninfo)
 	SSL_free(vpninfo->dtls_ssl);
 }
 
-#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 void gather_dtls_ciphers(struct openconnect_info *vpninfo, struct oc_text_buf *buf,
 			 struct oc_text_buf *buf12)
 {
