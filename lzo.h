@@ -63,4 +63,32 @@ int av_lzo1x_decode(void *out, int *outlen, const void *in, int *inlen);
  * @}
  */
 
+/*-------------------- LOCAL CHANGES --------------------*/
+#define FFMAX(a,b) ((a) > (b) ? (a) : (b))
+
+struct lzo_packed_uint32 {
+	uint32_t d;
+} __attribute__((packed));
+
+#define AV_COPY32U(dst,src) do {			\
+		((struct lzo_packed_uint32 *)dst)->d = \
+			((struct lzo_packed_uint32 *)src)->d; \
+	} while (0)
+
+static inline void av_memcpy_backptr(unsigned char *dst, int back, int cnt)
+{
+	while (cnt--) {
+		*dst = *(dst - back);
+		dst++;
+	}
+}
+
+#define av_assert0(cond) do {                                           \
+    /* Should never happen */                                           \
+    if (!(cond)) {                                                      \
+        c->error |= AV_LZO_ERROR;                                       \
+        return;                                                         \
+    }                                                                   \
+} while (0)
+/*-------------------- LOCAL CHANGES --------------------*/
 #endif /* AVUTIL_LZO_H */

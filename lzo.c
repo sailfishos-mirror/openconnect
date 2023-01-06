@@ -23,11 +23,11 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "avassert.h"
-#include "intreadwrite.h"
+//#include "avassert.h"
+//#include "intreadwrite.h"
 #include "lzo.h"
-#include "macros.h"
-#include "mem.h"
+//#include "macros.h"
+//#include "mem.h"
 
 /// Define if we may write up to 12 bytes beyond the output buffer.
 #define OUTBUF_PADDED 1
