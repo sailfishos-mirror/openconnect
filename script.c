@@ -366,13 +366,14 @@ void prepare_script_env(struct openconnect_info *vpninfo)
 	if (vpninfo->ip_info.dns[2])
 		script_setenv(vpninfo, "INTERNAL_IP4_DNS", vpninfo->ip_info.dns[2], 0, 1);
 
-	if (vpninfo->ip_info.nbns[0])
+	/* poorly configured VPNs send non-sensical 0.0.0.0 NBNS server address */
+	if (vpninfo->ip_info.nbns[0] && !strcmp(vpninfo->ip_info.nbns[0], "0.0.0.0"))
 		script_setenv(vpninfo, "INTERNAL_IP4_NBNS", vpninfo->ip_info.nbns[0], 0, 0);
 	else
 		script_setenv(vpninfo, "INTERNAL_IP4_NBNS", NULL, 0, 0);
-	if (vpninfo->ip_info.nbns[1])
+	if (vpninfo->ip_info.nbns[1] && !strcmp(vpninfo->ip_info.nbns[1], "0.0.0.0"))
 		script_setenv(vpninfo, "INTERNAL_IP4_NBNS", vpninfo->ip_info.nbns[1], 0, 1);
-	if (vpninfo->ip_info.nbns[2])
+	if (vpninfo->ip_info.nbns[2] && !strcmp(vpninfo->ip_info.nbns[2], "0.0.0.0"))
 		script_setenv(vpninfo, "INTERNAL_IP4_NBNS", vpninfo->ip_info.nbns[2], 0, 1);
 
 	if (vpninfo->ip_info.domain)
