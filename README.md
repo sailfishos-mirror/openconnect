@@ -26,8 +26,8 @@ Commonly-sought documentation:
 * [Manual](https://www.infradead.org/openconnect/manual.html)
 * [Getting Started / Building](https://www.infradead.org/openconnect/building.html) (includes build instructions)
 * [Packages](https://www.infradead.org/openconnect/packages.html)
-   (including latest development build of the CLI [for 64-bit Windows](https://gitlab.com/openconnect/openconnect/-/jobs/artifacts/master/raw/openconnect-installer.exe?job=MinGW64/GnuTLS),
-   and [for 32-bit Windows](https://gitlab.com/openconnect/openconnect/-/jobs/artifacts/master/raw/openconnect-installer.exe?job=MinGW32/GnuTLS))
+   (including latest development build of the CLI [for 64-bit Windows](https://gitlab.com/openconnect/openconnect/-/jobs/artifacts/master/raw/openconnect-installer-MinGW64-GnuTLS.exe?job=MinGW64/GnuTLS),
+   and [for 32-bit Windows](https://gitlab.com/openconnect/openconnect/-/jobs/artifacts/master/raw/openconnect-installer-MinGW32-GnuTLS.exe?job=MinGW32/GnuTLS))
 * [Contribute](https://www.infradead.org/openconnect/contribute.html)
 * [Mailing list / Help](https://www.infradead.org/openconnect/mail.html)
 * [GUIs / Front Ends](https://www.infradead.org/openconnect/gui.html)
