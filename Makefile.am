@@ -12,7 +12,7 @@ if USE_NLS
 SUBDIRS += po
 endif
 if BUILD_NSIS
-noinst_DATA = openconnect-installer.exe
+noinst_DATA = openconnect-installer-$(INSTALLER_SUFFIX).exe
 endif
 
 lib_LTLIBRARIES = libopenconnect.la
@@ -373,7 +373,7 @@ po/$(PACKAGE).pot: $(POTFILES) version.sh
 ACLOCAL_AMFLAGS = -I m4
 
 if BUILD_NSIS
-DISTCLEANFILES += .*.dll.d .*.exe.d file-list*.txt instfiles.nsh uninstfiles.nsh vpnc-script-win.js openconnect.nsi openconnect-installer.exe
+DISTCLEANFILES += .*.dll.d .*.exe.d file-list*.txt instfiles.nsh uninstfiles.nsh vpnc-script-win.js openconnect.nsi openconnect-installer-$(INSTALLER_NAME).exe
 
 # Including openconnect-gui.exe and Qt bits (as a hack)
 #EXTRA_EXECUTABLES := openconnect-gui.exe qwindows.dll qwindowsvistastyle.dll
@@ -467,17 +467,19 @@ uninstfiles.nsh: file-list.txt file-list-vpnc-script-win.js.txt file-list-$(TAPD
 # get it to work and life's too short.
 openconnect.nsi: version.c
 	$(AM_V_GEN) VERSION=$$(cut -f2 -d\" version.c); \
-	PROD_VERSION=$$(echo "$$VERSION" | perl -ne 'm|v(\d+)\.(\d+)(?:\.git\.\|\-)?(\d+)?(?:-g.+\|.*)|; print "$$1.$$2." . ($$3 or "0") . ".0"'); \
+	PROD_VERSION=$$(echo "$$VERSION" | perl -ne 'm|v(\d+)\.(\d+)(?:\.git\.\|\-)?(\d+)?(?:-g.+\|.*)|; printf("%1d.%1d.%1d.0",$$1,$$2,$$3)'); \
 	if egrep -q '^#define OPENCONNECT_GNUTLS' config.h; then \
 	    TLS_LIBRARY=GnuTLS; \
 	elif egrep -q '^#define OPENCONNECT_OPENSSL' config.h; then \
 	    TLS_LIBRARY=OpenSSL; \
 	else \
-	    TLS_LIBRARY="Unknown TLS library"; \
+	    TLS_LIBRARY="Unknown_TLS_library"; \
 	fi; \
+	INSTALLER_NAME="openconnect-installer-$(INSTALLER_SUFFIX)-$${VERSION}.exe"; \
 	( echo "VIProductVersion \"$$PROD_VERSION\""; \
 	  echo "VIAddVersionKey ProductVersion \"$$VERSION\""; \
 	  echo "VIAddVersionKey Comments \"OpenConnect multi-protocol VPN client for Windows (command-line version, built with $$TLS_LIBRARY). For more information, visit https://www.infradead.org/openconnect/\""; \
+	  echo "OutFile \"$$INSTALLER_NAME\""; \
 	  echo "!include $(srcdir)/openconnect.nsi.in" ) > $@
 
 AM_V_MAKENSIS = $(am__v_MAKENSIS_$(V))
@@ -485,7 +487,8 @@ am__v_MAKENSIS_ = $(am__v_MAKENSIS_$(AM_DEFAULT_VERBOSITY))
 am__v_MAKENSIS_0 = @echo "  MAKENSIS   " $@;
 am__v_MAKENSIS_1 =
 
-openconnect-installer.exe: openconnect.nsi instfiles.nsh uninstfiles.nsh $(srcdir)/openconnect.nsi.in html-recursive
+openconnect-installer-$(INSTALLER_SUFFIX).exe: openconnect.nsi instfiles.nsh uninstfiles.nsh $(srcdir)/openconnect.nsi.in html-recursive
 	$(AM_V_MAKENSIS) $(MAKENSIS) $<
+	ln -f "$$(egrep '^OutFile' openconnect.nsi | cut -f2 -d\")" $@
 
 endif
