@@ -32,6 +32,7 @@
        <li>Support F5 VPNs which encode authentication forms only in JSON, not in HTML (<a href="https://gitlab.com/openconnect/openconnect/-/issues/512">#512</a>, <a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/431">!431</a>).</li>
        <li>Persist Windows installers for tagged builds (<a href="https://gitlab.com/openconnect/openconnect/-/issues/463">#463</a>, <a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/391">!391</a>).</li>
        <li>Support simultaneous IPv6 and Legacy IP ("dual-stack") for Fortinet (<a href="https://gitlab.com/openconnect/openconnect/-/issues/568">#568</a>, <a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/456">!456</a>).</li>
+       <li>Support "FTM-push" token mode for Fortinet VPNs (<a href="https://gitlab.com/openconnect/openconnect/-/issues/555">#555</a>, <a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/450">!450</a>).</li>
      </ul><br/>
   </li>
   <li><b><a href="https://www.infradead.org/openconnect/download/openconnect-9.01.tar.gz">OpenConnect v9.01</a></b>

@@ -84,7 +84,7 @@ def check_form_against_session(*fields):
 # Configure the fake server. These settings will persist unless/until reconfigured or restarted:
 #   want_2fa: Require 2FA (default 0)
 #     If want_2fa>1, multiple rounds of 2FA token entry will be required.
-#   type_2fa: 2FA format (either 'tokeninfo' or 'html'; 'tokeninfo' is the default)
+#   type_2fa: 2FA format (either 'tokeninfo', 'ftmpush', or 'html'; 'tokeninfo' is the default)
 @dataclass
 class TestConfiguration:
     want_2fa: int = 0
@@ -133,16 +133,17 @@ def logincheck():
     want_2fa = session.get('want_2fa')
     if want_2fa:
         if (   (C.type_2fa == 'tokeninfo' and request.form.get('username') and request.form.get('code'))
+            or (C.type_2fa == 'ftmpush' and request.form.get('username') and request.form.get('ftmpush') == '1' and not request.form.get('magic'))
             or (C.type_2fa == 'html' and request.form.get('username') and request.form.get('magic') and request.form.get('credential'))):
             # we've received (at least one round of) 2FA login
             if want_2fa == 1:
                 return complete_2fa()
             else:
                 session.update(want_2fa=want_2fa - 1)
-                return send_2fa_tokeninfo() if C.type_2fa == 'tokeninfo' else send_2fa_html()
+                return send_2fa_html() if C.type_2fa == 'html' else send_2fa_tokeninfo()
         elif request.form.get('username') and request.form.get('credential'):
             # we've just received the initial non-2FA login
-            return send_2fa_tokeninfo() if C.type_2fa == 'tokeninfo' else send_2fa_html()
+            return send_2fa_html() if C.type_2fa == 'html' else send_2fa_tokeninfo()
     elif (request.form.get('username') and request.form.get('credential')):
         return complete_non_2fa()
     abort(405)
@@ -167,13 +168,21 @@ def complete_2fa():
 @check_form_against_session('realm')
 def send_2fa_tokeninfo():
     global C
+    if C.type_2fa == 'ftmpush':
+        tokeninfo = 'ftm_push'
+        msg = 'Leave blank to simulate fake FTM push'
+        magic = None
+    else:
+        tokeninfo = ''
+        msg = 'Please enter your tokeninfo code'
+        magic = '1-'+str(random.randint(10_000_000, 99_000_000))
     session.update(step='send-2FA-tokeninfo', username=request.form.get('username'), credential=request.form.get('credential'),
                    reqid=str(random.randint(10_000_000, 99_000_000)), polid='1-1-'+str(random.randint(10_000_000, 99_000_000)),
-                   magic='1-'+str(random.randint(10_000_000, 99_000_000)), portal=random.choice('ABCD'), grp=random.choice('EFGH'))
+                   magic=magic, portal=random.choice('ABCD'), grp=random.choice('EFGH'))
     # print(session)
 
     return ('ret=2,reqid={reqid},polid={polid},grp={grp},portal={portal},magic={magic},'
-            'tokeninfo=,chal_msg=Please enter your tokeninfo code ({want_2fa} remaining)'.format(**session),
+            'tokeninfo={tokeninfo},chal_msg={msg} ({want_2fa} remaining)'.format(tokeninfo=tokeninfo, msg=msg, **session),
             {'content-type': 'text/plain'})
 
 

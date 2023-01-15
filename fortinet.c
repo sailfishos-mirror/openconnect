@@ -97,11 +97,11 @@ static int filter_opts(struct oc_text_buf *buf, const char *query, const char *i
 
 int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 {
-	int ret;
+	int ret, ftmpush;
 	struct oc_text_buf *req_buf = NULL;
 	struct oc_auth_form *form = NULL;
 	struct oc_form_opt *opt, *opt2;
-	char *resp_buf = NULL, *realm = NULL, *tokeninfo_fields = NULL;
+	char *resp_buf = NULL, *realm = NULL, *tokeninfo_fields = NULL, *ti;
 
 	req_buf = buf_alloc();
 	if (buf_error(req_buf)) {
@@ -189,9 +189,17 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 			/* 2FA form (fields 'username', 'code', and a bunch of values
 			 * from the previous response which we mindlessly parrot back)
 			 */
-			buf_append(req_buf, "&code2=&%s", tokeninfo_fields);
-			free(tokeninfo_fields);
-			tokeninfo_fields = NULL;
+			buf_append(req_buf, "&%s", tokeninfo_fields);
+
+			/* But if the server sent 'tokeninfo=ftm_push' AND 'code' was left
+			 * blank, then we exclude 'magic' and add 'ftmpush=1', in order to
+			 * trigger the appropriate mobile-push-based response. */
+			if (ftmpush && (!opt2->_value || !opt2->_value[0])) {
+				char *magic = strstr(req_buf->data, "&magic=");
+				if (magic)
+					req_buf->pos = magic - req_buf->data;
+				buf_append(req_buf, "&ftmpush=1");
+			}
 		}
 
 		if ((ret = buf_error(req_buf)))
@@ -218,9 +226,10 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 
 		/* XX: We got 200 status, but no SVPNCOOKIE. tokeninfo-type 2FA? */
 		if (ret > 0 &&
-		    !strncmp(resp_buf, "ret=", 4) && strstr(resp_buf, ",tokeninfo=")) {
+		    !strncmp(resp_buf, "ret=", 4) && (ti = strstr(resp_buf, ",tokeninfo="))) {
 			const char *prompt;
 			struct oc_text_buf *tokeninfo_buf = buf_alloc();
+			ftmpush = !strncmp(ti + 11, "ftm_push", 8);
 
 			/* Hide 'username' field */
 			opt->type = OC_FORM_OPT_HIDDEN;
@@ -241,7 +250,8 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 			if (!(form->auth_id = strdup("_challenge")))
 				goto nomem;
 
-			/* Save a bunch of values to parrot back */
+			/* Save a bunch of values to parrot back. 'magic' must be LAST
+			 * in order for the 'ftmpush' trick above to work. */
 			filter_opts(tokeninfo_buf, resp_buf, "reqid,polid,grp,portal,peer,magic", 1);
 			if ((ret = buf_error(tokeninfo_buf)))
 				goto out;

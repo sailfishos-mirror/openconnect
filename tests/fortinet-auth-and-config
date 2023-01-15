@@ -66,6 +66,15 @@ echo -n "Authenticating with username/password/tokeninfo-2FA and NON-DEFAULT pat
 
 echo ok
 
+echo "Configuring fake server to require 1 rounds of tokeninfo-based 2FA with optional \"FTM push\"."
+curl -sk $SERVURL/CONFIGURE -d want_2fa=1 -d type_2fa=ftmpush
+
+echo -n "Authenticating with username/password/FTM-push and DEFAULT path... "
+( echo "test" | $CLIENT $SERVURL --form-entry=_challenge:code='' --cookieonly >/dev/null 2>&1) ||
+    fail $PID "Could not receive cookie from fake Fortinet server"
+
+echo ok
+
 echo "Configuring fake server to require 1 round of HTML-based 2FA."
 curl -sk $SERVURL/CONFIGURE -d want_2fa=1 -d type_2fa=html
 
@@ -75,7 +84,7 @@ echo -n "Authenticating with username/password/HTML-2FA and DEFAULT path... "
 
 echo ok
 
-echo "Configuring fake server to require 2 round of tokeninfo-based 2FA."
+echo "Configuring fake server to require 2 rounds of tokeninfo-based 2FA."
 curl -sk $SERVURL/CONFIGURE -d want_2fa=2 -d type_2fa=tokeninfo
 
 echo -n "Authenticating with username/password/(2 rounds of tokeninfo-2FA) and DEFAULT path... "
