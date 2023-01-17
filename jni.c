@@ -1459,6 +1459,14 @@ JNIEXPORT void JNICALL Java_org_infradead_libopenconnect_LibOpenConnect_setLocal
 	SET_STRING_END();
 }
 
+JNIEXPORT void JNICALL Java_org_infradead_libopenconnect_LibOpenConnect_setSNI(
+	JNIEnv *jenv, jobject jobj, jstring jarg)
+{
+	SET_STRING_START_VOID()
+	openconnect_set_sni(ctx->vpninfo, arg);
+	SET_STRING_END();
+}
+
 JNIEXPORT void JNICALL Java_org_infradead_libopenconnect_LibOpenConnect_setCAFile(
 	JNIEnv *jenv, jobject jobj, jstring jarg)
 {

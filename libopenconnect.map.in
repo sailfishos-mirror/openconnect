@@ -124,6 +124,7 @@ OPENCONNECT_5_8 {
 	openconnect_set_external_browser_callback;
 	openconnect_set_mca_cert;
 	openconnect_set_mca_key_password;
+	openconnect_set_sni;
 	openconnect_set_useragent;
 } OPENCONNECT_5_7;
 

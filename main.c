@@ -1933,7 +1933,7 @@ int main(int argc, char **argv)
 			gai->value = gai->option + (ip - config_arg) + 1;
 			break;
 		case OPT_SNI:
-			vpninfo->sni = keep_config_arg();
+			openconnect_set_sni(vpninfo, config_arg);
 			break;
 		case OPT_NO_DTLS:
 			openconnect_disable_dtls(vpninfo);

@@ -882,6 +882,15 @@ int openconnect_set_localname(struct openconnect_info *vpninfo,
 	return 0;
 }
 
+int openconnect_set_sni(struct openconnect_info *vpninfo,
+			      const char *sni)
+{
+	UTF8CHECK(sni);
+
+	STRDUP(vpninfo->sni, sni);
+	return 0;
+}
+
 void openconnect_set_xmlsha1(struct openconnect_info *vpninfo,
 			     const char *xmlsha1, int size)
 {
