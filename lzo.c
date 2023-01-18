@@ -19,14 +19,15 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
-//#include "avutil.h"
+#include <limits.h>
+#include <stdint.h>
+#include <string.h>
+
 //#include "avassert.h"
-//#include "common.h"
 //#include "intreadwrite.h"
 #include "lzo.h"
-
-#include <string.h>
-#include <limits.h>
+//#include "macros.h"
+//#include "mem.h"
 
 /// Define if we may write up to 12 bytes beyond the output buffer.
 #define OUTBUF_PADDED 1
@@ -87,11 +88,7 @@ static inline void copy(LZOContext *c, int cnt)
 {
     register const uint8_t *src = c->in;
     register uint8_t *dst       = c->out;
-    /* Should never happen */
-    if (cnt < 0) {
-	c->error |= AV_LZO_ERROR;
-	return;
-    }
+    av_assert0(cnt >= 0);
     if (cnt > c->in_end - src) {
         cnt       = FFMAX(c->in_end - src, 0);
         c->error |= AV_LZO_INPUT_DEPLETED;
@@ -123,11 +120,7 @@ static inline void copy(LZOContext *c, int cnt)
 static inline void copy_backptr(LZOContext *c, int back, int cnt)
 {
     register uint8_t *dst       = c->out;
-    /* Should never happen */
-    if (cnt <= 0) {
-        c->error |= AV_LZO_ERROR;
-	return;
-    }
+    av_assert0(cnt > 0);
     if (dst - c->out_start < back) {
         c->error |= AV_LZO_INVALID_BACKPTR;
         return;
@@ -170,14 +163,14 @@ int av_lzo1x_decode(void *out, int *outlen, const void *in, int *inlen)
     while (!c.error) {
         int cnt, back;
         if (x > 15) {
-            if (x > 63) { /* cccbbbnn BBBBBBBB */
+            if (x > 63) {
                 cnt  = (x >> 5) - 1;
                 back = (GETB(c) << 3) + ((x >> 2) & 7) + 1;
-            } else if (x > 31) { /* 001ccccc (cccccccc...) bbbbbbnn BBBBBBBB */
+            } else if (x > 31) {
                 cnt  = get_len(&c, x, 31);
                 x    = GETB(c);
                 back = (GETB(c) << 6) + (x >> 2) + 1;
-            } else { /* 0001bccc (cccccccc...) bbbbbbnn BBBBBBBB */
+            } else {
                 cnt   = get_len(&c, x, 7);
                 back  = (1 << 14) + ((x & 8) << 11);
                 x     = GETB(c);
@@ -188,7 +181,7 @@ int av_lzo1x_decode(void *out, int *outlen, const void *in, int *inlen)
                     break;
                 }
             }
-        } else if (!state) { /* 0000llll (llllllll...) { literal... } ( 0000bbnn BBBBBBBB ) */
+        } else if (!state) {
             cnt = get_len(&c, x, 15);
             copy(&c, cnt + 3);
             x = GETB(c);
@@ -196,7 +189,7 @@ int av_lzo1x_decode(void *out, int *outlen, const void *in, int *inlen)
                 continue;
             cnt  = 1;
             back = (1 << 11) + (GETB(c) << 2) + (x >> 2) + 1;
-        } else { /* 0000bbnn BBBBBBBB ) */
+        } else {
             cnt  = 0;
             back = (GETB(c) << 2) + (x >> 2) + 1;
         }
