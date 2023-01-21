@@ -2426,6 +2426,8 @@ int openconnect_open_https(struct openconnect_info *vpninfo)
 			buf_append(buf, ":+3DES-CBC:+ARCFOUR-128:+SHA1");
 			if (gnutls_check_version_numeric(3,6,0))
 				buf_append(buf, ":%%VERIFY_ALLOW_SIGN_WITH_SHA1");
+			if (gnutls_check_version_numeric(2,11,3))
+				buf_append(buf, ":%%UNSAFE_RENEGOTIATION");
 		} else
 			buf_append(buf, ":-3DES-CBC:-ARCFOUR-128");
 

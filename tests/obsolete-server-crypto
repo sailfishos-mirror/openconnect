@@ -27,14 +27,19 @@ top_builddir=${top_builddir:-..}
 
 ########################################
 # Verify that we cannot connect to a server offering only obsolete, insecure
-# crypto UNLESS --allow-insecure-crypto is specified.
+# crypto UNLESS --allow-insecure-crypto is specified:
+#   - only offer TLS v1.0, not newer versions
+#   - only offer 3DES and RC4 ciphers
+#   - only offer MD5 and SHA1 hashes
+#   - only offer unsafe/legacy renegotiation, NOT the safe renegotiation extension
+#     (may not do anything: Cisco AnyConnect servers use renegotiation; ocserv may not)
 ########################################
 
 echo "Testing against server with insecure crypto (3DES and RC4 only)..."
 
 # Run servers
 PORT=4568
-TLS_PRIORITIES="LEGACY:%SERVER_PRECEDENCE:%COMPAT:-VERS-TLS-ALL:+VERS-TLS1.0:-CIPHER-ALL:+3DES-CBC:+ARCFOUR-128:+MD5:+SHA1"
+TLS_PRIORITIES="LEGACY:%SERVER_PRECEDENCE:%COMPAT:%DISABLE_SAFE_RENEGOTIATION:%UNSAFE_RENEGOTIATION:-VERS-TLS-ALL:+VERS-TLS1.0:-CIPHER-ALL:+3DES-CBC:+ARCFOUR-128:+MD5:+SHA1"
 update_config test-obsolete-server-crypto.config
 
 ########################################
