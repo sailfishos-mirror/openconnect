@@ -2518,8 +2518,12 @@ int cstp_handshake(struct openconnect_info *vpninfo, unsigned init)
 				return -EINTR;
 			}
 		} else if (gnutls_error_is_fatal(err)) {
-			vpn_progress(vpninfo, PRG_ERR, _("SSL connection failure: %s\n"),
-							 gnutls_strerror(err));
+			if (err == GNUTLS_E_FATAL_ALERT_RECEIVED)
+				vpn_progress(vpninfo, PRG_ERR, _("SSL connection failure due to fatal alert: %s\n"),
+					     gnutls_alert_get_name(gnutls_alert_get(vpninfo->https_sess)));
+			else
+				vpn_progress(vpninfo, PRG_ERR, _("SSL connection failure: %s\n"),
+								 gnutls_strerror(err));
 			gnutls_deinit(vpninfo->https_sess);
 			vpninfo->https_sess = NULL;
 			closesocket(ssl_sock);
