@@ -88,9 +88,9 @@ static int parse_prelogin_xml(struct openconnect_info *vpninfo, xmlNode *xml_nod
 	for (xml_node = xml_node->children; xml_node; xml_node = xml_node->next) {
 		xmlnode_get_val(xml_node, "saml-request", &s);
 		xmlnode_get_val(xml_node, "saml-auth-method", &saml_method);
-		xmlnode_get_val(xml_node, "authentication-message", &prompt);
-		xmlnode_get_val(xml_node, "username-label", &username_label);
-		xmlnode_get_val(xml_node, "password-label", &password_label);
+		xmlnode_get_trimmed_val(xml_node, "authentication-message", &prompt);
+		xmlnode_get_trimmed_val(xml_node, "username-label", &username_label);
+		xmlnode_get_trimmed_val(xml_node, "password-label", &password_label);
 		/* XX: should we save the certificate username from <ccusername/> ? */
 	}
 
@@ -170,7 +170,7 @@ static int parse_prelogin_xml(struct openconnect_info *vpninfo, xmlNode *xml_nod
 	opt->name = strdup("user");
 	if (!opt->name)
 		goto nomem;
-	if (asprintf(&opt->label, "%s: ", username_label ? : _("Username")) == 0)
+	if (asprintf(&opt->label, "%s: ", username_label ? : _("Username")) <= 0)
 		goto nomem;
 	if (!ctx->username)
 		opt->type = saml_path ? OC_FORM_OPT_SSO_USER : OC_FORM_OPT_TEXT;
@@ -187,7 +187,7 @@ static int parse_prelogin_xml(struct openconnect_info *vpninfo, xmlNode *xml_nod
 	opt2->name = strdup(ctx->alt_secret ? : "passwd");
 	if (!opt2->name)
 		goto nomem;
-	if (asprintf(&opt2->label, "%s: ", ctx->alt_secret ? : password_label ? : _("Password")) == 0)
+	if (asprintf(&opt2->label, "%s: ", ctx->alt_secret ? : password_label ? : _("Password")) <= 0)
 		goto nomem;
 
 	/* XX: Some VPNs use a password in the first form, followed by a
