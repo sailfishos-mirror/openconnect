@@ -69,7 +69,7 @@ client and can be found
 cookie representing a VPN session can be used with OpenConnect. Just
 pass the cookie to OpenConnect with its <tt>-C</tt> option, for example:
 <pre>
-  openconnect --juniper -C "DSID=foobar12345" vpn.example.com
+  openconnect --protocol=nc -C "DSID=foobar12345" vpn.example.com
 </pre>
 </p>
 

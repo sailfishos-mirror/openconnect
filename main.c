@@ -1844,8 +1844,7 @@ int main(int argc, char **argv)
 				exit(1);
 			break;
 		case OPT_JUNIPER:
-			fprintf(stderr, "WARNING: Juniper Network Connect support is experimental.\n");
-			fprintf(stderr, "It will probably be superseded by Junos Pulse support.\n");
+			fprintf(stderr, _("WARNING: --juniper is deprecated, use --protocol=nc instead.\n"));
 			openconnect_set_protocol(vpninfo, "nc");
 			break;
 		case OPT_CONFIGFILE:
