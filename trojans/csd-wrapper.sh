@@ -9,6 +9,8 @@
 #   - fix small typos:
 # [31 May 2018] Updated by Daniel Lenski <dlenski@gmail.com>:
 #   - use curl with --pinnedpubkey to rely on sha256 hash of peer cert passed by openconnect
+# [10 Feb 2023] Updated by Andy Teijelo <ateijelo@gmail.com>:
+#   - use coreutil's timeout when spawning cstub
 
 TIMEOUT=30
 URL="https://${CSD_HOSTNAME}/CACHE"
@@ -153,10 +155,5 @@ done < $HOSTSCAN_DIR/manifest
 ARGS="-log error -ticket $TICKET -stub $STUB -group $GROUP -host \"$URL\" -certhash $CERTHASH"
 
 echo "Launching: $BIN_DIR/cstub $ARGS"
-$BIN_DIR/cstub $ARGS & CSTUB_PID=$!
 
-sleep $TIMEOUT
-if kill -0 $CSTUB_PID 2> /dev/null; then
-    echo "Killing cstub process after $TIMEOUT seconds"
-    kill $CSTUB_PID 2> /dev/null || kill -9 $CSTUB_PID 2> /dev/null
-fi
+timeout $TIMEOUT "$BIN_DIR/cstub" $ARGS
