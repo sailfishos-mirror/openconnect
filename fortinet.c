@@ -631,7 +631,10 @@ static int fortinet_configure(struct openconnect_info *vpninfo)
 
 	/* Fetch the connection options in XML format */
 	free(vpninfo->urlpath);
-	vpninfo->urlpath = strdup("remote/fortisslvpn_xml");
+	if (asprintf(&vpninfo->urlpath, "remote/fortisslvpn_xml%s", vpninfo->disable_ipv6 ? "" : "?dual_stack=1") < 0) {
+		ret = -ENOMEM;
+		goto out;
+	}
 	ret = do_https_request(vpninfo, "GET", NULL, NULL, &res_buf, NULL, HTTP_NO_FLAGS);
 	if (ret < 0) {
 		if (ret == -EPERM) {

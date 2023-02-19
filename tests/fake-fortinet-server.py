@@ -225,7 +225,8 @@ def html_config():
 @app.route('/remote/fortisslvpn_xml')
 @require_SVPNCOOKIE
 def xml_config():
-    resp = make_response('''
+    dual_stack = request.args.get('dual_stack') not in (None, '0')
+    resp = make_response(f'''
             <?xml version="1.0" encoding="utf-8"?>
             <sslvpn-tunnel ver="2" dtls="1" patch="1">
               <dtls-config heartbeat-interval="10" heartbeat-fail-count="10" heartbeat-idle-timeout="10" client-hello-timeout="10"/>
@@ -246,9 +247,7 @@ def xml_config():
                   <addr ip="9.9.9.9" mask="255.255.255.255"/>
                 </split-tunnel-info>
               </ipv4>
-              <!-- Real Fortinet servers are too dumb to send both IPv4 and IPv6 config simultaneously, but we
-                   may as well test it here nonetheless. -->
-              <ipv6>
+              {"<ipv6>" if dual_stack else "<--"}
                 <dns ipv6="cafe:1234::5678"/>
                 <assigned-addr ipv6="faff:ffff::1" prefix-len="64"/>
                 <split-tunnel-info>
@@ -257,7 +256,7 @@ def xml_config():
                 <split-tunnel-info negate="1">
                   <addr ipv6="2620:fe::fe" prefix-len="128"/>
                 </split-tunnel-info>
-              </ipv6>
+              {"</ipv6>" if dual_stack else "-->"}
               <idle-timeout val="3600"/>
               <auth-timeout val="18000"/>
             </sslvpn-tunnel>''',
