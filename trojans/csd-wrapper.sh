@@ -61,13 +61,18 @@ while [ "$1" ]; do
     shift
 done
 
-ARCH=$(uname -m)
+OS="$(uname -s)"
+ARCH="$(uname -m)"
 
-if [[ "$ARCH" == "x86_64" ]]
+if [[ "$OS $ARCH" == "Linux x86_64" ]]
 then
     ARCH="linux_x64"
-else
+elif [[ "$OS $ARCH" == "Linux i386" || "$ARCH" == "Linux i686" ]]
+then
     ARCH="linux_i386"
+else
+    echo "This CSD wrapper script does not know how to handle your platform: $OS on $ARCH" >&2
+    exit 1
 fi
 
 # creating dirs
