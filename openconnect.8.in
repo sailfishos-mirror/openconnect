@@ -853,16 +853,6 @@ writes progress message with detailed connection information and statistics.
 forces an immediate disconnection and reconnection; this can be used to
 quickly recover from LAN IP address changes.
 .TP
-.SH LIMITATIONS
-Note that although IPv6 has been tested on all platforms on which
-.B openconnect
-is known to run, it depends on a suitable
-.B vpnc\-script
-to configure the network. The standard
-.B vpnc\-script
-shipped with vpnc 0.5.3 is not capable of setting up IPv6 routes; the one from
-.B https://gitlab.com/openconnect/vpnc\-scripts
-will be required.
 .SH SEE ALSO
 .BR ocserv (8)
 
