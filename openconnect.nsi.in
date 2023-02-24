@@ -70,21 +70,6 @@ Section "Desktop Icons"
   CreateShortCut "$DESKTOP\openconnect.exe.lnk" "$INSTDIR\.\openconnect.exe" "" "$INSTDIR\.\openconnect.exe" 0
 SectionEnd
 
-Section "TAP-Windows driver"
-  MessageBox MB_OK \
-    "OpenConnect uses the TAP-Windows driver from OpenVPN to create virtual Ethernet adapters for \
-     VPN connections. If you haven't already installed this driver, you should now install v9.21.2, \
-     which works on Windows 2003, Windows Vista, or newer. \
-     More information on this driver, and available versions, can be found at \
-     https://community.openvpn.net/openvpn/wiki/GettingTapWindows"
-
-  MessageBox MB_YESNO "Install TAP-Windows driver v9.21.2?" /SD IDYES IDNO endTapWindows
-    DetailPrint "Running TAP-Windows driver setup..."
-    ExecWait "$INSTDIR\tap-windows-9.21.2.exe"
-    DetailPrint "Finished TAP-Windows driver setup"
-  endTapWindows:
-SectionEnd
-
 Section "Uninstall"
   Delete /rebootok "$DESKTOP\openconnect.exe.lnk"
   Delete /rebootok "$SMPROGRAMS\OpenConnect\openconnect.exe.lnk"
