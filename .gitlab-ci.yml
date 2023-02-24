@@ -109,8 +109,6 @@ Fedora/GnuTLS:
 Fedora/OpenSSL:
   stage: test-first
   script:
-# Re-enable DSA since we test it
-  - update-crypto-policies --set LEGACY
   - ./autogen.sh
   - ./configure --without-gnutls --with-openssl --without-openssl-version-check --disable-dsa-tests --enable-ppp-tests CFLAGS=-g
   - make tmp-distdir
@@ -323,8 +321,6 @@ Fedora/GnuTLS/clang:
 Fedora/OpenSSL/clang:
   stage: test-rest
   script:
-# Re-enable DSA since we test it
-  - update-crypto-policies --set LEGACY
   - ./autogen.sh
   - ./configure CC=clang --without-gnutls --with-openssl --without-openssl-version-check --disable-dsa-tests --enable-ppp-tests CFLAGS=-g
   - make tmp-distdir
