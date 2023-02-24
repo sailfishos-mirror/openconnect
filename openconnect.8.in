@@ -852,7 +852,13 @@ writes progress message with detailed connection information and statistics.
 .B SIGUSR2
 forces an immediate disconnection and reconnection; this can be used to
 quickly recover from LAN IP address changes.
-.TP
+.SH LIMITATIONS
+See
+.B https://www.infradead.org/openconnect/contribute.html
+for various features that we wish OpenConnect had, and
+.B https://www.infradead.org/openconnect/protocols.html
+for information on the quirks and limitations of the individual VPN
+protocols.
 .SH SEE ALSO
 .BR ocserv (8)
 
