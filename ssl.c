@@ -529,7 +529,7 @@ int connect_https_socket(struct openconnect_info *vpninfo)
 				vpn_progress(vpninfo, PRG_TRACE,
 					     _("Forgetting non-functional previous peer address\n"));
 				free(vpninfo->peer_addr);
-				vpninfo->peer_addr = 0;
+				vpninfo->peer_addr = NULL;
 				vpninfo->peer_addrlen = 0;
 				free(vpninfo->ip_info.gateway_addr);
 				vpninfo->ip_info.gateway_addr = NULL;

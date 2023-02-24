@@ -50,7 +50,7 @@ struct openconnect_info *openconnect_vpninfo_new(const char *useragent,
 						 openconnect_progress_vfn progress,
 						 void *privdata)
 {
-	struct openconnect_info *vpninfo = calloc(sizeof(*vpninfo), 1);
+	struct openconnect_info *vpninfo = calloc(1, sizeof(*vpninfo));
 #ifdef HAVE_ICONV
 	char *charset = nl_langinfo(CODESET);
 #endif

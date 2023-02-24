@@ -213,7 +213,7 @@ int openconnect_ppp_new(struct openconnect_info *vpninfo,
 {
 	free(vpninfo->ppp);
 
-	struct oc_ppp *ppp = vpninfo->ppp = calloc(sizeof(*ppp), 1);
+	struct oc_ppp *ppp = vpninfo->ppp = calloc(1, sizeof(*ppp));
 
 	if (!ppp)
 		return -ENOMEM;
