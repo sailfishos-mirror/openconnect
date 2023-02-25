@@ -153,8 +153,8 @@ Other items on the TODO list include:
 <ul>
   <li><b>WebView support in graphical clients.</b><br/>
   OpenConnect currently screen-scrapes the HTML login pages for protocols like Juniper, which is fragile and error-prone. It would be great if the graphical interfaces like NetworkManager could use a real WebView to show the pages, which would work with JavaScript and various other customisations that the admins often make. This might make an excellent Google Summer of Code project, or would also suit someone just trying to contribute in their spare time.</li>
-  <li><b>Better support for running or emulating the '<a href="csd.html">Cisco Secure Desktop</a>' trojan.</b><br/>
-  The Cisco <tt>hostscan</tt> tool seems to download and interpret a manifest file from the server and send back results based on the "questions" therein. A native implementation of this would be useful.</li>
+  <li><b>Support for running or emulating the '<a href="csd.html">Cisco Secure Desktop</a>' (Cisco), '<a href="hip.html">HIP</a>' (GlobalProtect), and '<a href="tncc.html">Host Checker</a>' (Juniper/Pulse) trojans.</b><br/>
+  OpenConnect does not yet support these trojans on Windows, whether by downloading and running trojan binaries directly, nor by invoking wrapper scripts.</li>
   <li><b>GUI for OS X, perhaps based on <a href="https://tunnelblick.net/">Tunnelblick</a>.</b></li>
   <li><b>Full Android keystore support.</b><br/>
   OpenConnect's support for the Android keystore predates the Android keystore actually doing anything useful. We assume we can just ask for the private key and be given it. A real keystore would only allow us to perform signature operations using the key, and wouldn't just give it to us. Modern versions of Android can support this, and we should add support for it.</li>
