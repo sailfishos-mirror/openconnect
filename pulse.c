@@ -1601,10 +1601,7 @@ static int pulse_authenticate(struct openconnect_info *vpninfo, int connecting)
 #if 0
 	/* Their client sends a lot of other stuff here, which we don't
 	 * understand and which doesn't appear to be mandatory. So leave
-	 * it out for now until/unless it becomes necessary. It seems that
-	 * sending Pulse-Secure/4.0.0.0 or anything newer makes it do
-	 * EAP-TLS *within* the EAP-TTLS session if you don't actually
-	 * present a certificate. */
+	 * it out for now until/unless it becomes necessary. */
 	buf_append_avp_be32(reqbuf, 0xd49, 3);
 	buf_append_avp_be32(reqbuf, 0xd61, 0);
 	buf_append_avp_string(reqbuf, 0xd5e, "Windows");

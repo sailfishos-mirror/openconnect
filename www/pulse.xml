@@ -59,5 +59,19 @@ specified manually. For example:</p>
   ./openconnect --protocol=pulse --useragent "Pulse-Secure/22.2.1.1295" --os=win
 </pre>
 
+<h2>Quirks and Issues</h2>
+
+<p>Some Pulse VPNs may <i>request</i> a client certificate but not actually
+<i>require</i> one. If you are trying to authenticate to such a VPN, and running
+into strange errors about unrecognized packet types, then mimicking a <i>very old</i>
+version of the official Pulse client software may help resolve the issue:</p>
+
+<pre>
+  ./openconnect --protocol=pulse --useragent "Pulse-Secure/3.0.0.0"
+</pre>
+
+<p>If you encounter this issue, please <a href="mail.html">tell us about it</a>
+so we can gather more information to solve it for everyone.</p>
+
 	<INCLUDE file="inc/footer.tmpl" />
 </PAGE>
