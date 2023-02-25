@@ -431,6 +431,9 @@ struct openconnect_info {
 	int esp_magic_af;
 	unsigned char esp_magic[16]; /* GlobalProtect magic ping address (network-endian) */
 
+	int pulse_esp_unstupid;      /* See pulse.c and esp.c for the stupid protocol-layering malpractice
+				      * that Pulse requires, unless this flag is set by the server. */
+
 	struct oc_ppp *ppp;
 	struct oc_text_buf *ppp_tls_connect_req;
 	struct oc_text_buf *ppp_dtls_connect_req;

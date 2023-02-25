@@ -501,6 +501,21 @@ static int process_attr(struct openconnect_info *vpninfo, struct oc_vpn_option *
 		add_option_dup(new_opts, "gateway6", buf, -1);
 		break;
 
+	case 0x4024:
+	        /* This flag is supposed to be available starting with Pulse server 9.1R9 (see
+		 * https://www-prev.pulsesecure.net/download/techpubs/current/2182/pulse-connect-secure/pcs/9.1rx/9.1r9/ps-pcs-sa-9.1r9.0-releasenotes.pdf),
+		 * but it appears that it also requires a certain minimum CLIENT version to
+		 * be advertised in order for the server to send it (22.2.1.1295 is insufficient;
+		 * see https://gitlab.com/openconnect/openconnect/-/issues/506#note_1146848739).
+		 */
+		if (attrlen != 1)
+			goto badlen;
+		vpninfo->pulse_esp_unstupid = data[0];
+		vpn_progress(vpninfo, PRG_DEBUG,
+			     _("Pulse ESP tunnel allowed to carry 6in4 or 4in6 traffic: %d\n"),
+			     vpninfo->pulse_esp_unstupid);
+		break;
+
 	/* 0x4022: disable proxy
 	   0x400a: preserve proxy
 	   0x4008: proxy (string)
@@ -1586,10 +1601,7 @@ static int pulse_authenticate(struct openconnect_info *vpninfo, int connecting)
 #if 0
 	/* Their client sends a lot of other stuff here, which we don't
 	 * understand and which doesn't appear to be mandatory. So leave
-	 * it out for now until/unless it becomes necessary. It seems that
-	 * sending Pulse-Secure/4.0.0.0 or anything newer makes it do
-	 * EAP-TLS *within* the EAP-TTLS session if you don't actually
-	 * present a certificate. */
+	 * it out for now until/unless it becomes necessary. */
 	buf_append_avp_be32(reqbuf, 0xd49, 3);
 	buf_append_avp_be32(reqbuf, 0xd61, 0);
 	buf_append_avp_string(reqbuf, 0xd5e, "Windows");
@@ -1600,7 +1612,26 @@ static int pulse_authenticate(struct openconnect_info *vpninfo, int connecting)
 	buf_append_avp_string(reqbuf, 0xd6c, "\x02\xe9\xa7\x51\x92\x4e");
 	buf_append_avp_be32(reqbuf, 0xd84, 0);
 #else
-	buf_append_avp_string(reqbuf, 0xd70, vpninfo->useragent);
+	/* XX: "Only the Pulse client supports IPv6", both according to user reports and
+	 * https://help.ivanti.com/ps/help/en_US/PCS/9.1R14/ag/network_n_host_admin.htm#network_and_host_administration_1399867268_681155
+	 *
+	 * Therefore, unless IPv6 is explicitly disabled, we need to spoof
+	 * a "Pulse-Secure/" version string here. Only use the user-provided
+	 * UA string as is if it already matches this format.
+	 *
+	 * A certain minimum client version is apparently required to trigger the sending
+	 * of this flag as well. No official docs have been found, but 22.2.1.1295 works
+	 * (see https://gitlab.com/openconnect/openconnect/-/issues/506#note_1146848739).
+	 */
+	if (vpninfo->disable_ipv6 || !strncmp(vpninfo->useragent, "Pulse-Secure/", 13))
+		buf_append_avp_string(reqbuf, 0xd70, vpninfo->useragent);
+	else {
+		char *pulse_version;
+		if (asprintf(&pulse_version, "Pulse-Secure/22.2.1.1295 (%s)", vpninfo->useragent) < 0)
+			return -ENOMEM;
+		buf_append_avp_string(reqbuf, 0xd70, pulse_version);
+		free(pulse_version);
+	}
 #endif
 	if (vpninfo->cookie)
 		buf_append_avp_string(reqbuf, 0xd53, vpninfo->cookie);

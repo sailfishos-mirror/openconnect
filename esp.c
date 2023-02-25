@@ -340,11 +340,13 @@ int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 				break;
 			ip_version = this->data[0] >> 4;
 
-			if (vpninfo->proto->proto == PROTO_PULSE) {
+			if (vpninfo->proto->proto == PROTO_PULSE && !vpninfo->pulse_esp_unstupid) {
 				uint8_t dontsend;
 
 				/* Pulse can only accept ESP of the same protocol as the one
-				 * you connected to it with. The other has to go over IF-T/TLS. */
+				 * you connected to it with. The other has to go over IF-T/TLS.
+				 * Newer Pulse servers can finally disable this protocol-layering
+				 * malpractice with the pulse_esp_unstupid flag. */
 				if (vpninfo->dtls_addr->sa_family == AF_INET6)
 					dontsend = 4;
 				else
