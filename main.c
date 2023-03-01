@@ -2005,6 +2005,14 @@ int main(int argc, char **argv)
 			usage();
 			break;
 		case 'i':
+#if defined(__APPLE__)
+			if (!strncmp(config_arg, "tun", 3))
+				fprintf(stderr,
+					_("WARNING: You are running on macOS and specified --interface='%s'\n"
+					  "         This probably won't work since recent macOS versions use utun\n"
+					  "         instead. Perhaps try --interface='u%s', or omit altogether.\n"),
+					config_arg, config_arg);
+#endif
 			vpninfo->ifname = dup_config_arg();
 			break;
 		case 'm': {
