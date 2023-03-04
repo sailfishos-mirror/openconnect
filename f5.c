@@ -679,9 +679,10 @@ static int f5_configure(struct openconnect_info *vpninfo)
 	/* XX: parse "session timeout" cookie to get auth expiration */
 	for (cookie = vpninfo->cookies; cookie; cookie = cookie->next) {
 		if (!strcmp(cookie->option, "F5_ST")) {
-			int junk, start, dur;
+			int junk;
+			time_t start, dur;
 			char c = 0;
-			if (sscanf(cookie->value, "%dz%dz%dz%dz%d%c", &junk, &junk, &junk, &start, &dur, &c) >= 5
+			if (sscanf(cookie->value, "%dz%dz%dz%ldz%ld%c", &junk, &junk, &junk, &start, &dur, &c) >= 5
 			    && (c == 0 || c == 'z'))
 				vpninfo->auth_expiration = start + dur;
 			break;
