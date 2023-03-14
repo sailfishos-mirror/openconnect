@@ -41,6 +41,8 @@
 #include LIBPROXY_HDR
 #endif
 
+#define MAX_READ_STDIN_SIZE 4096
+
 #ifdef _WIN32
 #include <shlwapi.h>
 #include <wtypes.h>
@@ -436,7 +438,7 @@ static void read_stdin(char **string, int hidden, int allow_fail)
 	CONSOLE_READCONSOLE_CONTROL rcc = { sizeof(rcc), 0, 13, 0 };
 	HANDLE stdinh = GetStdHandle(STD_INPUT_HANDLE);
 	DWORD cmode, nr_read, last_error;
-	wchar_t wbuf[1024];
+	wchar_t wbuf[MAX_READ_STDIN_SIZE];
 	char *buf;
 
 	if (GetConsoleMode(stdinh, &cmode)) {
@@ -765,7 +767,7 @@ static void print_supported_protocols_usage(void)
 static const char default_vpncscript[] = DEFAULT_VPNCSCRIPT;
 static void read_stdin(char **string, int hidden, int allow_fail)
 {
-	char *c, *got, *buf = malloc(1025);
+	char *c, *got, *buf = malloc(MAX_READ_STDIN_SIZE+1);
 	int fd = fileno(stdin);
 	struct termios t;
 
@@ -780,7 +782,7 @@ static void read_stdin(char **string, int hidden, int allow_fail)
 		tcsetattr(fd, TCSANOW, &t);
 	}
 
-	got = fgets(buf, 1025, stdin);
+	got = fgets(buf, MAX_READ_STDIN_SIZE+1, stdin);
 
 	if (hidden) {
 		t.c_lflag |= ECHO;
