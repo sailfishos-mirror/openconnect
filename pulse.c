@@ -503,7 +503,7 @@ static int process_attr(struct openconnect_info *vpninfo, struct oc_vpn_option *
 
 	case 0x4024:
 	        /* This flag is supposed to be available starting with Pulse server 9.1R9 (see
-		 * https://www-prev.pulsesecure.net/download/techpubs/current/2182/pulse-connect-secure/pcs/9.1rx/9.1r9/ps-pcs-sa-9.1r9.0-releasenotes.pdf),
+		 * https://help.ivanti.com/ps/legacy/pcs/9.1rx/9.1r9/ps-pcs-sa-9.1r9.0-releasenotes.pdf),
 		 * but it appears that it also requires a certain minimum CLIENT version to
 		 * be advertised in order for the server to send it (22.2.1.1295 is insufficient;
 		 * see https://gitlab.com/openconnect/openconnect/-/issues/506#note_1146848739).
