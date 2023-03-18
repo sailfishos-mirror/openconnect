@@ -326,6 +326,8 @@ struct oc_stats {
 	uint64_t tx_bytes;
 	uint64_t rx_pkts;
 	uint64_t rx_bytes;
+	uint64_t tx_queue_sat_count;
+	uint64_t rx_queue_sat_count;
 };
 
 struct oc_cert {

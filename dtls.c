@@ -274,6 +274,11 @@ int dtls_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		unsigned char *buf;
 
 		if (vpninfo->incoming_queue.count >= vpninfo->max_qlen) {
+			vpninfo->stats.rx_queue_sat_count++;
+			vpn_progress(vpninfo, PRG_TRACE,
+				     _("Saturated RX queue (>=%d packets)\n"),
+				     vpninfo->max_qlen);
+
 			work_done = 1;
 			break;
 		}

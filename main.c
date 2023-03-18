@@ -1615,6 +1615,14 @@ static void print_connection_stats(void *_vpninfo, const struct oc_stats *stats)
 	vpn_progress(vpninfo, PRG_INFO,
 		     _("RX: %"PRIu64" packets (%"PRIu64" B); TX: %"PRIu64" packets (%"PRIu64" B)\n"),
 		       stats->rx_pkts, stats->rx_bytes, stats->tx_pkts, stats->tx_bytes);
+	if (stats->rx_queue_sat_count > 0)
+		vpn_progress(vpninfo, PRG_INFO,
+			     _("FX queue has saturated %"PRIu64" times (>=%d packets).\n"),
+			     stats->rx_queue_sat_count, vpninfo->max_qlen);
+	if (stats->tx_queue_sat_count > 0)
+		vpn_progress(vpninfo, PRG_INFO,
+			     _("TX queue has saturated %"PRIu64" times (>=%d packets).\n"),
+			     stats->tx_queue_sat_count, vpninfo->max_qlen);
 
 	if (vpninfo->ssl_fd != -1)
 		vpn_progress(vpninfo, PRG_INFO, _("SSL ciphersuite: %s\n"), openconnect_get_cstp_cipher(vpninfo));

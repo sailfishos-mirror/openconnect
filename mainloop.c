@@ -75,6 +75,11 @@ int tun_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable, i
 
 			if (queue_packet(&vpninfo->outgoing_queue, out_pkt) +
 			    vpninfo->tcp_control_queue.count >= vpninfo->max_qlen) {
+				vpninfo->stats.tx_queue_sat_count++;
+				vpn_progress(vpninfo, PRG_TRACE,
+					     _("Saturated TX queue (>=%d packets)\n"),
+					     vpninfo->max_qlen);
+
 				out_pkt = NULL;
 				unmonitor_read_fd(vpninfo, tun);
 				break;
