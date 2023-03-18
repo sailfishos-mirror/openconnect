@@ -160,6 +160,11 @@ int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		int i;
 		struct pkt *pkt;
 
+		if (vpninfo->incoming_queue.count >= vpninfo->max_qlen) {
+			work_done = 1;
+			break;
+		}
+
 		if (!vpninfo->dtls_pkt) {
 			vpninfo->dtls_pkt = alloc_pkt(vpninfo, len);
 			if (!vpninfo->dtls_pkt) {
