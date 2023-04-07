@@ -119,9 +119,12 @@
 #include <errno.h>
 
 #ifdef HAVE_POSIX_SPAWN
-#ifdef __APPLE__
+#if defined(__APPLE__)
 #include <crt_externs.h>
 #define environ (*_NSGetEnviron())
+#elif defined(__sun__)
+// Is there nothing we can #include for this? And no consts?
+extern char **environ;
 #endif
 #include <spawn.h>
 #endif
