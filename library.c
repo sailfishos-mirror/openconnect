@@ -84,7 +84,7 @@ struct openconnect_info *openconnect_vpninfo_new(const char *useragent,
 	vpninfo->tncc_fd = -1;
 	vpninfo->cert_expire_warning = 60 * 86400;
 	vpninfo->req_compr = COMPR_STATELESS;
-	vpninfo->max_qlen = 10;
+	vpninfo->max_qlen = 32;	  /* >=16 will enable vhost-net on Linux */
 	vpninfo->localname = strdup("localhost");
 	vpninfo->port = 443;
 	vpninfo->useragent = openconnect_create_useragent(useragent);

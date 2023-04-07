@@ -394,7 +394,7 @@ Less output
 .B \-Q,\-\-queue\-len=LEN
 Set packet queue limit to
 .I LEN
-packets. The default is 10. A high value may allow better overall bandwidth
+packets. The default is 32. A high value may allow better overall bandwidth
 but at a cost of latency. If you run Voice over IP or other interactive
 traffic over the VPN, you don't want those packets to be queued behind
 thousands of other large packets which are part of a bulk transfer.
@@ -408,7 +408,7 @@ OS tunnel device.
 Ultimately, the right size for a queue is "just enough packets that it
 never quite gets empty before more are pushed to it". Any higher than
 that is simply introducing bufferbloat and additional latency with no
-benefit. With the default of 10, we are able to saturate a single
+benefit. With the default of 32, we are able to saturate a single
 Gigabit Ethernet from modest hardware, which is more than enough for
 most VPN users.
 
