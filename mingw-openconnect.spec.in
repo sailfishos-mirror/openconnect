@@ -112,8 +112,8 @@ fi
 %install
 %mingw_make install DESTDIR=$RPM_BUILD_ROOT
 
-install -m 0644 build_win32/openconnect-installer.exe $RPM_BUILD_ROOT/%{mingw32_bindir}/openconnect-installer-%{version}-%{release}.exe
-install -m 0644 build_win64/openconnect-installer.exe $RPM_BUILD_ROOT/%{mingw64_bindir}/openconnect-installer-%{version}-%{release}.exe
+install -m 0644 build_win32/openconnect-installer-MinGW32-GnuTLS-*.exe $RPM_BUILD_ROOT/%{mingw32_bindir}/openconnect-installer-MinGW32-GnuTLS-%{version}-%{release}.exe
+install -m 0644 build_win64/openconnect-installer-MinGW64-GnuTLS-*.exe $RPM_BUILD_ROOT/%{mingw64_bindir}/openconnect-installer-MinGW64-GnuTLS-%{version}-%{release}.exe
 
 rm -f $RPM_BUILD_ROOT/%{mingw32_libdir}/libopenconnect.la
 rm -rf $RPM_BUILD_ROOT/%{mingw32_libexecdir}/openconnect

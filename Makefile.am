@@ -373,7 +373,7 @@ po/$(PACKAGE).pot: $(POTFILES) version.sh
 ACLOCAL_AMFLAGS = -I m4
 
 if BUILD_NSIS
-DISTCLEANFILES += .*.dll.d .*.exe.d file-list*.txt instfiles.nsh uninstfiles.nsh vpnc-script-win.js openconnect.nsi openconnect-installer-$(INSTALLER_NAME).exe
+DISTCLEANFILES += .*.dll.d .*.exe.d file-list*.txt instfiles.nsh uninstfiles.nsh vpnc-script-win.js openconnect.nsi openconnect-installer-*.exe
 
 # Including openconnect-gui.exe and Qt bits (as a hack)
 #EXTRA_EXECUTABLES := openconnect-gui.exe qwindows.dll qwindowsvistastyle.dll

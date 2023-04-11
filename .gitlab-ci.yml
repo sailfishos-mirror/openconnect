@@ -556,7 +556,7 @@ MinGW32/GnuTLS:
   - echo ':DOSWin:M::MZ::/usr/bin/wine:' > /proc/sys/fs/binfmt_misc/register
   - ./autogen.sh
   - mingw32-configure --without-gnutls-version-check CFLAGS=-g
-  - make -j4 INSTALLER_SUFFIX=MinGW32-GnuTLS
+  - make -j4
 # These tests seem to fail due to wine failing to start; setting as XFAIL
 # since these never run before this patch set.
   - make VERBOSE=1 -j4 check XFAIL_TESTS="sigterm dtls-psk"
@@ -579,7 +579,7 @@ MinGW32/OpenSSL:
   - echo ':DOSWin:M::MZ::/usr/bin/wine:' > /proc/sys/fs/binfmt_misc/register
   - ./autogen.sh
   - mingw32-configure --without-gnutls --with-openssl --without-openssl-version-check CFLAGS=-g
-  - make -j4 INSTALLER_SUFFIX=MinGW32-OpenSSL
+  - make -j4
 # These tests seem to fail due to wine failing to start; setting as XFAIL
 # since these never run before this patch set.
   - make VERBOSE=1 -j4 check XFAIL_TESTS="sigterm dtls-psk"
@@ -603,7 +603,7 @@ MinGW64/GnuTLS:
   - echo ':DOSWin:M::MZ::/usr/bin/wine:' > /proc/sys/fs/binfmt_misc/register
   - ./autogen.sh
   - mingw64-configure --without-gnutls-version-check CFLAGS=-g
-  - make -j4 INSTALLER_SUFFIX=MinGW64-GnuTLS
+  - make -j4
 # These tests seem to fail due to wine failing to start; setting as XFAIL
 # since these never run before this patch set.
   - make VERBOSE=1 -j4 check XFAIL_TESTS="sigterm dtls-psk"
@@ -627,7 +627,7 @@ MinGW64/OpenSSL:
   - echo ':DOSWin:M::MZ::/usr/bin/wine:' > /proc/sys/fs/binfmt_misc/register
   - ./autogen.sh
   - mingw64-configure --without-gnutls --with-openssl --without-openssl-version-check CFLAGS=-g
-  - make -j4 INSTALLER_SUFFIX=MinGW64-OpenSSL
+  - make -j4
 # These tests seem to fail due to wine failing to start; setting as XFAIL
 # since these never run before this patch set.
   - make VERBOSE=1 -j4 check XFAIL_TESTS="sigterm dtls-psk"

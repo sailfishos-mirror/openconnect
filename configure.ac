@@ -892,6 +892,28 @@ PKG_CHECK_MODULES([LIBLZ4], [liblz4], [
 ])
 fi
 
+if test "$build_nsis" = "yes"; then
+   case $host_os in
+      *mingw32*)
+         if test "$host_cpu" = "x86_64"; then
+             winsys=MinGW64
+         else
+             winsys=MinGW32
+         fi
+	 ;;
+      *mingw64*)
+         winsys=MinGW64
+         ;;
+      *msys*)
+         winsys=MSYS
+         ;;
+      *)
+         winsys=Unknown
+         ;;
+   esac
+   AC_SUBST(INSTALLER_SUFFIX, [${winsys}-${ssl_library}])
+fi
+
 # For some bizarre reason now that we use AM_ICONV, the mingw32 build doesn't
 # manage to set EGREP properly in the created ./libtool script. Make sure it's
 # found.
