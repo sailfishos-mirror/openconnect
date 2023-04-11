@@ -512,6 +512,9 @@ static inline int process_ring(struct openconnect_info *vpninfo, int tx, uint64_
 					     (void *) &this->virtio.h,
 					     this->len + sizeof(this->virtio.h));
 
+			vpninfo->stats.tx_pkts++;
+			vpninfo->stats.tx_bytes += this->len;
+
 			/* If the incoming queue fill up, pretend we can't see any more
 			 * by contracting our idea of 'used_idx' back to *this* one. */
 			if (queue_packet(&vpninfo->outgoing_queue, this) >= vpninfo->max_qlen)
