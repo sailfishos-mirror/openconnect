@@ -138,9 +138,10 @@ static json_value *find_appLoader_configure_json_form(xmlDocPtr doc)
 
 	json_value *l = NULL;
 	for (int i = 0; i < v->u.object.length; i++) {
-		json_object_entry *oe = &v->u.object.values[i];
-		if (!strcmp(oe->name, "logon") && oe->value->type == json_object) {
-			l = oe->value;
+		json_value *subval = v->u.object.values[i].value;
+		json_char *subname = v->u.object.values[i].name;
+		if (!strcmp(subname, "logon") && subval->type == json_object) {
+			l = subval;
 			break;
 		}
 	}
@@ -149,13 +150,14 @@ static json_value *find_appLoader_configure_json_form(xmlDocPtr doc)
 		goto bad_json;
 
 	for (int i = 0; i < l->u.object.length; i++) {
-		json_object_entry *oe = &l->u.object.values[i];
-		if (!strcmp(oe->name, "form") && oe->value->type == json_object) {
-			f = oe->value;
+		json_value *subval = l->u.object.values[i].value;
+		json_char *subname = l->u.object.values[i].name;
+		if (!strcmp(subname, "form") && subval->type == json_object) {
+			f = subval;
 
 			/* "Detach" this sub-tree (XX: check for mem leaks here) */
 			f->parent = NULL;
-			oe->value = NULL;
+			l->u.object.values[i].value = NULL;
 			break;
 		}
 	}
@@ -164,6 +166,7 @@ static json_value *find_appLoader_configure_json_form(xmlDocPtr doc)
 	json_value_free(v);
 	return f;
 }
+
 
 static struct oc_auth_form *parse_json_form(struct openconnect_info *vpninfo, json_value *jform,
 					    int (*can_gen_tokencode)(struct openconnect_info *vpninfo, struct oc_auth_form *form, struct oc_form_opt *opt))
@@ -178,15 +181,16 @@ static struct oc_auth_form *parse_json_form(struct openconnect_info *vpninfo, js
 	json_value *fields = NULL;
 
 	for (int i = 0; i < jform->u.object.length; i++) {
-		json_object_entry *oe = &jform->u.object.values[i];
-		if (!strcmp(oe->name, "id") && oe->value->type == json_string) {
-			form->auth_id = oe->value->u.string.ptr;
-			oe->value->type = json_null, oe->value->u.string.ptr = NULL; /* XX */
-		} else if (!strcmp(oe->name, "title") && oe->value->type == json_string) {
-			form->banner = oe->value->u.string.ptr;
-			oe->value->type = json_null, oe->value->u.string.ptr = NULL; /* XX */
-		} else if (!strcmp(oe->name, "fields") && oe->value->type == json_array)
-			fields = oe->value;
+		json_value *subval = jform->u.object.values[i].value;
+		json_char *subname = jform->u.object.values[i].name;
+		if (!strcmp(subname, "id") && subval->type == json_string) {
+			form->auth_id = subval->u.string.ptr;
+			subval->type = json_null, subval->u.string.ptr = NULL; /* XX */
+		} else if (!strcmp(subname, "title") && subval->type == json_string) {
+			form->banner = subval->u.string.ptr;
+			subval->type = json_null, subval->u.string.ptr = NULL; /* XX */
+		} else if (!strcmp(subname, "fields") && subval->type == json_array)
+			fields = subval;
 	}
 
 	if (!fields) /* XX: Should we fail? */
@@ -203,28 +207,29 @@ static struct oc_auth_form *parse_json_form(struct openconnect_info *vpninfo, js
 			goto nomem;
 
 		for (int j = 0; j < f->u.object.length; j++) {
-			json_object_entry *oe = &f->u.object.values[j];
-			if (!strcmp(oe->name, "type") && oe->value->type == json_string) {
-				if (!strcmp(oe->value->u.string.ptr, "password"))
+			json_value *subval = f->u.object.values[j].value;
+			json_char *subname = f->u.object.values[j].name;
+			if (!strcmp(subname, "type") && subval->type == json_string) {
+				if (!strcmp(subval->u.string.ptr, "password"))
 					opt->type = OC_FORM_OPT_PASSWORD;
-				else if (!strcmp(oe->value->u.string.ptr, "text"))
+				else if (!strcmp(subval->u.string.ptr, "text"))
 					opt->type = OC_FORM_OPT_TEXT;
 				else {
 					vpn_progress(vpninfo, PRG_ERR,
 						     _("WARNING: Unknown F5 JSON form field type '%s', treating as 'text'. Please report to <%s>"),
-						     oe->value->u.string.ptr, "openconnect-devel@lists.infradead.org");
+						     subval->u.string.ptr, "openconnect-devel@lists.infradead.org");
 					opt->type = OC_FORM_OPT_TEXT;
 				}
-			} else if (!strcmp(oe->name, "name") && oe->value->type == json_string) {
-				opt->name = oe->value->u.string.ptr;
-				oe->value->type = json_null, oe->value->u.string.ptr = NULL; /* XX */
-			} else if (!strcmp(oe->name, "caption") && oe->value->type == json_string) {
-				if (asprintf(&opt->label, "%s:", oe->value->u.string.ptr) < 0)
+			} else if (!strcmp(subname, "name") && subval->type == json_string) {
+				opt->name = subval->u.string.ptr;
+				subval->type = json_null, subval->u.string.ptr = NULL; /* XX */
+			} else if (!strcmp(subname, "caption") && subval->type == json_string) {
+				if (asprintf(&opt->label, "%s:", subval->u.string.ptr) < 0)
 					goto nomem;
-			} else if (!strcmp(oe->name, "value") && oe->value->type == json_string && oe->value->u.string.length > 0) {
-				opt->_value = oe->value->u.string.ptr;
-				oe->value->type = json_null, oe->value->u.string.ptr = NULL; /* XX */
-			} else if (!strcmp(oe->name, "disabled") && oe->value->type == json_boolean) {
+			} else if (!strcmp(subname, "value") && subval->type == json_string && subval->u.string.length > 0) {
+				opt->_value = subval->u.string.ptr;
+				subval->type = json_null, subval->u.string.ptr = NULL; /* XX */
+			} else if (!strcmp(subname, "disabled") && subval->type == json_boolean) {
 				/* XX: Do we care if a field is disabled? */
 			}
 		}
