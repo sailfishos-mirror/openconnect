@@ -112,11 +112,20 @@ int handle_external_browser(struct openconnect_info *vpninfo)
 
 		pid_t pid = 0;
 		char *browser_argv[3] = { (char *)DEFAULT_EXTERNAL_BROWSER, vpninfo->sso_login, NULL };
+		posix_spawn_file_actions_t file_actions, *factp = NULL;
 
-		if (posix_spawn(&pid, DEFAULT_EXTERNAL_BROWSER, NULL, NULL, browser_argv, environ)) {
+		if (!posix_spawn_file_actions_init(&file_actions)) {
+			factp = &file_actions;
+			posix_spawn_file_actions_adddup2(&file_actions, STDERR_FILENO, STDOUT_FILENO);
+		}
+
+		if (posix_spawn(&pid, DEFAULT_EXTERNAL_BROWSER, factp, NULL, browser_argv, environ)) {
 			ret = -errno;
 			vpn_perror(vpninfo, _("Spawn browser"));
 		}
+		if (factp)
+			posix_spawn_file_actions_destroy(factp);
+
 #else
 	} else {
 		ret = -EINVAL;

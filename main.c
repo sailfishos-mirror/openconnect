@@ -906,15 +906,26 @@ static int spawn_browser(struct openconnect_info *vpninfo, const char *url, void
 	vpn_progress(vpninfo, PRG_TRACE,
 		     _("Main Spawning external browser '%s'\n"),
 		     ext_browser);
+
 	pid_t pid = 0;
 	char *browser_argv[3] = { ext_browser, (char *)url, NULL };
+	posix_spawn_file_actions_t file_actions, *factp = NULL;
+	int ret = 0;
 
-	if (posix_spawn(&pid, ext_browser, NULL, NULL, browser_argv, environ)) {
-		vpn_perror(vpninfo, _("Spawn browser"));
-		return -errno;
+	if (!posix_spawn_file_actions_init(&file_actions)) {
+		factp = &file_actions;
+
+		posix_spawn_file_actions_adddup2(&file_actions, STDERR_FILENO, STDOUT_FILENO);
 	}
 
-	return 0;
+	if (posix_spawn(&pid, ext_browser, factp, NULL, browser_argv, environ)) {
+		ret = -errno;
+		vpn_perror(vpninfo, _("Spawn browser"));
+	}
+
+	if (factp)
+		posix_spawn_file_actions_destroy(factp);
+	return ret;
 }
 #endif
 static void print_default_vpncscript(void)
