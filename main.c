@@ -201,6 +201,7 @@ enum {
 	OPT_SERVERCERT,
 	OPT_RESOLVE,
 	OPT_SNI,
+	OPT_SUDO,
 	OPT_USERAGENT,
 	OPT_NON_INTER,
 	OPT_DTLS_LOCAL_PORT,
@@ -274,6 +275,7 @@ static const struct option long_options[] = {
 	OPTION("config", 1, OPT_CONFIGFILE),
 	OPTION("no-dtls", 0, OPT_NO_DTLS),
 	OPTION("authenticate", 0, OPT_AUTHENTICATE),
+	OPTION("sudo", 0, OPT_SUDO),
 	OPTION("cookieonly", 0, OPT_COOKIEONLY),
 	OPTION("printcookie", 0, OPT_PRINTCOOKIE),
 	OPTION("quiet", 0, 'q'),
@@ -1004,6 +1006,7 @@ static void usage(void)
 	printf("  -C, --cookie=COOKIE             %s\n", _("Use authentication cookie COOKIE"));
 	printf("      --cookie-on-stdin           %s\n", _("Read cookie from standard input"));
 	printf("      --authenticate              %s\n", _("Authenticate only and print login info"));
+	printf("      --sudo                      %s\n", _("Authenticate as the current user and use 'sudo' to connect"));
 	printf("      --cookieonly                %s\n", _("Fetch and print cookie only; don't connect"));
 	printf("      --printcookie               %s\n", _("Print cookie before connecting"));
 
@@ -1938,13 +1941,10 @@ int main(int argc, char **argv)
 			openconnect_disable_dtls(vpninfo);
 			break;
 		case OPT_COOKIEONLY:
-			cookieonly = 1;
-			break;
 		case OPT_PRINTCOOKIE:
-			cookieonly = 2;
-			break;
 		case OPT_AUTHENTICATE:
-			cookieonly = 3;
+		case OPT_SUDO:
+			cookieonly = opt;
 			break;
 		case OPT_COOKIE_ON_STDIN:
 			read_stdin(&vpninfo->cookie, 0, 0);
@@ -2325,7 +2325,46 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	if (cookieonly == 3) {
+	if (cookieonly == OPT_SUDO) {
+		const char *sudo_argv[14];
+		int i = 0;
+
+		sudo_argv[i++] = "sudo";
+		sudo_argv[i++] = argv[0]; /* OpenConnect itself. */
+		sudo_argv[i++] = "--servercert";
+		sudo_argv[i++] = openconnect_get_peer_cert_hash(vpninfo);
+		if (vpninfo->unique_hostname) {
+			char *p = vpninfo->unique_hostname;
+			int l = strlen(p);
+
+			if (vpninfo->unique_hostname[0] == '[' &&
+			    vpninfo->unique_hostname[l-1] == ']') {
+				p++;
+				l -=2;
+			}
+
+			sudo_argv[i++] = "--resolve";
+			if (asprintf((char **)&sudo_argv[i++], "%s:%.*s", vpninfo->hostname, l, p) < 0) {
+				fprintf(stderr, _("Failed to allocate sudo arguments\n"));
+				exit(1);
+			}
+		}
+		if (verbose == PRG_ERR)
+			sudo_argv[i++] = "-q";
+		else if (verbose > PRG_INFO) {
+			sudo_argv[i++] = "-v";
+			if (verbose > PRG_DEBUG)
+				sudo_argv[i++] = "-v";
+		}
+		sudo_argv[i++] = "-C";
+		sudo_argv[i++] = vpninfo->cookie;
+		sudo_argv[i++] = openconnect_get_connect_url(vpninfo);
+		sudo_argv[i++] = NULL;
+
+		execvp(sudo_argv[0], (char **)sudo_argv);
+		fprintf(stderr, _("Failed to execute 'sudo'\n"));
+		exit(1);
+	} else if (cookieonly == OPT_AUTHENTICATE) {
 		/* --authenticate */
 		printf("COOKIE='%s'\n", vpninfo->cookie);
 		printf("HOST='%s'\n", openconnect_get_hostname(vpninfo));
@@ -2349,7 +2388,7 @@ int main(int argc, char **argv)
 		exit(0);
 	} else if (cookieonly) {
 		printf("%s\n", vpninfo->cookie);
-		if (cookieonly == 1) {
+		if (cookieonly == OPT_COOKIEONLY) {
 			/* We use cookieonly=2 for 'print it and continue' */
 			sig_vpninfo = NULL;
 			openconnect_vpninfo_free(vpninfo);
