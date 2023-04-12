@@ -21,13 +21,11 @@ EXTRA_CFLAGS := -fPIC
 
 # You should be able to just 'make ARCH=x86' and it should DTRT.
 ifeq ($(ARCH),arm)
-TRIPLET := arm-linux-androideabi
-EXTRA_CFLAGS := -fPIC -march=armv7-a -mthumb
+TRIPLET := armv7a-linux-androideabi
 endif
 ifeq ($(ARCH),arm64)
 TRIPLET := aarch64-linux-android
 API_LEVEL := 26
-#EXTRA_LDFLAGS := -Bsymbolic
 endif
 ifeq ($(ARCH),x86)
 TRIPLET := i686-linux-android
@@ -42,8 +40,6 @@ DESTDIR := $(TOPDIR)/$(TRIPLET)/out
 EXTRA_CFLAGS += -D__ANDROID_API__=$(API_LEVEL) -O2
 
 TOOLCHAIN := $(NDK)/toolchains/llvm/prebuilt/linux-x86_64
-TOOLCHAIN_OPTS := --api=$(API_LEVEL) --arch=$(ARCH) \
-		  --install-dir=$(TOOLCHAIN)
 PATH := $(TOOLCHAIN)/bin:$(PATH)
 
 OC_SYSROOT := $(TOOLCHAIN)/sysroot/usr
@@ -343,6 +339,7 @@ $(OC_SYSROOT)/lib/liblz4.a: $(TOOLCHAIN_BUILT) $(LZ4_DIR)/Makefile
 	$(MAKE) -C $(LZ4_DIR)/lib \
 		CC="$(CC)" \
 		AR="$(AR)" \
+		CFLAGS="$(EXTRA_CFLAGS)" \
 		LIBDIR=$(OC_SYSROOT)/lib \
 		INCLUDEDIR=$(OC_SYSROOT)/include \
 		install
