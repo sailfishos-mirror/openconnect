@@ -1723,6 +1723,7 @@ int main(int argc, char **argv)
 	int opt;
 	char *config_arg;
 	char *config_filename;
+	const char *server_url = NULL;
 	char *token_str = NULL;
 	oc_token_mode_t token_mode = OC_TOKEN_MODE_NONE;
 	int reconnect_timeout = 300;
@@ -2225,8 +2226,7 @@ int main(int argc, char **argv)
 			vpninfo->certinfo[1].password = dup_config_arg();
 			break;
 		case OPT_SERVER:
-			if (openconnect_parse_url(vpninfo, config_arg))
-				exit(1);
+			server_url = keep_config_arg();
 			break;
 		default:
 			usage();
@@ -2236,11 +2236,15 @@ int main(int argc, char **argv)
 	if (gai_overrides)
 		openconnect_override_getaddrinfo(vpninfo, gai_override_cb);
 
-	if (optind < argc - (vpninfo->hostname ? 0 : 1)) {
+	if (!server_url) {
+		if (optind >= argc) {
+			fprintf(stderr, _("No server specified\n"));
+			usage();
+		}
+		server_url = argv[optind++];
+	}
+	if (optind < argc) {
 		fprintf(stderr, _("Too many arguments on command line\n"));
-		usage();
-	} else if (optind > argc - (vpninfo->hostname ? 0 : 1)) {
-		fprintf(stderr, _("No server specified\n"));
 		usage();
 	}
 
@@ -2306,11 +2310,12 @@ int main(int argc, char **argv)
 	if (vpninfo->certinfo[0].key && do_passphrase_from_fsid)
 		openconnect_passphrase_from_fsid(vpninfo);
 
-	if (config_lookup_host(vpninfo, argv[optind]))
+	if (config_lookup_host(vpninfo, server_url))
 		exit(1);
 
+	/* If config_lookup_host() didn't set it, it'd better be a URL */
 	if (!vpninfo->hostname) {
-		char *url = strdup(argv[optind]);
+		char *url = strdup(server_url);
 
 		if (openconnect_parse_url(vpninfo, url))
 			exit(1);
