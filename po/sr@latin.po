@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: network-manager-openconnect\n"
 "Report-Msgid-Bugs-To: openconnect-devel@lists.infradead.org\n"
-"POT-Creation-Date: 2023-04-07 16:09+0100\n"
+"POT-Creation-Date: 2023-04-12 07:43+0100\n"
 "PO-Revision-Date: 2022-01-18 18:59+0200\n"
 "Last-Translator: Miroslav Nikolić <miroslavnikolic@rocketmail.com>\n"
 "Language-Team: srpski <gnome-sr@googlegroups.org>\n"
@@ -68,7 +68,7 @@ msgstr ""
 msgid "Error creating array negotiation request\n"
 msgstr ""
 
-#: array.c:675 f5.c:819 http.c:970 oncp.c:515 pulse.c:1390
+#: array.c:675 f5.c:824 http.c:970 oncp.c:515 pulse.c:1390
 #, c-format
 msgid "Unexpected %d result from server\n"
 msgstr "Neočekivan %d rezultat sa servera\n"
@@ -242,11 +242,11 @@ msgstr "Nisam uspeo da pošaljem DPD zahtev. Očekujte prekid veze\n"
 msgid "Sent DTLS packet of %d bytes; DTLS send returned %d\n"
 msgstr "Poslao sam DTLS paket od %d bajta; DTLS-ovo slanje je dalo %d\n"
 
-#: array.c:1362 auth-globalprotect.c:833 f5.c:854 fortinet.c:866 oncp.c:1224
+#: array.c:1362 auth-globalprotect.c:833 f5.c:859 fortinet.c:866 oncp.c:1224
 msgid "Logout failed.\n"
 msgstr "Odjavljivanje nije uspelo\n"
 
-#: array.c:1364 auth-globalprotect.c:835 f5.c:856 fortinet.c:868 oncp.c:1226
+#: array.c:1364 auth-globalprotect.c:835 f5.c:861 fortinet.c:868 oncp.c:1226
 msgid "Logout successful.\n"
 msgstr "Odjavljivanje je uspelo.\n"
 
@@ -355,7 +355,7 @@ msgstr ""
 msgid "GlobalProtect portal configuration lists no gateway servers.\n"
 msgstr ""
 
-#: auth-globalprotect.c:539 main.c:1586
+#: auth-globalprotect.c:539 main.c:1597
 msgid "unknown"
 msgstr ""
 
@@ -370,7 +370,7 @@ msgstr ""
 msgid "  %s (%s)\n"
 msgstr ""
 
-#: auth-globalprotect.c:678 auth-juniper.c:583 auth.c:766 f5.c:349
+#: auth-globalprotect.c:678 auth-juniper.c:583 auth.c:766 f5.c:354
 #: fortinet.c:176
 msgid "Failed to generate OTP tokencode; disabling token\n"
 msgstr "Nisam uspeo da stvorim OTP kod modula; isključujem modul\n"
@@ -471,7 +471,7 @@ msgstr ""
 msgid "Too many non-empty lines from TNCC after DSPREAUTH cookie\n"
 msgstr ""
 
-#: auth-juniper.c:499 f5.c:290
+#: auth-juniper.c:499 f5.c:295
 msgid "Failed to parse HTML document\n"
 msgstr "Nisam uspeo da obradim HTML dokument\n"
 
@@ -494,7 +494,7 @@ msgstr ""
 msgid "Unknown form (name '%s', id '%s')\n"
 msgstr ""
 
-#: auth-juniper.c:564 f5.c:326
+#: auth-juniper.c:564 f5.c:331
 #, c-format
 msgid "Dumping unknown HTML form:\n"
 msgstr "Izbacujem nepoznati HTML obrazac:\n"
@@ -529,7 +529,7 @@ msgstr "Prazan odgovor sa servera\n"
 msgid "Failed to parse server response\n"
 msgstr "Nisam uspeo da obradim odgovor servera\n"
 
-#: auth.c:615 f5.c:414 f5.c:456 f5.c:481 f5.c:626 fortinet.c:419 fortinet.c:605
+#: auth.c:615 f5.c:419 f5.c:461 f5.c:486 f5.c:631 fortinet.c:419 fortinet.c:605
 #, c-format
 msgid "Response was:%s\n"
 msgstr "Odgovor je bio:%s\n"
@@ -1258,14 +1258,14 @@ msgstr ""
 msgid "Failed to generate initial IV for ESP\n"
 msgstr ""
 
-#: f5.c:214
+#: f5.c:219
 #, c-format
 msgid ""
 "WARNING: Unknown F5 JSON form field type '%s', treating as 'text'. Please "
 "report to <%s>"
 msgstr ""
 
-#: f5.c:308
+#: f5.c:313
 #, c-format
 msgid ""
 "WARNING: No HTML authentication form found. Extracted form from F5's "
@@ -1273,105 +1273,105 @@ msgid ""
 "  JSON. This is EXPERIMENTAL. Please report results to <%s>.\n"
 msgstr ""
 
-#: f5.c:317
+#: f5.c:322
 msgid ""
 "WARNING: no HTML login form found; assuming username and password fields\n"
 msgstr ""
 
 #. XX: if first form isn't named auth_form, this probably isn't an F5 VPN
-#: f5.c:323
+#: f5.c:328
 #, c-format
 msgid "Unknown form ID '%s' (expected 'auth_form')\n"
 msgstr ""
 
-#: f5.c:412
+#: f5.c:417
 msgid "Failed to parse F5 profile response\n"
 msgstr ""
 
-#: f5.c:454
+#: f5.c:459
 msgid "Failed to find VPN profile parameters\n"
 msgstr ""
 
-#: f5.c:479
+#: f5.c:484
 msgid "Failed to parse F5 options response\n"
 msgstr ""
 
-#: f5.c:513
+#: f5.c:518
 #, c-format
 msgid "Idle timeout is %d minutes\n"
 msgstr ""
 
-#: f5.c:523
+#: f5.c:528
 msgid "Got default routes\n"
 msgstr ""
 
-#: f5.c:526
+#: f5.c:531
 #, c-format
 msgid "Got SplitTunneling0 value of %d\n"
 msgstr ""
 
-#: f5.c:535
+#: f5.c:540
 #, c-format
 msgid "Got DNS server %s\n"
 msgstr ""
 
-#: f5.c:542
+#: f5.c:547
 #, c-format
 msgid "Got WINS/NBNS server %s\n"
 msgstr ""
 
-#: f5.c:549 fortinet.c:496 fortinet.c:541
+#: f5.c:554 fortinet.c:496 fortinet.c:541
 #, c-format
 msgid "Got search domain %s\n"
 msgstr ""
 
-#: f5.c:579
+#: f5.c:584
 #, c-format
 msgid "Got split exclude route %s\n"
 msgstr ""
 
-#: f5.c:583
+#: f5.c:588
 #, c-format
 msgid "Got split include route %s\n"
 msgstr ""
 
 #. XX: DTLS always uses same port as TLS?
-#: f5.c:591 fortinet.c:435
+#: f5.c:596 fortinet.c:435
 #, c-format
 msgid "DTLS is enabled on port %d\n"
 msgstr ""
 
-#: f5.c:603
+#: f5.c:608
 msgid ""
 "WARNING: Server enables DTLS, but also requires HDLC. Disabling DTLS,\n"
 "    because HDLC prevents determination of efficient and consistent MTU.\n"
 msgstr ""
 
-#: f5.c:624 fortinet.c:603
+#: f5.c:629 fortinet.c:603
 msgid "Failed to find VPN options\n"
 msgstr ""
 
-#: f5.c:647 fortinet.c:492
+#: f5.c:652 fortinet.c:492
 #, c-format
 msgid "Got Legacy IP address %s\n"
 msgstr ""
 
-#: f5.c:652 fortinet.c:530 fortinet.c:535
+#: f5.c:657 fortinet.c:530 fortinet.c:535
 #, c-format
 msgid "Got IPv6 address %s\n"
 msgstr ""
 
-#: f5.c:703
+#: f5.c:708
 #, c-format
 msgid "Got profile parameters '%s'\n"
 msgstr ""
 
-#: f5.c:723
+#: f5.c:728
 #, c-format
 msgid "Got ipv4 %d ipv6 %d hdlc %d ur_Z '%s'\n"
 msgstr ""
 
-#: f5.c:752
+#: f5.c:757
 msgid "Error establishing F5 connection\n"
 msgstr ""
 
@@ -3071,34 +3071,34 @@ msgstr ""
 msgid "Spawning external browser '%s'\n"
 msgstr ""
 
-#: hpke.c:118 main.c:913
+#: hpke.c:124 main.c:923
 msgid "Spawn browser"
 msgstr ""
 
-#: hpke.c:127
+#: hpke.c:136
 #, c-format
 msgid "Failed to spawn external browser for %s\n"
 msgstr ""
 
-#: hpke.c:142
+#: hpke.c:151
 msgid "Accepted incoming external-browser connection on port 29786\n"
 msgstr ""
 
-#: hpke.c:149
+#: hpke.c:158
 msgid "Invalid incoming external-browser request\n"
 msgstr ""
 
-#: hpke.c:225
+#: hpke.c:234
 #, c-format
 msgid "Got encrypted SSO token of %d bytes\n"
 msgstr ""
 
-#: hpke.c:293
+#: hpke.c:302
 #, c-format
 msgid "Failed to decode SSO token at %d:\n"
 msgstr ""
 
-#: hpke.c:321
+#: hpke.c:330
 msgid "SSO token not alphanumeric\n"
 msgstr ""
 
@@ -3644,21 +3644,21 @@ msgstr "Dodela za putanju vpnc-skripte nije uspela\n"
 msgid "Main Spawning external browser '%s'\n"
 msgstr ""
 
-#: main.c:922
+#: main.c:933
 msgid "Default vpnc-script (override with --script):"
 msgstr ""
 
-#: main.c:937
+#: main.c:948
 #, c-format
 msgid "Override hostname '%s' to '%s'\n"
 msgstr "Prepisuje naziv domaćina „%s“ sa „%s“\n"
 
-#: main.c:950
+#: main.c:961
 #, c-format
 msgid "Usage:  openconnect [options] <server>\n"
 msgstr "Upotreba:  openconnect [opcije] <server>\n"
 
-#: main.c:951
+#: main.c:962
 #, c-format
 msgid ""
 "Open client for multiple VPN protocols, version %s\n"
@@ -3667,499 +3667,499 @@ msgstr ""
 "Otvoreni klijent za više VPN protokola, izdanje %s\n"
 "\n"
 
-#: main.c:953
+#: main.c:964
 msgid "Read options from config file"
 msgstr "Čita opcije iz datoteke podešavanja"
 
-#: main.c:954
+#: main.c:965
 msgid "Report version number"
 msgstr "Izveštava o broju izdanja"
 
-#: main.c:955
+#: main.c:966
 msgid "Display help text"
 msgstr "Prikazuje tekst pomoći"
 
-#: main.c:959
+#: main.c:970
 msgid "Authentication"
 msgstr ""
 
-#: main.c:960
+#: main.c:971
 msgid "Set login username"
 msgstr "Podešava korisničko ime prijavljivanja"
 
-#: main.c:961
+#: main.c:972
 msgid "Disable password/SecurID authentication"
 msgstr "Isključuje potvrđivanje identiteta lozinkom/Bezbednim IB-om"
 
-#: main.c:962
+#: main.c:973
 msgid "Do not expect user input; exit if it is required"
 msgstr "Ne očekuje korisnički unos; izlazi ako je zatražen"
 
-#: main.c:963
+#: main.c:974
 msgid "Read password from standard input"
 msgstr "Čita lozinku sa standardnog ulaza"
 
-#: main.c:964
+#: main.c:975
 msgid "Select GROUP from authentication dropdown (may be known"
 msgstr ""
 
-#: main.c:965
+#: main.c:976
 msgid "as \"realm\", \"domain\", \"gateway\"; protocol-dependent)"
 msgstr ""
 
-#: main.c:966
+#: main.c:977
 msgid "Provide authentication form responses"
 msgstr ""
 
-#: main.c:967
+#: main.c:978
 msgid "Use SSL client certificate CERT"
 msgstr "Koristi uverenje UVER SSL klijenta"
 
-#: main.c:968
+#: main.c:979
 msgid "Use SSL private key file KEY"
 msgstr "Koristi KLJUČ datoteke ličnog ključa SSL-a"
 
-#: main.c:969
+#: main.c:980
 msgid "Warn when certificate lifetime < DAYS"
 msgstr "Upozorava kada je životni vek uverenja < DANA"
 
-#: main.c:970
+#: main.c:981
 msgid "Set path of initial request URL"
 msgstr ""
 
-#: main.c:971
+#: main.c:982
 msgid "Set key passphrase or TPM SRK PIN"
 msgstr "Podešava lozinku ključa ili TPM SRK PIN"
 
-#: main.c:972
+#: main.c:983
 msgid "Set external browser executable"
 msgstr ""
 
-#: main.c:973
+#: main.c:984
 msgid "Key passphrase is fsid of file system"
 msgstr "Lozinka ključa je ib sistema datoteka ili sistem datoteka"
 
-#: main.c:974
+#: main.c:985
 msgid "Software token type: rsa, totp, hotp or oidc"
 msgstr ""
 
-#: main.c:975
+#: main.c:986
 msgid "Software token secret or oidc token"
 msgstr ""
 
-#: main.c:977
+#: main.c:988
 msgid "(NOTE: libstoken (RSA SecurID) disabled in this build)"
 msgstr ""
 "(NAPOMENA: „libstoken“ (RSA Bezbedni IB) je isključena u ovoj izgradnji)"
 
-#: main.c:980
+#: main.c:991
 msgid "(NOTE: Yubikey OATH disabled in this build)"
 msgstr "(NAPOMENA: „Yubikey“ OATH je isključen u ovoj izgradnji)"
 
-#: main.c:983
+#: main.c:994
 msgid "Server validation"
 msgstr ""
 
-#: main.c:984
+#: main.c:995
 msgid "Accept only server certificate with this fingerprint"
 msgstr ""
 
-#: main.c:985
+#: main.c:996
 msgid "Disable default system certificate authorities"
 msgstr "Isključuje osnovne sistemske izdavače uverenja"
 
-#: main.c:986
+#: main.c:997
 msgid "Cert file for server verification"
 msgstr "Datoteka uverenja za proveru servera"
 
-#: main.c:988
+#: main.c:999
 msgid "Internet connectivity"
 msgstr ""
 
-#: main.c:989
+#: main.c:1000
 msgid "Set VPN server"
 msgstr ""
 
-#: main.c:990
+#: main.c:1001
 msgid "Set proxy server"
 msgstr "Podešava posrednički server"
 
-#: main.c:991
+#: main.c:1002
 msgid "Set proxy authentication methods"
 msgstr "Podešava načine potvrđivanja identiteta posrednika"
 
-#: main.c:992
+#: main.c:1003
 msgid "Disable proxy"
 msgstr "Isključuje posrednika"
 
-#: main.c:993
+#: main.c:1004
 msgid "Use libproxy to automatically configure proxy"
 msgstr "Koristi „libproxy“ da samostalno podesi posrednika"
 
-#: main.c:995
+#: main.c:1006
 msgid "(NOTE: libproxy disabled in this build)"
 msgstr "(NAPOMENA: „libproxy“ je isključena u ovoj izgradnji)"
 
-#: main.c:997
+#: main.c:1008
 msgid "Reconnection retry timeout (default is 300 seconds)"
 msgstr ""
 
-#: main.c:998
+#: main.c:1009
 msgid "Use IP when connecting to HOST"
 msgstr "Koristi IP prilikom povezivanja sa DOMAĆINOM"
 
-#: main.c:999
+#: main.c:1010
 msgid "Always send HOST as TLS client SNI (domain fronting)"
 msgstr ""
 
-#: main.c:1000
+#: main.c:1011
 msgid "Copy TOS / TCLASS field into DTLS and ESP packets"
 msgstr ""
 
-#: main.c:1001
+#: main.c:1012
 msgid "Set local port for DTLS and ESP datagrams"
 msgstr ""
 
-#: main.c:1003
+#: main.c:1014
 msgid "Authentication (two-phase)"
 msgstr ""
 
-#: main.c:1004
+#: main.c:1015
 msgid "Use authentication cookie COOKIE"
 msgstr ""
 
-#: main.c:1005
+#: main.c:1016
 msgid "Read cookie from standard input"
 msgstr "Čita kolačić sa standardnog ulaza"
 
-#: main.c:1006
+#: main.c:1017
 msgid "Authenticate only and print login info"
 msgstr "Samo potvrđuje identitet i ispisuje podatke o prijavi"
 
-#: main.c:1007
+#: main.c:1018
 msgid "Fetch and print cookie only; don't connect"
 msgstr ""
 
-#: main.c:1008
+#: main.c:1019
 msgid "Print cookie before connecting"
 msgstr ""
 
-#: main.c:1011
+#: main.c:1022
 msgid "Process control"
 msgstr ""
 
-#: main.c:1012
+#: main.c:1023
 msgid "Continue in background after startup"
 msgstr "Nastavlja u pozadini nakon pokretanja"
 
-#: main.c:1013
+#: main.c:1024
 msgid "Write the daemon's PID to this file"
 msgstr "Piše PIB pozadinca u ovu datoteku"
 
-#: main.c:1014
+#: main.c:1025
 msgid "Drop privileges after connecting"
 msgstr "Odbacuje ovlašćenja nakon povezivanja"
 
-#: main.c:1017
+#: main.c:1028
 msgid "Logging (two-phase)"
 msgstr ""
 
-#: main.c:1019
+#: main.c:1030
 msgid "Use syslog for progress messages"
 msgstr "Koristi sistemski dnevnik za poruke napredovanja"
 
-#: main.c:1021
+#: main.c:1032
 msgid "More output"
 msgstr "Više izlaza"
 
-#: main.c:1022
+#: main.c:1033
 msgid "Less output"
 msgstr "Manje izlaza"
 
-#: main.c:1023
+#: main.c:1034
 msgid "Dump HTTP authentication traffic (implies --verbose)"
 msgstr ""
 "Ispisuje saobraćaj HTTP potvrđivanja identiteta (podrazumeva „--verbose“)"
 
-#: main.c:1024
+#: main.c:1035
 msgid "Prepend timestamp to progress messages"
 msgstr "Dodaje datum i vreme porukama napredovanja"
 
-#: main.c:1026
+#: main.c:1037
 msgid "VPN configuration script"
 msgstr ""
 
-#: main.c:1027
+#: main.c:1038
 msgid "Use IFNAME for tunnel interface"
 msgstr "Koristi AKONAZIV za uređaj tunela"
 
-#: main.c:1028
+#: main.c:1039
 msgid "Shell command line for using a vpnc-compatible config script"
 msgstr "Linija naredbe školjke za korišćenje vpnc-saglasne skripte podešavanja"
 
-#: main.c:1029
+#: main.c:1040
 msgid "default"
 msgstr "osnovno"
 
-#: main.c:1031
+#: main.c:1042
 msgid "Pass traffic to 'script' program, not tun"
 msgstr "Prosleđujem saobraćaj programu „script“, a ne tunu"
 
-#: main.c:1034
+#: main.c:1045
 msgid "Tunnel control"
 msgstr ""
 
-#: main.c:1035
+#: main.c:1046
 msgid "Do not ask for IPv6 connectivity"
 msgstr "Ne traži IPv6 povezivost"
 
-#: main.c:1036
+#: main.c:1047
 msgid "XML config file"
 msgstr "IksML datoteka podešavanja"
 
-#: main.c:1037
+#: main.c:1048
 msgid "Request MTU from server (legacy servers only)"
 msgstr "Zahteva MTU sa servera (samo stari serveri)"
 
-#: main.c:1038
+#: main.c:1049
 msgid "Indicate path MTU to/from server"
 msgstr "Ukazuje na MTU putanju do/od servera"
 
-#: main.c:1039
+#: main.c:1050
 msgid "Enable stateful compression (default is stateless only)"
 msgstr ""
 
-#: main.c:1040
+#: main.c:1051
 msgid "Disable all compression"
 msgstr ""
 
-#: main.c:1041
+#: main.c:1052
 msgid "Set Dead Peer Detection interval (in seconds)"
 msgstr ""
 
-#: main.c:1042
+#: main.c:1053
 msgid "Require perfect forward secrecy"
 msgstr "Zahteva savršenu tajnost prosleđivanja"
 
-#: main.c:1043
+#: main.c:1054
 msgid "Disable DTLS and ESP"
 msgstr ""
 
-#: main.c:1044
+#: main.c:1055
 msgid "OpenSSL ciphers to support for DTLS"
 msgstr "Šifreri OtvorenogSSL-a za podršku DTLS-a"
 
-#: main.c:1045
+#: main.c:1056
 msgid "Set packet queue limit to LEN pkts"
 msgstr "Podešava ograničenje reda paketa na DUŽINU paketa"
 
-#: main.c:1047
+#: main.c:1058
 msgid "Local system information"
 msgstr ""
 
-#: main.c:1048
+#: main.c:1059
 msgid "HTTP header User-Agent: field"
 msgstr "Korisnik-Agent HTTP zaglavlja: nije uspelo"
 
-#: main.c:1049
+#: main.c:1060
 msgid "Local hostname to advertise to server"
 msgstr "Naziv domaćina za obaveštavanje servera"
 
-#: main.c:1050
+#: main.c:1061
 msgid "OS type to report. Allowed values are the following:"
 msgstr ""
 
-#: main.c:1051
+#: main.c:1062
 msgid "linux, linux-64, win, mac-intel, android, apple-ios"
 msgstr ""
 
-#: main.c:1052
+#: main.c:1063
 msgid "reported version string during authentication"
 msgstr ""
 
-#: main.c:1053
+#: main.c:1064
 msgid "default:"
 msgstr ""
 
-#: main.c:1055
+#: main.c:1066
 msgid "Trojan binary (CSD) execution"
 msgstr ""
 
-#: main.c:1057
+#: main.c:1068
 msgid "Drop privileges during trojan execution"
 msgstr ""
 
-#: main.c:1058
+#: main.c:1069
 msgid "Run SCRIPT instead of trojan binary"
 msgstr ""
 
-#: main.c:1060
+#: main.c:1071
 msgid "Set minimum interval between trojan runs (in seconds)"
 msgstr ""
 
-#: main.c:1062
+#: main.c:1073
 msgid "Server bugs"
 msgstr ""
 
-#: main.c:1063
+#: main.c:1074
 msgid "Disable HTTP connection re-use"
 msgstr "Isključuje ponovno korišćenje HTTP veze"
 
-#: main.c:1064
+#: main.c:1075
 msgid "Do not attempt XML POST authentication"
 msgstr "Ne pokušava IksML POST potvrđivanje identiteta"
 
-#: main.c:1065
+#: main.c:1076
 msgid "Allow use of the ancient, insecure 3DES and RC4 ciphers"
 msgstr ""
 
-#: main.c:1067
+#: main.c:1078
 msgid "Multiple certificate authentication (MCA)"
 msgstr ""
 
-#: main.c:1068
+#: main.c:1079
 msgid "Use MCA certificate MCACERT"
 msgstr ""
 
-#: main.c:1069
+#: main.c:1080
 msgid "Use MCA key MCAKEY"
 msgstr ""
 
-#: main.c:1070
+#: main.c:1081
 msgid "Passphrase MCAPASS for MCACERT/MCAKEY"
 msgstr ""
 
-#: main.c:1092
+#: main.c:1103
 #, c-format
 msgid "Failed to allocate string\n"
 msgstr "Nisam uspeo da dodelim nisku\n"
 
-#: main.c:1165
+#: main.c:1176
 #, c-format
 msgid "Failed to get line from config file: %s\n"
 msgstr "Nisam uspeo da dobavim red iz datoteke podešavanja: %s\n"
 
-#: main.c:1205
+#: main.c:1216
 #, c-format
 msgid "Unrecognised option at line %d: '%s'\n"
 msgstr "Nepoznata opcija u %d. redu: „%s“\n"
 
-#: main.c:1215
+#: main.c:1226
 #, c-format
 msgid "Option '%s' does not take an argument at line %d\n"
 msgstr "Opcija „%s“ ne uzima argument u %d. redu\n"
 
-#: main.c:1219
+#: main.c:1230
 #, c-format
 msgid "Option '%s' requires an argument at line %d\n"
 msgstr "Opcija „%s“ zahteva argument u %d. redu\n"
 
 #. Should never happen
-#: main.c:1235
+#: main.c:1246
 #, c-format
 msgid "Internal error; option '%s' unexpectedly yielded null config_arg\n"
 msgstr ""
 
-#: main.c:1251
+#: main.c:1262
 #, c-format
 msgid "Invalid user \"%s\": %s\n"
 msgstr "Neispravan korisnik „%s“: %s\n"
 
-#: main.c:1260
+#: main.c:1271
 #, c-format
 msgid "Invalid user ID \"%d\": %s\n"
 msgstr "Neispravan IB korisnika „%d“: %s\n"
 
-#: main.c:1544
+#: main.c:1555
 #, c-format
 msgid "Unhandled autocomplete for option %d '--%s'. Please report.\n"
 msgstr ""
 
-#: main.c:1565 main.c:1580
+#: main.c:1576 main.c:1591
 msgid "connected"
 msgstr ""
 
-#: main.c:1565
+#: main.c:1576
 msgid "disconnected"
 msgstr ""
 
-#: main.c:1569
+#: main.c:1580
 msgid "unsuccessful"
 msgstr ""
 
-#: main.c:1574
+#: main.c:1585
 msgid "in progress"
 msgstr ""
 
-#: main.c:1577
+#: main.c:1588
 msgid "disabled"
 msgstr ""
 
-#: main.c:1583
+#: main.c:1594
 msgid "established"
 msgstr ""
 
-#: main.c:1593
+#: main.c:1604
 #, c-format
 msgid "Configured as %s%s%s, with SSL%s%s %s and %s%s%s %s\n"
 msgstr ""
 
-#: main.c:1602
+#: main.c:1613
 #, c-format
 msgid "Session authentication will expire at %s\n"
 msgstr ""
 
-#: main.c:1616
+#: main.c:1627
 #, c-format
 msgid ""
 "RX: %<PRIu64> packets (%<PRIu64> B); TX: %<PRIu64> packets (%<PRIu64> B)\n"
 msgstr ""
 
-#: main.c:1620
+#: main.c:1631
 #, c-format
 msgid "SSL ciphersuite: %s\n"
 msgstr ""
 
-#: main.c:1622
+#: main.c:1633
 #, c-format
 msgid "%s ciphersuite: %s\n"
 msgstr ""
 
-#: main.c:1625
+#: main.c:1636
 #, c-format
 msgid "Next SSL rekey in %ld seconds\n"
 msgstr ""
 
-#: main.c:1628
+#: main.c:1639
 #, c-format
 msgid "Next %s rekey in %ld seconds\n"
 msgstr ""
 
-#: main.c:1632
+#: main.c:1643
 #, c-format
 msgid "Next Trojan invocation in %ld seconds\n"
 msgstr ""
 
-#: main.c:1651
+#: main.c:1662
 #, c-format
 msgid "Failed to open '%s' for write: %s\n"
 msgstr "Nisam uspeo da otvorim „%s“ radi upisa: %s\n"
 
-#: main.c:1660
+#: main.c:1671
 msgid "Failed to continue in background"
 msgstr ""
 
-#: main.c:1668
+#: main.c:1679
 #, c-format
 msgid "Continuing in background; pid %d\n"
 msgstr "Nastavljam rad u pozadini, pib %d\n"
 
-#: main.c:1734
+#: main.c:1745
 #, c-format
 msgid "WARNING: Cannot set locale: %s\n"
 msgstr ""
 
-#: main.c:1747
+#: main.c:1758
 #, c-format
 msgid ""
 "WARNING: This version of OpenConnect was built without iconv\n"
@@ -4170,7 +4170,7 @@ msgstr ""
 "         podrške ali izgleda da koristite nasleđeni znak\n"
 "         podesite „%s“. Očekujte neočekivano.\n"
 
-#: main.c:1754
+#: main.c:1765
 #, c-format
 msgid ""
 "WARNING: This version of OpenConnect is %s but\n"
@@ -4179,56 +4179,56 @@ msgstr ""
 "UPOZORENJE: Ovo izdanje „openconnect“-a je %s ali\n"
 "         biblioteka „libopenconnect“ je %s\n"
 
-#: main.c:1761
+#: main.c:1772
 #, c-format
 msgid ""
 "WARNING: This build is intended only for debugging purposes and\n"
 "         may allow you to establish insecure connections.\n"
 msgstr ""
 
-#: main.c:1793
+#: main.c:1804
 #, c-format
 msgid "Failed to allocate vpninfo structure\n"
 msgstr "Nisam uspeo da dodelim strukturu vpnpodataka\n"
 
-#: main.c:1847
+#: main.c:1858
 #, c-format
 msgid "WARNING: --juniper is deprecated, use --protocol=nc instead.\n"
 msgstr ""
 
-#: main.c:1852
+#: main.c:1863
 #, c-format
 msgid "Cannot use 'config' option inside config file\n"
 msgstr "Ne možete koristiti opciju „config“ unutar datoteke podešavanja\n"
 
-#: main.c:1860
+#: main.c:1871
 #, c-format
 msgid "Cannot open config file '%s': %s\n"
 msgstr "Ne mogu da otvorim datoteku podešavanja „%s“: %s\n"
 
-#: main.c:1877
+#: main.c:1888
 #, c-format
 msgid "Invalid compression mode '%s'\n"
 msgstr "Neispravan režim zapakivanja „%s“\n"
 
-#: main.c:1895
+#: main.c:1906
 #, c-format
 msgid ""
 "Cannot enable insecure 3DES or RC4 ciphers, because the library\n"
 "%s no longer supports them.\n"
 msgstr ""
 
-#: main.c:1903 main.c:1924
+#: main.c:1914 main.c:1935
 #, c-format
 msgid "Failed to allocate memory\n"
 msgstr "Nisam uspeo da dodelim memoriju\n"
 
-#: main.c:1919
+#: main.c:1930
 #, c-format
 msgid "Missing colon in resolve option\n"
 msgstr "Nedostaje dvotačka u opciji rešavanja\n"
 
-#: main.c:2011
+#: main.c:2022
 #, c-format
 msgid ""
 "WARNING: You are running on macOS and specified --interface='%s'\n"
@@ -4236,12 +4236,12 @@ msgid ""
 "         instead. Perhaps try --interface='u%s', or omit altogether.\n"
 msgstr ""
 
-#: main.c:2022 main.c:2032
+#: main.c:2033 main.c:2043
 #, c-format
 msgid "MTU %d too small\n"
 msgstr "MTU %d je premalo\n"
 
-#: main.c:2062
+#: main.c:2073
 #, c-format
 msgid ""
 "Disabling all HTTP connection re-use due to --no-http-keepalive option.\n"
@@ -4251,7 +4251,7 @@ msgstr ""
 "keepalive“.\n"
 "Ako ovo pomogne, izvestite o tome na „<%s>“.\n"
 
-#: main.c:2069
+#: main.c:2080
 #, c-format
 msgid ""
 "The --no-cert-check option was insecure and has been removed.\n"
@@ -4261,29 +4261,29 @@ msgstr ""
 "Ispravite vaše uverenje servera ili koristite „--servercert“ da mu "
 "verujete.\n"
 
-#: main.c:2090
+#: main.c:2101
 #, c-format
 msgid "Queue length zero not permitted; using 1\n"
 msgstr "Nulta dužina reda nije dozvoljena; koristim 1\n"
 
-#: main.c:2104
+#: main.c:2115
 #, c-format
 msgid "OpenConnect version %s\n"
 msgstr "Otvoreno povezivanje izdanje %s\n"
 
-#: main.c:2152
+#: main.c:2163
 #, c-format
 msgid "Invalid software token mode \"%s\"\n"
 msgstr "Neispravan režim softverskog modula „%s“\n"
 
-#: main.c:2163
+#: main.c:2174
 #, c-format
 msgid ""
 "Invalid OS identity \"%s\"\n"
 "Allowed values: linux, linux-64, win, mac-intel, android, apple-ios\n"
 msgstr ""
 
-#: main.c:2191
+#: main.c:2202
 #, c-format
 msgid ""
 "WARNING: You specified %s. This should not be\n"
@@ -4292,112 +4292,112 @@ msgid ""
 "         to <%s>.\n"
 msgstr ""
 
-#: main.c:2229
+#: main.c:2240
 #, c-format
 msgid "Too many arguments on command line\n"
 msgstr "Previše argumenata na liniji naredbi\n"
 
-#: main.c:2232
+#: main.c:2243
 #, c-format
 msgid "No server specified\n"
 msgstr "Nije naveden server\n"
 
-#: main.c:2250
+#: main.c:2261
 #, c-format
 msgid "This version of OpenConnect was built without libproxy support\n"
 msgstr ""
 "Ovo izdanje otvorenog povezivanja je izgrađeno bez podrške biblioteke "
 "posrednika\n"
 
-#: main.c:2287
+#: main.c:2298
 #, c-format
 msgid "Error opening cmd pipe: %s\n"
 msgstr ""
 
-#: main.c:2324
+#: main.c:2335
 #, c-format
 msgid "Failed to complete authentication\n"
 msgstr ""
 
-#: main.c:2360
+#: main.c:2371
 #, c-format
 msgid "Creating SSL connection failed\n"
 msgstr "Nije uspelo stvaranje SSL veze\n"
 
-#: main.c:2375
+#: main.c:2386
 #, c-format
 msgid "Set up UDP failed; using SSL instead\n"
 msgstr ""
 
-#: main.c:2381
+#: main.c:2392
 msgid "No --script argument provided; DNS and routing are not configured\n"
 msgstr "Nije dostavljen argument „--script“; DNS i upućivanje nisu podešeni\n"
 
-#: main.c:2383
+#: main.c:2394
 #, c-format
 msgid "See %s\n"
 msgstr "Pogledajte „%s“\n"
 
-#: main.c:2396
+#: main.c:2407
 msgid "User requested reconnect\n"
 msgstr "Korisnik je zatražio ponovno povezivanje\n"
 
-#: main.c:2407
+#: main.c:2418
 msgid "Cookie was rejected by server; exiting.\n"
 msgstr ""
 
-#: main.c:2411
+#: main.c:2422
 msgid "Session terminated by server; exiting.\n"
 msgstr "Server je okončao sesiju; izlazim.\n"
 
-#: main.c:2415
+#: main.c:2426
 #, c-format
 msgid "User cancelled (%s); exiting.\n"
 msgstr ""
 
-#: main.c:2425
+#: main.c:2436
 #, c-format
 msgid "User detached from session (%s); exiting.\n"
 msgstr ""
 
-#: main.c:2435
+#: main.c:2446
 msgid "Unrecoverable I/O error; exiting.\n"
 msgstr ""
 
-#: main.c:2442
+#: main.c:2453
 msgid "Unknown error; exiting.\n"
 msgstr "Nepoznata greška; izlazim.\n"
 
-#: main.c:2462
+#: main.c:2473
 #, c-format
 msgid "Failed to open %s for write: %s\n"
 msgstr "Nisam uspeo da otvorim „%s“ radi upisa: %s\n"
 
-#: main.c:2470
+#: main.c:2481
 #, c-format
 msgid "Failed to write config to %s: %s\n"
 msgstr "Nisam uspeo da upišem podešavanja u „%s“: %s\n"
 
-#: main.c:2517
+#: main.c:2528
 #, c-format
 msgid ""
 "Insecurely accepting certificate from VPN server \"%s\" because you ran with "
 "--servercert=ACCEPT.\n"
 msgstr ""
 
-#: main.c:2530
+#: main.c:2541
 #, c-format
 msgid "Could not check server's certificate against %s\n"
 msgstr ""
 
-#: main.c:2538
+#: main.c:2549
 #, c-format
 msgid ""
 "None of the %d fingerprint(s) specified via --servercert match server's "
 "certificate: %s\n"
 msgstr ""
 
-#: main.c:2547
+#: main.c:2558
 #, c-format
 msgid ""
 "\n"
@@ -4408,116 +4408,116 @@ msgstr ""
 "Nije uspelo potvrđivanje uverenja sa VPN servera „%s“.\n"
 "Razlog: %s\n"
 
-#: main.c:2550
+#: main.c:2561
 #, c-format
 msgid ""
 "To trust this server in future, perhaps add this to your command line:\n"
 msgstr "Da i dalje verujete ovom serveru, dodajte ovo na liniju naredbi:\n"
 
-#: main.c:2551
+#: main.c:2562
 #, c-format
 msgid "    --servercert %s\n"
 msgstr "    --servercert %s\n"
 
-#: main.c:2556
+#: main.c:2567
 #, c-format
 msgid "Enter '%s' to accept, '%s' to abort; anything else to view: "
 msgstr ""
 "Unesite „%s“ da prihvatite, „%s“ da prekinete; bilo šta drugo da pregledate: "
 
-#: main.c:2557 main.c:2576
+#: main.c:2568 main.c:2587
 msgid "no"
 msgstr "ne"
 
-#: main.c:2557 main.c:2563
+#: main.c:2568 main.c:2574
 msgid "yes"
 msgstr "da"
 
-#: main.c:2585
+#: main.c:2596
 #, c-format
 msgid "Server key hash: %s\n"
 msgstr "Heš serverskog ključa: %s\n"
 
-#: main.c:2619
+#: main.c:2630
 #, c-format
 msgid "Auth choice \"%s\" matches multiple options\n"
 msgstr "Izbor potvrđivanja identiteta „%s“ se poklapa sa više opcija\n"
 
-#: main.c:2622
+#: main.c:2633
 #, c-format
 msgid "Auth choice \"%s\" not available\n"
 msgstr "Izbor potvrđivanja „%s“ nije dostupan\n"
 
-#: main.c:2643
+#: main.c:2654
 msgid "User input required in non-interactive mode\n"
 msgstr "Korisnički ulaz je zatražen u nemeđudejstvenom režimu\n"
 
-#: main.c:2904
+#: main.c:2915
 #, c-format
 msgid "Failed to open token file for write: %s\n"
 msgstr "Nisam uspeo da otvorim datoteku modula radi upisa: %s\n"
 
-#: main.c:2912
+#: main.c:2923
 #, c-format
 msgid "Failed to write token: %s\n"
 msgstr "Nisam uspeo da zapišem modul: %s\n"
 
-#: main.c:2959 main.c:2983
+#: main.c:2970 main.c:2994
 #, c-format
 msgid "Soft token string is invalid\n"
 msgstr "Niska softverskog modula je neispravna\n"
 
-#: main.c:2963
+#: main.c:2974
 #, c-format
 msgid "Can't open stoken file\n"
 msgstr ""
 
-#: main.c:2965
+#: main.c:2976
 #, c-format
 msgid "Can't open ~/.stokenrc file\n"
 msgstr "Ne mogu da otvorim datoteku „~/.stokenrc“\n"
 
-#: main.c:2968
+#: main.c:2979
 #, c-format
 msgid "OpenConnect was not built with libstoken support\n"
 msgstr "Otvoreno povezivanje nije izgrađeno sa podrškom „libstoken“-a\n"
 
-#: main.c:2971
+#: main.c:2982
 #, c-format
 msgid "General failure in libstoken\n"
 msgstr "Opšti neuspeh u „libstoken“-u\n"
 
-#: main.c:2986
+#: main.c:2997
 #, c-format
 msgid "OpenConnect was not built with liboath support\n"
 msgstr "Otvoreno povezivanje nije izgrađeno sa podrškom „liboath“-a\n"
 
-#: main.c:2989
+#: main.c:3000
 #, c-format
 msgid "General failure in liboath\n"
 msgstr "Opšti neuspeh u „liboath“-u\n"
 
-#: main.c:3000
+#: main.c:3011
 #, c-format
 msgid "Yubikey token not found\n"
 msgstr "Nisam našao modul Jubi ključa\n"
 
-#: main.c:3003
+#: main.c:3014
 #, c-format
 msgid "OpenConnect was not built with Yubikey support\n"
 msgstr "Otvoreno povezivanje nije izgrađeno sa podrškom Jubi ključa\n"
 
-#: main.c:3006
+#: main.c:3017
 #, c-format
 msgid "General Yubikey failure: %s\n"
 msgstr "Opšti neuspeh Jubi ključa: %s\n"
 
-#: main.c:3015
+#: main.c:3026
 #, c-format
 msgid "Can't open oidc file\n"
 msgstr ""
 
-#: main.c:3018
+#: main.c:3029
 #, c-format
 msgid "General failure in oidc token\n"
 msgstr ""
@@ -7128,26 +7128,26 @@ msgstr ""
 msgid "RX packet %p(%d) [%d] [used %d]\n"
 msgstr ""
 
-#: vhost.c:573
+#: vhost.c:576
 #, c-format
 msgid "Queue TX packet %p at desc %d avail %d\n"
 msgstr ""
 
-#: vhost.c:581
+#: vhost.c:584
 #, c-format
 msgid "Queue RX packet %p at desc %d avail %d\n"
 msgstr ""
 
-#: vhost.c:615
+#: vhost.c:618
 #, c-format
 msgid "Immediate wake because vhost ring moved on from 0x%x to 0x%x\n"
 msgstr ""
 
-#: vhost.c:642
+#: vhost.c:645
 msgid "Failed to kick vhost-net eventfd\n"
 msgstr ""
 
-#: vhost.c:645
+#: vhost.c:648
 msgid "Kick vhost ring\n"
 msgstr ""
 
