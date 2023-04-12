@@ -69,7 +69,12 @@ int handle_external_browser(struct openconnect_info *vpninfo)
 	sin6.sin6_port = htons(29786);
 	sin6.sin6_addr = in6addr_loopback;
 
-	int listen_fd = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
+	int listen_fd;
+#ifdef SOCK_CLOEXEC
+	listen_fd = socket(AF_INET6, SOCK_STREAM | SOCK_CLOEXEC, IPPROTO_TCP);
+	if (listen_fd < 0)
+#endif
+	listen_fd = socket(AF_INET6, SOCK_STREAM, IPPROTO_TCP);
 	if (listen_fd < 0) {
 		char *errstr;
 	sockerr:
