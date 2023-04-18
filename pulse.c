@@ -1830,7 +1830,14 @@ static int pulse_authenticate(struct openconnect_info *vpninfo, int connecting)
 					goto auth_unknown;
 				}
 			} else {
-				goto auth_unknown;
+				uint32_t eaptype = (unsigned char)avp_c[4];
+
+				if (eaptype == EAP_TYPE_EXPANDED && avp_len >= 8)
+					eaptype = load_be32(avp_c + 4);
+
+				vpn_progress(vpninfo, PRG_ERR,
+					     _("Pulse server requested unexpected EAP type 0x%x\n"), eaptype);
+				goto bad_eap;
 			}
 
 		} else if (avp_flags & AVP_MANDATORY)
