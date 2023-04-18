@@ -583,17 +583,24 @@ int oncp_connect(struct openconnect_info *vpninfo)
 	 */
 	if (check_len == 1) {
 		len = vpninfo->ssl_read(vpninfo, (void *)bytes, sizeof(bytes));
+		if (len < 0) {
+			ret = len;
+			goto out;
+		}
 		check_len = load_le16(bytes);
 	} else {
-		len = vpninfo->ssl_read(vpninfo, (void *)(bytes+2), sizeof(bytes)-2) + 2;
+		len = vpninfo->ssl_read(vpninfo, (void *)(bytes+2), sizeof(bytes)-2);
+		if (len < 0) {
+			ret = len;
+			goto out;
+		}
+		len += 2;
 		check_len--;
 	}
-	if (len < 0) {
-		ret = len;
-		goto out;
-	}
+	/* Now there is a record of size 'check_len', of which we have the
+	 * first (len-2) bytes starting at bytes[2]. */
 	vpn_progress(vpninfo, PRG_TRACE,
-		     _("Read %d bytes of SSL record\n"), len);
+		     _("Read %d bytes of SSL record\n"), len - 2);
 
 	if (len < 0x16 || check_len + 2 != len) {
 		vpn_progress(vpninfo, PRG_ERR,
@@ -626,6 +633,10 @@ int oncp_connect(struct openconnect_info *vpninfo)
 	}
 	vpn_progress(vpninfo, PRG_TRACE,
 		     _("Got KMP message 301 of length %d\n"), kmplen);
+
+	if (vpninfo->dump_http_traffic)
+		dump_buf_hex(vpninfo, PRG_TRACE, '<', bytes, len);
+
 	while (kmplen + 22 > len) {
 		char l[2];
 		int thislen;
@@ -640,8 +651,8 @@ int oncp_connect(struct openconnect_info *vpninfo)
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("Record of additional %d bytes too large; would make %d\n"),
 				     load_le16(l), len + load_le16(l));
-			ret = -EINVAL;
-			goto out;
+			//ret = -EINVAL;
+			//goto out;
 		}
 
 		thislen = vpninfo->ssl_read(vpninfo, (void *)(bytes + len), load_le16(l));
@@ -655,6 +666,8 @@ int oncp_connect(struct openconnect_info *vpninfo)
 		vpn_progress(vpninfo, PRG_TRACE,
 			     _("Read additional %d bytes of KMP 301 message\n"),
 			     thislen);
+		if (vpninfo->dump_http_traffic)
+			dump_buf_hex(vpninfo, PRG_TRACE, '<', (void *)(bytes + len), thislen);
 		len += thislen;
 	}
 
