@@ -56,6 +56,7 @@
 #define EAP_FAILURE 4
 
 #define EAP_TYPE_IDENTITY 1
+#define EAP_TYPE_NAK 3
 #define EAP_TYPE_GTC 6
 #define EAP_TYPE_TLS 0x0d
 #define EAP_TYPE_TTLS 0x15
@@ -1289,6 +1290,42 @@ static int pulse_request_gtc(struct openconnect_info *vpninfo, struct oc_text_bu
 	return ret;
 }
 
+static int pulse_deny_eap_tls(struct openconnect_info *vpninfo, struct oc_text_buf *reqbuf,
+			      uint8_t eap_ident)
+{
+	unsigned char eap_avp[13];
+	static const unsigned char tls_no_cert_alert[] = {
+		0x00, /* EAP-TLS Flags field */
+		0x15, /* TLS Alert */
+		0x03, 0x03, /* TLS version 1.2 */
+		0x00, 0x02, /* Length */
+		0x02, /* Fatal */
+		0x29, /* No certificate */
+	};
+
+	/* AVP flags+mandatory+length */
+	store_be32(&eap_avp[0], AVP_CODE_EAP_MESSAGE);
+	store_be32(&eap_avp[4], (AVP_MANDATORY << 24) + sizeof(eap_avp) + sizeof(tls_no_cert_alert));
+
+	/* EAP header: code/ident/len */
+	eap_avp[8] = EAP_RESPONSE;
+	eap_avp[9] = eap_ident;
+	store_be16(eap_avp + 10, 5 + sizeof(tls_no_cert_alert)); /* EAP length */
+	eap_avp[12] = EAP_TYPE_TLS;
+	buf_append_bytes(reqbuf, eap_avp, sizeof(eap_avp));
+	buf_append_bytes(reqbuf, tls_no_cert_alert, sizeof(tls_no_cert_alert));
+
+	/* Padding */
+	if (reqbuf->pos & 3) {
+		uint32_t pad = 0;
+
+		buf_append_bytes(reqbuf, &pad,
+				 4 - (reqbuf->pos & 3));
+	}
+	dump_buf_hex(vpninfo, PRG_ERR, 't', (void *)reqbuf->data, reqbuf->pos);
+	return 0;
+}
+
 static int dup_prompt(char **p, uint8_t *avp_p, int avp_len)
 {
 	char *ret = NULL;
@@ -1348,7 +1385,7 @@ static int pulse_authenticate(struct openconnect_info *vpninfo, int connecting)
 	void *avp_p, *p;
 	unsigned char *eap;
 	int cookie_found = 0;
-	int j2_found = 0, realms_found = 0, realm_entry = 0, old_sessions = 0, gtc_found = 0, regions_found = 0;
+	int j2_found = 0, realms_found = 0, realm_entry = 0, old_sessions = 0, gtc_found = 0, regions_found = 0, deny_eap_tls = 0;
 	uint8_t j2_code = 0;
 	void *ttls = NULL;
 	char *user_prompt = NULL, *pass_prompt = NULL, *gtc_prompt = NULL, *signin_prompt = NULL;
@@ -1652,7 +1689,7 @@ static int pulse_authenticate(struct openconnect_info *vpninfo, int connecting)
 	else
 		prompt_flags &= ~PROMPT_GTC_NEXT;
 
-	realm_entry = realms_found = j2_found = old_sessions = 0, gtc_found = 0, regions_found = 0;
+	realm_entry = realms_found = j2_found = old_sessions = gtc_found = regions_found = deny_eap_tls = 0;
 	eap = recv_eap_packet(vpninfo, ttls, (void *)bytes, sizeof(bytes));
 	if (!eap) {
 		ret = -EIO;
@@ -1782,13 +1819,27 @@ static int pulse_authenticate(struct openconnect_info *vpninfo, int connecting)
 			    load_be16(avp_c + 2) != avp_len)
 				goto auth_unknown;
 
+			uint32_t eap2_type = (unsigned char)avp_c[4];
+
+			if (eap2_type == EAP_TYPE_EXPANDED) {
+				if (avp_len < 8)
+					goto auth_unknown;
+				eap2_type = load_be32(avp_c + 4);
+			}
+
 			eap2_ident = avp_c[1];
 
-			if (avp_c[4] == EAP_TYPE_GTC) {
+			switch (eap2_type) {
+			case EAP_TYPE_GTC:
 				gtc_found = 1;
 				free(gtc_prompt);
 				gtc_prompt = strndup(avp_c + 5, avp_len - 5);
-			} else if (avp_len >= 13 && load_be32(avp_c + 4) == EXPANDED_JUNIPER) {
+				break;
+
+			case EXPANDED_JUNIPER:
+				if (avp_len < 13)
+					goto auth_unknown;
+
 				switch (load_be32(avp_c + 8)) {
 				case 2: /*  Expanded Juniper/2: password */
 					j2_found = 1;
@@ -1827,16 +1878,20 @@ static int pulse_authenticate(struct openconnect_info *vpninfo, int connecting)
 					goto bad_eap;
 
 				default:
-					goto auth_unknown;
+					vpn_progress(vpninfo, PRG_ERR,
+						     _("Pulse server requested unexpected Juniper EAP type 0x%x\n"),
+						     load_be32(avp_c + 8));
+					goto bad_eap;
 				}
-			} else {
-				uint32_t eaptype = (unsigned char)avp_c[4];
+				break;
 
-				if (eaptype == EAP_TYPE_EXPANDED && avp_len >= 8)
-					eaptype = load_be32(avp_c + 4);
+			case EAP_TYPE_TLS:
+				deny_eap_tls++;
+				break;
 
+			default:
 				vpn_progress(vpninfo, PRG_ERR,
-					     _("Pulse server requested unexpected EAP type 0x%x\n"), eaptype);
+					     _("Pulse server requested unexpected EAP type 0x%x\n"), eap2_type);
 				goto bad_eap;
 			}
 
@@ -1845,7 +1900,7 @@ static int pulse_authenticate(struct openconnect_info *vpninfo, int connecting)
 	}
 
 	/* We want it to be precisely one type of request, not a mixture. */
-	if (realm_entry + !!realms_found + !!regions_found + j2_found + gtc_found + cookie_found + !!old_sessions != 1 &&
+	if (realm_entry + !!realms_found + !!regions_found + j2_found + gtc_found + cookie_found + !!old_sessions + deny_eap_tls != 1 &&
 	    !signin_prompt) {
 	auth_unknown:
 		vpn_progress(vpninfo, PRG_ERR,
@@ -1930,6 +1985,8 @@ static int pulse_authenticate(struct openconnect_info *vpninfo, int connecting)
 				goto out;
 		} else if (signin_prompt) {
 			buf_append_avp_be32(reqbuf, 0xd7c, 1);
+		} else if (deny_eap_tls) {
+			pulse_deny_eap_tls(vpninfo, reqbuf, eap2_ident);
 		} else {
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("Unhandled Pulse auth request\n"));
