@@ -15,6 +15,7 @@
 <ul>
    <li><b>OpenConnect HEAD</b>
      <ul>
+       <li>Fix external browser authentication with KDE plasma-nm &amp;lt; 5.26.</li>
        <li>Always redirect <tt>stdout</tt> to <tt>stderr</tt> when spawning external browser.</li>
        <li>Increase default queue length to 32 packets (<a href="https://gitlab.com/openconnect/openconnect/-/issues/582">#582</a>).</li>
        <li>Make the <a href="https://www.wintun.net/">Wintun</a> Layer 3 TUN driver the default on Windows (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/427">!427</a>).</li>

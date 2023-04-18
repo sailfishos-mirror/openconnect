@@ -174,7 +174,13 @@ static int _openconnect_openssl_write(SSL *ssl, int fd, struct openconnect_info 
 				return -EIO;
 			}
 			cmd_fd_set(vpninfo, &rd_set, &maxfd);
-			select(maxfd + 1, &rd_set, &wr_set, NULL, NULL);
+			while (select(maxfd + 1, &rd_set, &wr_set, NULL, NULL) < 0) {
+				if (errno != EINTR) {
+					vpn_perror(vpninfo, _("Failed select() for TLS/DTLS"));
+					return -EIO;
+				}
+			}
+
 			if (is_cancel_pending(vpninfo, &rd_set)) {
 				vpn_progress(vpninfo, PRG_ERR, _("TLS/DTLS write cancelled\n"));
 				return -EINTR;
@@ -224,7 +230,12 @@ static int _openconnect_openssl_read(SSL *ssl, int fd, struct openconnect_info *
 			return -EIO;
 		}
 		cmd_fd_set(vpninfo, &rd_set, &maxfd);
-		ret = select(maxfd + 1, &rd_set, &wr_set, NULL, tv);
+		while ((ret = select(maxfd + 1, &rd_set, &wr_set, NULL, tv)) < 0) {
+			if (errno != EINTR) {
+				vpn_perror(vpninfo, _("Failed select() for TLS/DTLS"));
+				return -EIO;
+			}
+		}
 		if (is_cancel_pending(vpninfo, &rd_set)) {
 			vpn_progress(vpninfo, PRG_ERR, _("TLS/DTLS read cancelled\n"));
 			return -EINTR;
@@ -291,7 +302,12 @@ static int openconnect_openssl_gets(struct openconnect_info *vpninfo, char *buf,
 				break;
 			}
 			cmd_fd_set(vpninfo, &rd_set, &maxfd);
-			select(maxfd + 1, &rd_set, &wr_set, NULL, NULL);
+			while (select(maxfd + 1, &rd_set, &wr_set, NULL, NULL) < 0) {
+				if (errno != EINTR) {
+					vpn_perror(vpninfo, _("Failed select() for TLS/DTLS"));
+					return -EIO;
+				}
+			}
 			if (is_cancel_pending(vpninfo, &rd_set)) {
 				vpn_progress(vpninfo, PRG_ERR, _("TLS/DTLS read cancelled\n"));
 				ret = -EINTR;
