@@ -1835,8 +1835,18 @@ static int pulse_authenticate(struct openconnect_info *vpninfo, int connecting)
 				if (eaptype == EAP_TYPE_EXPANDED && avp_len >= 8)
 					eaptype = load_be32(avp_c + 4);
 
-				vpn_progress(vpninfo, PRG_ERR,
-					     _("Pulse server requested unexpected EAP type 0x%x\n"), eaptype);
+				if (eaptype == EAP_TYPE_TLS && !vpninfo->certinfo[0].cert)
+					vpn_progress(vpninfo, PRG_ERR,
+						     _("Pulse server is trying to authenticate via EAP-TLS over EAP-TTLS, which we\n"
+						       "do not know how to handle. This can happen when the server OPTIONALLY accepts\n"
+						       "TLS client certificates, but your authentication does not require one.\n"
+						       "You may be able to work around it by spoofing a very old Pulse client with:\n"
+						       "        --useragent=\"Pulse-Secure/3.0.0\"\n"
+						       "Please report results to <%s>.\n"),
+						     "openconnect-devel@lists.infradead.org");
+				else
+					vpn_progress(vpninfo, PRG_ERR,
+						     _("Pulse server requested unexpected EAP type 0x%x\n"), eaptype);
 				goto bad_eap;
 			}
 
