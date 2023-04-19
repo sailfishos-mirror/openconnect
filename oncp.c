@@ -610,6 +610,9 @@ int oncp_connect(struct openconnect_info *vpninfo)
 		goto out;
 	}
 
+	if (vpninfo->dump_http_traffic)
+		dump_buf_hex(vpninfo, PRG_TRACE, '<', bytes + 2, len - 2);
+
 	ret = check_kmp_header(vpninfo, bytes + 2, len - 2);
 	if (ret < 0)
 		goto out;
@@ -633,6 +636,7 @@ int oncp_connect(struct openconnect_info *vpninfo)
 	}
 	vpn_progress(vpninfo, PRG_TRACE,
 		     _("Got KMP message 301 of length %d\n"), kmplen);
+
 	while (kmplen + 22 > len) {
 		char l[2];
 		int thislen;
@@ -681,7 +685,7 @@ int oncp_connect(struct openconnect_info *vpninfo)
 		 */
 		if (thislen >= 21 && !memcmp(bytes + len, kmp_head, sizeof(kmp_head)) &&
 		    !bytes[len + 8] && !memcmp(bytes + len + 9, kmp_tail + 1, sizeof(kmp_tail) - 1) &&
-		    load_be16(bytes + len + 8) == 300 && load_be16(bytes + len + 18) + 20 == thislen &&
+		    load_be16(bytes + len + 6) == 300 && load_be16(bytes + len + 18) + 20 == thislen &&
 		    bytes[len + 20] == 0x45 /* Only Legacy IP over oNCP anyway */) {
 			vpn_progress(vpninfo, PRG_INFO,
 				     _("Discarding Legacy IP frame in the middle of oNCP config\n"));
@@ -699,6 +703,10 @@ int oncp_connect(struct openconnect_info *vpninfo)
 		vpn_progress(vpninfo, PRG_TRACE,
 			     _("Read additional %d bytes of KMP 301 message\n"),
 			     thislen);
+
+		if (vpninfo->dump_http_traffic)
+			dump_buf_hex(vpninfo, PRG_TRACE, '<', bytes + len, thislen);
+
 		len += thislen;
 	}
 
