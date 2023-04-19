@@ -583,15 +583,22 @@ int oncp_connect(struct openconnect_info *vpninfo)
 	 */
 	if (check_len == 1) {
 		len = vpninfo->ssl_read(vpninfo, (void *)bytes, sizeof(bytes));
+		if (len < 0) {
+			ret = len;
+			goto out;
+		}
 		check_len = load_le16(bytes);
 	} else {
-		len = vpninfo->ssl_read(vpninfo, (void *)(bytes+2), sizeof(bytes)-2) + 2;
+		len = vpninfo->ssl_read(vpninfo, (void *)(bytes+2), sizeof(bytes)-2);
+		if (len < 0) {
+			ret = len;
+			goto out;
+		}
+		len += 2;
 		check_len--;
 	}
-	if (len < 0) {
-		ret = len;
-		goto out;
-	}
+	/* Now there is a record of size 'check_len', of which we have the
+	 * first (len-2) bytes starting at bytes[2]. */
 	vpn_progress(vpninfo, PRG_TRACE,
 		     _("Read %d bytes of SSL record\n"), len);
 
@@ -603,7 +610,10 @@ int oncp_connect(struct openconnect_info *vpninfo)
 		goto out;
 	}
 
-	ret = check_kmp_header(vpninfo, bytes + 2, len);
+	if (vpninfo->dump_http_traffic)
+		dump_buf_hex(vpninfo, PRG_TRACE, '<', bytes + 2, len - 2);
+
+	ret = check_kmp_header(vpninfo, bytes + 2, len - 2);
 	if (ret < 0)
 		goto out;
 
@@ -626,6 +636,7 @@ int oncp_connect(struct openconnect_info *vpninfo)
 	}
 	vpn_progress(vpninfo, PRG_TRACE,
 		     _("Got KMP message 301 of length %d\n"), kmplen);
+
 	while (kmplen + 22 > len) {
 		char l[2];
 		int thislen;
@@ -652,9 +663,42 @@ int oncp_connect(struct openconnect_info *vpninfo)
 			ret = -EINVAL;
 			goto out;
 		}
+
+		/*
+		 * Sometimes the server throws IP packets into the *middle* of the config!
+		 * https://gitlab.com/openconnect/openconnect/-/issues/562#note_1357470906
+		 *
+		 * We can't use check_kmp_header() because the byte after the KMP type is
+		 * 0x00 not 0x01 which kmp_tail expects. So we do the check manually...
+		 *
+		 * This check may have false positives, if this genuinely *is* the end of
+		 * the config packet but just happens to *look* like KMP300 with a Legacy
+		 * IP packet in it. And false negatives, if there's more than one KMP300
+		 * in the SSL record — which we know *can* happen later. We also know that
+		 * KMP300s can be split across multiple records. So if we get this, then
+		 * another record which doesn't have a KMP header... how are we even
+		 * supposed to guess which one that next record is supposed to complete?
+		 *
+		 * We *could* collect all the frames into a list and then each time we
+		 * get a new frame, attempt to find a set of frames which add up to the
+		 * correct size and see if they parse sanely. But let's try this for now.
+		 */
+		if (thislen >= 21 && !memcmp(bytes + len, kmp_head, sizeof(kmp_head)) &&
+		    !bytes[len + 8] && !memcmp(bytes + len + 9, kmp_tail + 1, sizeof(kmp_tail) - 1) &&
+		    load_be16(bytes + len + 6) == 300 && load_be16(bytes + len + 18) + 20 == thislen &&
+		    bytes[len + 20] == 0x45 /* Only Legacy IP over oNCP anyway */) {
+			vpn_progress(vpninfo, PRG_INFO,
+				     _("Discarding Legacy IP frame in the middle of oNCP config\n"));
+			continue;
+		}
+
 		vpn_progress(vpninfo, PRG_TRACE,
 			     _("Read additional %d bytes of KMP 301 message\n"),
 			     thislen);
+
+		if (vpninfo->dump_http_traffic)
+			dump_buf_hex(vpninfo, PRG_TRACE, '<', bytes + len, thislen);
+
 		len += thislen;
 	}
 
