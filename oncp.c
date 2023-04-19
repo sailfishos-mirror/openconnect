@@ -686,8 +686,16 @@ int oncp_connect(struct openconnect_info *vpninfo)
 			vpn_progress(vpninfo, PRG_INFO,
 				     _("Discarding Legacy IP frame in the middle of oNCP config\n"));
 			continue;
+		} else if (kmplen + 22 != len + thislen) {
+			vpn_progress(vpninfo, PRG_INFO,
+				     "Didn't think this was a stray Legacy IP frame:\n");
+			dump_buf_hex(vpninfo, PRG_INFO, 't', bytes + len, thislen);
+			vpn_progress(vpninfo, PRG_INFO, "thislen %d, memcmp1 %d, b8 0x%x, memcmp2 %d, KMP type %d, KMP len %d, b20 0x%x\n",
+				     thislen, !memcmp(bytes + len, kmp_head, sizeof(kmp_head)), 
+				     bytes[len + 8], !memcmp(bytes + len + 9, kmp_tail + 1, sizeof(kmp_tail) - 1),
+				     load_be16(bytes + len + 8), load_be16(bytes + len + 18) + 20,
+				     bytes[len + 20]);
 		}
-
 		vpn_progress(vpninfo, PRG_TRACE,
 			     _("Read additional %d bytes of KMP 301 message\n"),
 			     thislen);
