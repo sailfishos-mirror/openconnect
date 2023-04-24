@@ -1584,9 +1584,14 @@ static void print_connection_info(struct openconnect_info *vpninfo)
 		     ssl_state,
 		     vpninfo->proto->udp_protocol ? : "UDP", udp_compr ? " + " : "", udp_compr ? : "",
 		     dtls_state);
-	if (vpninfo->auth_expiration != 0)
-		vpn_progress(vpninfo, PRG_INFO, _("Session authentication will expire at %s\n"),
-			     ctime(&vpninfo->auth_expiration));
+	if (vpninfo->auth_expiration != 0) {
+		char buf[80];
+		struct tm *tm = localtime(&&vpninfo->auth_expiration);
+		strftime(buf, 80, "%a, %d %b %Y %H:%M:%S %Z", tm);
+		vpn_progress(vpninfo, PRG_INFO,
+			     _("Session authentication will expire at %s\n"),
+			     buf);
+	}
 }
 
 static void print_connection_stats(void *_vpninfo, const struct oc_stats *stats)
