@@ -1586,7 +1586,7 @@ static void print_connection_info(struct openconnect_info *vpninfo)
 		     dtls_state);
 	if (vpninfo->auth_expiration != 0) {
 		char buf[80];
-		struct tm *tm = localtime(&&vpninfo->auth_expiration);
+		struct tm *tm = localtime(&vpninfo->auth_expiration);
 		strftime(buf, 80, "%a, %d %b %Y %H:%M:%S %Z", tm);
 		vpn_progress(vpninfo, PRG_INFO,
 			     _("Session authentication will expire at %s\n"),
