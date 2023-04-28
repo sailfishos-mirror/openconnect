@@ -1285,7 +1285,7 @@ void oncp_esp_close(struct openconnect_info *vpninfo)
 int oncp_esp_send_probes(struct openconnect_info *vpninfo)
 {
 	struct pkt *pkt;
-	int pktlen, seq;
+	int pktlen;
 
 	if (vpninfo->dtls_fd == -1) {
 		int fd = udp_connect(vpninfo);
@@ -1304,18 +1304,15 @@ int oncp_esp_send_probes(struct openconnect_info *vpninfo)
 	if (!pkt)
 		return -ENOMEM;
 
-	for (seq=1; seq <= (vpninfo->dtls_state==DTLS_ESTABLISHED ? 1 : 2); seq++) {
-		pkt->len = 1;
-		pkt->data[0] = 0;
-		pktlen = construct_esp_packet(vpninfo, pkt,
-					      vpninfo->dtls_addr->sa_family == AF_INET6 ? IPPROTO_IPV6 : IPPROTO_IPIP);
-		if (pktlen < 0 ||
-		    send(vpninfo->dtls_fd, (void *)&pkt->esp, pktlen, 0) < 0)
-			vpn_progress(vpninfo, PRG_DEBUG, _("Failed to send ESP probe\n"));
-	}
-	free_pkt(vpninfo, pkt);
+	pkt->len = 1;
+	pkt->data[0] = 0;
+	pktlen = construct_esp_packet(vpninfo, pkt,
+				      vpninfo->dtls_addr->sa_family == AF_INET6 ? IPPROTO_IPV6 : IPPROTO_IPIP);
+	if (pktlen < 0 ||
+	    send(vpninfo->dtls_fd, (void *)&pkt->esp, pktlen, 0) < 0)
+		vpn_progress(vpninfo, PRG_DEBUG, _("Failed to send ESP probe\n"));
 
-	vpninfo->dtls_times.last_tx = time(&vpninfo->new_dtls_started);
+	free_pkt(vpninfo, pkt);
 
 	return 0;
 };
