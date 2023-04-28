@@ -636,6 +636,7 @@ struct openconnect_info {
 	int reconnect_timeout;
 	int reconnect_interval;
 	int dtls_attempt_period;
+	int udp_probes_sent;
 	time_t auth_expiration;
 	time_t new_dtls_started;
 #if defined(OPENCONNECT_OPENSSL)
