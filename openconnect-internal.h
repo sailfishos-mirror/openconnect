@@ -1175,8 +1175,9 @@ int dumb_socketpair(OPENCONNECT_CMD_SOCKET socks[2], int make_overlapped);
 /* I always coded as if it worked like this. Now it does. */
 #define realloc_inplace(p, size) do {			\
 	void *__realloc_old = p;			\
-	p = realloc(p, size);				\
-	if (size && !p)					\
+	size_t sz = size;				\
+	p = realloc(p, sz);				\
+	if (sz && !p)					\
 		free(__realloc_old);			\
     } while (0)
 
