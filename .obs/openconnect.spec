@@ -44,8 +44,9 @@ BuildRequires:	pkgconfig(uid_wrapper) pkgconfig(socket_wrapper)
 %if 0%{?fedora}
 BuildRequires:  pkgconfig(json-parser)
 %endif
-%if 0%{?fedora} || 0%{?suse_version} > 1500
+%if 0%{?fedora}
 # SoftHSM doesn't install on EPEL8: https://bugzilla.redhat.com/show_bug.cgi?id=1829480
+# and it is not available on SUSE
 BuildRequires:  softhsm
 %endif
 Obsoletes:	openconnect-lib-compat < %{version}-%{release}
