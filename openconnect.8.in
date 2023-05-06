@@ -269,12 +269,25 @@ Display help text
 .TP
 .B \-\-http\-auth=METHODS
 Use only the specified methods for HTTP authentication to a server.  By default,
-only Negotiate, NTLM and Digest authentication are enabled. Basic authentication
-is also supported but because it is insecure it must be explicitly enabled. The
-argument is a comma-separated list of methods to be enabled. Note that the order
-does not matter: OpenConnect will use Negotiate, NTLM, Digest and Basic
+only
+.IR Negotiate ,
+.I NTLM
+and
+.I Digest
+authentication are enabled.
+.I Basic
+authentication is also supported but because it is insecure it must be
+explicitly enabled. The argument is a comma-separated list of methods
+to be enabled. Note that the order does not matter: OpenConnect will use
+.IR Negotiate ,
+.IR NTLM ,
+.I Digest
+and
+.I Basic
 authentication in that order, if each is enabled, regardless of the order
-specified in the METHODS string.
+specified in the
+.I METHODS
+string.
 .TAG opt-interface
 .TP
 .B \-i,\-\-interface=IFNAME
@@ -339,8 +352,7 @@ Provide passphrase for certificate file, or SRK (System Root Key) PIN for TPM
 
 .B \-\-mca\-key\-password
 provides the passphrase for the secondary certificate (see
-.B \-\-mca\-certificate
-).
+.BR \-\-mca\-certificate ).
 .TAG opt-proxy
 .TP
 .B \-P,\-\-proxy=PROXYURL
@@ -716,12 +728,13 @@ algorithm.
 .B \-\-token\-mode=rsa
 will call libstoken to generate an RSA SecurID tokencode,
 .B \-\-token\-mode=totp
-will call liboath to generate an RFC 6238 time-based password, and
+will generate an RFC 6238 time-based password, and
 .B \-\-token\-mode=hotp
-will call liboath to generate an RFC 4226 HMAC-based password. Yubikey
+will generate an RFC 4226 HMAC-based password. Yubikey
 tokens which generate OATH codes in hardware are supported with
-.B \-\-token\-mode=yubioath. \-\-token\-mode=oidc will use the provided
-OpenIDConnect token as an RFC 6750 bearer token.
+.BR \-\-token\-mode=yubioath .
+.B \-\-token\-mode=oidc
+will use the provided OpenIDConnect token as an RFC 6750 bearer token.
 .TAG opt-token-secret
 .TP
 .B \-\-token\-secret={ SECRET[,COUNTER] | @FILENAME }

@@ -3005,11 +3005,8 @@ static void init_token(struct openconnect_info *vpninfo,
 		case -EINVAL:
 			fprintf(stderr, _("Soft token string is invalid\n"));
 			exit(1);
-		case -EOPNOTSUPP:
-			fprintf(stderr, _("OpenConnect was not built with liboath support\n"));
-			exit(1);
 		default:
-			fprintf(stderr, _("General failure in liboath\n"));
+			fprintf(stderr, _("General failure in TOTP/HOTP support\n"));
 			exit(1);
 		}
 
