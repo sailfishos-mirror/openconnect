@@ -239,7 +239,7 @@ static const struct vpn_proto openconnect_protos[] = {
 		.udp_mainloop = ppp_udp_mainloop,
 		.udp_close = dtls_close,
 		.udp_shutdown = dtls_shutdown,
-		.udp_catch_probe = fortinet_dtls_catch_svrhello,
+		.udp_catch_probe = fortinet_dtls_catch_probe,
 #endif
 	}, {
 		.name = "nullppp",

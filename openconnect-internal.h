@@ -1349,7 +1349,7 @@ void fortinet_common_headers(struct openconnect_info *vpninfo, struct oc_text_bu
 int fortinet_obtain_cookie(struct openconnect_info *vpninfo);
 int fortinet_connect(struct openconnect_info *vpninfo);
 int fortinet_bye(struct openconnect_info *vpninfo, const char *reason);
-int fortinet_dtls_catch_svrhello(struct openconnect_info *vpninfo, struct pkt *pkt);
+int fortinet_dtls_catch_probe(struct openconnect_info *vpninfo, struct pkt *pkt);
 
 /* ppp.c */
 struct oc_ppp;

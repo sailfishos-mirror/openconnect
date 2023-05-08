@@ -41,6 +41,7 @@
  */
 static const char clthello[] = "GFtype\0clthello\0SVPNCOOKIE"; /* + cookie value + '\0' */
 static const char svrhello[] = "GFtype\0svrhello\0handshake"; /* + "ok"/"fail" + '\0' */
+static const char heartbeat[] = "GFtype\0heartbeat"; /* + '\0' */
 
 void fortinet_common_headers(struct openconnect_info *vpninfo,
 			 struct oc_text_buf *buf)
@@ -805,17 +806,17 @@ int fortinet_connect(struct openconnect_info *vpninfo)
 	return 0;
 }
 
-int fortinet_dtls_catch_svrhello(struct openconnect_info *vpninfo, struct pkt *pkt)
+int fortinet_dtls_catch_probe(struct openconnect_info *vpninfo, struct pkt *pkt)
 {
 	char *const buf = (void *)pkt->data;
 	const int len = pkt->len;
 
 	buf[len] = 0;
 
-	if (load_be16(buf) != len || len < sizeof(svrhello) + 2 ||
-	    memcmp(buf + 2, svrhello, sizeof(svrhello))) {
+	if (len < 2 || load_be16(buf) != len) {
+	malformed:
 		vpn_progress(vpninfo, PRG_ERR,
-			     _("Did not receive expected svrhello response.\n"));
+			     _("Malformed Fortinet DTLS probe packet from server.\n"));
 		dump_buf_hex(vpninfo, PRG_ERR, '<', (void *)buf, len);
 	disable:
 		dtls_close(vpninfo);
@@ -823,21 +824,41 @@ int fortinet_dtls_catch_svrhello(struct openconnect_info *vpninfo, struct pkt *p
 		return -EINVAL;
 	}
 
-	if (strncmp("ok", buf + 2 + sizeof(svrhello),
-		    len - 2 - sizeof(svrhello))) {
-		vpn_progress(vpninfo, PRG_ERR,
-			     _("svrhello status was \"%.*s\" rather than \"ok\"\n"),
-			     (int)(len - 2 - sizeof(svrhello)),
-			     buf + 2 + sizeof(svrhello));
-		goto disable;
-	}
+	if (len >= sizeof(svrhello) + 2 &&
+	    memcmp(buf + 2, svrhello, sizeof(svrhello))) {
+		/* SVRHELLO */
+		if (strncmp("ok", buf + 2 + sizeof(svrhello),
+			    len - 2 - sizeof(svrhello))) {
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("Fortinet DTLS svrhello status was \"%.*s\" rather than \"ok\"\n"),
+				     (int)(len - 2 - sizeof(svrhello)),
+				     buf + 2 + sizeof(svrhello));
+			goto disable;
+		}
 
-	/* XX: The 'ok' packet might get dropped, and the server won't resend
-	 * it when we resend the GET request. What will happen in that case
-	 * is it'll just keep sending PPP frames. If we detect a PPP frame
-	 * we should take that as 'success' too. Bonus points for actually
-	 * feeding it to the PPP code to process too, but dropping it *ought*
-	 * to be OK. */
+		/* XX: The 'ok' packet might get dropped, and the server won't resend
+		 * it when we resend the GET request. What will happen in that case
+		 * is it'll just keep sending PPP frames. If we detect a PPP frame
+		 * we should take that as 'success' too. Bonus points for actually
+		 * feeding it to the PPP code to process too, but dropping it *ought*
+		 * to be OK. */
+	} else if (len >= sizeof(heartbeat) + 2 &&
+		   memcmp(buf + 2, heartbeat, sizeof(heartbeat))) {
+		/* heartbeat */
+		if (len == sizeof(heartbeat) + 2)
+			vpn_progress(vpninfo, PRG_TRACE,
+				     _("Received Fortinet DTLS heartbeat.\n"));
+		else {
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("Received Fortinet DTLS heartbeat with %d extra bytes at end.\n"),
+				     (int)(len - 2 - sizeof(heartbeat)));
+			dump_buf_hex(vpninfo, PRG_ERR, '<',
+				     (void *)(buf + 2 + sizeof(heartbeat)),
+				     len - 2 - sizeof(heartbeat));
+		}
+		vpninfo->dtls_times.last_rx = time(NULL);
+	} else
+		goto malformed;
 
 	return 1;
 }
