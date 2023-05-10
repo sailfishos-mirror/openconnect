@@ -812,7 +812,7 @@ const char *openconnect_get_connect_url(struct openconnect_info *vpninfo)
 	 * https://gitlab.gnome.org/GNOME/NetworkManager-openconnect/-/issues/53
 	 * https://gitlab.gnome.org/GNOME/NetworkManager-openconnect/-/merge_requests/22
 	 */
-	if (vpninfo->proto->proto == PROTO_PULSE)
+	if (vpninfo->proto->proto == PROTO_PULSE && vpninfo->urlpath)
 		buf_append(urlbuf, "%s", vpninfo->urlpath);
 	if (buf_error(urlbuf)) {
 		buf_free(urlbuf);
