@@ -459,9 +459,9 @@ uninstfiles.nsh: file-list.txt file-list-vpnc-script-win.js.txt file-list-extra.
 openconnect.nsi: version.c
 	$(AM_V_GEN) VERSION=$$(cut -f2 -d\" version.c); \
 	PROD_VERSION=$$(echo "$$VERSION" | perl -ne 'm|v(\d+)\.(\d+)(?:\.git\.\|\-)?(\d+)?(?:-g.+\|.*)|; printf("%1d.%1d.%1d.0",$$1,$$2,$$3)'); \
-	if egrep -q '^#define OPENCONNECT_GNUTLS' config.h; then \
+	if grep -E -q '^#define OPENCONNECT_GNUTLS' config.h; then \
 	    TLS_LIBRARY=GnuTLS; \
-	elif egrep -q '^#define OPENCONNECT_OPENSSL' config.h; then \
+	elif grep -E -q '^#define OPENCONNECT_OPENSSL' config.h; then \
 	    TLS_LIBRARY=OpenSSL; \
 	else \
 	    TLS_LIBRARY="Unknown_TLS_library"; \
@@ -480,6 +480,6 @@ am__v_MAKENSIS_1 =
 
 openconnect-installer-$(INSTALLER_SUFFIX).exe: openconnect.nsi instfiles.nsh uninstfiles.nsh $(srcdir)/openconnect.nsi.in html-recursive
 	$(AM_V_MAKENSIS) $(MAKENSIS) $<
-	ln -f "$$(egrep '^OutFile' openconnect.nsi | cut -f2 -d\")" $@
+	ln -f "$$(grep -E '^OutFile' openconnect.nsi | cut -f2 -d\")" $@
 
 endif
