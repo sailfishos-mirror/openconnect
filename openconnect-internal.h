@@ -94,7 +94,10 @@
 #ifndef _Ret_bytecount_
 #define _Ret_bytecount_(sz)
 #endif
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunknown-pragmas"
 #include "wintun.h"
+#pragma GCC diagnostic pop
 
 #include <ws2tcpip.h>
 #ifndef SECURITY_WIN32
