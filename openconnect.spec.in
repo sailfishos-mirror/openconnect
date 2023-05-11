@@ -35,7 +35,7 @@ Source0:        https://www.infradead.org/openconnect/download/%{name}-%{version
 Source2:	gpgkey-BE07D9FD54809AB2C4B0FF5F63762CDA67E2F359.asc
 Source3:	macros.gpg
 
-
+BuildRequires:	make xdg-utils
 BuildRequires:	pkgconfig(libxml-2.0) pkgconfig(libpcsclite) krb5-devel gnupg2
 BuildRequires:	autoconf automake libtool gettext pkgconfig(liblz4)
 BuildRequires:	pkgconfig(uid_wrapper) pkgconfig(socket_wrapper)
