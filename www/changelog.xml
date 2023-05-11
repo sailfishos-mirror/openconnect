@@ -15,6 +15,7 @@
 <ul>
    <li><b>OpenConnect HEAD</b>
      <ul>
+       <li>Add external browser support for Windows ((<a href="https://gitlab.com/openconnect/openconnect/-/issues/553">#553</a>).</li>
        <li>Fix stray <tt>(null)</tt> in URL path after Pulse authentication.</li>
      </ul><br/>
   </li>
