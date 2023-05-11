@@ -73,6 +73,9 @@ struct openconnect_info *openconnect_vpninfo_new(const char *useragent,
 #ifndef _WIN32
 	vpninfo->tun_fd = -1;
 #endif
+#if defined(DEFAULT_EXTERNAL_BROWSER)
+	vpninfo->external_browser = DEFAULT_EXTERNAL_BROWSER;
+#endif
 	init_pkt_queue(&vpninfo->free_queue);
 	init_pkt_queue(&vpninfo->incoming_queue);
 	init_pkt_queue(&vpninfo->outgoing_queue);

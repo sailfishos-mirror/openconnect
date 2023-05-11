@@ -96,8 +96,6 @@ static int allow_stdin_read;
 static char *token_filename;
 static int allowed_fingerprints;
 
-static char *ext_browser;
-
 struct accepted_cert {
 	struct accepted_cert *next;
 	char *fingerprint;
@@ -902,34 +900,6 @@ static BOOL WINAPI console_ctrl_handler(DWORD dwCtrlType)
 }
 #endif
 
-#ifdef HAVE_POSIX_SPAWN
-static int spawn_browser(struct openconnect_info *vpninfo, const char *url, void *cbdata)
-{
-	vpn_progress(vpninfo, PRG_TRACE,
-		     _("Main Spawning external browser '%s'\n"),
-		     ext_browser);
-
-	pid_t pid = 0;
-	char *browser_argv[3] = { ext_browser, (char *)url, NULL };
-	posix_spawn_file_actions_t file_actions, *factp = NULL;
-	int ret = 0;
-
-	if (!posix_spawn_file_actions_init(&file_actions)) {
-		factp = &file_actions;
-
-		posix_spawn_file_actions_adddup2(&file_actions, STDERR_FILENO, STDOUT_FILENO);
-	}
-
-	if (posix_spawn(&pid, ext_browser, factp, NULL, browser_argv, environ)) {
-		ret = -errno;
-		vpn_perror(vpninfo, _("Spawn browser"));
-	}
-
-	if (factp)
-		posix_spawn_file_actions_destroy(factp);
-	return ret;
-}
-#endif
 static void print_default_vpncscript(void)
 {
 	printf("%s %s\n", _("Default vpnc-script (override with --script):"),
@@ -2089,7 +2059,7 @@ int main(int argc, char **argv)
 			vpnc_script = dup_config_arg();
 			break;
 		case OPT_EXT_BROWSER:
-			ext_browser = dup_config_arg();
+			vpninfo->external_browser = dup_config_arg();
 			break;
 		case OPT_NO_EXTERNAL_AUTH:
 			/* XX: Is this a workaround for a server bug, or a "normal" authentication option? */
@@ -2279,11 +2249,6 @@ int main(int argc, char **argv)
 
 	if (proxy && openconnect_set_http_proxy(vpninfo, strdup(proxy)))
 		exit(1);
-
-#ifdef HAVE_POSIX_SPAWN
-	if (ext_browser)
-		openconnect_set_external_browser_callback(vpninfo, spawn_browser);
-#endif
 
 #ifndef _WIN32
 	memset(&sa, 0, sizeof(sa));
