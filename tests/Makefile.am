@@ -257,6 +257,9 @@ $(certsdir)/server-cert.pem:
 		-extfile $(srcdir)/configs/server-cert.prm -extensions req_EXT \
 		-set_serial $(shell date +%s) -req -out $@ -in $@.csr
 
+$(certsdir)/ca.pem: | $(certsdir)/ca-key.pem
+	openssl req -new -x509 -days 10000 -key $| -out $@ -config $(srcdir)/configs/ca.prm -extensions x509v3 -set_serial 1
+
 # Like most of the rules to generate keys/certs, the swtpm rules are
 # dormant for most builds; they were used once to generate the state
 # which is committed to git and used thereafter (just like the cert
