@@ -179,8 +179,8 @@ serverhash_LDADD = ../libopenconnect.la $(SSL_LIBS)
 keyfiles: $(USER_KEYS) $(USER_CERTS) $(certsdir)/server-cert.pem
 
 OPENSSL = openssl
-OSSLARGS = -in $< -out $@ -passout pass:password
-OSSLARGSP12 = -inkey $< -out $@ -in $${KEYFILE%-key-pkcs8.pem}-cert.pem -passout pass:$${PASSWORD%-password}
+OSSLARGS = -in $(firstword $|) -out $@ -passout pass:password
+OSSLARGSP12 = -inkey $(firstword $|) -out $@ -in $${KEYFILE%-key-pkcs8.pem}-cert.pem -passout pass:$${PASSWORD:-password}
 
 # Strictly speaking this is only PKCS#1 for RSA. For EC it's probably
 # best described as RFC5915§4, and no idea what defines it for DSA.
@@ -222,34 +222,34 @@ $(certsdir)/ec-key-pkcs1-aes128.pem: | certs/ec-key-pkcs1.pem
 	$(OPENSSL) pkcs8 $(OSSLARGS) -topk8 -v2 aes256 -v2prf hmacWithSHA256
 
 %-key-sha1-3des-sha1.p12: | %-key-pkcs8.pem %-cert.pem
-	KEYFILE="$<"; $(OPENSSL) pkcs12 $(OSSLARGSP12) -export -macalg SHA1 \
+	KEYFILE="$(firstword $|)"; $(OPENSSL) pkcs12 $(OSSLARGSP12) -export -macalg SHA1 \
 		-certpbe pbeWithSHA1And3-KeyTripleDES-CBC -keypbe pbeWithSHA1And3-KeyTripleDES-CBC
 
 %-key-sha1-3des-sha256.p12: | %-key-pkcs8.pem %-cert.pem
-	KEYFILE="$<"; $(OPENSSL) pkcs12 $(OSSLARGSP12) -export -macalg SHA256 \
+	KEYFILE="$(firstword $|)"; $(OPENSSL) pkcs12 $(OSSLARGSP12) -export -macalg SHA256 \
 		-certpbe pbeWithSHA1And3-KeyTripleDES-CBC -keypbe pbeWithSHA1And3-KeyTripleDES-CBC
 
 %-key-md5-des-sha1.p12: | %-key-pkcs8.pem %-cert.pem
-	KEYFILE="$<"; $(OPENSSL) pkcs12 $(OSSLARGSP12) -export -macalg SHA1 \
+	KEYFILE="$(firstword $|)"; $(OPENSSL) pkcs12 $(OSSLARGSP12) -export -macalg SHA1 \
 		-certpbe pbeWithMD5AndDES-CBC -keypbe pbeWithMD5AndDES-CBC
 
 %-key-aes256-cbc-sha256.p12: | %-key-pkcs8.pem %-cert.pem
-	KEYFILE="$<"; $(OPENSSL) pkcs12 $(OSSLARGSP12) -export -macalg SHA256 \
+	KEYFILE="$(firstword $|)"; $(OPENSSL) pkcs12 $(OSSLARGSP12) -export -macalg SHA256 \
 		-certpbe AES-256-CBC -keypbe AES-256-CBC
 
 # NB: Needs OpenSSL 1.1 or newer
 %-key-nonascii-password.p12: | %-key-pkcs8.pem %-cert.pem
-	LC_ALL=en_GB.UTF-8 PASSWORD="$$(cat $(srcdir)/pass-UTF-8)" KEYFILE="$<" ; \
+	LC_ALL=en_GB.UTF-8 PASSWORD="$$(cat $(srcdir)/pass-UTF-8)" KEYFILE="$(firstword $|)" ; \
 	$(OPENSSL) pkcs12 $(OSSLARGSP12) -export -macalg SHA256 \
 		-certpbe AES-256-CBC -keypbe AES-256-CBC
 
 # This one makes GnuTLS behave strangely...
 %-key-aes256-cbc-md5-des-sha256.p12: | %-key-pkcs8.pem %-cert.pem
-	KEYFILE="$<"; $(OPENSSL) pkcs12 $(OSSLARGSP12) -export -macalg SHA256 \
+	KEYFILE="$(firstword $|)"; $(OPENSSL) pkcs12 $(OSSLARGSP12) -export -macalg SHA256 \
 		-certpbe AES-256-CBC -keypbe pbeWithMD5AndDES-CBC
 
 %.der: | %.pem
-	sed -e '0,/^-----BEGIN.*KEY-----/d' -e '/^-----END.*KEY-----/,$$d' $< | base64 -d > $@
+	sed -e '0,/^-----BEGIN.*KEY-----/d' -e '/^-----END.*KEY-----/,$$d' $| | base64 -d > $@
 
 $(certsdir)/server-cert.pem:
 	$(OPENSSL) req -new -config $(srcdir)/configs/server-cert.prm -key $(certsdir)/server-key.pem -out $@.csr
@@ -315,10 +315,10 @@ swtpm-perm.state: | $(SWTPM_KEYS) $(SWTPM_CERTS)
 
 $(certsdir)/ec-key-swtpm.pem: | certs/ec-key-pkcs8.pem
 	$(START_SWTPM)
-	$(SWTPM_PRELOAD) $(CREATE_TPM2_KEY) -w $< $@
+	$(SWTPM_PRELOAD) $(CREATE_TPM2_KEY) -w $| $@
 
 ec-key-hwtpm.pem: | certs/ec-key-pkcs8.pem
-	TPM_INTERFACE_TYPE=dev $(CREATE_TPM2_KEY) -w $< $@
+	TPM_INTERFACE_TYPE=dev $(CREATE_TPM2_KEY) -w $| $@
 
 # These are *different* keys generated inside the TPM, hence a different prefix.
 $(certsdir)/swtpm-ec-key-tpm.pem:
@@ -340,20 +340,20 @@ hwtpm-rsa-key-tpm.pem:
 	$(TPM2TSS_GENKEY) -t device -a rsa -s 2048 $@
 
 $(certsdir)/swtpm-%-cert.csr: | $(certsdir)/swtpm-%-key-tpm.pem
-	$(SWTPM_PRELOAD) $(OPENSSL) req -new -config $(srcdir)/configs/user-cert.prm -engine tpm2tss -keyform ENGINE -key $< -out $@
+	$(SWTPM_PRELOAD) $(OPENSSL) req -new -config $(srcdir)/configs/user-cert.prm -engine tpm2tss -keyform ENGINE -key $| -out $@
 
 hwtpm-%-cert.csr: | hwtpm-%-key-tpm.pem
-	TPM2TSSENGINE_TCTI=device $(OPENSSL) req -new -config $(srcdir)/configs/user-cert.prm -engine tpm2tss -keyform ENGINE -key $< -out $@
+	TPM2TSSENGINE_TCTI=device $(OPENSSL) req -new -config $(srcdir)/configs/user-cert.prm -engine tpm2tss -keyform ENGINE -key $| -out $@
 
 %-cert.csr: | %-key-hwtpm.pem
-	TPM2TSSENGINE_TCTI=device $(OPENSSL) req -new -config $(srcdir)/configs/user-cert.prm -engine tpm2tss -keyform ENGINE -key $< -out $@
+	TPM2TSSENGINE_TCTI=device $(OPENSSL) req -new -config $(srcdir)/configs/user-cert.prm -engine tpm2tss -keyform ENGINE -key $| -out $@
 
 %-cert.csr: | %-key-pkcs8.pem
-	$(OPENSSL) req -new -config $(srcdir)/configs/user-cert.prm -key $< -out $@
+	$(OPENSSL) req -new -config $(srcdir)/configs/user-cert.prm -key $| -out $@
 
 %.pem: | %.csr
 	$(OPENSSL) x509 -days 3650 -CA $(certsdir)/ca.pem -CAkey $(certsdir)/ca-key.pem \
-		-set_serial $(shell date +%s) -req -out $@ -in $<
+		-set_serial $(shell date +%s) -req -out $@ -in $|
 
 SHM2_UTIL=SOFTHSM2_CONF=softhsm2.conf softhsm2-util
 P11TOOL=SOFTHSM2_CONF=softhsm2.conf p11tool
