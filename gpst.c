@@ -1376,11 +1376,11 @@ int gpst_sso_detect_done(struct openconnect_info *vpninfo,
 
 	for (i=0; result->headers != NULL && result->headers[i] != NULL; i+=2) {
 		const char *hname = result->headers[i], *hval = result->headers[i+1];
-		if (!strcmp(hname, "saml-username")) {
+		if (!strcasecmp(hname, "saml-username")) {
 			free(vpninfo->sso_username);
 			vpninfo->sso_username = strdup(hval);
-		} else if (!strcmp(hname, "prelogin-cookie") ||
-			   !strcmp(hname, "portal-userauthcookie")) {
+		} else if (!strcasecmp(hname, "prelogin-cookie") ||
+			   !strcasecmp(hname, "portal-userauthcookie")) {
 			free(vpninfo->sso_token_cookie);
 			free(vpninfo->sso_cookie_value);
 			vpninfo->sso_token_cookie = strdup(hname);
