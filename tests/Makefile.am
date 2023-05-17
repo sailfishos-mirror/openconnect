@@ -343,6 +343,7 @@ hwtpm-rsa-key-tpm.pem:
 	$(TPM2TSS_GENKEY) -t device -a rsa -s 2048 $@
 
 $(certsdir)/swtpm-%-cert.csr: | $(certsdir)/swtpm-%-key-tpm.pem
+	$(START_SWTPM)
 	$(SWTPM_PRELOAD) $(OPENSSL) req -new -config $(srcdir)/configs/user-cert.prm -engine tpm2tss -keyform ENGINE -key $| -out $@
 
 hwtpm-%-cert.csr: | hwtpm-%-key-tpm.pem
