@@ -481,11 +481,12 @@ static int gpst_parse_config_xml(struct openconnect_info *vpninfo, xmlNode *xml_
 					     _("Gateway address in config XML (%s) differs from external gateway address (%s).\n"), s, vpninfo->ip_info.gateway_addr);
 #ifdef HAVE_ESP
 			if (esp_magic_af == AF_INET6 && legacy) {
-				/* We ignore the Legacy IP tag if we've already gotten the IPv6 tag. */
+				/* We ignore the Legacy IP tag <gw-address> if we've already gotten the IPv6 tag <gw-address-v6>. */
+			} else {
 				esp_magic_af = legacy ? AF_INET : AF_INET6;
 				inet_pton(esp_magic_af, s, &esp_magic);
-#endif /* HAVE_ESP */
 			}
+#endif /* HAVE_ESP */
 		} else if (!xmlnode_get_val(xml_node, "connected-gw-ip", &s)) {
 			if (vpninfo->ip_info.gateway_addr && strcmp(s, vpninfo->ip_info.gateway_addr))
 				vpn_progress(vpninfo, PRG_DEBUG, _("Config XML <connected-gw-ip> address (%s) differs from external\n"
