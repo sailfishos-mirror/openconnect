@@ -15,7 +15,8 @@
 <ul>
    <li><b>OpenConnect HEAD</b>
      <ul>
-       <li>Fix stray <tt>(null)</tt> in URL path after Pulse authentication.</li>
+       <li>Fix stray <tt>(null)</tt> in URL path after Pulse authentication (<a href="https://gitlab.com/openconnect/openconnect/-/commit/4023bd95c3dd6b273462e0782132f70a608dc721">4023bd95</a>).</li>
+       <li>Fix config XML parsing mistake that left GlobalProtect ESP non-working in v9.10 (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/475">!475</a>).</li>
      </ul><br/>
   </li>
   <li><b><a href="https://www.infradead.org/openconnect/download/openconnect-9.10.tar.gz">OpenConnect v9.10</a></b>
