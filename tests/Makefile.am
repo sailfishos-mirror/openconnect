@@ -253,7 +253,7 @@ $(certsdir)/ec-key-pkcs1-aes128.pem: | certs/ec-key-pkcs1.pem
 
 $(certsdir)/server-cert.pem:
 	$(OPENSSL) req -new -config $(srcdir)/configs/server-cert.prm -key $(certsdir)/server-key.pem -out $@.csr
-	$(OPENSSL) x509 -days 3650 -CA $(certsdir)/ca.pem -CAkey $(certsdir)/ca-key.pem \
+	$(OPENSSL) x509 -days 10000 -CA $(certsdir)/ca.pem -CAkey $(certsdir)/ca-key.pem \
 		-extfile $(srcdir)/configs/server-cert.prm -extensions req_EXT \
 		-set_serial $(shell date +%s) -req -out $@ -in $@.csr
 
@@ -356,7 +356,7 @@ hwtpm-%-cert.csr: | hwtpm-%-key-tpm.pem
 	$(OPENSSL) req -new -config $(srcdir)/configs/user-cert.prm -key $| -out $@
 
 %.pem: | %.csr
-	$(OPENSSL) x509 -days 3650 -CA $(certsdir)/ca.pem -CAkey $(certsdir)/ca-key.pem \
+	$(OPENSSL) x509 -days 10000 -CA $(certsdir)/ca.pem -CAkey $(certsdir)/ca-key.pem \
 		-set_serial $(shell date +%s) -req -out $@ -in $|
 
 SHM2_UTIL=SOFTHSM2_CONF=softhsm2.conf softhsm2-util
