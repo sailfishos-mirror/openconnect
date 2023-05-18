@@ -25,4 +25,4 @@ override_dh_compress:
 
 override_dh_makeshlibs:
 	dh_makeshlibs
-	dpkg-gensymbols -plibopenconnect5 -Odebian/libopenconnect5/DEBIAN/symbols -Ilibopenconnect5.symbols
+	dpkg-gensymbols -plibopenconnect5 -Pdebian/libopenconnect5 -Ilibopenconnect5.symbols
