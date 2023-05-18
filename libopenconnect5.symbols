@@ -100,5 +100,4 @@ libopenconnect.so.5 libopenconnect5 #MINVER#
  openconnect_set_external_browser_callback@OPENCONNECT_5_8 9.00
  openconnect_set_mca_cert@OPENCONNECT_5_8 9.00
  openconnect_set_mca_key_password@OPENCONNECT_5_8 9.00
- openconnect_set_sni@OPENCONNECT_5_8 9.00
  openconnect_set_useragent@OPENCONNECT_5_8 9.00
