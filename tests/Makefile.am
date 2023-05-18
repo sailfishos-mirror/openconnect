@@ -71,8 +71,8 @@ EXTRA_DIST = certs/ca.pem certs/ca-key.pem certs/user-cert.pem $(USER_KEYS) $(US
 	suppressions.lsan fake-fortinet-server.py fake-f5-server.py fake-juniper-server.py \
 	fake-juniper-sso-server.py fake-tncc.py fake-gp-server.py fake-cisco-server.py
 
-dist_check_SCRIPTS = autocompletion
-TESTS = autocompletion
+dist_check_SCRIPTS = autocompletion symbols
+TESTS = autocompletion symbols
 
 dist_check_SCRIPTS += dtls-psk sigterm
 if HAVE_NETNS
@@ -137,6 +137,7 @@ endif # TEST_PKCS11
 endif # HAVE_CWRAP
 
 TESTS_ENVIRONMENT = srcdir="$(srcdir)" \
+	top_srcdir="$(top_srcdir)" \
 	top_builddir="$(top_builddir)" \
 	key_list="$(USER_KEYS)" \
 	swtpm_list="$(SWTPM_KEYS)" \
