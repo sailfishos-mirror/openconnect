@@ -1398,11 +1398,15 @@ int gpst_sso_detect_done(struct openconnect_info *vpninfo,
 }
 
 #ifdef HAVE_ESP
-static inline uint32_t csum_partial(uint16_t *buf, int nwords)
+static inline uint32_t csum_partial(void *_buf, int nwords)
 {
+	char *buf = _buf; /* So we can do pointer arithmetic on it portably */
 	uint32_t sum = 0;
-	for(sum=0; nwords>0; nwords--)
-		sum += ntohs(*buf++);
+
+	for(sum=0; nwords>0; nwords--) {
+		sum += load_be16(buf);
+		buf += 2;
+	}
 	return sum;
 }
 
@@ -1413,7 +1417,7 @@ static inline uint16_t csum_finish(uint32_t sum)
 	return htons((uint16_t)(~sum));
 }
 
-static inline uint16_t csum(uint16_t *buf, int nwords)
+static inline uint16_t csum(void *buf, int nwords)
 {
 	return csum_finish(csum_partial(buf, nwords));
 }
@@ -1509,8 +1513,8 @@ int gpst_esp_send_probes(struct openconnect_info *vpninfo)
 		 *     next header byte (IPPROTO_ICMPV6)
 		 *   Then the actual ICMPv6 bytes
 		 */
-		uint32_t sum = csum_partial((uint16_t *)&iph->ip6_src, 8);      /* 8 uint16_t */
-		sum += csum_partial((uint16_t *)&iph->ip6_dst, 8);              /* 8 uint16_t */
+		uint32_t sum = csum_partial(&iph->ip6_src, 8);      /* 8 uint16_t */
+		sum += csum_partial(&iph->ip6_dst, 8);              /* 8 uint16_t */
 
 		/* The easiest way to checksum the following 8-byte
 		 * part of the pseudo-header without horridly violating
@@ -1522,7 +1526,7 @@ int gpst_esp_send_probes(struct openconnect_info *vpninfo)
 		sum += IPPROTO_ICMPV6;
 		sum += ICMP_MINLEN + sizeof(magic_ping_payload);
 
-		sum += csum_partial((uint16_t *)icmph, icmplen / 2);
+		sum += csum_partial(icmph, icmplen / 2);
 		icmph->icmp6_cksum = csum_finish(sum);
 	} else {
 		memset(pkt, 0, sizeof(*pkt) + plen);
@@ -1541,14 +1545,14 @@ int gpst_esp_send_probes(struct openconnect_info *vpninfo)
 		iph->ip_p = IPPROTO_ICMP;
 		iph->ip_src.s_addr = inet_addr(vpninfo->ip_info.addr);
 		memcpy(&iph->ip_dst.s_addr, vpninfo->esp_magic, 4);
-		iph->ip_sum = csum((uint16_t *)iph, sizeof(*iph)/2);
+		iph->ip_sum = csum(iph, sizeof(*iph)/2);
 
 		/* ICMP echo request */
 		icmph->icmp_type = ICMP_ECHO;
 		icmph->icmp_hun.ih_idseq.icd_id = htons(0x4747);
 		icmph->icmp_hun.ih_idseq.icd_seq = htons(seq);
 		memcpy(pmagic, magic_ping_payload, sizeof(magic_ping_payload)); /* required to get gateway to respond */
-		icmph->icmp_cksum = csum((uint16_t *)icmph, (ICMP_MINLEN+sizeof(magic_ping_payload))/2);
+		icmph->icmp_cksum = csum(icmph, (ICMP_MINLEN+sizeof(magic_ping_payload))/2);
 	}
 
 	if (vpninfo->dtls_state != DTLS_ESTABLISHED) {
