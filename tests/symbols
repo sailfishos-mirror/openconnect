@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Symbol version checking OpenConnect
 #
@@ -36,8 +36,8 @@ function cleanup {
 
 trap cleanup EXIT
 
-( sed -nf ${SEDFILE} ${OPENCONNECT_H} | \
-      sed -nf- ${MAPFILE} ) > $TMPSYMBOLS
+( sed -Enf ${SEDFILE} ${OPENCONNECT_H} | \
+      sed -Enf- ${MAPFILE} ) > $TMPSYMBOLS
 
 SYMSBAD=no
 
@@ -63,7 +63,7 @@ fi
 APIMAJOR="$(sed -n 's/^#define OPENCONNECT_API_VERSION_MAJOR \(.*\)/\1/p' ${OPENCONNECT_H})"
 APIMINOR="$(sed -n 's/^#define OPENCONNECT_API_VERSION_MINOR \(.*\)/\1/p' ${OPENCONNECT_H})"
 
-LASTVER="$(sed -n "/^ \* API version [0-9]\+.[0-9]\+.*/{p;q}" ${OPENCONNECT_H})"
+LASTVER="$(sed -En "/^ \* API version [0-9]+.[0-9]+.*/{p;q;}" ${OPENCONNECT_H})"
 if ! grep -q "API version $APIMAJOR.$APIMINOR" <<< "$LASTVER"; then
    echo "API $APIMAJOR.$APIMINOR is not the latest?"
    exit 1

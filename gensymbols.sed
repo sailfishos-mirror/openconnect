@@ -1,5 +1,5 @@
 #
-# Usage: sed -nf gensymbols.sed openconnect.h | sed -nf- libopenconnect.map.in
+# Usage: sed -Enf gensymbols.sed openconnect.h | sed -nf- libopenconnect.map.in
 #
 # This sed script is used to process openconnect.h and emit another
 # sed script, which is used to process libopenconnect.map.in.
@@ -38,21 +38,23 @@
 
 # First change . to _ for all but 5.0.
 
-s/API version 5.\([1-9]\)/API version 5_\1/
+s/API version 5.([1-9])/API version 5_\1/
 
 # Now, for each API version...
 
-s/^ \* API version \(5[._][0-9.]\+\) (v\([0-9.]\+\); 20.*/\
+s/^ \* API version (5[._][0-9.]+) \(v([0-9.]+); 20.*/\
 # Swap hold and pattern space, prepend newline and OPENCONNECT_\1, swap back \
-1{x;s\/^\/\\\
- OPENCONNECT_\1@OPENCONNECT_\1 \2\/;x}\
+1{x;s\/\(.*\)\/\\\
+ OPENCONNECT_\1@OPENCONNECT_\1 \2\\1\/;x;\}\
 # Match actual symbols within the OPENCONNECT_\1 \{ ... \} range and print them with versions \
-\/^OPENCONNECT_\1\/,\/^\}\/s\/^\\t\\(openconnect_.*\\);\/ \\1@OPENCONNECT_\1 \2\/p\
+\/^OPENCONNECT_\1\/,\/^\}\/s\/^\\t(openconnect_.*);\/ \\1@OPENCONNECT_\1 \2\/p\
 /p
 
 # At the end of processing openconnect.h, therefore at the end
 # of sed script we're generating, tell it to swap hold and pattern
 # spare one last time, prepend the header for the .symbol file,
 # then print it.
-${z;a 1{x;s\/^\/libopenconnect.so.5 libopenconnect5 #MINVER#\/p}
-p}
+${s/.*//;a\
+1{x;s\/\(.*\)\/libopenconnect.so.5 libopenconnect5 #MINVER#\\1\/p\
+}
+p;}
