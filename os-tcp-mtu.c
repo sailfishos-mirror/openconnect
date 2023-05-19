@@ -123,12 +123,14 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
+#ifdef IP_PMTUDISC_DO
 	int val = IP_PMTUDISC_DO;
 	ret = setsockopt(sock, IPPROTO_TCP, IP_MTU_DISCOVER, &val, sizeof(val));
 	if (ret < 0) {
 		perror("setsockopt");
 		exit(1);
 	}
+#endif
 
 	/* Bind if source address was specified */
 	if (src_ip) {
