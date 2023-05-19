@@ -25,6 +25,7 @@
 #include <sys/ioctl.h>
 #include <net/if.h>
 #include <netdb.h>
+#include <netinet/in.h>
 #if defined(__linux__)
 /* For TCP_INFO */
 # include <linux/tcp.h>
