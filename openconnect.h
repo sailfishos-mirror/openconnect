@@ -36,7 +36,7 @@ extern "C" {
 #define OPENCONNECT_API_VERSION_MINOR 9
 
 /*
- * API version 5.9:
+ * API version 5.9 (v9.12; 2023-05-20):
  *  - Add openconnect_set_sni()
  *
  * API version 5.8 (v9.00; 2022-04-29):
