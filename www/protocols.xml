@@ -22,7 +22,7 @@ See <a href="manual.xml">the <tt>--protocol</tt> option</a> for how to use a dif
   <li><a href="juniper.html">Details</a> on support for
   Juniper SSL VPN (<tt>--protocol=nc</tt>)</li>
   <li><a href="juniper.html">Details</a> on support for
-  <a href="https://www.ivanti.com/products/connect-secure-vpn">Pulse Connect Secure</a> SSL VPN (<tt>--protocol=pulse</tt>;
+  <a href="https://www.ivanti.com/products/connect-secure-vpn">Pulse/Ivanti Connect Secure</a> SSL VPN (<tt>--protocol=pulse</tt>;
   most Pulse VPNs also support the older Juniper protocol, unless explicitly disabled)</li>
   <li><a href="globalprotect.html">Details</a> on support for
   <a href="https://www.paloaltonetworks.com/features/vpn">Palo Alto Networks GlobalProtect SSL VPN</a> (<tt>--protocol=gp</tt>)</li>

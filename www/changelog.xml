@@ -259,7 +259,7 @@
        <li>Relax requirements for Juniper hostname packet response to support old gateways.</li>
        <li>Add API functions to query the supported protocols.</li>
        <li>Verify ESP sequence numbers and warn even if replay protection is disabled.</li>
-       <li>Add support for PAN GlobalProtect VPN protocol (<tt>--protocol=gp</tt>).</li>
+       <li>Add support for Palo Alto Networks (PAN) GlobalProtect VPN protocol (<tt>--protocol=gp</tt>).</li>
        <li>Reorganize listing of command-line options, and include information on supported protocols.</li>
        <li>SIGTERM cleans up the session similarly to SIGINT.</li>
      </ul><br/>

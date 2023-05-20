@@ -40,7 +40,7 @@ Description: open client for various network vendors SSL VPNs
  AnyConnect SSL VPN. It has since been extended to support the Pulse Connect
  Secure VPN (formerly known as Juniper Network Connect or Junos Pulse), the Palo
  Alto Networks GlobalProtect SSL VPN, F5 Big-IP SSL VPN, Fortinet Fortigate SSL
- VPN and Array Networks AG SSL VPN.
+ VPN and Array Networks SSL VPN.
  .
  A corresponding OpenConnect VPN server implementation can be found in the
  ocserv package.
@@ -64,7 +64,7 @@ Description: open client for various network vendors SSL VPNs - development file
  AnyConnect SSL VPN. It has since been extended to support the Pulse Connect
  Secure VPN (formerly known as Juniper Network Connect or Junos Pulse), the Palo
  Alto Networks GlobalProtect SSL VPN, F5 Big-IP SSL VPN, Fortinet Fortigate SSL
- VPN and Array Networks AG SSL VPN.
+ VPN and Array Networks SSL VPN.
  .
  This package provides the header and development files.
 
@@ -80,6 +80,6 @@ Description: open client for various network vendors SSL VPNs - shared library
  AnyConnect SSL VPN. It has since been extended to support the Pulse Connect
  Secure VPN (formerly known as Juniper Network Connect or Junos Pulse), the Palo
  Alto Networks GlobalProtect SSL VPN, F5 Big-IP SSL VPN, Fortinet Fortigate SSL
- VPN and Array Networks AG SSL VPN.
+ VPN and Array Networks SSL VPN.
  .
  This package provides the shared library.

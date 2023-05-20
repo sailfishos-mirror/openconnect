@@ -23,7 +23,7 @@
 Name:		openconnect
 Version:	%{tagver}%{?snapver}
 Release:	0%{?dist}
-Summary:	Open client for SSL VPNs including Cisco AnyConnect VPN, Juniper Network Connect/Pulse, PAN GlobalProtect, Fortinet, etc.
+Summary:	Open client for SSL VPNs including Cisco AnyConnect VPN, Juniper Network Connect, Pulse/Ivanti Connect Secure, Palo Alto Networks GlobalProtect, F5 Big-IP, Fortinet, Array Networks, etc.
 
 License:	LGPLv2
 URL:		https://www.infradead.org/openconnect.html
