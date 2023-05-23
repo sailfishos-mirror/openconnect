@@ -31,6 +31,9 @@
 #include <openssl/bio.h>
 #include <openssl/ui.h>
 #include <openssl/rsa.h>
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+#include <openssl/provider.h>
+#endif
 
 #include <sys/types.h>
 
@@ -68,6 +71,11 @@ const char *openconnect_get_tls_library_version(void)
 
 int can_enable_insecure_crypto(void)
 {
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+	if (OSSL_PROVIDER_load(NULL, "legacy") == NULL ||
+	    OSSL_PROVIDER_load(NULL, "default") == NULL)
+		return -ENOENT;
+#endif
 	if (EVP_des_ede3_cbc() == NULL ||
 	    EVP_rc4() == NULL)
 		return -ENOENT;
