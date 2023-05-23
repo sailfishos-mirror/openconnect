@@ -28,7 +28,7 @@
 Name:		openconnect
 Version:	8.20+git20220220
 Release:	0
-Summary:	Open client for SSL VPNs
+Summary:	Open multi-protocol SSL VPN client
 
 License:	LGPL-2.1
 URL:		https://www.infradead.org/openconnect.html

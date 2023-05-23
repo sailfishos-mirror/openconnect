@@ -13,7 +13,7 @@
 Name:		mingw-openconnect
 Version:	%{tagver}%{?snapver}
 Release:	0%{?dist}
-Summary:	Open client for SSL VPNs including Cisco AnyConnect VPN, Juniper Network Connect, Pulse/Ivanti Connect Secure, Palo Alto Networks GlobalProtect, F5 Big-IP, Fortinet, Array Networks, etc.
+Summary:	Open multi-protocol SSL VPN client
 
 License:	LGPLv2
 URL:		https://www.infradead.org/openconnect.html

@@ -35,7 +35,7 @@ Architecture: any
 Depends: libopenconnect5 (= ${binary:Version}), vpnc-scripts, ${misc:Depends}, ${shlibs:Depends}
 Recommends: python3, python3-asn1crypto, python3-mechanize, python3-netifaces,
 Suggests: bash-completion,
-Description: open client for various network vendors SSL VPNs
+Description: open multi-protocol SSL VPN client
  OpenConnect is an SSL VPN client initially created to support Cisco's
  AnyConnect SSL VPN. It has since been extended to support the Pulse Connect
  Secure VPN (formerly known as Juniper Network Connect or Junos Pulse), the Palo
