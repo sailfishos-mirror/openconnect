@@ -2643,7 +2643,7 @@ static int handle_esp_config_packet(struct openconnect_info *vpninfo,
 int pulse_connect(struct openconnect_info *vpninfo)
 {
 	struct oc_text_buf *reqbuf;
-	unsigned char bytes[TLS_RECORD_MAX];
+	unsigned char *bytes = NULL;
 	int ret;
 
 	/* If we already have a channel open, it's because we have just
@@ -2655,25 +2655,49 @@ int pulse_connect(struct openconnect_info *vpninfo)
 	}
 
 	while (1) {
-		uint32_t pkt_type;
+		uint32_t pkt_type, config_len;
 
-		ret = recv_ift_packet(vpninfo, (void *)bytes, sizeof(bytes));
-		if (ret < 0)
-			return ret;
+	next_pkt:
+		free(bytes);
+		config_len = TLS_RECORD_MAX;
+		bytes = malloc(config_len);
 
-		if (ret < 16 || load_be32(bytes + 8) != ret) {
-			vpn_progress(vpninfo, PRG_ERR,
-				     _("Bad IF-T/TLS packet when expecting configuration:\n"));
-			dump_buf_hex(vpninfo, PRG_ERR, '<', bytes, ret);
-			return -EINVAL;
-		}
+		for (int ii = 0; ii < config_len; ii += ret) {
+			if (!bytes)
+				return -ENOMEM;
 
-		if (load_be32(bytes) != VENDOR_JUNIPER) {
-			vpn_progress(vpninfo, PRG_INFO,
-				     _("Unexpected IF-T/TLS packet when expecting configuration: wrong vendor\n"));
-		bad_pkt:
-			dump_buf_hex(vpninfo, PRG_DEBUG, '<', bytes, ret);
-			continue;
+			ret = recv_ift_packet(vpninfo, bytes + ii, MAX(config_len - ii, TLS_RECORD_MAX));
+			if (ret < 0)
+				goto out;
+
+			if (ii == 0) {
+				/* Check header, and reallocate if it exceeds one TLS record */
+				if (ret < 16) {
+					vpn_progress(vpninfo, PRG_ERR,
+						     _("Short IF-T/TLS packet when expecting configuration:\n"));
+					dump_buf_hex(vpninfo, PRG_ERR, '<', bytes, ret);
+					ret = -EINVAL;
+					goto out;
+				}
+
+				if (load_be32(bytes) != VENDOR_JUNIPER) {
+					vpn_progress(vpninfo, PRG_INFO,
+						     _("Unexpected IF-T/TLS packet when expecting configuration: wrong vendor\n"));
+				bad_pkt:
+					dump_buf_hex(vpninfo, PRG_DEBUG, '<', bytes, ret);
+					goto next_pkt;
+				}
+
+				config_len = load_be32(bytes + 8);
+				if (config_len > 0x100000) {
+					vpn_progress(vpninfo, PRG_ERR,
+						     _("Unreasonably large IF-T/TLS packet (%u > 1 MiB) when expecting configuration"),
+						     config_len);
+					ret = -EINVAL;
+					goto out;
+				} else if (config_len > TLS_RECORD_MAX)
+					realloc_inplace(bytes, config_len);
+			}
 		}
 
 		pkt_type = load_be32(bytes + 4);
@@ -2697,7 +2721,7 @@ int pulse_connect(struct openconnect_info *vpninfo)
 				     _("Unexpected Pulse configuration packet: %s\n"),
 				     _("wrong type field (!= 1)"));
 			goto bad_pkt;
-		} else if (ret < 0x2c) {
+		} else if (config_len < 0x2c) {
 			vpn_progress(vpninfo, PRG_INFO,
 				     _("Unexpected Pulse configuration packet: %s\n"),
 				     _("too short"));
@@ -2709,7 +2733,7 @@ int pulse_connect(struct openconnect_info *vpninfo)
 				     _("Unexpected Pulse configuration packet: %s\n"),
 				     _("non-zero values at offsets 0x10, 0x14, 0x18, 0x1c, or 0x24"));
 			goto bad_pkt;
-		} else if (load_be32(bytes + 0x28) != ret - 0x10) {
+		} else if (load_be32(bytes + 0x28) != config_len - 0x10) {
 			vpn_progress(vpninfo, PRG_INFO,
 				     _("Unexpected Pulse configuration packet: %s\n"),
 				     _("length at offset 0x28 != packet length - 0x10"));
@@ -2719,14 +2743,14 @@ int pulse_connect(struct openconnect_info *vpninfo)
 		switch(load_be32(bytes + 0x20)) {
 		case 0x2c20f000:
 		case 0x2e20f000: /* Variant seen on Pulse 9.1R14 */
-			ret = handle_main_config_packet(vpninfo, bytes, ret);
+			ret = handle_main_config_packet(vpninfo, bytes, config_len);
 			if (ret)
-				return ret;
+				goto out;
 
 			break;
 
 		case 0x21202400:
-			ret = handle_esp_config_packet(vpninfo, bytes, ret);
+			ret = handle_esp_config_packet(vpninfo, bytes, config_len);
 			if (ret) {
 				vpninfo->dtls_state = DTLS_DISABLED;
 				continue;
@@ -2735,7 +2759,7 @@ int pulse_connect(struct openconnect_info *vpninfo)
 			/* It has created a response packet to send. */
 			ret = send_ift_bytes(vpninfo, bytes, load_be32(bytes + 8));
 			if (ret)
-				return ret;
+				goto out;
 
 			/* Tell server to enable ESP handling */
 			reqbuf = buf_alloc();
@@ -2744,7 +2768,7 @@ int pulse_connect(struct openconnect_info *vpninfo)
 			ret = send_ift_packet(vpninfo, reqbuf);
 			buf_free(reqbuf);
 			if (ret)
-				return ret;
+				goto out;
 
 			break;
 
@@ -2759,12 +2783,15 @@ int pulse_connect(struct openconnect_info *vpninfo)
 	if (!vpninfo->ip_info.mtu ||
 	    (!vpninfo->ip_info.addr && !vpninfo->ip_info.addr6)) {
 		vpn_progress(vpninfo, PRG_ERR, _("Insufficient configuration found\n"));
-		return -EINVAL;
+		ret = -EINVAL;
+		goto out;
 	}
 
 	/* This should never happen, but be defensive and shut Coverity up */
-	if (vpninfo->ssl_fd == -1)
-		return -EIO;
+	if (vpninfo->ssl_fd == -1) {
+		ret = -EIO;
+		goto out;
+	}
 
 	ret = 0;
 	monitor_fd_new(vpninfo, ssl);
@@ -2774,6 +2801,8 @@ int pulse_connect(struct openconnect_info *vpninfo)
 	free_pkt(vpninfo, vpninfo->cstp_pkt);
 	vpninfo->cstp_pkt = NULL;
 
+ out:
+	free(bytes);
 	return ret;
 }
 
