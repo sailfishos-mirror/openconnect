@@ -501,6 +501,16 @@ static int process_attr(struct openconnect_info *vpninfo, struct oc_vpn_option *
 		add_option_dup(new_opts, "gateway6", buf, -1);
 		break;
 
+	case 0x4009:
+		vpn_progress(vpninfo, PRG_INFO,
+			     _("Received proxy auto-config (PAC) payload of size %d\n"), attrlen);
+		break;
+
+	case 0x4023:
+		vpn_progress(vpninfo, PRG_INFO,
+			     _("Received proxy auto-config (PAC) URL: %.*s\n"), attrlen, data);
+		break;
+
 	case 0x4024:
 	        /* This flag is supposed to be available starting with Pulse server 9.1R9 (see
 		 * https://help.ivanti.com/ps/legacy/pcs/9.1rx/9.1r9/ps-pcs-sa-9.1r9.0-releasenotes.pdf),
