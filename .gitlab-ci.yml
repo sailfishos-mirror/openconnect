@@ -673,6 +673,7 @@ Android/x86_64:
   - tags
   - schedules
   script:
+  - ls /opt/android-sdk-linux_x86
   - make -C android ARCH=x86_64 TOOLCHAIN=$ANDROID_TOOLCHAINDIR/'$(TRIPLET)-$(API_LEVEL)'
   artifacts:
     when: always
@@ -689,6 +690,7 @@ Android/x86:
   - tags
   - schedules
   script:
+  - ls /opt/android-sdk-linux_x86
   - make -C android ARCH=x86 TOOLCHAIN=$ANDROID_TOOLCHAINDIR/'$(TRIPLET)-$(API_LEVEL)'
   artifacts:
     when: always
@@ -705,6 +707,7 @@ Android/arm:
   - tags
   - schedules
   script:
+  - ls /opt/android-sdk-linux_x86
   - make -C android ARCH=arm TOOLCHAIN=$ANDROID_TOOLCHAINDIR/'$(TRIPLET)-$(API_LEVEL)'
   artifacts:
     when: always
@@ -721,6 +724,7 @@ Android/arm64:
   - tags
   - schedules
   script:
+  - ls /opt/android-sdk-linux_x86
   - make -C android ARCH=arm64 TOOLCHAIN=$ANDROID_TOOLCHAINDIR/'$(TRIPLET)-$(API_LEVEL)'
   artifacts:
     when: always
