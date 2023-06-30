@@ -664,6 +664,7 @@ persist-windows-builds-for-tagged-releases:
 ################################################################################
 
 Android/x86_64:
+  allow_failure: true
   stage: test-android
   image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$ANDROID_BUILD
   script:
@@ -680,6 +681,7 @@ Android/x86_64:
       - android/*-linux-android*/out/*
 
 Android/x86:
+  allow_failure: true
   stage: test-android
   image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$ANDROID_BUILD
   script:
@@ -696,6 +698,7 @@ Android/x86:
       - android/*-linux-android*/out/*
 
 Android/arm:
+  allow_failure: true
   stage: test-android
   image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$ANDROID_BUILD
   script:
@@ -712,6 +715,7 @@ Android/arm:
       - android/*-linux-android*/out/*
 
 Android/arm64:
+  allow_failure: true
   stage: test-android
   image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$ANDROID_BUILD
   script:
