@@ -1622,6 +1622,11 @@ static int pulse_authenticate(struct openconnect_info *vpninfo, int connecting)
 	buf_append_avp_string(reqbuf, 0xd6c, "\x02\xe9\xa7\x51\x92\x4e");
 	buf_append_avp_be32(reqbuf, 0xd84, 0);
 #else
+	/* XX: We don't actually know what string the Pulse clients send for OSes other than
+	 * Windows, but Windows/Linux/Mac (like GP clients use) seems likely.
+	 */
+	buf_append_avp_string(reqbuf, 0xd5e, gpst_os_name(vpninfo));
+
 	/* XX: "Only the Pulse client supports IPv6", both according to user reports and
 	 * https://help.ivanti.com/ps/help/en_US/PCS/9.1R14/ag/network_n_host_admin.htm#network_and_host_administration_1399867268_681155
 	 *
