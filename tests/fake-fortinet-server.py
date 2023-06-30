@@ -235,7 +235,7 @@ def html_config():
 @require_SVPNCOOKIE
 def xml_config():
     dual_stack = request.args.get('dual_stack') not in (None, '0')
-    resp = make_response(f'''
+    resp = make_response(rf'''
             <?xml version="1.0" encoding="utf-8"?>
             <sslvpn-tunnel ver="2" dtls="1" patch="1">
               <dtls-config heartbeat-interval="10" heartbeat-fail-count="10" heartbeat-idle-timeout="10" client-hello-timeout="10"/>
@@ -245,7 +245,7 @@ def xml_config():
               <auth-ses tun-connect-without-reauth="1" check-src-ip="0" tun-user-ses-timeout="240"/>
               <ipv4>
                 <dns ip="1.1.1.1"/>
-                <dns ip="8.8.8.8" domain="foo.com"/>
+                <dns ip="8.8.8.8" domain="foo.com\059bar.com;baz.com\59\e\0092\"/> <!-- CHR(59)=';', CHR(92)='\', "\e\0092\"=junk -->
                 <split-dns domains='mydomain1.local,mydomain2.local' dnsserver1='10.10.10.10' dnsserver2='10.10.10.11' />
                 <assigned-addr ipv4="10.11.1.123"/>
                 <split-tunnel-info>

@@ -493,6 +493,17 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 					new_ip_info.addr = add_option_steal(&new_opts, "ipaddr", &s);
 				} else if (xmlnode_is_named(x, "dns")) {
 					if (!xmlnode_get_prop(x, "domain", &s) && s && *s) {
+						/* Some Fortinet servers bizarrely use "\059" (ASCII 59 = ';')
+						 * as a separator. Find and fix any/all "\NNN" escapes.
+						 */
+						for (char *p = s; (p = strchr(p, '\\')); p++) {
+							char *end;
+							int c = strtoul(p+1, &end, 10);
+							if (end > p+1) {
+								*p = c;
+								memmove(p+1, end, strlen(end)+1);
+							}
+						}
 						vpn_progress(vpninfo, PRG_INFO, _("Got search domain %s\n"), s);
 						buf_append(domains, "%s ", s);
 					}
