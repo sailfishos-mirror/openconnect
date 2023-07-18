@@ -147,7 +147,7 @@ TESTS_ENVIRONMENT = srcdir="$(srcdir)" \
 	pkcs11_keys="$(PKCS11_KEYS)" \
 	pkcs11_tokens="$(PKCS11_TOKENS)" \
 	EXEEXT=$(EXEEXT) \
-	LSAN_OPTIONS=$(srcdir)/suppressions=suppressions.lsan
+	LSAN_OPTIONS=suppressions=$(srcdir)/suppressions.lsan
 
 C_TESTS = lzstest seqtest buftest
 
