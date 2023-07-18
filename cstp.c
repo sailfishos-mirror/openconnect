@@ -802,7 +802,7 @@ int decompress_and_queue_packet(struct openconnect_info *vpninfo, int compr_type
 	   space to handle that */
 	int receive_mtu = MAX(16384, vpninfo->ip_info.mtu);
 	struct pkt *new = alloc_pkt(vpninfo, receive_mtu);
-	const char *comprname = "";
+	const char *comprname;
 
 	if (!new)
 		return -ENOMEM;
