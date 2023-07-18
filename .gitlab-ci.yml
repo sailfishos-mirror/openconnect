@@ -12,7 +12,7 @@ variables:
   BUILD_IMAGES_PROJECT: openconnect/build-images
   CENTOS7_BUILD: openconnect-cli-centos7
   CENTOS8_BUILD: openconnect-cli-centos8
-  FEDORA_BUILD: openconnect-cli-fedora35
+  FEDORA_BUILD: openconnect-cli-fedora38
   MINGW32_BUILD: openconnect-cli-mingw32
   MINGW64_BUILD: openconnect-cli-mingw64
   UBUNTU_BUILD: openconnect-cli-ubuntu
@@ -36,7 +36,7 @@ Signoff:
 
 static-analyzer/GnuTLS/Fedora:
   stage: static-analysis
-  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:buildenv-fedora33
+  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$FEDORA_BUILD
   script:
   - ./autogen.sh
   - scan-build ./configure
@@ -55,7 +55,7 @@ static-analyzer/GnuTLS/Fedora:
 
 static-analyzer/OpenSSL/Fedora:
   stage: static-analysis
-  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:buildenv-fedora33
+  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$FEDORA_BUILD
   script:
   - ./autogen.sh
   - scan-build ./configure --without-gnutls --with-openssl --without-openssl-version-check
