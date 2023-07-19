@@ -111,7 +111,7 @@ may be disabled with
 but is preferred when correctly supported by the server and network
 for performance reasons. (TCP performs poorly and unreliably over
 TCP-based tunnels; see
-.IR http://sites.inka.de/~W1011/devel/tcp-tcp.html .)
+.IR https://web.archive.org/web/20230228035749/https://sites.inka.de/~W1011/devel/tcp-tcp.html .)
 
 .SH OPTIONS
 .TAG opt-config
