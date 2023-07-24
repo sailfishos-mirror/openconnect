@@ -1335,6 +1335,7 @@ int oncp_esp_catch_probe(struct openconnect_info *vpninfo, struct pkt *pkt);
 int pulse_obtain_cookie(struct openconnect_info *vpninfo);
 void pulse_common_headers(struct openconnect_info *vpninfo, struct oc_text_buf *buf);
 int pulse_connect(struct openconnect_info *vpninfo);
+void pulse_esp_close(struct openconnect_info *vpninfo);
 int pulse_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable);
 int pulse_bye(struct openconnect_info *vpninfo, const char *reason);
 int pulse_eap_ttls_send(struct openconnect_info *vpninfo, const void *data, int len);

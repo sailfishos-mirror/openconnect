@@ -2767,6 +2767,21 @@ int pulse_connect(struct openconnect_info *vpninfo)
 	return ret;
 }
 
+#ifdef HAVE_ESP
+void pulse_esp_close(struct openconnect_info *vpninfo)
+{
+	if (vpninfo->dtls_state >= DTLS_CONNECTED) {
+		/* Tell server to stop sending on ESP channel */
+		struct oc_text_buf *reqbuf = buf_alloc();
+		buf_append_ift_hdr(reqbuf, VENDOR_JUNIPER, 5);
+		buf_append(reqbuf, "ncmo=0\n%c", 0);
+
+		send_ift_packet(vpninfo, reqbuf);
+	}
+
+	esp_close(vpninfo);
+}
+#endif
 
 int pulse_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 {
