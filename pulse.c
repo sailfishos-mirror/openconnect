@@ -2632,7 +2632,6 @@ static int handle_esp_config_packet(struct openconnect_info *vpninfo,
 
 int pulse_connect(struct openconnect_info *vpninfo)
 {
-	struct oc_text_buf *reqbuf;
 	unsigned char bytes[TLS_RECORD_MAX];
 	int ret;
 
@@ -2727,15 +2726,6 @@ int pulse_connect(struct openconnect_info *vpninfo)
 			if (ret)
 				return ret;
 
-			/* Tell server to enable ESP handling */
-			reqbuf = buf_alloc();
-			buf_append_ift_hdr(reqbuf, VENDOR_JUNIPER, 5);
-			buf_append(reqbuf, "ncmo=1\n%c", 0);
-			ret = send_ift_packet(vpninfo, reqbuf);
-			buf_free(reqbuf);
-			if (ret)
-				return ret;
-
 			break;
 
 		default:
@@ -2768,16 +2758,27 @@ int pulse_connect(struct openconnect_info *vpninfo)
 }
 
 #ifdef HAVE_ESP
+static int pulse_queue_esp_control(struct openconnect_info *vpninfo, int enable)
+{
+	struct pkt *new = alloc_pkt(vpninfo, 0x18);
+	if (!new)
+		return -ENOMEM;
+
+	new->len = snprintf((char *)new->data, 8, "ncmo=%c\n", enable ? '1' : '0') + 1;
+
+	store_be32(&new->pulse.vendor, VENDOR_JUNIPER);
+	store_be32(&new->pulse.type, 5);
+	store_be32(&new->pulse.len, new->len + 16);
+
+	queue_packet(&vpninfo->tcp_control_queue, new);
+	return 0;
+
+}
+
 void pulse_esp_close(struct openconnect_info *vpninfo)
 {
-	if (vpninfo->dtls_state >= DTLS_CONNECTED) {
-		/* Tell server to stop sending on ESP channel */
-		struct oc_text_buf *reqbuf = buf_alloc();
-		buf_append_ift_hdr(reqbuf, VENDOR_JUNIPER, 5);
-		buf_append(reqbuf, "ncmo=0\n%c", 0);
-
-		send_ift_packet(vpninfo, reqbuf);
-	}
+	if (vpninfo->dtls_state >= DTLS_CONNECTED)
+		pulse_queue_esp_control(vpninfo, 0);
 
 	esp_close(vpninfo);
 }
@@ -3080,7 +3081,7 @@ int pulse_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		 * data packets in ESP instead of over IF-T/TLS. Just go straight
 		 * to CONNECTED mode. */
 		vpninfo->dtls_state = DTLS_ESTABLISHED;
-		work_done = 1;
+		pulse_queue_esp_control(vpninfo, 1);
 	}
 
 	vpninfo->current_ssl_pkt = dequeue_packet(&vpninfo->tcp_control_queue);
