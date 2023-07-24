@@ -2630,6 +2630,40 @@ static int handle_esp_config_packet(struct openconnect_info *vpninfo,
 #endif
 }
 
+#ifdef HAVE_ESP
+static int pulse_queue_esp_control(struct openconnect_info *vpninfo, int enable)
+{
+	struct pkt *new = alloc_pkt(vpninfo, 0x18);
+	if (!new)
+		return -ENOMEM;
+
+	new->len = snprintf((char *)new->data, 8, "ncmo=%c\n", enable ? '1' : '0') + 1;
+
+	store_be32(&new->pulse.vendor, VENDOR_JUNIPER);
+	store_be32(&new->pulse.type, 5);
+	store_be32(&new->pulse.len, new->len + 16);
+
+	queue_packet(&vpninfo->tcp_control_queue, new);
+	return 0;
+
+}
+
+void pulse_esp_close(struct openconnect_info *vpninfo)
+{
+	if (vpninfo->dtls_state >= DTLS_CONNECTING) {
+		/*
+		 * Disable ESP and then re-enable it immediately. The server
+		 * won't start sending over ESP until (unless) it's
+		 * re-established.
+		 */
+		pulse_queue_esp_control(vpninfo, 0);
+		pulse_queue_esp_control(vpninfo, 1);
+	}
+
+	esp_close(vpninfo);
+}
+#endif
+
 int pulse_connect(struct openconnect_info *vpninfo)
 {
 	unsigned char bytes[TLS_RECORD_MAX];
@@ -2757,33 +2791,6 @@ int pulse_connect(struct openconnect_info *vpninfo)
 
 	return ret;
 }
-
-#ifdef HAVE_ESP
-static int pulse_queue_esp_control(struct openconnect_info *vpninfo, int enable)
-{
-	struct pkt *new = alloc_pkt(vpninfo, 0x18);
-	if (!new)
-		return -ENOMEM;
-
-	new->len = snprintf((char *)new->data, 8, "ncmo=%c\n", enable ? '1' : '0') + 1;
-
-	store_be32(&new->pulse.vendor, VENDOR_JUNIPER);
-	store_be32(&new->pulse.type, 5);
-	store_be32(&new->pulse.len, new->len + 16);
-
-	queue_packet(&vpninfo->tcp_control_queue, new);
-	return 0;
-
-}
-
-void pulse_esp_close(struct openconnect_info *vpninfo)
-{
-	if (vpninfo->dtls_state >= DTLS_CONNECTED)
-		pulse_queue_esp_control(vpninfo, 0);
-
-	esp_close(vpninfo);
-}
-#endif
 
 int pulse_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 {
@@ -3082,7 +3089,6 @@ int pulse_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		 * data packets in ESP instead of over IF-T/TLS. Just go straight
 		 * to CONNECTED mode. */
 		vpninfo->dtls_state = DTLS_ESTABLISHED;
-		//		pulse_queue_esp_control(vpninfo, 1);
 	}
 
 	vpninfo->current_ssl_pkt = dequeue_packet(&vpninfo->tcp_control_queue);

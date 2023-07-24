@@ -299,7 +299,16 @@ int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		time_t now = time(NULL);
 
 		/* Send 5 probes a second apart, then give up until the next attempt */
-		if (ka_check_deadline(timeout, now, vpninfo->dtls_times.last_tx + 1)) {
+		if (vpninfo->dtls_need_reconnect ||
+		    ka_check_deadline(timeout, now, vpninfo->new_dtls_started +
+				      vpninfo->dtls_attempt_period)) {
+			/* New attempt */
+			vpninfo->dtls_state = DTLS_CONNECTING;
+			vpninfo->dtls_need_reconnect = 0;
+			vpninfo->udp_probes_sent = 1;
+			vpninfo->new_dtls_started = now;
+		} else if (vpninfo->dtls_state == DTLS_CONNECTING &&
+			   ka_check_deadline(timeout, now, vpninfo->dtls_times.last_tx + 1)) {
 			if (vpninfo->udp_probes_sent > 5) {
 				/* When it's time to send the sixth probe, don't. Give up. */
 				vpn_progress(vpninfo, PRG_INFO, ("No ESP probe responses; giving up for now\n"));
@@ -309,16 +318,6 @@ int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 				/* Send repeat probe */
 				vpninfo->udp_probes_sent++;
 			}
-		} else if (vpninfo->dtls_need_reconnect ||
-			   ka_check_deadline(timeout, now, vpninfo->new_dtls_started +
-					     vpninfo->dtls_attempt_period)) {
-			/* New attempt */
-			vpninfo->dtls_state = DTLS_CONNECTING;
-			vpninfo->dtls_need_reconnect = 0;
-			vpninfo->udp_probes_sent = 1;
-			vpninfo->new_dtls_started = now;
-			if (*timeout > 1000)
-				*timeout = 1000;
 		} else {
 			return work_done;
 		}
@@ -326,6 +325,9 @@ int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		vpn_progress(vpninfo, PRG_DEBUG, _("Send ESP probes\n"));
 		if (vpninfo->proto->udp_send_probes)
 			vpninfo->proto->udp_send_probes(vpninfo);
+
+		if (*timeout > 1000)
+			*timeout = 1000;
 
 		vpninfo->dtls_times.last_tx = now;
 	}

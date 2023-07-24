@@ -1277,7 +1277,7 @@ int oncp_bye(struct openconnect_info *vpninfo, const char *reason)
 void oncp_esp_close(struct openconnect_info *vpninfo)
 {
 	/* Tell server to stop sending on ESP channel */
-	if (vpninfo->dtls_state >= DTLS_CONNECTED)
+	if (vpninfo->dtls_state >= DTLS_CONNECTING)
 		queue_esp_control(vpninfo, 0);
 	esp_close(vpninfo);
 }
