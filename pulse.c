@@ -2726,6 +2726,7 @@ int pulse_connect(struct openconnect_info *vpninfo)
 			if (ret)
 				return ret;
 
+			pulse_queue_esp_control(vpninfo, 1);
 			break;
 
 		default:
@@ -3081,7 +3082,7 @@ int pulse_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		 * data packets in ESP instead of over IF-T/TLS. Just go straight
 		 * to CONNECTED mode. */
 		vpninfo->dtls_state = DTLS_ESTABLISHED;
-		pulse_queue_esp_control(vpninfo, 1);
+		//		pulse_queue_esp_control(vpninfo, 1);
 	}
 
 	vpninfo->current_ssl_pkt = dequeue_packet(&vpninfo->tcp_control_queue);
