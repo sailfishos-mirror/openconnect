@@ -1293,7 +1293,7 @@ int oncp_esp_send_probes(struct openconnect_info *vpninfo)
 			return fd;
 
 		/* We are not connected until we get an ESP packet back */
-		vpninfo->dtls_state = DTLS_SLEEPING;
+		vpninfo->dtls_state = DTLS_CONNECTING;
 		vpninfo->dtls_fd = fd;
 		monitor_fd_new(vpninfo, dtls);
 		monitor_read_fd(vpninfo, dtls);

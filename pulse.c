@@ -2916,7 +2916,7 @@ int pulse_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			 * now, abuse this to deal with the race condition in ESP setup — it looks
 			 * like the server doesn't process the ESP config until after we've sent
 			 * the probes, in some cases. */
-			if (vpninfo->dtls_state == DTLS_SLEEPING)
+			if (vpninfo->dtls_state == DTLS_CONNECTING)
 				vpninfo->proto->udp_send_probes(vpninfo);
 			break;
 

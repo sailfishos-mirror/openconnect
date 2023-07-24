@@ -94,6 +94,8 @@ int esp_setup(struct openconnect_info *vpninfo)
 	print_esp_keys(vpninfo, _("outgoing"), &vpninfo->esp_out);
 
 	vpn_progress(vpninfo, PRG_DEBUG, _("Send ESP probes\n"));
+
+	vpninfo->dtls_state = DTLS_CONNECTING;
 	if (vpninfo->proto->udp_send_probes)
 		vpninfo->proto->udp_send_probes(vpninfo);
 
@@ -251,7 +253,8 @@ int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 
 		if (vpninfo->proto->udp_catch_probe) {
 			if (vpninfo->proto->udp_catch_probe(vpninfo, pkt)) {
-				if (vpninfo->dtls_state == DTLS_SLEEPING) {
+				if (vpninfo->dtls_state == DTLS_SLEEPING ||
+				    vpninfo->dtls_state == DTLS_CONNECTING) {
 					vpn_progress(vpninfo, PRG_INFO,
 						     _("ESP session established with server\n"));
 					vpninfo->dtls_state = DTLS_CONNECTED;
@@ -291,18 +294,26 @@ int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			vpninfo->proto->udp_close(vpninfo);
 	}
 
-	if (vpninfo->dtls_state == DTLS_SLEEPING) {
+	if (vpninfo->dtls_state == DTLS_SLEEPING ||
+	    vpninfo->dtls_state == DTLS_CONNECTING) {
 		time_t now = time(NULL);
 
 		/* Send 5 probes a second apart, then give up until the next attempt */
-		if (vpninfo->udp_probes_sent <= 5 &&
-		    ka_check_deadline(timeout, now, vpninfo->dtls_times.last_tx + 1)) {
-			/* Send repeat probe */
-			vpninfo->udp_probes_sent++;
+		if (ka_check_deadline(timeout, now, vpninfo->dtls_times.last_tx + 1)) {
+			if (vpninfo->udp_probes_sent > 5) {
+				/* When it's time to send the sixth probe, don't. Give up. */
+				vpn_progress(vpninfo, PRG_INFO, ("No ESP probe responses; giving up for now\n"));
+				vpninfo->proto->udp_close(vpninfo);
+				return work_done;
+			} else {
+				/* Send repeat probe */
+				vpninfo->udp_probes_sent++;
+			}
 		} else if (vpninfo->dtls_need_reconnect ||
 			   ka_check_deadline(timeout, now, vpninfo->new_dtls_started +
 					     vpninfo->dtls_attempt_period)) {
 			/* New attempt */
+			vpninfo->dtls_state = DTLS_CONNECTING;
 			vpninfo->dtls_need_reconnect = 0;
 			vpninfo->udp_probes_sent = 1;
 			vpninfo->new_dtls_started = now;
