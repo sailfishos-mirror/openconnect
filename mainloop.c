@@ -289,6 +289,8 @@ int openconnect_mainloop(struct openconnect_info *vpninfo,
 					vpninfo->proto->udp_close(vpninfo);
 					vpninfo->new_dtls_started = 0;
 				}
+				while (vpninfo->tcp_control_queue.count)
+					free_pkt(vpninfo, dequeue_packet(&vpninfo->tcp_control_queue));
 
 				vpninfo->got_pause_cmd = 0;
 				vpn_progress(vpninfo, PRG_INFO, _("Caller paused the connection\n"));

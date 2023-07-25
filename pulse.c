@@ -2650,12 +2650,13 @@ static int pulse_queue_esp_control(struct openconnect_info *vpninfo, int enable)
 
 void pulse_esp_close(struct openconnect_info *vpninfo)
 {
-	if (vpninfo->dtls_state >= DTLS_CONNECTING) {
+	if (vpninfo->dtls_state >= DTLS_CONNECTED) {
 		/*
 		 * Disable ESP and then re-enable it immediately. The server
 		 * won't start sending over ESP until (unless) it's
 		 * re-established.
 		 */
+		printf("Queue 0\n");
 		pulse_queue_esp_control(vpninfo, 0);
 		pulse_queue_esp_control(vpninfo, 1);
 	}
@@ -2761,6 +2762,7 @@ int pulse_connect(struct openconnect_info *vpninfo)
 				return ret;
 
 			pulse_queue_esp_control(vpninfo, 1);
+			printf("Enable ESP, state %d\n", vpninfo->dtls_state);
 			break;
 
 		default:
@@ -2939,8 +2941,11 @@ int pulse_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			 * now, abuse this to deal with the race condition in ESP setup — it looks
 			 * like the server doesn't process the ESP config until after we've sent
 			 * the probes, in some cases. */
-			if (vpninfo->dtls_state == DTLS_CONNECTING)
+			if (vpninfo->dtls_state == DTLS_CONNECTING ||
+			    vpninfo->dtls_state == DTLS_SECRET) {
+				printf("Probe from licence\n");
 				vpninfo->proto->udp_send_probes(vpninfo);
+			}
 			break;
 
 		default:
@@ -3006,7 +3011,10 @@ int pulse_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 				vpninfo->quit_reason = "Pulse reconnect failed";
 				return ret;
 			}
-			vpninfo->dtls_need_reconnect = 1;
+			if (vpninfo->dtls_state >= DTLS_CONNECTED) {
+				printf("REcon %d\n", __LINE__);
+				vpninfo->dtls_need_reconnect = 1;
+			}
 			return 1;
 		} else if (!ret) {
 #if 0 /* Not for Pulse yet */
@@ -3092,6 +3100,7 @@ int pulse_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		 * itself. */
 		if (vpninfo->dtls_state > DTLS_SLEEPING &&
 		    vpninfo->dtls_times.rekey_method == REKEY_NONE) {
+			printf("REcon %d\n", __LINE__);
 			vpninfo->dtls_need_reconnect = 1;
 		}
 

@@ -319,6 +319,7 @@ int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 				vpninfo->udp_probes_sent++;
 			}
 		} else {
+			printf("Nothing. started %ld period %ld now %ld\n", vpninfo->new_dtls_started, vpninfo->dtls_attempt_period, now);
 			return work_done;
 		}
 
@@ -330,7 +331,7 @@ int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			*timeout = 1000;
 
 		vpninfo->dtls_times.last_tx = now;
-	}
+	} else printf("State %d\n", vpninfo->dtls_state);
 
 	if (vpninfo->dtls_state != DTLS_ESTABLISHED)
 		return 0;
@@ -531,8 +532,10 @@ int openconnect_setup_esp_keys(struct openconnect_info *vpninfo, int new_keys)
 	if (ret)
 		return ret;
 
-	if (vpninfo->dtls_state == DTLS_NOSECRET)
+	if (vpninfo->dtls_state == DTLS_NOSECRET) {
+		printf("Set secret\n");
 		vpninfo->dtls_state = DTLS_SECRET;
+	}
 
 	return 0;
 }
