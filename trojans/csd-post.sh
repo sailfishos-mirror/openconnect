@@ -48,6 +48,22 @@ export RESPONSE=$(mktemp /tmp/csdresponseXXXXXXX)
 export RESULT=$(mktemp /tmp/csdresultXXXXXXX)
 trap 'rm $RESPONSE $RESULT' EXIT
 
+CURL_OPENSSL_VERSION=$(curl --version | head -n1 | sed -e 's/.*\OpenSSL\/\([^ ]*\).*/\1/')
+if [[ "$CURL_OPENSSL_VERSION" == 3* ]]; then
+    echo "Apply OpenSSL 3.x configuration to reenable legacy renegotiation";
+
+    export OPENSSL_CONF=$(mktemp /tmp/openssl3confXXXXXX)
+    trap 'rm $RESPONSE $RESULT $OPENSSL_CONF' EXIT
+    cat >$OPENSSL_CONF <<EOF
+openssl_conf = openssl_init
+[openssl_init]
+ssl_conf = ssl_sect
+[ssl_sect]
+system_default = system_default_sect
+[system_default_sect]
+Options = UnsafeLegacyRenegotiation
+EOF
+fi
 
 cat >> $RESPONSE <<EOF
 endpoint.os.version="$(uname -s)";
