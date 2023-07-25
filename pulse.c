@@ -2824,7 +2824,7 @@ int pulse_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		}
 
 		len = ssl_nonblock_read(vpninfo, 0,
-					&pkt->pulse.vendor + vpninfo->partial_rec_size,
+					((char *)&pkt->pulse.vendor) + vpninfo->partial_rec_size,
 					receive_mtu + hdr_size - vpninfo->partial_rec_size);
 		if (!len)
 			break;
@@ -2857,13 +2857,13 @@ int pulse_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 
 		if (hdr_len > len) {
 			vpn_progress(vpninfo, PRG_DEBUG,
-				     _("Received partial packet, %d of %d bytes\n"),
+				     _("Received partial packet, 0x%x of 0x%x bytes\n"),
 				     len, hdr_len);
 			vpninfo->partial_rec_size = len;
 			continue;
 		} else if (len > hdr_len)
 			vpn_progress(vpninfo, PRG_TRACE,
-				     _("Received packet of %d bytes with %d trailing bytes of concatenated packet.\n"),
+				     _("Received packet of 0x%x bytes with 0x%x trailing bytes of concatenated packet.\n"),
 				     hdr_len, len - hdr_len);
 
 		int payload_len = hdr_len - hdr_size;
@@ -2872,7 +2872,7 @@ int pulse_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			if (payload_len <= 0)
 				goto unknown_pkt;
 			vpn_progress(vpninfo, PRG_TRACE,
-				     _("Received IPv%d data packet of %d bytes\n"),
+				     _("Received IPv%d data packet of 0x%x bytes\n"),
 				     (pkt->data[0] >> 4), payload_len);
 			if (vpninfo->dump_http_traffic)
 				dump_buf_hex(vpninfo, PRG_TRACE, '<', (void *)&pkt->pulse.vendor, len);
