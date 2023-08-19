@@ -243,7 +243,7 @@ static const struct option long_options[] = {
 	OPTION("csd-user", 1, OPT_CSD_USER),
 	OPTION("csd-wrapper", 1, OPT_CSD_WRAPPER),
 #endif
-#ifdef HAVE_POSIX_SPAWN
+#if defined(HAVE_POSIX_SPAWN) || defined(_WIN32)
 	OPTION("external-browser", 1, OPT_EXT_BROWSER),
 #endif
 	OPTION("no-external-auth", 0, OPT_NO_EXTERNAL_AUTH),
