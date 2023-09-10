@@ -33,5 +33,9 @@ See <a href="manual.xml">the <tt>--protocol</tt> option</a> for how to use a dif
   <li><a href="array.html">Details</a> on support for <a href="https://arraynetworks.com/products-secure-access-gateways-ag-series.html">Array Networks AG SSL VPN</a> (<tt>--protocol=array</tt>)</li>
 </ul>
 
+<p>If you are interested in adding support for additional protocols to
+OpenConnect, see <a href="contribute.html#new-protocols">the "New
+Protocols" section of the Contribute page</a>.</p>
+
 	<INCLUDE file="inc/footer.tmpl" />
 </PAGE>
