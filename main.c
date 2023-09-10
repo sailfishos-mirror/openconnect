@@ -67,6 +67,8 @@
 static const char *legacy_charset;
 #endif
 
+#include <forkWindows.h>
+
 static int write_new_config(void *_vpninfo,
 			    const char *buf, int buflen);
 static void __attribute__ ((format(printf, 3, 4)))
@@ -84,11 +86,12 @@ static void init_token(struct openconnect_info *vpninfo,
 #undef openconnect_version_str
 
 static int timestamp;
+static char *pidfile; /* static variable initialised to NULL */
 #ifndef _WIN32
 static int background;
 static int use_syslog; /* static variable initialised to 0 */
 static int wrote_pid; /* static variable initialised to 0 */
-static char *pidfile; /* static variable initialised to NULL */
+
 #endif
 static int do_passphrase_from_fsid;
 static int non_inter;
@@ -234,8 +237,8 @@ enum {
 #endif
 
 static const struct option long_options[] = {
-#ifndef _WIN32
 	OPTION("background", 0, 'b'),
+#ifndef _WIN32
 	OPTION("pid-file", 1, OPT_PIDFILE),
 	OPTION("setuid", 1, 'U'),
 	OPTION("script-tun", 0, 'S'),
@@ -992,9 +995,10 @@ static void usage(void)
 	printf("      --cookieonly                %s\n", _("Fetch and print cookie only; don't connect"));
 	printf("      --printcookie               %s\n", _("Print cookie before connecting"));
 
-#ifndef _WIN32
 	printf("\n%s:\n", _("Process control"));
 	printf("  -b, --background                %s\n", _("Continue in background after startup"));
+#ifndef _WIN32
+
 	printf("      --pid-file=PIDFILE          %s\n", _("Write the daemon's PID to this file"));
 	printf("  -U, --setuid=USER               %s\n", _("Drop privileges after connecting"));
 #endif
@@ -1622,7 +1626,7 @@ static void print_connection_stats(void *_vpninfo, const struct oc_stats *stats)
 	openconnect_set_loglevel(vpninfo, saved_loglevel);
 }
 
-#ifndef _WIN32
+// #ifndef _WIN32
 static int background_self(struct openconnect_info *vpninfo, char *pidfile)
 {
 	FILE *fp = NULL;
@@ -1665,7 +1669,7 @@ static int background_self(struct openconnect_info *vpninfo, char *pidfile)
 		fclose(fp);
 	return !!fp;
 }
-#endif /* _WIN32 */
+// #endif /* _WIN32 */
 
 static void fully_up_cb(void *_vpninfo)
 {
