@@ -136,7 +136,7 @@ static int child_entry(void)
     return 0;
 }
 
-static BOOL haveLoadedFunctionsForFork(void)
+/*static*/ BOOL haveLoadedFunctionsForFork(void)
 {
     HMODULE ntdll = GetModuleHandle("ntdll");
     if (ntdll == NULL)
