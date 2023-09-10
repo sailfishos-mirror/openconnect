@@ -1,5 +1,5 @@
 #include <windows.h>
-#include <WinNT.h>
+#include <winnt.h>
 #include <setjmp.h>
 #include "forkWindows.h"
 
