@@ -47,6 +47,7 @@
 #include <shlwapi.h>
 #include <wtypes.h>
 #include <wincon.h>
+#include <forkWindows.h>
 #else
 #include <sys/utsname.h>
 #include <pwd.h>
@@ -66,8 +67,6 @@
 
 static const char *legacy_charset;
 #endif
-
-#include <forkWindows.h>
 
 static int write_new_config(void *_vpninfo,
 			    const char *buf, int buflen);
