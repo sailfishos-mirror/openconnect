@@ -21,10 +21,7 @@ struct oc_packed_uint16_t {
 	unsigned short d;
 } __attribute__((packed));
 
-int lzs_decompress(unsigned char *dst, int dstlen, const unsigned char *src, int srclen);
-int lzs_compress(unsigned char *dst, int dstlen, const unsigned char *src, int srclen);
-
-#include "../lzs.c"
+#include "../lzs.c" /* lzs_decompress() / lzs_compress() */
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -79,63 +79,75 @@ static int parse_prelogin_xml(struct openconnect_info *vpninfo, xmlNode *xml_nod
 	struct oc_auth_form *form = NULL;
 	struct oc_form_opt *opt, *opt2;
 	char *prompt = NULL, *username_label = NULL, *password_label = NULL;
-	char *saml_method = NULL, *saml_path = NULL;
-	int result = 0;
+	char *s = NULL, *saml_method = NULL, *saml_path = NULL;
+	int result = -EINVAL;
 
 	if (!xmlnode_is_named(xml_node, "prelogin-response"))
 		goto out;
 
 	for (xml_node = xml_node->children; xml_node; xml_node = xml_node->next) {
-		char *s = NULL;
-		if (!xmlnode_get_val(xml_node, "saml-request", &s)) {
-			int len;
-			free(saml_path);
-			saml_path = openconnect_base64_decode(&len, s);
-			if (len < 0) {
-				vpn_progress(vpninfo, PRG_ERR, "Could not decode SAML request as base64: %s\n", s);
-				free(s);
-				result = -EINVAL;
-				goto out;
-			}
-			free(s);
-			realloc_inplace(saml_path, len+1);
-			if (!saml_path) {
-				result = -ENOMEM;
-				goto out;
-			}
-			saml_path[len] = '\0';
-		} else {
-			xmlnode_get_val(xml_node, "saml-auth-method", &saml_method);
-			xmlnode_get_val(xml_node, "authentication-message", &prompt);
-			xmlnode_get_val(xml_node, "username-label", &username_label);
-			xmlnode_get_val(xml_node, "password-label", &password_label);
-			/* XX: should we save the certificate username from <ccusername/> ? */
-		}
+		xmlnode_get_val(xml_node, "saml-request", &s);
+		xmlnode_get_val(xml_node, "saml-auth-method", &saml_method);
+		xmlnode_get_trimmed_val(xml_node, "authentication-message", &prompt);
+		xmlnode_get_trimmed_val(xml_node, "username-label", &username_label);
+		xmlnode_get_trimmed_val(xml_node, "password-label", &password_label);
+		/* XX: should we save the certificate username from <ccusername/> ? */
 	}
 
-	/* XX: Alt-secret form field must be specified for SAML, because we can't autodetect it */
-	if (saml_method || saml_path) {
-		if (ctx->portal_userauthcookie)
+	if (saml_method && s) {
+		/* Allow the legacy workflow (no GUI setting up open_webview) to keep working */
+		if (!vpninfo->open_webview && ctx->portal_userauthcookie)
 			vpn_progress(vpninfo, PRG_DEBUG, _("SAML authentication required; using portal-userauthcookie to continue SAML.\n"));
-		else if (ctx->portal_prelogonuserauthcookie)
+		else if (!vpninfo->open_webview && ctx->portal_prelogonuserauthcookie)
 			vpn_progress(vpninfo, PRG_DEBUG, _("SAML authentication required; using portal-prelogonuserauthcookie to continue SAML.\n"));
-		else if (ctx->alt_secret)
+		else if (!vpninfo->open_webview && ctx->alt_secret)
 			vpn_progress(vpninfo, PRG_DEBUG, _("Destination form field %s was specified; assuming SAML %s authentication is complete.\n"),
 			             ctx->alt_secret, saml_method);
 		else {
-			if (saml_method && !strcmp(saml_method, "REDIRECT"))
-				vpn_progress(vpninfo, PRG_ERR,
-				             _("SAML %s authentication is required via %s\n"),
-				             saml_method, saml_path);
-			else
-				vpn_progress(vpninfo, PRG_ERR,
-				             _("SAML %s authentication is required via external script.\n"),
-				             saml_method);
-			vpn_progress(vpninfo, PRG_ERR,
-			             _("When SAML authentication is complete, specify destination form field by appending :field_name to login URL.\n"));
-			/* XX: EINVAL will lead to "failure to parse response", with unnecessary/confusing extra logging output */
-			result = -EPERM;
-			goto out;
+			if (!strcmp(saml_method, "REDIRECT")) {
+				int len;
+				saml_path = openconnect_base64_decode(&len, s);
+				if (len < 0) {
+					vpn_progress(vpninfo, PRG_ERR, "Could not decode SAML request as base64: %s\n", s);
+					free(s);
+					goto out;
+				}
+				free(s);
+				realloc_inplace(saml_path, len+1);
+				if (!saml_path)
+					goto nomem;
+				saml_path[len] = '\0';
+				vpninfo->sso_login = strdup(saml_path);
+				prompt = strdup("SAML REDIRECT authentication in progress");
+				if (!vpninfo->sso_login || !prompt)
+					goto nomem;
+			} else if (!strcmp(saml_method, "POST")) {
+				const char *prefix = "data:text/html;base64,";
+				saml_path = s;
+				realloc_inplace(saml_path, strlen(saml_path)+strlen(prefix)+1);
+				if (!saml_path)
+					goto nomem;
+				memmove(saml_path + strlen(prefix), saml_path, strlen(saml_path) + 1);
+				memcpy(saml_path, prefix, strlen(prefix));
+				vpninfo->sso_login = strdup(saml_path);
+				prompt = strdup("SAML REDIRECT authentication in progress");
+				if (!vpninfo->sso_login || !prompt)
+					goto nomem;
+			} else {
+				vpn_progress(vpninfo, PRG_ERR, "Unknown SAML method %s\n", saml_method);
+				goto out;
+			}
+
+			vpn_progress(vpninfo, PRG_INFO,
+					_("SAML %s authentication is required via %s\n"),
+					saml_method, saml_path);
+
+			/* Legacy flow (when not called by n-m-oc) */
+			if (!vpninfo->open_webview) {
+				vpn_progress(vpninfo,
+					PRG_ERR, _("When SAML authentication is complete, specify destination form field by appending :field_name to login URL.\n"));
+				goto out;
+			}
 		}
 	}
 
@@ -156,10 +168,12 @@ static int parse_prelogin_xml(struct openconnect_info *vpninfo, xmlNode *xml_nod
 	if (!opt)
 		goto nomem;
 	opt->name = strdup("user");
-	if (asprintf(&opt->label, "%s: ", username_label ? : _("Username")) == 0)
+	if (!opt->name)
+		goto nomem;
+	if (asprintf(&opt->label, "%s: ", username_label ? : _("Username")) <= 0)
 		goto nomem;
 	if (!ctx->username)
-		opt->type = OC_FORM_OPT_TEXT;
+		opt->type = saml_path ? OC_FORM_OPT_SSO_USER : OC_FORM_OPT_TEXT;
 	else {
 		opt->type = OC_FORM_OPT_HIDDEN;
 		opt->_value = ctx->username;
@@ -171,7 +185,9 @@ static int parse_prelogin_xml(struct openconnect_info *vpninfo, xmlNode *xml_nod
 	if (!opt2)
 		goto nomem;
 	opt2->name = strdup(ctx->alt_secret ? : "passwd");
-	if (asprintf(&opt2->label, "%s: ", ctx->alt_secret ? : password_label ? : _("Password")) == 0)
+	if (!opt2->name)
+		goto nomem;
+	if (asprintf(&opt2->label, "%s: ", ctx->alt_secret ? : password_label ? : _("Password")) <= 0)
 		goto nomem;
 
 	/* XX: Some VPNs use a password in the first form, followed by a
@@ -182,16 +198,19 @@ static int parse_prelogin_xml(struct openconnect_info *vpninfo, xmlNode *xml_nod
 	 * password in the first form means we should treat the first
 	 * form's password as a token field.
 	 */
-	if (!can_gen_tokencode(vpninfo, form, opt2) && !ctx->alt_secret
-	    && password_label && strcmp(password_label, "Password"))
+	if (saml_path)
+		opt2->type = OC_FORM_OPT_SSO_TOKEN;
+	else if (!can_gen_tokencode(vpninfo, form, opt2) && !ctx->alt_secret
+	         && password_label && strcmp(password_label, "Password"))
 		opt2->type = OC_FORM_OPT_TOKEN;
 	else
 		opt2->type = OC_FORM_OPT_PASSWORD;
 
+	result = 0;
 	vpn_progress(vpninfo, PRG_TRACE, "Prelogin form %s: \"%s\" %s(%s)=%s, \"%s\" %s(%s)\n",
 	             form->auth_id,
-	             opt->label, opt->name, opt->type == OC_FORM_OPT_TEXT ? "TEXT" : "HIDDEN", opt->_value,
-	             opt2->label, opt2->name, opt2->type == OC_FORM_OPT_PASSWORD ? "PASSWORD" : "TOKEN");
+	             opt->label, opt->name, opt->type == OC_FORM_OPT_SSO_USER ? "SSO" : opt->type == OC_FORM_OPT_TEXT ? "TEXT" : "HIDDEN", opt->_value,
+	             opt2->label, opt2->name, opt2->type == OC_FORM_OPT_SSO_TOKEN ? "SSO" : opt2->type == OC_FORM_OPT_PASSWORD ? "PASSWORD" : "TOKEN");
 
 out:
 	free(prompt);
@@ -289,7 +308,7 @@ static const struct gp_login_arg gp_login_args[] = {
 	{ .opt="usually-equals-4", .show=1 },           /* newer servers send "4" here, meaning unknown */
 	{ .opt="usually-equals-unknown", .show=1 },     /* newer servers send "unknown" here */
 };
-static const int gp_login_nargs = (sizeof(gp_login_args)/sizeof(*gp_login_args));
+static const int gp_login_nargs = ARRAY_SIZE(gp_login_args);
 
 static int parse_login_xml(struct openconnect_info *vpninfo, xmlNode *xml_node, void *cb_data)
 {
@@ -371,8 +390,9 @@ static int parse_login_xml(struct openconnect_info *vpninfo, xmlNode *xml_node, 
 
 	if (unknown_args)
 		vpn_progress(vpninfo, PRG_ERR,
-					 _("Please report %d unexpected values above (of which %d fatal) to <openconnect-devel@lists.infradead.org>\n"),
-					 unknown_args, fatal_args);
+					 _("Please report %d unexpected values above (of which %d fatal) to <%s>\n"),
+					 unknown_args, fatal_args,
+					 "openconnect-devel@lists.infradead.org");
 	if (fatal_args) {
 		buf_free(cookie);
 		return -EPERM;
@@ -428,9 +448,33 @@ static int parse_portal_xml(struct openconnect_info *vpninfo, xmlNode *xml_node,
 	/*
 	 * The portal contains a ton of stuff, but basically none of it is
 	 * useful to a VPN client that wishes to give control to the client
-	 * user, as opposed to the VPN administrator.  The exceptions are the
-	 * list of gateways in policy/gateways/external/list and the interval
-	 * for HIP checks in policy/hip-collection/hip-report-interval
+	 * user, as opposed to the VPN administrator.  The exception is
+	 * the list of gateways in policy/gateways/external/list.
+	 *
+	 * There are other fields which are worthless in terms of end-user
+	 * functionality, but are needed for compliance with the server's
+	 * security policies:
+	 * - Interval for HIP checks in policy/hip-collection/hip-report-interval
+	 *   (save so that we can rerun HIP on the expected interval)
+	 * - Software version (save so we can mindlessly parrot it back)
+	 *
+	 * Potentially also useful, but currently ignored:
+	 * - welcome-page/page, help-page, and help-page-2 contents might in
+	 *   principle be informative, but in practice they're either empty
+	 *   or extremely verbose multi-page boilerplate in HTML format
+	 * - hip-collection/default/category/member[] might be useful
+	 *   to report to the user as a diagnostic, so that they know what
+	 *   HIP report entries the server expects, if their HIP report
+	 *   isn't expected. In practice, servers that actually check the HIP
+	 *   report contents are so nitpicky that anything less than a
+	 *   capture from an officially-supported client is unlikely to help.
+	 * - root-ca/entry[]/cert is potentially useful because it contains
+	 *   certs that we should allow as root-of-trust for the gateway
+	 *   servers. This could prevent users from having to specify --cafile
+	 *   or repeated --servercert in order to allow non-interactive
+	 *   authentication to gateways whose certs aren't trusted by the
+	 *   system but ARE trusted by the portal (see example at
+         *   https://github.com/dlenski/openconnect/issues/128).
 	 */
 	if (xmlnode_is_named(xml_node, "policy")) {
 		for (x = xml_node->children; x; x = x->next) {
@@ -454,6 +498,13 @@ static int parse_portal_xml(struct openconnect_info *vpninfo, xmlNode *xml_node,
 						}
 					}
 				}
+			} else if (!xmlnode_get_trimmed_val(x, "version", &vpninfo->csd_ticket)) {
+				/* We abuse csd_ticket to store the portal's software version. Parroting this back as
+				 * the client software version (app-version) appears to be the best way to prevent the
+				 * gateway server from rejecting the connection due to obsolete client software.
+				 */
+				vpn_progress(vpninfo, PRG_INFO, _("Portal reports GlobalProtect version %s; we will report the same client version.\n"),
+					     vpninfo->csd_ticket);
 			} else {
 				xmlnode_get_val(x, "portal-name", &portal);
 				if (!xmlnode_get_val(x, "portal-userauthcookie", &ctx->portal_userauthcookie)) {
@@ -473,6 +524,9 @@ static int parse_portal_xml(struct openconnect_info *vpninfo, xmlNode *xml_node,
 	}
 
 	if (!gateways) {
+no_gateways:
+		vpn_progress(vpninfo, PRG_ERR,
+					 _("GlobalProtect portal configuration lists no gateway servers.\n"));
 		result = -EINVAL;
 		goto out;
 	}
@@ -482,7 +536,7 @@ static int parse_portal_xml(struct openconnect_info *vpninfo, xmlNode *xml_node,
 		buf_append(buf, "<GPPortal>\n  <ServerList>\n");
 		if (portal) {
 			buf_append(buf, "      <HostEntry><HostName>");
-			buf_append_xmlescaped(buf, portal);
+			buf_append_xmlescaped(buf, portal ? : _("unknown"));
 			buf_append(buf, "</HostName><HostAddress>%s", vpninfo->hostname);
 			if (vpninfo->port!=443)
 				buf_append(buf, ":%d", vpninfo->port);
@@ -527,12 +581,8 @@ static int parse_portal_xml(struct openconnect_info *vpninfo, xmlNode *xml_node,
 				     choice->label, choice->name);
 		}
 	}
-	if (!opt->nr_choices) {
-		vpn_progress(vpninfo, PRG_ERR,
-					 _("GlobalProtect portal configuration lists no gateway servers.\n"));
-		result = -EINVAL;
-		goto out;
-	}
+	if (!opt->nr_choices)
+		goto no_gateways;
 	if (!vpninfo->authgroup && opt->nr_choices)
 		vpninfo->authgroup = strdup(opt->choices[0]->name);
 
@@ -575,7 +625,6 @@ static int gpst_login(struct openconnect_info *vpninfo, int portal, struct login
 {
 	int result, blind_retry = 0;
 	struct oc_text_buf *request_body = buf_alloc();
-	const char *request_body_type = "application/x-www-form-urlencoded";
 	char *xml_buf = NULL, *orig_path;
 
 	/* Ask the user to fill in the auth form; repeat as necessary */
@@ -613,6 +662,15 @@ static int gpst_login(struct openconnect_info *vpninfo, int portal, struct login
 		if (result)
 			goto out;
 
+		/* Coming back from SAML we might have been redirected */
+		if (vpninfo->redirect_url) {
+			result = handle_redirect(vpninfo);
+			free(vpninfo->redirect_url);
+			vpninfo->redirect_url = NULL;
+			if (result)
+				goto out;
+		}
+
 	replay_form:
 		/* generate token code if specified */
 		result = do_gen_tokencode(vpninfo, ctx->form);
@@ -624,7 +682,7 @@ static int gpst_login(struct openconnect_info *vpninfo, int portal, struct login
 
 		/* submit gateway login (ssl-vpn/login.esp) or portal config (global-protect/getconfig.esp) request */
 		buf_truncate(request_body);
-		buf_append(request_body, "jnlpReady=jnlpReady&ok=Login&direct=yes&clientVer=4100&prot=https:");
+		buf_append(request_body, "jnlpReady=jnlpReady&ok=Login&direct=yes&clientVer=4100&prot=https:&internal=no");
 		append_opt(request_body, "ipv6-support", vpninfo->disable_ipv6 ? "no" : "yes");
 		append_opt(request_body, "clientos", gpst_os_name(vpninfo));
 		append_opt(request_body, "os-version", vpninfo->platname);
@@ -647,7 +705,7 @@ static int gpst_login(struct openconnect_info *vpninfo, int portal, struct login
 
 		orig_path = vpninfo->urlpath;
 		vpninfo->urlpath = strdup(portal ? "global-protect/getconfig.esp" : "ssl-vpn/login.esp");
-		result = do_https_request(vpninfo, "POST", request_body_type, request_body, &xml_buf, NULL, HTTP_NO_FLAGS);
+		result = do_https_request(vpninfo, "POST", "application/x-www-form-urlencoded", request_body, &xml_buf, NULL, HTTP_NO_FLAGS);
 		free(vpninfo->urlpath);
 		vpninfo->urlpath = orig_path;
 
@@ -737,8 +795,6 @@ int gpst_bye(struct openconnect_info *vpninfo, const char *reason)
 	char *orig_path;
 	int result;
 	struct oc_text_buf *request_body = buf_alloc();
-	const char *request_body_type = "application/x-www-form-urlencoded";
-	const char *method = "POST";
 	char *xml_buf = NULL;
 
 	/* In order to logout successfully, the client must send not only
@@ -763,7 +819,7 @@ int gpst_bye(struct openconnect_info *vpninfo, const char *reason)
 	orig_path = vpninfo->urlpath;
 	vpninfo->urlpath = strdup("ssl-vpn/logout.esp");
 	openconnect_close_https(vpninfo, 0);
-	result = do_https_request(vpninfo, method, request_body_type, request_body, &xml_buf, NULL, HTTP_NO_FLAGS);
+	result = do_https_request(vpninfo, "POST", "application/x-www-form-urlencoded", request_body, &xml_buf, NULL, HTTP_NO_FLAGS);
 	free(vpninfo->urlpath);
 	vpninfo->urlpath = orig_path;
 

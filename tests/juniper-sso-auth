@@ -24,7 +24,7 @@ top_builddir=${top_builddir:-..}
 
 . `dirname $0`/common.sh
 
-FINGERPRINT="--servercert=d66b507ae074d03b02eafca40d35f87dd81049d3"
+FINGERPRINT="--servercert=pin-sha256:xp3scfzy3rO"
 CERT=$certdir/server-cert.pem
 KEY=$certdir/server-key.pem
 FAKE_TOKEN="--token-mode=totp --token-secret=ABCD"
@@ -33,7 +33,7 @@ echo "Testing Juniper SSO auth against fake server ..."
 
 ${srcdir}/fake-juniper-sso-server.py $ADDRESS 1443 $CERT $KEY >/dev/null 2>&1 &
 PID=$!
-wait_server $PID 1
+wait_server $PID
 
 echo -n "Azure SSO with MFA. "
 (

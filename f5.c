@@ -19,6 +19,10 @@
 
 #include "openconnect-internal.h"
 
+#if HAVE_JSON
+#include "json.h"
+#endif
+
 #include "ppp.h"
 
 #include <libxml/HTMLparser.h>
@@ -105,6 +109,142 @@ static int check_cookie_success(struct openconnect_info *vpninfo)
 	return -ENOENT;
 }
 
+#ifdef HAVE_JSON
+static json_value *find_appLoader_configure_json_form(xmlDocPtr doc)
+{
+	xmlNodePtr root, node;
+	json_value *v = NULL, *f = NULL;
+
+	/* We look for a <script> tag containing a call to 'appLoader.configure(...);', with
+	 * the assumption that there will be a newline right before the closing parenthesis,
+	 * and a semicolon right after, allowing us to clearly delimit it. Ick. Then we assume
+	 * that everything between the parentheses is a valid JSON object literal. Ick.
+	 */
+	for (root = node = xmlDocGetRootElement(doc); node; node = htmlnode_dive(root, node)) {
+		if (node->name && !strcasecmp((char *)node->name, "script")) {
+			const char *content = (char *)xmlNodeGetContent(node);
+			const char *start, *end;
+
+			if ((start = strstr(content, "appLoader.configure({"))
+			    && (end = strstr(start, "\n});"))) {
+				v = json_parse((json_char *)start + 20, (end + 2) - (start + 20));
+				break;
+			}
+		}
+	}
+
+	if (!v || v->type != json_object)
+		goto bad_json;
+
+	json_value *l = NULL;
+	for (int i = 0; i < v->u.object.length; i++) {
+		json_value *subval = v->u.object.values[i].value;
+		json_char *subname = v->u.object.values[i].name;
+		if (!strcmp(subname, "logon") && subval->type == json_object) {
+			l = subval;
+			break;
+		}
+	}
+
+	if (!l)
+		goto bad_json;
+
+	for (int i = 0; i < l->u.object.length; i++) {
+		json_value *subval = l->u.object.values[i].value;
+		json_char *subname = l->u.object.values[i].name;
+		if (!strcmp(subname, "form") && subval->type == json_object) {
+			f = subval;
+
+			/* "Detach" this sub-tree (XX: check for mem leaks here) */
+			f->parent = NULL;
+			l->u.object.values[i].value = NULL;
+			break;
+		}
+	}
+
+ bad_json:
+	json_value_free(v);
+	return f;
+}
+
+
+static struct oc_auth_form *parse_json_form(struct openconnect_info *vpninfo, json_value *jform,
+					    int (*can_gen_tokencode)(struct openconnect_info *vpninfo, struct oc_auth_form *form, struct oc_form_opt *opt))
+{
+	struct oc_auth_form *form = calloc(1, sizeof(*form));
+	if (!form) {
+	nomem:
+		free_auth_form(form);
+		return NULL;
+	}
+
+	json_value *fields = NULL;
+
+	for (int i = 0; i < jform->u.object.length; i++) {
+		json_value *subval = jform->u.object.values[i].value;
+		json_char *subname = jform->u.object.values[i].name;
+		if (!strcmp(subname, "id") && subval->type == json_string) {
+			form->auth_id = subval->u.string.ptr;
+			subval->type = json_null, subval->u.string.ptr = NULL; /* XX */
+		} else if (!strcmp(subname, "title") && subval->type == json_string) {
+			form->banner = subval->u.string.ptr;
+			subval->type = json_null, subval->u.string.ptr = NULL; /* XX */
+		} else if (!strcmp(subname, "fields") && subval->type == json_array)
+			fields = subval;
+	}
+
+	if (!fields) /* XX: Should we fail? */
+		return form;
+
+	struct oc_form_opt **next_opt = &form->opts;
+	for (int i = 0; i < fields->u.array.length; i++) {
+		json_value *f = fields->u.array.values[i];
+		if (f->type != json_object) /* XX: Should we fail? */
+			continue;
+
+		struct oc_form_opt *opt = calloc(1, sizeof(*opt));
+		if (!opt)
+			goto nomem;
+
+		for (int j = 0; j < f->u.object.length; j++) {
+			json_value *subval = f->u.object.values[j].value;
+			json_char *subname = f->u.object.values[j].name;
+			if (!strcmp(subname, "type") && subval->type == json_string) {
+				if (!strcmp(subval->u.string.ptr, "password"))
+					opt->type = OC_FORM_OPT_PASSWORD;
+				else if (!strcmp(subval->u.string.ptr, "text"))
+					opt->type = OC_FORM_OPT_TEXT;
+				else {
+					vpn_progress(vpninfo, PRG_ERR,
+						     _("WARNING: Unknown F5 JSON form field type '%s', treating as 'text'. Please report to <%s>"),
+						     subval->u.string.ptr, "openconnect-devel@lists.infradead.org");
+					opt->type = OC_FORM_OPT_TEXT;
+				}
+			} else if (!strcmp(subname, "name") && subval->type == json_string) {
+				opt->name = subval->u.string.ptr;
+				subval->type = json_null, subval->u.string.ptr = NULL; /* XX */
+			} else if (!strcmp(subname, "caption") && subval->type == json_string) {
+				if (asprintf(&opt->label, "%s:", subval->u.string.ptr) < 0)
+					goto nomem;
+			} else if (!strcmp(subname, "value") && subval->type == json_string && subval->u.string.length > 0) {
+				opt->_value = subval->u.string.ptr;
+				subval->type = json_null, subval->u.string.ptr = NULL; /* XX */
+			} else if (!strcmp(subname, "disabled") && subval->type == json_boolean) {
+				/* XX: Do we care if a field is disabled? */
+			}
+		}
+		if (opt->type == OC_FORM_OPT_PASSWORD && can_gen_tokencode && !can_gen_tokencode(vpninfo, form, opt))
+			opt->type = OC_FORM_OPT_TOKEN;
+
+		/* Append to the existing list */
+		*next_opt = opt;
+		next_opt = &opt->next;
+	}
+
+	return form;
+}
+#endif
+
 int f5_obtain_cookie(struct openconnect_info *vpninfo)
 {
 	int ret, form_order=0;
@@ -160,39 +300,61 @@ int f5_obtain_cookie(struct openconnect_info *vpninfo)
 		buf_truncate(req_buf);
 
 		node = find_form_node(doc);
-		if (!node && form_order==1) {
+#if HAVE_JSON
+		if (!node) {
 			/* XX: some F5 VPNs simply do not have a static HTML form to parse */
+			json_value *jform = find_appLoader_configure_json_form(doc);
+			if (jform) {
+				form = parse_json_form(vpninfo, jform, form_order > 1 ? can_gen_tokencode : NULL);
+				json_value_free(jform);
+			}
+			if (form) {
+				vpn_progress(vpninfo, PRG_ERR,
+				     _("WARNING: No HTML authentication form found. Extracted form from F5's embedded\n"
+				       "  JSON. This is EXPERIMENTAL. Please report results to <%s>.\n"),
+				       "openconnect-devel@lists.infradead.org");
+				goto process_form;
+			}
+		}
+#endif
+		if (!node && form_order==1) {
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("WARNING: no HTML login form found; assuming username and password fields\n"));
+
 			if ((form = plain_auth_form()) == NULL)
 				goto nomem;
-		} else {
-			form = parse_form_node(vpninfo, node, NULL, NULL);
-			if (form_order==1 && (xmlnode_get_prop(node, "id", &form_id) || strcmp(form_id, "auth_form"))) {
-				vpn_progress(vpninfo, PRG_ERR, _("Unknown form ID '%s' (expected 'auth_form')\n"),
-					     form_id);
+		} else if (form_order==1 && (xmlnode_get_prop(node, "id", &form_id) || strcmp(form_id, "auth_form"))) {
+			/* XX: if first form isn't named auth_form, this probably isn't an F5 VPN */
+			vpn_progress(vpninfo, PRG_ERR, _("Unknown form ID '%s' (expected 'auth_form')\n"),
+				     form_id);
 
-				fprintf(stderr, _("Dumping unknown HTML form:\n"));
-				htmlNodeDumpFileFormat(stderr, node->doc, node, NULL, 1);
+			fprintf(stderr, _("Dumping unknown HTML form:\n"));
+			htmlNodeDumpFileFormat(stderr, node->doc, node, NULL, 1);
+			ret = -EINVAL;
+			goto out;
+		} else {
+			form = parse_form_node(vpninfo, node, NULL, form_order > 1 ? can_gen_tokencode : NULL);
+			if (!form) {
 				ret = -EINVAL;
-				break;
+				goto out;
 			}
 		}
 
-		if (!form) {
-			ret = -EINVAL;
-			break;
-		}
-
-		/* XX: do_gen_tokencode would go here, if we knew of any
-		 * token-based 2FA options for F5.
-		 */
-
+#if HAVE_JSON
+	process_form:
+#endif
 		do {
 			ret = process_auth_form(vpninfo, form);
 		} while (ret == OC_FORM_RESULT_NEWGROUP);
 		if (ret)
 			goto out;
+
+		ret = do_gen_tokencode(vpninfo, form);
+		if (ret) {
+			vpn_progress(vpninfo, PRG_ERR, _("Failed to generate OTP tokencode; disabling token\n"));
+			vpninfo->token_bypassed = 1;
+			goto out;
+		}
 
 		append_form_opts(vpninfo, form, req_buf);
 		if ((ret = buf_error(req_buf)))
@@ -248,7 +410,7 @@ static int parse_profile(struct openconnect_info *vpninfo, char *buf, int len,
 	if (!buf || !len)
 		return -EINVAL;
 
-	xml_doc = xmlReadMemory(buf, len, "noname.xml", NULL,
+	xml_doc = xmlReadMemory(buf, len, NULL, NULL,
 				XML_PARSE_NOERROR|XML_PARSE_RECOVER);
 	if (!xml_doc) {
 		vpn_progress(vpninfo, PRG_ERR,
@@ -303,24 +465,6 @@ static int parse_profile(struct openconnect_info *vpninfo, char *buf, int len,
 	return ret;
 }
 
-static int xmlnode_bool_or_int_value(struct openconnect_info *vpninfo, xmlNode *node)
-{
-	int ret = -1;
-	char *content = (char *)xmlNodeGetContent(node);
-	if (!content)
-		return -1;
-
-	if (isdigit(content[0]))
-		ret = atoi(content);
-	if (!strcasecmp(content, "yes") || !strcasecmp(content, "on"))
-		ret = 1;
-	if (!strcasecmp(content, "no") || !strcasecmp(content, "off"))
-		ret = 0;
-
-	free(content);
-	return ret;
-}
-
 static int parse_options(struct openconnect_info *vpninfo, char *buf, int len,
 			 char **session_id, char **ur_z, int *ipv4, int *ipv6, int *hdlc)
 {
@@ -333,7 +477,7 @@ static int parse_options(struct openconnect_info *vpninfo, char *buf, int len,
 	if (!buf || !len)
 		return -EINVAL;
 
-	xml_doc = xmlReadMemory(buf, len, "noname.xml", NULL,
+	xml_doc = xmlReadMemory(buf, len, NULL, NULL,
 				XML_PARSE_NOERROR|XML_PARSE_RECOVER);
 	if (!xml_doc) {
 		vpn_progress(vpninfo, PRG_ERR,
@@ -363,27 +507,27 @@ static int parse_options(struct openconnect_info *vpninfo, char *buf, int len,
 		else if (xmlnode_is_named(xml_node, "Session_ID"))
 			*session_id = (char *)xmlNodeGetContent(xml_node);
 		else if (xmlnode_is_named(xml_node, "IPV4_0"))
-			*ipv4 = xmlnode_bool_or_int_value(vpninfo, xml_node);
+			*ipv4 = xmlnode_bool_or_int_value(xml_node);
 		else if (xmlnode_is_named(xml_node, "IPV6_0")) {
 			if (!vpninfo->disable_ipv6)
-				*ipv6 = xmlnode_bool_or_int_value(vpninfo, xml_node);
+				*ipv6 = xmlnode_bool_or_int_value(xml_node);
 		} else if (xmlnode_is_named(xml_node, "hdlc_framing"))
-			*hdlc = xmlnode_bool_or_int_value(vpninfo, xml_node);
+			*hdlc = xmlnode_bool_or_int_value(xml_node);
 		else if (xmlnode_is_named(xml_node, "idle_session_timeout")) {
-			int sec = vpninfo->idle_timeout = xmlnode_bool_or_int_value(vpninfo, xml_node);
+			int sec = vpninfo->idle_timeout = xmlnode_bool_or_int_value(xml_node);
 			vpn_progress(vpninfo, PRG_INFO, _("Idle timeout is %d minutes\n"), sec/60);
 		} else if (xmlnode_is_named(xml_node, "tunnel_dtls"))
-			dtls = xmlnode_bool_or_int_value(vpninfo, xml_node);
+			dtls = xmlnode_bool_or_int_value(xml_node);
 		else if (xmlnode_is_named(xml_node, "tunnel_port_dtls"))
-			dtls_port = xmlnode_bool_or_int_value(vpninfo, xml_node);
+			dtls_port = xmlnode_bool_or_int_value(xml_node);
 		else if (xmlnode_is_named(xml_node, "dtls_v1_2_supported"))
-			vpninfo->dtls12 = xmlnode_bool_or_int_value(vpninfo, xml_node);
+			vpninfo->dtls12 = xmlnode_bool_or_int_value(xml_node);
 		else if (xmlnode_is_named(xml_node, "UseDefaultGateway0")) {
-			default_route = xmlnode_bool_or_int_value(vpninfo, xml_node);
+			default_route = xmlnode_bool_or_int_value(xml_node);
 			if (default_route)
 				vpn_progress(vpninfo, PRG_INFO, _("Got default routes\n"));
 		} else if (xmlnode_is_named(xml_node, "SplitTunneling0")) {
-			int st = xmlnode_bool_or_int_value(vpninfo, xml_node);
+			int st = xmlnode_bool_or_int_value(xml_node);
 			vpn_progress(vpninfo, PRG_INFO, _("Got SplitTunneling0 value of %d\n"), st);
 			/* XX: Should we ignore split-{in,ex}cludes if this is zero? */
                 }
@@ -540,9 +684,10 @@ static int f5_configure(struct openconnect_info *vpninfo)
 	/* XX: parse "session timeout" cookie to get auth expiration */
 	for (cookie = vpninfo->cookies; cookie; cookie = cookie->next) {
 		if (!strcmp(cookie->option, "F5_ST")) {
-			int junk, start, dur;
+			int junk;
+			unsigned long long start, dur;
 			char c = 0;
-			if (sscanf(cookie->value, "%dz%dz%dz%dz%d%c", &junk, &junk, &junk, &start, &dur, &c) >= 5
+			if (sscanf(cookie->value, "%dz%dz%dz%lldz%lld%c", &junk, &junk, &junk, &start, &dur, &c) >= 5
 			    && (c == 0 || c == 'z'))
 				vpninfo->auth_expiration = start + dur;
 			break;

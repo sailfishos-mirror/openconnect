@@ -3,7 +3,7 @@
 
 	<VAR match="VAR_SEL_MAIL" replace="selected" />
 	<PARSE file="menu1.xml" />
-	
+
 	<INCLUDE file="inc/content.tmpl" />
 
 	<h1>Getting help</h1>
@@ -20,11 +20,17 @@
 
 	<h1>GitLab</h1>
 
-	<p>As an experiment we have created an <a href="https://gitlab.com/openconnect/openconnect">OpenConnect project</a> on GitLab.</p>
+	<p>We have created an <a href="https://gitlab.com/openconnect/openconnect">OpenConnect project</a> on GitLab.</p>
 
 	<p>You can file <a href="https://gitlab.com/openconnect/openconnect/issues">issues</a>
-	there, which may be slightly more effective than sending them in email. You can also
+	there, which may be more effective than sending them in email. You can also
 	submit <a href="https://gitlab.com/openconnect/openconnect/merge_requests">merge requests</a>.</p>
+
+	<p>In addition to allowing discussion of issues and code changes, OpenConnect is now
+	also using <a href="https://docs.gitlab.com/ee/ci/">GitLab CI</a> for continuous integration,
+	testing, and building of the software. For example, GitLab CI builds the the
+	<a href="packages.html#windows">Windows installers</a> for OpenConnect with each new
+	commit.</p>
 
     	<h1>Mailing list</h1>
 
@@ -52,7 +58,7 @@
 	</p>
 	<p>For Juniper VPN, the equivalent is a <tt>DSID</tt> cookie, which is not yet filtered
 	out of any output <i>(the authentication support in Juniper is still very new)</i>.
-	For PAN GlobalConnect, the equivalent is a URL-encoded
+	For Palo Alto Networks GlobalConnect, the equivalent is a URL-encoded
 	<tt>authcookie</tt> parameter, which is also not filtered out of any output.</p>
 
 	<h1>Internet Relay Chat (IRC)</h1>

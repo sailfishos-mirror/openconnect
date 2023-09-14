@@ -157,7 +157,7 @@ static int unhdlc_in_place(struct openconnect_info *vpninfo, unsigned char *byte
 	}
 }
 
-static const char *ppps_names[] = {
+static const char * const ppps_names[] = {
 	"DEAD",
 	"ESTABLISH",
 	"OPENED",
@@ -166,7 +166,7 @@ static const char *ppps_names[] = {
 	"TERMINATE"
 };
 
-static const char *encap_names[PPP_ENCAP_MAX+1] = {
+static const char * const encap_names[PPP_ENCAP_MAX+1] = {
 	NULL,
 	"RFC1661",
 	"RFC1662 HDLC",
@@ -176,7 +176,7 @@ static const char *encap_names[PPP_ENCAP_MAX+1] = {
 	"NX HDLC",
 };
 
-static const char *lcp_names[] = {
+static const char * const lcp_names[] = {
 	NULL,
 	"Configure-Request",
 	"Configure-Ack",
@@ -214,7 +214,7 @@ int openconnect_ppp_new(struct openconnect_info *vpninfo,
 {
 	free(vpninfo->ppp);
 
-	struct oc_ppp *ppp = vpninfo->ppp = calloc(sizeof(*ppp), 1);
+	struct oc_ppp *ppp = vpninfo->ppp = calloc(1, sizeof(*ppp));
 
 	if (!ppp)
 		return -ENOMEM;

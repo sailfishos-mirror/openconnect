@@ -270,7 +270,7 @@ static inline int PACKET_get_length_prefixed_1(PACKET *pkt,
     return 1;
 }
 
-#define OSSL_NELEM(x)    (sizeof(x)/sizeof(x[0]))
+#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 
 /* For DTLS1_BAD_VER packets the MAC doesn't include the handshake header */
 #define MAC_OFFSET (DTLS1_RT_HEADER_LENGTH + DTLS1_HM_HEADER_LENGTH)
@@ -293,12 +293,14 @@ static EVP_MD_CTX *handshake_md5;
 static EVP_MD_CTX *handshake_sha1;
 
 #if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
-static inline HMAC_CTX *HMAC_CTX_new(void) {
+static inline HMAC_CTX *HMAC_CTX_new(void)
+{
     HMAC_CTX *ret = malloc(sizeof(*ret));
     HMAC_CTX_init(ret);
     return ret;
 }
-static inline void HMAC_CTX_free(HMAC_CTX *ctx) {
+static inline void HMAC_CTX_free(HMAC_CTX *ctx)
+{
     HMAC_CTX_cleanup(ctx);
     free(ctx);
 }
@@ -870,7 +872,7 @@ int main(int argc, char *argv[])
        specific but useful anyway for the general case. It's been broken
        before, and in fact was broken even for a basic 0, 2, 1 test case
        when this test was first added.... */
-    for (i = 0; i < (int)OSSL_NELEM(tests); i++) {
+    for (i = 0; i < (int)ARRAY_SIZE(tests); i++) {
         unsigned long recv_buf[2];
 
         if (send_record(rbio, SSL3_RT_APPLICATION_DATA, tests[i].seq,

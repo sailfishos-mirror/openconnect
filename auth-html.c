@@ -68,6 +68,7 @@ int parse_input_node(struct openconnect_info *vpninfo, struct oc_auth_form *form
 
 	opt = calloc(1, sizeof(*opt));
 	if (!opt) {
+	nomem:
 		ret = -ENOMEM;
 		goto out;
 	}
@@ -75,24 +76,22 @@ int parse_input_node(struct openconnect_info *vpninfo, struct oc_auth_form *form
 	if (nodisplay || !strcasecmp(type, "hidden")) {
 		opt->type = OC_FORM_OPT_HIDDEN;
 		xmlnode_get_prop(node, "name", &opt->name);
+		if (asprintf(&opt->label, "%s:", opt->name) == -1)
+			goto nomem;
 		xmlnode_get_prop(node, "value", &opt->_value);
 		/* XXX: Handle tz_offset / tz */
 	} else if (!strcasecmp(type, "password")) {
 		opt->type = OC_FORM_OPT_PASSWORD;
 		xmlnode_get_prop(node, "name", &opt->name);
-		if (asprintf(&opt->label, "%s:", opt->name) == -1) {
-			ret = -ENOMEM;
-			goto out;
-		}
+		if (asprintf(&opt->label, "%s:", opt->name) == -1)
+			goto nomem;
 		if (can_gen_tokencode && !can_gen_tokencode(vpninfo, form, opt))
 			opt->type = OC_FORM_OPT_TOKEN;
 	} else if (!strcasecmp(type, "text") || !strcasecmp(type, "username") || !strcasecmp(type, "email")) {
 		opt->type = OC_FORM_OPT_TEXT;
 		xmlnode_get_prop(node, "name", &opt->name);
-		if (asprintf(&opt->label, "%s:", opt->name) == -1) {
-			ret = -ENOMEM;
-			goto out;
-		}
+		if (asprintf(&opt->label, "%s:", opt->name) == -1)
+			goto nomem;
 		if (vpninfo->proto->proto == PROTO_NC &&
 		    !strcmp(form->auth_id, "loginForm") &&
 		    !strcmp(opt->name, "VerificationCode") &&
@@ -225,8 +224,10 @@ struct oc_auth_form *parse_form_node(struct openconnect_info *vpninfo,
 		if (!xmlnode_get_prop(node, "name", &form->auth_id) ||
 		    !xmlnode_get_prop(node, "id", &form->auth_id))
 			form->banner = strdup(form->auth_id);
-	} else if (vpninfo->proto->proto == PROTO_F5)
-		xmlnode_get_prop(node, "id", &form->auth_id);
+	} else if (vpninfo->proto->proto == PROTO_F5) {
+		if (!xmlnode_get_prop(node, "id", &form->auth_id))
+			form->banner = strdup(form->auth_id);
+	}
 
 	/* XX: fallback auth_id (since other functions expect it to exist) */
 	if (!form->auth_id)

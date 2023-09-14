@@ -94,15 +94,18 @@ MSG_FUNK_PLATFORM = 0x58301
 MSG_FUNK = 0xa4c01
 
 
-# 0013 - Message
-def decode_0013(buf, indent):
-    logging.debug('%scmd 0013 (Message) %d bytes', indent, len(buf))
+def _decode_helper(buf, indent):
     ret = collections.defaultdict(list)
     while (len(buf) >= 12):
         length, cmd, out = decode_packet(buf, indent + "  ")
         buf = buf[length:]
         ret[cmd].append(out)
     return ret
+
+# 0013 - Message
+def decode_0013(buf, indent):
+    logging.debug('%scmd 0013 (Message) %d bytes', indent, len(buf))
+    return _decode_helper(buf, indent)
 
 
 # 0012 - u32
@@ -116,23 +119,13 @@ def decode_0016(buf, indent):
     logging.debug('%scmd 0016 (compressed message) %d bytes', indent, len(buf))
     _, compressed = struct.unpack(">I" + str(len(buf) - 4) + "s", buf)
     buf = zlib.decompress(compressed)
-    ret = collections.defaultdict(list)
-    while (len(buf) >= 12):
-        length, cmd, out = decode_packet(buf, indent + "  ")
-        buf = buf[length:]
-        ret[cmd].append(out)
-    return ret
+    return _decode_helper(buf, indent)
 
 
 # 0ce4 - encapsulation
 def decode_0ce4(buf, indent):
     logging.debug('%scmd 0ce4 (encapsulation) %d bytes', indent, len(buf))
-    ret = collections.defaultdict(list)
-    while (len(buf) >= 12):
-        length, cmd, out = decode_packet(buf, indent + "  ")
-        buf = buf[length:]
-        ret[cmd].append(out)
-    return ret
+    return _decode_helper(buf, indent)
 
 
 # 0ce5 - string without hex prefixer
@@ -161,7 +154,7 @@ def decode_0ce7(buf, indent):
 # 0cf0 - encapsulation
 def decode_0cf0(buf, indent):
     logging.debug('%scmd 0cf0 (encapsulation) %d bytes', indent, len(buf))
-    ret = dict()
+    ret = {}
     cmd, _, out = decode_packet(buf, indent + "  ")
     ret[cmd] = out
     return ret
@@ -193,24 +186,20 @@ def decode_packet(buf, indent=""):
     if length % 4:
         length += 4 - (length % 4)
 
-    if cmd == 0x0013:
-        data = decode_0013(data, indent)
-    elif cmd == 0x0012:
-        data = decode_0012(data, indent)
-    elif cmd == 0x0016:
-        data = decode_0016(data, indent)
-    elif cmd == 0x0ce4:
-        data = decode_0ce4(data, indent)
-    elif cmd == 0x0ce5:
-        data = decode_0ce5(data, indent)
-    elif cmd == 0x0ce7:
-        data = decode_0ce7(data, indent)
-    elif cmd == 0x0cf0:
-        data = decode_0cf0(data, indent)
-    elif cmd == 0x0cf1:
-        data = decode_0cf1(data, indent)
-    elif cmd == 0x0cf3:
-        data = decode_0cf3(data, indent)
+    decode_function = {
+        0x0012: decode_0012,
+        0x0013: decode_0013,
+        0x0016: decode_0016,
+        0x0ce4: decode_0ce4,
+        0x0ce5: decode_0ce5,
+        0x0ce7: decode_0ce7,
+        0x0cf0: decode_0cf0,
+        0x0cf1: decode_0cf1,
+        0x0cf3: decode_0cf3,
+    }
+
+    if cmd in decode_function:
+        data = decode_function[cmd](data, indent)
     else:
         logging.debug('%scmd %04x(%02x:%02x) is unknown, length %d', indent, cmd, _1, _2, length)
         data = None
@@ -274,12 +263,12 @@ class x509cert:
 
     @staticmethod
     def decode_names(names):
-        ret = dict()
+        ret = {}
         for name in names.chosen:
             for attr in name:
-                type = attr['type'].dotted    # dotted-quad value (e.g. '2.5.4.10' = organization)
-                value = attr['value'].native  # literal string value (e.g. 'Bigcorp Inc.')
-                ret.setdefault(type, []).append(value)
+                type_dotted = attr['type'].dotted    # dotted-quad value (e.g. '2.5.4.10' = organization)
+                value_native = attr['value'].native  # literal string value (e.g. 'Bigcorp Inc.')
+                ret.setdefault(type_dotted, []).append(value_native)
         return ret
 
     def __init__(self, cert_file):
@@ -353,8 +342,8 @@ class tncc:
         self.cj.set_cookie(cookie)
 
     def parse_response(self):
-        # Read in key/token fields in HTTP response
-        response = dict()
+        # Read in key/token fields in HTTP responsedict
+        response = {}
         last_key = ''
         for line in self.r.readlines():
             line = line.strip().decode()
@@ -379,13 +368,14 @@ class tncc:
         objs = []
 
         class ParamHTMLParser(HTMLParser.HTMLParser):
-            def handle_starttag(self, tag, attrs):
+            @staticmethod
+            def handle_starttag(tag, attrs):
                 if tag.lower() == 'param':
                     for key, value in attrs:
                         if key.lower() == 'value':
                             # It's made up of a bunch of key=value pairs separated
                             # by semicolons
-                            d = dict()
+                            d = {}
                             for field in value.split(';'):
                                 field = field.strip()
                                 try:
@@ -499,10 +489,8 @@ class tncc:
             msg += '\npolicy:%s\nstatus:' % policy
             if 'Unsupported' in policy or 'Deny' in policy:
                 msg += 'NOTOK\nerror:Unknown error'
-            elif 'Required' in policy:
-                msg += 'OK\n'
             else:
-                # Default action
+                # Default action, including 'Required'
                 msg += 'OK\n'
 
         return encode_0ce7(msg.encode(), MSG_POLICY)
@@ -583,16 +571,17 @@ class tncc:
             for cert in self.avail_certs:
                 fail = False
                 for dn_name, dn_vals in req_dns.items():
-                    for name, val in dn_vals.items():
-                        try:
-                            if dn_name == 'IssuerDN':
-                                assert val in cert.issuer[name]
-                            else:
-                                logging.warning('Unknown DN type %s', str(dn_name))
-                                raise Exception()
-                        except Exception:
-                            fail = True
-                            break
+                    if dn_name == 'IssuerDN':
+                        for name, val in dn_vals.items():
+                            if (
+                                name not in cert.issuer
+                                or val not in cert.issuer[name]
+                            ):
+                                fail = True
+                                break
+                    else:
+                        logging.warning('Unknown DN type %s', str(dn_name))
+                        fail = True
                     if fail:
                         break
                 if not fail:
@@ -657,8 +646,8 @@ def fingerprint_checking_SSLSocket(_fingerprint):
     class SSLSocket(ssl.SSLSocket):
         fingerprint = _fingerprint
 
-        def do_handshake(self, *args, **kw):
-            res = super().do_handshake(*args, **kw)
+        def do_handshake(self):
+            res = super().do_handshake()
             der_bytes = self.getpeercert(True)
             cert = asn1crypto.x509.Certificate.load(der_bytes)
             pubkey = cert.public_key.dump()
@@ -691,10 +680,11 @@ if __name__ == "__main__":
             for iface in netifaces.interfaces():
                 try:
                     mac = netifaces.ifaddresses(iface)[netifaces.AF_LINK][0]['addr']
-                    assert mac != '00:00:00:00:00:00'
-                    mac_addrs.append(mac)
-                except Exception:
+                except (IndexError, KeyError):
                     pass
+                else:
+                    if mac != '00:00:00:00:00:00':
+                        mac_addrs.append(mac)
 
     hostname = os.environ.get('TNCC_HOSTNAME', socket.gethostname())
 

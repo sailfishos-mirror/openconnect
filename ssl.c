@@ -114,10 +114,11 @@ static int cancellable_connect(struct openconnect_info *vpninfo, int sockfd,
 		FD_SET(sockfd, &ex_set);
 #endif
 		cmd_fd_set(vpninfo, &rd_set, &maxfd);
-		if (select(maxfd + 1, &rd_set, &wr_set, &ex_set, NULL) < 0 &&
-		    errno != EINTR) {
-			vpn_perror(vpninfo, _("Failed select() for socket connect"));
-			return -EIO;
+		while (select(maxfd + 1, &rd_set, &wr_set, &ex_set, NULL) < 0) {
+			if (errno != EINTR) {
+				vpn_perror(vpninfo, _("Failed select() for socket connect"));
+				return -EIO;
+			}
 		}
 
 		if (is_cancel_pending(vpninfo, &rd_set)) {
@@ -154,6 +155,63 @@ static int cancellable_connect(struct openconnect_info *vpninfo, int sockfd,
 	}
 #endif
 	return err;
+}
+
+
+static inline int accept_pending(void)
+{
+#ifdef _WIN32
+	return WSAGetLastError() == WSAEWOULDBLOCK;
+#else
+	return errno == EAGAIN || errno == EWOULDBLOCK;
+#endif
+}
+
+int cancellable_accept(struct openconnect_info *vpninfo, int sockfd)
+{
+	fd_set wr_set, rd_set, ex_set;
+	int accept_fd, maxfd = sockfd;
+	char *errstr;
+
+	do {
+		accept_fd = accept(sockfd, NULL, NULL);
+		if (accept_fd >= 0)
+			return accept_fd;
+
+		if (!accept_pending())
+			break;
+
+		FD_ZERO(&wr_set);
+		FD_ZERO(&rd_set);
+		FD_ZERO(&ex_set);
+		FD_SET(sockfd, &rd_set);
+
+		cmd_fd_set(vpninfo, &rd_set, &maxfd);
+		while (select(maxfd + 1, &rd_set, &wr_set, &ex_set, NULL) < 0) {
+			if (errno != EINTR) {
+				vpn_perror(vpninfo, _("Failed select() for socket accept"));
+				return -EIO;
+			}
+		}
+
+		if (is_cancel_pending(vpninfo, &rd_set)) {
+			vpn_progress(vpninfo, PRG_ERR, _("Socket accept cancelled\n"));
+			return -EINTR;
+		}
+	} while (!FD_ISSET(sockfd, &ex_set) && !vpninfo->got_pause_cmd);
+
+#ifdef _WIN32
+	errstr = openconnect__win32_strerror(WSAGetLastError());
+#else
+	errstr = strerror(errno);
+#endif
+	vpn_progress(vpninfo, PRG_ERR,
+		     _("Failed to accept local connection: %s\n"),
+		     errstr);
+#ifdef _WIN32
+	free(errstr);
+#endif
+	return -1;
 }
 
 /* checks whether the provided string is an IP or a hostname.
@@ -343,13 +401,21 @@ int connect_https_socket(struct openconnect_info *vpninfo)
 			err = getaddrinfo(hostname, port, &hints, &result);
 
 		if (err) {
+#ifdef _WIN32
+			char *errstr = openconnect__win32_strerror(WSAGetLastError());
+#else
+			const char *errstr = gai_strerror(err);
+#endif
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("getaddrinfo failed for host '%s': %s\n"),
-				     hostname, gai_strerror(err));
+				     hostname, errstr);
+#ifdef _WIN32
+			free(errstr);
+#endif
 			if (hints.ai_flags & AI_NUMERICHOST)
 				free(hostname);
 			ssl_sock = -EINVAL;
-			/* If we were just retrying for dynamic DNS, reconnct using
+			/* If we were just retrying for dynamic DNS, reconnect using
 			   the previously-known IP address */
 			if (vpninfo->peer_addr) {
 				vpn_progress(vpninfo, PRG_ERR,
@@ -465,7 +531,7 @@ int connect_https_socket(struct openconnect_info *vpninfo)
 				vpn_progress(vpninfo, PRG_TRACE,
 					     _("Forgetting non-functional previous peer address\n"));
 				free(vpninfo->peer_addr);
-				vpninfo->peer_addr = 0;
+				vpninfo->peer_addr = NULL;
 				vpninfo->peer_addrlen = 0;
 				free(vpninfo->ip_info.gateway_addr);
 				vpninfo->ip_info.gateway_addr = NULL;
@@ -816,6 +882,7 @@ void check_cmd_fd(struct openconnect_info *vpninfo, fd_set *fds)
 		return;
 	if (vpninfo->cmd_fd_write == -1) {
 		/* legacy openconnect_set_cancel_fd() users */
+		vpn_progress(vpninfo, PRG_TRACE, _("Got cancel on legacy fd\n"));
 		vpninfo->got_cancel_cmd = 1;
 		return;
 	}
@@ -830,10 +897,12 @@ void check_cmd_fd(struct openconnect_info *vpninfo, fd_set *fds)
 	switch (cmd) {
 	case OC_CMD_CANCEL:
 	case OC_CMD_DETACH:
+		vpn_progress(vpninfo, PRG_TRACE, _("Got cancel command\n"));
 		vpninfo->got_cancel_cmd = 1;
 		vpninfo->cancel_type = cmd;
 		break;
 	case OC_CMD_PAUSE:
+		vpn_progress(vpninfo, PRG_TRACE, _("Got pause command\n"));
 		vpninfo->got_pause_cmd = 1;
 		break;
 	case OC_CMD_STATS:
@@ -867,9 +936,12 @@ void poll_cmd_fd(struct openconnect_info *vpninfo, int timeout)
 
 		FD_ZERO(&rd_set);
 		cmd_fd_set(vpninfo, &rd_set, &maxfd);
-		if (select(maxfd + 1, &rd_set, NULL, NULL, &tv) < 0 &&
-		    errno != EINTR) {
+		if (select(maxfd + 1, &rd_set, NULL, NULL, &tv) < 0) {
+			if (errno == EINTR)
+				continue;
+
 			vpn_perror(vpninfo, _("Failed select() for command socket"));
+			return;
 		}
 		if (FD_ISSET(vpninfo->cmd_fd, &rd_set)) {
 			vpninfo->need_poll_cmd_fd = 1; /* Until it's *empty */
@@ -1204,7 +1276,7 @@ int cancellable_gets(struct openconnect_info *vpninfo, int fd,
 }
 
 int cancellable_send(struct openconnect_info *vpninfo, int fd,
-		     char *buf, size_t len)
+		     const char *buf, size_t len)
 {
 	size_t count;
 
@@ -1221,10 +1293,11 @@ int cancellable_send(struct openconnect_info *vpninfo, int fd,
 		FD_SET(fd, &wr_set);
 		cmd_fd_set(vpninfo, &rd_set, &maxfd);
 
-		if (select(maxfd + 1, &rd_set, &wr_set, NULL, NULL) < 0 &&
-		    errno != EINTR) {
-			vpn_perror(vpninfo, _("Failed select() for socket send"));
-			return -EIO;
+		while (select(maxfd + 1, &rd_set, &wr_set, NULL, NULL) < 0) {
+			if (errno != EINTR) {
+				vpn_perror(vpninfo, _("Failed select() for socket send"));
+				return -EIO;
+			}
 		}
 
 		if (is_cancel_pending(vpninfo, &rd_set))
@@ -1261,10 +1334,11 @@ int cancellable_recv(struct openconnect_info *vpninfo, int fd,
 		FD_SET(fd, &rd_set);
 		cmd_fd_set(vpninfo, &rd_set, &maxfd);
 
-		if (select(maxfd + 1, &rd_set, NULL, NULL, NULL) < 0 &&
-		    errno != EINTR) {
-			vpn_perror(vpninfo, _("Failed select() for socket recv"));
-			return -EIO;
+		if (select(maxfd + 1, &rd_set, NULL, NULL, NULL) < 0) {
+			if (errno != EINTR) {
+				vpn_perror(vpninfo, _("Failed select() for socket recv"));
+				return -EIO;
+			}
 		}
 
 		if (is_cancel_pending(vpninfo, &rd_set))

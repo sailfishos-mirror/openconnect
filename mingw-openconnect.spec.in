@@ -13,7 +13,7 @@
 Name:		mingw-openconnect
 Version:	%{tagver}%{?snapver}
 Release:	0%{?dist}
-Summary:	Open client for SSL VPNs including Cisco AnyConnect VPN, Juniper Network Connect/Pulse, PAN GlobalProtect, Fortinet, etc.
+Summary:	Open multi-protocol SSL VPN client
 
 License:	LGPLv2
 URL:		https://www.infradead.org/openconnect.html
@@ -54,6 +54,7 @@ BuildRequires:  mingw32-nsis
 
 BuildRequires:  pkgconfig automake autoconf libtool
 BuildRequires:  gettext-devel
+BuildRequires:  jq
 
 %description
 The OpenConnect multiprotocol VPN client library, cross-compiled for MinGW.
@@ -111,8 +112,8 @@ fi
 %install
 %mingw_make install DESTDIR=$RPM_BUILD_ROOT
 
-install -m 0644 build_win32/openconnect-installer.exe $RPM_BUILD_ROOT/%{mingw32_bindir}/openconnect-installer-%{version}-%{release}.exe
-install -m 0644 build_win64/openconnect-installer.exe $RPM_BUILD_ROOT/%{mingw64_bindir}/openconnect-installer-%{version}-%{release}.exe
+install -m 0644 build_win32/openconnect-installer-MinGW32-GnuTLS-*.exe $RPM_BUILD_ROOT/%{mingw32_bindir}/openconnect-installer-MinGW32-GnuTLS-%{version}-%{release}.exe
+install -m 0644 build_win64/openconnect-installer-MinGW64-GnuTLS-*.exe $RPM_BUILD_ROOT/%{mingw64_bindir}/openconnect-installer-MinGW64-GnuTLS-%{version}-%{release}.exe
 
 rm -f $RPM_BUILD_ROOT/%{mingw32_libdir}/libopenconnect.la
 rm -rf $RPM_BUILD_ROOT/%{mingw32_libexecdir}/openconnect
@@ -134,7 +135,7 @@ rm -rf $RPM_BUILD_ROOT/%{mingw64_datadir}/bash-completion
 %files -n mingw32-openconnect -f mingw32-openconnect.lang
 %license COPYING.LGPL
 %{mingw32_bindir}/libopenconnect*.dll
-%{mingw32_bindir}/openconnect.exe
+%{mingw32_bindir}/*.exe
 %{mingw32_includedir}/openconnect.h
 %{mingw32_libdir}/libopenconnect*.dll.a
 %{mingw32_libdir}/pkgconfig/openconnect.pc
@@ -146,7 +147,7 @@ rm -rf $RPM_BUILD_ROOT/%{mingw64_datadir}/bash-completion
 %files -n mingw64-openconnect -f mingw64-openconnect.lang
 %license COPYING.LGPL
 %{mingw64_bindir}/libopenconnect*.dll
-%{mingw64_bindir}/openconnect.exe
+%{mingw64_bindir}/*.exe
 %{mingw64_includedir}/openconnect.h
 %{mingw64_libdir}/libopenconnect*.dll.a
 %{mingw64_libdir}/pkgconfig/openconnect.pc

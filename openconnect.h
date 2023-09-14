@@ -33,16 +33,26 @@ extern "C" {
 #endif
 
 #define OPENCONNECT_API_VERSION_MAJOR 5
-#define OPENCONNECT_API_VERSION_MINOR 7
+#define OPENCONNECT_API_VERSION_MINOR 9
 
 /*
- * API version 5.7:
+ * API version 5.9 (v9.12; 2023-05-20):
+ *  - Add openconnect_set_sni()
+ *
+ * API version 5.8 (v9.00; 2022-04-29):
+ *  - Add openconnect_set_useragent()
+ *  - Add openconnect_set_external_browser_callback()
+ *  - Add openconnect_set_mca_cert() and openconnect_set_mca_key_password()
+ *
+ * API version 5.7 (v8.20; 2022-02-20):
  *  - Add openconnect_get_connect_url()
  *  - Add openconnect_set_cookie()
  *  - Add openconnect_set_allow_insecure_crypto()
  *  - Add openconnect_get_auth_expiration()
  *  - Add openconnect_disable_dtls()
  *  - Make openconnect_disable_ipv6() return int
+ *  - Add openconnect_set_webview_callback()
+ *  - Add openconnect_webview_load_changed()
  *
  * API version 5.6 (v8.06; 2020-03-31):
  *  - Add openconnect_set_trojan_interval()
@@ -195,6 +205,7 @@ extern "C" {
 #define OC_PROTO_AUTH_STOKEN	(1<<4)
 #define OC_PROTO_PERIODIC_TROJAN	(1<<5)
 #define OC_PROTO_HIDDEN	(1<<6)
+#define OC_PROTO_AUTH_MCA	(1<<7)
 
 struct oc_vpn_proto {
 	const char *name;
@@ -212,6 +223,8 @@ struct oc_vpn_proto {
 #define OC_FORM_OPT_SELECT	3
 #define OC_FORM_OPT_HIDDEN	4
 #define OC_FORM_OPT_TOKEN	5
+#define OC_FORM_OPT_SSO_TOKEN	6
+#define OC_FORM_OPT_SSO_USER	7
 
 #define OC_FORM_RESULT_ERR		-1
 #define OC_FORM_RESULT_OK		0
@@ -322,6 +335,17 @@ struct oc_cert {
 	int der_len;
 	unsigned char *der_data;
 	void *reserved;
+};
+
+/* Used by openconnect_webview_load_changed() to return data to OC.
+ * The arrays must contain an even number of const strings, with names and
+ * values, and a NULL to terminate. E.g.:
+ * name0, val0, name1, val1, NULL
+ */
+struct oc_webview_result {
+	const char *uri;
+	const char **cookies;
+	const char **headers;
 };
 
 /****************************************************************************/
@@ -437,6 +461,14 @@ int openconnect_set_proxy_auth(struct openconnect_info *vpninfo,
 			       const char *methods);
 int openconnect_set_http_proxy(struct openconnect_info *vpninfo,
 			       const char *proxy);
+
+/* Passing a useragent string to openconnect_vpninfo_new() will still
+ * append the OpenConnect version number. This function allows the
+ * full string to be set, for those cases where a VPN server might
+ * require an *exact* match. */
+int openconnect_set_useragent(struct openconnect_info *vpninfo,
+			      const char *useragent);
+
 int openconnect_passphrase_from_fsid(struct openconnect_info *vpninfo);
 int openconnect_obtain_cookie(struct openconnect_info *vpninfo);
 int openconnect_init_ssl(void);
@@ -546,6 +578,7 @@ int openconnect_set_hostname(struct openconnect_info *, const char *);
 char *openconnect_get_urlpath(struct openconnect_info *);
 int openconnect_set_urlpath(struct openconnect_info *, const char *);
 int openconnect_set_localname(struct openconnect_info *, const char *);
+int openconnect_set_sni(struct openconnect_info *, const char *);
 
 /* Some software tokens, such as HOTP tokens, include a counter which
  * needs to be stored in persistent storage.
@@ -607,6 +640,14 @@ int openconnect_set_mobile_info(struct openconnect_info *vpninfo,
 int openconnect_set_client_cert(struct openconnect_info *, const char *cert,
 				const char *sslkey);
 int openconnect_set_key_password(struct openconnect_info *vpninfo, const char *pass);
+/**
+ * Multiple certificate authentication (MCA): the client cert _and_ the
+ * mca_cert are used for authentication. The mca_cert is used to sign a
+ * challenge sent by the server.
+ */
+int openconnect_set_mca_cert(struct openconnect_info *, const char *cert,
+			     const char *key);
+int openconnect_set_mca_key_password(struct openconnect_info *vpninfo, const char *pass);
 const char *openconnect_get_ifname(struct openconnect_info *);
 void openconnect_set_reqmtu(struct openconnect_info *, int reqmtu);
 void openconnect_set_dpd(struct openconnect_info *, int min_seconds);
@@ -731,6 +772,19 @@ struct openconnect_info *openconnect_vpninfo_new(const char *useragent,
 						 openconnect_progress_vfn,
 						 void *privdata);
 void openconnect_vpninfo_free(struct openconnect_info *vpninfo);
+
+typedef int (*openconnect_open_webview_vfn) (struct openconnect_info *,
+					     const char *uri,
+					     void *privdata);
+
+void openconnect_set_webview_callback(struct openconnect_info *vpninfo,
+				      openconnect_open_webview_vfn);
+
+int openconnect_webview_load_changed(struct openconnect_info *vpninfo,
+                                     const struct oc_webview_result *result);
+
+void openconnect_set_external_browser_callback(struct openconnect_info *vpninfo,
+					       openconnect_open_webview_vfn);
 
 /* Callback to allow binding a newly created socket's file descriptor to
    a specific interface, e.g. with SO_BINDTODEVICE. This tells the kernel

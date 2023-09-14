@@ -3,7 +3,8 @@
 # These values may need to be extracted from the official HIP report, if made-up values are not accepted.
 PLATFORM_VERSION="4.3"
 PLATFORM_NAME="Android-x86"
-HOSTID="deadbeef-dead-beef-dead-beefdeadbeef"
+HOST_ID="deadbeef-dead-beef-dead-beefdeadbeef"
+if [ -z "$APP_VERSION" ]; then APP_VERSION=4.0.2-19; fi
 
 # Read command line arguments into variables
 COOKIE=
@@ -41,13 +42,13 @@ echo "	<md5-sum>$MD5</md5-sum>"
 echo "	<user-name>$USER</user-name>"
 echo "	<domain>$DOMAIN</domain>"
 echo "	<host-name>$COMPUTER</host-name>"
-echo "	<host-id>$HOSTID</host-id>"
+echo "	<host-id>$HOST_ID</host-id>"
 echo "	<ip-address>$IP</ip-address>"
 echo "	<ipv6-address>$IPV6</ipv6-address>"
 echo "	<generate-time>$NOW</generate-time>"
 echo '	<categories>'
 echo '		<entry name="host-info">'
-echo '			<client-version>4.0.2-19</client-version>'
+echo '			<client-version>$APP_VERSION</client-version>'
 echo "			<os>$PLATFORM_NAME $PLATFORM_VERSION</os>"
 echo '			<os-vendor>Google</os-vendor>'
 echo "			<domain>$DOMAIN.internal</domain>"

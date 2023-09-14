@@ -27,6 +27,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/mman.h>
 
 #include <ctype.h>
 #include <errno.h>
@@ -89,9 +90,9 @@ static int setup_vring(struct openconnect_info *vpninfo, int idx)
 
 	struct vhost_vring_addr va = { };
 	va.index = idx;
-	va.desc_user_addr = (uint64_t)vring->desc;
-	va.avail_user_addr = (uint64_t)vring->avail;
-	va.used_user_addr  = (uint64_t)vring->used;
+	va.desc_user_addr = (unsigned long)vring->desc;
+	va.avail_user_addr = (unsigned long)vring->avail;
+	va.used_user_addr  = (unsigned long)vring->used;
 	if (ioctl(vpninfo->vhost_fd, VHOST_SET_VRING_ADDR, &va) < 0) {
 		ret = -errno;
 		vpn_progress(vpninfo, PRG_ERR, _("Failed to set vring #%d base: %s\n"),
@@ -125,6 +126,113 @@ static int setup_vring(struct openconnect_info *vpninfo, int idx)
 		return ret;
 	}
 
+	return 0;
+}
+
+/*
+ * This is awful. The kernel doesn't let us just ask for a 1:1 mapping of
+ * our virtual address space; we have to *know* the minimum and maximum
+ * addresses. We can't test it directly with VHOST_SET_MEM_TABLE because
+ * that actually succeeds, and the failure only occurs later when we try
+ * to use a buffer at an address that *is* valid, but our memory table
+ * *could* point to addresses that aren't. Ewww.
+ *
+ * So... attempt to work out what TASK_SIZE is for the kernel we happen
+ * to be running on right now...
+ */
+
+static int testaddr(unsigned long addr)
+{
+	void *res = mmap((void *)addr, getpagesize(), PROT_NONE,
+			 MAP_FIXED|MAP_ANONYMOUS, -1, 0);
+	if (res == MAP_FAILED) {
+		if (errno == EEXIST || errno == EINVAL)
+			return 1;
+
+		/* We get ENOMEM for a bad virtual address */
+		return 0;
+	}
+	/* It shouldn't actually succeed without either MAP_SHARED or
+	 * MAP_PRIVATE in the flags, but just in case... */
+	munmap((void *)addr, getpagesize());
+	return 1;
+}
+
+static int find_vmem_range(struct openconnect_info *vpninfo,
+			   struct vhost_memory *vmem)
+{
+	const unsigned long page_size = getpagesize();
+	unsigned long top;
+	unsigned long bottom;
+
+
+	top = -page_size;
+
+	if (testaddr(top)) {
+		vmem->regions[0].memory_size = top;
+		goto out;
+	}
+
+	/* 'top' is the lowest address known *not* to work */
+	bottom = top;
+	while (1) {
+		bottom >>= 1;
+		bottom &= ~(page_size - 1);
+		if (!bottom) {
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("Failed to find virtual task size; search reached zero"));
+			return -EINVAL;
+		}
+
+		if (testaddr(bottom))
+			break;
+		top = bottom;
+	}
+
+	/* It's often a page or two below the boundary */
+	top -= page_size;
+	if (testaddr(top)) {
+		vmem->regions[0].memory_size = top;
+		goto out;
+	}
+	top -= page_size;
+	if (testaddr(top)) {
+		vmem->regions[0].memory_size = top;
+		goto out;
+	}
+
+	/* Now, bottom is the highest address known to work,
+	   and we must search between it and 'top' which is
+	   the lowest address known not to. */
+	while (bottom + page_size != top) {
+		unsigned long test = bottom + (top - bottom) / 2;
+		test &= ~(page_size - 1);
+
+		if (testaddr(test)) {
+			bottom = test;
+			continue;
+		}
+		test -= page_size;
+		if (testaddr(test)) {
+			vmem->regions[0].memory_size = test;
+			goto out;
+		}
+
+		test -= page_size;
+		if (testaddr(test)) {
+			vmem->regions[0].memory_size = test;
+			goto out;
+		}
+		top = test;
+	}
+	vmem->regions[0].memory_size = bottom;
+
+ out:
+	vmem->regions[0].guest_phys_addr = page_size;
+	vmem->regions[0].userspace_addr = page_size;
+	vpn_progress(vpninfo, PRG_DEBUG, _("Detected virtual address range 0x%lx-0x%lx\n"),
+		     page_size,
+		     (unsigned long)(page_size + vmem->regions[0].memory_size));
 	return 0;
 }
 
@@ -206,13 +314,11 @@ int setup_vhost(struct openconnect_info *vpninfo, int tun_fd)
 
 	memset(vmem, 0, sizeof(*vmem) + sizeof(vmem->regions[0]));
 	vmem->nregions = 1;
-#ifdef __x86_64__
-	vmem->regions[0].guest_phys_addr = 4096;
-	vmem->regions[0].memory_size = 0x7fffffffe000; /* Why doesn't it allow 0x7fffffff000? */
-	vmem->regions[0].userspace_addr = 4096;
-#else
-#error Need magic vhost numbers for this platform
-#endif
+
+	ret = find_vmem_range(vpninfo, vmem);
+	if (ret)
+		goto err;
+
 	if (ioctl(vpninfo->vhost_fd, VHOST_SET_MEM_TABLE, vmem) < 0) {
 		ret = -errno;
 		vpn_progress(vpninfo, PRG_DEBUG, _("Failed to set vhost memory map: %s\n"),
@@ -340,7 +446,7 @@ static void dump_vring(struct openconnect_info *vpninfo, struct oc_vring *ring)
 	for (int i = 0; i < vpninfo->vhost_ring_size + 1; i++)
 		vpn_progress(vpninfo, PRG_ERR,
 			     "%d %p %x %x\n", i,
-			     (void *)vio64(ring->desc[i].addr),
+			     (void *)(unsigned long)vio64(ring->desc[i].addr),
 			     vio16(ring->avail->ring[i]),
 			     vio32(ring->used->ring[i].id));
 }
@@ -406,6 +512,9 @@ static inline int process_ring(struct openconnect_info *vpninfo, int tx, uint64_
 					     (void *) &this->virtio.h,
 					     this->len + sizeof(this->virtio.h));
 
+			vpninfo->stats.tx_pkts++;
+			vpninfo->stats.tx_bytes += this->len;
+
 			/* If the incoming queue fill up, pretend we can't see any more
 			 * by contracting our idea of 'used_idx' back to *this* one. */
 			if (queue_packet(&vpninfo->outgoing_queue, this) >= vpninfo->max_qlen)
@@ -457,7 +566,7 @@ static inline int process_ring(struct openconnect_info *vpninfo, int tx, uint64_
 
 		if (!tx)
 			ring->desc[desc].flags = vio16(VRING_DESC_F_WRITE);
-		ring->desc[desc].addr = vio64((uint64_t)this + pkt_offset(virtio.h));
+		ring->desc[desc].addr = vio64((unsigned long)this + pkt_offset(virtio.h));
 		ring->desc[desc].len = vio32(this->len + sizeof(this->virtio.h));
 		barrier();
 

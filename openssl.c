@@ -31,6 +31,9 @@
 #include <openssl/bio.h>
 #include <openssl/ui.h>
 #include <openssl/rsa.h>
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+#include <openssl/provider.h>
+#endif
 
 #include <sys/types.h>
 
@@ -38,7 +41,7 @@
 #include <string.h>
 #include <ctype.h>
 
-#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 #define X509_up_ref(x) CRYPTO_add(&(x)->references, 1, CRYPTO_LOCK_X509)
 #define X509_get0_notAfter(x) X509_get_notAfter(x)
 #define EVP_MD_CTX_new EVP_MD_CTX_create
@@ -49,6 +52,8 @@
 typedef int (*X509_STORE_CTX_get_issuer_fn)(X509 **issuer,
 					    X509_STORE_CTX *ctx, X509 *x);
 #define X509_STORE_CTX_get_get_issuer(ctx) ((ctx)->get_issuer)
+#define OpenSSL_version SSLeay_version
+#define OPENSSL_VERSION SSLEAY_VERSION
 #endif
 
 static char tls_library_version[32] = "";
@@ -56,7 +61,9 @@ static char tls_library_version[32] = "";
 const char *openconnect_get_tls_library_version(void)
 {
 	if (!*tls_library_version) {
-		strncpy(tls_library_version, SSLeay_version(SSLEAY_VERSION), sizeof(tls_library_version));
+		strncpy(tls_library_version,
+			OpenSSL_version(OPENSSL_VERSION),
+			sizeof(tls_library_version));
 		tls_library_version[sizeof(tls_library_version)-1]='\0';
 	}
 	return tls_library_version;
@@ -64,6 +71,11 @@ const char *openconnect_get_tls_library_version(void)
 
 int can_enable_insecure_crypto(void)
 {
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+	if (OSSL_PROVIDER_load(NULL, "legacy") == NULL ||
+	    OSSL_PROVIDER_load(NULL, "default") == NULL)
+		return -ENOENT;
+#endif
 	if (EVP_des_ede3_cbc() == NULL ||
 	    EVP_rc4() == NULL)
 		return -ENOENT;
@@ -170,7 +182,13 @@ static int _openconnect_openssl_write(SSL *ssl, int fd, struct openconnect_info 
 				return -EIO;
 			}
 			cmd_fd_set(vpninfo, &rd_set, &maxfd);
-			select(maxfd + 1, &rd_set, &wr_set, NULL, NULL);
+			while (select(maxfd + 1, &rd_set, &wr_set, NULL, NULL) < 0) {
+				if (errno != EINTR) {
+					vpn_perror(vpninfo, _("Failed select() for TLS/DTLS"));
+					return -EIO;
+				}
+			}
+
 			if (is_cancel_pending(vpninfo, &rd_set)) {
 				vpn_progress(vpninfo, PRG_ERR, _("TLS/DTLS write cancelled\n"));
 				return -EINTR;
@@ -220,7 +238,12 @@ static int _openconnect_openssl_read(SSL *ssl, int fd, struct openconnect_info *
 			return -EIO;
 		}
 		cmd_fd_set(vpninfo, &rd_set, &maxfd);
-		ret = select(maxfd + 1, &rd_set, &wr_set, NULL, tv);
+		while ((ret = select(maxfd + 1, &rd_set, &wr_set, NULL, tv)) < 0) {
+			if (errno != EINTR) {
+				vpn_perror(vpninfo, _("Failed select() for TLS/DTLS"));
+				return -EIO;
+			}
+		}
 		if (is_cancel_pending(vpninfo, &rd_set)) {
 			vpn_progress(vpninfo, PRG_ERR, _("TLS/DTLS read cancelled\n"));
 			return -EINTR;
@@ -287,7 +310,12 @@ static int openconnect_openssl_gets(struct openconnect_info *vpninfo, char *buf,
 				break;
 			}
 			cmd_fd_set(vpninfo, &rd_set, &maxfd);
-			select(maxfd + 1, &rd_set, &wr_set, NULL, NULL);
+			while (select(maxfd + 1, &rd_set, &wr_set, NULL, NULL) < 0) {
+				if (errno != EINTR) {
+					vpn_perror(vpninfo, _("Failed select() for TLS/DTLS"));
+					return -EIO;
+				}
+			}
 			if (is_cancel_pending(vpninfo, &rd_set)) {
 				vpn_progress(vpninfo, PRG_ERR, _("TLS/DTLS read cancelled\n"));
 				ret = -EINTR;
@@ -525,15 +553,25 @@ struct ossl_cert_info {
 	const char *certs_from;
 };
 
-static void free_ossl_cert_info(struct ossl_cert_info *oci)
+void unload_certificate(struct cert_info *certinfo, int finalize)
 {
-	if (oci->key)
-		EVP_PKEY_free(oci->key);
-	if (oci->cert)
-		X509_free(oci->cert);
-	if (oci->extra_certs)
-		sk_X509_pop_free(oci->extra_certs, X509_free);
-	memset(oci, 0, sizeof(*oci));
+	(void) finalize;
+
+	if (!certinfo)
+		return;
+
+	if (certinfo->priv_info) {
+		struct ossl_cert_info *oci = certinfo->priv_info;
+
+		certinfo->priv_info = NULL;
+		if (oci->key)
+			EVP_PKEY_free(oci->key);
+		if (oci->cert)
+			X509_free(oci->cert);
+		if (oci->extra_certs)
+			sk_X509_pop_free(oci->extra_certs, X509_free);
+		free(oci);
+	}
 }
 
 static int install_ssl_ctx_certs(struct openconnect_info *vpninfo, struct ossl_cert_info *oci)
@@ -674,7 +712,7 @@ static int load_pkcs12_certificate(struct openconnect_info *vpninfo, struct cert
 	PKCS12_free(p12);
 
 	if (ret)
-		free_ossl_cert_info(oci);
+		unload_certificate(certinfo, 1);
 
 	return ret;
 }
@@ -905,14 +943,12 @@ static int is_pem_password_error(struct openconnect_info *vpninfo, struct cert_i
 	return 0;
 }
 
-static int load_certificate(struct openconnect_info *vpninfo, struct cert_info *certinfo,
+static int xload_certificate(struct openconnect_info *vpninfo, struct cert_info *certinfo,
 			    struct ossl_cert_info *oci)
 {
 	FILE *f;
 	char buf[256];
 	int ret;
-
-	certinfo->vpninfo = vpninfo;
 
 	if (!strncmp(certinfo->cert, "pkcs11:", 7)) {
 		int ret = load_pkcs11_certificate(vpninfo, certinfo, &oci->cert);
@@ -1124,6 +1160,29 @@ static int load_certificate(struct openconnect_info *vpninfo, struct cert_info *
 	return -EINVAL;
 }
 
+int load_certificate(struct openconnect_info *vpninfo, struct cert_info *certinfo, int flags)
+{
+	struct ossl_cert_info *oci;
+	int ret;
+
+	(void) flags;
+
+	certinfo->priv_info = oci = calloc(1, sizeof(*oci));
+	if (!oci) {
+		ret = -ENOMEM;
+		goto done;
+	}
+	certinfo->vpninfo = vpninfo;
+
+	ret = xload_certificate(vpninfo, certinfo, oci);
+
+done:
+	if (ret)
+		unload_certificate(certinfo, 1);
+
+	return ret;
+}
+
 static int get_cert_fingerprint(struct openconnect_info *vpninfo,
 				X509 *cert, const EVP_MD *type,
 				char *buf)
@@ -1174,7 +1233,7 @@ static int set_peer_cert_hash(struct openconnect_info *vpninfo)
 	return 0;
 }
 
-#if OPENSSL_VERSION_NUMBER < 0x10002000L || defined(LIBRESSL_VERSION_NUMBER)
+#if OPENSSL_VERSION_NUMBER < 0x10002000L
 static int match_hostname_elem(const char *hostname, int helem_len,
 			       const char *match, int melem_len)
 {
@@ -1243,8 +1302,8 @@ static int match_hostname(const char *hostname, const char *match)
 }
 
 /* cf. RFC2818 and RFC2459 */
-static int match_cert_hostname(struct openconnect_info *vpninfo, X509 *peer_cert,
-			       const unsigned char *ipaddr, int ipaddrlen)
+static int match_cert_hostname_or_ip(struct openconnect_info *vpninfo, X509 *peer_cert,
+				     char *hostname)
 {
 	STACK_OF(GENERAL_NAME) *altnames;
 	X509_NAME *subjname;
@@ -1252,6 +1311,21 @@ static int match_cert_hostname(struct openconnect_info *vpninfo, X509 *peer_cert
 	char *subjstr = NULL;
 	int i, altdns = 0;
 	int ret;
+
+	unsigned char ipaddr[sizeof(struct in6_addr)];
+	int ipaddrlen = 0;
+	if (inet_pton(AF_INET, hostname, ipaddr) > 0)
+		ipaddrlen = 4;
+	else if (inet_pton(AF_INET6, hostname, ipaddr) > 0)
+		ipaddrlen = 16;
+	else if (hostname[0] == '[' &&
+		 hostname[strlen(hostname)-1] == ']') {
+		char *p = &hostname[strlen(hostname)-1];
+		*p = 0;
+		if (inet_pton(AF_INET6, hostname + 1, ipaddr) > 0)
+			ipaddrlen = 16;
+		*p = ']';
+	}
 
 	altnames = X509_get_ext_d2i(peer_cert, NID_subject_alt_name,
 				    NULL, NULL);
@@ -1271,7 +1345,7 @@ static int match_cert_hostname(struct openconnect_info *vpninfo, X509 *peer_cert
 			if (strlen(str) != len)
 				continue;
 
-			if (!match_hostname(vpninfo->hostname, str)) {
+			if (!match_hostname(hostname, str)) {
 				vpn_progress(vpninfo, PRG_DEBUG,
 					     _("Matched DNS altname '%s'\n"),
 					     str);
@@ -1342,14 +1416,14 @@ static int match_cert_hostname(struct openconnect_info *vpninfo, X509 *peer_cert
 
 			/* Leave url_host as it was so that it can be freed */
 			url_host2 = url_host;
-			if (ipaddrlen == 16 && vpninfo->hostname[0] != '[' &&
+			if (ipaddrlen == 16 && hostname[0] != '[' &&
 			    url_host[0] == '[' && url_host[strlen(url_host)-1] == ']') {
 				/* Cope with https://[IPv6]/ when the hostname is bare IPv6 */
 				url_host[strlen(url_host)-1] = 0;
 				url_host2++;
 			}
 
-			if (strcasecmp(vpninfo->hostname, url_host2))
+			if (strcasecmp(hostname, url_host2))
 				goto no_uri_match;
 
 			if (url_path) {
@@ -1386,7 +1460,7 @@ static int match_cert_hostname(struct openconnect_info *vpninfo, X509 *peer_cert
 	if (altdns) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("No altname in peer cert matched '%s'\n"),
-			     vpninfo->hostname);
+			     hostname);
 		return -EINVAL;
 	}
 
@@ -1433,10 +1507,25 @@ static int match_cert_hostname(struct openconnect_info *vpninfo, X509 *peer_cert
 	return ret;
 }
 #else
-static int match_cert_hostname(struct openconnect_info *vpninfo, X509 *peer_cert,
-			       const unsigned char *ipaddr, int ipaddrlen)
+static int match_cert_hostname_or_ip(struct openconnect_info *vpninfo, X509 *peer_cert,
+				     char *hostname)
 {
 	char *matched = NULL;
+
+	unsigned char ipaddr[sizeof(struct in6_addr)];
+	int ipaddrlen = 0;
+	if (inet_pton(AF_INET, hostname, ipaddr) > 0)
+		ipaddrlen = 4;
+	else if (inet_pton(AF_INET6, hostname, ipaddr) > 0)
+		ipaddrlen = 16;
+	else if (hostname[0] == '[' &&
+		 hostname[strlen(hostname)-1] == ']') {
+		char *p = &hostname[strlen(hostname)-1];
+		*p = 0;
+		if (inet_pton(AF_INET6, hostname + 1, ipaddr) > 0)
+			ipaddrlen = 16;
+		*p = ']';
+	}
 
 	if (ipaddrlen && X509_check_ip(peer_cert, ipaddr, ipaddrlen, 0) == 1) {
 		if (vpninfo->verbose >= PRG_DEBUG) {
@@ -1457,7 +1546,7 @@ static int match_cert_hostname(struct openconnect_info *vpninfo, X509 *peer_cert
 		}
 		return 0;
 	}
-	if (X509_check_host(peer_cert, vpninfo->hostname, 0, 0, &matched) == 1) {
+	if (X509_check_host(peer_cert, hostname, 0, 0, &matched) == 1) {
 		vpn_progress(vpninfo, PRG_DEBUG,
 			     _("Matched peer certificate subject name '%s'\n"),
 			     matched);
@@ -1608,23 +1697,12 @@ static int ssl_app_verify_callback(X509_STORE_CTX *ctx, void *arg)
 	if (!X509_verify_cert(ctx)) {
 		err_string = X509_verify_cert_error_string(X509_STORE_CTX_get_error(ctx));
 	} else {
-		unsigned char addrbuf[sizeof(struct in6_addr)];
-		int addrlen = 0;
-
-		if (inet_pton(AF_INET, vpninfo->hostname, addrbuf) > 0)
-			addrlen = 4;
-		else if (inet_pton(AF_INET6, vpninfo->hostname, addrbuf) > 0)
-			addrlen = 16;
-		else if (vpninfo->hostname[0] == '[' &&
-			 vpninfo->hostname[strlen(vpninfo->hostname)-1] == ']') {
-			char *p = &vpninfo->hostname[strlen(vpninfo->hostname)-1];
-			*p = 0;
-			if (inet_pton(AF_INET6, vpninfo->hostname + 1, addrbuf) > 0)
-				addrlen = 16;
-			*p = ']';
-		}
-
-		if (match_cert_hostname(vpninfo, vpninfo->peer_cert, addrbuf, addrlen))
+		if (vpninfo->sni && vpninfo->sni[0]) {
+			if (match_cert_hostname_or_ip(vpninfo, vpninfo->peer_cert, vpninfo->sni))
+				err_string = _("certificate does not match SNI");
+			else
+				return 1;
+		} else if (match_cert_hostname_or_ip(vpninfo, vpninfo->peer_cert, vpninfo->hostname))
 			err_string = _("certificate does not match hostname");
 		else
 			return 1;
@@ -1651,7 +1729,7 @@ static int ssl_app_verify_callback(X509_STORE_CTX *ctx, void *arg)
 static int check_certificate_expiry(struct openconnect_info *vpninfo, struct cert_info *certinfo,
 				    struct ossl_cert_info *oci)
 {
-	method_const ASN1_TIME *notAfter;
+	const ASN1_TIME *notAfter;
 	const char *reason = NULL;
 	time_t t;
 	int i;
@@ -1698,11 +1776,13 @@ static int check_certificate_expiry(struct openconnect_info *vpninfo, struct cer
 
 static int load_primary_certificate(struct openconnect_info *vpninfo)
 {
-	struct ossl_cert_info oci = { };
+	struct cert_info *certinfo = &vpninfo->certinfo[0];
+	struct ossl_cert_info *oci;
 
-	int ret = load_certificate(vpninfo, &vpninfo->certinfo[0], &oci);
+	int ret = load_certificate(vpninfo, certinfo, 0);
+	oci = certinfo->priv_info;
 	if (!ret)
-		ret = install_ssl_ctx_certs(vpninfo, &oci);
+		ret = install_ssl_ctx_certs(vpninfo, oci);
 
 	if (!ret && !SSL_CTX_check_private_key(vpninfo->https_ctx)) {
 		vpn_progress(vpninfo, PRG_ERR,
@@ -1710,9 +1790,9 @@ static int load_primary_certificate(struct openconnect_info *vpninfo)
 		ret = -EINVAL;
 	}
 	if (!ret)
-		check_certificate_expiry(vpninfo, &vpninfo->certinfo[0], &oci);
+		check_certificate_expiry(vpninfo, &vpninfo->certinfo[0], oci);
 
-	free_ossl_cert_info(&oci);
+	unload_certificate(certinfo, 1);
 	return ret;
 }
 
@@ -1806,7 +1886,7 @@ int openconnect_open_https(struct openconnect_info *vpninfo)
 		return ssl_sock;
 
 	if (!vpninfo->https_ctx) {
-#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 		vpninfo->https_ctx = SSL_CTX_new(SSLv23_client_method());
 		if (vpninfo->https_ctx)
 			SSL_CTX_set_options(vpninfo->https_ctx, SSL_OP_NO_SSLv2|SSL_OP_NO_SSLv3);
@@ -1868,13 +1948,10 @@ int openconnect_open_https(struct openconnect_info *vpninfo)
 			struct oc_text_buf *buf = buf_alloc();
 			if (vpninfo->pfs)
 				buf_append(buf, "HIGH:!aNULL:!eNULL:-RSA");
+			else if (vpninfo->allow_insecure_crypto)
+				buf_append(buf, "ALL");
 			else
-				buf_append(buf, "DEFAULT");
-
-			if (vpninfo->allow_insecure_crypto)
-				buf_append(buf, ":+3DES:+RC4");
-			else
-				buf_append(buf, ":-3DES:-RC4");
+				buf_append(buf, "DEFAULT:-3DES:-RC4");
 
 			if (buf_error(buf)) {
 				vpn_progress(vpninfo, PRG_ERR,
@@ -1933,8 +2010,10 @@ int openconnect_open_https(struct openconnect_info *vpninfo)
 	 * 4fcdd66fff5fea0cfa1055c6680a76a4303f28a2
 	 * cd6bd5ffda616822b52104fee0c4c7d623fd4f53
 	 */
-#if OPENSSL_VERSION_NUMBER >= 0x10001070 && !defined(LIBRESSL_VERSION_NUMBER)
-	if (string_is_hostname(vpninfo->hostname))
+#if OPENSSL_VERSION_NUMBER >= 0x10001070L
+	if (vpninfo->sni)
+		SSL_set_tlsext_host_name(https_ssl, vpninfo->sni);
+	else if (string_is_hostname(vpninfo->hostname))
 		SSL_set_tlsext_host_name(https_ssl, vpninfo->hostname);
 #endif
 	SSL_set_verify(https_ssl, SSL_VERIFY_PEER, NULL);
@@ -2028,7 +2107,7 @@ int openconnect_init_ssl(void)
 	if (ret)
 		return ret;
 #endif
-#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 	SSL_library_init();
 	ERR_clear_error();
 	SSL_load_error_strings();
@@ -2247,3 +2326,432 @@ void destroy_eap_ttls(struct openconnect_info *vpninfo, void *ttls)
 	/* Leave the BIO_METH for now. It may get reused and we don't want to
 	 * have to call BIO_get_new_index() more times than is necessary */
 }
+
+#ifdef HAVE_HPKE_SUPPORT
+static int generate_strap_key(EC_KEY **key, char **pubkey,
+			      unsigned char *privder_in, int privderlen,
+			      unsigned char **pubder, int *pubderlen)
+{
+	EC_KEY *lkey;
+	struct oc_text_buf *buf = NULL;
+	unsigned char *der = NULL;
+	int len;
+
+	if (privder_in) {
+		lkey = d2i_ECPrivateKey(NULL, (const unsigned char **)&privder_in, privderlen);
+		if (!lkey)
+			return -EIO;
+	} else {
+		lkey = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
+		if (!lkey)
+			return -EIO;
+
+		if (!EC_KEY_generate_key(lkey)) {
+			EC_KEY_free(lkey);
+			return -EIO;
+		}
+	}
+
+	len = i2d_EC_PUBKEY(lkey, &der);
+	buf = buf_alloc();
+	buf_append_base64(buf, der, len, 0);
+	if (buf_error(buf)) {
+		EC_KEY_free(lkey);
+		free(der);
+		return buf_free(buf);
+	}
+
+	/* All done. There are no failure modes from here on, so
+	 * install the resulting key/pubkey/etc. where the caller
+	 * asked us to, freeing the previous ones if needed. */
+	EC_KEY_free(*key);
+	*key = lkey;
+
+	free(*pubkey);
+	*pubkey = buf->data;
+
+	/* If the caller wants the DER, give it to them */
+	if (pubder && pubderlen) {
+		*pubder = der;
+		*pubderlen = len;
+	} else {
+		free(der);
+	}
+
+	buf->data = NULL;
+	buf_free(buf);
+	return 0;
+}
+
+int generate_strap_keys(struct openconnect_info *vpninfo)
+{
+	int err;
+
+	err = generate_strap_key(&vpninfo->strap_key, &vpninfo->strap_pubkey,
+				 NULL, 0, NULL, NULL);
+	if (err) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Failed to generate STRAP key"));
+		openconnect_report_ssl_errors(vpninfo);
+		free_strap_keys(vpninfo);
+		return -EIO;
+	}
+
+	err = generate_strap_key(&vpninfo->strap_dh_key, &vpninfo->strap_dh_pubkey,
+				 NULL, 0, NULL, NULL);
+	if (err) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Failed to generate STRAP DH key\n"));
+		openconnect_report_ssl_errors(vpninfo);
+		free_strap_keys(vpninfo);
+		return -EIO;
+	}
+	return 0;
+}
+
+void free_strap_keys(struct openconnect_info *vpninfo)
+{
+	if (vpninfo->strap_key)
+		EC_KEY_free(vpninfo->strap_key);
+	if (vpninfo->strap_dh_key)
+		EC_KEY_free(vpninfo->strap_dh_key);
+
+	vpninfo->strap_key = vpninfo->strap_dh_key = NULL;
+}
+
+int ingest_strap_privkey(struct openconnect_info *vpninfo, unsigned char *der, int len)
+{
+	if (generate_strap_key(&vpninfo->strap_key,
+			       &vpninfo->strap_pubkey, der, len, NULL, 0)) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Failed to decode STRAP key\n"));
+		openconnect_report_ssl_errors(vpninfo);
+		return -EIO;
+	}
+	return 0;
+}
+
+void append_strap_privkey(struct openconnect_info *vpninfo,
+			  struct oc_text_buf *buf)
+{
+	unsigned char *der = NULL;
+	int derlen = i2d_ECPrivateKey(vpninfo->strap_key, &der);
+	if (derlen > 0)
+		buf_append_base64(buf, der, derlen, 0);
+}
+
+#include <openssl/kdf.h>
+
+int ecdh_compute_secp256r1(struct openconnect_info *vpninfo, const unsigned char *pubkey,
+			   int pubkey_len, unsigned char *secret)
+{
+	const EC_POINT *point;
+	EC_KEY *pkey;
+	int ret = 0;
+
+	if (!(pkey = d2i_EC_PUBKEY(NULL, &pubkey, pubkey_len)) ||
+	    !(point = EC_KEY_get0_public_key(pkey))) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Failed to decode server DH key\n"));
+		openconnect_report_ssl_errors(vpninfo);
+		ret = -EIO;
+		goto out;
+
+	}
+
+	/* Perform the DH secret derivation from our STRAP-DH key
+	 * and the one the server returned to us in the payload. */
+	if (ECDH_compute_key(secret, 32, point, vpninfo->strap_dh_key, NULL) <= 0) {
+		vpn_progress(vpninfo, PRG_ERR, _("Failed to compute DH secret\n"));
+		openconnect_report_ssl_errors(vpninfo);
+		ret = -EIO;
+	}
+ out:
+	EC_KEY_free(pkey);
+	return ret;
+}
+
+int hkdf_sha256_extract_expand(struct openconnect_info *vpninfo, unsigned char *buf,
+			       const unsigned char *info, int infolen)
+{
+	size_t buflen = 32;
+	int ret = 0;
+
+	/* Next, use HKDF to generate the actual key used for encryption. */
+	EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_HKDF, NULL);
+	if (!ctx || !EVP_PKEY_derive_init(ctx) ||
+	    !EVP_PKEY_CTX_set_hkdf_md(ctx, EVP_sha256()) ||
+	    !EVP_PKEY_CTX_set1_hkdf_key(ctx, buf, buflen) ||
+	    !EVP_PKEY_CTX_hkdf_mode(ctx, EVP_PKEY_HKDEF_MODE_EXTRACT_AND_EXPAND) ||
+	    !EVP_PKEY_CTX_add1_hkdf_info(ctx, info, infolen) ||
+	    EVP_PKEY_derive(ctx, buf, &buflen) != 1) {
+		vpn_progress(vpninfo, PRG_ERR, _("HKDF key derivation failed\n"));
+		openconnect_report_ssl_errors(vpninfo);
+		ret = -EINVAL;
+	}
+	EVP_PKEY_CTX_free(ctx);
+	return ret;
+}
+
+int aes_256_gcm_decrypt(struct openconnect_info *vpninfo, unsigned char *key,
+			unsigned char *data, int len,
+			unsigned char *iv, unsigned char *tag)
+{
+	/* Finally, we actually decrypt the sso-token */
+	EVP_CIPHER_CTX *cctx = EVP_CIPHER_CTX_new();
+	int ret = 0, i = 0;
+
+	if (!cctx ||
+	    !EVP_DecryptInit_ex(cctx, EVP_aes_256_gcm(), NULL, key, iv) ||
+	    !EVP_CIPHER_CTX_ctrl(cctx, EVP_CTRL_AEAD_SET_TAG, 12, tag) ||
+	    !EVP_DecryptUpdate(cctx, data, &len, data, len) ||
+	    !EVP_DecryptFinal(cctx, NULL, &i)) {
+		vpn_progress(vpninfo, PRG_ERR, _("SSO token decryption failed\n"));
+		openconnect_report_ssl_errors(vpninfo);
+		ret = -EINVAL;
+	}
+	EVP_CIPHER_CTX_free(cctx);
+	return ret;
+}
+
+void append_strap_verify(struct openconnect_info *vpninfo,
+			 struct oc_text_buf *buf, int rekey)
+{
+	unsigned char finished[64];
+	size_t flen = SSL_get_finished(vpninfo->https_ssl, finished, sizeof(finished));
+
+	if (flen > sizeof(finished)) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("SSL Finished message too large (%zd bytes)\n"), flen);
+		if (!buf_error(buf))
+			buf->error = -EIO;
+		return;
+	}
+
+	/* If we're rekeying, we need to sign the Verify header with the *old* key. */
+	EVP_PKEY *evpkey = EVP_PKEY_new();
+	if (!evpkey || EVP_PKEY_set1_EC_KEY(evpkey, vpninfo->strap_key) <= 0) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("STRAP signature failed\n"));
+	fail_errors:
+		openconnect_report_ssl_errors(vpninfo);
+	fail_pkey:
+		if (!buf_error(buf))
+			buf->error = -EIO;
+		EVP_PKEY_free(evpkey);
+		return;
+	}
+
+	unsigned char *pubkey_der = NULL;
+	int pubkey_derlen = 0;
+	if (rekey) {
+		if (generate_strap_key(&vpninfo->strap_key, &vpninfo->strap_pubkey,
+				       NULL, 0, &pubkey_der, &pubkey_derlen)) {
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("Failed to regenerate STRAP key\n"));
+			goto fail_errors;
+		}
+	} else {
+		pubkey_der = openconnect_base64_decode(&pubkey_derlen, vpninfo->strap_pubkey);
+		if (!pubkey_der) {
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("Failed to generate STRAP key DER\n"));
+			goto fail_pkey;
+		}
+	}
+
+	EVP_MD_CTX *mdctx = EVP_MD_CTX_new();
+	const EVP_MD *md = EVP_sha256(); /* We only support prime256v1 for now */
+
+	unsigned char signature_bin[128];
+	size_t siglen = sizeof(signature_bin);
+	int ok = (mdctx &&
+		  EVP_DigestSignInit(mdctx, NULL, md, NULL, evpkey) > 0 &&
+		  EVP_DigestSignUpdate(mdctx, finished, flen) > 0 &&
+		  EVP_DigestSignUpdate(mdctx, pubkey_der, pubkey_derlen) > 0 &&
+		  EVP_DigestSignFinal(mdctx, (void *)signature_bin, &siglen) > 0);
+
+	EVP_MD_CTX_free(mdctx);
+	EVP_PKEY_free(evpkey);
+	free(pubkey_der);
+
+	if (!ok) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("STRAP signature failed\n"));
+		goto fail_errors;
+	}
+
+	buf_append_base64(buf, signature_bin, siglen, 0);
+}
+#endif /* HAVE_HPKE_SUPPORT */
+
+int export_certificate_pkcs7(struct openconnect_info *vpninfo,
+			     struct cert_info *certinfo,
+			     cert_format_t format,
+			     struct oc_text_buf **pp7b)
+{
+	struct ossl_cert_info *oci;
+	PKCS7 *p7 = NULL;
+	BIO *bio = NULL;
+	BUF_MEM *bptr = NULL;
+	struct oc_text_buf *p7b = NULL;
+	int ret, ok;
+
+	if (!(certinfo && (oci = certinfo->priv_info) && pp7b))
+		return -EINVAL;
+
+	/* We have the client certificate in 'oci.cert' and *optionally*
+	 * a stack of intermediate certs in oci.extra_certs. For the TLS
+	 * connection those would be used by SSL_CTX_use_certificate() and
+	 * SSL_CTX_add_extra_chain_cert() respectively. For PKCS7_sign()
+	 * we need the actual cert at the head of the stack, so *create*
+	 * one if needed, and insert oci.cert at position zero. */
+
+	if (!oci->extra_certs)
+		oci->extra_certs = sk_X509_new_null();
+	if (!oci->extra_certs)
+		goto err;
+	if (!sk_X509_insert(oci->extra_certs, oci->cert, 0))
+		goto err;
+	X509_up_ref(oci->cert);
+
+	p7 = PKCS7_sign(NULL, NULL, oci->extra_certs, NULL, PKCS7_DETACHED);
+	if (!p7) {
+	err:
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Failed to create PKCS#7 structure\n"));
+		ret = -EIO;
+		goto out;
+	}
+
+	ret = 0;
+
+	bio = BIO_new(BIO_s_mem());
+	if (!bio) {
+		ret = -ENOMEM;
+		goto pkcs7_error;
+	}
+
+	if (format == CERT_FORMAT_ASN1) {
+		ok = i2d_PKCS7_bio(bio, p7);
+	} else if (format == CERT_FORMAT_PEM) {
+		ok = PEM_write_bio_PKCS7(bio, p7);
+	} else {
+		ret = -EINVAL;
+		goto pkcs7_error;
+	}
+
+	if (!ok) {
+		ret = -EIO;
+		goto pkcs7_error;
+	}
+
+	BIO_get_mem_ptr(bio, &bptr);
+
+	p7b = buf_alloc();
+	if (!p7b)
+		ret = -ENOMEM;
+
+	if (ret < 0) {
+pkcs7_error:
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Failed to output PKCS#7 structure\n"));
+		goto out;
+	}
+
+	BIO_set_close(bio, BIO_NOCLOSE);
+
+	p7b->data = bptr->data;
+	p7b->pos = bptr->length;
+
+	*pp7b = p7b;
+	p7b = NULL;
+
+out:
+	buf_free(p7b);
+	BIO_free(bio);
+	if (p7)
+		PKCS7_free(p7);
+	return ret;
+}
+
+int multicert_sign_data(struct openconnect_info *vpninfo,
+			struct cert_info *certinfo,
+			unsigned int hashes,
+			const void *chdata, size_t chdata_len,
+			struct oc_text_buf **psignature)
+{
+	struct table_entry {
+		openconnect_hash_type id;
+		const EVP_MD *(*evp_md_fn)(void);
+	};
+	static struct table_entry table[] = {
+		{ OPENCONNECT_HASH_SHA512, &EVP_sha512 },
+		{ OPENCONNECT_HASH_SHA384, &EVP_sha384 },
+		{ OPENCONNECT_HASH_SHA256, &EVP_sha256 },
+		{ OPENCONNECT_HASH_UNKNOWN },
+	};
+	struct ossl_cert_info *oci;
+	struct oc_text_buf *signature;
+	openconnect_hash_type hash;
+	int ret;
+
+	/**
+	 * Check preconditions...
+	 */
+	if (!(certinfo && (oci = certinfo->priv_info)
+	      && hashes && chdata && chdata_len && psignature))
+		return -EINVAL;
+
+	*psignature = NULL;
+
+	signature = buf_alloc();
+	if (!signature)
+		goto out_of_memory;
+
+	for (const struct table_entry *entry = table;
+	     (hash = entry->id) != OPENCONNECT_HASH_UNKNOWN;
+	     entry++) {
+		if ((hashes & MULTICERT_HASH_FLAG(hash)) == 0)
+			continue;
+
+		EVP_MD_CTX *mdctx = EVP_MD_CTX_new();
+		if (!mdctx)
+			goto out_of_memory;
+
+		const EVP_MD *md = (*entry->evp_md_fn)();
+
+		size_t siglen = 0;
+		int ok = (EVP_DigestSignInit(mdctx, NULL, md, NULL, oci->key) > 0 &&
+			  EVP_DigestSignUpdate(mdctx, chdata, chdata_len) > 0 &&
+			  EVP_DigestSignFinal(mdctx, NULL, &siglen) > 0 &&
+			  !buf_ensure_space(signature, siglen) &&
+			  EVP_DigestSignFinal(mdctx, (void *)signature->data, &siglen) > 0);
+
+		EVP_MD_CTX_free(mdctx);
+
+		if (ok) {
+			signature->pos = siglen;
+			*psignature = signature;
+			return hash;
+		}
+	}
+
+	/** Error path */
+
+	ret = -EIO;
+
+	if (buf_error(signature)) {
+out_of_memory:
+		ret = -ENOMEM;
+	}
+
+	buf_free(signature);
+
+	vpn_progress(vpninfo, PRG_ERR,
+		     _("Failed to generate signature for multiple certificate authentication\n"));
+	openconnect_report_ssl_errors(vpninfo);
+
+	return ret;
+}
+

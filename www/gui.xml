@@ -22,10 +22,9 @@ widget-based NetworkManagement applet.</p>
 
 <h2>ConnMan</h2>
 
-<p><a href="https://01.org/connman">ConnMan</a> has core OpenConnect functionality
-as from version 0.48, and the corresponding support is also in the
-<a href="http://meego.gitorious.org/meego-netbook-ux/meego-panel-networks">meego-panel-networks</a>
-user interface. Other ConnMan UI front ends may lack VPN support.</p>
+<p><a href="https://git.kernel.org/pub/scm/network/connman/connman.git">ConnMan</a>
+has core OpenConnect functionality as from version 0.48.
+ConnMan UI front ends may lack VPN support.</p>
 
 <h2>OpenConnect-gui</h2>
 

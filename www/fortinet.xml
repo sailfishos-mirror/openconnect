@@ -24,7 +24,7 @@ to the command line:
   openconnect --protocol=fortinet fortigate.example.com
 </pre></p>
 
-<p>Since <a href="http://sites.inka.de/~W1011/devel/tcp-tcp.html">TCP over
+<p>Since <a href="https://web.archive.org/web/20230228035749/https://sites.inka.de/~W1011/devel/tcp-tcp.html">TCP over
 TCP is very suboptimal</a>, OpenConnect tries to always use PPP-over-DTLS,
 and will only fall over to the PPP-over-TLS tunnel if that fails, or if
 disabled via the <tt>--no-dtls</tt> argument.</p>
@@ -43,9 +43,23 @@ and HTML forms
 authentication, please send information to <a href="mail.html">the mailing
 list</a> so that we can add support to OpenConnect.</p>
 
+<h2>Non-PPP-based wire protocol</h2>
+
+<p>FortiGate server versions starting around v5.6.6 support <a
+href="https://gitlab.com/openconnect/openconnect/-/issues/297#note_1173334442">a
+new wire protocol ("v2") for the VPN tunnel</a>, in addition to the
+original wire protocol ("v1"). The original wire protocol is based on
+PPP; the new one is not.</p>
+
+<p>OpenConnect does not yet support this wire protocol. We do not know
+of any advantages of this wire protocol, but if there are some then it
+might be worthwhile to add support, and relatively straightforward (<a
+href="https://gitlab.com/openconnect/openconnect/-/issues/297#note_1173228786">see
+many details of this wire protocol are easily understood</a>).</p>
+
 <h2>Quirks and Issues</h2>
 
-<p>Prior to server version FortiOS 6.2.1, the Fortinet protocol appears <i>not</i> to allow its
+<p>FortiGate server versions prior to v6.2.1 do <i>not</i> allow the
 post-authentication cookie (as output by <tt>--authenticate</tt>) to
 be used to reestablish a dropped connection. This means that if the
 client loses its connection to the gateway (for example, due to a

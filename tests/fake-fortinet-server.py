@@ -32,11 +32,6 @@
 # It does not actually validate the credentials in any way, but attempts to
 # verify their consistency from one request to the next, by saving their
 # values via a (cookie-based) session.
-#
-# In order to test with 2FA, the initial 'GET /' request should include
-# the query string '?want_2fa=1&type_2fa={tokeninfo,html}'. If want_2fa>1,
-# multiple rounds of 2FA token entry will be required. If type_2fa is not,
-# specified tokeninfo-type 2FA is the default.
 ########################################
 
 import sys
@@ -46,6 +41,7 @@ import base64
 from json import dumps
 from functools import wraps
 from flask import Flask, request, abort, redirect, url_for, make_response, session
+from dataclasses import dataclass
 
 host, port, *cert_and_maybe_keyfile = sys.argv[1:]
 
@@ -85,13 +81,36 @@ def check_form_against_session(*fields):
 
 ########################################
 
+# Configure the fake server. These settings will persist unless/until reconfigured or restarted:
+#   want_2fa: Require 2FA (default 0)
+#     If want_2fa>1, multiple rounds of 2FA token entry will be required.
+#   type_2fa: 2FA format (either 'tokeninfo', 'ftmpush', or 'html'; 'tokeninfo' is the default)
+@dataclass
+class TestConfiguration:
+    want_2fa: int = 0
+    type_2fa: str = None
+C = TestConfiguration()
+
+
+@app.route('/CONFIGURE', methods=('POST', 'GET'))
+def configure():
+    global C
+    if request.method == 'POST':
+        C = TestConfiguration(
+            want_2fa=int(request.form.get('want_2fa', 0)),
+            type_2fa=request.form.get('type_2fa', 'tokeninfo'))
+        return '', 201
+    else:
+        return 'Current configuration of fake Fortinet server:\n{}\n'.format(C)
+
+
 # Respond to initial 'GET /' with a login form
 # Respond to initial 'GET /<realm>' with a redirect to '/remote/login?realm=<realm>'
-# [Save want_2fa and type_2fa query parameters in the session for use later]
+# [Save want_2fa configuration parameter in session so that we can count down multiple rounds of it]
 @app.route('/')
 @app.route('/<realm>')
 def realm(realm=None):
-    session.update(step='GET-realm', want_2fa=int(request.args.get('want_2fa', 0)), type_2fa=request.args.get('type_2fa', 'tokeninfo'))
+    session.update(step='GET-realm', want_2fa=C.want_2fa)
     # print(session)
     if realm:
         return redirect(url_for('login', realm=realm, lang='en'))
@@ -112,20 +131,19 @@ def login():
 @app.route('/remote/logincheck', methods=['POST'])
 def logincheck():
     want_2fa = session.get('want_2fa')
-    type_2fa = session.get('type_2fa')
-
     if want_2fa:
-        if (   (type_2fa == 'tokeninfo' and request.form.get('username') and request.form.get('code'))
-            or (type_2fa == 'html' and request.form.get('username') and request.form.get('magic'))):
+        if (   (C.type_2fa == 'tokeninfo' and request.form.get('username') and request.form.get('code'))
+            or (C.type_2fa == 'ftmpush' and request.form.get('username') and request.form.get('ftmpush') == '1' and not request.form.get('magic'))
+            or (C.type_2fa == 'html' and request.form.get('username') and request.form.get('magic') and request.form.get('credential'))):
             # we've received (at least one round of) 2FA login
             if want_2fa == 1:
                 return complete_2fa()
             else:
                 session.update(want_2fa=want_2fa - 1)
-                return send_2fa_tokeninfo() if type_2fa == 'tokeninfo' else send_2fa_html()
+                return send_2fa_html() if C.type_2fa == 'html' else send_2fa_tokeninfo()
         elif request.form.get('username') and request.form.get('credential'):
             # we've just received the initial non-2FA login
-            return send_2fa_tokeninfo() if type_2fa == 'tokeninfo' else send_2fa_html()
+            return send_2fa_html() if C.type_2fa == 'html' else send_2fa_tokeninfo()
     elif (request.form.get('username') and request.form.get('credential')):
         return complete_non_2fa()
     abort(405)
@@ -149,13 +167,22 @@ def complete_2fa():
 # [Save username, credential, and challenge fields in the session for verification of client state later]
 @check_form_against_session('realm')
 def send_2fa_tokeninfo():
+    global C
+    if C.type_2fa == 'ftmpush':
+        tokeninfo = 'ftm_push'
+        msg = 'Leave blank to simulate fake FTM push'
+        magic = None
+    else:
+        tokeninfo = ''
+        msg = 'Please enter your tokeninfo code'
+        magic = '1-'+str(random.randint(10_000_000, 99_000_000))
     session.update(step='send-2FA-tokeninfo', username=request.form.get('username'), credential=request.form.get('credential'),
                    reqid=str(random.randint(10_000_000, 99_000_000)), polid='1-1-'+str(random.randint(10_000_000, 99_000_000)),
-                   magic='1-'+str(random.randint(10_000_000, 99_000_000)), portal=random.choice('ABCD'), grp=random.choice('EFGH'))
+                   magic=magic, portal=random.choice('ABCD'), grp=random.choice('EFGH'))
     # print(session)
 
     return ('ret=2,reqid={reqid},polid={polid},grp={grp},portal={portal},magic={magic},'
-            'tokeninfo=,chal_msg=Please enter your tokeninfo code ({want_2fa} remaining)'.format(**session),
+            'tokeninfo={tokeninfo},chal_msg={msg} ({want_2fa} remaining)'.format(tokeninfo=tokeninfo, msg=msg, **session),
             {'content-type': 'text/plain'})
 
 
@@ -164,6 +191,7 @@ def send_2fa_tokeninfo():
 # [Save username, credential, and challenge fields in the session for verification of client state later]
 @check_form_against_session('realm')
 def send_2fa_html():
+    global C
     session.update(step='send-2FA-html', username=request.form.get('username'), credential=request.form.get('credential'),
                    reqid=str(random.randint(10_000_000, 99_000_000)), grpid='0,'+str(random.randint(1_000, 9_999))+',1',
                    magic='1-'+str(random.randint(10_000_000, 99_000_000)))
@@ -206,13 +234,15 @@ def html_config():
 @app.route('/remote/fortisslvpn_xml')
 @require_SVPNCOOKIE
 def xml_config():
-    return ('''
+    dual_stack = request.args.get('dual_stack') not in (None, '0')
+    resp = make_response(f'''
             <?xml version="1.0" encoding="utf-8"?>
             <sslvpn-tunnel ver="2" dtls="1" patch="1">
               <dtls-config heartbeat-interval="10" heartbeat-fail-count="10" heartbeat-idle-timeout="10" client-hello-timeout="10"/>
               <tunnel-method value="ppp"/>
               <tunnel-method value="tun"/>
-              <fos platform="FakeFortigate" major="1" minor="2" patch="3" build="4567" branch="4567"/>
+              <fos platform="FakeFortigate" major="1" minor="2" patch="3" build="4567" branch="4567" mr_num="??"/>
+              <auth-ses tun-connect-without-reauth="1" check-src-ip="0" tun-user-ses-timeout="240"/>
               <ipv4>
                 <dns ip="1.1.1.1"/>
                 <dns ip="8.8.8.8" domain="foo.com"/>
@@ -222,20 +252,27 @@ def xml_config():
                   <addr ip="10.11.10.10" mask="255.255.255.255"/>
                   <addr ip="10.11.1.0" mask="255.255.255.0"/>
                 </split-tunnel-info>
+                <split-tunnel-info negate="1">
+                  <addr ip="9.9.9.9" mask="255.255.255.255"/>
+                </split-tunnel-info>
               </ipv4>
-              <!-- Real Fortinet servers are too dumb to send both IPv4 and IPv6 config simultaneously, but we
-                   may as well test it here nonetheless. -->
-              <ipv6>
+              {"<ipv6>" if dual_stack else "<--"}
                 <dns ipv6="cafe:1234::5678"/>
                 <assigned-addr ipv6="faff:ffff::1" prefix-len="64"/>
                 <split-tunnel-info>
                   <addr ipv6="fdff:ffff::" prefix-len="120"/>
                 </split-tunnel-info>
-              </ipv6>
+                <split-tunnel-info negate="1">
+                  <addr ipv6="2620:fe::fe" prefix-len="128"/>
+                </split-tunnel-info>
+              {"</ipv6>" if dual_stack else "-->"}
               <idle-timeout val="3600"/>
               <auth-timeout val="18000"/>
             </sslvpn-tunnel>''',
             {'content-type': 'application/xml'})
+    # Re-set the SVPNCOOKIE (this was causing a crash: https://gitlab.com/openconnect/openconnect/-/issues/514)
+    resp.set_cookie('SVPNCOOKIE', request.cookies['SVPNCOOKIE'])
+    return resp
 
 
 # Respond to faux-CONNECT 'GET /remote/sslvpn-tunnel' with 403 Forbidden

@@ -39,11 +39,29 @@
 #include <ctype.h>
 #include <errno.h>
 
+enum {
+	CERT1_REQUESTED = (1<<0),
+	CERT1_AUTHENTICATED = (1<<1),
+	CERT2_REQUESTED = (1<<2),
+};
+
+struct cert_request {
+	unsigned int state:16;
+	unsigned int hashes:16;
+};
+
 static int xmlpost_append_form_opts(struct openconnect_info *vpninfo,
 				    struct oc_auth_form *form, struct oc_text_buf *body);
 static int cstp_can_gen_tokencode(struct openconnect_info *vpninfo,
 				  struct oc_auth_form *form,
 				  struct oc_form_opt *opt);
+
+/* multiple certificate-based authentication */
+static void parse_multicert_request(struct openconnect_info *vpninfo,
+				    xmlNodePtr node, struct cert_request *cert_rq);
+static int prepare_multicert_response(struct openconnect_info *vpninfo,
+			      struct cert_request cert_rq, const char *challenge,
+			      struct oc_text_buf *body);
 
 int openconnect_set_option_value(struct oc_form_opt *opt, const char *value)
 {
@@ -209,9 +227,12 @@ static int parse_form(struct openconnect_info *vpninfo, struct oc_auth_form *for
 			continue;
 		}
 		input_label = (char *)xmlGetProp(xml_node, (unsigned char *)"label");
+		if (!input_label && asprintf(&input_label, "%s:", input_name) == -1)
+			goto nomem;
 
 		opt = calloc(1, sizeof(*opt));
 		if (!opt) {
+		nomem:
 			free(input_type);
 			free(input_name);
 			free(input_label);
@@ -227,6 +248,8 @@ static int parse_form(struct openconnect_info *vpninfo, struct oc_auth_form *for
 			opt->_value = (char *)xmlGetProp(xml_node, (unsigned char *)"value");
 		} else if (!strcmp(input_type, "text")) {
 			opt->type = OC_FORM_OPT_TEXT;
+		} else if (!strcmp(input_type, "sso")) {
+			opt->type = OC_FORM_OPT_SSO_TOKEN;
 		} else if (!strcmp(input_type, "password")) {
 			if (!cstp_can_gen_tokencode(vpninfo, form, opt))
 				opt->type = OC_FORM_OPT_TOKEN;
@@ -422,6 +445,11 @@ static int parse_auth_node(struct openconnect_info *vpninfo, xmlNode *xml_node,
 		xmlnode_get_text(xml_node, "banner", &form->banner);
 		xmlnode_get_text(xml_node, "message", &form->message);
 		xmlnode_get_text(xml_node, "error", &form->error);
+		xmlnode_get_text(xml_node, "sso-v2-login", &vpninfo->sso_login);
+		xmlnode_get_text(xml_node, "sso-v2-login-final", &vpninfo->sso_login_final);
+		xmlnode_get_text(xml_node, "sso-v2-token-cookie-name", &vpninfo->sso_token_cookie);
+		xmlnode_get_text(xml_node, "sso-v2-error-cookie-name", &vpninfo->sso_error_cookie);
+		xmlnode_get_text(xml_node, "sso-v2-browser-mode", &vpninfo->sso_browser_mode);
 
 		if (xmlnode_is_named(xml_node, "form")) {
 
@@ -550,20 +578,24 @@ static void parse_config_node(struct openconnect_info *vpninfo, xmlNode *xml_nod
  *  < 0, on error
  *  = 0, on success; *form is populated
  */
-static int parse_xml_response(struct openconnect_info *vpninfo, char *response,
-			      struct oc_auth_form **formp, int *cert_rq)
+static int parse_xml_response(struct openconnect_info *vpninfo,
+			      char *response,struct oc_auth_form **formp,
+			      struct cert_request *cert_rq)
 {
 	struct oc_auth_form *form;
 	xmlDocPtr xml_doc;
 	xmlNode *xml_node;
+	int old_cert_rq_state = 0;
 	int ret;
 
 	if (*formp) {
 		free_auth_form(*formp);
 		*formp = NULL;
 	}
-	if (cert_rq)
-		*cert_rq = 0;
+	if (cert_rq) {
+		old_cert_rq_state = cert_rq->state;
+		*cert_rq = (struct cert_request) { 0 };
+	}
 
 	if (!response) {
 		vpn_progress(vpninfo, PRG_DEBUG,
@@ -574,7 +606,7 @@ static int parse_xml_response(struct openconnect_info *vpninfo, char *response,
 	form = calloc(1, sizeof(*form));
 	if (!form)
 		return -ENOMEM;
-	xml_doc = xmlReadMemory(response, strlen(response), "noname.xml", NULL,
+	xml_doc = xmlReadMemory(response, strlen(response), NULL, NULL,
 				XML_PARSE_NOERROR|XML_PARSE_RECOVER);
 	if (!xml_doc) {
 		vpn_progress(vpninfo, PRG_ERR,
@@ -599,12 +631,28 @@ static int parse_xml_response(struct openconnect_info *vpninfo, char *response,
 			continue;
 		} else if (xmlnode_is_named(xml_node, "client-cert-request")) {
 			if (cert_rq)
-				*cert_rq = 1;
+				cert_rq->state |= CERT1_REQUESTED;
 			else {
 				vpn_progress(vpninfo, PRG_ERR,
 					     _("Received <client-cert-request> when not expected.\n"));
 				ret = -EINVAL;
 			}
+		} else if (xmlnode_is_named(xml_node, "multiple-client-cert-request")) {
+			if (cert_rq) {
+				cert_rq->state |= CERT1_REQUESTED|CERT2_REQUESTED;
+				parse_multicert_request(vpninfo, xml_node, cert_rq);
+			} else {
+				vpn_progress(vpninfo, PRG_ERR,
+		     _("Received <multiple-client-cert-request> when not expected.\n"));
+				ret = -EINVAL;
+			}
+		} else if (xmlnode_is_named(xml_node, "cert-authenticated")) {
+			/**
+			 * cert-authenticated indicates that the certificate for the
+			 * TLS session is valid.
+			 */
+			if (cert_rq)
+				cert_rq->state |= CERT1_AUTHENTICATED;
 		} else if (xmlnode_is_named(xml_node, "auth")) {
 			xmlnode_get_prop(xml_node, "id", &form->auth_id);
 			ret = parse_auth_node(vpninfo, xml_node, form);
@@ -618,8 +666,10 @@ static int parse_xml_response(struct openconnect_info *vpninfo, char *response,
 			ret = parse_host_scan_node(vpninfo, xml_node);
 		} else if (xmlnode_is_named(xml_node, "config")) {
 			parse_config_node(vpninfo, xml_node);
+		} else if (xmlnode_is_named(xml_node, "session-token")) {
+			http_add_cookie(vpninfo, "webvpn",
+					(const char *)xmlNodeGetContent(xml_node), 1);
 		} else {
-			xmlnode_get_text(xml_node, "session-token", &vpninfo->cookie);
 			xmlnode_get_text(xml_node, "error", &form->error);
 		}
 
@@ -628,7 +678,14 @@ static int parse_xml_response(struct openconnect_info *vpninfo, char *response,
 		xml_node = xml_node->next;
 	}
 
-	if (!form->auth_id && (!cert_rq || !*cert_rq)) {
+	if ((old_cert_rq_state & CERT2_REQUESTED) && form->error) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Server reported certificate error: %s.\n"), form->error);
+		ret = -EINVAL;
+		goto out;
+	}
+
+	if (!form->auth_id && (!cert_rq || !cert_rq->state)) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("XML response has no \"auth\" node\n"));
 		ret = -EINVAL;
@@ -753,7 +810,7 @@ static xmlDocPtr xmlpost_new_query(struct openconnect_info *vpninfo, const char 
 				   xmlNodePtr *rootp)
 {
 	xmlDocPtr doc;
-	xmlNodePtr root, node;
+	xmlNodePtr root, node, capabilities;
 
 	doc = xmlNewDoc(XCAST("1.0"));
 	if (!doc)
@@ -767,6 +824,8 @@ static xmlDocPtr xmlpost_new_query(struct openconnect_info *vpninfo, const char 
 	if (!xmlNewProp(root, XCAST("client"), XCAST("vpn")))
 		goto bad;
 	if (!xmlNewProp(root, XCAST("type"), XCAST(type)))
+		goto bad;
+	if (!xmlNewProp(root, XCAST("aggregate-auth-version"), XCAST("2")))
 		goto bad;
 
 	node = xmlNewTextChild(root, NULL, XCAST("version"),
@@ -783,6 +842,31 @@ static xmlDocPtr xmlpost_new_query(struct openconnect_info *vpninfo, const char 
 		if (!xmlNewProp(node, XCAST("platform-version"), XCAST(vpninfo->mobile_platform_version)) ||
 		    !xmlNewProp(node, XCAST("device-type"), XCAST(vpninfo->mobile_device_type)) ||
 		    !xmlNewProp(node, XCAST("unique-id"), XCAST(vpninfo->mobile_device_uniqueid)))
+			goto bad;
+	}
+
+	capabilities = xmlNewNode(NULL, XCAST("capabilities"));
+	if (!capabilities)
+		goto bad;
+	capabilities = xmlAddChild(root, capabilities);
+	if (!capabilities)
+		goto bad;
+
+	if (!vpninfo->no_external_auth) {
+		node = xmlNewTextChild(capabilities, NULL, XCAST("auth-method"), XCAST("single-sign-on-v2"));
+		if (!node)
+			goto bad;
+
+#ifdef HAVE_HPKE_SUPPORT
+		node = xmlNewTextChild(capabilities, NULL, XCAST("auth-method"), XCAST("single-sign-on-external-browser"));
+		if (!node)
+			goto bad;
+#endif
+	}
+
+	if (vpninfo->certinfo[1].cert) {
+		node = xmlNewTextChild(capabilities, NULL, XCAST("auth-method"), XCAST("multiple-cert"));
+		if (!node)
 			goto bad;
 	}
 
@@ -835,6 +919,7 @@ static int xmlpost_initial_req(struct openconnect_info *vpninfo,
 	node = xmlNewTextChild(root, NULL, XCAST("group-access"), XCAST(url));
 	if (!node)
 		goto bad;
+
 	if (cert_fail) {
 		node = xmlNewTextChild(root, NULL, XCAST("client-cert-fail"), NULL);
 		if (!node)
@@ -973,12 +1058,13 @@ static int fetch_config(struct openconnect_info *vpninfo)
 	else
 		buf_append(buf, "GET %s HTTP/1.1\r\n", vpninfo->profile_url);
 	cstp_common_headers(vpninfo, buf);
-	if (vpninfo->xmlpost)
-		buf_append(buf, "Cookie: webvpn=%s\r\n", vpninfo->cookie);
 	buf_append(buf, "\r\n");
 
 	if (buf_error(buf))
 		return buf_free(buf);
+
+	if (vpninfo->dump_http_traffic)
+		dump_buf(vpninfo, '>', buf->data);
 
 	if (vpninfo->ssl_write(vpninfo, buf->data, buf->pos) != buf->pos) {
 		vpn_progress(vpninfo, PRG_ERR,
@@ -1029,41 +1115,41 @@ int set_csd_user(struct openconnect_info *vpninfo)
 
 	if (vpninfo->uid_csd_given && vpninfo->uid_csd != getuid()) {
 		struct passwd *pw;
-		int e;
+		int err;
 
 		if (setgid(vpninfo->gid_csd)) {
-			e = errno;
+			err = errno;
 			fprintf(stderr, _("Failed to set gid %ld: %s\n"),
-				(long)vpninfo->uid_csd, strerror(e));
-			return -e;
+				(long)vpninfo->uid_csd, strerror(err));
+			return -err;
 		}
 
 		if (setgroups(1, &vpninfo->gid_csd)) {
-			e = errno;
+			err = errno;
 			fprintf(stderr, _("Failed to set groups to %ld: %s\n"),
-				(long)vpninfo->uid_csd, strerror(e));
-			return -e;
+				(long)vpninfo->uid_csd, strerror(err));
+			return -err;
 		}
 
 		if (setuid(vpninfo->uid_csd)) {
-			e = errno;
+			err = errno;
 			fprintf(stderr, _("Failed to set uid %ld: %s\n"),
-				(long)vpninfo->uid_csd, strerror(e));
-			return -e;
+				(long)vpninfo->uid_csd, strerror(err));
+			return -err;
 		}
 
 		if (!(pw = getpwuid(vpninfo->uid_csd))) {
-			e = errno;
+			err = errno;
 			fprintf(stderr, _("Invalid user uid=%ld: %s\n"),
-				(long)vpninfo->uid_csd, strerror(e));
-			return -e;
+				(long)vpninfo->uid_csd, strerror(err));
+			return -err;
 		}
 		setenv("HOME", pw->pw_dir, 1);
 		if (chdir(pw->pw_dir)) {
-			e = errno;
+			err = errno;
 			fprintf(stderr, _("Failed to change to CSD home directory '%s': %s\n"),
-				pw->pw_dir, strerror(e));
-			return -e;
+				pw->pw_dir, strerror(err));
+			return -err;
 		}
 	}
 	return 0;
@@ -1302,7 +1388,8 @@ int cstp_obtain_cookie(struct openconnect_info *vpninfo)
 	const char *method = "POST";
 	char *orig_host = NULL, *orig_path = NULL, *form_path = NULL;
 	int orig_port = 0;
-	int cert_rq, cert_sent = !vpninfo->certinfo[0].cert;
+	struct cert_request cert_rq = { 0 };
+	int cert_sent = !vpninfo->certinfo[0].cert;
 	int newgroup_attempts = 5;
 
 	if (!vpninfo->xmlpost)
@@ -1335,7 +1422,14 @@ newgroup:
 	orig_port = vpninfo->port;
 
 	for (tries = 0; ; tries++) {
-		if (tries == 3) {
+		/**
+		 * Multiple certificate authentication requires an additional exchange.
+		 * tries == 0: redirect
+		 * tries == 1: !cert_sent + initial_req
+		 * tries == 2: cert_sent + initial_req
+		 * tries == 3: challenge response
+		 */
+		if (tries == 3 + !!(cert_rq.state&CERT2_REQUESTED)) {
 		fail:
 			if (vpninfo->xmlpost) {
 			no_xmlpost:
@@ -1389,7 +1483,8 @@ newgroup:
 		if (result < 0)
 			goto fail;
 
-		if (cert_rq) {
+		if ((cert_rq.state&CERT1_REQUESTED) &&
+		    !(cert_rq.state&CERT1_AUTHENTICATED)) {
 			int cert_failed = 0;
 
 			free_auth_form(form);
@@ -1412,6 +1507,39 @@ newgroup:
 			result = xmlpost_initial_req(vpninfo, request_body, cert_failed);
 			if (result < 0)
 				goto fail;
+			continue;
+		} else if (cert_rq.state&CERT2_REQUESTED) {
+
+			free_auth_form(form); form = NULL;
+			buf_truncate(request_body);
+
+			/** load the second certificate */
+			struct cert_info *certinfo = &vpninfo->certinfo[1];
+			if (!certinfo->cert) {
+				/* This is a fail safe; we should never get here */
+				vpn_progress(vpninfo, PRG_ERR,
+				_("Multiple-certificate authentication requires a second certificate; none were configured.\n"));
+				result = -EINVAL;
+				(void) xmlpost_initial_req(vpninfo, request_body, 1);
+				goto out;
+			}
+
+			result = load_certificate(vpninfo, certinfo, MULTICERT_COMPAT);
+			if (result < 0) {
+				(void) xmlpost_initial_req(vpninfo, request_body, 1);
+				goto out;
+			}
+
+			result = prepare_multicert_response(vpninfo, cert_rq, form_buf,
+				  request_body);
+
+			unload_certificate(certinfo, 1);
+
+			if (result < 0) {
+				(void) xmlpost_initial_req(vpninfo, request_body, 0);
+				goto fail;
+			}
+
 			continue;
 		}
 		if (form && form->action) {
@@ -1529,11 +1657,17 @@ newgroup:
 	/* A return value of 2 means the XML form indicated
 	   success. We _should_ have a cookie... */
 
+	struct oc_text_buf *cookie_buf = buf_alloc();
+#ifdef HAVE_HPKE_SUPPORT
+	if (!vpninfo->no_external_auth && vpninfo->strap_key) {
+		buf_append(cookie_buf, "openconnect_strapkey=");
+		append_strap_privkey(vpninfo, cookie_buf);
+		buf_append(cookie_buf, "; webvpn=");
+	}
+#endif
 	for (opt = vpninfo->cookies; opt; opt = opt->next) {
-
 		if (!strcmp(opt->option, "webvpn")) {
-			free(vpninfo->cookie);
-			vpninfo->cookie = strdup(opt->value);
+			buf_append(cookie_buf, "%s", opt->value);
 		} else if (vpninfo->write_new_config && !strcmp(opt->option, "webvpnc")) {
 			char *tok = opt->value;
 			char *bu = NULL, *fu = NULL, *sha = NULL;
@@ -1552,6 +1686,7 @@ newgroup:
 
 			if (bu && fu && sha) {
 				if (asprintf(&vpninfo->profile_url, "%s%s", bu, fu) == -1) {
+					buf_free(cookie_buf);
 					result = -ENOMEM;
 					goto out;
 				}
@@ -1559,10 +1694,19 @@ newgroup:
 			}
 		}
 	}
+	if (buf_error(cookie_buf)) {
+		result = buf_free(cookie_buf);
+		goto out;
+	}
+
+	free(vpninfo->cookie);
+	vpninfo->cookie = cookie_buf->data;
+	cookie_buf->data = NULL;
+	buf_free(cookie_buf);
+
 	result = 0;
 
 	fetch_config(vpninfo);
-
 out:
 	buf_free(request_body);
 
@@ -1580,4 +1724,255 @@ out:
 	}
 
 	return result;
+}
+
+/**
+ * Multiple certificate authentication
+ *
+ * Two certificates are employed: a "machine" certificate and a
+ * "user" certificate. The machine certificate is used to establish
+ * the TLS session. The user certificate is used to sign a challenge.
+ *
+ * An example XML exchange follows. For brevity, tags and attributes whose
+ * values are irrelevant (e.g. <opaque>) or well-understood from other auth
+ * types are omitted:
+ *
+ * CLIENT's initial request should include multiple-cert in capabilities:
+ *
+ *   <config-auth client="vpn" type="init">
+ *     <capabilities>
+ *       <auth-method>multiple-cert</auth-method>
+ *     </capabilities>
+ *   </config-auth>
+ *
+ * SERVER's response should include <multiple-client-cert-request> with list
+ * of hash algorithms, and empty <cert-authenticated> tag:
+ *
+ *   <config-auth client="vpn" type="auth-request">
+ *     <multiple-client-cert-request>
+ *       <hash-algorithm>sha256</hash-algorithm>
+ *       <hash-algorithm>sha384</hash-algorithm>
+ *       <hash-algorithm>sha512</hash-algorithm>
+ *     </multiple-client-cert-request>
+ *
+ *     <!-- Ensures that the client has signed this specific request in subsequent reply -->
+ *     <random>FA4003BD87436B227...C138A08FF724F0100015B863F750914839EE79C86DFE8F0B9A0199E2</random>
+ *
+ *     <!-- Appears to indicate that "machine" cert was accepted -->
+ *     <cert-authenticated/>
+ *   </config-auth>
+ *
+ * CLIENT's second request should include the "user" certificate (and any
+ * required intermediates) in PKCS7 format, along with a signature of the
+ * complete XML body of the server's prior response:
+ *
+ *   <config-auth client="vpn" type="auth-reply">
+ *     <auth>
+ *       <client-cert-chain cert-store="1M">
+ *         <client-cert-sent-via-protocol/>
+ *       </client-cert-chain>
+ *       <client-cert-chain cert-store="1U">
+ *         <client-cert cert-format="pkcs7">
+ *           <!-- PKCS7 "user" certificate and intermediate (base64-encoded) -->
+ *         </client-cert>
+ *         <client-cert-auth-signature hash-algorithm-chosen="sha512">
+ *           <!-- signature on server's prior response with private key of "user" certificate -->
+ *         </client-cert-auth-signature>
+ *       </client-cert-chain>
+ *     </auth>
+ *   </config-auth>
+ */
+static int to_base64(struct oc_text_buf **result,
+		     const void *data, size_t data_len)
+{
+	const uint8_t *dp = data;
+	struct oc_text_buf *buf;
+	int ret;
+
+	*result = NULL;
+
+	/**
+	 * Line feed every 64 characters. No feed needed on last line
+	 * */
+	buf = buf_alloc();
+	if (!buf)
+		return -ENOMEM;
+
+	buf_append_base64(buf, dp, data_len, 64);
+
+	ret = buf_error(buf);
+	if (ret < 0)
+		goto out;
+
+	*result = buf;
+	buf = NULL;
+
+out:
+	buf_free(buf);
+	return ret;
+}
+
+/**
+ * parse request
+ */
+void parse_multicert_request(struct openconnect_info *vpninfo,
+		xmlNodePtr node, struct cert_request *cert_rq)
+{
+	xmlNodePtr child;
+	char *content;
+	openconnect_hash_type hash;
+	unsigned int oldhashes = 0;
+
+	/* node is a multiple-client-cert-request element */
+	for (child = node->children; child; child = child->next) {
+		if (child->type != XML_ELEMENT_NODE)
+			continue;
+
+		if (xmlStrcmp(child->name, XCAST("hash-algorithm")) != 0)
+			continue;
+
+		content = (char *)xmlNodeGetContent(child);
+		if (content == NULL)
+			continue;
+
+		hash = multicert_hash_get_id(content);
+		/* hash was not found */
+		if (hash == OPENCONNECT_HASH_UNKNOWN) {
+			vpn_progress(vpninfo, PRG_INFO,
+			    _("Unsupported hash algorithm '%s' requested.\n"),
+			    (char *) content);
+			goto next;
+		}
+
+		oldhashes = cert_rq->hashes;
+		cert_rq->hashes |= MULTICERT_HASH_FLAG(hash);
+		if (oldhashes == cert_rq->hashes)
+			vpn_progress(vpninfo, PRG_INFO,
+			   _("Duplicate hash algorithm '%s' requested.\n"),
+			   (char *) content);
+
+	next:
+		xmlFree(content);
+	}
+}
+
+#define BUF_DATA(bp) ((bp)->data)
+#define BUF_SIZE(bp) ((bp)->pos)
+
+static int post_multicert_response(struct openconnect_info *vpninfo, const xmlChar *cert,
+				   openconnect_hash_type hash, const xmlChar *signature,
+				   struct oc_text_buf *body)
+{
+	static const xmlChar *strnull = XCAST("(null)");
+	const xmlChar *hashname;
+	xmlDocPtr doc;
+	xmlNodePtr root, auth, node, chain;
+
+	doc = xmlpost_new_query(vpninfo, "auth-reply", &root);
+	if (!doc)
+		goto bad;
+
+	node = xmlNewChild(root, NULL, XCAST("session-token"), NULL);
+	if (!node)
+		goto bad;
+
+	node = xmlNewChild(root, NULL, XCAST("session-id"), NULL);
+	if (!node)
+		goto bad;
+
+	if (vpninfo->opaque_srvdata != NULL) {
+		node = xmlCopyNode(vpninfo->opaque_srvdata, 1);
+		if (!node || !xmlAddChild(root, node))
+			goto bad;
+	}
+	// key1 ownership is proved by TLS session
+	auth = xmlNewChild(root, NULL, XCAST("auth"), NULL);
+	if (!auth)
+		goto bad;
+
+	chain = xmlNewChild(auth, NULL, XCAST("client-cert-chain"), NULL);
+	if (!chain || !xmlNewProp(chain, XCAST("cert-store"), XCAST("1M")))
+		goto bad;
+
+	if (!xmlNewChild(chain, NULL, XCAST("client-cert-sent-via-protocol"),
+		   NULL))
+		goto bad;
+	// key2 ownership is proved by signing the challenge
+	chain = xmlNewChild(auth, NULL, XCAST("client-cert-chain"), NULL);
+	if (!chain || !xmlNewProp(chain, XCAST("cert-store"), XCAST("1U")))
+		goto bad;
+
+	node = xmlNewTextChild(chain, NULL, XCAST("client-cert"), cert ? cert : strnull);
+	if (!node || !xmlNewProp(node, XCAST("cert-format"), XCAST("pkcs7")))
+		goto bad;
+
+	hashname = XCAST(multicert_hash_get_name(hash));
+	node = xmlNewTextChild(chain, NULL,
+			       XCAST("client-cert-auth-signature"),
+			       signature ? signature : strnull);
+	if (!node || !xmlNewProp(node, XCAST("hash-algorithm-chosen"), hashname ? hashname : strnull))
+		goto bad;
+
+	return xmlpost_complete(doc, body);
+
+ bad:
+	xmlpost_complete(doc, NULL);
+	return -ENOMEM;
+
+}
+
+int prepare_multicert_response(struct openconnect_info *vpninfo,
+		       struct cert_request cert_rq, const char *challenge,
+		       struct oc_text_buf *body)
+{
+	struct cert_info *certinfo = &vpninfo->certinfo[1];
+	struct oc_text_buf *certdata = NULL, *certtext = NULL;
+	struct oc_text_buf *signdata = NULL, *signtext = NULL;
+	openconnect_hash_type hash;
+	int ret;
+
+
+	if (!cert_rq.hashes) {
+		vpn_progress(vpninfo, PRG_ERR,
+		 _("Multiple-certificate authentication signature hash algorithm negotiation failed.\n"));
+		ret = -EIO;
+		goto done;
+	}
+
+	ret = export_certificate_pkcs7(vpninfo, certinfo, CERT_FORMAT_ASN1, &certdata);
+
+	if (ret >= 0)
+		ret = to_base64(&certtext,
+				BUF_DATA(certdata),
+				BUF_SIZE(certdata));
+
+	if (ret < 0) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Error exporting multiple-certificate signer's certificate chain.\n"));
+		goto done;
+	}
+
+	ret = multicert_sign_data(vpninfo, certinfo, cert_rq.hashes,
+				  challenge, strlen(challenge),
+				  &signdata);
+	if (ret < 0)
+		goto done;
+
+	hash = ret;
+
+	if ((ret = to_base64(&signtext, BUF_DATA(signdata), BUF_SIZE(signdata))) < 0) {
+		vpn_progress(vpninfo, PRG_ERR,
+			     _("Error encoding the challenge response.\n"));
+
+		goto done;
+	}
+
+	ret = post_multicert_response(vpninfo, XCAST(BUF_DATA(certtext)),
+				      hash, XCAST(BUF_DATA(signtext)),
+				      body);
+
+done:
+	buf_free(certdata); buf_free(certtext);
+	buf_free(signdata); buf_free(signtext);
+	return ret;
 }

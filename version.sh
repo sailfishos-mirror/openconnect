@@ -1,6 +1,6 @@
 #!/bin/sh
 
-v="v8.10"
+v="v9.12"
 
 if [ -d ${GIT_DIR:-.git} ] && tag=`git describe --tags`; then
 	v="$tag"
@@ -17,5 +17,5 @@ else # XXX: Equivalent for .deb packages?
 	v="$v"-unknown
 fi
 
-echo "const char *openconnect_version_str = \"$v\";" > $1
+echo "const char openconnect_version_str[] = \"$v\";" > $1
 echo "New version: $v"

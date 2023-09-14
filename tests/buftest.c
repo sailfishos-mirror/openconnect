@@ -29,11 +29,11 @@
 
 /* I always coded as if it worked like this. Now it does. */
 #define realloc_inplace(p, size) do {			\
-	void *__realloc_old = p;			\
-	p = realloc(p, size);				\
-	if (size && !p)					\
-		free(__realloc_old);			\
-    } while (0)
+		void *__realloc_old = p;		\
+		p = realloc(p, size);			\
+		if (size && !p)				\
+			free(__realloc_old);		\
+	} while (0)
 
 struct oc_packed_uint32_t {
 	uint32_t d;
@@ -104,9 +104,14 @@ struct oc_text_buf {
 #define BUFTEST
 #include "../textbuf.c"
 
-#define assert(x) if (!(x)) {						\
-	fprintf(stderr, "assert(%s) failed at line %d\n", #x, __LINE__); \
-	exit(1); }
+#define assert(x) do {							\
+		if (!(x)) {						\
+			fprintf(stderr,					\
+			        "assert(%s) failed at line %d\n",	\
+			        #x, __LINE__);				\
+			exit(1);					\
+		}							\
+	} while (0)
 
 
 static char testbytes[OC_BUF_MAX];

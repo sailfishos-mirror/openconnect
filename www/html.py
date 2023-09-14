@@ -14,7 +14,13 @@ import getopt
 import xml.sax
 import codecs
 
-sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())
+if sys.version_info >= (3, 0):
+    sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())
+else:
+    # reload() always needed because of https://docs.python.org/2.7/library/sys.html#sys.setdefaultencoding
+    reload(sys)
+    sys.setdefaultencoding('utf-8')
+    sys.stdout = codecs.getwriter("utf-8")(sys.stdout)
 
 lookupdir = ''
 
@@ -44,6 +50,9 @@ fdout = sys.stdout
 def replaceVars(line):
     cnt = 0
     while cnt < len(replace):
+        # FIXME: this will match partial variable names, e.g. if XYZ and XYZ_ABC
+        # are both in the replacement list, and XYZ appears first, it will
+        # match and (partially) replace occurrences of XYZ_ABC.
         if line.find(replace[cnt]) >= 0:
             line = line.replace(replace[cnt], replace[cnt+1])
         cnt += 2
@@ -79,7 +88,7 @@ def placeMenu(topic, link, mode):
 class docHandler(xml.sax.ContentHandler):
 
     def __init__(self):
-        super().__init__()
+        xml.sax.ContentHandler.__init__(self)
         self.content = ""
 
     def startElement(self, name, attrs):
@@ -124,32 +133,20 @@ class docHandler(xml.sax.ContentHandler):
             writeHtml("<" + name)
             if attrs.getLength() > 0:
                 names = attrs.getNames()
-                for name in names:
-                    writeHtml(" " + name + "=\"" + attrs.get(name) + "\"")
+                for n in names:
+                    v = attrs.get(n)
+                    writeHtml(" " + n + "=\"" + v + "\"")
             writeHtml(" />" if name == "br" else ">")
 
-    def characters(self, ch):
-        self.content += ch
+    def characters(self, content):
+        self.content += content
 
     def endElement(self, name):
 
-        if name == "PAGE":
-            return
-        elif name == 'INCLUDE':
-            return
-        elif name == 'PARSE':
-            return
-        elif name == 'PAGE':
-            return
-        elif name == 'STARTMENU':
-            return
-        elif name == 'ENDMENU':
-            return
-        elif name == 'MENU':
-            return
-        elif name == 'VAR':
-            return
-        elif name == 'br':
+        if name in {
+            "PAGE", "INCLUDE", "PARSE", "STARTMENU", "ENDMENU", "MENU",
+            "VAR", "br",
+        }:
             return
 
         if len(self.content) > 0:

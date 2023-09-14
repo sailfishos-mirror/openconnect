@@ -118,14 +118,14 @@ static int setup_tun_device(struct openconnect_info *vpninfo)
 	if (vpninfo->use_tun_script) {
 		ret = openconnect_setup_tun_script(vpninfo, vpninfo->vpnc_script);
 		if (ret) {
-			fprintf(stderr, _("Set up tun script failed\n"));
+			vpn_progress(vpninfo, PRG_ERR, _("Set up tun script failed\n"));
 			return ret;
 		}
 	} else
 #endif
 	ret = openconnect_setup_tun_device(vpninfo, vpninfo->vpnc_script, vpninfo->ifname);
 	if (ret) {
-		fprintf(stderr, _("Set up tun device failed\n"));
+		vpn_progress(vpninfo, PRG_ERR, _("Set up tun device failed\n"));
 		if (!vpninfo->quit_reason)
 			vpninfo->quit_reason = "Set up tun device failed";
 		return ret;
@@ -133,26 +133,21 @@ static int setup_tun_device(struct openconnect_info *vpninfo)
 
 #if !defined(_WIN32) && !defined(__native_client__)
 	if (vpninfo->uid != getuid()) {
-		int e;
-
 		if (setgid(vpninfo->gid)) {
-			e = errno;
-			fprintf(stderr, _("Failed to set gid %ld: %s\n"),
-				(long)vpninfo->gid, strerror(e));
+			vpn_progress(vpninfo, PRG_ERR, _("Failed to set gid %ld: %s\n"),
+				     (long)vpninfo->gid, strerror(errno));
 			return -EPERM;
 		}
 
 		if (setgroups(1, &vpninfo->gid)) {
-			e = errno;
-			fprintf(stderr, _("Failed to set groups to %ld: %s\n"),
-				(long)vpninfo->gid, strerror(e));
+			vpn_progress(vpninfo, PRG_ERR, _("Failed to set groups to %ld: %s\n"),
+				     (long)vpninfo->gid, strerror(errno));
 			return -EPERM;
 		}
 
 		if (setuid(vpninfo->uid)) {
-			e = errno;
-			fprintf(stderr, _("Failed to set uid %ld: %s\n"),
-				(long)vpninfo->uid, strerror(e));
+			vpn_progress(vpninfo, PRG_ERR, _("Failed to set uid %ld: %s\n"),
+				     (long)vpninfo->uid, strerror(errno));
 			return -EPERM;
 		}
 	}
@@ -372,7 +367,7 @@ int openconnect_mainloop(struct openconnect_info *vpninfo,
 				nfds = 0;
 			}
 			while (nfds--) {
-				if (evs[nfds].events & EPOLLIN) {
+				if (evs[nfds].events & (EPOLLIN|EPOLLERR)) {
 					if (evs[nfds].data.fd == vpninfo->tun_fd)
 						tun_r = 1;
 					else if (evs[nfds].data.fd == vpninfo->ssl_fd)

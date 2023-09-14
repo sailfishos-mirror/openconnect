@@ -33,6 +33,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+/* FIXME: this largely duplicates xmlnode_get_trimmed in auth-common.c */
 static char *fetch_and_trim(xmlNode *node)
 {
 	char *str = (char *)xmlNodeGetContent(node), *p;
@@ -92,7 +93,7 @@ int config_lookup_host(struct openconnect_info *vpninfo, const char *host)
 	vpn_progress(vpninfo, PRG_DEBUG, _("XML config file SHA1: %s\n"),
 		     vpninfo->xmlsha1);
 
-	xml_doc = xmlReadMemory(xmlfile, size, "noname.xml", NULL, 0);
+	xml_doc = xmlReadMemory(xmlfile, size, NULL, NULL, 0);
 
 	free(xmlfile);
 

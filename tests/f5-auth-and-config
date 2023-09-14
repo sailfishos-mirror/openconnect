@@ -24,7 +24,7 @@ top_builddir=${top_builddir:-..}
 
 . `dirname $0`/common.sh
 
-FINGERPRINT="--servercert=d66b507ae074d03b02eafca40d35f87dd81049d3"
+FINGERPRINT="--servercert=pin-sha256:xp3scfzy3rO"
 CERT=$certdir/server-cert.pem
 KEY=$certdir/server-key.pem
 
@@ -33,28 +33,62 @@ echo "Testing F5 auth against fake server ..."
 OCSERV=${srcdir}/fake-f5-server.py
 launch_simple_sr_server $ADDRESS 443 $CERT $KEY > /dev/null 2>&1
 PID=$!
-wait_server $PID 1
+wait_server $PID
+
+SERVURL="https://$ADDRESS:443"
+CLIENT="$OPENCONNECT -q --protocol=f5 $FINGERPRINT -u test --passwd-on-stdin"
+export LD_PRELOAD=libsocket_wrapper.so
+
+echo "Configuring fake server not to present an HTML login form."
+curl -sk $SERVURL/CONFIGURE -d no_html_login_form=1
 
 echo -n "Authenticating with username/password in the absence of an HTML login form... "
-( echo "test" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT --protocol=f5 -q $ADDRESS:443/?no_html_login_form=1 -u test $FINGERPRINT --cookieonly >/dev/null 2>&1) ||
+( echo "test" | $CLIENT $SERVURL --cookieonly >/dev/null 2>&1) ||
     fail $PID "Could not receive cookie from fake F5 server"
 
 echo ok
+
+echo "Resetting fake server to default configuration."
+curl -sk $SERVURL/CONFIGURE -d ''
 
 echo -n "Authenticating with username/password... "
-( echo "test" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT --protocol=f5 -q $ADDRESS:443 -u test $FINGERPRINT --cookieonly >/dev/null 2>&1) ||
+( echo "test" | $CLIENT $SERVURL --cookieonly >/dev/null 2>&1) ||
     fail $PID "Could not receive cookie from fake F5 server"
 
 echo ok
+
+echo "Configuring fake server for a choice of 3 domains/authgroups."
+curl -sk $SERVURL/CONFIGURE -d domains=xyz,abc,def
 
 echo -n "Authenticating with username/password/authgroup... "
-( echo "test" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT --protocol=f5 -q $ADDRESS:443/?domains=xyz,abc,def --authgroup=abc -u test $FINGERPRINT --cookieonly >/dev/null 2>&1) ||
+( echo "test" | $CLIENT $SERVURL --authgroup=abc --cookieonly >/dev/null 2>&1) ||
     fail $PID "Could not receive cookie from fake F5 server"
 
 echo ok
 
+echo "Configuring fake server to require 2FA token following hidden form."
+curl -sk $SERVURL/CONFIGURE -d hidden_form_then_2fa=1
+
+echo -n "Authenticating with username/password/2FA-token... "
+( echo "test" | $CLIENT $SERVURL --token-mode=totp --token-secret=FAKE --cookieonly >/dev/null 2>&1) ||
+    fail $PID "Could not receive cookie from fake F5 server"
+
+echo ok
+
+echo "Configuring fake server to require 2FA token following hidden form with a field that must be overridden."
+curl -sk $SERVURL/CONFIGURE -d hidden_form_then_2fa=1 -d hidden_required_value=17
+
+echo -n "Authenticating with username/password/2FA-token and hidden field override... "
+( echo "test" | $CLIENT $SERVURL --token-mode=totp --token-secret=FAKE --form-entry 'hidden_form:choice=17' --cookieonly >/dev/null 2>&1) ||
+    fail $PID "Could not receive cookie from fake F5 server"
+
+echo ok
+
+echo "Resetting fake server to default configuration."
+curl -sk $SERVURL/CONFIGURE -d ''
+
 echo -n "Authenticating with username/password, then proceeding to tunnel stage... "
-echo "test" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT --protocol=f5 -q $ADDRESS:443 -u test $FINGERPRINT >/dev/null 2>&1
+echo "test" | $CLIENT $SERVURL >/dev/null 2>&1
 test $? = 2 || # what OpenConnect returns when server rejects cookie upon tunnel connection, as the fake server does
     fail $PID "Something went wrong in fake F5 server (other than the expected rejection of cookie)"
 

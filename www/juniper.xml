@@ -5,16 +5,24 @@
 	<VAR match="VAR_SEL_JUNIPER" replace="selected" />
 	<PARSE file="menu1.xml" />
 	<PARSE file="menu2-protocols.xml" />
-	
+
 	<INCLUDE file="inc/content.tmpl" />
 
 <h1>Juniper SSL VPN / Pulse Connect Secure</h1>
 
 <p>Support for Juniper's Network Connect protocol was added to
-OpenConnect in early 2015, for the 7.05 release. It is still
-experimental, and is quite likely to be deprecated in favour of the newer
-<a href="http://www.juniper.net/techpubs/en_US/junos-pulse4.0/topics/reference/a-c-c-nc-comparing.html">Junos
-Pulse</a> protocol.</p>
+OpenConnect in early 2015, for the 7.05 release. It is an extremely
+convoluted and quirky protocol, but OpenConnect's support for it
+is believed to be nearly complete. The most glaring problem with
+the Pulse protocol is that it does not support IPv6 at all.</p>
+
+<p>Following
+<a href="https://www.juniper.net/content/dam/www/assets/solution-briefs/us/en/security/juniper-networks-and-pulse-secure-deliver-unified-secure-network-access.pdf">Juniper's
+2015 announcement</a>, the Juniper protocol has been largely
+deprecated and replaced with the <a href="pulse.html">Junos/Ivanti
+Pulse</a> protocol. However, as of 2023 Junos/Ivanti servers continue
+to support the Juniper Network Connect protocol alongside the Pulse
+protocol, unless explicitly disabled by administrators.</p>
 
 <p>Juniper mode is requested by adding <tt>--protocol=nc</tt>
 to the command line:
@@ -61,7 +69,7 @@ client and can be found
 cookie representing a VPN session can be used with OpenConnect. Just
 pass the cookie to OpenConnect with its <tt>-C</tt> option, for example:
 <pre>
-  openconnect --juniper -C "DSID=foobar12345" vpn.example.com
+  openconnect --protocol=nc -C "DSID=foobar12345" vpn.example.com
 </pre>
 </p>
 

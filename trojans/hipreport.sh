@@ -21,6 +21,14 @@
 #                values are 'Linux', 'Mac' or 'Windows' ). Defaults to
 #                'Windows'.
 #
+# Sending these parameters as --long-options was a mistake (see
+# comments on run_hip_script in gpst.c for more details). New
+# parameters should be sent as environment variables instead:
+#
+#    APP_VERSION: client software version, labeled here in the HIP
+#      report as '<client-version>', but as 'app-version' or as
+#      'clientgpversion' elsewhere in the GlobalProtect wire protocol.
+#
 # This hipreport.sh does not work as-is on Android. The large here-doc
 # (cat <<EOF) does not appear to work with Android's /system/bin/sh,
 # likely due to an insufficient read buffer size.
@@ -53,11 +61,8 @@ USER=$(echo "$COOKIE" | sed -rn 's/(.+&|^)user=([^&]+)(&.+|$)/\2/p')
 DOMAIN=$(echo "$COOKIE" | sed -rn 's/(.+&|^)domain=([^&]+)(&.+|$)/\2/p')
 COMPUTER=$(echo "$COOKIE" | sed -rn 's/(.+&|^)computer=([^&]+)(&.+|$)/\2/p')
 
-# This value may need to be extracted from the official HIP report, if a made-up value is not accepted.
-HOSTID="deadbeef-dead-beef-dead-beefdeadbeef"
 case $CLIENTOS in
 	Linux)
-		CLIENT_VERSION="5.1.5-8"
 		OS="Linux Fedora 32"
 		OS_VENDOR="Linux"
 		NETWORK_INTERFACE_NAME="virbr0"
@@ -66,8 +71,17 @@ case $CLIENTOS in
 		ENCDRIVE='/'
 		;;
 
+	Mac)
+		# set to desired default OS version if not actually running on MacOS
+		OS_VERSION=$(sw_vers --productVersion 2> /dev/null || echo 10.16.0)
+		OS="Apple Mac OS X ${OS_VERSION}"
+		OS_VENDOR="Apple"
+		NETWORK_INTERFACE_NAME="en0"
+		NETWORK_INTERFACE_DESCRIPTION="en0"
+		# Not currently used for MacOS
+		ENCDRIVE='/'
+		;;
 	*)
-		CLIENT_VERSION="5.1.5-8"
 		OS="Microsoft Windows 10 Pro , 64-bit"
 		OS_VENDOR="Microsoft"
 		NETWORK_INTERFACE_NAME="{DEADBEEF-DEAD-BEEF-DEAD-BEEFDEADBEEF}"
@@ -76,6 +90,11 @@ case $CLIENTOS in
 		ENCDRIVE='C:\\'
 		;;
 esac
+
+# If default/made-up values are not accepted, these values may need to be extracted from the
+# HIP report sent by an official GlobalProtect client.
+HOST_ID="deadbeef-dead-beef-dead-beefdeadbeef"
+if [ -z "$APP_VERSION" ]; then APP_VERSION=5.1.5-8; fi
 
 # Timestamp in the format expected by GlobalProtect server
 NOW=$(date +'%m/%d/%Y %H:%M:%S')
@@ -90,19 +109,19 @@ cat <<EOF
 	<user-name>$USER</user-name>
 	<domain>$DOMAIN</domain>
 	<host-name>$COMPUTER</host-name>
-	<host-id>$HOSTID</host-id>
+	<host-id>$HOST_ID</host-id>
 	<ip-address>$IP</ip-address>
 	<ipv6-address>$IPV6</ipv6-address>
 	<generate-time>$NOW</generate-time>
 	<hip-report-version>4</hip-report-version>
 	<categories>
 		<entry name="host-info">
-			<client-version>$CLIENT_VERSION</client-version>
+			<client-version>$APP_VERSION</client-version>
 			<os>$OS</os>
 			<os-vendor>$OS_VENDOR</os-vendor>
 			<domain>$DOMAIN.internal</domain>
 			<host-name>$COMPUTER</host-name>
-			<host-id>$HOSTID</host-id>
+			<host-id>$HOST_ID</host-id>
 			<network-interface>
 				<entry name="$NETWORK_INTERFACE_NAME">
 					<description>$NETWORK_INTERFACE_DESCRIPTION</description>
@@ -120,6 +139,8 @@ EOF
 
 case $CLIENTOS in
 	Linux)
+	;;
+	Mac)
 	;;
 	*) cat <<EOF
 		<entry name="antivirus">
@@ -150,6 +171,27 @@ case $CLIENTOS in
 	Linux) cat <<EOF
 		<entry name="anti-malware">
 			<list/>
+		</entry>
+EOF
+	;;
+	Mac) cat <<EOF
+		<entry name="anti-malware">
+			<list>
+				<entry>
+					<ProductInfo>
+						<Prod vendor="Apple Inc." name="Xprotect" version="2167" defver="235000000000000" engver="" datemon="$MONTH" dateday="$DAY" dateyear="$YAR" prodType="3" osType="4"/>
+						<real-time-protection>yes</real-time-protection>
+						<last-full-scan-time>n/a</last-full-scan-time>
+					</ProductInfo>
+				</entry>
+				<entry>
+					<ProductInfo>
+						<Prod vendor="Apple Inc." name="Gatekeeper" version="${OS_VERSION}" defver="" engver="" datemon="$MONTH" dateday="$DAY" dateyear="$YEAR" prodType="3" osType="4"/>
+						<real-time-protection>yes</real-time-protection>
+						<last-full-scan-time>n/a</last-full-scan-time>
+					</ProductInfo>
+				</entry>
+			</list>
 		</entry>
 EOF
 	;;
@@ -185,6 +227,19 @@ case $CLIENTOS in
 		</entry>
 EOF
 	;;
+	Mac) cat <<EOF
+		<entry name="disk-backup">
+			<list>
+				<entry>
+					<ProductInfo>
+						<Prod vendor="Apple Inc." name="Time Machine" version="1.3"/>
+						<last-backup-time>n/a</last-backup-time>
+					</ProductInfo>
+				</entry>
+			</list>
+		</entry>
+EOF
+	;;
 	*) cat <<EOF
 		<entry name="disk-backup">
 			<list>
@@ -202,6 +257,32 @@ EOF
 esac
 
 case $CLIENTOS in
+	Mac) cat <<EOF
+		<entry name="disk-encryption">
+			<list>
+				<entry>
+					<ProductInfo>
+						<Prod vendor="Apple Inc." name="FileVault" version="${OS_VERSION}"/>
+						<drives>
+							<entry>
+								<drive-name>Macintosh HD</drive-name>
+								<enc-state>encrypted</enc-state>
+							</entry>
+							<entry>
+								<drive-name>Data</drive-name>
+								<enc-state>encrypted</enc-state>
+							</entry>
+							<entry>
+								<drive-name>All</drive-name>
+								<enc-state>encrypted</enc-state>
+							</entry>
+						</drives>
+					</ProductInfo>
+				</entry>
+			</list>
+		</entry>
+EOF
+	;;
 	Linux) cat <<EOF
 		<entry name="disk-encryption">
 			<list>
@@ -243,6 +324,25 @@ EOF
 esac
 
 case $CLIENTOS in
+	Mac) cat <<EOF
+		<entry name="firewall">
+			<list>
+				<entry>
+					<ProductInfo>
+						<Prod vendor="Apple Inc." name="Mac OS X Builtin Firewall" version="${OS_VERSION}"/>
+						<is-enabled>yes</is-enabled>
+					</ProductInfo>
+				</entry>
+				<entry>
+					<ProductInfo>
+						<Prod vendor="OpenBSD" name="Packet Filter" version="${OS_VERSION}"/>
+						<is-enabled>no</is-enabled>
+					</ProductInfo>
+				</entry>
+			</list>
+		</entry>
+EOF
+	;;
 	Linux) cat <<EOF
 		<entry name="firewall">
 			<list>
@@ -281,6 +381,21 @@ EOF
 esac
 
 case $CLIENTOS in
+	Mac) cat <<EOF
+		<entry name="patch-management">
+			<list>
+				<entry>
+					<ProductInfo>
+						<Prod vendor="Apple Inc." name="Software Update" version="3.0"/>
+						<is-enabled>yes</is-enabled>
+					</ProductInfo>
+				</entry>
+			</list>
+			<missing-patches>
+			</missing-patches>
+		</entry>
+EOF
+	;;
 	Linux) cat <<EOF
 		<entry name="patch-management">
 			<list>

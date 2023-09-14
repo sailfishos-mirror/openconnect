@@ -100,6 +100,17 @@ int http_add_cookie(struct openconnect_info *vpninfo, const char *option,
 	return 0;
 }
 
+const char *http_get_cookie(struct openconnect_info *vpninfo, const char *name)
+{
+	struct oc_vpn_option *this;
+
+	for (this = vpninfo->cookies; this; this = this->next) {
+		if (!strcmp(this->option, name))
+			return this->value;
+	}
+	return NULL;
+}
+
 /* Some protocols use an "authentication cookie" which needs
  * to be split into multiple HTTP cookies. (For example, oNCP
  * 'DSSignInUrl=/; DSID=xxx; DSFirstAccess=xxx; DSLastAccess=xxx')
@@ -657,6 +668,18 @@ int handle_redirect(struct openconnect_info *vpninfo)
 		vpninfo->redirect_url = NULL;
 
 		return 0;
+	} else if (vpninfo->redirect_url[0] == '\0' || vpninfo->redirect_url[0] == '#') {
+		/* Empty redirect, no op */
+		free(vpninfo->redirect_url);
+		vpninfo->redirect_url = NULL;
+		return 0;
+        } else if (vpninfo->redirect_url[0] == '/') {
+                /* Absolute redirect within same host */
+                free(vpninfo->urlpath);
+                vpninfo->urlpath = strdup(vpninfo->redirect_url + 1);
+                free(vpninfo->redirect_url);
+                vpninfo->redirect_url = NULL;
+                return 0;
 	} else if (strstr(vpninfo->redirect_url, "://")) {
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Cannot follow redirection to non-https URL '%s'\n"),
@@ -664,13 +687,6 @@ int handle_redirect(struct openconnect_info *vpninfo)
 		free(vpninfo->redirect_url);
 		vpninfo->redirect_url = NULL;
 		return -EINVAL;
-	} else if (vpninfo->redirect_url[0] == '/') {
-		/* Absolute redirect within same host */
-		free(vpninfo->urlpath);
-		vpninfo->urlpath = strdup(vpninfo->redirect_url + 1);
-		free(vpninfo->redirect_url);
-		vpninfo->redirect_url = NULL;
-		return 0;
 	} else {
 		char *lastslash = NULL;
 		if (vpninfo->urlpath)
@@ -699,7 +715,7 @@ int handle_redirect(struct openconnect_info *vpninfo)
 	}
 }
 
-void dump_buf(struct openconnect_info *vpninfo, char prefix, char *buf)
+void do_dump_buf(struct openconnect_info *vpninfo, char prefix, char *buf)
 {
 	while (*buf) {
 		char *eol = buf;
@@ -725,12 +741,14 @@ void dump_buf(struct openconnect_info *vpninfo, char prefix, char *buf)
 	}
 }
 
-void dump_buf_hex(struct openconnect_info *vpninfo, int loglevel, char prefix, unsigned char *buf, int len)
+void do_dump_buf_hex(struct openconnect_info *vpninfo, int loglevel, char prefix, unsigned char *buf, int len)
 {
 	struct oc_text_buf *line = buf_alloc();
-	int i, j;
+	int i;
 
 	for (i = 0; i < len; i+=16) {
+		int j;
+
 		buf_truncate(line);
 		buf_append(line, "%04x:", i);
 		for (j = i; j < i+16; j++) {
@@ -955,6 +973,8 @@ int do_https_request(struct openconnect_info *vpninfo, const char *method, const
 			result = -EPERM;
 		else if (result == 512) /* GlobalProtect invalid username/password */
 			result = -EACCES;
+		else if (result == 405) /* Method not supported */
+			result = -EOPNOTSUPP;
 		else
 			result = -EINVAL;
 
@@ -998,7 +1018,7 @@ static int proxy_read(struct openconnect_info *vpninfo, char *buf, size_t len)
 	return cancellable_recv(vpninfo, vpninfo->proxy_fd, buf, len);
 }
 
-static const char *socks_errors[] = {
+static const char * const socks_errors[] = {
 	N_("request granted"),
 	N_("general failure"),
 	N_("connection not allowed by ruleset"),

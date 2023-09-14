@@ -50,7 +50,7 @@ struct openconnect_info *openconnect_vpninfo_new(const char *useragent,
 						 openconnect_progress_vfn progress,
 						 void *privdata)
 {
-	struct openconnect_info *vpninfo = calloc(sizeof(*vpninfo), 1);
+	struct openconnect_info *vpninfo = calloc(1, sizeof(*vpninfo));
 #ifdef HAVE_ICONV
 	char *charset = nl_langinfo(CODESET);
 #endif
@@ -73,6 +73,9 @@ struct openconnect_info *openconnect_vpninfo_new(const char *useragent,
 #ifndef _WIN32
 	vpninfo->tun_fd = -1;
 #endif
+#if defined(DEFAULT_EXTERNAL_BROWSER)
+	vpninfo->external_browser = DEFAULT_EXTERNAL_BROWSER;
+#endif
 	init_pkt_queue(&vpninfo->free_queue);
 	init_pkt_queue(&vpninfo->incoming_queue);
 	init_pkt_queue(&vpninfo->outgoing_queue);
@@ -84,7 +87,7 @@ struct openconnect_info *openconnect_vpninfo_new(const char *useragent,
 	vpninfo->tncc_fd = -1;
 	vpninfo->cert_expire_warning = 60 * 86400;
 	vpninfo->req_compr = COMPR_STATELESS;
-	vpninfo->max_qlen = 10;
+	vpninfo->max_qlen = 32;	  /* >=16 will enable vhost-net on Linux */
 	vpninfo->localname = strdup("localhost");
 	vpninfo->port = 443;
 	vpninfo->useragent = openconnect_create_useragent(useragent);
@@ -121,15 +124,16 @@ err:
 static const struct vpn_proto openconnect_protos[] = {
 	{
 		.name = "anyconnect",
-		.pretty_name = N_("Cisco AnyConnect or openconnect"),
+		.pretty_name = N_("Cisco AnyConnect or OpenConnect"),
 		.description = N_("Compatible with Cisco AnyConnect SSL VPN, as well as ocserv"),
 		.proto = PROTO_ANYCONNECT,
-		.flags = OC_PROTO_PROXY | OC_PROTO_CSD | OC_PROTO_AUTH_CERT | OC_PROTO_AUTH_OTP | OC_PROTO_AUTH_STOKEN,
+		.flags = OC_PROTO_PROXY | OC_PROTO_CSD | OC_PROTO_AUTH_CERT | OC_PROTO_AUTH_OTP | OC_PROTO_AUTH_STOKEN | OC_PROTO_AUTH_MCA,
 		.vpn_close_session = cstp_bye,
 		.tcp_connect = cstp_connect,
 		.tcp_mainloop = cstp_mainloop,
 		.add_http_headers = cstp_common_headers,
 		.obtain_cookie = cstp_obtain_cookie,
+		.sso_detect_done = cstp_sso_detect_done,
 		.secure_cookie = "webvpn",
 		.udp_protocol = "DTLS",
 #ifdef HAVE_DTLS
@@ -170,6 +174,7 @@ static const struct vpn_proto openconnect_protos[] = {
 		.tcp_mainloop = gpst_mainloop,
 		.add_http_headers = gpst_common_headers,
 		.obtain_cookie = gpst_obtain_cookie,
+		.sso_detect_done = gpst_sso_detect_done,
 		.udp_protocol = "ESP",
 #ifdef HAVE_ESP
 		.udp_setup = esp_setup,
@@ -204,7 +209,7 @@ static const struct vpn_proto openconnect_protos[] = {
 		.pretty_name = N_("F5 BIG-IP SSL VPN"),
 		.description = N_("Compatible with F5 BIG-IP SSL VPN"),
 		.proto = PROTO_F5,
-		.flags = OC_PROTO_PROXY | OC_PROTO_AUTH_CERT,
+		.flags = OC_PROTO_PROXY | OC_PROTO_AUTH_CERT | OC_PROTO_AUTH_OTP | OC_PROTO_AUTH_STOKEN,
 		.vpn_close_session = f5_bye,
 		.tcp_connect = f5_connect,
 		.tcp_mainloop = ppp_tcp_mainloop,
@@ -282,7 +287,7 @@ static const struct vpn_proto openconnect_protos[] = {
 	},
 };
 
-#define NR_PROTOS (sizeof(openconnect_protos)/sizeof(*openconnect_protos))
+#define NR_PROTOS ARRAY_SIZE(openconnect_protos)
 
 int openconnect_get_supported_protocols(struct oc_vpn_proto **protos)
 {
@@ -390,7 +395,7 @@ int openconnect_make_cstp_connection(struct openconnect_info *vpninfo)
 int openconnect_set_reported_os(struct openconnect_info *vpninfo,
 				const char *os)
 {
-	const char *allowed[] = {"linux", "linux-64", "win", "mac-intel", "android", "apple-ios"};
+	static const char * const allowed[] = {"linux", "linux-64", "win", "mac-intel", "android", "apple-ios"};
 
 	if (!os) {
 #if defined(__APPLE__)
@@ -578,6 +583,21 @@ int install_vpn_opts(struct openconnect_info *vpninfo, struct oc_vpn_option *opt
 			     ip_info->mtu);
 	}
 
+	/* XX: Supported protocols and servers are inconsistent in how they send us
+	 * multiple search domains. Some provide domains via repeating fields which we
+	 * glom into a single space-separated string, some provide domains in single
+	 * fields which contain ',' or ';' as separators.
+	 *
+	 * Since neither ',' nor ';' is a legal character in a domain name, and since all
+	 * known routing configuration scripts support space-separated domains, we can
+	 * safely replace these characters with spaces, and thus support all known
+	 * combinations.
+	 */
+	for (char *p = (char *)ip_info->domain; p && *p; p++) {
+		if (*p == ';' || *p == ',')
+			*p = ' ';
+	}
+
 	/* Free the original options */
 	free_split_routes(&vpninfo->ip_info);
 	free_optlist(vpninfo->cstp_options);
@@ -587,6 +607,24 @@ int install_vpn_opts(struct openconnect_info *vpninfo, struct oc_vpn_option *opt
 	vpninfo->ip_info = *ip_info;
 
 	return 0;
+}
+
+static void free_certinfo(struct cert_info *certinfo)
+{
+	/**
+	 * Ensure resources are released
+	 */
+
+	unload_certificate(certinfo, 1);
+
+	/* These are const in openconnect itself, but for consistency of
+	   the library API we do take ownership of the strings we're given,
+	   and thus we have to free them too. */
+	if (certinfo->cert != certinfo->key)
+		free((void *)certinfo->key);
+	free((void *)certinfo->cert);
+
+	free_pass(&certinfo->password);
 }
 
 void openconnect_vpninfo_free(struct openconnect_info *vpninfo)
@@ -601,10 +639,23 @@ void openconnect_vpninfo_free(struct openconnect_info *vpninfo)
 		closesocket(vpninfo->cmd_fd_write);
 	}
 
+#ifdef HAVE_HPKE_SUPPORT
+	free_strap_keys(vpninfo);
+	free(vpninfo->strap_pubkey);
+	free(vpninfo->strap_dh_pubkey);
+#endif /* HAVE_HPKE_SUPPORT */
+
+	free(vpninfo->sso_username);
+	free(vpninfo->sso_cookie_value);
+	free(vpninfo->sso_browser_mode);
+	free(vpninfo->sso_login);
+	free(vpninfo->sso_login_final);
+	free(vpninfo->sso_error_cookie);
+	free(vpninfo->sso_token_cookie);
+
 	free(vpninfo->ppp);
 	buf_free(vpninfo->ppp_tls_connect_req);
 	buf_free(vpninfo->ppp_dtls_connect_req);
-
 #ifdef HAVE_ICONV
 	if (vpninfo->ic_utf8_to_legacy != (iconv_t)-1)
 		iconv_close(vpninfo->ic_utf8_to_legacy);
@@ -631,6 +682,7 @@ void openconnect_vpninfo_free(struct openconnect_info *vpninfo)
 	free_split_routes(&vpninfo->ip_info);
 	free(vpninfo->hostname);
 	free(vpninfo->unique_hostname);
+	free(vpninfo->sni);
 	buf_free(vpninfo->connect_urlbuf);
 	free(vpninfo->urlpath);
 	free(vpninfo->redirect_url);
@@ -639,7 +691,6 @@ void openconnect_vpninfo_free(struct openconnect_info *vpninfo)
 	free(vpninfo->proxy);
 	free(vpninfo->proxy_user);
 	free_pass(&vpninfo->proxy_pass);
-	free_pass(&vpninfo->certinfo[0].password);
 	free(vpninfo->vpnc_script);
 	free(vpninfo->cafile);
 	free(vpninfo->ifname);
@@ -682,12 +733,9 @@ void openconnect_vpninfo_free(struct openconnect_info *vpninfo)
 	free(vpninfo->profile_url);
 	free(vpninfo->profile_sha1);
 
-	/* These are const in openconnect itself, but for consistency of
-	   the library API we do take ownership of the strings we're given,
-	   and thus we have to free them too. */
-	if (vpninfo->certinfo[0].cert != vpninfo->certinfo[0].key)
-		free((void *)vpninfo->certinfo[0].key);
-	free((void *)vpninfo->certinfo[0].cert);
+	free_certinfo(&vpninfo->certinfo[0]);
+	free_certinfo(&vpninfo->certinfo[1]);
+
 	if (vpninfo->peer_cert) {
 #if defined(OPENCONNECT_OPENSSL)
 		X509_free(vpninfo->peer_cert);
@@ -779,7 +827,7 @@ const char *openconnect_get_connect_url(struct openconnect_info *vpninfo)
 	 * https://gitlab.gnome.org/GNOME/NetworkManager-openconnect/-/issues/53
 	 * https://gitlab.gnome.org/GNOME/NetworkManager-openconnect/-/merge_requests/22
 	 */
-	if (vpninfo->proto->proto == PROTO_PULSE)
+	if (vpninfo->proto->proto == PROTO_PULSE && vpninfo->urlpath)
 		buf_append(urlbuf, "%s", vpninfo->urlpath);
 	if (buf_error(urlbuf)) {
 		buf_free(urlbuf);
@@ -822,6 +870,15 @@ char *openconnect_get_urlpath(struct openconnect_info *vpninfo)
 	return vpninfo->urlpath;
 }
 
+int openconnect_set_useragent(struct openconnect_info *vpninfo,
+			      const char *useragent)
+{
+	UTF8CHECK(useragent);
+
+	STRDUP(vpninfo->useragent, useragent);
+	return 0;
+}
+
 int openconnect_set_urlpath(struct openconnect_info *vpninfo,
 			    const char *urlpath)
 {
@@ -837,6 +894,15 @@ int openconnect_set_localname(struct openconnect_info *vpninfo,
 	UTF8CHECK(localname);
 
 	STRDUP(vpninfo->localname, localname);
+	return 0;
+}
+
+int openconnect_set_sni(struct openconnect_info *vpninfo,
+			      const char *sni)
+{
+	UTF8CHECK(sni);
+
+	STRDUP(vpninfo->sni, sni);
 	return 0;
 }
 
@@ -980,6 +1046,34 @@ int openconnect_set_client_cert(struct openconnect_info *vpninfo,
 	} else {
 		vpninfo->certinfo[0].key = vpninfo->certinfo[0].cert;
 	}
+
+	return 0;
+}
+
+int openconnect_set_mca_cert(struct openconnect_info *vpninfo,
+			     const char *cert, const char *key)
+{
+	UTF8CHECK(cert);
+	UTF8CHECK(key);
+
+	/* Avoid freeing it twice if it's the same */
+	if (vpninfo->certinfo[1].key == vpninfo->certinfo[1].cert)
+		vpninfo->certinfo[1].key = NULL;
+
+	STRDUP(vpninfo->certinfo[1].cert, cert);
+
+	if (key) {
+		STRDUP(vpninfo->certinfo[1].key, key);
+	} else {
+		vpninfo->certinfo[1].key = vpninfo->certinfo[1].cert;
+	}
+
+	return 0;
+}
+
+int openconnect_set_mca_key_password(struct openconnect_info *vpninfo, const char *pass)
+{
+	STRDUP(vpninfo->certinfo[1].password, pass);
 
 	return 0;
 }
@@ -1359,14 +1453,14 @@ int openconnect_setup_tun_device(struct openconnect_info *vpninfo,
 	return openconnect_setup_tun_fd(vpninfo, tun_fd);
 }
 
-static const char *compr_name_map[] = {
+static const char * const compr_name_map[] = {
 	[COMPR_DEFLATE] = "Deflate",
 	[COMPR_LZS] = "LZS",
 	[COMPR_LZ4] = "LZ4",
 	[COMPR_LZO] = "LZO",
 };
 
-const char *openconnect_get_cstp_compression(struct openconnect_info * vpninfo)
+const char *openconnect_get_cstp_compression(struct openconnect_info *vpninfo)
 {
 	if (vpninfo->cstp_compr <= 0 || vpninfo->cstp_compr > COMPR_MAX)
 		return NULL;
@@ -1374,7 +1468,7 @@ const char *openconnect_get_cstp_compression(struct openconnect_info * vpninfo)
 	return compr_name_map[vpninfo->cstp_compr];
 }
 
-const char *openconnect_get_dtls_compression(struct openconnect_info * vpninfo)
+const char *openconnect_get_dtls_compression(struct openconnect_info *vpninfo)
 {
 	if (vpninfo->dtls_compr <= 0 || vpninfo->dtls_compr > COMPR_MAX)
 		return NULL;
@@ -1553,7 +1647,7 @@ void nuke_opt_values(struct oc_form_opt *opt)
 
 int process_auth_form(struct openconnect_info *vpninfo, struct oc_auth_form *form)
 {
-	int ret;
+	int ret, do_sso = 0;
 	struct oc_form_opt_select *grp = form->authgroup_opt;
 	struct oc_choice *auth_choice;
 	struct oc_form_opt *opt;
@@ -1583,6 +1677,11 @@ retry:
 	for (opt = form->opts; opt; opt = opt->next) {
 		int second_auth = opt->flags & OC_FORM_OPT_SECOND_AUTH;
 		opt->flags &= ~OC_FORM_OPT_IGNORE;
+
+		if (opt->type == OC_FORM_OPT_SSO_TOKEN) {
+			do_sso = 1;
+			continue;
+		}
 
 		if (!auth_choice ||
 		    (opt->type != OC_FORM_OPT_TEXT && opt->type != OC_FORM_OPT_PASSWORD))
@@ -1616,5 +1715,68 @@ retry:
 	if (ret == OC_FORM_RESULT_CANCELLED || ret < 0)
 		nuke_opt_values(form->opts);
 
+	if (do_sso) {
+		free(vpninfo->sso_cookie_value);
+		free(vpninfo->sso_username);
+		vpninfo->sso_cookie_value = NULL;
+		vpninfo->sso_username = NULL;
+
+		/* Handle the special Cisco external browser mode */
+		if (vpninfo->sso_browser_mode && !strcmp(vpninfo->sso_browser_mode, "external")) {
+			ret = handle_external_browser(vpninfo);
+		} else if (vpninfo->open_webview) {
+			ret = vpninfo->open_webview(vpninfo, vpninfo->sso_login, vpninfo->cbdata);
+		} else {
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("No SSO handler\n")); /* XX: print more debugging info */
+			ret = -EINVAL;
+		}
+		if (!ret) {
+			for (opt = form->opts; opt; opt = opt->next) {
+				if (opt->type == OC_FORM_OPT_SSO_TOKEN) {
+					free(opt->_value);
+					opt->_value = vpninfo->sso_cookie_value;
+					vpninfo->sso_cookie_value = NULL;
+				} else if (opt->type == OC_FORM_OPT_SSO_USER) {
+					free(opt->_value);
+					opt->_value = vpninfo->sso_username;
+					vpninfo->sso_username = NULL;
+				}
+			}
+		}
+		free(vpninfo->sso_username);
+		vpninfo->sso_username = NULL;
+		free(vpninfo->sso_cookie_value);
+		vpninfo->sso_cookie_value = NULL;
+		free(vpninfo->sso_browser_mode);
+		vpninfo->sso_browser_mode = NULL;
+	}
+
 	return ret;
+}
+
+void openconnect_set_webview_callback(struct openconnect_info *vpninfo,
+				      openconnect_open_webview_vfn webview_fn)
+{
+	vpninfo->open_webview = webview_fn;
+	vpninfo->try_http_auth = 0;
+}
+
+void openconnect_set_external_browser_callback(struct openconnect_info *vpninfo,
+					       openconnect_open_webview_vfn browser_fn)
+{
+	vpninfo->open_ext_browser = browser_fn;
+	vpninfo->try_http_auth = 0;
+}
+
+int openconnect_webview_load_changed(struct openconnect_info *vpninfo,
+				      const struct oc_webview_result *result)
+{
+	if (!vpninfo || !result)
+		return -EINVAL;
+
+	if (vpninfo->proto->sso_detect_done)
+		return (vpninfo->proto->sso_detect_done)(vpninfo, result);
+
+	return -EOPNOTSUPP;
 }

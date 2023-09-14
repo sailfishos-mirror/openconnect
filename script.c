@@ -306,6 +306,7 @@ void prepare_script_env(struct openconnect_info *vpninfo)
 
 	script_setenv_int(vpninfo, "INTERNAL_IP4_MTU", vpninfo->ip_info.mtu);
 	script_setenv_int(vpninfo, "VPNPID", (int)getpid());
+	script_setenv_int(vpninfo, "LOG_LEVEL", vpninfo->verbose);
 
 	if (vpninfo->idle_timeout)
 		script_setenv_int(vpninfo, "IDLE_TIMEOUT", vpninfo->idle_timeout);
@@ -365,13 +366,14 @@ void prepare_script_env(struct openconnect_info *vpninfo)
 	if (vpninfo->ip_info.dns[2])
 		script_setenv(vpninfo, "INTERNAL_IP4_DNS", vpninfo->ip_info.dns[2], 0, 1);
 
-	if (vpninfo->ip_info.nbns[0])
+	/* poorly configured VPNs send non-sensical 0.0.0.0 NBNS server address */
+	if (vpninfo->ip_info.nbns[0] && !strcmp(vpninfo->ip_info.nbns[0], "0.0.0.0"))
 		script_setenv(vpninfo, "INTERNAL_IP4_NBNS", vpninfo->ip_info.nbns[0], 0, 0);
 	else
 		script_setenv(vpninfo, "INTERNAL_IP4_NBNS", NULL, 0, 0);
-	if (vpninfo->ip_info.nbns[1])
+	if (vpninfo->ip_info.nbns[1] && !strcmp(vpninfo->ip_info.nbns[1], "0.0.0.0"))
 		script_setenv(vpninfo, "INTERNAL_IP4_NBNS", vpninfo->ip_info.nbns[1], 0, 1);
-	if (vpninfo->ip_info.nbns[2])
+	if (vpninfo->ip_info.nbns[2] && !strcmp(vpninfo->ip_info.nbns[2], "0.0.0.0"))
 		script_setenv(vpninfo, "INTERNAL_IP4_NBNS", vpninfo->ip_info.nbns[2], 0, 1);
 
 	if (vpninfo->ip_info.domain)
@@ -667,11 +669,11 @@ int script_config_tun(struct openconnect_info *vpninfo, const char *reason)
 		exit(127);
 	}
 	if (pid == -1 || waitpid(pid, &ret, 0) == -1) {
-		int e = errno;
+		int err = errno;
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("Failed to spawn script '%s' for %s: %s\n"),
-			     vpninfo->vpnc_script, reason, strerror(e));
-		return -e;
+			     vpninfo->vpnc_script, reason, strerror(err));
+		return -err;
 	}
 
 	if (!WIFEXITED(ret)) {

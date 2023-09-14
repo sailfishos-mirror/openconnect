@@ -1,4 +1,4 @@
-AC_INIT(openconnect, 8.10)
+AC_INIT([openconnect], [9.12])
 AC_LANG([C])
 AC_CONFIG_HEADERS([config.h])
 m4_ifdef([AC_CONFIG_MACRO_DIRS], [AC_CONFIG_MACRO_DIRS([m4])])
@@ -9,7 +9,7 @@ AM_MAINTAINER_MODE([enable])
 AM_INIT_AUTOMAKE([foreign tar-ustar subdir-objects])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
-AC_PREREQ([2.62], [], [AC_SUBST([localedir], ['$(datadir)/locale'])])
+AC_PREREQ([2.62])
 
 # Upstream's pkg.m4 (since 0.27) offers this now, but define our own
 # compatible version in case the local version of pkgconfig isn't new enough.
@@ -33,16 +33,15 @@ symver_win32_setenv=
 # is conditional (as it is here for some of the MinGW checks), it forgets
 # to ever look for one in the other code paths. Do it explicitly here.
 AC_PROG_CC
-AC_PROG_CC_C99
+# Before autoconf 2.70, AC_PROG_CC_C99 appears to be necessary for some
+# compilers if you want C99 support. Starting with 2.70, it is obsolete.
+m4_version_prereq([2.70], [:], [AC_PROG_CC_C99])
 
+default_browser=xdg-open
 have_vhost=no
 case $host_os in
  *linux* | *gnu* | *nacl*)
-    case $host_cpu in
-	x86_64|amd64)
-	    have_vhost=yes
-	    ;;
-    esac
+    have_vhost=yes
     AC_MSG_NOTICE([Applying feature macros for GNU build])
     AC_DEFINE(_GNU_SOURCE, 1, [_GNU_SOURCE])
     ;;
@@ -74,6 +73,7 @@ case $host_os in
     system_pcsc_cflags=
     AC_CHECK_TOOL([WINDRES], [windres], [])
     AC_CHECK_TOOL([MAKENSIS], [makensis], [])
+    default_browser=open
 
     case $host_cpu in
 	x86_64|amd64)
@@ -91,6 +91,10 @@ case $host_os in
     esac
     AC_SUBST(WINTUN_ARCH, "$wintun_arch")
 
+    # Per https://github.com/MisterDA/ocaml/commit/5855ce5ffd931a2802d5b9a5b2987ab0b276fd0a,
+    # "The header file <afunix.h> declares the `struct sockaddr_un` type, but hasn't been picked by mingw-w64."
+    AC_CHECK_HEADER([afunix.h], AC_DEFINE([HAVE_AF_UNIX_H], 1, [MinGW has afunix.h]))
+
     # MINGW_HAS_SECURE_API may only work on newer MinGW:
     # https://stackoverflow.com/a/51977723
     AC_DEFINE(MINGW_HAS_SECURE_API, 1, [Try to make getenv_s and _putenv_s available])
@@ -100,6 +104,7 @@ case $host_os in
  *darwin*)
     system_pcsc_libs="-Wl,-framework -Wl,PCSC"
     system_pcsc_cflags=
+    default_browser=open
     ;;
  *)
     # On FreeBSD the only way to get vsyslog() visible is to define
@@ -124,6 +129,28 @@ if test "${MAKENSIS}" != ""; then
 fi
 AM_CONDITIONAL(BUILD_NSIS, [ test "$build_nsis" = "yes" ])
 AM_CONDITIONAL(OPENCONNECT_WINTUN, [ test "${wintun_arch}" != "" ])
+
+AC_ARG_WITH([external-browser],
+	[AS_HELP_STRING([--with-external-browser],
+	  [command to use for spawning external web browser])])
+
+if test "$with_external_browser" = "yes" || test "$with_external_browser" = ""; then
+   if test "$have_win" != ""; then
+      with_external_browser=${default_browser}
+   elif test "$default_browser" != ""; then
+      AC_MSG_CHECKING([for ${default_browser}])
+      AC_PATH_PROG(with_external_browser, ${default_browser}, no)
+   else
+      with_external_browser=no
+   fi
+fi
+if test "$with_external_browser" != "no"; then
+   if test -x "${with_external_browser}" -o -n "$have_win"; then
+      AC_DEFINE_UNQUOTED(DEFAULT_EXTERNAL_BROWSER, "${with_external_browser}", [External browser executable])
+   else
+      AC_MSG_ERROR([${with_external_browser} does not seem to be executable.])
+   fi
+fi
 
 AC_ARG_WITH([vpnc-script],
 	[AS_HELP_STRING([--with-vpnc-script],
@@ -304,6 +331,8 @@ AC_DISABLE_STATIC
 
 AC_CHECK_FUNC(nl_langinfo, [AC_DEFINE(HAVE_NL_LANGINFO, 1, [Have nl_langinfo() function])], [])
 
+AC_CHECK_FUNC(posix_spawn, [AC_DEFINE(HAVE_POSIX_SPAWN, 1, [Have posix_spawn() function])], [])
+
 if test "$ac_cv_func_nl_langinfo" = "yes"; then
     AM_ICONV
     if test "$am_cv_func_iconv" = "yes"; then
@@ -336,7 +365,7 @@ if test "$USE_NLS" = "yes"; then
     [AC_MSG_RESULT(yes)],
     [AC_LIB_LINKFLAGS_BODY([intl])
      oldLIBS="$LIBS"
-     LIBS="$LIBS $LIBINTL"
+     LIBS="$LIBINTL $LIBS"
      oldCFLAGS="$LIBS"
      CFLAGS="$CFLAGS $INCINTL"
      AC_LINK_IFELSE([AC_LANG_PROGRAM([
@@ -374,6 +403,7 @@ AC_ARG_WITH([openssl],
 ssl_library=
 esp=
 dtls=
+hpke=
 
 if test "$with_openssl" != "" -a "$with_openssl" != "no"; then
     if test "$with_gnutls" = ""; then
@@ -402,7 +432,7 @@ if test "$ssl_library" = ""; then
     elif test "$with_openssl" = "yes" -o "$with_openssl" = ""; then
         PKG_CHECK_MODULES(OPENSSL, openssl, [AC_SUBST(SSL_PC, [openssl])],
 	    [oldLIBS="$LIBS"
-	     LIBS="$LIBS -lssl -lcrypto"
+	     LIBS="-lssl -lcrypto $LIBS"
 	     AC_MSG_CHECKING([for OpenSSL without pkg-config])
 	     AC_LINK_IFELSE([AC_LANG_PROGRAM([
 			        #include <openssl/ssl.h>
@@ -467,7 +497,7 @@ case "$ssl_library" in
     OpenSSL)
 	oldLIBS="${LIBS}"
 	oldCFLAGS="${CFLAGS}"
-	LIBS="${LIBS} ${OPENSSL_LIBS}"
+	LIBS="${OPENSSL_LIBS} ${LIBS}"
 	CFLAGS="${CFLAGS} ${OPENSSL_CFLAGS}"
 
 	# Check for the various known-broken versions of OpenSSL, which includes LibreSSL.
@@ -575,6 +605,15 @@ perhaps consider building with GnuTLS instead.)])
 			AC_DEFINE(HAVE_SSL_CIPHER_FIND, [1], [OpenSSL has SSL_CIPHER_find() function])],
 		       [AC_MSG_RESULT(no)])
 
+	AC_MSG_CHECKING([for HKDF support in OpenSSL])
+	AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <openssl/ssl.h>
+					 #include <openssl/kdf.h>],
+					[EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_HKDF, NULL);
+					 EVP_PKEY_CTX_hkdf_mode(ctx, EVP_PKEY_HKDEF_MODE_EXTRACT_AND_EXPAND);])],
+		       [AC_MSG_RESULT(yes)
+			hpke=yes],
+		       [AC_MSG_RESULT(no)])
+
 	LIBS="${oldLIBS}"
 	CFLAGS="${oldCFLAGS}"
 
@@ -588,7 +627,7 @@ perhaps consider building with GnuTLS instead.)])
     GnuTLS)
 	oldlibs="$LIBS"
 	oldcflags="$CFLAGS"
-	LIBS="$LIBS $GNUTLS_LIBS"
+	LIBS="$GNUTLS_LIBS $LIBS"
 	CFLAGS="$CFLAGS $GNUTLS_CFLAGS"
 	esp=yes
 	dtls=yes
@@ -617,7 +656,10 @@ perhaps consider building with GnuTLS instead.)])
 					  pkcs11_support=GnuTLS
 					  AC_SUBST(P11KIT_PC, p11-kit-1)],
 					 [:])], [])
-	LIBS="$oldlibs -ltspi"
+	# From GnuTLS 3.6.13
+	AC_CHECK_FUNC(gnutls_hkdf_expand, [have_hkdf=yes], [have_hkdf=no])
+
+	LIBS="-ltspi $oldlibs"
 	AC_MSG_CHECKING([for Trousers tss library])
 	AC_LINK_IFELSE([AC_LANG_PROGRAM([
 					   #include <trousers/tss.h>
@@ -629,8 +671,42 @@ perhaps consider building with GnuTLS instead.)])
 			AC_SUBST([TSS_CFLAGS], [])
 			AC_DEFINE(HAVE_TROUSERS, 1, [Have Trousers TSS library])],
 		       [AC_MSG_RESULT(no)])
+
 	LIBS="$oldlibs"
 	CFLAGS="$oldcflags"
+
+	if test "$have_hkdf" = "yes"; then
+		PKG_CHECK_MODULES(HOGWEED, [hogweed],
+			[AC_MSG_CHECKING([For hogweed built-in mini-gmp])
+			 LIBS="$oldlibs $HOGWEED_LIBS"
+			 CFLAGS="$oldcflags $HOGWEED_CFLAGS"
+			 AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <nettle/ecc.h>],
+							 [mpz_clear((void *)0);])],
+					[AC_MSG_RESULT(yes)
+					 AC_SUBST(HPKE_CFLAGS, ['$(HOGWEED_FLAGS)'])
+					 AC_SUBST(HPKE_LIBS, ['$(HOGWEED_LIBS)'])
+					 hpke=yes],
+					[AC_MSG_RESULT(no)
+					 PKG_CHECK_MODULES(GMP, [gmp],
+						[hpke=yes
+						 AC_SUBST(HPKE_CFLAGS, ['$(HOGWEED_FLAGS) $(GMP_CFLAGS)'])
+						 AC_SUBST(HPKE_LIBS, ['$(HOGWEED_LIBS) $(GMP_LIBS)'])],
+						[AC_MSG_CHECKING([for gmp without pkgconfig])
+						 LIBS="$LIBS -lgmp"
+						 AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <gmp.h>],
+										 [mpz_clear((void *)0);])],
+								[AC_MSG_RESULT(yes)
+								 AC_SUBST(HPKE_CFLAGS, ['$(HOGWEED_FLAGS)'])
+								 AC_SUBST(HPKE_LIBS, ['$(HOGWEED_LIBS) -lgmp'])
+								 hpke=yes],
+								[AC_MSG_RESULT(no)])
+						 ])
+					 ])
+			 LIBS="$oldlibs"
+			 CFLAGS="$oldcflags"],
+			[:])
+
+	fi
 
 	PKG_CHECK_MODULES(TASN1, [libtasn1], [have_tasn1=yes], [have_tasn1=no])
 	if test "$have_tasn1" = "yes"; then
@@ -674,8 +750,8 @@ perhaps consider building with GnuTLS instead.)])
 
 	AC_DEFINE(OPENCONNECT_GNUTLS, 1, [Using GnuTLS])
 	AC_SUBST(SSL_PC, [gnutls])
-	AC_SUBST(SSL_LIBS, ['$(GNUTLS_LIBS) $(TPM2_LIBS)'])
-	AC_SUBST(SSL_CFLAGS, ['$(GNUTLS_CFLAGS) $(TPM2_CFLAGS)'])
+	AC_SUBST(SSL_LIBS, ['$(GNUTLS_LIBS) $(TPM2_LIBS) $(HPKE_LIBS)'])
+	AC_SUBST(SSL_CFLAGS, ['$(GNUTLS_CFLAGS) $(TPM2_CFLAGS) $(HPKE_CFLAGS)'])
 	;;
 
     *)
@@ -711,6 +787,7 @@ case x"$with_gnutls_tss2" in
 	;;
 esac
 
+AM_CONDITIONAL(OPENCONNECT_SYSTEM_KEYS, [ test "$ac_cv_func_gnutls_system_key_add_x509" = "yes" ])
 AM_CONDITIONAL(OPENCONNECT_TSS2_ESYS, [ test "$tss2lib" = "tss2-esys" ])
 AM_CONDITIONAL(OPENCONNECT_TSS2_IBM, [ test "$tss2lib" = "ibmtss" -o "$tss2lib" = "tss" ])
 
@@ -779,6 +856,9 @@ fi
 if test "$dtls" != ""; then
     AC_DEFINE(HAVE_DTLS, 1, [Build with DTLS support])
 fi
+if test "$hpke" != ""; then
+   AC_DEFINE(HAVE_HPKE_SUPPORT, 1, [Support Cisco external browser HPKE (ECDH+HKDF+AES-256-GCM)])
+fi
 
 AC_ARG_WITH(lz4,
   AS_HELP_STRING([--without-lz4], [disable support for LZ4 compression]),
@@ -792,7 +872,7 @@ PKG_CHECK_MODULES([LIBLZ4], [liblz4], [
 	AC_DEFINE([HAVE_LZ4], [], [LZ4 was found])
 	lz4_pkg=yes
 	oldLIBS="$LIBS"
-	LIBS="$LIBS $LIBLZ4_LIBS"
+	LIBS="$LIBLZ4_LIBS $LIBS"
 	oldCFLAGS="$CFLAGS"
 	CFLAGS="$CFLAGS $LIBLZ4_CFLAGS"
 	AC_MSG_CHECKING([for LZ4_compress_default()])
@@ -812,6 +892,28 @@ PKG_CHECK_MODULES([LIBLZ4], [liblz4], [
 *** lz4 not found.
 *** ]])
 ])
+fi
+
+if test "$build_nsis" = "yes"; then
+   case $host_os in
+      *mingw32*)
+         if test "$host_cpu" = "x86_64"; then
+             winsys=MinGW64
+         else
+             winsys=MinGW32
+         fi
+	 ;;
+      *mingw64*)
+         winsys=MinGW64
+         ;;
+      *msys*)
+         winsys=MSYS
+         ;;
+      *)
+         winsys=Unknown
+         ;;
+   esac
+   AC_SUBST(INSTALLER_SUFFIX, [${winsys}-${ssl_library}])
 fi
 
 # For some bizarre reason now that we use AM_ICONV, the mingw32 build doesn't
@@ -840,6 +942,7 @@ AS_IF([test "$with_builtin_json" != "yes"],
 	[PKG_CHECK_MODULES(JSON, json-parser,
 			   [AC_SUBST(JSON_PC, [json-parser])
 			    json=system], [:])
+	 AC_DEFINE(HAVE_JSON, 1, [Have system json-parser package])
       ])
 
 AS_IF([test "$with_builtin_json" != "no"  && test "$json" = "" ],
@@ -849,6 +952,7 @@ AS_IF([test "$with_builtin_json" != "no"  && test "$json" = "" ],
 	 LIBS="$oldLIBS"
 	 AC_SUBST([JSON_LIBS], [$ac_cv_search_pow])
 	 AC_SUBST([JSON_CFLAGS], ['-I$(srcdir)/json'])
+	 AC_DEFINE(HAVE_JSON, 1, [Have builtin json-parser package])
       ])
 
 AS_IF([test "$json" = ""],
@@ -859,7 +963,7 @@ AM_CONDITIONAL(BUILTIN_JSON, [test "$json" = "builtin"])
 
 PKG_CHECK_MODULES(ZLIB, zlib, [AC_SUBST(ZLIB_PC, [zlib])],
 		  [oldLIBS="$LIBS"
-		  LIBS="$LIBS -lz"
+		  LIBS="-lz $LIBS"
 		  AC_MSG_CHECKING([for zlib without pkg-config])
 		  AC_LINK_IFELSE([AC_LANG_PROGRAM([
 		   #include <zlib.h>],[
@@ -889,7 +993,7 @@ dnl libproxy.h in that case.
 if (test "$libproxy_pkg" = "no"); then
    AC_MSG_CHECKING([for libproxy])
    oldLIBS="$LIBS"
-   LIBS="$LIBS -lproxy"
+   LIBS="-lproxy $LIBS"
    AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <libproxy.h>],
 			   [(void)px_proxy_factory_new();])],
 	  [AC_MSG_RESULT(yes (with libproxy.h))
@@ -1225,10 +1329,17 @@ AC_CHECK_HEADER([endian.h],
             [AC_DEFINE([ENDIAN_HDR], [<sys/isa_defs.h>])])])])
 
 build_www=yes
-AC_PATH_PROGS(PYTHON, [python3 python2 python], [], $PATH:/bin:/usr/bin)
-if test -z "${ac_cv_path_PYTHON}"; then
-   AC_MSG_NOTICE([Python not found; not building HTML pages])
-   build_www=no
+AC_ARG_ENABLE([docs],
+    [AS_HELP_STRING([--enable-docs],
+        [enable militant API assertions])],
+    [build_www=$enableval],
+    [])
+if test "${build_www}" = "yes"; then
+   AC_PATH_PROGS(PYTHON, [python3 python2 python], [], $PATH:/bin:/usr/bin)
+   if test -z "${ac_cv_path_PYTHON}"; then
+	AC_MSG_NOTICE([Python not found; not building HTML pages])
+	build_www=no
+   fi
 fi
 if test "${build_www}" = "yes"; then
    AC_MSG_CHECKING([if groff can create UTF-8 XHTML])
@@ -1261,6 +1372,19 @@ if test "$enable_flask_tests" = "yes" -a -n "${ac_cv_path_PYTHON}"; then
     fi
 fi
 AM_CONDITIONAL(HAVE_PYTHON36_FLASK, test "$have_python36_flask" = yes)
+
+have_python37_dataclasses=no
+if test "$enable_flask_tests" = "yes" -a -n "${ac_cv_path_PYTHON}"; then
+    AC_MSG_CHECKING([for Python 3.7+ or 3.6 with dataclasses backport])
+    python3 -c 'import sys; assert sys.version_info >= (3,6); import dataclasses' 2>/dev/null
+    if test $? -ne 0 ; then
+        AC_MSG_RESULT(not found)
+    else
+        have_python37_dataclasses=yes
+        AC_MSG_RESULT(found)
+    fi
+fi
+AM_CONDITIONAL(HAVE_PYTHON37_DATACLASSES, test "$have_python37_dataclasses" = yes)
 
 if test "$enable_ppp_tests" = "yes"; then
     AC_PATH_PROGS(SOCAT, [socat], [], $PATH:/bin:/usr/bin)
@@ -1359,6 +1483,7 @@ if test "$ssl_library" = "GnuTLS"; then
 fi
 SUMMARY([DTLS support], [$dtls])
 SUMMARY([ESP support], [$esp])
+SUMMARY([HPKE support], [$hpke])
 SUMMARY([libproxy support], [$libproxy_pkg])
 SUMMARY([RSA SecurID support], [$libstoken_pkg])
 SUMMARY([PSKC OATH file support], [$libpskc_pkg])

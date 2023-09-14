@@ -144,18 +144,7 @@ int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 	   reserve some extra space to handle that */
 	int receive_mtu = MAX(2048, vpninfo->ip_info.mtu + 256);
 
-	if (vpninfo->dtls_state == DTLS_SLEEPING) {
-		if (ka_check_deadline(timeout, time(NULL), vpninfo->new_dtls_started + vpninfo->dtls_attempt_period)
-		    || vpninfo->dtls_need_reconnect) {
-			vpn_progress(vpninfo, PRG_DEBUG, _("Send ESP probes\n"));
-			if (vpninfo->proto->udp_send_probes)
-				vpninfo->proto->udp_send_probes(vpninfo);
-		}
-	}
-	if (vpninfo->dtls_fd == -1)
-		return 0;
-
-	while (readable) {
+	while (readable && vpninfo->dtls_fd != -1) {
 		int len = receive_mtu + vpninfo->pkt_trailer;
 		int i;
 		struct pkt *pkt;
@@ -169,8 +158,30 @@ int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		}
 		pkt = vpninfo->dtls_pkt;
 		len = recv(vpninfo->dtls_fd, (void *)&pkt->esp, len + sizeof(pkt->esp), 0);
-		if (len <= 0)
+		if (!len)
 			break;
+		if (len < 0) {
+#ifdef _WIN32
+			int err = WSAGetLastError();
+			if (err == WSAEWOULDBLOCK)
+				break;
+
+			char *errstr = openconnect__win32_strerror(err);
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("ESP receive error: %s\n"),
+				     errstr);
+			free(errstr);
+#else
+			if (errno == EAGAIN || errno == EWOULDBLOCK)
+				break;
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("ESP receive error: %s\n"),
+				     strerror(errno));
+#endif
+			/* On *real* errors, close the UDP socket and try again later. */
+			vpninfo->proto->udp_close(vpninfo);
+			return 0;
+		}
 
 		work_done = 1;
 
@@ -274,6 +285,40 @@ int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		}
 	}
 
+	if (vpninfo->dtls_need_reconnect) {
+	need_reconnect:
+		if (vpninfo->proto->udp_close)
+			vpninfo->proto->udp_close(vpninfo);
+	}
+
+	if (vpninfo->dtls_state == DTLS_SLEEPING) {
+		time_t now = time(NULL);
+
+		/* Send 5 probes a second apart, then give up until the next attempt */
+		if (vpninfo->udp_probes_sent <= 5 &&
+		    ka_check_deadline(timeout, now, vpninfo->dtls_times.last_tx + 1)) {
+			/* Send repeat probe */
+			vpninfo->udp_probes_sent++;
+		} else if (vpninfo->dtls_need_reconnect ||
+			   ka_check_deadline(timeout, now, vpninfo->new_dtls_started +
+					     vpninfo->dtls_attempt_period)) {
+			/* New attempt */
+			vpninfo->dtls_need_reconnect = 0;
+			vpninfo->udp_probes_sent = 1;
+			vpninfo->new_dtls_started = now;
+			if (*timeout > 1000)
+				*timeout = 1000;
+		} else {
+			return work_done;
+		}
+
+		vpn_progress(vpninfo, PRG_DEBUG, _("Send ESP probes\n"));
+		if (vpninfo->proto->udp_send_probes)
+			vpninfo->proto->udp_send_probes(vpninfo);
+
+		vpninfo->dtls_times.last_tx = now;
+	}
+
 	if (vpninfo->dtls_state != DTLS_ESTABLISHED)
 		return 0;
 
@@ -284,16 +329,14 @@ int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 
 	case KA_DPD_DEAD:
 		vpn_progress(vpninfo, PRG_ERR, _("ESP detected dead peer\n"));
-		if (vpninfo->proto->udp_close)
-			vpninfo->proto->udp_close(vpninfo);
-		if (vpninfo->proto->udp_send_probes)
-			vpninfo->proto->udp_send_probes(vpninfo);
-		return 1;
+		goto need_reconnect;
 
 	case KA_DPD:
 		vpn_progress(vpninfo, PRG_DEBUG, _("Send ESP probes for DPD\n"));
-		if (vpninfo->proto->udp_send_probes)
+		if (vpninfo->proto->udp_send_probes) {
+			vpninfo->udp_probes_sent++;
 			vpninfo->proto->udp_send_probes(vpninfo);
+		}
 		work_done = 1;
 		break;
 
@@ -318,11 +361,13 @@ int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 				break;
 			ip_version = this->data[0] >> 4;
 
-			if (vpninfo->proto->proto == PROTO_PULSE) {
+			if (vpninfo->proto->proto == PROTO_PULSE && !vpninfo->pulse_esp_unstupid) {
 				uint8_t dontsend;
 
 				/* Pulse can only accept ESP of the same protocol as the one
-				 * you connected to it with. The other has to go over IF-T/TLS. */
+				 * you connected to it with. The other has to go over IF-T/TLS.
+				 * Newer Pulse servers can finally disable this protocol-layering
+				 * malpractice with the pulse_esp_unstupid flag. */
 				if (vpninfo->dtls_addr->sa_family == AF_INET6)
 					dontsend = 4;
 				else
@@ -367,12 +412,11 @@ int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		if (ret < 0) {
 			/* Not that this is likely to happen with UDP, but... */
 			if (errno == ENOBUFS || errno == EAGAIN || errno == EWOULDBLOCK) {
-				int err = errno;
 				vpninfo->deflate_pkt = this;
 				this->len = len;
 				vpn_progress(vpninfo, PRG_DEBUG,
 					     _("Requeueing failed ESP send: %s\n"),
-					     strerror(err));
+					     strerror(errno));
 				monitor_write_fd(vpninfo, dtls);
 				return work_done;
 			} else {

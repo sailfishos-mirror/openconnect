@@ -158,17 +158,19 @@ static void calculate_dtls_mtu(struct openconnect_info *vpninfo, int *base_mtu, 
 static void append_compr_types(struct oc_text_buf *buf, const char *proto, int avail)
 {
 	if (avail) {
-		const char sep = ',';
+		char sep = ' ';
 		buf_append(buf, "X-%s-Accept-Encoding:", proto);
 		if (avail & COMPR_LZ4) {
 			buf_append(buf, "%coc-lz4", sep);
+			sep = ',';
 		}
 		if (avail & COMPR_LZS) {
 			buf_append(buf, "%clzs", sep);
+			sep = ',';
 		}
-		if (avail & COMPR_DEFLATE) {
+		if (avail & COMPR_DEFLATE)
 			buf_append(buf, "%cdeflate", sep);
-		}
+
 		buf_append(buf, "\r\n");
 	}
 }
@@ -209,7 +211,19 @@ static int parse_hex_val(const char *str, unsigned char *storage, unsigned int m
 	return len/2;
 }
 
-static int start_cstp_connection(struct openconnect_info *vpninfo)
+#ifdef HAVE_HPKE_SUPPORT
+static void append_connect_strap_headers(struct openconnect_info *vpninfo,
+					 struct oc_text_buf *buf, int rekey)
+{
+	buf_append(buf, "X-AnyConnect-STRAP-Verify: ");
+	append_strap_verify(vpninfo, buf, rekey);
+	buf_append(buf, "\r\n");
+
+	buf_append(buf, "X-AnyConnect-STRAP-Pubkey: %s\r\n", vpninfo->strap_pubkey);
+}
+#endif
+
+static int start_cstp_connection(struct openconnect_info *vpninfo, int strap_rekey)
 {
 	struct oc_text_buf *reqbuf;
 	char buf[65536];
@@ -232,9 +246,14 @@ static int start_cstp_connection(struct openconnect_info *vpninfo)
 	else
 		buf_append(reqbuf, "Host: %s\r\n", vpninfo->hostname);
 	buf_append(reqbuf, "User-Agent: %s\r\n", vpninfo->useragent);
-	buf_append(reqbuf, "Cookie: webvpn=%s\r\n", vpninfo->cookie);
+	buf_append(reqbuf, "Cookie: webvpn=%s\r\n", http_get_cookie(vpninfo, "webvpn"));
 	buf_append(reqbuf, "X-CSTP-Version: 1\r\n");
 	buf_append(reqbuf, "X-CSTP-Hostname: %s\r\n", vpninfo->localname);
+
+#ifdef HAVE_HPKE_SUPPORT
+	if (!vpninfo->no_external_auth && vpninfo->strap_pubkey)
+		append_connect_strap_headers(vpninfo, reqbuf, strap_rekey);
+#endif
 
 	append_mobile_headers(vpninfo, reqbuf);
 	append_compr_types(reqbuf, "CSTP", vpninfo->req_compr);
@@ -667,7 +686,27 @@ int cstp_connect(struct openconnect_info *vpninfo)
 	int ret;
 	int deflate_bufsize = 0;
 	int compr_type;
+	int strap_rekey = 1;
 
+	if (!vpninfo->cookies) {
+		internal_split_cookies(vpninfo, 0, "webvpn");
+#ifdef HAVE_HPKE_SUPPORT
+		if (!vpninfo->no_external_auth) {
+			const char *strap_privkey = http_get_cookie(vpninfo, "openconnect_strapkey");
+			if (strap_privkey && *strap_privkey) {
+				int derlen;
+				void *der = openconnect_base64_decode(&derlen, strap_privkey);
+				if (der && !ingest_strap_privkey(vpninfo, der, derlen)) {
+					strap_rekey = 0;
+					vpn_progress(vpninfo, PRG_DEBUG,
+						     _("Ingested STRAP public key %s\n"),
+						     vpninfo->strap_pubkey);
+				}
+			}
+		}
+#endif
+		http_add_cookie(vpninfo, "openconnect_strapkey", "", 1);
+	}
 	/* This needs to be done before openconnect_setup_dtls() because it's
 	   sent with the CSTP CONNECT handshake. Even if we don't end up doing
 	   DTLS. */
@@ -682,7 +721,7 @@ int cstp_connect(struct openconnect_info *vpninfo)
 	if (ret)
 		return ret;
 
-	ret = start_cstp_connection(vpninfo);
+	ret = start_cstp_connection(vpninfo, strap_rekey);
 	if (ret)
 		goto out;
 
@@ -763,7 +802,7 @@ int decompress_and_queue_packet(struct openconnect_info *vpninfo, int compr_type
 	   space to handle that */
 	int receive_mtu = MAX(16384, vpninfo->ip_info.mtu);
 	struct pkt *new = alloc_pkt(vpninfo, receive_mtu);
-	const char *comprname = "";
+	const char *comprname;
 
 	if (!new)
 		return -ENOMEM;
@@ -1245,6 +1284,48 @@ void cstp_common_headers(struct openconnect_info *vpninfo, struct oc_text_buf *b
 		buf_append(buf, "X-Aggregate-Auth: 1\r\n");
 	if (vpninfo->try_http_auth)
 		buf_append(buf, "X-Support-HTTP-Auth: true\r\n");
+#ifdef HAVE_HPKE_SUPPORT
+	if (!vpninfo->no_external_auth) {
+		if (!vpninfo->strap_pubkey || !vpninfo->strap_dh_pubkey) {
+			int err = generate_strap_keys(vpninfo);
+			if (err) {
+				buf->error = err;
+				return;
+			}
+		}
 
+		buf_append(buf, "X-AnyConnect-STRAP-Pubkey: %s\r\n",
+			   vpninfo->strap_pubkey);
+		buf_append(buf, "X-AnyConnect-STRAP-DH-Pubkey: %s\r\n",
+			   vpninfo->strap_dh_pubkey);
+	}
+#endif
 	append_mobile_headers(vpninfo, buf);
+}
+
+int cstp_sso_detect_done(struct openconnect_info *vpninfo,
+			 const struct oc_webview_result *result)
+{
+	int i;
+
+	/* Note that, at least with some backends (eg: Google's), empty cookies might be set */
+	for (i=0; result->cookies[i] != NULL; i+=2) {
+		const char *cname = result->cookies[i], *cval = result->cookies[i+1];
+		if (!strcmp(vpninfo->sso_token_cookie, cname) && cval && cval[0] != '\0') {
+			vpninfo->sso_cookie_value = strdup(cval);
+			break;
+		} else if (!strcmp(vpninfo->sso_error_cookie, cname) && cval && cval[0] != '\0') {
+			/* XX: or should we combine both the error cookie name and its value? */
+			vpninfo->quit_reason = strdup(cval);
+			return -EINVAL;
+		}
+	}
+
+	/* If we're not at the final URI, tell the webview to keep going.
+	 * Note that we might find the cookie at any time, not only on the last page. */
+	if (strcmp(result->uri, vpninfo->sso_login_final))
+		return -EAGAIN;
+
+	/* Tell the webview to terminate */
+	return 0;
 }

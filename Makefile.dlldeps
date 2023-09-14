@@ -9,10 +9,10 @@
 # binary, either in the local .libs directory or in the MinGw sys-root
 # which ought to be $(bindir).
 #
-# The Makefile snippet in each generated file adds the full DLL
-# pathname to $(DLLS), adds the .d file itself to the dependencies of
-# file-list.txt, and then includes more .d files for each other DLL
-# that this DLL links to.
+# The Makefile snippet in each generated file adds the full DLL pathname
+# to $(DLLS), adds the .d file and the DLL itself to the dependencies of
+# file-list.txt, and then includes more .d files for each other DLL that
+# this DLL links to.
 #
 # Because we use -include, we just skip any DLLs we can't find, which
 # will mostly be Windows system runtime stuff like kernel32.dll.
@@ -22,23 +22,31 @@
 # in the $(DLLS) variable. Which will contain duplicates, hence the
 # use of $(sort) when writing it out to file-list.txt.
 
+# Defaults for manual invocation.
+DLL_EXECUTABLES ?= openconnect.exe wintun.dll $(EXTRA_EXECUTABLES)
+MINGW ?= x86_64-w64-mingw32
+OBJDUMP ?= $(MINGW)-objdump
+bindir ?= /usr/$(MINGW)/sys-root/mingw/bin
+V ?= 0
+
 AM_V_LISTDLLS = $(am__v_LISTDLLS_$(V))
 am__v_LISTDLLS_ = $(am__v_LISTDLLS_$(AM_DEFAULT_VERBOSITY))
 am__v_LISTDLLS_0 = @echo "  LISTDLLS" $<;
 am__v_LISTDLLS_1 =
 
 LISTDLLS_CMD = $(AM_V_LISTDLLS) \
-	( echo "DLLS += $<" ;  echo "file-list.txt: $@" ; \
-	  $(OBJDUMP) -p "$<" | sed -n '/DLL Name:/{s%^.*DLL Name: %-include .%;s/$$/.d/;p}' | tr A-Z a-z ) > $@
+	( echo "DLLS += $<" ; echo "file-list.txt: $@ $<" ; \
+	  $(OBJDUMP) -p "$<" | sed -n '/DLL Name:/{s%^.*DLL Name: \(Qt.*\)\?\(.*\)\?%-include .\1\L\2.d%;p}' ) > $@
+
+VPATH = $(bindir) $(EXTRA_DLLDIRS)
 
 .%.d: .libs/%
 	$(LISTDLLS_CMD)
 
-.%.d: $(bindir)/%
+.%.d: %
 	$(LISTDLLS_CMD)
 
--include .openconnect.exe.d
--include .wintun.dll.d
+include $(patsubst %,.%.d,$(DLL_EXECUTABLES))
 
 AM_V_GEN = $(am__v_GEN_$(V))
 am__v_GEN_ = $(am__v_GEN_$(AM_DEFAULT_VERBOSITY))

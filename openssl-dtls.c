@@ -52,7 +52,7 @@ extern void dtls1_stop_timer(SSL *);
 static int dtls_get_data_mtu(struct openconnect_info *vpninfo, int mtu)
 {
 	int ivlen, maclen, blocksize = 0, pad = 0;
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined(LIBRESSL_VERSION_NUMBER)
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
 	const SSL_CIPHER *s_ciph = SSL_get_current_cipher(vpninfo->dtls_ssl);
 	int cipher_nid;
 	const EVP_CIPHER *e_ciph;
@@ -140,7 +140,7 @@ unsigned dtls_set_mtu(struct openconnect_info *vpninfo, unsigned mtu)
 #endif
 }
 
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined(LIBRESSL_VERSION_NUMBER)
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
 /* Since OpenSSL 1.1, the SSL_SESSION structure is opaque and we can't
  * just fill it in directly. So we have to generate the OpenSSL ASN.1
  * representation of the SSL_SESSION, and use d2i_SSL_SESSION() to
@@ -324,7 +324,7 @@ static const SSL_CIPHER *SSL_CIPHER_find(SSL *ssl, const unsigned char *ptr)
 
 int start_dtls_handshake(struct openconnect_info *vpninfo, int dtls_fd)
 {
-	method_const SSL_METHOD *dtls_method;
+	const SSL_METHOD *dtls_method;
 	SSL_SESSION *dtls_session;
 	SSL *dtls_ssl;
 	BIO *dtls_bio;
@@ -511,7 +511,7 @@ int start_dtls_handshake(struct openconnect_info *vpninfo, int dtls_fd)
 		for (i = 0; i < sk_SSL_CIPHER_num(ciphers); i++) {
 			ssl_ciph = sk_SSL_CIPHER_value(ciphers, i);
 			/* For PSK-NEGOTIATE just use the first one we find */
-			if (!dtlsver || !strcmp(SSL_CIPHER_get_name(ssl_ciph), cipher))
+			if (!strcmp(SSL_CIPHER_get_name(ssl_ciph), cipher))
 				break;
 		}
 
@@ -539,9 +539,9 @@ int start_dtls_handshake(struct openconnect_info *vpninfo, int dtls_fd)
 			vpn_progress(vpninfo, PRG_ERR,
 				     _("SSL_set_session() failed with DTLS protocol version 0x%x\n"
 				       "Are you using a version of OpenSSL older than 0.9.8m?\n"
-				       "See http://rt.openssl.org/Ticket/Display.html?id=1751\n"
+				       "See %s\n"
 				       "Use the --no-dtls command line option to avoid this message\n"),
-				     dtlsver);
+				     dtlsver, "http://rt.openssl.org/Ticket/Display.html?id=1751");
 			SSL_CTX_free(vpninfo->dtls_ctx);
 			SSL_free(dtls_ssl);
 			vpninfo->dtls_ctx = NULL;
@@ -734,7 +734,7 @@ int dtls_try_handshake(struct openconnect_info *vpninfo, int *timeout)
 			 &(vpninfo->dtls_ssl->d1->next_timeout));
 #elif defined(BIO_CTRL_DGRAM_SET_TIMEOUT)
 		/*
-		 * OK, here it gets more fun... this shoul handle the case
+		 * OK, here it gets more fun... this should handle the case
 		 * of older OpenSSL which has the Cisco DTLS compatibility
 		 * backported, but *not* the fix for RT#1922.
 		 */
@@ -808,7 +808,7 @@ void dtls_ssl_free(struct openconnect_info *vpninfo)
 	SSL_free(vpninfo->dtls_ssl);
 }
 
-#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 void gather_dtls_ciphers(struct openconnect_info *vpninfo, struct oc_text_buf *buf,
 			 struct oc_text_buf *buf12)
 {
@@ -826,7 +826,7 @@ void gather_dtls_ciphers(struct openconnect_info *vpninfo, struct oc_text_buf *b
 void gather_dtls_ciphers(struct openconnect_info *vpninfo, struct oc_text_buf *buf,
 			 struct oc_text_buf *buf12)
 {
-	method_const SSL_METHOD *dtls_method;
+	const SSL_METHOD *dtls_method;
 	SSL_CTX *ctx;
 	SSL *ssl;
 	STACK_OF(SSL_CIPHER) *ciphers;

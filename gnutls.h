@@ -64,7 +64,7 @@ char *get_gnutls_cipher(gnutls_session_t session);
  * were built again, but we might be run against a version which is
  * newer. So some ancient compatibility code *can* be dropped at
  * compile time. Likewise, if building against GnuTLS 2.x then we
- * can never be running agsinst a 3.x library — the soname changed.
+ * can never be running against a 3.x library — the soname changed.
  *
  * This macro was added upstream, gnutls_check_version_numeric,
  * in 3.5.0 (see https://gitlab.com/gnutls/gnutls/commit/c8b40aeb) */

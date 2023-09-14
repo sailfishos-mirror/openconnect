@@ -12,12 +12,13 @@ if USE_NLS
 SUBDIRS += po
 endif
 if BUILD_NSIS
-noinst_DATA = openconnect-installer.exe
+noinst_DATA = openconnect-installer-$(INSTALLER_SUFFIX).exe
 endif
 
 lib_LTLIBRARIES = libopenconnect.la
 sbin_PROGRAMS = openconnect
 man8_MANS = openconnect.8
+noinst_PROGRAMS :=
 
 AM_CFLAGS = @WFLAGS@
 AM_CPPFLAGS = -DLOCALEDIR="\"$(localedir)\""
@@ -34,8 +35,10 @@ openconnect_LDADD = libopenconnect.la $(SSL_LIBS) $(LIBXML2_LIBS) \
 if OPENCONNECT_WIN32
 openconnect_SOURCES += openconnect.rc
 endif
-library_srcs = ssl.c http.c textbuf.c http-auth.c auth-common.c auth-html.c library.c compat.c lzs.c mainloop.c script.c ntlm.c digest.c mtucalc.c openconnect-internal.h
-lib_srcs_cisco = auth.c cstp.c
+library_srcs = ssl.c http.c textbuf.c http-auth.c auth-common.c \
+	auth-html.c library.c compat.c lzs.c mainloop.c script.c \
+	ntlm.c digest.c mtucalc.c openconnect-internal.h
+lib_srcs_cisco = auth.c cstp.c hpke.c multicert.c
 lib_srcs_juniper = oncp.c lzo.c auth-juniper.c
 lib_srcs_nx = nx.c
 lib_srcs_pulse = pulse.c
@@ -126,10 +129,10 @@ endif
 
 libopenconnect_la_SOURCES = version.c $(library_srcs)
 libopenconnect_la_CFLAGS = $(AM_CFLAGS) $(SSL_CFLAGS) $(DTLS_SSL_CFLAGS) \
-	$(LIBXML2_CFLAGS) $(LIBPROXY_CFLAGS) $(ZLIB_CFLAGS) $(P11KIT_CFLAGS) \
-	$(TSS_CFLAGS) $(LIBSTOKEN_CFLAGS) $(LIBPSKC_CFLAGS) $(GSSAPI_CFLAGS) \
-	$(INTL_CFLAGS) $(ICONV_CFLAGS) $(LIBPCSCLITE_CFLAGS) $(LIBP11_CFLAGS) \
-	$(LIBLZ4_CFLAGS) $(JSON_CFLAGS)
+	$(LIBXML2_CFLAGS) $(JSON_CFLAGS) $(LIBPROXY_CFLAGS) $(ZLIB_CFLAGS) \
+	$(P11KIT_CFLAGS) $(TSS_CFLAGS) $(LIBSTOKEN_CFLAGS) $(LIBPSKC_CFLAGS) \
+	$(GSSAPI_CFLAGS) $(INTL_CFLAGS) $(ICONV_CFLAGS) $(LIBPCSCLITE_CFLAGS) \
+	$(LIBP11_CFLAGS) $(LIBLZ4_CFLAGS)
 libopenconnect_la_LIBADD = $(SSL_LIBS) $(DTLS_SSL_LIBS) \
 	$(LIBXML2_LIBS) $(LIBPROXY_LIBS) $(ZLIB_LIBS) $(P11KIT_LIBS) \
 	$(TSS_LIBS) $(LIBSTOKEN_LIBS) $(LIBPSKC_LIBS) $(GSSAPI_LIBS) \
@@ -164,10 +167,22 @@ libopenconnect_wrapper_la_LIBADD = libopenconnect.la
 endif
 endif
 
+if OPENCONNECT_SYSTEM_KEYS
+noinst_PROGRAMS += list-system-keys
+list_system_keys_SOURCES = list-system-keys.c
+list_system_keys_CFLAGS = $(GNUTLS_CFLAGS)
+list_system_keys_LDADD = $(GNUTLS_LIBS)
+endif
+
+if !OPENCONNECT_WIN32
+noinst_PROGRAMS += os-tcp-mtu
+os_tcp_mtu_SOURCES = os-tcp-mtu.c
+endif
+
 pkgconfig_DATA = openconnect.pc
 
 EXTRA_DIST = AUTHORS version.sh COPYING.LGPL openconnect.ico $(POTFILES) openconnect.nsi.in
-EXTRA_DIST += json/AUTHORS json/LICENSE json/json.c json/json.h
+EXTRA_DIST += json/AUTHORS json/LICENSE json/json.c json/json.h libopenconnect5.symbols gensymbols.sed
 EXTRA_DIST += $(shell cd "$(top_srcdir)" && \
 		git ls-tree HEAD -r --name-only -- android/ java/ trojans/ bash/ 2>/dev/null)
 
@@ -218,7 +233,7 @@ sign-dist: dist
 tag: uncommitted-check
 	@if git rev-parse --verify v$(VERSION) &> /dev/null; then \
 		echo "*** ERROR: Version v$(VERSION) is already tagged"; exit 1; fi
-	@sed 's/AC_INIT.*/AC_INIT(openconnect, $(VERSION))/' -i $(srcdir)/configure.ac
+	@sed 's/AC_INIT.*/AC_INIT([openconnect], [$(VERSION)])/' -i $(srcdir)/configure.ac
 	@sed 's/^v=.*/v="v$(VERSION)"/' -i $(srcdir)/version.sh
 	@( echo '1,/<!-- latest-release-start -->/p' ;\
 	   echo '/<!-- latest-release-end -->/,$$p' ;\
@@ -239,11 +254,101 @@ tag: uncommitted-check
 		sed -f - -i $(srcdir)/www/changelog.xml
 	@echo '/API version [0-9]\+\.[0-9]\+:$$/s/:/ (v$(VERSION); $(shell date +%Y-%m-%d)):/' | \
 		sed -f - -i $(srcdir)/openconnect.h
+	@sed -Enf $(srcdir)/gensymbols.sed $(srcdir)/openconnect.h | \
+	  sed -Enf- $(srcdir)/libopenconnect.map.in > $(srcdir)/libopenconnect5.symbols
 # stupid syntax highlighting '
-	@cd $(srcdir) && git commit -s -m "Tag version $(VERSION)" configure.ac version.sh www/download.xml www/changelog.xml openconnect.h
+	@cd $(srcdir) && git commit -s -m "Tag version $(VERSION)" configure.ac version.sh www/download.xml www/changelog.xml openconnect.h libopenconnect5.symbols
 	@git tag v$(VERSION)
 	@cd $(srcdir) && ./autogen.sh
 
+
+###########################################################################
+#
+# Translations are handled in the NetworkManager-openconnect repository by
+# GNOME translation teams. We export all our translatable strings to a file
+# 'openconnect-strings.txt' which is included in their set of files to be
+# translated.
+#
+# We have an 'import-strings' make target which, for each translation, does
+# a merge of their file with ours and compares with a canonicalised version
+# of ours to see if there are any substantive changes. The strings from
+# NetworkManager-openconnect take precedence over ours, so if there are
+# any *corrections* to translations they need to be applied there first,
+# because changes in openconnect to a string which is already translated
+# in NetworkManager-openconnect will get overwritten on the next sync.
+#
+# Given that precedence, the 'export-strings' target is mostly only useful
+# when we add *new* strings which already have translations, which happens
+# occasionally when we change a non-translated part of a string (e.g. when
+# we recently replaced URLs and email addresses with '%s' and could do that
+# without 'losing' the existing translations by changing those too).
+#
+# A decent guess at where NetworkManager-openconnect might be checked out...
+NMO_DIR := $(srcdir)/../NetworkManager-openconnect
+NMO_POT := $(NMO_DIR)/po/NetworkManager-openconnect.pot
+NMO_STRINGS := $(NMO_DIR)/openconnect-strings.txt
+
+NMO_LINGUAS = $(wildcard $(NMO_DIR)/po/*.po)
+OC_LINGUAS = $(shell grep -v ^\# $(srcdir)/po/LINGUAS)
+
+# Generate the openconnect-strings.txt file in the NetworkManager-openconnect
+# repository, which 'injects' our strings there to be translated.
+$(NMO_STRINGS): po/$(PACKAGE).pot uncommitted-check
+	$(srcdir)/export-strings.sh $@ $<
+
+.PHONY: $(NMO_POT)
+$(NMO_POT): $(NMO_STRINGS)
+	make -C $(NMO_DIR)/po NetworkManager-openconnect.pot
+
+# Sync translations from our own po/ directory to NetworkManager-openconnect,
+# with theirs taking precedence. Use a strange path with extra 'po/..' to
+# avoid circular dependencies.
+$(NMO_DIR)/po/../po/%.po: $(srcdir)/po/%.po $(NMO_POT) po/$(PACKAGE).pot
+	@msgattrib -F --no-fuzzy $< > $@.openconnect
+# Merge using local strings as additional compendium
+	@msgmerge -q -N -F $@ -C $@.openconnect ${NMO_POT} > $@.merged
+# Dummy merge (cleanup) for comparison.
+	@msgmerge -q -N -F $@ ${NMO_POT} > $@.unmerged
+# If the result is different, update the NM version.
+	@if ! cmp $@.merged $@.unmerged; then \
+		echo "New changes for NetworkManager-openconnect $(notdir $@)"; \
+		mv $@.merged $@; \
+	else \
+		echo "No changes for NetworkManager-openconnect $(notdir $@)"; \
+	fi
+	@rm -f $@.openconnect $@.merged $@.unmerged
+
+# Sync translations from NetworkManager-openconnect, with theirs taking
+# precedence.
+$(srcdir)/po/../po/%.po: $(NMO_DIR)/po/%.po $(NMO_POT) po/$(PACKAGE).pot
+	@msgattrib -F --no-fuzzy $< > $@.nmo
+# Merge NM against openconnect.pot, using local strings as additional compendium
+	@msgmerge -q -N -C $@ -F $@.nmo po/$(PACKAGE).pot > $@.merged1
+# Remove fuzzy and obsolete translations
+	@msgattrib -F --no-fuzzy --no-obsolete $@.merged1 > $@.merged2
+# Unmerged, clean up for simple comparison
+	@msgmerge -q -N -F $@ po/$(PACKAGE).pot > $@.unmerged
+	@if ! cmp $@.merged2 $@.unmerged; then \
+		echo "New changes for $(notdir $@)"; \
+		mv $@.merged2 $@; \
+	else \
+		echo "No changes for $(notdir $@)"; \
+	fi
+	@rm -f $@.nmo $@.merged1 $@.merged2 $@.unmerged
+
+# Import translated strings from NetworkManager-openconnect
+import-strings: $(patsubst $(NMO_DIR)/%,$(srcdir)/po/../%,$(NMO_LINGUAS))
+	if ! git update-index -q --refresh --unmerged || \
+	   ! git diff-index --name-only --exit-code HEAD -- $(srcdir)/po/ >/dev/null; then \
+		git commit -s -m "Import translations from GNOME" -- $(srcdir)/po/ ; \
+	else \
+		echo No changes to commit ; \
+	fi
+
+# Export our translatable strings to NetworkManager-openconnect
+export-strings: $(patsubst $(NMO_DIR)/%,$(NMO_DIR)/po/../%,$(NMO_LINGUAS))
+
+# Just resync the translation comments to reflect accurate line numbers, etc.
 update-po: po/$(PACKAGE).pot
 	@cd $(top_srcdir); if ! git diff-index --name-only --exit-code HEAD -- po/; then \
 		echo "*** ERROR: Uncommitted changes in above files"; exit 1; \
@@ -276,41 +381,48 @@ po/$(PACKAGE).pot: $(POTFILES) version.sh
 ACLOCAL_AMFLAGS = -I m4
 
 if BUILD_NSIS
-DISTCLEANFILES += .*.dll.d .*.exe.d file-list*.txt instfiles.nsh uninstfiles.nsh vpnc-script-win.js openconnect.nsi openconnect-installer.exe
+DISTCLEANFILES += .*.dll.d .*.exe.d file-list*.txt instfiles.nsh uninstfiles.nsh vpnc-script-win.js openconnect.nsi openconnect-installer-*.exe
+
+# Including openconnect-gui.exe and Qt bits (as a hack)
+#EXTRA_EXECUTABLES := openconnect-gui.exe qwindows.dll qwindowsvistastyle.dll
+#EXTRA_NSIS_FILES := $(OPENCONNECT_GUI_DIR)/nsis/qt.conf
+#EXTRA_DLLDIRS := $(OPENCONNECT_GUI_DIR)/bin $(libdir)/qt5/plugins/platforms $(libdir)/qt5/plugins/styles
+
+DLL_EXECUTABLES := openconnect$(EXEEXT) $(EXTRA_EXECUTABLES)
 
 if OPENCONNECT_WINTUN
 WINTUN_DLL = .libs/wintun.dll
 DISTCLEANFILES += $(WINTUN_DLL)
+DLL_EXECUTABLES += wintun.dll
 endif
 
-export V AM_DEFAULT_VERBOSITY bindir OBJDUMP
+if OPENCONNECT_SYSTEM_KEYS
+DLL_EXECUTABLES += list-system-keys$(EXEEXT)
+endif
 
-# This Makefile has no rules to create these, just uses them to track
-# dependencies on file-list.txt if it already exists.
--include .openconnect.exe.d
--include .wintun.dll.d
+# DLL dependencies are found recursively with make, with each .foo.dll.d being
+# generated automatically from foo.dll by a pattern rule. However, we don't
+# want the normal top-level Makefile doing that directly because it would try
+# to do so *every* time it's invoked, just because of the -include directives.
+# So we split it out to a *separate* Makefile.dlldeps to be invoked only when
+# we are actually building the NSIS installer.
+#
+# The 'file-list.txt' contains the full transitive list of executables and
+# DLLs to be included in the installer. It potentially needs to be rebuilt if
+# any of them change (as they may now link against a different set of DLLs),
+# and *that* much does need to be visible to this top-level Makefile, so
+# include them if they exist.
+-include $(patsubst %,.%.d,$(DLL_EXECUTABLES))
+
+export V AM_DEFAULT_VERBOSITY bindir libdir OBJDUMP DLL_EXECUTABLES EXTRA_DLLDIRS
 
 file-list.txt: Makefile.dlldeps openconnect$(EXEEXT) libopenconnect.la $(WINTUN_DLL)
 	@$(MAKE) --no-print-directory -f $< $@
 
 # Wintun Layer 3 TUN driver for Windows 7 and newer
 # (see https://wintun.net)
-WINTUNDRIVER = wintun-0.13.zip
-WINTUNSHA256 = 34afe7d0de1fdb781af3defc0a75fd8c97daa756279b42dd6be6a1bd8ccdc7f0
-
-# OpenVPN TAP driver for Windows Vista/2003 and newer
-# (see https://community.openvpn.net/openvpn/wiki/GettingTapWindows)
-# XX: Newer releases exist, but are split between Win7+ and Win10+ versions.
-TAPDRIVER = tap-windows-9.21.2.exe
-TAPSHA256 = 645bee92ba4e9f32ddfdd9f8519dc1b9f9ff0b0a8e87e342f08d39da77e499a9
-
-$(TAPDRIVER):
-	curl https://build.openvpn.net/downloads/releases/tap-windows-9.21.2.exe -o $@
-
-# Validate file and also let make find it in VPATH
-file-list-$(TAPDRIVER).txt: $(TAPDRIVER)
-	echo $(TAPSHA256) $< | sha256sum -c
-	echo $< > $@
+WINTUNDRIVER = wintun-0.14.1.zip
+WINTUNSHA256 = 07c256185d6ee3652e09fa55c0b673e2624b565e02c4b9091c79ca7d2f24ef51
 
 $(WINTUNDRIVER):
 	curl https://www.wintun.net/builds/$(WINTUNDRIVER) -o $@
@@ -330,31 +442,38 @@ vpnc-script-win.js:
 file-list-%.txt: %
 	echo $< > $@
 
+file-list-extra.txt:
+	$(AM_V_GEN) for f in $(EXTRA_NSIS_FILES); do echo "$${f}" ; done > $@
+
 # Rather than trying to get clever in NSIS and iterate over lists,
 # just emit raw snippets to be included separately in the install
 # and uninstall sections.
-instfiles.nsh: file-list.txt file-list-vpnc-script-win.js.txt file-list-$(TAPDRIVER).txt
-	$(AM_V_GEN) cat $^ | while read FILE; do echo "File \"$${FILE}\"" ; done > $@
+instfiles.nsh: file-list.txt file-list-vpnc-script-win.js.txt file-list-extra.txt
+	$(AM_V_GEN) ( grep -hv "^$(libdir)/qt5/plugins" $^ | sed 's%\(.*\)%File "\1"%' ; \
+	grep -h "^$(libdir)/qt5/plugins" $^ | sed 's%\(.*/qt5/plugins\)/\([^/]*\)/\([^/]*\)%SetOutPath "$$INSTDIR\\\\\2"\nFile "\1/\2/\3"%' ) > $@
 
-uninstfiles.nsh: file-list.txt file-list-vpnc-script-win.js.txt file-list-$(TAPDRIVER).txt
-	$(AM_V_GEN) cat $^ | while read FILE; do echo "Delete /rebootok \"\$$INSTDIR\\\\$${FILE##*/}\"" ; done > $@
+uninstfiles.nsh: file-list.txt file-list-vpnc-script-win.js.txt file-list-extra.txt
+	$(AM_V_GEN) ( grep -hv "^$(libdir)/qt5/plugins" $^ | sed 's%\(.*/\)\?\([^/]*\)%Delete /rebootok "$$INSTDIR\\\\\2"%' ; \
+	grep -h "^$(libdir)/qt5/plugins" $^ | sed 's%.*/qt5/plugins/\([^/]*\)/\([^/]*\)%Delete /rebootok "$$INSTDIR\\\\\1\\\\\2"\nRMDir "$$INSTDIR\\\\\1"%' ) > $@
 
 # Theoretically makensis can define symbols with the -D command line
 # option and much of this could just be done that way, but I couldn't
 # get it to work and life's too short.
 openconnect.nsi: version.c
 	$(AM_V_GEN) VERSION=$$(cut -f2 -d\" version.c); \
-	PROD_VERSION=$$(echo "$$VERSION" | perl -ne 'm|v(\d+)\.(\d+)(?:\.git\.\|\-)?(\d+)?(?:-g.+\|.*)|; print "$$1.$$2." . ($$3 or "0") . ".0"'); \
-	if egrep -q '^#define OPENCONNECT_GNUTLS' config.h; then \
+	PROD_VERSION=$$(echo "$$VERSION" | perl -ne 'm|v(\d+)\.(\d+)(?:\.git\.\|\-)?(\d+)?(?:-g.+\|.*)|; printf("%1d.%1d.%1d.0",$$1,$$2,$$3)'); \
+	if grep -E -q '^#define OPENCONNECT_GNUTLS' config.h; then \
 	    TLS_LIBRARY=GnuTLS; \
-	elif egrep -q '^#define OPENCONNECT_OPENSSL' config.h; then \
+	elif grep -E -q '^#define OPENCONNECT_OPENSSL' config.h; then \
 	    TLS_LIBRARY=OpenSSL; \
 	else \
-	    TLS_LIBRARY="Unknown TLS library"; \
+	    TLS_LIBRARY="Unknown_TLS_library"; \
 	fi; \
+	INSTALLER_NAME="openconnect-installer-$(INSTALLER_SUFFIX)-$${VERSION}.exe"; \
 	( echo "VIProductVersion \"$$PROD_VERSION\""; \
 	  echo "VIAddVersionKey ProductVersion \"$$VERSION\""; \
 	  echo "VIAddVersionKey Comments \"OpenConnect multi-protocol VPN client for Windows (command-line version, built with $$TLS_LIBRARY). For more information, visit https://www.infradead.org/openconnect/\""; \
+	  echo "OutFile \"$$INSTALLER_NAME\""; \
 	  echo "!include $(srcdir)/openconnect.nsi.in" ) > $@
 
 AM_V_MAKENSIS = $(am__v_MAKENSIS_$(V))
@@ -362,7 +481,8 @@ am__v_MAKENSIS_ = $(am__v_MAKENSIS_$(AM_DEFAULT_VERBOSITY))
 am__v_MAKENSIS_0 = @echo "  MAKENSIS   " $@;
 am__v_MAKENSIS_1 =
 
-openconnect-installer.exe: openconnect.nsi instfiles.nsh uninstfiles.nsh $(srcdir)/openconnect.nsi.in html-recursive
+openconnect-installer-$(INSTALLER_SUFFIX).exe: openconnect.nsi instfiles.nsh uninstfiles.nsh $(srcdir)/openconnect.nsi.in html-recursive
 	$(AM_V_MAKENSIS) $(MAKENSIS) $<
+	ln -f "$$(grep -E '^OutFile' openconnect.nsi | cut -f2 -d\")" $@
 
 endif

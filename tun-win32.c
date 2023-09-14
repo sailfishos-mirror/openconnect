@@ -49,7 +49,10 @@
 #define TAP_IOCTL_CONFIG_DHCP_SET_OPT   _TAP_IOCTL(9)
 #define TAP_IOCTL_CONFIG_TUN            _TAP_IOCTL(10)
 
+/* TAP driver 9.21.2 we download from the OpenVPN download page */
 #define TAP_COMPONENT_ID "tap0901"
+/* TAP driver bundled with OpenVPN */
+#define TAP_OVPNCONNECT_COMPONENT_ID "tap_ovpnconnect"
 
 #define DEVTEMPLATE "\\\\.\\Global\\%s.tap"
 
@@ -114,9 +117,11 @@ static intptr_t search_taps(struct openconnect_info *vpninfo, tap_callback *cb)
 			RegCloseKey(hkey);
 			continue;
 		}
-		if (!strcmp(buf, TAP_COMPONENT_ID) || !strcmp(buf, "root\\" TAP_COMPONENT_ID))
+		if (!stricmp(buf, TAP_COMPONENT_ID) || !stricmp(buf, "root\\" TAP_COMPONENT_ID) ||
+		    !stricmp(buf, TAP_OVPNCONNECT_COMPONENT_ID) ||
+		    !stricmp(buf, "root\\" TAP_OVPNCONNECT_COMPONENT_ID))
 			adapter_type = ADAPTER_TUNTAP;
-		else if (!strcmp(buf, "wintun"))
+		else if (!stricmp(buf, "Wintun"))
 			adapter_type = ADAPTER_WINTUN;
 		else {
 			vpn_progress(vpninfo, PRG_TRACE, _("%s\\ComponentId is unknown '%s'\n"),
@@ -472,14 +477,18 @@ static intptr_t open_tun(struct openconnect_info *vpninfo, int adapter_type, cha
 		vpn_progress(vpninfo, PRG_ERR,
 			     _("WARNING: Support for Wintun is experimental and may be unstable. If you\n"
 			       "  encounter problems, install the TAP-Windows driver instead. See\n"
-			       "  https://www.infradead.org/openconnect/building.html\n"));
+			       "  %s\n"),
+			     "https://www.infradead.org/openconnect/building.html");
 
 	return ret;
 }
 
-static intptr_t create_ifname_w(struct openconnect_info *vpninfo, const char *ifname) {
+static intptr_t create_ifname_w(struct openconnect_info *vpninfo,
+				const char *ifname)
+{
 	struct oc_text_buf *ifname_buf = buf_alloc();
-	buf_append_utf16le(ifname_buf, vpninfo->ifname);
+
+	buf_append_utf16le(ifname_buf, ifname);
 
 	if (buf_error(ifname_buf)) {
 		vpn_progress(vpninfo, PRG_ERR, _("Could not construct interface name\n"));
