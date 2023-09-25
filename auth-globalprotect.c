@@ -646,7 +646,10 @@ static int gpst_login(struct openconnect_info *vpninfo, int portal, struct login
 			}
 		}
 		/* submit prelogin request to get form */
-		result = do_https_request(vpninfo, "POST", NULL, NULL, &xml_buf, NULL, HTTP_REDIRECT);
+		buf_truncate(request_body);
+		if (!vpninfo->no_external_auth)
+			buf_append(request_body, "cas-support=yes");
+		result = do_https_request(vpninfo, "POST", "application/x-www-form-urlencoded", request_body, &xml_buf, NULL, HTTP_REDIRECT);
 		if (!keep_urlpath) {
 			free(vpninfo->urlpath);
 			vpninfo->urlpath = orig_path;
