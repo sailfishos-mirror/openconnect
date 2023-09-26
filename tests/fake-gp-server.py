@@ -81,6 +81,7 @@ if_path2name = {'global-protect': 'portal', 'ssl-vpn': 'gateway'}
 #                  be used to automatically continue login on the gateway
 #   saml_comments_only: if set, then the SAML completion information will be sent *only* in XML
 #                       wrapped inside an XML comment (github.com/dlenski/gp-saml-gui/issues/51)
+#   saml_needs_js: if set, then the SAML authentication form requires JavaScript execution to complete
 
 @dataclass
 class TestConfiguration:
@@ -91,6 +92,7 @@ class TestConfiguration:
     portal_saml: str = None
     gateway_saml: str = None
     saml_comments_only: int = None
+    saml_needs_js: int = None
 C = TestConfiguration()
 OUTSTANDING_SAML_TOKENS = set()
 
@@ -99,7 +101,7 @@ OUTSTANDING_SAML_TOKENS = set()
 def configure():
     global C
     if request.method == 'POST':
-        gateways, portal_2fa, gw_2fa, portal_cookie, portal_saml, gateway_saml, saml_comments_only = request.form.get('gateways'), request.form.get('portal_2fa'), request.form.get('gw_2fa'), request.form.get('portal_cookie'), request.form.get('portal_saml'), request.form.get('gateway_saml'), request.form.get('saml_comments_only')
+        gateways, portal_2fa, gw_2fa, portal_cookie, portal_saml, gateway_saml, saml_comments_only, saml_needs_js = request.form.get('gateways'), request.form.get('portal_2fa'), request.form.get('gw_2fa'), request.form.get('portal_cookie'), request.form.get('portal_saml'), request.form.get('gateway_saml'), request.form.get('saml_comments_only'), request.form.get('saml_needs_js')
         C.gateways = gateways.split(',') if gateways else ('Default gateway',)
         C.portal_cookie = portal_cookie
         C.portal_2fa = portal_2fa and portal_2fa.strip().lower()
@@ -107,6 +109,7 @@ def configure():
         C.portal_saml = portal_saml
         C.gateway_saml = gateway_saml
         C.saml_comments_only = int(saml_comments_only) if saml_comments_only else None
+        C.saml_needs_js = int(saml_needs_js) if saml_needs_js else None
         return '', 201
     else:
         return 'Current configuration of fake GP server configuration:\n{}\n'.format(C)
@@ -148,20 +151,23 @@ def prelogin(interface):
 # It will be opened by an external browser or SAML-wrangling script, *not* by OpenConnect.
 @app.route('/ANOTHER-HOST/SAML-ENDPOINT')
 def saml_handler():
+    global C
     ifname, token = request.args.get('ifname'), request.args.get('token')
 
     # Submit to saml_complete endpoint
     # In a "real" GP setup, this would be on a different server which is why we use _external=True
     saml_complete = url_for('saml_complete', _external=True)
 
-    return '''<html><body><p>Please login to this fake GP VPN {ifname} interface via SAML</p>
+    return f'''<html><body onload="document.forms.saml.elements.token_needs_js.name='token'">
+{"<noscript><b>JavaScript is disabled! This won't work!</b></noscript>" if C.saml_needs_js else ''}
+<p>Please login to this fake GP VPN {ifname} interface via SAML</p>
 <form name="saml" method="post" action="{saml_complete}">
 <input type="text" name="username" autofocus="1"/><br/>
 <input type="password" name="password"/><br/>
-<input type="hidden" name="token" value="{token}"/>
+<input type="hidden" name="{'token_needs_js' if C.saml_needs_js else 'token'}" value="{token}"/>
 <input type="hidden" name="ifname" value="{ifname}"/>
 <input type="submit" value="Login"/>
-</form></body></html>'''.format(ifname=ifname, saml_complete=saml_complete, token=token)
+</form></body></html>'''
 
 
 # This is the "return path" where SAML authentication ends up on real GP servers after
