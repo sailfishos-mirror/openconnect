@@ -534,14 +534,12 @@ no_gateways:
 	if (vpninfo->write_new_config) {
 		buf = buf_alloc();
 		buf_append(buf, "<GPPortal>\n  <ServerList>\n");
-		if (portal) {
-			buf_append(buf, "      <HostEntry><HostName>");
-			buf_append_xmlescaped(buf, portal ? : _("unknown"));
-			buf_append(buf, "</HostName><HostAddress>%s", vpninfo->hostname);
-			if (vpninfo->port!=443)
-				buf_append(buf, ":%d", vpninfo->port);
-			buf_append(buf, "/global-protect</HostAddress></HostEntry>\n");
-		}
+		buf_append(buf, "      <HostEntry><HostName>");
+		buf_append_xmlescaped(buf, portal ? : _("unknown"));
+		buf_append(buf, "</HostName><HostAddress>%s", vpninfo->hostname);
+		if (vpninfo->port!=443)
+			buf_append(buf, ":%d", vpninfo->port);
+		buf_append(buf, "/global-protect</HostAddress></HostEntry>\n");
 	}
 
 	/* first, count the number of gateways */
