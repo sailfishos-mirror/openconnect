@@ -841,7 +841,7 @@ int decompress_and_queue_packet(struct openconnect_info *vpninfo, int compr_type
 		comprname = "LZS";
 
 		new->len = lzs_decompress(new->data, receive_mtu, buf, len);
-		if (new->len < 0) {
+		if (new->len <= 0) {
 			len = new->len;
 			if (len == 0)
 				len = -EINVAL;
