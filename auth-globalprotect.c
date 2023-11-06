@@ -117,6 +117,7 @@ static int parse_prelogin_xml(struct openconnect_info *vpninfo, xmlNode *xml_nod
 				if (!saml_path)
 					goto nomem;
 				saml_path[len] = '\0';
+				free(vpninfo->sso_login);
 				vpninfo->sso_login = strdup(saml_path);
 				prompt = strdup("SAML REDIRECT authentication in progress");
 				if (!vpninfo->sso_login || !prompt)
@@ -129,6 +130,7 @@ static int parse_prelogin_xml(struct openconnect_info *vpninfo, xmlNode *xml_nod
 					goto nomem;
 				memmove(saml_path + strlen(prefix), saml_path, strlen(saml_path) + 1);
 				memcpy(saml_path, prefix, strlen(prefix));
+				free(vpninfo->sso_login);
 				vpninfo->sso_login = strdup(saml_path);
 				prompt = strdup("SAML REDIRECT authentication in progress");
 				if (!vpninfo->sso_login || !prompt)
