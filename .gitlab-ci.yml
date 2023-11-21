@@ -13,7 +13,8 @@ variables:
   CENTOS7_BUILD: openconnect-cli-centos7
   CENTOS8_BUILD: openconnect-cli-centos8
   CENTOS9_BUILD: openconnect-cli-centos9
-  FEDORA_BUILD: openconnect-cli-fedora38
+  FEDORA_BUILD: openconnect-cli-fedora39
+  FEDORA38_BUILD: openconnect-cli-fedora38
   MINGW32_BUILD: openconnect-cli-mingw32
   MINGW64_BUILD: openconnect-cli-mingw64
   UBUNTU_BUILD: openconnect-cli-ubuntu
@@ -109,6 +110,7 @@ Fedora/GnuTLS:
 
 Fedora/OpenSSL:
   stage: test-first
+  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$FEDORA38_BUILD
   script:
 # Re-enable DSA since we test it
   - update-crypto-policies --set LEGACY
@@ -377,6 +379,7 @@ Fedora/GnuTLS/clang:
 
 Fedora/OpenSSL/clang:
   stage: test-rest
+  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$FEDORA38_BUILD
   script:
 # Re-enable DSA since we test it
   - update-crypto-policies --set LEGACY
@@ -527,7 +530,7 @@ ubsan/GnuTLS/Fedora:
 
 ubsan/OpenSSL/Fedora:
   stage: test-sanitizers
-  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$FEDORA_BUILD
+  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$FEDORA38_BUILD
   script:
   - ./autogen.sh
   - export UBCFLAGS="-Wall -Wextra -fsanitize=undefined -fsanitize=bool -fsanitize=alignment -fsanitize=null -fsanitize=bounds-strict -fsanitize=enum -fno-sanitize-recover -g -O2"
@@ -573,7 +576,7 @@ asan/GnuTLS/Fedora:
 
 asan/OpenSSL/Fedora:
   stage: test-sanitizers
-  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$FEDORA_BUILD
+  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$FEDORA38_BUILD
   script:
   - ./autogen.sh
   - CC=clang CFLAGS="-fsanitize=address -fno-optimize-sibling-calls -fno-omit-frame-pointer -g -O1"
