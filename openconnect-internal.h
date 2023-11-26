@@ -85,6 +85,7 @@
 #define N_(s) s
 
 #include <libxml/tree.h>
+#include <libxml/parser.h>
 #include <zlib.h>
 
 #ifdef _WIN32
