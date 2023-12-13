@@ -44,17 +44,22 @@ int script_setenv(struct openconnect_info *vpninfo,
 
 	for (p = vpninfo->script_env; p; p = p->next) {
 		if (!strcmp(opt, p->option)) {
-			if (append) {
-				if (asprintf(&str, "%s %s", p->value, val) == -1)
-					return -ENOMEM;
-			} else
+			if (append && p->value) {
+				if (val) {
+					if (asprintf(&str, "%s %s", p->value, val) == -1)
+						return -ENOMEM;
+					free (p->value);
+					p->value = str;
+				}
+			} else {
 				str = val ? strdup(val) : NULL;
-
-			free (p->value);
-			p->value = str;
+				free (p->value);
+				p->value = str;
+			}
 			return 0;
 		}
 	}
+
 	p = malloc(sizeof(*p));
 	if (!p)
 		return -ENOMEM;
