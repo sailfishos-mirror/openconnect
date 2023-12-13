@@ -868,7 +868,7 @@ static void set_default_vpncscript(void)
 			exit(1);
 		}
 	} else {
-		default_vpncscript = "cscript " DEFAULT_VPNCSCRIPT;
+		default_vpncscript = DEFAULT_VPNCSCRIPT;
 	}
 }
 
