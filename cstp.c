@@ -1323,7 +1323,7 @@ int cstp_sso_detect_done(struct openconnect_info *vpninfo,
 
 	/* If we're not at the final URI, tell the webview to keep going.
 	 * Note that we might find the cookie at any time, not only on the last page. */
-	if (strcmp(result->uri, vpninfo->sso_login_final))
+	if (result->uri == NULL || strcmp(result->uri, vpninfo->sso_login_final))
 		return -EAGAIN;
 
 	/* Tell the webview to terminate */
