@@ -1690,7 +1690,7 @@ static void fully_up_cb(void *_vpninfo)
 #endif /* !_WIN32 */
 }
 
-int main(int argc, char **argv)
+int main(int argc, char *argv[])
 {
 	struct openconnect_info *vpninfo;
 	char *urlpath = NULL;

@@ -745,7 +745,7 @@ static struct {
     /* The last test should be NODROP, because a DROP wouldn't get tested. */
 };
 
-int main(int argc, char *argv[])
+int main(void)
 {
     SSL_SESSION *sess;
     SSL_CTX *ctx;
