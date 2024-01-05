@@ -2522,7 +2522,7 @@ void append_strap_verify(struct openconnect_info *vpninfo,
 
 	if (flen > sizeof(finished)) {
 		vpn_progress(vpninfo, PRG_ERR,
-			     _("SSL Finished message too large (%zd bytes)\n"), flen);
+			     _("SSL Finished message too large (%zu bytes)\n"), flen);
 		if (!buf_error(buf))
 			buf->error = -EIO;
 		return;
