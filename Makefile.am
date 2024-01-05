@@ -424,7 +424,7 @@ WINTUNDRIVER = wintun-0.14.1.zip
 WINTUNSHA256 = 07c256185d6ee3652e09fa55c0b673e2624b565e02c4b9091c79ca7d2f24ef51
 
 $(WINTUNDRIVER):
-	curl https://www.wintun.net/builds/$(WINTUNDRIVER) -o $@
+	( test -f "/opt/$(WINTUNDRIVER)" && cp "/opt/$(WINTUNDRIVER)" ./ ) || curl https://www.wintun.net/builds/$(WINTUNDRIVER) -o $@
 
 .libs/wintun.dll: $(WINTUNDRIVER)
 	echo $(WINTUNSHA256) $< | sha256sum -c
