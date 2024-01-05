@@ -18,7 +18,7 @@ See <a href="manual.xml">the <tt>--protocol</tt> option</a> for how to use a dif
 <ul>
   <li><a href="anyconnect.html">Details</a> on support for
   Cisco's <a href="https://www.cisco.com/site/us/en/products/security/secure-client/index.html">AnyConnect SSL VPN</a> (<tt>--protocol=anyconnect</tt>).
-  The OpenConnect VPN server, <a href="https://ocserv.gitlab.io/www/index.html">ocserv</a>, now implements an improved version of this protocol.</li>
+  <a href="https://ocserv.openconnect-vpn.net/">The OpenConnect VPN server</a>, ocserv, now implements an improved version of this protocol.</li>
   <li><a href="juniper.html">Details</a> on support for
   Juniper SSL VPN (<tt>--protocol=nc</tt>)</li>
   <li><a href="juniper.html">Details</a> on support for
