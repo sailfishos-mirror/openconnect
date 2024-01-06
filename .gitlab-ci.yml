@@ -17,7 +17,7 @@ variables:
   MINGW32_BUILD: openconnect-cli-mingw32
   MINGW64_BUILD: openconnect-cli-mingw64
   UBUNTU_BUILD: openconnect-cli-ubuntu
-  ANDROID_BUILD: openconnect-cli-android
+  ANDROID_BUILD: openconnect-cli-android-r21e
   ANDROID_TOOLCHAINDIR: /opt/android-sdk-linux_x86/toolchains
 
 image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$FEDORA_BUILD
