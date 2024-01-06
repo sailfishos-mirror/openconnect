@@ -716,13 +716,15 @@ int load_pkcs11_key(struct openconnect_info *vpninfo, struct cert_info *certinfo
 int load_pkcs11_key(struct openconnect_info *vpninfo, struct cert_info *certinfo, EVP_PKEY **keyp)
 {
 	vpn_progress(vpninfo, PRG_ERR,
-		     _("This version of OpenConnect was built without PKCS#11 support\n"));
+		     _("This version of %s was built without PKCS#11 support\n"),
+		     PACKAGE_NAME);
 	return -EINVAL;
 }
 int load_pkcs11_certificate(struct openconnect_info *vpninfo, struct cert_info *certinfo, X509 **certp)
 {
 	vpn_progress(vpninfo, PRG_ERR,
-		     _("This version of OpenConnect was built without PKCS#11 support\n"));
+		     _("This version of %s was built without PKCS#11 support\n"),
+		     PACKAGE_NAME);
 	return -EINVAL;
 }
 #endif

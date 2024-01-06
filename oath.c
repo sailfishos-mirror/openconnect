@@ -215,7 +215,8 @@ static int pskc_decode(struct openconnect_info *vpninfo, const char *token_str,
 	return 0;
 #else /* !HAVE_LIBPSKC */
 	vpn_progress(vpninfo, PRG_ERR,
-		     _("This version of OpenConnect was built without PSKC support\n"));
+		     _("This version of %s was built without PSKC support\n"),
+		     PACKAGE_NAME);
 	return -EINVAL;
 #endif /* HAVE_LIBPSKC */
 }
