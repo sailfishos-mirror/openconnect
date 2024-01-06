@@ -797,6 +797,7 @@ int main(int argc, char *argv[])
         printf("Failed to allocate SSL_CTX\n");
         goto end_md;
     }
+    SSL_CTX_set_security_level(ctx, 0);
 #endif
 
     if (!SSL_CTX_set_cipher_list(ctx, "AES128-SHA")) {
