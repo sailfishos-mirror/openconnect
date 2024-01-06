@@ -468,9 +468,10 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 						     check_ip_src ? _("but only from the same source IP address") : _("even if source IP address changes"));
 				} else
 					vpn_progress(vpninfo, PRG_INFO,
-						     _("Server reports that reconnect-after-drop is not allowed. OpenConnect will not\n"
+						     _("Server reports that reconnect-after-drop is not allowed. %s will not\n"
 						       "be able to reconnect if dead peer is detected. If reconnection DOES work,\n"
 						       "please report to <%s>\n"),
+						     PACKAGE_NAME,
 						     "openconnect-devel@lists.infradead.org");
 			}
 		} else if (xmlnode_is_named(xml_node, "fos")) {
@@ -576,9 +577,10 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 
 	if (reconnect_after_drop == -1)
 		vpn_progress(vpninfo, PRG_ERR,
-			     _("Server did not send <auth-ses tun-connect-without-reauth=\"0/1\"/>. OpenConnect will\n"
+			     _("Server did not send <auth-ses tun-connect-without-reauth=\"0/1\"/>. %s will\n"
 			       "probably not be able to reconnect if dead peer is detected. If reconnection DOES,\n"
 			       "work please report to <%s>\n"),
+			     PACKAGE_NAME,
 			     "openconnect-devel@lists.infradead.org");
 
 	if (new_ip_info.addr) {
@@ -662,7 +664,8 @@ static int fortinet_configure(struct openconnect_info *vpninfo)
 			int ret2 = do_https_request(vpninfo, "GET", NULL, NULL, &res_buf, NULL, HTTP_NO_FLAGS);
 			if (ret2 > 0)
 				vpn_progress(vpninfo, PRG_ERR,
-					     _("Ancient Fortinet server (<v5?) only supports ancient HTML config, which is not implemented by OpenConnect.\n"));
+					     _("Ancient Fortinet server (<v5?) only supports ancient HTML config, which is not implemented by %s.\n"),
+					     PACKAGE_NAME);
 			else
 				vpn_progress(vpninfo, PRG_ERR,
 					     _("Fortinet server is rejecting request for connection options. This\n"

@@ -1393,7 +1393,8 @@ int load_certificate(struct openconnect_info *vpninfo, struct cert_info *certinf
 	if (strstr((char *)fdata.data, "-----BEGIN TSS KEY BLOB-----")) {
 #ifndef HAVE_TROUSERS
 		vpn_progress(vpninfo, PRG_ERR,
-			     _("This version of OpenConnect was built without TPM support\n"));
+			     _("This version of %s was built without TPM support\n"),
+			     PACKAGE_NAME);
 		return -EINVAL;
 #else
 		ret = load_tpm1_key(vpninfo, certinfo, &fdata, &gci->pkey, &pkey_sig);
@@ -1409,7 +1410,8 @@ int load_certificate(struct openconnect_info *vpninfo, struct cert_info *certinf
 	    strstr((char *)fdata.data, "-----BEGIN TSS2 KEY BLOB-----")) {
 #ifndef HAVE_TSS2
 		vpn_progress(vpninfo, PRG_ERR,
-			     _("This version of OpenConnect was built without TPM2 support\n"));
+			     _("This version of %s was built without TPM2 support\n"),
+			     PACKAGE_NAME);
 		return -EINVAL;
 #else
 		ret = load_tpm2_key(vpninfo, certinfo, &fdata, &gci->pkey, &pkey_sig);

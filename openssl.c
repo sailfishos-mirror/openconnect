@@ -782,7 +782,8 @@ static int load_tpm_certificate(struct openconnect_info *vpninfo, struct cert_in
 				struct ossl_cert_info *oci, const char *engine)
 {
 	vpn_progress(vpninfo, PRG_ERR,
-		     _("This version of OpenConnect was built without TPM support\n"));
+		     _("This version of %s was built without TPM support\n"),
+		     PACKAGE_NAME);
 	return -EINVAL;
 }
 #endif

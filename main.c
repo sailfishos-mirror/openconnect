@@ -666,8 +666,9 @@ static char *convert_to_utf8(char *legacy, int free_it)
 
 static void helpmessage(void)
 {
-	printf(_("For assistance with OpenConnect, please see the web page at\n"
+	printf(_("For assistance with %s, please see the web page at\n"
 		 "  %s\n"),
+	       PACKAGE_NAME,
 	       "https://www.infradead.org/openconnect/mail.html");
 }
 
@@ -1736,15 +1737,17 @@ int main(int argc, char *argv[])
 #ifndef HAVE_ICONV
 	if (legacy_charset)
 		fprintf(stderr,
-			_("WARNING: This version of OpenConnect was built without iconv\n"
+			_("WARNING: This version of %s was built without iconv\n"
 			  "         support but you appear to be using the legacy character\n"
-			  "         set \"%s\". Expect strangeness.\n"), legacy_charset);
+			  "         set \"%s\". Expect strangeness.\n"),
+			  PACKAGE_NAME, legacy_charset);
 #endif /* !HAVE_ICONV */
 #endif /* HAVE_NL_LANGINFO */
 
 	if (strcmp(openconnect_version_str, openconnect_binary_version)) {
-		fprintf(stderr, _("WARNING: This version of OpenConnect is %s but\n"
+		fprintf(stderr, _("WARNING: This version of %s is %s but\n"
 				  "         the libopenconnect library is %s\n"),
+			PACKAGE_NAME,
 			openconnect_binary_version, openconnect_version_str);
 	}
 
@@ -1779,7 +1782,7 @@ int main(int argc, char *argv[])
 
 	openconnect_init_ssl();
 
-	vpninfo = openconnect_vpninfo_new("AnyConnect-compatible OpenConnect VPN Agent",
+	vpninfo = openconnect_vpninfo_new("AnyConnect-compatible "PACKAGE_NAME" VPN Agent",
 		validate_peer_cert, NULL, process_auth_form_cb, write_progress, NULL);
 	if (!vpninfo) {
 		fprintf(stderr, _("Failed to allocate vpninfo structure\n"));
@@ -2097,7 +2100,7 @@ int main(int argc, char *argv[])
 			verbose++;
 			break;
 		case 'V':
-			printf(_("OpenConnect version %s\n"), openconnect_version_str);
+			printf(_("%s version %s\n"), PACKAGE_NAME, openconnect_version_str);
 			print_build_opts();
 			print_supported_protocols();
 			print_default_vpncscript();
@@ -2246,7 +2249,9 @@ int main(int argc, char *argv[])
 #ifdef LIBPROXY_HDR
 		vpninfo->proxy_factory = px_proxy_factory_new();
 #else
-		fprintf(stderr, _("This version of OpenConnect was built without libproxy support\n"));
+		fprintf(stderr,
+		        _("This version of %s was built without libproxy support\n"),
+		        PACKAGE_NAME);
 		exit(1);
 #endif
 	}
@@ -2960,7 +2965,9 @@ static void init_token(struct openconnect_info *vpninfo,
 				fprintf(stderr, _("Can't open ~/.stokenrc file\n"));
 			exit(1);
 		case -EOPNOTSUPP:
-			fprintf(stderr, _("OpenConnect was not built with libstoken support\n"));
+			fprintf(stderr,
+			        _("%s was not built with libstoken support\n"),
+			        PACKAGE_NAME);
 			exit(1);
 		default:
 			fprintf(stderr, _("General failure in libstoken\n"));
@@ -2992,7 +2999,9 @@ static void init_token(struct openconnect_info *vpninfo,
 			fprintf(stderr, _("Yubikey token not found\n"));
 			exit(1);
 		case -EOPNOTSUPP:
-			fprintf(stderr, _("OpenConnect was not built with Yubikey support\n"));
+			fprintf(stderr,
+			        _("%s was not built with Yubikey support\n"),
+			        PACKAGE_NAME);
 			exit(1);
 		default:
 			fprintf(stderr, _("General Yubikey failure: %s\n"), strerror(-ret));
