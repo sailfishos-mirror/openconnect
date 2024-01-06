@@ -109,7 +109,8 @@ static int no_gssapi_authorization(struct openconnect_info *vpninfo, int proxy,
 {
 	/* This comes last so just complain. We're about to bail. */
 	vpn_progress(vpninfo, PRG_ERR,
-		     _("This version of OpenConnect was built without GSSAPI support\n"));
+		     _("This version of %s was built without GSSAPI support\n"),
+		     PACKAGE_NAME);
 	auth_state->state = AUTH_FAILED;
 	return -ENOENT;
 }
