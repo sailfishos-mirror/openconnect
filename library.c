@@ -927,13 +927,12 @@ int openconnect_disable_dtls(struct openconnect_info *vpninfo)
 	 * connection is currently connected or has been
 	 * connected previously.
 	 *
-	 * XX: It would be better to allow it when DTLS is not
-	 * in use, but other than DTLS already being disabled,
-	 * we currently do not have a reliable indicator of
-	 * this.
+	 * We allow to disable DTLS if not yet connected to
+	 * allow clients using the library disable DTLS if it
+	 * fails to connect, similarly to what openconnect does.
 	 */
-	if (vpninfo->dtls_state != DTLS_NOSECRET
-	    || vpninfo->ssl_times.last_tx != 0)
+	if (vpninfo->dtls_state == DTLS_ESTABLISHED
+	    || vpninfo->dtls_state == DTLS_CONNECTED)
 		return -EINVAL;
 	vpninfo->dtls_state = DTLS_DISABLED;
 	return 0;
