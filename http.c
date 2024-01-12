@@ -422,7 +422,7 @@ int process_http_response(struct openconnect_info *vpninfo, int connect,
 		char clen_buf[16];
 		/* ... else, chunked */
 		while ((i = vpninfo->ssl_gets(vpninfo, clen_buf, sizeof(clen_buf)))) {
-			char *endp = NULL;
+			char *endp;
 			int lastchunk = 0;
 			long chunklen;
 
@@ -433,6 +433,10 @@ int process_http_response(struct openconnect_info *vpninfo, int connect,
 				goto err;
 			}
 			chunklen = strtol(clen_buf, &endp, 16);
+			if (endp != clen_buf)
+				/* Be lenient with extraneous trailing spaces in chunk-size */
+				while (*endp && isspace(*endp))
+					++endp;
 			if (endp == clen_buf || (*endp && *endp != ';')) {
 				/* XX: Anything other than a non-negative hex integer followed by EOL or ';' is an error. */
 				vpn_progress(vpninfo, PRG_ERR,
