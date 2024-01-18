@@ -48,10 +48,14 @@ void gpst_common_headers(struct openconnect_info *vpninfo,
  */
 const char *gpst_os_name(struct openconnect_info *vpninfo)
 {
-	if (!strcmp(vpninfo->platname, "mac-intel") || !strcmp(vpninfo->platname, "apple-ios"))
+	if (!strcmp(vpninfo->platname, "mac-intel"))
 		return "Mac";
-	else if (!strcmp(vpninfo->platname, "linux-64") || !strcmp(vpninfo->platname, "linux") || !strcmp(vpninfo->platname, "android"))
+	else if (!strcmp(vpninfo->platname, "apple-ios"))
+		return "iOS";
+	else if (!strcmp(vpninfo->platname, "linux-64") || !strcmp(vpninfo->platname, "linux"))
 		return "Linux";
+	else if (!strcmp(vpninfo->platname, "android"))
+		return "Android";
 	else
 		return "Windows";
 }
