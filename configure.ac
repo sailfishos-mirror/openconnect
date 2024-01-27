@@ -1501,6 +1501,8 @@ SUMMARY([PPP tests], [$enable_ppp_tests])
 SUMMARY([Flask tests], [$have_python36_flask])
 SUMMARY([Insecure debugging], [$insecure_debugging])
 SUMMARY([NSIS installer], [$build_nsis])
+SUMMARY([External browser], [${with_external_browser}])
+SUMMARY([VPNC script], [${with_vpnc_script}])
 
 if test "$ssl_library" = "OpenSSL"; then
     AC_MSG_WARN([[
