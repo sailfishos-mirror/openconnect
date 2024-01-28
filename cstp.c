@@ -131,7 +131,7 @@ static void calculate_dtls_mtu(struct openconnect_info *vpninfo, int *base_mtu, 
 		int mss;
 		socklen_t mss_size = sizeof(mss);
 		if (!getsockopt(vpninfo->ssl_fd, IPPROTO_TCP, TCP_MAXSEG,
-				&mss, &mss_size)) {
+				(void *)&mss, &mss_size)) {
 			vpn_progress(vpninfo, PRG_DEBUG, _("TCP_MAXSEG %d\n"), mss);
 			*base_mtu = mss - 13;
 		}
