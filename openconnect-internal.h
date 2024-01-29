@@ -87,6 +87,7 @@
 #include <libxml/tree.h>
 #include <libxml/parser.h>
 #include <zlib.h>
+#include <stdlib.h>
 
 #ifdef _WIN32
 #ifndef _Out_cap_c_
