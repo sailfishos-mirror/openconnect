@@ -43,7 +43,7 @@ static const char *ip46_ntop(union sa_ip46 *src, char *dst, socklen_t size) {
 			 dst, size);
 }
 
-int main(int argc, char **argv)
+int main(int argc, char *argv[])
 {
 	int ret;
 	socklen_t opt_size;
