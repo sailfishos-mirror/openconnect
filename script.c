@@ -20,6 +20,7 @@
 #include "openconnect-internal.h"
 
 #include <unistd.h>
+#include <strings.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -549,6 +550,19 @@ static wchar_t *create_script_env(struct openconnect_info *vpninfo)
 	return newenv;
 }
 
+static const char *script_engine(const char *path) {
+	const char *dot = strrchr(path, '.');
+	if (dot && strcasecmp(dot, ".js") == 0)
+		/*
+		 * The "/e:JScript" argument forces the Windows script host
+		 * to use the JScript engine. This bypasses rogue programs that
+		 * register as handlers for the ".js" file extension but fail
+		 * to run the script.
+		 */
+		return "cscript.exe /e:JScript";
+	return "cscript.exe";
+}
+
 int script_config_tun(struct openconnect_info *vpninfo, const char *reason)
 {
 	wchar_t *script_w;
@@ -571,7 +585,7 @@ int script_config_tun(struct openconnect_info *vpninfo, const char *reason)
 
 	script_setenv(vpninfo, "reason", reason, 0, 0);
 
-	if (asprintf(&cmd, "cscript.exe \"%s\"", vpninfo->vpnc_script) == -1)
+	if (asprintf(&cmd, "%s \"%s\"", script_engine(vpninfo->vpnc_script), vpninfo->vpnc_script) == -1)
 		return 0;
 
 	nr_chars = MultiByteToWideChar(CP_UTF8, 0, cmd, -1, NULL, 0);
