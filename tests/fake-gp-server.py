@@ -63,6 +63,8 @@ def check_form_against_session(*fields, use_query=False, on_failure=None):
 ########################################
 
 
+REGIONS = ['MERCURY', 'VENUS', 'EARTH', 'MARS', 'JUPITER', 'SATURN']
+
 if_path2name = {'global-protect': 'portal', 'ssl-vpn': 'gateway'}
 
 # Configure the fake server. These settings will persist unless/until reconfigured or restarted:
@@ -130,7 +132,7 @@ def prelogin(interface):
             base64.standard_b64encode(url_for('saml_handler', ifname=ifname, token=token, _external=True).encode()).decode())
     else:
         saml = ''
-    session.update(step='%s-prelogin' % ifname)
+    session.update(step='%s-prelogin' % ifname, region=choice(REGIONS))
     return '''
 <prelogin-response>
 <status>Success</status>
@@ -138,12 +140,12 @@ def prelogin(interface):
 <autosubmit>false</autosubmit>
 <msg/>
 <newmsg/>
-<authentication-message>Please login to this fake GP VPN {ifname}</authentication-message>
+<authentication-message>Greetings, user from {region}. Please login to this fake GP VPN {ifname}</authentication-message>
 <username-label>Username</username-label>
 <password-label>Password</password-label>
 <panos-version>1</panos-version>{saml}
-<region>EARTH</region>
-</prelogin-response>'''.format(ifname=ifname, saml=saml)
+<region>{region}</region>
+</prelogin-response>'''.format(ifname=ifname, saml=saml, region=session['region'])
 
 
 # In a "real" GP VPN with SAML, this lives on a completely different server like subdomain.okta.com
@@ -243,8 +245,17 @@ def portal_config():
                    saml_user=None, saml_value=None,
                    # clear inputStr to ensure failure if same form fields are blindly retried on another challenge form:
                    inputStr=None)
-    gwlist = ''.join('<entry name="{}:{}"><description>{}</description></entry>'.format(app.config['HOST'], app.config['PORT'], gw)
-                     for gw in C.gateways)
+    gwlist = ''.join('''
+<entry name="{}:{}">
+  <description>{}</description>
+  <priority-rule>
+    {}
+  </priority-rule>
+</entry>'''.format(
+        app.config['HOST'], app.config['PORT'], gw,
+        '\n    '.join(f'<entry name="{region}"><priority>{99 if region=="Any" else randint(1, len(REGIONS))}</priority></entry>'
+                      for region in REGIONS + ['Any'] if randint(0, 1)))
+        for gw in C.gateways)
     if C.portal_cookie:
         val = session[C.portal_cookie] = 'portal-cookie-%d' % randint(1, 10)
         pc = '<{0}>{1}</{0}>'.format(C.portal_cookie, val)

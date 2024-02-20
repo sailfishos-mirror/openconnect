@@ -27,6 +27,7 @@ struct login_context {
 	char *alt_secret;			/* Alternative secret (DO NOT FREE) */
 	char *portal_userauthcookie;		/* portal-userauthcookie (from global-protect/getconfig.esp) */
 	char *portal_prelogonuserauthcookie;	/* portal-prelogonuserauthcookie (from global-protect/getconfig.esp) */
+	char *region;				/* Region (typically 2 characters, e.g. DE, US) */
 	struct oc_auth_form *form;
 };
 
@@ -92,6 +93,7 @@ static int parse_prelogin_xml(struct openconnect_info *vpninfo, xmlNode *xml_nod
 		xmlnode_get_trimmed_val(xml_node, "authentication-message", &prompt);
 		xmlnode_get_trimmed_val(xml_node, "username-label", &username_label);
 		xmlnode_get_trimmed_val(xml_node, "password-label", &password_label);
+		xmlnode_get_trimmed_val(xml_node, "region", &ctx->region);
 		/* XX: should we save the certificate username from <ccusername/> ? */
 	}
 
@@ -413,6 +415,13 @@ err_out:
 	return -EINVAL;
 }
 
+static int compare_choices(const void *a, const void *b)
+{
+	const struct oc_choice *const *_a = a, *c1 = *_a;
+	const struct oc_choice *const *_b = b, *c2 = *_b;
+	return (c1->priority - c2->priority);
+}
+
 /* Parse portal login/config response (POST /ssl-vpn/getconfig.esp)
  *
  * Extracts the list of gateways from the XML, writes them to the XML config,
@@ -556,34 +565,74 @@ no_gateways:
 		goto out;
 	}
 
-	/* each entry looks like <entry name="host[:443]"><description>Label</description></entry> */
+	/* Each entry looks like:
+	 *   <entry name="host[:443]">
+	 *     <description>Label</description>
+	 *     <priority-rule>           <!-- This is optional -->
+	 *       <entry name="US"><priority>1</priority></entry>
+	 *       <entry name="DE"><priority>2</priority></entry>
+	 *       <entry name="Any"><priority>3</priority></entry>
+	 *     </priority-rule>
+	 *   </entry>
+	 */
 	vpn_progress(vpninfo, PRG_INFO, _("%d gateway servers available:\n"), max_choices);
 	for (x = gateways->children; x; x = x->next) {
 		if (xmlnode_is_named(x, "entry")) {
 			struct oc_choice *choice = calloc(1, sizeof(*choice));
+
 			if (!choice) {
 				result = -ENOMEM;
 				goto out;
 			}
 
+			choice->priority = INT_MAX;
 			xmlnode_get_prop(x, "name", &choice->name);
-			for (x2 = x->children; x2; x2=x2->next)
-				if (!xmlnode_get_val(x2, "description", &choice->label)) {
-					if (vpninfo->write_new_config) {
-						buf_append(buf, "      <HostEntry><HostName>");
-						buf_append_xmlescaped(buf, choice->label);
-						buf_append(buf, "</HostName><HostAddress>%s/ssl-vpn</HostAddress></HostEntry>\n",
-								   choice->name);
+			for (x2 = x->children; x2; x2 = x2->next) {
+				if (ctx->region && xmlnode_is_named(x2, "priority-rule")) {
+					/* Extract priority for our region (also matching to 'Any'). */
+					for (xmlNode *entry = x2->children; entry; entry = entry->next) {
+						char *entry_name = NULL;
+						if (xmlnode_is_named(entry, "entry") &&
+						    !xmlnode_get_prop(entry, "name", &entry_name)) {
+							if (!strcmp(ctx->region, entry_name) || !strcmp("Any", entry_name)) {
+								for (xmlNode *x3 = entry->children; x3; x3 = x3->next) {
+									if (xmlnode_is_named(x3, "priority")) {
+										/* Use lowest if there are multiple matches (e.g. both exact and 'Any') */
+										int p = xmlnode_bool_or_int_value(x3);
+										if (p < choice->priority)
+											choice->priority = p;
+									}
+								}
+							}
+						}
+						free(entry_name);
 					}
-				}
+				} else
+					xmlnode_get_val(x2, "description", &choice->label);
+			}
 
 			opt->choices[opt->nr_choices++] = choice;
-			vpn_progress(vpninfo, PRG_INFO, _("  %s (%s)\n"),
-				     choice->label, choice->name);
+			if (choice->priority != INT_MAX)
+				vpn_progress(vpninfo, PRG_INFO, _("  %s (%s) [priority %d]\n"),
+					     choice->label, choice->name, choice->priority);
+			else
+				vpn_progress(vpninfo, PRG_INFO, _("  %s (%s) [unprioritized]\n"),
+					     choice->label, choice->name);
 		}
 	}
 	if (!opt->nr_choices)
 		goto no_gateways;
+
+	qsort(opt->choices, opt->nr_choices, sizeof(*opt->choices), compare_choices);
+	if (vpninfo->write_new_config) {
+		for (int i = 0; i < opt->nr_choices; i++) {
+			buf_append(buf, "      <HostEntry><HostName>");
+			buf_append_xmlescaped(buf, opt->choices[i]->label);
+			buf_append(buf, "</HostName><HostAddress>%s/ssl-vpn</HostAddress></HostEntry>\n",
+					   opt->choices[i]->name);
+		}
+	}
+
 	if (!vpninfo->authgroup && opt->nr_choices)
 		vpninfo->authgroup = strdup(opt->choices[0]->name);
 
@@ -790,6 +839,7 @@ int gpst_obtain_cookie(struct openconnect_info *vpninfo)
 	free(ctx.alt_secret);
 	free(ctx.portal_userauthcookie);
 	free(ctx.portal_prelogonuserauthcookie);
+	free(ctx.region);
 	free_auth_form(ctx.form);
 	return result;
 }
