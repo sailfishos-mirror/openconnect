@@ -524,12 +524,13 @@ static int gpst_parse_config_xml(struct openconnect_info *vpninfo, xmlNode *xml_
 			   xmlnode_is_named(xml_node, "access-routes") || xmlnode_is_named(xml_node, "exclude-access-routes")) {
 			for (member = xml_node->children; member; member=member->next) {
 				if (!xmlnode_get_val(member, "member", &s)) {
+					int is_exclude = (xml_node->name[0] == 'e');
 					struct oc_split_include *inc = malloc(sizeof(*inc));
 					if (!inc) {
 						ret = -ENOMEM;
 						goto err;
 					}
-					if (xmlnode_is_named(xml_node, "access-routes")) {
+					if (!is_exclude) {
 						inc->route = add_option_steal(&new_opts, "split-include", &s);
 						inc->next = new_ip_info.split_includes;
 						new_ip_info.split_includes = inc;
