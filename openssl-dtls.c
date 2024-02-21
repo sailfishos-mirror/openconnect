@@ -329,6 +329,7 @@ int start_dtls_handshake(struct openconnect_info *vpninfo, int dtls_fd)
 	SSL *dtls_ssl;
 	BIO *dtls_bio;
 	int dtlsver = DTLS1_BAD_VER;
+	int use_psk_neg = 0;
 	const char *cipher = vpninfo->dtls_cipher;
 
 	if (!cipher) {
@@ -349,7 +350,9 @@ int start_dtls_handshake(struct openconnect_info *vpninfo, int dtls_fd)
 		cipher = "AES256-GCM-SHA384";
 #ifndef OPENSSL_NO_PSK
 	} else if (!strcmp(cipher, "PSK-NEGOTIATE")) {
-		dtlsver = 0; /* Let it negotiate */
+		use_psk_neg = 1;
+		dtlsver = DTLS1_2_VERSION;
+		cipher = "PSK";
 #endif
 #endif
 	}
@@ -406,7 +409,7 @@ int start_dtls_handshake(struct openconnect_info *vpninfo, int dtls_fd)
 		if (vpninfo->proto->proto == PROTO_ANYCONNECT) {
 			/* All the AnyConnect hackery about saved sessions and PSK */
 #if defined (HAVE_DTLS12) && !defined(OPENSSL_NO_PSK)
-			if (!dtlsver) {
+			if (use_psk_neg) {
 				SSL_CTX_set_psk_client_callback(vpninfo->dtls_ctx, psk_callback);
 				/* For PSK we override the DTLS master secret with one derived
 				 * from the HTTPS session. */
@@ -422,7 +425,6 @@ int start_dtls_handshake(struct openconnect_info *vpninfo, int dtls_fd)
 					return -EINVAL;
 				}
 				/* For SSL_CTX_set_cipher_list() */
-				cipher = "PSK";
 			}
 #endif /* OPENSSL_NO_PSK */
 #ifdef SSL_OP_NO_ENCRYPT_THEN_MAC
@@ -450,7 +452,7 @@ int start_dtls_handshake(struct openconnect_info *vpninfo, int dtls_fd)
 			 * *requires* secure renegotiation support by default. For interop
 			 * with Cisco's resumed DTLS sessions, we have to turn that off.
 			 */
-			if (dtlsver)
+			if (dtlsver && !use_psk_neg)
 				SSL_CTX_set_options(vpninfo->dtls_ctx, SSL_OP_LEGACY_SERVER_CONNECT);
 #endif
 #ifdef SSL_OP_NO_EXTENDED_MASTER_SECRET
@@ -469,7 +471,7 @@ int start_dtls_handshake(struct openconnect_info *vpninfo, int dtls_fd)
 			 * So where OpenSSL provides the choice, tell it not to use extms on
 			 * resumed sessions.
 			 */
-			if (dtlsver)
+			if (dtlsver && !use_psk_neg)
 				SSL_CTX_set_options(vpninfo->dtls_ctx, SSL_OP_NO_EXTENDED_MASTER_SECRET);
 #endif
 			if (!SSL_CTX_set_cipher_list(vpninfo->dtls_ctx, cipher)) {
@@ -511,7 +513,7 @@ int start_dtls_handshake(struct openconnect_info *vpninfo, int dtls_fd)
 		/* Where they only do DTLSv1, they also don't cope with secure renegotiation */
 		if (dtlsver == DTLS1_VERSION)
 			SSL_set_options(dtls_ssl, SSL_OP_LEGACY_SERVER_CONNECT);
-	} else if (dtlsver) {
+	} else if (dtlsver && !use_psk_neg) {
 		/* This is the actual Cisco AnyConnect method, using session resume */
 		STACK_OF(SSL_CIPHER) *ciphers = SSL_get_ciphers(dtls_ssl);
 		const SSL_CIPHER *ssl_ciph = NULL;
@@ -561,7 +563,7 @@ int start_dtls_handshake(struct openconnect_info *vpninfo, int dtls_fd)
 		/* We don't need our own refcount on it any more */
 		SSL_SESSION_free(dtls_session);
 
-	} else if (vpninfo->dtls_app_id_size > 0) {
+	} else if (use_psk_neg) {
 		/*
 		 * For ocserv PSK-NEGOTIATE we abuse the session resume
 		 * protocol just to pass an 'App ID' in our ClientHello
@@ -569,7 +571,7 @@ int start_dtls_handshake(struct openconnect_info *vpninfo, int dtls_fd)
 		 * and isn't actually going to be resumed at all.
 		 */
 		const uint8_t cs[2] = {0x00, 0x2F}; /* RSA-AES-128 */
-		dtls_session = generate_dtls_session(vpninfo, DTLS1_VERSION,
+		dtls_session = generate_dtls_session(vpninfo, dtlsver,
 						     SSL_CIPHER_find(dtls_ssl, cs),
 						     1);
 		if (!dtls_session) {

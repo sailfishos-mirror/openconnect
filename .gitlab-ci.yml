@@ -193,9 +193,8 @@ CentOS7/OpenSSL:
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
-# dtls-psk: communication with ocserv fails for undetermined reasons marking as xfail until issue is identified
 # ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
-  - make VERBOSE=1 XFAIL_TESTS="auth-nonascii dtls-psk ppp-over-tls-sync" -j4 check
+  - make VERBOSE=1 XFAIL_TESTS="auth-nonascii ppp-over-tls-sync" -j4 check
   tags:
   - shared
   except:
