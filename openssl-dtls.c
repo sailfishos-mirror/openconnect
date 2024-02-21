@@ -390,6 +390,15 @@ int start_dtls_handshake(struct openconnect_info *vpninfo, int dtls_fd)
 		if (dtlsver == DTLS1_BAD_VER)
 			SSL_CTX_set_options(vpninfo->dtls_ctx, SSL_OP_CISCO_ANYCONNECT);
 #endif
+
+#if OPENSSL_VERSION_NUMBER >= 0x030100000L
+		/* After openssl 3.1, DTLS 1.0 and earlier cannot be negotiated
+		 * without reducing the security level. See openssl commit
+		 * a8b6c9f83ce49b6192137c7600532441db885e19 */
+		if (!dtlsver)
+			SSL_CTX_set_security_level(vpninfo->dtls_ctx, 0);
+#endif
+
 		/* If we don't readahead, then we do short reads and throw
 		   away the tail of data packets. */
 		SSL_CTX_set_read_ahead(vpninfo->dtls_ctx, 1);
