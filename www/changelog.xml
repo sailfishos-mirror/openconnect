@@ -31,6 +31,7 @@
        <li>Fix bug which has caused GlobalProtect split-include IPv6 routes to be broken since v9.00 (<a href="https://gitlab.com/openconnect/openconnect/-/commit/64f0c03d660f1d17834f7ff7ce9d0151704bb32f">64f0c03d</a>).</li>
        <li>Sort GlobalProtect gateways according to portal's regionalized priority list (<a href="https://gitlab.com/openconnect/openconnect/-/issues/663">#663</a>, <a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/498">!495</a>).</li>
        <li>openconnect_disable_dtls() allows to disable DTLS unless it is already connected (<a href="https://gitlab.com/openconnect/openconnect/-/issues/697">#697</a>)</li>
+       <li>Enable DTLSv1.0 to continue working with OpenSSL v3.1.0 and newer (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/504">!504</a>, <a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/536">!536</a>).</li>
      </ul><br/>
   </li>
   <li><b><a href="https://www.infradead.org/openconnect/download/openconnect-9.12.tar.gz">OpenConnect v9.12</a></b>

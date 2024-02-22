@@ -14,7 +14,6 @@ variables:
   CENTOS8_BUILD: openconnect-cli-centos8
   CENTOS9_BUILD: openconnect-cli-centos9
   FEDORA_BUILD: openconnect-cli-fedora39
-  FEDORA38_BUILD: openconnect-cli-fedora38
   MINGW32_BUILD: openconnect-cli-mingw32
   MINGW64_BUILD: openconnect-cli-mingw64
   UBUNTU_BUILD: openconnect-cli-ubuntu
@@ -110,7 +109,7 @@ Fedora/GnuTLS:
 
 Fedora/OpenSSL:
   stage: test-first
-  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$FEDORA38_BUILD
+  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$FEDORA_BUILD
   script:
 # Re-enable DSA since we test it
   - update-crypto-policies --set LEGACY
@@ -194,9 +193,8 @@ CentOS7/OpenSSL:
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
-# dtls-psk: communication with ocserv fails for undetermined reasons marking as xfail until issue is identified
 # ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
-  - make VERBOSE=1 XFAIL_TESTS="auth-nonascii dtls-psk ppp-over-tls-sync" -j4 check
+  - make VERBOSE=1 XFAIL_TESTS="auth-nonascii ppp-over-tls-sync" -j4 check
   tags:
   - shared
   except:
@@ -379,7 +377,7 @@ Fedora/GnuTLS/clang:
 
 Fedora/OpenSSL/clang:
   stage: test-rest
-  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$FEDORA38_BUILD
+  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$FEDORA_BUILD
   script:
 # Re-enable DSA since we test it
   - update-crypto-policies --set LEGACY
@@ -530,7 +528,7 @@ ubsan/GnuTLS/Fedora:
 
 ubsan/OpenSSL/Fedora:
   stage: test-sanitizers
-  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$FEDORA38_BUILD
+  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$FEDORA_BUILD
   script:
   - ./autogen.sh
   - export UBCFLAGS="-Wall -Wextra -fsanitize=undefined -fsanitize=bool -fsanitize=alignment -fsanitize=null -fsanitize=bounds-strict -fsanitize=enum -fno-sanitize-recover -g -O2"
@@ -576,7 +574,7 @@ asan/GnuTLS/Fedora:
 
 asan/OpenSSL/Fedora:
   stage: test-sanitizers
-  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$FEDORA38_BUILD
+  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$FEDORA_BUILD
   script:
   - ./autogen.sh
   - CC=clang CFLAGS="-fsanitize=address -fno-optimize-sibling-calls -fno-omit-frame-pointer -g -O1"
