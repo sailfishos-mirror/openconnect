@@ -32,6 +32,7 @@
        <li>Sort GlobalProtect gateways according to portal's regionalized priority list (<a href="https://gitlab.com/openconnect/openconnect/-/issues/663">#663</a>, <a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/498">!495</a>).</li>
        <li>openconnect_disable_dtls() allows to disable DTLS unless it is already connected (<a href="https://gitlab.com/openconnect/openconnect/-/issues/697">#697</a>)</li>
        <li>Enable DTLSv1.0 to continue working with OpenSSL v3.1.0 and newer (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/504">!504</a>, <a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/536">!536</a>).</li>
+       <li>Fix bug that caused OpenConnect to incorrectly log the remaining time until a re-key or periodic Trojan incorrect (<a href="https://gitlab.com/openconnect/openconnect/-/issues/677">#677</a>, <a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/539">!539</a>)</li>
      </ul><br/>
   </li>
   <li><b><a href="https://www.infradead.org/openconnect/download/openconnect-9.12.tar.gz">OpenConnect v9.12</a></b>
