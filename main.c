@@ -1614,14 +1614,14 @@ static void print_connection_stats(void *_vpninfo, const struct oc_stats *stats)
 		     vpninfo->proto->udp_protocol ? : "UDP", openconnect_get_dtls_cipher(vpninfo));
 	if (vpninfo->ssl_times.last_rekey && vpninfo->ssl_times.rekey)
 		vpn_progress(vpninfo, PRG_INFO, _("Next SSL rekey in %ld seconds\n"),
-			     (long)(time(NULL) - vpninfo->ssl_times.last_rekey + vpninfo->ssl_times.rekey));
+			     (long)(vpninfo->ssl_times.last_rekey + vpninfo->ssl_times.rekey - time(NULL)));
 	if (vpninfo->dtls_times.last_rekey && vpninfo->dtls_times.rekey)
 		vpn_progress(vpninfo, PRG_INFO, _("Next %s rekey in %ld seconds\n"),
 			     vpninfo->proto->udp_protocol ? : "UDP",
-			     (long)(time(NULL) - vpninfo->ssl_times.last_rekey + vpninfo->ssl_times.rekey));
+			     (long)(vpninfo->ssl_times.last_rekey + vpninfo->ssl_times.rekey - time(NULL)));
 	if (vpninfo->trojan_interval && vpninfo->last_trojan)
 		vpn_progress(vpninfo, PRG_INFO, _("Next Trojan invocation in %ld seconds\n"),
-			     (long)(time(NULL) - vpninfo->last_trojan + vpninfo->trojan_interval));
+			     (long)(vpninfo->last_trojan + vpninfo->trojan_interval - time(NULL)));
 
 	/* XX: restore loglevel */
 	openconnect_set_loglevel(vpninfo, saved_loglevel);
