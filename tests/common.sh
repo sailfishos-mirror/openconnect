@@ -39,6 +39,7 @@ mkdir -p $SOCKDIR
 export SOCKET_WRAPPER_DIR=$SOCKDIR
 export SOCKET_WRAPPER_DEFAULT_IFACE=2
 ADDRESS=127.0.0.$SOCKET_WRAPPER_DEFAULT_IFACE
+SWRESOLVE="--resolve sockwrap:fd00::5357:5f0$SOCKET_WRAPPER_DEFAULT_IFACE --resolve sockwrap:127.0.0.$SOCKET_WRAPPER_DEFAULT_IFACE"
 OPENCONNECT="${OPENCONNECT:-${top_builddir}/openconnect}"${EXEEXT}
 LOGFILE="$SOCKDIR/log.$$.tmp"
 OCCTL_SOCKET="${OCCTL_SOCKET:-./occtl-comp-$$.socket}"
@@ -103,7 +104,7 @@ launch_simple_pppd() {
        #    the config packets exchanged, causing retries and leading to a longer negotiation period.
        #    [use `socat -x` for a hex log of I/O to/from the connected sockets]
 
-       LD_PRELOAD=libsocket_wrapper.so socat -t 120 -T 120 -4 -d -d \
+       LD_PRELOAD=libsocket_wrapper.so socat -t 120 -T 120 -d -d \
 		 SYSTEM:"LD_PRELOAD= $SUDO $PPPD noauth local debug nodefaultroute logfile '$LOGFILE' $*",pty,raw,echo=0 \
 		 OPENSSL-LISTEN:443,verify=0,cert="$CERT",key="$KEY" 2>&1 &
        PID=$!
