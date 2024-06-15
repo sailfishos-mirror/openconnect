@@ -359,7 +359,7 @@ static int xmlnode_get_text(xmlNode *xml_node, const char *name, char **var)
  *   <csd
  *        stuburl="<!-- save to vpninfo->csd_stuburl if --os=win -->"
  *        starturl="<!-- save to vpninfo->csd_starturl if --os=win -->"
- *        waiturl="<!-- save to vpninfo->csd_starturl if --os=win -->"
+ *        waiturl="<!-- save to vpninfo->csd_waiturl if --os=win -->"
  *   <csdMac
  *        stuburl="<!-- save to vpninfo->csd_stuburl if --os=mac-intel -->"
  *        starturl="<!-- save to vpninfo->csd_starturl if --os=mac-intel -->"
