@@ -1,6 +1,7 @@
 SUBDIRS = tests
 # We kind of want openconnect to be built before we try to test it
-check-recursive: openconnect$(EXEEXT)
+# We also want to have wintun library when running wintun tests, if applicable
+check-recursive: openconnect$(EXEEXT) $(WINTUN_DLL)
 # And even *building* some of tests/*.c needs libopenconnect
 install-recursive: libopenconnect.la
 all-recursive: libopenconnect.la
