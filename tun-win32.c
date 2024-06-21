@@ -77,7 +77,7 @@ static intptr_t search_taps(struct openconnect_info *vpninfo, tap_callback *cb)
 	DWORD len, type;
 	int adapter_type;
 	char buf[40];
-	wchar_t name[40];
+	wchar_t name[MAX_ADAPTER_NAME];
 	char keyname[strlen(CONNECTIONS_KEY) + sizeof(buf) + 1 + strlen("\\Connection")];
 	int i = 0;
 	intptr_t ret = OPEN_TUN_SOFTFAIL;
