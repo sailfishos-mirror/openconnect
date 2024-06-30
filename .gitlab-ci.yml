@@ -13,10 +13,10 @@ variables:
   CENTOS7_BUILD: openconnect-cli-centos7
   CENTOS8_BUILD: openconnect-cli-centos8
   CENTOS9_BUILD: openconnect-cli-centos9
-  FEDORA_BUILD: openconnect-cli-fedora39
+  FEDORA_BUILD: openconnect-cli-fedora40
   MINGW32_BUILD: openconnect-cli-mingw32
   MINGW64_BUILD: openconnect-cli-mingw64
-  UBUNTU_BUILD: openconnect-cli-ubuntu
+  UBUNTU20_BUILD: openconnect-cli-ubuntu20
   ANDROID_BUILD: openconnect-cli-android-r21e
   ANDROID_TOOLCHAINDIR: /opt/android-sdk-linux_x86/toolchains
 
@@ -408,9 +408,9 @@ Fedora/OpenSSL/clang:
     paths:
       - build/tests/*.log
 
-Ubuntu18.04/GnuTLS:
+Ubuntu20.04/GnuTLS:
   stage: test-rest
-  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$UBUNTU_BUILD
+  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$UBUNTU20_BUILD
   script:
   - ./autogen.sh
   - ./configure --with-java --enable-ppp-tests CFLAGS=-g
@@ -434,9 +434,9 @@ Ubuntu18.04/GnuTLS:
     paths:
       - tests/*.log
 
-Ubuntu18.04/OpenSSL:
+Ubuntu20.04/OpenSSL:
   stage: test-rest
-  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$UBUNTU_BUILD
+  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$UBUNTU20_BUILD
   script:
   - ./autogen.sh
   - ./configure --without-gnutls --with-openssl --with-java --without-openssl-version-check --disable-dsa-tests --enable-ppp-tests CFLAGS=-g
