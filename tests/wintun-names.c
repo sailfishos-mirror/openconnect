@@ -21,6 +21,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <fcntl.h>
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -145,8 +146,6 @@ WINTUN_ADAPTER_HANDLE create_wintun_adapter(PWSTR adapterName)
         goto cleanupWintun;
     }
 
-    DWORD Version = WintunGetRunningDriverVersion();
-
     NETIO_STATUS ret;
     NET_LUID luid;
     MIB_IF_ROW2 row;
@@ -191,18 +190,20 @@ wchar_t * currentAdapterName;
 
 static intptr_t check_tun(struct openconnect_info *vpninfo, int type, char *guid, wchar_t *wname)
 {
-	if (currentAdapterName != 0) {
-		if ( ! wcscmp(currentAdapterName, wname) ) {
-			printf("Found %s device '%S' guid %s\n",
-			type ? "Wintun" : "Tap", wname, guid);
-			return VALID_WINTUN_HANDLE;
-		}
-	}
-	return 0;
+    if (currentAdapterName != 0) {
+        if ( ! wcscmp(currentAdapterName, wname) ) {
+            wprintf(L"Found %s device '%ls' guid %s\n",
+                type ? "Wintun" : "Tap", wname, guid);
+            return VALID_WINTUN_HANDLE;
+        }
+    }
+    return 0;
 }
 
 int main(void)
 {
+    _setmode(_fileno(stdout), _O_U16TEXT);
+
     HMODULE Wintun = InitializeWintun();
     if (!Wintun) {
         DWORD LastError = GetLastError();
@@ -232,20 +233,45 @@ int main(void)
         Log(WINTUN_LOG_INFO, L"len=%3d name=%ls", len, adapterName);
         adapter = create_wintun_adapter(adapterName);
 
-		if (adapter == NULL)
-			ret = OPEN_TUN_HARDFAIL;
-		else {
-			currentAdapterName = adapterName;
-			ret = search_taps(NULL, check_tun);
-			WintunCloseAdapter(adapter);
-			Log(WINTUN_LOG_INFO, L"Wintun adapter closed");
-		}
+        if (adapter == NULL)
+            ret = OPEN_TUN_HARDFAIL;
+        else {
+            currentAdapterName = adapterName;
+	    ret = search_taps(NULL, check_tun);
+	    WintunCloseAdapter(adapter);
+	    Log(WINTUN_LOG_INFO, L"Wintun adapter closed");
+        }
     } while ( (len < (MAX_ADAPTER_NAME - 1)) && (ret == VALID_WINTUN_HANDLE) );
+
+    if (ret != VALID_WINTUN_HANDLE) {
+        /* last test was not succesful*/
+        FreeLibrary(Wintun);
+        return 1;
+    }
+
+    /* do an extra test with a string only with unicode characters */
+    memset(adapterName, 0, sizeof(adapterName));
+    wsprintfW(adapterName, L"ΌνομαΠροσαρμογέαΜόνοΣταΕλληνικά_");
+    while ((len = wcslen(adapterName)) < (MAX_ADAPTER_NAME - 1)) {
+        wsprintfW(adapterName, L"%ls%lc", adapterName, L'ά');
+    }
+
+    Log(WINTUN_LOG_INFO, L"len=%3d name=%ls", len, adapterName);
+    adapter = create_wintun_adapter(adapterName);
+
+    if (adapter == NULL) {
+        /* last test was not succesful*/
+        FreeLibrary(Wintun);
+        return 2;
+    }
+    else {
+        currentAdapterName = adapterName;
+	ret = search_taps(NULL, check_tun);
+	WintunCloseAdapter(adapter);
+	Log(WINTUN_LOG_INFO, L"Wintun adapter closed");
+    }
 
     FreeLibrary(Wintun);
 
-    if (ret == VALID_WINTUN_HANDLE) /* last test was succesful*/
-        return 0;
-
-    return 1;
+    return 0;
 }
