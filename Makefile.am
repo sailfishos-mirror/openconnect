@@ -1,6 +1,7 @@
 SUBDIRS = tests
 # We kind of want openconnect to be built before we try to test it
-check-recursive: openconnect$(EXEEXT)
+# We also want to have wintun library when running wintun tests, if applicable
+check-recursive: openconnect$(EXEEXT) $(WINTUN_DLL)
 # And even *building* some of tests/*.c needs libopenconnect
 install-recursive: libopenconnect.la
 all-recursive: libopenconnect.la
@@ -62,7 +63,7 @@ library_srcs += $(lib_srcs_juniper) $(lib_srcs_cisco) $(lib_srcs_oath) \
 
 lib_srcs_gnutls = gnutls.c gnutls_tpm.c gnutls_tpm2.c
 lib_srcs_openssl = openssl.c openssl-pkcs11.c
-lib_srcs_win32 = wintun.c tun-win32.c sspi.c
+lib_srcs_win32 = wintun.c tun-win32.c sspi.c wintun.h
 lib_srcs_posix = tun.c
 lib_srcs_gssapi = gssapi.c
 lib_srcs_iconv = iconv.c
@@ -196,6 +197,7 @@ EXTRA_DIST = AUTHORS version.sh COPYING.LGPL openconnect.ico $(POTFILES) opencon
 EXTRA_DIST += json/AUTHORS json/LICENSE json/json.c json/json.h libopenconnect5.symbols gensymbols.sed
 EXTRA_DIST += $(shell cd "$(top_srcdir)" && \
 		git ls-tree HEAD -r --name-only -- android/ java/ trojans/ bash/ 2>/dev/null)
+EXTRA_DIST += Makefile.dlldeps
 
 DISTCLEANFILES = $(pkgconfig_DATA) version.c
 
