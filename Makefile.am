@@ -469,7 +469,7 @@ file-list-extra.txt:
 # just emit raw snippets to be included separately in the install
 # and uninstall sections.
 instfiles.nsh: file-list.txt file-list-vpnc-script-win.js.txt file-list-extra.txt
-	$(AM_V_GEN) ( grep -hv "^$(libdir)/qt5/plugins" $^ | sed 's%\(.*\)%File "\1"%' ; \
+	$(AM_V_GEN) ( for f in `grep -hv "^$(libdir)/qt5/plugins" $^`; do g=`$(CYGPATH_W) $$f`; echo File \"$$g\"; done; \
 	grep -h "^$(libdir)/qt5/plugins" $^ | sed 's%\(.*/qt5/plugins\)/\([^/]*\)/\([^/]*\)%SetOutPath "$$INSTDIR\\\\\2"\nFile "\1/\2/\3"%' ) > $@
 
 uninstfiles.nsh: file-list.txt file-list-vpnc-script-win.js.txt file-list-extra.txt
