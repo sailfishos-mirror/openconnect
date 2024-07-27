@@ -769,6 +769,7 @@ static int gpst_connect(struct openconnect_info *vpninfo)
 		if (ret==sizeof(start_tunnel)) {
 			ret = vpninfo->ssl_gets(vpninfo, buf+sizeof(start_tunnel), sizeof(buf)-sizeof(start_tunnel));
 			ret = (ret>0 ? ret : 0) + sizeof(start_tunnel);
+			dump_buf(vpninfo, '<', buf);
 		}
 		int status = check_http_status(buf, ret);
 		/* XX: GP servers return 502 when they don't like the cookie */
@@ -1152,9 +1153,9 @@ int gpst_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 				     _("Failed to connect ESP tunnel; using HTTPS instead.\n"));
 		/* XX: gpst_connect does nothing if ESP is enabled and has secrets */
 		vpninfo->dtls_state = DTLS_NOSECRET;
-		if (gpst_connect(vpninfo)) {
+		if (ret = gpst_connect(vpninfo)) {
 			vpninfo->quit_reason = "GPST connect failed";
-			return 1;
+			return ret;
 		}
 		break;
 	case DTLS_NOSECRET:
@@ -1310,9 +1311,9 @@ int gpst_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			return ret;
 		}
 		/* XX: no need to do_reconnect, since ESP doesn't need reconnection */
-		if (gpst_connect(vpninfo))
+		if (ret = gpst_connect(vpninfo))
 			vpninfo->quit_reason = "GPST connect failed";
-		return 1;
+		return ret;
 	}
 
 	switch (keepalive_action(&vpninfo->ssl_times, timeout)) {
