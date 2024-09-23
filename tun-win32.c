@@ -164,9 +164,11 @@ static struct oc_adapter_info * get_adapter_list(struct openconnect_info *vpninf
 		status = RegOpenKeyExA(HKEY_LOCAL_MACHINE, keyname, 0,
 				       KEY_QUERY_VALUE, &hkey);
 		if (status) {
+			char *errstr = openconnect__win32_strerror(status);
 			vpn_progress(vpninfo, PRG_TRACE,
 				_("Cannot open registry key %s: %s (%ld)\n"),
-				keyname, openconnect__win32_strerror(status), status);
+				keyname, errstr, status);
+			free(errstr);
 			continue;
 		}
 
@@ -185,9 +187,11 @@ static struct oc_adapter_info * get_adapter_list(struct openconnect_info *vpninf
 					keyname, "ComponentId", type);
 			}
 			else {
+				char *errstr = openconnect__win32_strerror(status);
 				vpn_progress(vpninfo, PRG_TRACE,
 					_("Cannot read registry key %s\\%s or is not string: %s (%ld)\n"),
-					keyname, "ComponentId", openconnect__win32_strerror(status), status);
+					keyname, "ComponentId", errstr, status);
+				free(errstr);
 			}
 			RegCloseKey(hkey);
 			continue;
@@ -248,9 +252,11 @@ static struct oc_adapter_info * get_adapter_list(struct openconnect_info *vpninf
 					keyname, "Name", type);
 			}
 			else {
+				char *errstr = openconnect__win32_strerror(status);
 				vpn_progress(vpninfo, PRG_INFO,
 					_("Cannot read registry key %s\\%s: %s (%ld)\n"),
-					keyname, "Name", openconnect__win32_strerror(status), status);
+					keyname, "Name", errstr, status);
+				free(errstr);
 			}
 			continue;
 		}
@@ -374,6 +380,7 @@ static int check_address_conflicts(struct openconnect_info *vpninfo)
 	if (LastError != ERROR_SUCCESS) {
 		char *errstr = openconnect__win32_strerror(LastError);
 		vpn_progress(vpninfo, PRG_ERR, _("GetAdaptersAddresses() failed: %s\n"), errstr);
+		free(errstr);
 		ret = -EIO;
 		goto out;
 	}
@@ -425,6 +432,7 @@ static int check_address_conflicts(struct openconnect_info *vpninfo)
 					if (LastError != ERROR_SUCCESS) {
 						char *errstr = openconnect__win32_strerror(LastError);
 						vpn_progress(vpninfo, PRG_ERR, _("GetUnicastIpAddressTable() failed: %s\n"), errstr);
+						free(errstr);
 						ret = -EIO;
 						goto out;
 					}
@@ -446,6 +454,7 @@ static int check_address_conflicts(struct openconnect_info *vpninfo)
 					if (LastError != NO_ERROR) {
 						char *errstr = openconnect__win32_strerror(LastError);
 						vpn_progress(vpninfo, PRG_ERR, _("DeleteUnicastIpAddressEntry() failed: %s\n"), errstr);
+						free(errstr);
 						ret = -EIO;
 						goto out;
 					}
