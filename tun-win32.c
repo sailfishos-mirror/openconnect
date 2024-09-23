@@ -62,15 +62,68 @@
 #define ADAPTERS_KEY CONTROL_KEY "Class\\" NETDEV_GUID
 #define CONNECTIONS_KEY CONTROL_KEY "Network\\" NETDEV_GUID
 
-#define ADAPTER_TUNTAP 0
-#define ADAPTER_WINTUN 1
+#define ADAPTER_NONE   0
+#define ADAPTER_TUNTAP 1
+#define ADAPTER_WINTUN 2
 
 typedef intptr_t (tap_callback)(struct openconnect_info *vpninfo, int type, char *idx, wchar_t *name);
 
 #define SEARCH_CONTINUE	0
 #define SEARCH_DONE	1
 
-static intptr_t search_taps(struct openconnect_info *vpninfo, tap_callback *cb)
+/* a linked list of adapter information */
+struct oc_adapter_info {
+	int type;
+	char *guid;
+	wchar_t *ifname;
+	struct oc_adapter_info *next;
+};
+
+static void free_adapter_list(struct oc_adapter_info *first)
+{
+	struct oc_adapter_info *next = first;
+
+	while (next) {
+		struct oc_adapter_info *this = next;
+		next = next->next;
+
+		free(this->guid);
+		free(this->ifname);
+		free(this);
+	}
+}
+
+static struct oc_adapter_info * find_adapter_by_name(struct openconnect_info *vpninfo, struct oc_adapter_info *adapter_list, wchar_t *wname)
+{
+	struct oc_adapter_info *this = adapter_list;
+	struct oc_adapter_info *found = NULL;
+
+	while (this && !found ) {
+		if (!wcscmp(this->ifname, wname)) {
+			found = this;
+		}
+		this = this->next;
+	}
+
+	return found;
+}
+
+static intptr_t search_taps(struct openconnect_info *vpninfo, struct oc_adapter_info *adapter_list, tap_callback *cb)
+{
+	struct oc_adapter_info *this = adapter_list;
+	intptr_t ret = OPEN_TUN_SOFTFAIL;
+
+	while (this && ret == OPEN_TUN_SOFTFAIL) {
+		if (this->type != ADAPTER_NONE) {
+			ret = cb(vpninfo, this->type, this->guid, this->ifname);
+		}
+		this = this->next;
+	}
+
+	return ret;
+}
+
+static struct oc_adapter_info * get_adapter_list(struct openconnect_info *vpninfo)
 {
 	LONG status;
 	HKEY adapters_key, hkey;
@@ -80,22 +133,28 @@ static intptr_t search_taps(struct openconnect_info *vpninfo, tap_callback *cb)
 	wchar_t name[MAX_ADAPTER_NAME];
 	char keyname[strlen(CONNECTIONS_KEY) + sizeof(buf) + 1 + strlen("\\Connection")];
 	int i = 0;
-	intptr_t ret = OPEN_TUN_SOFTFAIL;
+	struct oc_adapter_info *first = NULL, *last = NULL;
 
 	status = RegOpenKeyExA(HKEY_LOCAL_MACHINE, ADAPTERS_KEY, 0,
 			       KEY_READ, &adapters_key);
 	if (status) {
+		char *errstr = openconnect__win32_strerror(status);
 		vpn_progress(vpninfo, PRG_ERR,
-			     _("Error accessing registry key for network adapters\n"));
-		return -EIO;
+			     _("Error accessing registry key for network adapters: %s (%ld)\n"),
+			     errstr, status);
+		free(errstr);
+		return NULL;
 	}
-	while (ret == OPEN_TUN_SOFTFAIL) {
+
+	while (status != ERROR_NO_MORE_ITEMS) {
 		len = sizeof(buf);
 		status = RegEnumKeyExA(adapters_key, i++, buf, &len,
 				       NULL, NULL, NULL, NULL);
 		if (status) {
-			if (status != ERROR_NO_MORE_ITEMS)
-				ret = OPEN_TUN_HARDFAIL;
+			if (status != ERROR_NO_MORE_ITEMS) {
+				free_adapter_list(first);
+				first = NULL;
+			}
 			break;
 		}
 
@@ -104,8 +163,12 @@ static intptr_t search_taps(struct openconnect_info *vpninfo, tap_callback *cb)
 
 		status = RegOpenKeyExA(HKEY_LOCAL_MACHINE, keyname, 0,
 				       KEY_QUERY_VALUE, &hkey);
-		if (status)
+		if (status) {
+			vpn_progress(vpninfo, PRG_TRACE,
+				_("Cannot open registry key %s: %s (%ld)\n"),
+				keyname, openconnect__win32_strerror(status), status);
 			continue;
+		}
 
 		len = sizeof(buf);
 		status = RegQueryValueExA(hkey, "ComponentId", NULL, &type,
@@ -129,6 +192,7 @@ static intptr_t search_taps(struct openconnect_info *vpninfo, tap_callback *cb)
 			RegCloseKey(hkey);
 			continue;
 		}
+
 		if (!stricmp(buf, TAP_COMPONENT_ID) || !stricmp(buf, "root\\" TAP_COMPONENT_ID) ||
 		    !stricmp(buf, TAP_OVPNCONNECT_COMPONENT_ID) ||
 		    !stricmp(buf, "root\\" TAP_OVPNCONNECT_COMPONENT_ID))
@@ -138,8 +202,7 @@ static intptr_t search_taps(struct openconnect_info *vpninfo, tap_callback *cb)
 		else {
 			vpn_progress(vpninfo, PRG_TRACE, _("%s\\ComponentId is unknown '%s'\n"),
 				     keyname, buf);
-			RegCloseKey(hkey);
-			continue;
+			adapter_type = ADAPTER_NONE;
 		}
 
 		vpn_progress(vpninfo, PRG_TRACE, _("Found %s at %s\n"),
@@ -192,12 +255,33 @@ static intptr_t search_taps(struct openconnect_info *vpninfo, tap_callback *cb)
 			continue;
 		}
 
-		ret = cb(vpninfo, adapter_type, buf, name);
+		struct oc_adapter_info *new = malloc(sizeof(struct oc_adapter_info));
+
+		if (!new) {
+			vpn_progress(vpninfo, PRG_ERR,
+				     _("Cannot allocate memory for adapter info\n"));
+			free_adapter_list(first);
+			first = NULL;
+			break;
+		}
+
+		new->type = adapter_type;
+		new->ifname = wcsdup(name);
+		new->guid = strdup(buf);
+		new->next = NULL;
+
+		if (last) {
+			last->next = new;
+		}
+		if (!first) {
+			first = new;
+		}
+		last = new;
 	}
 
 	RegCloseKey(adapters_key);
 
-	return ret;
+	return first;
 }
 
 #ifndef __LIST_TAPS__
@@ -464,7 +548,7 @@ static intptr_t open_tun(struct openconnect_info *vpninfo, int adapter_type, cha
 		vpn_progress(vpninfo, PRG_DEBUG,
 			     _("Ignoring non-matching interface \"%S\"\n"),
 			     wname);
-		return 0;
+		return OPEN_TUN_SOFTFAIL;
 	}
 
 	if (adapter_type == ADAPTER_TUNTAP)
@@ -500,7 +584,7 @@ static intptr_t open_tun(struct openconnect_info *vpninfo, int adapter_type, cha
 
 	vpn_progress(vpninfo, adapter_type ? PRG_ERR : PRG_INFO,
 		     _("Using %s device '%s', index %d\n"),
-		     adapter_type ? "Wintun" : "TAP-Windows",
+		     (adapter_type == ADAPTER_WINTUN) ? "Wintun" : "TAP-Windows",
 		     vpninfo->ifname, vpninfo->tun_idx);
 	if (adapter_type == ADAPTER_WINTUN)
 		vpn_progress(vpninfo, PRG_ERR,
@@ -534,31 +618,46 @@ static intptr_t create_ifname_w(struct openconnect_info *vpninfo,
 intptr_t os_setup_tun(struct openconnect_info *vpninfo)
 {
 	intptr_t ret;
+	struct oc_adapter_info *list = NULL;
+
+	list = get_adapter_list(vpninfo);
+
+	if (!list)
+		goto safe_return;
 
 	if (vpninfo->ifname) {
 		ret = create_ifname_w(vpninfo, vpninfo->ifname);
 		if (ret)
-			return ret;
+			goto safe_return;
 	}
 
-	ret = search_taps(vpninfo, open_tun);
+	ret = search_taps(vpninfo, list, open_tun);
 
 	if (ret == OPEN_TUN_SOFTFAIL) {
 		if (!vpninfo->ifname_w) {
 			ret = create_ifname_w(vpninfo, vpninfo->hostname);
 			if (ret)
-				return ret;
+				goto safe_return;
 		}
 
 		/* Try creating a Wintun instead of TAP */
 		int retw = create_wintun(vpninfo);
 		if (!retw) {
-			ret = search_taps(vpninfo, open_tun);
-
-			if (ret == OPEN_TUN_SOFTFAIL)
+			char wintun_adapter_guid[40];
+			/* we have a wintun adapter. Get its guid and open it via the callback */
+			if (get_wintun_adapter_guid(vpninfo, wintun_adapter_guid, sizeof(wintun_adapter_guid))) {
 				ret = OPEN_TUN_HARDFAIL;
-			if (ret == OPEN_TUN_HARDFAIL)
+			}
+			else {
+				ret = open_tun(vpninfo, ADAPTER_WINTUN, wintun_adapter_guid, vpninfo->ifname_w);
+
+				if (ret == OPEN_TUN_SOFTFAIL)
+					ret = OPEN_TUN_HARDFAIL;
+			}
+
+			if (ret == OPEN_TUN_HARDFAIL) {
 				os_shutdown_wintun(vpninfo);
+			}
 		} else if (retw == -EPERM) {
 			ret = OPEN_TUN_HARDFAIL;
 			vpn_progress(vpninfo, PRG_ERR,
@@ -575,6 +674,9 @@ intptr_t os_setup_tun(struct openconnect_info *vpninfo)
 	if (check_address_conflicts(vpninfo) < 0)
 		ret = OPEN_TUN_HARDFAIL; /* already complained about it */
 
+safe_return:
+	if (list)
+		free_adapter_list(list);
 	return ret;
 }
 
