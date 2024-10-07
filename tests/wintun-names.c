@@ -43,6 +43,7 @@
 
 struct openconnect_info {
 	char *ifname;
+    wchar_t *ifname_w;
 };
 
 /* don't link linkopenconnect in this test, just for this function
@@ -210,6 +211,8 @@ int main(void)
 {
     _setmode(_fileno(stdout), _O_U16TEXT);
 
+    struct openconnect_info empty_info = { NULL, NULL};
+
     HMODULE Wintun = InitializeWintun();
     if (!Wintun) {
         DWORD LastError = GetLastError();
@@ -244,7 +247,7 @@ int main(void)
         if (adapter) {
             list = get_adapter_list(NULL);
             if (list) {
-                ret = check_tun(NULL, list, adapterName);
+                ret = check_tun(&empty_info, list, adapterName);
                 free_adapter_list(list);
             }
 
@@ -274,7 +277,7 @@ int main(void)
     if (adapter) {
         list = get_adapter_list(NULL);
         if (list) {
-            ret = check_tun(NULL, list, adapterName);
+            ret = check_tun(&empty_info, list, adapterName);
             free_adapter_list(list);
         }
 

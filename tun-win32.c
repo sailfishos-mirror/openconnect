@@ -93,6 +93,24 @@ static void free_adapter_list(struct oc_adapter_info *first)
 	}
 }
 
+static struct oc_adapter_info * adapter_alloc(struct openconnect_info *vpninfo, int type, const wchar_t* name, const char *guid)
+{
+	struct oc_adapter_info *new = malloc(sizeof(struct oc_adapter_info));
+
+	if (!new) {
+		vpn_progress(vpninfo, PRG_ERR,
+					_("Cannot allocate memory for adapter info\n"));
+		return NULL;
+	}
+
+	new->type = type;
+	new->ifname = wcsdup(name);
+	new->guid = strdup(guid);
+	new->next = NULL;
+
+	return new;
+}
+
 static struct oc_adapter_info * find_adapter_by_name(struct openconnect_info *vpninfo, struct oc_adapter_info *adapter_list, wchar_t *wname)
 {
 	struct oc_adapter_info *this = adapter_list;
@@ -112,12 +130,42 @@ static intptr_t search_taps(struct openconnect_info *vpninfo, struct oc_adapter_
 {
 	struct oc_adapter_info *this = adapter_list;
 	intptr_t ret = OPEN_TUN_SOFTFAIL;
+	int wintun_failed_loading = 0;
 
 	while (this && ret == OPEN_TUN_SOFTFAIL) {
 		if (this->type != ADAPTER_NONE) {
-			ret = cb(vpninfo, this->type, this->guid, this->ifname);
+			if (vpninfo->ifname_w && wcscmp(this->ifname, vpninfo->ifname_w)) {
+				vpn_progress(vpninfo, PRG_DEBUG,
+						_("Ignoring non-matching interface \"%S\"\n"),
+						this->ifname);
+				ret = OPEN_TUN_SOFTFAIL; /* keep searching */
+			}
+			else {
+				ret = cb(vpninfo, this->type, this->guid, this->ifname);
+
+				if (!vpninfo->ifname_w ) {
+					/* we are not searching for a specific adapter */
+
+					if (this->type == ADAPTER_WINTUN && ret == OPEN_TUN_SOFTFAIL) {
+						/* keep track of wintun failing to load */
+						wintun_failed_loading = 1;
+					}
+
+					if (ret == OPEN_TUN_HARDFAIL) {
+						/* the adapter failed to open */
+						ret = OPEN_TUN_SOFTFAIL; /* keep searching; we might be able to open a TAP */
+					}
+				}
+			}
 		}
 		this = this->next;
+	}
+
+	if (ret == OPEN_TUN_SOFTFAIL && (!vpninfo->ifname_w) && wintun_failed_loading) {
+		/* wintun failed to load at least once when searching for any usable adapter
+		   notify the caller of a hard failure to force them not to try a wintun fallback
+		*/
+		ret = OPEN_TUN_HARDFAIL;
 	}
 
 	return ret;
@@ -261,20 +309,13 @@ static struct oc_adapter_info * get_adapter_list(struct openconnect_info *vpninf
 			continue;
 		}
 
-		struct oc_adapter_info *new = malloc(sizeof(struct oc_adapter_info));
+		struct oc_adapter_info *new = adapter_alloc(vpninfo, adapter_type, name, buf);
 
 		if (!new) {
-			vpn_progress(vpninfo, PRG_ERR,
-				     _("Cannot allocate memory for adapter info\n"));
 			free_adapter_list(first);
 			first = NULL;
 			break;
 		}
-
-		new->type = adapter_type;
-		new->ifname = wcsdup(name);
-		new->guid = strdup(buf);
-		new->next = NULL;
 
 		if (last) {
 			last->next = new;
@@ -291,6 +332,42 @@ static struct oc_adapter_info * get_adapter_list(struct openconnect_info *vpninf
 }
 
 #ifndef __LIST_TAPS__
+
+static struct oc_adapter_info * create_wintun_adapter(struct openconnect_info *vpninfo, tap_callback *cb, intptr_t *fh)
+{
+	struct oc_adapter_info *ret = NULL;
+
+	int retw = create_wintun(vpninfo);
+	if (!retw) {
+		char wintun_adapter_guid[40];
+		/* we have a wintun adapter. Get its guid and return adapter info */
+		if (! get_wintun_adapter_guid(vpninfo, wintun_adapter_guid, sizeof(wintun_adapter_guid))) {
+			ret = adapter_alloc(vpninfo, ADAPTER_WINTUN, vpninfo->ifname_w, wintun_adapter_guid);
+		}
+	} else if (retw == -EPERM) {
+		vpn_progress(vpninfo, PRG_ERR,
+					_("Access denied creating Wintun adapter. Are you running with Administrator privileges?\n"));
+	}
+	/* no need to worry about other return codes for retw (-ENOENT or -EIO) - we will return NULL */
+
+	if ( ret ) {
+		/* we have a wintun adapter. Open it via the callback */
+		intptr_t retcb = cb(vpninfo, ret->type, ret->guid, ret->ifname);
+
+		if (retcb == OPEN_TUN_SOFTFAIL || retcb == OPEN_TUN_HARDFAIL) {
+			os_shutdown_wintun(vpninfo);
+			free_adapter_list(ret);
+			ret = NULL;
+		}
+		*fh = retcb;
+	}
+	else {
+		os_shutdown_wintun(vpninfo);
+		*fh = OPEN_TUN_SOFTFAIL;
+	}
+
+	return ret;
+}
 
 static int get_adapter_index(struct openconnect_info *vpninfo, char *guid)
 {
@@ -489,9 +566,11 @@ static intptr_t open_tuntap(struct openconnect_info *vpninfo, char *guid, wchar_
 			     FILE_ATTRIBUTE_SYSTEM | FILE_FLAG_OVERLAPPED,
 			     0);
 	if (tun_fh == INVALID_HANDLE_VALUE) {
-		vpn_progress(vpninfo, PRG_ERR, _("Failed to open %s\n"),
-			     devname);
-		return OPEN_TUN_SOFTFAIL;
+		char *errstr = openconnect__win32_strerror(GetLastError());
+		vpn_progress(vpninfo, PRG_ERR, _("Failed to open %s: %s\n"),
+			     devname, errstr);
+		free(errstr);
+		return OPEN_TUN_HARDFAIL;
 
 	}
 	vpn_progress(vpninfo, PRG_DEBUG, _("Opened tun device %S\n"), wname);
@@ -552,13 +631,6 @@ static intptr_t open_tuntap(struct openconnect_info *vpninfo, char *guid, wchar_
 static intptr_t open_tun(struct openconnect_info *vpninfo, int adapter_type, char *guid, wchar_t *wname)
 {
 	intptr_t ret = -1;
-
-	if (vpninfo->ifname_w && wcscmp(wname, vpninfo->ifname_w)) {
-		vpn_progress(vpninfo, PRG_DEBUG,
-			     _("Ignoring non-matching interface \"%S\"\n"),
-			     wname);
-		return OPEN_TUN_SOFTFAIL;
-	}
 
 	if (adapter_type == ADAPTER_TUNTAP)
 		ret = open_tuntap(vpninfo, guid, wname);
@@ -624,6 +696,13 @@ static intptr_t create_ifname_w(struct openconnect_info *vpninfo,
 	return 0;
 }
 
+static void clear_ifname_w(struct openconnect_info *vpninfo)
+{
+	free(vpninfo->ifname_w);
+	vpninfo->ifname_w = NULL;
+}
+
+
 intptr_t os_setup_tun(struct openconnect_info *vpninfo)
 {
 	intptr_t ret;
@@ -635,42 +714,65 @@ intptr_t os_setup_tun(struct openconnect_info *vpninfo)
 		goto safe_return;
 
 	if (vpninfo->ifname) {
+		/* the user specified an interface name; try to find an existing adapter */
 		ret = create_ifname_w(vpninfo, vpninfo->ifname);
 		if (ret)
 			goto safe_return;
-	}
 
-	ret = search_taps(vpninfo, list, open_tun);
+		ret = search_taps(vpninfo, list, open_tun);
 
-	if (ret == OPEN_TUN_SOFTFAIL) {
-		if (!vpninfo->ifname_w) {
-			ret = create_ifname_w(vpninfo, vpninfo->hostname);
-			if (ret)
-				goto safe_return;
-		}
-
-		/* Try creating a Wintun instead of TAP */
-		int retw = create_wintun(vpninfo);
-		if (!retw) {
-			char wintun_adapter_guid[40];
-			/* we have a wintun adapter. Get its guid and open it via the callback */
-			if (get_wintun_adapter_guid(vpninfo, wintun_adapter_guid, sizeof(wintun_adapter_guid))) {
-				ret = OPEN_TUN_HARDFAIL;
+		if (ret == OPEN_TUN_SOFTFAIL) {
+			/* no adapter was found; Try creating a Wintun adapter */
+			struct oc_adapter_info * new = create_wintun_adapter(vpninfo, open_tun, &ret);
+			if ( new ) {
+				/* add the new adapter to the beginning of the list so it can be freed */
+				new->next = list;
+				list = new;
 			}
 			else {
-				ret = open_tun(vpninfo, ADAPTER_WINTUN, wintun_adapter_guid, vpninfo->ifname_w);
-
-				if (ret == OPEN_TUN_SOFTFAIL)
-					ret = OPEN_TUN_HARDFAIL;
+				clear_ifname_w(vpninfo);
+				ret = OPEN_TUN_HARDFAIL;
 			}
+		}
+		else if (ret == OPEN_TUN_HARDFAIL) {
+			clear_ifname_w(vpninfo);
+		}
+	}
+	else {
+		/* the user did not specify an interface name; try create a wintun default based on hostname */
+		ret = create_ifname_w(vpninfo, vpninfo->hostname);
+		if (ret)
+			goto safe_return;
 
-			if (ret == OPEN_TUN_HARDFAIL) {
-				os_shutdown_wintun(vpninfo);
+		/* check if the adapter already exists */
+		struct oc_adapter_info * new = find_adapter_by_name(vpninfo, list, vpninfo->ifname_w);
+
+		if (new) {
+			/* don't create a wintun adapter with a default name;
+             * unfortunately, wintun will rename an existing adapter when creating an adapter with the same name
+             * see https://git.zx2c4.com/wintun/tree/api/adapter.c?id=41624504341307f7f55afe72e86d5d8c76f81c0e#n292
+			 */
+			vpn_progress(vpninfo, PRG_INFO,
+						_("Adapter %S already exists. Cannot use it as a default wintun adapter.\n"), 
+						vpninfo->ifname_w);
+		}
+
+		if ( !new ) {
+			new = create_wintun_adapter(vpninfo, open_tun, &ret);
+			if ( new ) {
+				/* add the new adapter to the beginning of the list so it can be freed */
+				new->next = list;
+				list = new;
 			}
-		} else if (retw == -EPERM) {
-			ret = OPEN_TUN_HARDFAIL;
-			vpn_progress(vpninfo, PRG_ERR,
-				     _("Access denied creating Wintun adapter. Are you running with Administrator privileges?\n"));
+		}
+		else {
+			new = NULL;
+		}
+
+		if ( !new ) {
+			/* could not create wintun adapter; cleanup ifname_w and fallback to the first available tap */
+			clear_ifname_w(vpninfo);
+			ret = search_taps(vpninfo, list, open_tun);
 		}
 	}
 

@@ -143,7 +143,7 @@ intptr_t open_wintun(struct openconnect_info *vpninfo, char *guid, wchar_t *wnam
 	intptr_t ret;
 
 	if (init_wintun(vpninfo))
-		return 0;
+		return OPEN_TUN_SOFTFAIL;
 
 	if (!vpninfo->wintun_adapter) {
 		vpninfo->wintun_adapter = WintunOpenAdapter(wname);
@@ -153,7 +153,7 @@ intptr_t open_wintun(struct openconnect_info *vpninfo, char *guid, wchar_t *wnam
 				     wname, errstr);
 			free(errstr);
 
-			ret = OPEN_TUN_SOFTFAIL;
+			ret = OPEN_TUN_HARDFAIL;
 			goto out;
 		}
 	}

@@ -27,6 +27,7 @@
 
 struct openconnect_info {
 	char *ifname;
+	wchar_t *ifname_w;
 };
 
 /* don't link linkopenconnect in this test, just for this function
@@ -51,13 +52,14 @@ int main(void)
 {
 	intptr_t ret;
 	struct oc_adapter_info *list = NULL;
+	struct openconnect_info empty_info = { NULL, NULL};
 
 	list = get_adapter_list(NULL);
 
 	if (!list)
 		return 1;
 
-	search_taps(NULL, list, print_tun);
+	search_taps(&empty_info, list, print_tun);
 
 	free_adapter_list(list);
 	return 0;
