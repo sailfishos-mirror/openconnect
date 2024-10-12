@@ -2,8 +2,10 @@
  * OpenConnect (SSL + DTLS) VPN client
  *
  * Copyright © 2008-2015 Intel Corporation.
+ * Copyright © 2024 Marios Paouris
  *
- * Author: David Woodhouse <dwmw2@infradead.org>
+ * Authors: David Woodhouse <dwmw2@infradead.org>
+ *          Marios Paouris <mspaourh@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -30,6 +32,7 @@
 
 #include <errno.h>
 #include <stdio.h>
+#include <assert.h>
 
 /*
  * TAP-Windows support inspired by http://i3.cs.berkeley.edu/ (v0.2) with
@@ -70,6 +73,10 @@ typedef intptr_t (tap_callback)(struct openconnect_info *vpninfo, int type, char
 
 #define SEARCH_CONTINUE	0
 #define SEARCH_DONE	1
+
+#ifndef MAX_FALLBACK_TRIES
+#define MAX_FALLBACK_TRIES 15
+#endif
 
 /* a linked list of adapter information */
 struct oc_adapter_info {
@@ -124,6 +131,67 @@ static struct oc_adapter_info * find_adapter_by_name(struct openconnect_info *vp
 	}
 
 	return found;
+}
+
+static wchar_t * first_available_adapter_name(struct openconnect_info *vpninfo, struct oc_adapter_info *list, const wchar_t *prefix)
+{
+	wchar_t buf[MAX_ADAPTER_NAME];
+	wchar_t usedPrefix[MAX_ADAPTER_NAME];
+	wchar_t *adapterName;
+	wchar_t * ret = NULL;
+
+	size_t prefix_len = wcslen(prefix);
+
+	/* safeguard against prefix being too large */
+	if (prefix_len > (MAX_ADAPTER_NAME - 1)) {
+		prefix_len = MAX_ADAPTER_NAME - 1;
+	}
+
+	/* copy the safe prefix */
+	wcsncpy(usedPrefix, prefix, prefix_len);
+
+	/* without splitting surrogate pairs */
+	if (IS_HIGH_SURROGATE(usedPrefix[prefix_len - 1])) {
+		prefix_len--;
+	}
+	usedPrefix[prefix_len] = 0;
+
+	adapterName = usedPrefix;
+
+	/* don't set count more than 2 digits */
+	assert((MAX_FALLBACK_TRIES <= 99));
+
+	int count = MAX_FALLBACK_TRIES;
+	int digits_count = 0;
+	int tries = 0;
+	while (tries < count) {
+		struct oc_adapter_info * found = find_adapter_by_name(vpninfo, list, adapterName);
+		if (!found) {
+			ret = wcsdup(adapterName);
+			break;
+		}
+
+		/* no adapter found; append try count and try again */
+		tries++;
+
+		if (tries == 1 || tries == 10) {
+			/* make room for one more digit */
+			digits_count++;
+		}
+		if (prefix_len + digits_count > (MAX_ADAPTER_NAME - 1)) {
+			prefix_len--;
+			/* without splitting surrogate pairs */
+			if (IS_HIGH_SURROGATE(usedPrefix[prefix_len - 1])) {
+				prefix_len--;
+			}
+			usedPrefix[prefix_len] = 0;
+		}
+
+		_snwprintf(buf, digits_count + prefix_len + 1, L"%s%d", usedPrefix, tries);
+		adapterName = buf;
+	}
+
+	return ret;
 }
 
 static intptr_t search_taps(struct openconnect_info *vpninfo, struct oc_adapter_info *adapter_list, tap_callback *cb)
@@ -685,7 +753,7 @@ static intptr_t create_ifname_w(struct openconnect_info *vpninfo,
 	buf_append_utf16le(ifname_buf, ifname);
 
 	if (buf_error(ifname_buf)) {
-		vpn_progress(vpninfo, PRG_ERR, _("Could not construct interface name\n"));
+		vpn_progress(vpninfo, PRG_ERR, _("Could not construct interface name for \"%s\"\n"), ifname);
 		return buf_free(ifname_buf);
 	}
 
@@ -698,7 +766,9 @@ static intptr_t create_ifname_w(struct openconnect_info *vpninfo,
 
 static void clear_ifname_w(struct openconnect_info *vpninfo)
 {
-	free(vpninfo->ifname_w);
+	if (vpninfo->ifname_w) {
+		free(vpninfo->ifname_w);
+	}
 	vpninfo->ifname_w = NULL;
 }
 
@@ -739,25 +809,27 @@ intptr_t os_setup_tun(struct openconnect_info *vpninfo)
 		}
 	}
 	else {
-		/* the user did not specify an interface name; try create a wintun default based on hostname */
-		ret = create_ifname_w(vpninfo, vpninfo->hostname);
-		if (ret)
-			goto safe_return;
+		/* the user did not specify an interface name; try create a wintun default based on hostname
+		* this is also required since, unfortunately, wintun will rename an existing adapter when 
+		* creating an adapter with the same name.
+		* see https://git.zx2c4.com/wintun/tree/api/adapter.c?id=41624504341307f7f55afe72e86d5d8c76f81c0e#n292
+		*/
+		struct oc_adapter_info * new = NULL;
+		wchar_t *fallback_ifname = NULL;
+		intptr_t ret_ciw = create_ifname_w(vpninfo, vpninfo->hostname);
 
-		/* check if the adapter already exists */
-		struct oc_adapter_info * new = find_adapter_by_name(vpninfo, list, vpninfo->ifname_w);
-
-		if (new) {
-			/* don't create a wintun adapter with a default name;
-             * unfortunately, wintun will rename an existing adapter when creating an adapter with the same name
-             * see https://git.zx2c4.com/wintun/tree/api/adapter.c?id=41624504341307f7f55afe72e86d5d8c76f81c0e#n292
-			 */
-			vpn_progress(vpninfo, PRG_INFO,
-						_("Adapter %S already exists. Cannot use it as a default wintun adapter.\n"), 
-						vpninfo->ifname_w);
+		if (!ret_ciw) {
+			wchar_t *prefix = vpninfo->ifname_w;
+			vpninfo->ifname_w = NULL;
+			fallback_ifname = first_available_adapter_name(vpninfo, list, prefix);
+			free(prefix);
 		}
 
-		if ( !new ) {
+		if (!fallback_ifname) {
+			vpn_progress(vpninfo, PRG_INFO,
+						_("Unable to find a usable default adapter name based on hostname.\n"));
+		} else {
+			vpninfo->ifname_w = fallback_ifname;
 			new = create_wintun_adapter(vpninfo, open_tun, &ret);
 			if ( new ) {
 				/* add the new adapter to the beginning of the list so it can be freed */
@@ -765,12 +837,9 @@ intptr_t os_setup_tun(struct openconnect_info *vpninfo)
 				list = new;
 			}
 		}
-		else {
-			new = NULL;
-		}
 
 		if ( !new ) {
-			/* could not create wintun adapter; cleanup ifname_w and fallback to the first available tap */
+			/* could not create a wintun adapter; cleanup ifname_w and fallback to the first available tap */
 			clear_ifname_w(vpninfo);
 			ret = search_taps(vpninfo, list, open_tun);
 		}
