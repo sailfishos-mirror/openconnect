@@ -78,6 +78,8 @@ typedef intptr_t (tap_callback)(struct openconnect_info *vpninfo, int type, char
 #define MAX_FALLBACK_TRIES 15
 #endif
 
+static void shutdown_tun(struct openconnect_info *vpninfo);
+
 /* a linked list of adapter information */
 struct oc_adapter_info {
 	int type;
@@ -851,8 +853,10 @@ intptr_t os_setup_tun(struct openconnect_info *vpninfo)
 		ret = OPEN_TUN_HARDFAIL;
 	}
 
-	if (check_address_conflicts(vpninfo) < 0)
+	if (ret != OPEN_TUN_HARDFAIL && ( check_address_conflicts(vpninfo) < 0 )) {
+		shutdown_tun(vpninfo);
 		ret = OPEN_TUN_HARDFAIL; /* already complained about it */
+	}
 
 safe_return:
 	if (list)
@@ -950,7 +954,11 @@ int os_write_tun(struct openconnect_info *vpninfo, struct pkt *pkt)
 void os_shutdown_tun(struct openconnect_info *vpninfo)
 {
 	script_config_tun(vpninfo, "disconnect");
+	shutdown_tun(vpninfo);
+}
 
+static void shutdown_tun(struct openconnect_info *vpninfo)
+{
 	if (vpninfo->wintun) {
 		os_shutdown_wintun(vpninfo);
 		return;
