@@ -2615,7 +2615,13 @@ int export_certificate_pkcs7(struct openconnect_info *vpninfo,
 		goto err;
 	X509_up_ref(oci->cert);
 
-	p7 = PKCS7_sign(NULL, NULL, oci->extra_certs, NULL, PKCS7_DETACHED);
+	bio = BIO_new(BIO_s_mem());
+	if (!bio) {
+		ret = -ENOMEM;
+		goto pkcs7_error;
+	}
+
+	p7 = PKCS7_sign(NULL, NULL, oci->extra_certs, bio, PKCS7_DETACHED);
 	if (!p7) {
 	err:
 		vpn_progress(vpninfo, PRG_ERR,
@@ -2625,12 +2631,6 @@ int export_certificate_pkcs7(struct openconnect_info *vpninfo,
 	}
 
 	ret = 0;
-
-	bio = BIO_new(BIO_s_mem());
-	if (!bio) {
-		ret = -ENOMEM;
-		goto pkcs7_error;
-	}
 
 	if (format == CERT_FORMAT_ASN1) {
 		ok = i2d_PKCS7_bio(bio, p7);
