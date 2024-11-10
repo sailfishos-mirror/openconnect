@@ -228,6 +228,16 @@ static intptr_t search_taps(struct openconnect_info *vpninfo, struct oc_adapter_
 				}
 			}
 		}
+		else {
+			if (vpninfo->ifname_w && !wcscmp(this->ifname, vpninfo->ifname_w)) {
+				/* we were asked to load an adapter of an unsupported type */
+				vpn_progress(vpninfo, PRG_ERR,
+						_("Interface \"%S\" is not supported\n"),
+						this->ifname);
+				ret = OPEN_TUN_HARDFAIL; /* fail */
+				break;
+			}
+		}
 		this = this->next;
 	}
 
