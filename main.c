@@ -699,7 +699,7 @@ static void print_build_opts(void)
 		printf("%sRSA software token", sep);
 		sep = comma;
 	}
-	switch(openconnect_has_oath_support()) {
+	switch (openconnect_has_oath_support()) {
 	case 2:
 		printf("%sHOTP software token", sep);
 		sep = comma;
@@ -2923,7 +2923,7 @@ static void init_token(struct openconnect_info *vpninfo,
 
 	if (token_str && (token_mode == OC_TOKEN_MODE_TOTP ||
 			  token_mode == OC_TOKEN_MODE_HOTP)) {
-		switch(token_str[0]) {
+		switch (token_str[0]) {
 		case '@':
 			token_str++;
 			/* fall through... */
@@ -2986,7 +2986,7 @@ static void init_token(struct openconnect_info *vpninfo,
 		break;
 
 	case OC_TOKEN_MODE_YUBIOATH:
-		switch(ret) {
+		switch (ret) {
 		case 0:
 			return;
 		case -ENOENT:
