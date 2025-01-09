@@ -9,21 +9,22 @@
 # Matheus Barbosa <mdpb.matheus@gmail.com>, 2022.
 # Diogo Leal <diogo@diogoleal.com>, 2022.
 # Rafael Fontenelle <rafaelff@gnome.org>, 2013-2022.
+# Juliano de Souza Camargo <julianosc@pm.me>, 2024.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: network-manager-openconnect\n"
 "Report-Msgid-Bugs-To: openconnect-devel@lists.infradead.org\n"
 "POT-Creation-Date: 2025-01-09 08:34+0000\n"
-"PO-Revision-Date: 2022-08-23 08:24-0300\n"
-"Last-Translator: Rafael Fontenelle <rafaelff@gnome.org>\n"
-"Language-Team: Brazilian Portuguese <gnome-pt_br-list@gnome.org>\n"
+"PO-Revision-Date: 2024-11-12 11:19-0300\n"
+"Last-Translator: Juliano de Souza Camargo <julianosc@pm.me>\n"
+"Language-Team: Brazilian Portuguese <https://br.gnome.org/traducao>\n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n > 1)\n"
-"X-Generator: Gtranslator 40.0\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"X-Generator: Gtranslator 47.0\n"
 "X-Project-Style: gnome\n"
 "X-DL-Team: pt_BR\n"
 "X-DL-Module: NetworkManager-openconnect\n"
@@ -119,12 +120,12 @@ msgstr "Alocação falhou\n"
 #: array.c:846
 #, c-format
 msgid "Received %d more bytes after partial %d\n"
-msgstr ""
+msgstr "Recebido %d bytes adicionais depois da parcial %d\n"
 
 #: array.c:860
 #, c-format
 msgid "Received partial packet, %d bytes\n"
-msgstr ""
+msgstr "Recebido pacote parcial, %d bytes\n"
 
 #: array.c:875
 #, c-format
@@ -134,7 +135,7 @@ msgstr "Pacote de dados não reconhecido, tam %d\n"
 #: array.c:886
 #, c-format
 msgid "Received partial packet, %d of %d bytes\n"
-msgstr ""
+msgstr "Recebido pacote parcial, %d de %d bytes\n"
 
 #: array.c:896 array.c:1256
 #, c-format
@@ -375,6 +376,8 @@ msgid ""
 "Portal reports GlobalProtect version %s; we will report the same client "
 "version.\n"
 msgstr ""
+"Portal relata versão do GlobalProtect %s; vamos relatar a mesma versão de "
+"cliente.\n"
 
 #: auth-globalprotect.c:541
 msgid "GlobalProtect portal configuration lists no gateway servers.\n"
@@ -1324,6 +1327,8 @@ msgid ""
 "WARNING: Unknown F5 JSON form field type '%s', treating as 'text'. Please "
 "report to <%s>"
 msgstr ""
+"AVISO: tipo de formulário de campo F5 JSON desconhecido '%s', tratando como "
+"'texto'.Por favor, relate a <%s>"
 
 #: f5.c:316
 #, c-format
@@ -1332,6 +1337,9 @@ msgid ""
 "embedded\n"
 "  JSON. This is EXPERIMENTAL. Please report results to <%s>.\n"
 msgstr ""
+"AVISO: Nenhum formulário de autenticação HTML encontrado. Extraído "
+"formulário embutido de F5\n"
+"  JSON. Isto é EXPERIMENTAL. Por favor, relatar resultados a <%s>.\n"
 
 #: f5.c:325
 msgid ""
@@ -1446,7 +1454,7 @@ msgstr "Obteve área de autenticação “%s”\n"
 
 #: fortinet.c:303
 msgid "Invalid credentials; try again."
-msgstr ""
+msgstr "Credenciais inválidas; tente novamente."
 
 #: fortinet.c:345
 #, c-format
@@ -2212,7 +2220,7 @@ msgstr "verificação da assinatura falhou"
 
 #: gnutls.c:2208 openssl.c:1702
 msgid "certificate does not match SNI"
-msgstr ""
+msgstr "certificado não confere o SNI"
 
 #: gnutls.c:2210 openssl.c:1561 openssl.c:1706
 msgid "certificate does not match hostname"
@@ -2269,7 +2277,7 @@ msgstr "Conexão SSL cancelada\n"
 #: gnutls.c:2528
 #, c-format
 msgid "SSL connection failure due to fatal alert: %s\n"
-msgstr ""
+msgstr "Conexão SSL falhou devido ao alerta fatal: %s\n"
 
 #: gnutls.c:2531
 #, c-format
@@ -2799,7 +2807,7 @@ msgstr "Desafio: %s\n"
 
 #: gpst.c:259
 msgid "Failed to parse non-XML server response\n"
-msgstr ""
+msgstr "Falha ao analisar resposta non-XML do servidor\n"
 
 #: gpst.c:260 gpst.c:327
 #, c-format
@@ -2808,7 +2816,7 @@ msgstr "Resposta foi: %s\n"
 
 #: gpst.c:325
 msgid "Failed to parse XML server response\n"
-msgstr ""
+msgstr "Falha ao analisar resposta XML do servidor\n"
 
 #: gpst.c:364
 #, c-format
@@ -2853,6 +2861,8 @@ msgid ""
 "IPv6 gateway address in config XML (%s) differs from external gateway "
 "address (%s).\n"
 msgstr ""
+"Endereço IPv6 do gateway no XML de config (%s) difere do endereço externo do "
+"gateway (%s).\n"
 
 #: gpst.c:488
 #, c-format
@@ -3344,6 +3354,8 @@ msgstr "Erro ao obter cabeçalho do bloco\n"
 msgid ""
 "Error in chunked decoding. Expected hexadecimal chunk length, got: '%s'\n"
 msgstr ""
+"Erro na decodificação fragmentada. Esperava tamanho de fragmento "
+"hexadecimal, obteve: '%s'\n"
 
 #: http.c:454
 #, c-format
@@ -3854,11 +3866,11 @@ msgstr "Lê senha da entrada padrão"
 
 #: main.c:1031
 msgid "Select GROUP from authentication dropdown (may be known"
-msgstr ""
+msgstr "Selecionar GRUPO do dropdown de autenticação (pode ser conhecido"
 
 #: main.c:1032
 msgid "as \"realm\", \"domain\", \"gateway\"; protocol-dependent)"
-msgstr ""
+msgstr "como \"realm\", \"domain\", \"gateway\"; dependente de protocolo)"
 
 #: main.c:1033
 msgid "Provide authentication form responses"
@@ -3878,7 +3890,7 @@ msgstr "Avisa quando o tempo de vida do certificado < DAYS"
 
 #: main.c:1037
 msgid "Set path of initial request URL"
-msgstr ""
+msgstr "Definir caminho para a URL de requisição inicial"
 
 #: main.c:1038
 msgid "Set key passphrase or TPM SRK PIN"
@@ -3962,7 +3974,7 @@ msgstr "Usa IP ao conectar ao HOST"
 
 #: main.c:1066
 msgid "Always send HOST as TLS client SNI (domain fronting)"
-msgstr ""
+msgstr "Sempre enviar HOST como cliente TLS SNI (apresentação de domínio)"
 
 #: main.c:1067
 msgid "Copy TOS / TCLASS field into DTLS and ESP packets"
@@ -4160,6 +4172,7 @@ msgstr "Bugs do servidor"
 #: main.c:1130
 msgid "Do not offer or use auth methods requiring external browser"
 msgstr ""
+"Não oferecer ou usar métodos de autenticação que requerem navegador externo"
 
 #: main.c:1131
 msgid "Disable HTTP connection re-use"
@@ -4359,7 +4372,7 @@ msgstr "Falha ao alocar a estrutura de vpninfo\n"
 #: main.c:1921
 #, c-format
 msgid "WARNING: --juniper is deprecated, use --protocol=nc instead.\n"
-msgstr ""
+msgstr "AVISO: --juniper está depreciado, use --protocol=nc em vez.\n"
 
 #: main.c:1926
 #, c-format
@@ -4402,6 +4415,10 @@ msgid ""
 "         This probably won't work since recent macOS versions use utun\n"
 "         instead. Perhaps try --interface='u%s', or omit altogether.\n"
 msgstr ""
+"AVISO: Você está rodando no macOS e especifica --interface='%s'\n"
+"         Isto provavelmente não funcionará pois as recentes versões do macOS "
+"usam, em vez,\n"
+"         utun. Tente talvez --interface='u%s', ou omita completamente.\n"
 
 #: main.c:2097 main.c:2107
 #, c-format
@@ -4669,7 +4686,7 @@ msgstr "Falha geral no libstoken\n"
 #: main.c:3064
 #, c-format
 msgid "General failure in TOTP/HOTP support\n"
-msgstr ""
+msgstr "Falha geral no suporte a TOTP/HOTP\n"
 
 #: main.c:3075
 #, c-format
@@ -5035,7 +5052,7 @@ msgstr "Falha ao ler registro de continuação de tamanho %d\n"
 
 #: oncp.c:691
 msgid "Discarding Legacy IP frame in the middle of oNCP config\n"
-msgstr ""
+msgstr "Descartando IP frame legado no meio da configuração do oNCP\n"
 
 #: oncp.c:696
 #, c-format
@@ -5707,7 +5724,7 @@ msgstr "Falha na descriptografia do token SSO\n"
 #: openssl.c:2528
 #, c-format
 msgid "SSL Finished message too large (%zu bytes)\n"
-msgstr ""
+msgstr "Mensagem de finalização de SSL muito grande (%zu bytes)\n"
 
 #: openssl.c:2540
 msgid "Failed to generate channel bindings for STRAP key\n"
@@ -6119,17 +6136,17 @@ msgstr "Recebido endereço IPv6 de gateway interno %s\n"
 #: pulse.c:506
 #, c-format
 msgid "Received proxy auto-config (PAC) payload of size %d\n"
-msgstr ""
+msgstr "Carga auto-config (PAC) proxy de tamanho %d\n"
 
 #: pulse.c:511
 #, c-format
 msgid "Received proxy auto-config (PAC) URL: %.*s\n"
-msgstr ""
+msgstr "Recebido URL de auto-config (PAC) proxy: %.*s\n"
 
 #: pulse.c:525
 #, c-format
 msgid "Pulse ESP tunnel allowed to carry 6in4 or 4in6 traffic: %d\n"
-msgstr ""
+msgstr "Túnel Pulse ESP permitido a carregar tráfego 6in4 ou 4in6: %d\n"
 
 #: pulse.c:549
 #, c-format
@@ -6185,11 +6202,11 @@ msgstr "Escolha o reino do usuário Pulse:"
 
 #: pulse.c:821
 msgid "Choose Pulse region:"
-msgstr ""
+msgstr "Escolha a região Pulse:"
 
 #: pulse.c:823
 msgid "Region:"
-msgstr ""
+msgstr "Região:"
 
 #: pulse.c:837 pulse.c:1596 pulse.c:1686
 msgid "Failed to parse AVP\n"
@@ -6353,11 +6370,18 @@ msgid ""
 "        --useragent=\"Pulse-Secure/3.0.0\"\n"
 "Please report results to <%s>.\n"
 msgstr ""
+"Servidor Pulse está tentando autenticar via EAP-TLS sobre EAP-TTLS, que nós\n"
+"não sabemos manipular. Isto pode acontecer quando o servidor aceita "
+"OPCIONALMENTE\n"
+"certificados de cliente TLS, mas a sua autenticação não necessita de um.\n"
+"Você é capaz de contornar usando um cliente Pulse muito antigo com:\n"
+"        --useragent=\"Pulse-Secure/3.0.0\"\n"
+"Por favor, relate resultados a <%s>.\n"
 
 #: pulse.c:1864
 #, c-format
 msgid "Pulse server requested unexpected EAP type 0x%x\n"
-msgstr ""
+msgstr "O servidor Pulse requisitou um tipo 0x%x de EAP inesperado\n"
 
 #: pulse.c:1877
 msgid "Unhandled Pulse authentication packet, or authentication failure\n"
@@ -6377,7 +6401,7 @@ msgstr "Escolha de área Pulse\n"
 
 #: pulse.c:1911
 msgid "Pulse region choice\n"
-msgstr ""
+msgstr "Escolha de região Pulse\n"
 
 #: pulse.c:1918
 #, c-format
@@ -6442,28 +6466,33 @@ msgstr "Pacote de configuração Pulse inesperado:\n"
 #: pulse.c:2416
 msgid "Processing Pulse main config packet for server version >= 9.1R14\n"
 msgstr ""
+"Processando pacote de configuração principal Pulse para servidor versão >= "
+"9.1R14\n"
 
 #: pulse.c:2428
 msgid "attr_flag 0x2c00: known for Pulse version >= 9.1R14\n"
-msgstr ""
+msgstr "attr_flag 0x2c00: conhecida por Pulse versão >= 9.1R14\n"
 
 #: pulse.c:2432
 msgid "attr_flag 0x2e00: known for Pulse version >= 9.1R16\n"
-msgstr ""
+msgstr "attr_flag 0x2e00: conhecida por Pulse versão >= 9.1R16\n"
 
 #: pulse.c:2436
 #, c-format
 msgid "attr_flag 0x%04x: unknown Pulse version. Please report to <%s>\n"
 msgstr ""
+"attr_flag 0x%04x: versão Pulse desconhecida. Por favor, relate a <%s>\n"
 
 #: pulse.c:2451
 #, c-format
 msgid "If any of the above attributes are meaningful, please report to <%s>\n"
-msgstr ""
+msgstr "Se os atributos acima são significativos, por favor, relate a <%s>\n"
 
 #: pulse.c:2456
 msgid "Processing Pulse main config packet for server version < 9.1R14\n"
 msgstr ""
+"Processando pacote de configuração principal Pulse para servidor versão < "
+"9.1R14\n"
 
 #: pulse.c:2524
 #, c-format
@@ -6472,7 +6501,7 @@ msgstr "Recebida rota de tipo desconhecido 0x%08x\n"
 
 #: pulse.c:2578
 msgid "Processing Pulse ESP config packet\n"
-msgstr ""
+msgstr "Processando pacote de configuração Pulse ESP\n"
 
 #: pulse.c:2584
 msgid "Invalid ESP config packet:\n"
@@ -6484,42 +6513,43 @@ msgstr "Configuração ESP inválida\n"
 
 #: pulse.c:2682
 msgid "Short IF-T/TLS packet when expecting configuration:\n"
-msgstr ""
+msgstr "Pacote IF-T/TLS pequeno ao esperar a configuração:\n"
 
 #: pulse.c:2690
 msgid "Unexpected IF-T/TLS packet when expecting configuration: wrong vendor\n"
 msgstr ""
+"Pacote IF-T/TLS inesperado ao esperar a configuração: fornecedor errado\n"
 
 #: pulse.c:2699
 #, c-format
 msgid ""
 "Unreasonably large IF-T/TLS packet (%u > 1 MiB) when expecting configuration"
-msgstr ""
+msgstr "Pacote IF-T/TLS muito grande (%u > 1 MiB) ao esperar a configuração"
 
 #: pulse.c:2726 pulse.c:2731 pulse.c:2738 pulse.c:2743 pulse.c:2782
 #, c-format
 msgid "Unexpected Pulse configuration packet: %s\n"
-msgstr ""
+msgstr "Pacote de configuração Pulse inesperado: %s\n"
 
 #: pulse.c:2727
 msgid "wrong type field (!= 1)"
-msgstr ""
+msgstr "Campo de tipo errado (!= 1)"
 
 #: pulse.c:2732
 msgid "too short"
-msgstr ""
+msgstr "muito curto"
 
 #: pulse.c:2739
 msgid "non-zero values at offsets 0x10, 0x14, 0x18, 0x1c, or 0x24"
-msgstr ""
+msgstr "valores non-zero nos modelos 0x10, 0x14, 0x18, 0x1c, ou 0x24"
 
 #: pulse.c:2744
 msgid "length at offset 0x28 != packet length - 0x10"
-msgstr ""
+msgstr "tamanho no modelo 0x28 != tamanho do pacote - 0x10"
 
 #: pulse.c:2783
 msgid "identifier at offset 0x20 is unknown"
-msgstr ""
+msgstr "identificador do modelo 0x20 é desconhecido"
 
 #: pulse.c:2790
 msgid "Insufficient configuration found\n"
@@ -6540,6 +6570,8 @@ msgid ""
 "Unknown Pulse packet of %d bytes (vendor 0x%03x, type 0x%02x, hdr_len %d, "
 "ident %d)\n"
 msgstr ""
+"Pacote Pulse de %d bytes desconhecido (fornecedor 0x%03x, tipo 0x%02x, "
+"hdr_len %d, ident %d)\n"
 
 #: pulse.c:3134
 #, c-format
@@ -6761,15 +6793,15 @@ msgstr "Erro desconhecido"
 #. legacy openconnect_set_cancel_fd() users
 #: ssl.c:885
 msgid "Got cancel on legacy fd\n"
-msgstr ""
+msgstr "Recebeu cancelar no fd legado\n"
 
 #: ssl.c:900
 msgid "Got cancel command\n"
-msgstr ""
+msgstr "Recebeu o comando cancelar\n"
 
 #: ssl.c:905
 msgid "Got pause command\n"
-msgstr ""
+msgstr "Recebeu o comando pause\n"
 
 #: ssl.c:943
 msgid "Failed select() for command socket"
@@ -7247,7 +7279,7 @@ msgstr "dispositivo tun sem suporte nesta plataforma\n"
 #: tun.c:197
 #, c-format
 msgid "Requested tun device name '%s' is too long\n"
-msgstr ""
+msgstr "Nome de dispositivo tun requisitado '%s' é muito longo\n"
 
 #: tun.c:239 tun.c:421
 #, c-format

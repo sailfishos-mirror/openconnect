@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: network-manager-openconnect main\n"
 "Report-Msgid-Bugs-To: openconnect-devel@lists.infradead.org\n"
 "POT-Creation-Date: 2025-01-09 08:34+0000\n"
-"PO-Revision-Date: 2023-02-13 14:30+0700\n"
+"PO-Revision-Date: 2024-10-30 13:08+0700\n"
 "Last-Translator: Andika Triwidada <andika@gmail.com>\n"
 "Language-Team: Indonesian <gnome@i15n.org>\n"
 "Language: id\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n!=1;\n"
-"X-Generator: Poedit 3.2.2\n"
+"X-Generator: Poedit 3.5\n"
 
 #: array.c:130
 msgid "No ANsession cookie found\n"
@@ -114,12 +114,12 @@ msgstr "Alokasi gagal\n"
 #: array.c:846
 #, c-format
 msgid "Received %d more bytes after partial %d\n"
-msgstr ""
+msgstr "Diterima %d byte lagi setelah parsial %d\n"
 
 #: array.c:860
 #, c-format
 msgid "Received partial packet, %d bytes\n"
-msgstr ""
+msgstr "Diterima paket parsial, %d byte\n"
 
 #: array.c:875
 #, c-format
@@ -129,7 +129,7 @@ msgstr "Paket data tak dikenal, pjg %d\n"
 #: array.c:886
 #, c-format
 msgid "Received partial packet, %d of %d bytes\n"
-msgstr ""
+msgstr "Diterima paket parsial, %d dari %d byte\n"
 
 #: array.c:896 array.c:1256
 #, c-format
@@ -370,6 +370,8 @@ msgid ""
 "Portal reports GlobalProtect version %s; we will report the same client "
 "version.\n"
 msgstr ""
+"Portal melaporkan GlobalProtect versi %s; kami akan melaporkan versi klien "
+"yang sama.\n"
 
 #: auth-globalprotect.c:541
 msgid "GlobalProtect portal configuration lists no gateway servers.\n"
@@ -1315,6 +1317,8 @@ msgid ""
 "WARNING: Unknown F5 JSON form field type '%s', treating as 'text'. Please "
 "report to <%s>"
 msgstr ""
+"PERINGATAN: Ruas formulir JSON F5 yang tak dikenal dengan tipe '%s', "
+"memperlakukan sebagai 'text'. Harap laporkan ke <%s>"
 
 #: f5.c:316
 #, c-format
@@ -1323,6 +1327,9 @@ msgid ""
 "embedded\n"
 "  JSON. This is EXPERIMENTAL. Please report results to <%s>.\n"
 msgstr ""
+"PERINGATAN: Tidak ditemukan formulir otentikasi HTML. Diekstrak dari JSON\n"
+"  tertanam F5. Ini adalah EKSPERIMEN. Harap laporkan hasil ke <%s>.\n"
+"\n"
 
 #: f5.c:325
 msgid ""
@@ -1438,7 +1445,7 @@ msgstr "Mendapat realm login '%s'\n"
 
 #: fortinet.c:303
 msgid "Invalid credentials; try again."
-msgstr ""
+msgstr "Kredensial tidak valid; coba lagi."
 
 #: fortinet.c:345
 #, c-format
@@ -1540,11 +1547,11 @@ msgstr ""
 
 #: fortinet.c:586
 msgid "Received split routes; not setting default Legacy IP route\n"
-msgstr ""
+msgstr "Menerima rute split; tidak mengatur rute IP warisan baku\n"
 
 #: fortinet.c:588
 msgid "No split routes received; setting default Legacy IP route\n"
-msgstr ""
+msgstr "Tidak ada rute split yang diterima; mengatur rute IP warisan baku\n"
 
 #: fortinet.c:665
 msgid ""
@@ -2202,7 +2209,7 @@ msgstr "verifikasi tandatangan gagal"
 
 #: gnutls.c:2208 openssl.c:1702
 msgid "certificate does not match SNI"
-msgstr ""
+msgstr "sertifikat tak cocok dengan SNI"
 
 #: gnutls.c:2210 openssl.c:1561 openssl.c:1706
 msgid "certificate does not match hostname"
@@ -2257,7 +2264,7 @@ msgstr "Koneksi SSL dibatalkan\n"
 #: gnutls.c:2528
 #, c-format
 msgid "SSL connection failure due to fatal alert: %s\n"
-msgstr ""
+msgstr "Kegagalan koneksi SSL karena waspada yang fatal: %s\n"
 
 #: gnutls.c:2531
 #, c-format
@@ -2605,6 +2612,7 @@ msgstr "Enkode PSS gagal; ukuran hash %d terlalu besar untuk kunci RSA %d\n"
 #, c-format
 msgid "TPMv2 RSA sign called for unknown algorithm %s\n"
 msgstr ""
+"Tanda tangan RSA TPMv2 dipanggil untuk algoritma %s yang tidak dikenal\n"
 
 #: gnutls_tpm2_esys.c:177
 msgid "TPM2 password too long; truncating\n"
@@ -2731,7 +2739,7 @@ msgstr "Fungsi tanda tangan TPM2 EC dipanggil dengan %d byte.\n"
 #: gnutls_tpm2_esys.c:504 gnutls_tpm2_ibm.c:445
 #, c-format
 msgid "Unknown TPM2 EC digest size %d for algo 0x%x\n"
-msgstr ""
+msgstr "Ukuran digest %d untuk algo 0x%x TPM2 EC yang tidak dikenal\n"
 
 #: gnutls_tpm2_esys.c:524
 msgid "TPM2 Esys_Sign auth failed\n"
@@ -2744,7 +2752,7 @@ msgstr "Handle induk TPM2 tidak valid 0x%08x\n"
 
 #: gnutls_tpm2_esys.c:581
 msgid "Using SWTPM due to TPM_INTERFACE_TYPE environment variable\n"
-msgstr ""
+msgstr "Menggunakan SWTPM karena variabel lingkungan TPM_INTERFACE_TYPE\n"
 
 #: gnutls_tpm2_esys.c:586
 #, c-format
@@ -2783,7 +2791,7 @@ msgstr "Challenge: %s\n"
 
 #: gpst.c:259
 msgid "Failed to parse non-XML server response\n"
-msgstr ""
+msgstr "Gagal mengurai respon server bukan XML\n"
 
 #: gpst.c:260 gpst.c:327
 #, c-format
@@ -2792,7 +2800,7 @@ msgstr "Respon adalah:%s\n"
 
 #: gpst.c:325
 msgid "Failed to parse XML server response\n"
-msgstr ""
+msgstr "Gagal mengurai respon server XML\n"
 
 #: gpst.c:364
 #, c-format
@@ -2810,6 +2818,8 @@ msgid ""
 "WARNING: Config XML contains <quarantine> tag with value of \"%s\".\n"
 "    VPN connectivity may be disabled or limited.\n"
 msgstr ""
+"PERINGATAN: Konfig XML berisi tag <quarantine> dengan nilai \"%s\".\n"
+"    Konektivitas VPN mungkin dinonaktifkan atau terbatas.\n"
 
 #: gpst.c:456
 #, c-format
@@ -2843,6 +2853,10 @@ msgid ""
 "<%s>, including any problems\n"
 "with ESP or other apparent loss of connectivity or performance.\n"
 msgstr ""
+"Alamat konfig XML <connected-gw-ip> (%s) berbeda dari alamat\n"
+"gateway eksternal (%s). Silakan laporkan ini ke\n"
+"<%s>, termasuk masalah apa pun\n"
+"dengan ESP atau hilangnya konektivitas atau kinerja lainnya.\n"
 
 #: gpst.c:557
 #, c-format
@@ -2857,7 +2871,7 @@ msgstr ""
 #: gpst.c:583
 #, c-format
 msgid "Potential IPv6-related GlobalProtect config tag <%s>: %s\n"
-msgstr ""
+msgstr "Tag konfig GlobalProtect potensial terkait IPv6 <%s>: %s\n"
 
 #: gpst.c:585
 #, c-format
@@ -2877,6 +2891,8 @@ msgid ""
 "Did not receive ESP keys and matching gateway in GlobalProtect config; "
 "tunnel will be TLS only.\n"
 msgstr ""
+"Tidak menerima kunci ESP dan gateway yang cocok di konfigurasi "
+"GlobalProtect; tunnel hanya akan TLS.\n"
 
 #: gpst.c:692
 msgid "ESP disabled"
@@ -2952,7 +2968,7 @@ msgstr ""
 #: gpst.c:946
 #, c-format
 msgid "Trying to run HIP Trojan script '%s'.\n"
-msgstr ""
+msgstr "Mencoba menjalankan skrip Trojan HIP '%s'.\n"
 
 #: gpst.c:954
 msgid "Failed to create pipe for HIP script\n"
@@ -3077,7 +3093,7 @@ msgstr "Mengirim paket data IPv%d %d byte\n"
 #: gpst.c:1567
 #, c-format
 msgid "ICMPv%d probe packet (seq %d) for GlobalProtect ESP:\n"
-msgstr ""
+msgstr "Paket probe ICMPv%d (seq %d) untuk GlobalProtect ESP:\n"
 
 #: gpst.c:1574 oncp.c:1313
 msgid "Failed to send ESP probe\n"
@@ -3197,11 +3213,11 @@ msgstr "Gagal men-spawn peramban eksternal untuk %s\n"
 
 #: hpke.c:184
 msgid "Accepted incoming external-browser connection on port 29786\n"
-msgstr ""
+msgstr "Menerima koneksi peramban eksternal arah masuk pada port 29786\n"
 
 #: hpke.c:191
 msgid "Invalid incoming external-browser request\n"
-msgstr ""
+msgstr "Permintaan peramban eksternal arah masuk tidak valid\n"
 
 #: hpke.c:267
 #, c-format
@@ -3311,6 +3327,8 @@ msgstr "Galat saat mengambil tajuk penggalan\n"
 msgid ""
 "Error in chunked decoding. Expected hexadecimal chunk length, got: '%s'\n"
 msgstr ""
+"Galat dalam pengawakodean terpenggal. Mengharapkan panjang penggalan "
+"heksadesimal, mendapat: '%s'\n"
 
 #: http.c:454
 #, c-format
@@ -3329,7 +3347,7 @@ msgstr "Galat saat mengambil tubuh respon HTTP\n"
 #: http.c:487
 #, c-format
 msgid "Error in chunked decoding. Expected '', got: '%s'\n"
-msgstr ""
+msgstr "Galat dalam pengawakodean terpenggal. Berharap '', mendapat: '%s'\n"
 
 #: http.c:500
 msgid "Cannot receive HTTP 1.0 body without closing connection\n"
@@ -3565,7 +3583,7 @@ msgstr "PPP di atas TLS"
 
 #: library.c:250
 msgid "Unauthenticated RFC1661/RFC1662 PPP over TLS, for testing"
-msgstr ""
+msgstr "PPP RFC1661/RFC1662 di atas TLS tanpa otentikasi, untuk pengujian"
 
 #: library.c:259
 msgid "Array SSL VPN"
@@ -3758,7 +3776,7 @@ msgstr "Alokasi bagi path vpnc-script gagal\n"
 
 #: main.c:907
 msgid "Default vpnc-script (override with --script):"
-msgstr ""
+msgstr "vpnc-script baku (timpa dengan --script):"
 
 #: main.c:959
 #, c-format
@@ -3818,11 +3836,11 @@ msgstr "Baca kata sandi dari masukan standar"
 
 #: main.c:1031
 msgid "Select GROUP from authentication dropdown (may be known"
-msgstr ""
+msgstr "Pilih GRUP dari dropdown otentikasi (mungkin dikenal"
 
 #: main.c:1032
 msgid "as \"realm\", \"domain\", \"gateway\"; protocol-dependent)"
-msgstr ""
+msgstr "sebagai \"realm\", \"domain\", \"gateway\"; bergantung protokol)"
 
 #: main.c:1033
 msgid "Provide authentication form responses"
@@ -3842,7 +3860,7 @@ msgstr "Peringatkan ketika masa hidup sertifikat < HARI"
 
 #: main.c:1037
 msgid "Set path of initial request URL"
-msgstr ""
+msgstr "Atur path dari URL permintaan awal"
 
 #: main.c:1038
 msgid "Set key passphrase or TPM SRK PIN"
@@ -3918,7 +3936,7 @@ msgstr "(CATATAN: libproxy dimatikan dalam build ini)"
 
 #: main.c:1064
 msgid "Reconnection retry timeout (default is 300 seconds)"
-msgstr ""
+msgstr "Batas waktu coba lagi koneksi ulang (nilai baku adalah 300 detik)"
 
 #: main.c:1065
 msgid "Use IP when connecting to HOST"
@@ -3926,7 +3944,7 @@ msgstr "Pakai IP ketika menyambung ke HOST"
 
 #: main.c:1066
 msgid "Always send HOST as TLS client SNI (domain fronting)"
-msgstr ""
+msgstr "Selalu kirim HOST sebagai SNI klien TLS (domain fronting)"
 
 #: main.c:1067
 msgid "Copy TOS / TCLASS field into DTLS and ESP packets"
@@ -4050,7 +4068,7 @@ msgstr "Nonaktifkan semua kompresi"
 
 #: main.c:1108
 msgid "Set Dead Peer Detection interval (in seconds)"
-msgstr ""
+msgstr "Atur interval Deteksi Peer Mati (dalam detik)"
 
 #: main.c:1109
 msgid "Require perfect forward secrecy"
@@ -4110,7 +4128,7 @@ msgstr "Jalankan SKRIP sebagai pengganti biner trojan"
 
 #: main.c:1127
 msgid "Set minimum interval between trojan runs (in seconds)"
-msgstr ""
+msgstr "Atur interval minimum antara menjalankan trojan (dalam detik)"
 
 #: main.c:1129
 msgid "Server bugs"
@@ -4119,6 +4137,7 @@ msgstr "Bug server"
 #: main.c:1130
 msgid "Do not offer or use auth methods requiring external browser"
 msgstr ""
+"Jangan tawarkan atau pakai metode auth yang memerlukan peramban eksternal"
 
 #: main.c:1131
 msgid "Disable HTTP connection re-use"
@@ -4130,11 +4149,12 @@ msgstr "Jangan coba autentikasi XML POST"
 
 #: main.c:1133
 msgid "Allow use of the ancient, insecure 3DES and RC4 ciphers"
-msgstr ""
+msgstr "Izinkan penggunaan cipher 3DES dan RC4 kuno yang tidak aman"
 
 #: main.c:1135
 msgid "Multiple certificate authentication (MCA)"
 msgstr ""
+"Autentikasi beberapa sertifikat (Multiple certificate authentication, MCA)"
 
 #: main.c:1136
 msgid "Use MCA certificate MCACERT"
@@ -4177,7 +4197,7 @@ msgstr "Opsi '%s' memerlukan argumen pada baris %d\n"
 #: main.c:1303
 #, c-format
 msgid "Internal error; option '%s' unexpectedly yielded null config_arg\n"
-msgstr ""
+msgstr "Galat internal; opsi '%s' tiba-tiba menghasilkan config_arg null\n"
 
 #: main.c:1319
 #, c-format
@@ -4223,7 +4243,7 @@ msgstr "terjalin"
 #: main.c:1661
 #, c-format
 msgid "Configured as %s%s%s, with SSL%s%s %s and %s%s%s %s\n"
-msgstr ""
+msgstr "Dikonfigurasi sebagai %s%s%s, dengan SSL%s%s %s dan %s%s%s %s\n"
 
 #: main.c:1674
 #, c-format
@@ -4234,7 +4254,7 @@ msgstr "Autentikasi sesi akan kedaluwarsa pada %s\n"
 #, c-format
 msgid ""
 "RX: %<PRIu64> packets (%<PRIu64> B); TX: %<PRIu64> packets (%<PRIu64> B)\n"
-msgstr ""
+msgstr "RX: %<PRIu64> paket (%<PRIu64> B); TX: %<PRIu64> paket (%<PRIu64> B)\n"
 
 #: main.c:1693
 #, c-format
@@ -4259,7 +4279,7 @@ msgstr "Rekey %s selanjutnya dalam %ld detik\n"
 #: main.c:1705
 #, c-format
 msgid "Next Trojan invocation in %ld seconds\n"
-msgstr ""
+msgstr "Pemanggilan Trojan berikutnya dalam %ld detik\n"
 
 #: main.c:1724
 #, c-format
@@ -4306,6 +4326,8 @@ msgid ""
 "WARNING: This build is intended only for debugging purposes and\n"
 "         may allow you to establish insecure connections.\n"
 msgstr ""
+"PERINGATAN: Build ini hanya ditujukan untuk tujuan debugging dan\n"
+"         bisa memungkinkan Anda untuk membuat koneksi yang tidak aman.\n"
 
 #: main.c:1867
 #, c-format
@@ -4316,6 +4338,8 @@ msgstr "Gagal mengalokasikan struktur vpninfo\n"
 #, c-format
 msgid "WARNING: --juniper is deprecated, use --protocol=nc instead.\n"
 msgstr ""
+"PERINGATAN: --juniper tidak dipakai lagi, gunakan --protocol=nc sebagai "
+"pengganti.\n"
 
 #: main.c:1926
 #, c-format
@@ -4359,6 +4383,10 @@ msgid ""
 "         This probably won't work since recent macOS versions use utun\n"
 "         instead. Perhaps try --interface='u%s', or omit altogether.\n"
 msgstr ""
+"PERINGATAN: Anda sedang menjalankan macOS dan menyatakan --interface='%s'\n"
+"            Ini mungkin tidak bekerja karena versi macOS terkini memakai\n"
+"            utun sebagai pengganti. Mungkin coba --interface='u%s', atau\n"
+"            jangan pakai sama sekali.\n"
 
 #: main.c:2097 main.c:2107
 #, c-format
@@ -4406,6 +4434,8 @@ msgid ""
 "Invalid OS identity \"%s\"\n"
 "Allowed values: linux, linux-64, win, mac-intel, android, apple-ios\n"
 msgstr ""
+"Identitas OS tidak valid \"%s\"\n"
+"Nilai yang diizinkan: linux, linux-64, win, mac-intel, android, apple-ios\n"
 
 #: main.c:2270
 #, c-format
@@ -4484,7 +4514,7 @@ msgstr "Pengguna membatalkan (%s); keluar.\n"
 #: main.c:2503
 #, c-format
 msgid "User detached from session (%s); exiting.\n"
-msgstr ""
+msgstr "Pengguna dilepas dari sesi (%s); keluar.\n"
 
 #: main.c:2513
 msgid "Unrecoverable I/O error; exiting.\n"
@@ -4510,11 +4540,13 @@ msgid ""
 "Insecurely accepting certificate from VPN server \"%s\" because you ran with "
 "--servercert=ACCEPT.\n"
 msgstr ""
+"Menerima sertifikat secara tidak aman dari server VPN \"%s\" karena Anda "
+"menjalankan dengan --servercert=ACCEPT.\n"
 
 #: main.c:2608
 #, c-format
 msgid "Could not check server's certificate against %s\n"
-msgstr ""
+msgstr "Tidak bisa memeriksa hash sertifikat server terhadap %s\n"
 
 #: main.c:2616
 #, c-format
@@ -4522,6 +4554,8 @@ msgid ""
 "None of the %d fingerprint(s) specified via --servercert match server's "
 "certificate: %s\n"
 msgstr ""
+"Tidak ada dari %d sidik jari yang ditentukan melalui --servercert cocok "
+"dengan sertifikat server: %s\n"
 
 #: main.c:2625
 #, c-format
@@ -4619,7 +4653,7 @@ msgstr "Kegagalan umum dalam libstoken\n"
 #: main.c:3064
 #, c-format
 msgid "General failure in TOTP/HOTP support\n"
-msgstr ""
+msgstr "Kegagalan umum dalam dukungan TOTP/HOTP\n"
 
 #: main.c:3075
 #, c-format
@@ -4657,23 +4691,23 @@ msgstr "Penyiapan perangkat tun gagal\n"
 #: mainloop.c:204
 #, c-format
 msgid "Delaying tunnel with reason: %s\n"
-msgstr ""
+msgstr "Menunda tunnel dengan alasan: %s\n"
 
 #: mainloop.c:256
 msgid "Delaying cancel (immediate callback).\n"
-msgstr ""
+msgstr "Menunda pembatalan (panggilan balik langsung).\n"
 
 #: mainloop.c:259
 msgid "Delaying cancel.\n"
-msgstr ""
+msgstr "Menunda pembatalan.\n"
 
 #: mainloop.c:278
 msgid "Delaying pause (immediate callback).\n"
-msgstr ""
+msgstr "Menunda jeda (panggilan balik langsung).\n"
 
 #: mainloop.c:281
 msgid "Delaying pause.\n"
-msgstr ""
+msgstr "Menunda jeda.\n"
 
 #: mainloop.c:294
 msgid "Caller paused the connection\n"
@@ -4691,7 +4725,7 @@ msgstr "WaitForMultipleObjects gagal: %s\n"
 
 #: mainloop.c:364
 msgid "Failed epoll_wait() in mainloop"
-msgstr ""
+msgstr "epoll_wait() yang gagal di mainloop"
 
 #: mainloop.c:396
 msgid "Failed select() in mainloop"
@@ -4700,7 +4734,7 @@ msgstr "Kegagalan select() di mainloop"
 #: mtucalc.c:90
 #, c-format
 msgid "Using base_mtu of %d\n"
-msgstr ""
+msgstr "Memakai base_mtu %d\n"
 
 #: mtucalc.c:106
 #, c-format
@@ -4718,6 +4752,8 @@ msgid ""
 "After removing protocol specific overhead (%d unpadded, %d padded, %d "
 "blocksize), MTU of %d\n"
 msgstr ""
+"Setelah menghapus overhead spesifik protokol (tidak di-padd %d, di-pad %d, "
+"ukuran blok %d), MTU %d\n"
 
 #: ntlm.c:88 sspi.c:113 sspi.c:196
 #, c-format
@@ -4826,12 +4862,12 @@ msgstr "Diterima alamat gateway internal %s\n"
 #: oncp.c:143 pulse.c:2500
 #, c-format
 msgid "Received split include route %s\n"
-msgstr "Menerima split termasuk route %s\n"
+msgstr "Menerima split termasuk rute %s\n"
 
 #: oncp.c:163 pulse.c:2513
 #, c-format
 msgid "Received split exclude route %s\n"
-msgstr "Menerima split tidak termasuk route %s\n"
+msgstr "Menerima split tidak termasuk rute %s\n"
 
 #: oncp.c:181 pulse.c:268
 #, c-format
@@ -4982,7 +5018,7 @@ msgstr "Gagal membaca rekaman lanjutan sepanjang %d\n"
 
 #: oncp.c:691
 msgid "Discarding Legacy IP frame in the middle of oNCP config\n"
-msgstr ""
+msgstr "Membuang bingkai IP Warisan di tengah konfig oNCP\n"
 
 #: oncp.c:696
 #, c-format
@@ -5127,6 +5163,10 @@ msgid ""
 "See %s\n"
 "Use the --no-dtls command line option to avoid this message\n"
 msgstr ""
+"SSL_set_session() gagal dengan protokol DTLS versi 0x%x\n"
+"Apakah Anda menggunakan versi OpenSSL yang lebih lama dari 0.9.8m?\n"
+"Lihat %s\n"
+"Gunakan opsi baris perintah --no-dtls untuk menghindari pesan ini\n"
 
 #: openssl-dtls.c:587
 msgid "SSL_set_session() failed\n"
@@ -5639,7 +5679,7 @@ msgstr "Dekripsi token SSO gagal\n"
 #: openssl.c:2528
 #, c-format
 msgid "SSL Finished message too large (%zu bytes)\n"
-msgstr ""
+msgstr "Pesan SSL Selesai terlalu besar (%zu byte)\n"
 
 #: openssl.c:2540
 msgid "Failed to generate channel bindings for STRAP key\n"
@@ -5668,16 +5708,16 @@ msgstr ""
 
 #: ppp.c:113
 msgid "HDLC initial flag sequence (0x7e) is missing\n"
-msgstr ""
+msgstr "Urutan flag awal HDLC (0x7e) hilang\n"
 
 #: ppp.c:131
 msgid "HDLC buffer ended without FCS and flag sequence (0x7e)\n"
-msgstr ""
+msgstr "Penyangga HDLC berakhir tanpa FCS dan urutan flag (0x7e)\n"
 
 #: ppp.c:137
 #, c-format
 msgid "HDLC frame too short (%d bytes)\n"
-msgstr ""
+msgstr "Frame HLDC terlalu pendek (%d byte)\n"
 
 #: ppp.c:149
 #, c-format
@@ -5687,7 +5727,7 @@ msgstr "Paket HDLC buruk FCS %04x\n"
 #: ppp.c:154
 #, c-format
 msgid "Un-HDLC'ed packet (%ld bytes -> %ld), FCS=0x%04x\n"
-msgstr ""
+msgstr "Paket yang dibongkar HDLC-nya (%ld byte -> %ld), FCS=0x%04x\n"
 
 #: ppp.c:312
 #, c-format
@@ -5778,12 +5818,12 @@ msgstr "Menolak konfig %s/id %d dari server\n"
 #: ppp.c:524
 #, c-format
 msgid "Nak %s/id %d config from server\n"
-msgstr ""
+msgstr "Nak konfigurasi %s/id %d dari server\n"
 
 #: ppp.c:530
 #, c-format
 msgid "Ack %s/id %d config from server\n"
-msgstr ""
+msgstr "Ack konfigurasi %s/id %d dari server\n"
 
 #: ppp.c:570
 #, c-format
@@ -5793,32 +5833,32 @@ msgstr "Meminta MTU terhitung %d\n"
 #: ppp.c:625
 #, c-format
 msgid "Sending our %s/id %d config request to server\n"
-msgstr ""
+msgstr "Mengirim permintaan konfig %s/id %d kami ke server\n"
 
 #: ppp.c:662
 msgid "Server rejected/nak'ed LCP MRU option\n"
-msgstr ""
+msgstr "Server menolak/nak opsi LCP MRU\n"
 
 #: ppp.c:667
 msgid "Server rejected/nak'ed LCP asyncmap option\n"
-msgstr ""
+msgstr "Server menolak/nak opsi asyncmap LCP\n"
 
 #: ppp.c:678
 msgid "Server rejected LCP magic option\n"
-msgstr ""
+msgstr "Server menolak opsi magic LCP\n"
 
 #: ppp.c:684
 msgid "Server rejected/nak'ed LCP PFCOMP option\n"
-msgstr ""
+msgstr "Server menolak/nak opsi LCP PFCOMP\n"
 
 #: ppp.c:689
 msgid "Server rejected/nak'ed LCP ACCOMP option\n"
-msgstr ""
+msgstr "Server menolak/nak opsi LCP ACCOMP\n"
 
 #: ppp.c:697
 #, c-format
 msgid "Server nak-offered IPv4 address: %s\n"
-msgstr ""
+msgstr "Server me-nak alamat IPv4 yang ditawarkan: %s\n"
 
 #: ppp.c:701
 #, c-format
@@ -5828,31 +5868,32 @@ msgstr "Server menolak alamat IP Legacy %s\n"
 #: ppp.c:707
 #, c-format
 msgid "Server rejected/nak'ed our IPv4 address or request: %s\n"
-msgstr ""
+msgstr "Server menolak/nak permintaan atau alamat IPv4 kami: %s\n"
 
 #: ppp.c:723
 #, c-format
 msgid "Server nak-offered IPCP request for %s[%d] server: %s\n"
 msgstr ""
+"Server me-nak permintaan IPCP yang ditawarkan untuk server %s[%d]: %s\n"
 
 #: ppp.c:729
 #, c-format
 msgid "Server rejected/nak'ed IPCP request for %s[%d] server\n"
-msgstr ""
+msgstr "Server menolak/nak permintaan IPCP untuk server %s[%d]\n"
 
 #: ppp.c:744
 #, c-format
 msgid "Server nak-offered IPv6 link-local address %s\n"
-msgstr ""
+msgstr "Server me-nak alamat link-local IPv6 %s\n"
 
 #: ppp.c:752
 msgid "Server rejected/nak'ed our IPv6 interface identifier\n"
-msgstr ""
+msgstr "Server menolak/nak pengidentifikasi antarmuka IPv6 kami\n"
 
 #: ppp.c:760
 #, c-format
 msgid "Server rejected/nak'ed %s TLV (tag %d, len %d+2)\n"
-msgstr ""
+msgstr "Server menolak/nak TLV %s (tag %d, len %d+2)\n"
 
 #: ppp.c:769
 #, c-format
@@ -5877,7 +5918,7 @@ msgstr "Server menolak permintaan kita untuk mengonfigurasi IPv%d\n"
 #: ppp.c:1023
 #, c-format
 msgid "PPP state transition from %s to %s on %s channel\n"
-msgstr ""
+msgstr "Transisi keadaan PPP dari %s ke %s pada kanal %s\n"
 
 #: ppp.c:1106
 msgid "PPP payload exceeds receive buffer\n"
@@ -5891,7 +5932,7 @@ msgstr "Diterima paket pendek (%d byte). Menunggu lebih banyak.\n"
 #: ppp.c:1163
 #, c-format
 msgid "Unexpected pre-PPP packet header for encap %d.\n"
-msgstr ""
+msgstr "Header paket pra-PPP tak terduga untuk enkap %d.\n"
 
 #: ppp.c:1176
 #, c-format
@@ -5935,7 +5976,7 @@ msgstr "Diharapkan %d byte header PPP tetapi mendapat %ld, menggeser muatan.\n"
 #: ppp.c:1306
 #, c-format
 msgid "Sending Protocol-Reject for %s. Payload:\n"
-msgstr ""
+msgstr "Mengirim Protocol-Reject untuk %s. Payload:\n"
 
 #: ppp.c:1390
 msgid "Detected dead peer!\n"
@@ -6045,22 +6086,22 @@ msgstr "Hanya ESP: %d\n"
 #: pulse.c:498
 #, c-format
 msgid "Received internal gateway IPv6 address %s\n"
-msgstr ""
+msgstr "Menerima alamat IPv6 gateway internal %s\n"
 
 #: pulse.c:506
 #, c-format
 msgid "Received proxy auto-config (PAC) payload of size %d\n"
-msgstr ""
+msgstr "Menerima payload konfigurasi otomatis proksi (PAC) dengan ukuran %d\n"
 
 #: pulse.c:511
 #, c-format
 msgid "Received proxy auto-config (PAC) URL: %.*s\n"
-msgstr ""
+msgstr "URL konfigurasi otomatis proksi (PAC) yang diterima: %.*s\n"
 
 #: pulse.c:525
 #, c-format
 msgid "Pulse ESP tunnel allowed to carry 6in4 or 4in6 traffic: %d\n"
-msgstr ""
+msgstr "Tunnel ESP Pulse diizinkan membawa lalu lintas 6in4 atau 4in6: %d\n"
 
 #: pulse.c:549
 #, c-format
@@ -6116,11 +6157,11 @@ msgstr "Pilih realm pengguna Pulse:"
 
 #: pulse.c:821
 msgid "Choose Pulse region:"
-msgstr ""
+msgstr "Pilih wilayah Pulse:"
 
 #: pulse.c:823
 msgid "Region:"
-msgstr ""
+msgstr "Wilayah:"
 
 #: pulse.c:837 pulse.c:1596 pulse.c:1686
 msgid "Failed to parse AVP\n"
@@ -6285,11 +6326,20 @@ msgid ""
 "        --useragent=\"Pulse-Secure/3.0.0\"\n"
 "Please report results to <%s>.\n"
 msgstr ""
+"Server Pulse sedang mencoba mengotentikasi melalui EAP-TLS di atas EAP-"
+"TTLS,\n"
+"yang kami tidak tahu bagaimana menanganinya. Ini bisa terjadi ketika server\n"
+"SECARA OPSIONAL menerima sertifikat klien TLS, tapi otentikasi Anda tidak \n"
+"membutuhkannya. Anda mungkin dapat mengatasinya dengan men-spoof suatu "
+"klien\n"
+"Pulse yang sangat tua dengan:\n"
+"        --useragent=\"Pulse-Secure/3.0.0\"\n"
+"Harap laporkan hasil ke <%s>.\n"
 
 #: pulse.c:1864
 #, c-format
 msgid "Pulse server requested unexpected EAP type 0x%x\n"
-msgstr ""
+msgstr "Server Pulse meminta EAP yang tak diharapkan bertipe 0x%x\n"
 
 #: pulse.c:1877
 msgid "Unhandled Pulse authentication packet, or authentication failure\n"
@@ -6309,7 +6359,7 @@ msgstr "Pilihan realm Pulse\n"
 
 #: pulse.c:1911
 msgid "Pulse region choice\n"
-msgstr ""
+msgstr "Pilihan wilayah Pulse\n"
 
 #: pulse.c:1918
 #, c-format
@@ -6374,29 +6424,29 @@ msgstr "Paket config Pulse yang tak diharapkan:\n"
 
 #: pulse.c:2416
 msgid "Processing Pulse main config packet for server version >= 9.1R14\n"
-msgstr ""
+msgstr "Memroses paket konfig utama Pulse bagi server versi >= 9.1R14\n"
 
 #: pulse.c:2428
 msgid "attr_flag 0x2c00: known for Pulse version >= 9.1R14\n"
-msgstr ""
+msgstr "attr_flag 0x2c00: dikenal untuk Pulse versi >= 9.1R14\n"
 
 #: pulse.c:2432
 msgid "attr_flag 0x2e00: known for Pulse version >= 9.1R16\n"
-msgstr ""
+msgstr "attr_flag 0x2e00: dikenal untuk Pulse versi >= 9.1R16\n"
 
 #: pulse.c:2436
 #, c-format
 msgid "attr_flag 0x%04x: unknown Pulse version. Please report to <%s>\n"
-msgstr ""
+msgstr "attr_flag 0x%04x: versi Pulse tidak dikenal. Harap laporkan ke <%s>\n"
 
 #: pulse.c:2451
 #, c-format
 msgid "If any of the above attributes are meaningful, please report to <%s>\n"
-msgstr ""
+msgstr "Bila sebarang atribut di atas mempunyai arti, harap laporkan ke <%s>\n"
 
 #: pulse.c:2456
 msgid "Processing Pulse main config packet for server version < 9.1R14\n"
-msgstr ""
+msgstr "Memroses paket konfig utama Pulse bagi server versi < 9.1R14\n"
 
 #: pulse.c:2524
 #, c-format
@@ -6405,7 +6455,7 @@ msgstr "Menerima rute dengan tipe yang tidak dikenal 0x%08x\n"
 
 #: pulse.c:2578
 msgid "Processing Pulse ESP config packet\n"
-msgstr ""
+msgstr "Memroses paket konfig ESP Pulse\n"
 
 #: pulse.c:2584
 msgid "Invalid ESP config packet:\n"
@@ -6417,42 +6467,46 @@ msgstr "Penyiapan ESP tidak valid\n"
 
 #: pulse.c:2682
 msgid "Short IF-T/TLS packet when expecting configuration:\n"
-msgstr ""
+msgstr "Paket IF-T/TLS pendek saat mengharapkan konfigurasi:\n"
 
 #: pulse.c:2690
 msgid "Unexpected IF-T/TLS packet when expecting configuration: wrong vendor\n"
 msgstr ""
+"Paket IF-T/TLS yang tak diharapkan ketika mengharapkan konfigurasi: salah "
+"vendor\n"
 
 #: pulse.c:2699
 #, c-format
 msgid ""
 "Unreasonably large IF-T/TLS packet (%u > 1 MiB) when expecting configuration"
 msgstr ""
+"Paket IF-T/TLS yang tidak masuk akal (%u > 1 MiB) saat mengharapkan "
+"konfigurasi"
 
 #: pulse.c:2726 pulse.c:2731 pulse.c:2738 pulse.c:2743 pulse.c:2782
 #, c-format
 msgid "Unexpected Pulse configuration packet: %s\n"
-msgstr ""
+msgstr "Paket konfigurai Pulse yang tak diharapkan: %s\n"
 
 #: pulse.c:2727
 msgid "wrong type field (!= 1)"
-msgstr ""
+msgstr "tipe ruas salah (!= 1)"
 
 #: pulse.c:2732
 msgid "too short"
-msgstr ""
+msgstr "terlalu pendek"
 
 #: pulse.c:2739
 msgid "non-zero values at offsets 0x10, 0x14, 0x18, 0x1c, or 0x24"
-msgstr ""
+msgstr "nilai bukan nol pada ofset 0x10, 0x14, 0x18, 0x1c, atau 0x24"
 
 #: pulse.c:2744
 msgid "length at offset 0x28 != packet length - 0x10"
-msgstr ""
+msgstr "panjang pada ofset 0x28 != panjang paket - 0x10"
 
 #: pulse.c:2783
 msgid "identifier at offset 0x20 is unknown"
-msgstr ""
+msgstr "identifier pada ofset 0x20 tidak dikenal"
 
 #: pulse.c:2790
 msgid "Insufficient configuration found\n"
@@ -6473,6 +6527,8 @@ msgid ""
 "Unknown Pulse packet of %d bytes (vendor 0x%03x, type 0x%02x, hdr_len %d, "
 "ident %d)\n"
 msgstr ""
+"Paket Pulse %d byte yang tidak dikenal (vendor 0x%03x, type 0x%02x, hdr_len "
+"%d, ident %d)\n"
 
 #: pulse.c:3134
 #, c-format
@@ -6518,16 +6574,16 @@ msgstr "Mengabaikan jaringan warisan karena netmask \"%s\" tidak valid.\n"
 #: script.c:615
 #, c-format
 msgid "Failed to get script exit status: %s\n"
-msgstr ""
+msgstr "Gagal mendapatkan status keluar skrip: %s\n"
 
 #: script.c:624
 #, c-format
 msgid "Script '%s' returned error %ld\n"
-msgstr ""
+msgstr "Skrip '%s' mengembalikan galat %ld\n"
 
 #: script.c:632
 msgid "Script did not complete within 10 seconds.\n"
-msgstr ""
+msgstr "Skrip tidak selesai dalam waktu 10 detik.\n"
 
 #: script.c:645 script.c:693
 #, c-format
@@ -6554,16 +6610,16 @@ msgstr "Koneksi soket dibatalkan\n"
 
 #: ssl.c:192
 msgid "Failed select() for socket accept"
-msgstr ""
+msgstr "Gagal select() untuk penerimaan soket"
 
 #: ssl.c:198
 msgid "Socket accept cancelled\n"
-msgstr ""
+msgstr "Soket accept dibatalkan\n"
 
 #: ssl.c:209
 #, c-format
 msgid "Failed to accept local connection: %s\n"
-msgstr ""
+msgstr "Gagal accept koneksi lokal: %s\n"
 
 #: ssl.c:254
 msgid "Failed setsockopt(TCP_NODELAY) on TLS socket:"
@@ -6694,15 +6750,15 @@ msgstr "Galat tak dikenal"
 #. legacy openconnect_set_cancel_fd() users
 #: ssl.c:885
 msgid "Got cancel on legacy fd\n"
-msgstr ""
+msgstr "Mendapat pembatalan pada fd warisan\n"
 
 #: ssl.c:900
 msgid "Got cancel command\n"
-msgstr ""
+msgstr "Mendapat perintah pembatalan\n"
 
 #: ssl.c:905
 msgid "Got pause command\n"
-msgstr ""
+msgstr "Mendapat perintah jeda\n"
 
 #: ssl.c:943
 msgid "Failed select() for command socket"
@@ -6711,7 +6767,7 @@ msgstr "Kegagalan select() untuk soket perintah"
 #: ssl.c:1010
 #, c-format
 msgid "%s() used with unsupported mode '%s'\n"
-msgstr ""
+msgstr "%s() digunakan dengan mode '%s' yang tidak didukung\n"
 
 #: ssl.c:1032 tun-win32.c:650
 #, c-format
@@ -6980,6 +7036,8 @@ msgid ""
 "Access denied creating Wintun adapter. Are you running with Administrator "
 "privileges?\n"
 msgstr ""
+"Akses ditolak saat mencipta adaptor Wintun. Apakah Anda menjalankan dengan "
+"hak Administrator?\n"
 
 #: tun-win32.c:478
 #, c-format
@@ -7005,6 +7063,8 @@ msgstr "GetAdaptersAddresses() gagal: %s\n"
 msgid ""
 "Adapter \"%S\" / %ld is UP and using our IPv%d address. Cannot resolve.\n"
 msgstr ""
+"Adaptor \"%S\" / %ld sedang UP dan menggunakan alamat IPv%d kami. Tidak bisa "
+"menyelesaikan.\n"
 
 #: tun-win32.c:578
 #, c-format
@@ -7012,6 +7072,8 @@ msgid ""
 "Adapter \"%S\" / %ld is DOWN and using our IPv%d address. We will reclaim "
 "the address from it.\n"
 msgstr ""
+"Adaptor \"%S\" / %ld sedang DOWN dan menggunakan alamat IPv%d kami. Kami "
+"akan mengklaim kembali alamat darinya.\n"
 
 #: tun-win32.c:591
 #, c-format
@@ -7026,6 +7088,8 @@ msgstr "DeleteUnicastIpAddressEntry() gagal: %s\n"
 #: tun-win32.c:621
 msgid "GetUnicastIpAddressTable() did not find matching address to reclaim\n"
 msgstr ""
+"GetUnicastIpAddressTable() tidak menemukan alamat yang cocok untuk mengklaim "
+"kembali\n"
 
 #: tun-win32.c:656
 #, c-format
@@ -7069,6 +7133,11 @@ msgid ""
 "  encounter problems, install the TAP-Windows driver instead. See\n"
 "  %s\n"
 msgstr ""
+"PERINGATAN: Dukungan untuk Wintun bersifat eksperimental dan mungkin tidak "
+"stabil. \n"
+"  Jika Anda mengalami masalah, pasang driver TAP-Windows sebagai gantinya. "
+"Lihat\n"
+"  %s\n"
 
 #: tun-win32.c:768
 #, c-format
@@ -7084,6 +7153,8 @@ msgid ""
 "Neither Windows-TAP nor Wintun adapters were found. Is the driver "
 "installed?\n"
 msgstr ""
+"Baik adaptor Windows-TAP maupun Wintun tidak ditemukan. Apakah driver "
+"terpasang?\n"
 
 #: tun-win32.c:894
 msgid "TAP device aborted connectivity. Disconnecting.\n"
@@ -7163,7 +7234,7 @@ msgstr "Perangkat tun tak didukung pada plaform ini\n"
 #: tun.c:197
 #, c-format
 msgid "Requested tun device name '%s' is too long\n"
-msgstr ""
+msgstr "Nama perangkat tun '%s' yang diminta terlalu panjang\n"
 
 #: tun.c:239 tun.c:421
 #, c-format
@@ -7274,26 +7345,26 @@ msgstr "Gagal mengatur backend RX vring #%d: %s\n"
 #: vhost.c:116
 #, c-format
 msgid "Failed to set vring #%d call eventfd: %s\n"
-msgstr ""
+msgstr "Gagal mengatur pemanggilan eventfd vring #%d: %s\n"
 
 #: vhost.c:124
 #, c-format
 msgid "Failed to set vring #%d kick eventfd: %s\n"
-msgstr ""
+msgstr "Gagal mengatur kick eventfd vring #%d: %s\n"
 
 #: vhost.c:183
 msgid "Failed to find virtual task size; search reached zero"
-msgstr ""
+msgstr "Gagal menemukan ukuran tugas virtual; pencarian mencapai nol"
 
 #: vhost.c:233
 #, c-format
 msgid "Detected virtual address range 0x%lx-0x%lx\n"
-msgstr ""
+msgstr "Rentang alamat virtual yang terdeteksi 0x%lx-0x%lx\n"
 
 #: vhost.c:250
 #, c-format
 msgid "Not using vhost-net due to low queue length %d\n"
-msgstr ""
+msgstr "Tidak menggunakan vhost-net karena panjang antrean yang rendah %d\n"
 
 #: vhost.c:264
 #, c-format
@@ -7323,12 +7394,12 @@ msgstr "Gagal mengatur fitur vhost: %s\n"
 #: vhost.c:301
 #, c-format
 msgid "Failed to open vhost kick eventfd: %s\n"
-msgstr ""
+msgstr "Gagal membuka vhost kick eventfd: %s\n"
 
 #: vhost.c:308
 #, c-format
 msgid "Failed to open vhost call eventfd: %s\n"
-msgstr ""
+msgstr "Gagal membuka vhost call eventfd: %s\n"
 
 #: vhost.c:324
 #, c-format
@@ -7338,22 +7409,23 @@ msgstr "Gagal mengatur peta memori vhost: %s\n"
 #: vhost.c:347
 #, c-format
 msgid "Failed to set tun sndbuf: %s\n"
-msgstr ""
+msgstr "Gagal mengatur tun sndbuf: %s\n"
 
 #: vhost.c:352
 #, c-format
 msgid "Using vhost-net for tun acceleration, ring size %d\n"
-msgstr ""
+msgstr "Menggunakan vhost-net untuk akselerasi tun, ukuran cincin %d\n"
 
 #: vhost.c:475
 #, c-format
 msgid "Error: vhost gave back invalid descriptor %d, len %d\n"
 msgstr ""
+"Galat: vhost mengembalikan deskriptor %d yang tidak valid, panjang %d\n"
 
 #: vhost.c:485
 #, c-format
 msgid "vhost gave back empty descriptor %d\n"
-msgstr ""
+msgstr "vhost mengembalikan deskriptor kosong %d\n"
 
 #: vhost.c:496
 #, c-format
@@ -7378,15 +7450,15 @@ msgstr "Antrean paket RX %p di desc %d tersedia %d\n"
 #: vhost.c:618
 #, c-format
 msgid "Immediate wake because vhost ring moved on from 0x%x to 0x%x\n"
-msgstr ""
+msgstr "Seketika bangun karena cincin vhost pindah dari 0x%x ke 0x%x\n"
 
 #: vhost.c:645
 msgid "Failed to kick vhost-net eventfd\n"
-msgstr ""
+msgstr "Gagal kick eventfd vhost-net\n"
 
 #: vhost.c:648
 msgid "Kick vhost ring\n"
-msgstr ""
+msgstr "Kick cincin vhost\n"
 
 #: wintun.c:70
 msgid "Could not load wintun.dll\n"
@@ -7412,22 +7484,23 @@ msgstr "Dimuat Wintun v%lu.%lu\n"
 #: wintun.c:169
 #, c-format
 msgid "Failed to create Wintun session: %s\n"
-msgstr ""
+msgstr "Gagal membuat sesi Wintun: %s\n"
 
 #: wintun.c:192
 #, c-format
 msgid "Could not retrieve packet from Wintun adapter '%S': %s\n"
-msgstr ""
+msgstr "Tidak bisa mengambil paket dari adaptor Wintun '%S': %s\n"
 
 #: wintun.c:204
 #, c-format
 msgid "Drop oversized packet retrieved from Wintun adapter '%S' (%ld > %d)\n"
 msgstr ""
+"Membuang paket besar yang diambil dari adaptor Wintun '%S' (%ld > %d)\n"
 
 #: wintun.c:219
 #, c-format
 msgid "Could not send packet through Wintun adapter '%S': %s\n"
-msgstr ""
+msgstr "Tidak bisa mengirim paket melalui adaptor Wintun '%S': %s\n"
 
 #: xml.c:75 xml.c:100
 #, c-format

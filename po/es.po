@@ -2856,6 +2856,8 @@ msgid ""
 "IPv6 gateway address in config XML (%s) differs from external gateway "
 "address (%s).\n"
 msgstr ""
+"La dirección de la puerta de enlace IPv6 en el XML de configuración (%s) "
+"difiere de la dirección de la puerta de enlace externa (%s).\n"
 
 #: gpst.c:488
 #, c-format

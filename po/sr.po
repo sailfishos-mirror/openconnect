@@ -2828,6 +2828,8 @@ msgid ""
 "IPv6 gateway address in config XML (%s) differs from external gateway "
 "address (%s).\n"
 msgstr ""
+"Адреса ИПв6 мрежног пролаза у ХМЛ-у подешавања (%s) се разликује од адресе "
+"спољног мрежног пролаза (%s).\n"
 
 #: gpst.c:488
 #, c-format

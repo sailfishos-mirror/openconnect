@@ -2826,6 +2826,8 @@ msgid ""
 "IPv6 gateway address in config XML (%s) differs from external gateway "
 "address (%s).\n"
 msgstr ""
+"Adres bramy IPv6 w XML konfiguracji (%s) różni się od zewnętrznego adresu "
+"bramy (%s).\n"
 
 #: gpst.c:488
 #, c-format

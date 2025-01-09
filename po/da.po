@@ -4,7 +4,7 @@
 # Mads Bille Lundby <lundbymads@gmail.com>, 2009.
 # Kim Iskov <kimiskov@gmail.com>, 2010.
 # Joe Hansen <joedalton2@yahoo.dk>, 2011, 2012.
-# Alan Mortensen <alanmortensen.am@gmail.com>, 2017-19, 2022-23.
+# Alan Mortensen <alanmortensen.am@gmail.com>, 2017-19, 2022-24.
 # scootergrisen, 2020-2021.
 #
 # Using -> Anvender (for at undgå forvirring om Bruger er navne- eller udsagnsord)
@@ -14,7 +14,7 @@ msgstr ""
 "Project-Id-Version: network-manager-openconnect master\n"
 "Report-Msgid-Bugs-To: openconnect-devel@lists.infradead.org\n"
 "POT-Creation-Date: 2025-01-09 08:34+0000\n"
-"PO-Revision-Date: 2023-10-16 15:29+0200\n"
+"PO-Revision-Date: 2024-03-23 15:15+0100\n"
 "Last-Translator: Alan Mortensen <alanmortensen.am@gmail.com>\n"
 "Language-Team: Danish <dansk@dansk-gruppen.dk>\n"
 "Language: da\n"
@@ -2857,6 +2857,8 @@ msgid ""
 "IPv6 gateway address in config XML (%s) differs from external gateway "
 "address (%s).\n"
 msgstr ""
+"IPv6-gatewayadressen i konfigurations-XML'en (%s) afviger fra den eksterne "
+"gatewayadresse (%s).\n"
 
 #: gpst.c:488
 #, c-format
@@ -3344,16 +3346,18 @@ msgstr "Der opstod en fejl i forsøget på at hente fragmentheader\n"
 msgid ""
 "Error in chunked decoding. Expected hexadecimal chunk length, got: '%s'\n"
 msgstr ""
+"Der opstod en fejl i den fragmenterede afkodning. Forventede hexadecimal "
+"fragmentlængde, fik: “%s”\n"
 
 #: http.c:454
 #, c-format
 msgid "HTTP chunk length is negative (%ld)\n"
-msgstr "Længde på HTTP-bid er negativ (%ld)\n"
+msgstr "Længde på HTTP-fragment er negativ (%ld)\n"
 
 #: http.c:460
 #, c-format
 msgid "HTTP chunk length is too large (%ld)\n"
-msgstr "Længde på HTTP-bid er for stor (%ld)\n"
+msgstr "Længde på HTTP-fragment er for stor (%ld)\n"
 
 #: http.c:483
 msgid "Error fetching HTTP response body\n"
@@ -5713,7 +5717,7 @@ msgstr "Dekryptering af SSO-symbol mislykkedes\n"
 #: openssl.c:2528
 #, c-format
 msgid "SSL Finished message too large (%zu bytes)\n"
-msgstr ""
+msgstr "SSL-færdig-besked er for stor (%zu byte)\n"
 
 #: openssl.c:2540
 msgid "Failed to generate channel bindings for STRAP key\n"
@@ -6117,12 +6121,12 @@ msgstr "Modtog intern IPV6-gatewayadresse %s\n"
 #: pulse.c:506
 #, c-format
 msgid "Received proxy auto-config (PAC) payload of size %d\n"
-msgstr ""
+msgstr "Modtog proxy auto-config-nyttedata (PAC) af størrelse %d\n"
 
 #: pulse.c:511
 #, c-format
 msgid "Received proxy auto-config (PAC) URL: %.*s\n"
-msgstr ""
+msgstr "Modtaget proxy auto-config-URL (PAC): %.*s\n"
 
 #: pulse.c:525
 #, c-format
@@ -6494,7 +6498,7 @@ msgstr "Ugyldig ESP-opsætning\n"
 
 #: pulse.c:2682
 msgid "Short IF-T/TLS packet when expecting configuration:\n"
-msgstr ""
+msgstr "Kort IF-T/TLS-pakke da konfiguration blev ventet:\n"
 
 #: pulse.c:2690
 msgid "Unexpected IF-T/TLS packet when expecting configuration: wrong vendor\n"
@@ -6506,6 +6510,7 @@ msgstr ""
 msgid ""
 "Unreasonably large IF-T/TLS packet (%u > 1 MiB) when expecting configuration"
 msgstr ""
+"Urimeligt stor IF-T/TLS-pakke (%u > 1 MiB) da konfiguration blev ventet"
 
 #: pulse.c:2726 pulse.c:2731 pulse.c:2738 pulse.c:2743 pulse.c:2782
 #, c-format

@@ -2795,6 +2795,8 @@ msgid ""
 "IPv6 gateway address in config XML (%s) differs from external gateway "
 "address (%s).\n"
 msgstr ""
+"IPv6 kelvedžio adresas konfigūracijos XML (%s) skiriasi nuo išorinio "
+"kelvedžio adreso (%s).\n"
 
 #: gpst.c:488
 #, c-format

@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: NetworkManager-openconnect master\n"
 "Report-Msgid-Bugs-To: openconnect-devel@lists.infradead.org\n"
 "POT-Creation-Date: 2025-01-09 08:34+0000\n"
-"PO-Revision-Date: 2025-01-09 16:13+0800\n"
+"PO-Revision-Date: 2023-08-27 09:51-0400\n"
 "Last-Translator: Boyuan Yang <073plan@gmail.com>\n"
 "Language-Team: Chinese - China <i18n-zh@googlegroups.com>\n"
 "Language: zh_CN\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: Poedit 3.5\n"
+"X-Generator: Poedit 3.3.2\n"
 
 #: array.c:130
 msgid "No ANsession cookie found\n"
@@ -2802,7 +2802,7 @@ msgstr ""
 msgid ""
 "IPv6 gateway address in config XML (%s) differs from external gateway "
 "address (%s).\n"
-msgstr ""
+msgstr "配置 XML（%s）里的 IPv6 网关地址与外部网关地址（%s）不同。\n"
 
 #: gpst.c:488
 #, c-format

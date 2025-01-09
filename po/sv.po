@@ -1,9 +1,9 @@
 # Swedish translation for network-manager-openconnect.
-# Copyright © 2008, 2010, 2011, 2015, 2017-2023 Free Software Foundation, Inc.
+# Copyright © 2008, 2010, 2011, 2015, 2017-2024 Free Software Foundation, Inc.
 # This file is distributed under the same license as the network-manager-openconnect package.
 # Daniel Nylander <po@danielnylander.se>, 2008, 2010, 2011.
 # Josef Andersson <josef.andersson@fripost.org>, 2015, 2017, 2018, 2019.
-# Anders Jonsson <anders.jonsson@norsjovallen.se>, 2019, 2020, 2021, 2022, 2023.
+# Anders Jonsson <anders.jonsson@norsjovallen.se>, 2019, 2020, 2021, 2022, 2023, 2024.
 # Luna Jernberg <droidbittin@gmail.com>, 2022.
 #
 msgid ""
@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: network-manager-openconnect\n"
 "Report-Msgid-Bugs-To: openconnect-devel@lists.infradead.org\n"
 "POT-Creation-Date: 2025-01-09 08:34+0000\n"
-"PO-Revision-Date: 2023-10-24 14:38+0200\n"
+"PO-Revision-Date: 2024-01-29 20:46+0100\n"
 "Last-Translator: Anders Jonsson <anders.jonsson@norsjovallen.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
 "Language: sv\n"
@@ -19,7 +19,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.4\n"
+"X-Generator: Poedit 3.4.2\n"
 "X-Project-Style: gnome\n"
 
 #: array.c:130
@@ -2833,6 +2833,8 @@ msgid ""
 "IPv6 gateway address in config XML (%s) differs from external gateway "
 "address (%s).\n"
 msgstr ""
+"IPv6-gatewayadressen i konfigurations-XML (%s) skiljer sig från extern "
+"gatewayadress (%s).\n"
 
 #: gpst.c:488
 #, c-format
@@ -3330,6 +3332,7 @@ msgstr "Fel vid hämtning av chunk-huvud\n"
 msgid ""
 "Error in chunked decoding. Expected hexadecimal chunk length, got: '%s'\n"
 msgstr ""
+"Fel i chunk-avkodning. Förväntade hexadecimal chunk-längd, fick: '%s'\n"
 
 #: http.c:454
 #, c-format
@@ -5680,7 +5683,7 @@ msgstr "SSO-tokenavkryptering misslyckades\n"
 #: openssl.c:2528
 #, c-format
 msgid "SSL Finished message too large (%zu bytes)\n"
-msgstr ""
+msgstr "SSL Finished-meddelande för stort (%zu byte)\n"
 
 #: openssl.c:2540
 msgid "Failed to generate channel bindings for STRAP key\n"
@@ -6086,12 +6089,12 @@ msgstr "Mottog intern IPv6-gatewayadress %s\n"
 #: pulse.c:506
 #, c-format
 msgid "Received proxy auto-config (PAC) payload of size %d\n"
-msgstr ""
+msgstr "Mottog nyttolast för proxyautokonfiguration (PAC) av storlek %d\n"
 
 #: pulse.c:511
 #, c-format
 msgid "Received proxy auto-config (PAC) URL: %.*s\n"
-msgstr ""
+msgstr "Mottog URL för proxyautokonfiguration (PAC): %.*s\n"
 
 #: pulse.c:525
 #, c-format
@@ -6460,7 +6463,7 @@ msgstr "Ogiltig ESP-konfiguration\n"
 
 #: pulse.c:2682
 msgid "Short IF-T/TLS packet when expecting configuration:\n"
-msgstr ""
+msgstr "Kort IF-T/TLS-paket när konfiguration förväntades:\n"
 
 #: pulse.c:2690
 msgid "Unexpected IF-T/TLS packet when expecting configuration: wrong vendor\n"
@@ -6471,6 +6474,7 @@ msgstr "Oväntat IF-T/TLS-paket när konfiguration förväntades: fel leverantö
 msgid ""
 "Unreasonably large IF-T/TLS packet (%u > 1 MiB) when expecting configuration"
 msgstr ""
+"Orimligt stort IF-T/TLS-paket (%u > 1 MiB) när konfiguration förväntades"
 
 #: pulse.c:2726 pulse.c:2731 pulse.c:2738 pulse.c:2743 pulse.c:2782
 #, c-format

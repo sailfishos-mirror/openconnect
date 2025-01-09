@@ -3,13 +3,13 @@
 # This file is distributed under the same license as the NetworkManager package.
 # Maxim Dziumanenko <dziumanenko@gmail.com>, 2005-2010.
 # Korostil Daniel <ted.korostiled@gmail.com>, 2011.
-# Yuri Chornoivan <yurchor@ukr.net>, 2020, 2021, 2022, 2023.
+# Yuri Chornoivan <yurchor@ukr.net>, 2020, 2021, 2022, 2023, 2024.
 msgid ""
 msgstr ""
 "Project-Id-Version: network-manager-openconnect\n"
 "Report-Msgid-Bugs-To: openconnect-devel@lists.infradead.org\n"
 "POT-Creation-Date: 2025-01-09 08:34+0000\n"
-"PO-Revision-Date: 2023-05-21 09:24+0300\n"
+"PO-Revision-Date: 2024-01-30 22:58+0200\n"
 "Last-Translator: Yuri Chornoivan <yurchor@ukr.net>\n"
 "Language-Team: Ukrainian <kde-i18n-uk@kde.org>\n"
 "Language: uk\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
-"X-Generator: Lokalize 20.12.0\n"
+"X-Generator: Lokalize 23.04.1\n"
 
 #: array.c:130
 msgid "No ANsession cookie found\n"
@@ -2887,6 +2887,8 @@ msgid ""
 "IPv6 gateway address in config XML (%s) differs from external gateway "
 "address (%s).\n"
 msgstr ""
+"Адреса шлюзу IPv6 у налаштуваннях XML (%s) відрізняється від зовнішньої "
+"адреси шлюзу (%s).\n"
 
 #: gpst.c:488
 #, c-format
@@ -3379,6 +3381,8 @@ msgstr "Помилка під час спроби отримати заголо�
 msgid ""
 "Error in chunked decoding. Expected hexadecimal chunk length, got: '%s'\n"
 msgstr ""
+"Помилка під час розшифровування фрагментів. Мала бути шістнадцяткова довжина "
+"фрагмента, отримано: «%s»\n"
 
 #: http.c:454
 #, c-format
@@ -5800,6 +5804,7 @@ msgstr "невдала спроба розшифрування жетона SSO\
 #, c-format
 msgid "SSL Finished message too large (%zu bytes)\n"
 msgstr ""
+"Розмір повідомлення про завершення SSL є занадто великим (%zu байтів)\n"
 
 #: openssl.c:2540
 msgid "Failed to generate channel bindings for STRAP key\n"
@@ -6208,12 +6213,12 @@ msgstr "Отримано внутрішню адресу IPv6 шлюзу %s\n"
 #: pulse.c:506
 #, c-format
 msgid "Received proxy auto-config (PAC) payload of size %d\n"
-msgstr ""
+msgstr "Отримано дані автоналаштовування проксі (PAC) розміром %d\n"
 
 #: pulse.c:511
 #, c-format
 msgid "Received proxy auto-config (PAC) URL: %.*s\n"
-msgstr ""
+msgstr "Отримано адресу автоналаштовування проксі (PAC): %.*s\n"
 
 #: pulse.c:525
 #, c-format
@@ -6601,7 +6606,7 @@ msgstr "Некоректне налаштування ESP\n"
 
 #: pulse.c:2682
 msgid "Short IF-T/TLS packet when expecting configuration:\n"
-msgstr ""
+msgstr "Короткий пакет IF-T/TLS, а мали бути налаштування:\n"
 
 #: pulse.c:2690
 msgid "Unexpected IF-T/TLS packet when expecting configuration: wrong vendor\n"
@@ -6613,6 +6618,7 @@ msgstr ""
 msgid ""
 "Unreasonably large IF-T/TLS packet (%u > 1 MiB) when expecting configuration"
 msgstr ""
+"Необґрунтовано великий пакет IF-T/TLS (%u > 1 МіБ) при очікуванні налаштувань"
 
 #: pulse.c:2726 pulse.c:2731 pulse.c:2738 pulse.c:2743 pulse.c:2782
 #, c-format
