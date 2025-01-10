@@ -22,7 +22,9 @@
 #include <openssl/crypto.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+#ifdef HAVE_ENGINE
 #include <openssl/engine.h>
+#endif
 #include <openssl/evp.h>
 #include <openssl/rand.h>
 #include <openssl/pkcs12.h>
