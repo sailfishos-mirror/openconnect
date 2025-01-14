@@ -93,6 +93,7 @@ Fedora/GnuTLS:
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
 # ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
+  - bash -c '( sleep 600; ps axf ) &'
   - make VERBOSE=1 XFAIL_TESTS="ppp-over-tls-sync" -j4 check
   - echo "Check done"
   - 'ps axf || :'
@@ -130,6 +131,7 @@ Fedora/OpenSSL:
 # auth-swtpm: XFAIL until we understand the TPM error
 # obsolete-server-crypto: obsolete crypto has been removed from LEGACY crypto policies
 # ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
+  - bash -c '( sleep 600; ps axf ) &'
   - make VERBOSE=1 XFAIL_TESTS="auth-swtpm obsolete-server-crypto ppp-over-tls-sync" -j4 check
   - echo "Check done"
   - 'ps axf || :'
@@ -166,6 +168,7 @@ CentOS7/GnuTLS:
   - mv /etc/ppp /etc/ppp.DISABLED
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
 # ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
+  - bash -c '( sleep 600; ps axf ) &'
   - make VERBOSE=1 XFAIL_TESTS="auth-nonascii ppp-over-tls-sync" -j4 check
   - echo "Check done"
   - 'ps axf || :'
@@ -198,6 +201,7 @@ CentOS7/OpenSSL:
   - mv /etc/ppp /etc/ppp.DISABLED
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
 # ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
+  - bash -c '( sleep 600; ps axf ) &'
   - make VERBOSE=1 XFAIL_TESTS="auth-nonascii ppp-over-tls-sync" -j4 check
   - echo "Check done"
   - 'ps axf || :'
@@ -227,6 +231,7 @@ CentOS8/GnuTLS:
   - mv /etc/ppp /etc/ppp.DISABLED
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
 # ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
+  - bash -c '( sleep 600; ps axf ) &'
   - make VERBOSE=1 XFAIL_TESTS="auth-nonascii ppp-over-tls-sync" -j4 check
   - echo "Check done"
   - 'ps axf || :'
@@ -256,6 +261,7 @@ CentOS8/OpenSSL:
   - mv /etc/ppp /etc/ppp.DISABLED
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
 # ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
+  - bash -c '( sleep 600; ps axf ) &'
   - make VERBOSE=1 XFAIL_TESTS="auth-nonascii ppp-over-tls-sync" -j4 check
   - echo "Check done"
   - 'ps axf || :'
@@ -285,6 +291,7 @@ CentOS9/GnuTLS:
   - mv /etc/ppp /etc/ppp.DISABLED
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
 # ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
+  - bash -c '( sleep 600; ps axf ) &'
   - make VERBOSE=1 XFAIL_TESTS="auth-nonascii ppp-over-tls-sync" -j4 check
   - echo "Check done"
   - 'ps axf || :'
@@ -315,6 +322,7 @@ CentOS9/OpenSSL:
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
 # ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
 # obsolete-server-crypto: unknown why the legacy openssl provider is not sufficient
+  - bash -c '( sleep 600; ps axf ) &'
   - make VERBOSE=1 XFAIL_TESTS="auth-nonascii ppp-over-tls-sync obsolete-server-crypto" -j4 check
   - echo "Check done"
   - 'ps axf || :'
@@ -347,6 +355,7 @@ Fedora/GnuTLS/ibmtss:
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
 # ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
+  - bash -c '( sleep 600; ps axf ) &'
   - make VERBOSE=1 XFAIL_TESTS="ppp-over-tls-sync" -j4 check
   - echo "Check done"
   - 'ps axf || :'
@@ -379,6 +388,7 @@ Fedora/GnuTLS/clang:
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
 # ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
+  - bash -c '( sleep 600; ps axf ) &'
   - make VERBOSE=1 XFAIL_TESTS="ppp-over-tls-sync" -j4 check
   - echo "Check done"
   - 'ps axf || :'
@@ -416,6 +426,7 @@ Fedora/OpenSSL/clang:
 # auth-swtpm: XFAIL until we understand the TPM error
 # obsolete-server-crypto: obsolete crypto has been removed from LEGACY crypto policies
 # ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
+  - bash -c '( sleep 600; ps axf ) &'
   - make VERBOSE=1 XFAIL_TESTS="auth-swtpm obsolete-server-crypto ppp-over-tls-sync" -j4 check
   - echo "Check done"
   - 'ps axf || :'
@@ -445,6 +456,7 @@ Ubuntu18.04/GnuTLS:
   - mv /etc/ppp /etc/ppp.DISABLED
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
 # ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
+  - bash -c '( sleep 600; ps axf ) &'
   - make VERBOSE=1 XFAIL_TESTS="auth-nonascii ppp-over-tls-sync" -j4 check
   - echo "Check done"
   - 'ps axf || :'
@@ -474,6 +486,7 @@ Ubuntu18.04/OpenSSL:
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
 # obsolete-server-crypto: OpenSSL 1.1.0 disables 3DES and RC4 by default (https://www.openssl.org/blog/blog/2016/08/24/sweet32/)
 # ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
+  - bash -c '( sleep 600; ps axf ) &'
   - make VERBOSE=1 XFAIL_TESTS="auth-nonascii obsolete-server-crypto ppp-over-tls-sync" -j4 check
   - echo "Check done"
   - 'ps axf || :'
@@ -536,6 +549,7 @@ ubsan/GnuTLS/Fedora:
   - export UBCFLAGS="-Wall -Wextra -fsanitize=undefined -fsanitize=bool -fsanitize=alignment -fsanitize=null -fsanitize=bounds-strict -fsanitize=enum -fno-sanitize-recover -g -O2"
   - CFLAGS="$UBCFLAGS" ./configure --with-java --disable-dsa-tests --without-gnutls-version-check
   - make -j4
+  - bash -c '( sleep 600; ps axf ) &'
   - make VERBOSE=1 -j4 check
   - echo "Check done"
   - 'ps axf || :'
@@ -561,6 +575,7 @@ ubsan/OpenSSL/Fedora:
   - make -j4
 # auth-swtpm: XFAIL until we understand the TPM error
 # obsolete-server-crypto: obsolete crypto has been removed from LEGACY crypto policies
+  - bash -c '( sleep 600; ps axf ) &'
   - make VERBOSE=1 XFAIL_TESTS="auth-swtpm obsolete-server-crypto" -j4 check
   - echo "Check done"
   - 'ps axf || :'
@@ -584,6 +599,7 @@ asan/GnuTLS/Fedora:
   - CC=clang CFLAGS="-fsanitize=address -fno-optimize-sibling-calls -fno-omit-frame-pointer -g -O1"
     ./configure --with-java --disable-dsa-tests --without-gnutls-version-check --without-asan-broken-tests
   - make -j4
+  - bash -c '( sleep 600; ps axf ) &'
   - make VERBOSE=1 -j4 check
   - echo "Check done"
   - 'ps axf || :'
@@ -607,6 +623,7 @@ asan/OpenSSL/Fedora:
   - CC=clang CFLAGS="-fsanitize=address -fno-optimize-sibling-calls -fno-omit-frame-pointer -g -O1"
     ./configure --without-gnutls --with-openssl --without-openssl-version-check --disable-dsa-tests --without-asan-broken-tests
   - make -j4
+  - bash -c '( sleep 600; ps axf ) &'
   - make VERBOSE=1 -j4 check
   - echo "Check done"
   - 'ps axf || :'
@@ -639,6 +656,7 @@ MinGW32/GnuTLS:
   - export WINEPATH=/usr/i686-w64-mingw32/sys-root/mingw/bin\;.
 # Wintun tests cannot be run under wine, wintun cannot create the interface on wine,
 # Tap tests also: wine does not support windows drivers
+  - bash -c '( sleep 600; ps axf ) &'
   - make VERBOSE=1 XFAIL_TESTS="list-taps.exe wintun-names.exe" -j4 check
   - echo "Check done"
   - 'ps axf || :'
@@ -666,6 +684,7 @@ MinGW32/OpenSSL:
   - export WINEPATH=/usr/i686-w64-mingw32/sys-root/mingw/bin\;.
 # Wintun tests cannot be run under wine, wintun cannot create the interface on wine. 
 # Tap tests also: wine does not support windows drivers
+  - bash -c '( sleep 600; ps axf ) &'
   - make VERBOSE=1 XFAIL_TESTS="list-taps.exe wintun-names.exe" -j4 check
   - echo "Check done"
   - 'ps axf || :'
@@ -694,6 +713,7 @@ MinGW64/GnuTLS:
   - export WINEPATH=/usr/x86_64-w64-mingw32/sys-root/mingw/bin\;.
 # Wintun tests cannot be run under wine, wintun cannot create the interface on wine. 
 # Tap tests also: wine does not support windows drivers
+  - bash -c '( sleep 600; ps axf ) &'
   - make VERBOSE=1 XFAIL_TESTS="list-taps.exe wintun-names.exe" -j4 check
   - echo "Check done"
   - 'ps axf || :'
@@ -722,6 +742,7 @@ MinGW64/OpenSSL:
   - export WINEPATH=/usr/x86_64-w64-mingw32/sys-root/mingw/bin\;.
 # Wintun tests cannot be run under wine, wintun cannot create the interface on wine. 
 # Tap tests also: wine does not support windows drivers
+  - bash -c '( sleep 600; ps axf ) &'
   - make VERBOSE=1 XFAIL_TESTS="list-taps.exe wintun-names.exe" -j4 check
   - echo "Check done"
   - 'ps axf || :'
