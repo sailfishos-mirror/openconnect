@@ -94,6 +94,8 @@ Fedora/GnuTLS:
   - mv /etc/ppp /etc/ppp.DISABLED
 # ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
   - make VERBOSE=1 XFAIL_TESTS="ppp-over-tls-sync" -j4 check
+  - echo "Check done"
+  - 'ps axf || :'
   tags:
   - saas-linux-small-amd64
   except:
@@ -129,6 +131,8 @@ Fedora/OpenSSL:
 # obsolete-server-crypto: obsolete crypto has been removed from LEGACY crypto policies
 # ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
   - make VERBOSE=1 XFAIL_TESTS="auth-swtpm obsolete-server-crypto ppp-over-tls-sync" -j4 check
+  - echo "Check done"
+  - 'ps axf || :'
   tags:
   - saas-linux-small-amd64
   except:
@@ -163,6 +167,8 @@ CentOS7/GnuTLS:
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
 # ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
   - make VERBOSE=1 XFAIL_TESTS="auth-nonascii ppp-over-tls-sync" -j4 check
+  - echo "Check done"
+  - 'ps axf || :'
   tags:
   - saas-linux-small-amd64
   except:
@@ -193,6 +199,8 @@ CentOS7/OpenSSL:
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
 # ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
   - make VERBOSE=1 XFAIL_TESTS="auth-nonascii ppp-over-tls-sync" -j4 check
+  - echo "Check done"
+  - 'ps axf || :'
   tags:
   - saas-linux-small-amd64
   except:
@@ -220,6 +228,8 @@ CentOS8/GnuTLS:
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
 # ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
   - make VERBOSE=1 XFAIL_TESTS="auth-nonascii ppp-over-tls-sync" -j4 check
+  - echo "Check done"
+  - 'ps axf || :'
   tags:
   - saas-linux-small-amd64
   except:
@@ -247,6 +257,8 @@ CentOS8/OpenSSL:
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
 # ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
   - make VERBOSE=1 XFAIL_TESTS="auth-nonascii ppp-over-tls-sync" -j4 check
+  - echo "Check done"
+  - 'ps axf || :'
   tags:
   - saas-linux-small-amd64
   except:
@@ -274,6 +286,8 @@ CentOS9/GnuTLS:
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
 # ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
   - make VERBOSE=1 XFAIL_TESTS="auth-nonascii ppp-over-tls-sync" -j4 check
+  - echo "Check done"
+  - 'ps axf || :'
   tags:
   - saas-linux-small-amd64
   except:
@@ -302,6 +316,8 @@ CentOS9/OpenSSL:
 # ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
 # obsolete-server-crypto: unknown why the legacy openssl provider is not sufficient
   - make VERBOSE=1 XFAIL_TESTS="auth-nonascii ppp-over-tls-sync obsolete-server-crypto" -j4 check
+  - echo "Check done"
+  - 'ps axf || :'
   tags:
   - saas-linux-small-amd64
   except:
@@ -332,6 +348,8 @@ Fedora/GnuTLS/ibmtss:
   - mv /etc/ppp /etc/ppp.DISABLED
 # ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
   - make VERBOSE=1 XFAIL_TESTS="ppp-over-tls-sync" -j4 check
+  - echo "Check done"
+  - 'ps axf || :'
   tags:
   - saas-linux-small-amd64
   except:
@@ -362,6 +380,8 @@ Fedora/GnuTLS/clang:
   - mv /etc/ppp /etc/ppp.DISABLED
 # ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
   - make VERBOSE=1 XFAIL_TESTS="ppp-over-tls-sync" -j4 check
+  - echo "Check done"
+  - 'ps axf || :'
   tags:
   - saas-linux-small-amd64
   except:
@@ -397,6 +417,8 @@ Fedora/OpenSSL/clang:
 # obsolete-server-crypto: obsolete crypto has been removed from LEGACY crypto policies
 # ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
   - make VERBOSE=1 XFAIL_TESTS="auth-swtpm obsolete-server-crypto ppp-over-tls-sync" -j4 check
+  - echo "Check done"
+  - 'ps axf || :'
   tags:
   - saas-linux-small-amd64
   except:
@@ -424,6 +446,8 @@ Ubuntu18.04/GnuTLS:
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
 # ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
   - make VERBOSE=1 XFAIL_TESTS="auth-nonascii ppp-over-tls-sync" -j4 check
+  - echo "Check done"
+  - 'ps axf || :'
   tags:
   - saas-linux-small-amd64
   except:
@@ -451,6 +475,8 @@ Ubuntu18.04/OpenSSL:
 # obsolete-server-crypto: OpenSSL 1.1.0 disables 3DES and RC4 by default (https://www.openssl.org/blog/blog/2016/08/24/sweet32/)
 # ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
   - make VERBOSE=1 XFAIL_TESTS="auth-nonascii obsolete-server-crypto ppp-over-tls-sync" -j4 check
+  - echo "Check done"
+  - 'ps axf || :'
   tags:
   - saas-linux-small-amd64
   except:
@@ -511,6 +537,8 @@ ubsan/GnuTLS/Fedora:
   - CFLAGS="$UBCFLAGS" ./configure --with-java --disable-dsa-tests --without-gnutls-version-check
   - make -j4
   - make VERBOSE=1 -j4 check
+  - echo "Check done"
+  - 'ps axf || :'
   tags:
   - saas-linux-small-amd64
   except:
@@ -534,6 +562,8 @@ ubsan/OpenSSL/Fedora:
 # auth-swtpm: XFAIL until we understand the TPM error
 # obsolete-server-crypto: obsolete crypto has been removed from LEGACY crypto policies
   - make VERBOSE=1 XFAIL_TESTS="auth-swtpm obsolete-server-crypto" -j4 check
+  - echo "Check done"
+  - 'ps axf || :'
   tags:
   - saas-linux-small-amd64
   except:
@@ -555,6 +585,8 @@ asan/GnuTLS/Fedora:
     ./configure --with-java --disable-dsa-tests --without-gnutls-version-check --without-asan-broken-tests
   - make -j4
   - make VERBOSE=1 -j4 check
+  - echo "Check done"
+  - 'ps axf || :'
   tags:
   - saas-linux-small-amd64
   except:
@@ -576,6 +608,8 @@ asan/OpenSSL/Fedora:
     ./configure --without-gnutls --with-openssl --without-openssl-version-check --disable-dsa-tests --without-asan-broken-tests
   - make -j4
   - make VERBOSE=1 -j4 check
+  - echo "Check done"
+  - 'ps axf || :'
   tags:
   - saas-linux-small-amd64
   except:
@@ -606,6 +640,8 @@ MinGW32/GnuTLS:
 # Wintun tests cannot be run under wine, wintun cannot create the interface on wine,
 # Tap tests also: wine does not support windows drivers
   - make VERBOSE=1 XFAIL_TESTS="list-taps.exe wintun-names.exe" -j4 check
+  - echo "Check done"
+  - 'ps axf || :'
   tags:
   - saas-linux-small-amd64
   except:
@@ -631,6 +667,8 @@ MinGW32/OpenSSL:
 # Wintun tests cannot be run under wine, wintun cannot create the interface on wine. 
 # Tap tests also: wine does not support windows drivers
   - make VERBOSE=1 XFAIL_TESTS="list-taps.exe wintun-names.exe" -j4 check
+  - echo "Check done"
+  - 'ps axf || :'
   tags:
   - saas-linux-small-amd64
   except:
@@ -657,6 +695,8 @@ MinGW64/GnuTLS:
 # Wintun tests cannot be run under wine, wintun cannot create the interface on wine. 
 # Tap tests also: wine does not support windows drivers
   - make VERBOSE=1 XFAIL_TESTS="list-taps.exe wintun-names.exe" -j4 check
+  - echo "Check done"
+  - 'ps axf || :'
   tags:
   - saas-linux-small-amd64
   except:
@@ -683,6 +723,8 @@ MinGW64/OpenSSL:
 # Wintun tests cannot be run under wine, wintun cannot create the interface on wine. 
 # Tap tests also: wine does not support windows drivers
   - make VERBOSE=1 XFAIL_TESTS="list-taps.exe wintun-names.exe" -j4 check
+  - echo "Check done"
+  - 'ps axf || :'
   tags:
   - saas-linux-small-amd64
   except:
