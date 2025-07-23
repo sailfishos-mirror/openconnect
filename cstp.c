@@ -250,6 +250,10 @@ static int start_cstp_connection(struct openconnect_info *vpninfo, int strap_rek
 	buf_append(reqbuf, "X-CSTP-Version: 1\r\n");
 	buf_append(reqbuf, "X-CSTP-Hostname: %s\r\n", vpninfo->localname);
 
+	/* Some servers only allow connection if they see a shibboleth in the form of a standard copyright blurb: */
+	buf_append(reqbuf, "X-CSTP-Protocol: Copyright (c) %d %s\r\n",
+		2004, "Cisco Systems, Inc.");
+
 #ifdef HAVE_HPKE_SUPPORT
 	if (!vpninfo->no_external_auth && vpninfo->strap_pubkey)
 		append_connect_strap_headers(vpninfo, reqbuf, strap_rekey);
