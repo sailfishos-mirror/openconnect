@@ -17,9 +17,7 @@
 
 set -e
 
-libxml2_MIRROR_0=https://download.gnome.org/sources/libxml2/2.13
-libxml2_MIRROR_1=http://gd.tuwien.ac.at/pub/libxml
-libxml2_MIRROR_2=http://distfiles.macports.org/libxml2
+libxml2_MIRROR_0=https://download.gnome.org/sources/libxml2/2.14
 
 gmp_MIRROR_0=http://ftp.gnu.org/gnu/gmp
 gmp_MIRROR_1=https://gmplib.org/download/gmp
