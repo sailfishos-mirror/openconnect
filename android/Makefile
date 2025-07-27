@@ -102,7 +102,7 @@ $(LIBXML2_TAR):
 
 $(LIBXML2_SRC)/configure: $(LIBXML2_TAR)
 	mkdir -p sources
-	tar Jxf $<  -C sources
+	tar xfJ $< -C sources
 	touch $@
 
 $(LIBXML2_BUILD)/Makefile: $(OC_SYSROOT) $(LIBXML2_SRC)/configure
