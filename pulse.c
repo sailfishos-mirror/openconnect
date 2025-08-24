@@ -1449,6 +1449,7 @@ static int pulse_authenticate(struct openconnect_info *vpninfo, int connecting)
 	}
 	if (bytes[0])
 		buf_append(reqbuf, " clientIp=%s", bytes);
+	buf_append(reqbuf, " clientCapabilities={}");
 	buf_append(reqbuf, "\n%c", 0);
 	ret = send_ift_packet(vpninfo, reqbuf);
 	if (ret)
