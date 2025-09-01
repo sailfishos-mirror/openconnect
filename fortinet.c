@@ -102,6 +102,7 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 	struct oc_auth_form *form = NULL;
 	struct oc_form_opt *opt, *opt2;
 	char *resp_buf = NULL, *realm = NULL, *tokeninfo_fields = NULL, *ti;
+	char *js_top_location = NULL;
 
 	req_buf = buf_alloc();
 	if (buf_error(req_buf)) {
@@ -109,9 +110,34 @@ int fortinet_obtain_cookie(struct openconnect_info *vpninfo)
 		goto out;
 	}
 
+again:
 	ret = do_https_request(vpninfo, "GET", NULL, NULL, &resp_buf, NULL, HTTP_REDIRECT);
 	if (ret < 0)
 		goto out;
+
+	/* Starting with FortiOS 7.4 server returns a javascript redirect request, so let's
+	 * check it here and set it manually:
+	 *
+	 * <html><script type="text/javascript">
+	 * if (window!=top) top.location=window.location;top.location="/remote/login";
+	 * </script></html>
+	 */
+	js_top_location = strstr(resp_buf, "top.location=\"");
+	if (js_top_location) {
+		int top_location_str_len = strlen("top.location=\"");
+		char *js_top_location_end = strchrnul(js_top_location + top_location_str_len, '"');
+		char *location = strndup(js_top_location + top_location_str_len, js_top_location_end - js_top_location - top_location_str_len);
+
+		/* Skip leading / if necessary */
+		if (location && location[0] == '/') {
+			vpninfo->urlpath = strdup(location + 1);
+			free(location);
+		} else {
+			vpninfo->urlpath = location;
+		}
+
+		goto again;
+	}
 
 	/* XX: Fortinet's initial 'GET /' normally redirects to /remote/login.
 	 * If a valid, non-default "realm" is specified (~= usergroup or authgroup),
