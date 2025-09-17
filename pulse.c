@@ -531,8 +531,8 @@ static int process_attr(struct openconnect_info *vpninfo, struct oc_vpn_option *
 	   0x4008: proxy (string)
 	   0x4000: disconnect when routes changed
 	   0x4015: tos copy
-	   0x4001:  tunnel routes take precedence
-	   0x401f:  tunnel routes with subnet access (also 4001 set)
+	   0x4001: tunnel routes take precedence
+	   0x401f: tunnel routes with subnet access (also 4001 set)
 	   0x4020: Enforce IPv4
 	   0x4021: Enforce IPv6
 	   0x0014: Prefer FQDN resources over IP resources in case of a split tunneling conflict
@@ -546,7 +546,7 @@ static int process_attr(struct openconnect_info *vpninfo, struct oc_vpn_option *
 			sprintf(buf + strlen(buf), "...");
 
 		vpn_progress(vpninfo, PRG_DEBUG,
-			     _("Unknown attr 0x%x len %d:%s\n"),
+			     _("Unknown attr 0x%04x len %d:%s\n"),
 			     type, attrlen, buf);
 	}
 	return 0;
