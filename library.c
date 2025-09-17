@@ -54,6 +54,7 @@ struct openconnect_info *openconnect_vpninfo_new(const char *useragent,
 #ifdef HAVE_ICONV
 	char *charset = nl_langinfo(CODESET);
 #endif
+	char hostname[256] = {'\0'};
 
 	if (!vpninfo)
 		return NULL;
@@ -216,6 +217,22 @@ struct openconnect_info *openconnect_vpninfo_new(const char *useragent,
 	vpninfo->sso_browser_mode = NULL;
 	vpninfo->verbose = PRG_TRACE;
 	vpninfo->cbdata = privdata ? : vpninfo;
+
+	if (gethostname(hostname, sizeof(hostname)) == 0 && hostname[0]) {
+		char *localname;
+
+		localname = openconnect_legacy_to_utf8(vpninfo, hostname);
+		if (localname == hostname)
+			vpninfo->localname = strdup(hostname);
+		else
+			vpninfo->localname = localname;
+	} else {
+		vpninfo->localname = strdup("localhost");
+	}
+
+	if (!vpninfo->localname)
+		goto err;
+
 	vpninfo->validate_peer_cert = validate_peer_cert;
 	vpninfo->write_new_config = write_new_config;
 	vpninfo->process_auth_form = process_auth_form;
@@ -236,8 +253,6 @@ struct openconnect_info *openconnect_vpninfo_new(const char *useragent,
 			goto err;
 	}
 #endif
-	if (!(vpninfo->localname = strdup("localhost")))
-		goto err;
 	if (!(vpninfo->useragent = openconnect_create_useragent(useragent)))
 		goto err;
 	openconnect_set_reported_os(vpninfo, NULL);
