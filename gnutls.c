@@ -2564,7 +2564,7 @@ void openconnect_close_https(struct openconnect_info *vpninfo, int final)
 		gnutls_deinit(vpninfo->https_sess);
 		vpninfo->https_sess = NULL;
 	}
-	if (vpninfo->ssl_fd != -1) {
+	if (vpninfo->ssl_fd >= 0) {
 		unmonitor_fd(vpninfo, ssl);
 		closesocket(vpninfo->ssl_fd);
 		vpninfo->ssl_fd = -1;
