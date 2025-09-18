@@ -446,7 +446,7 @@ void esp_close(struct openconnect_info *vpninfo)
 {
 	/* We close and reopen the socket in case we roamed and our
 	   local IP address has changed. */
-	if (vpninfo->dtls_fd != -1) {
+	if (vpninfo->dtls_fd >= 0) {
 		unmonitor_fd(vpninfo, dtls);
 		closesocket(vpninfo->dtls_fd);
 		vpninfo->dtls_fd = -1;
