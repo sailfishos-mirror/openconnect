@@ -16,7 +16,7 @@ variables:
   FEDORA_BUILD: openconnect-cli-fedora39
   MINGW32_BUILD: openconnect-cli-mingw32
   MINGW64_BUILD: openconnect-cli-mingw64
-  UBUNTU_BUILD: openconnect-cli-ubuntu
+  UBUNTU18_BUILD: openconnect-cli-ubuntu18
   ANDROID_BUILD: openconnect-cli-android-r27c
   ANDROID_TOOLCHAINDIR: /opt/android-sdk-linux_x86/android-ndk-r27c/toolchains/llvm/prebuilt/linux-x86_64
 
@@ -410,7 +410,7 @@ Fedora/OpenSSL/clang:
 
 Ubuntu18.04/GnuTLS:
   stage: test-rest
-  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$UBUNTU_BUILD
+  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$UBUNTU18_BUILD
   script:
   - ./autogen.sh
   - ./configure --with-java --enable-ppp-tests CFLAGS=-g
@@ -436,7 +436,7 @@ Ubuntu18.04/GnuTLS:
 
 Ubuntu18.04/OpenSSL:
   stage: test-rest
-  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$UBUNTU_BUILD
+  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$UBUNTU18_BUILD
   script:
   - ./autogen.sh
   - ./configure --without-gnutls --with-openssl --with-java --without-openssl-version-check --disable-dsa-tests --enable-ppp-tests CFLAGS=-g
