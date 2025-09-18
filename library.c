@@ -773,9 +773,9 @@ void openconnect_vpninfo_free(struct openconnect_info *vpninfo)
 	openconnect_close_https(vpninfo, 1);
 	if (vpninfo->proto->udp_shutdown)
 		vpninfo->proto->udp_shutdown(vpninfo);
-	if (vpninfo->tncc_fd != -1)
+	if (vpninfo->tncc_fd >= 0)
 		closesocket(vpninfo->tncc_fd);
-	if (vpninfo->cmd_fd_write != -1) {
+	if (vpninfo->cmd_fd_write >= 0) {
 		closesocket(vpninfo->cmd_fd);
 		closesocket(vpninfo->cmd_fd_write);
 	}
