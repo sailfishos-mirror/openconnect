@@ -2085,7 +2085,7 @@ void openconnect_close_https(struct openconnect_info *vpninfo, int final)
 		SSL_free(vpninfo->https_ssl);
 		vpninfo->https_ssl = NULL;
 	}
-	if (vpninfo->ssl_fd != -1) {
+	if (vpninfo->ssl_fd >= 0) {
 		unmonitor_fd(vpninfo, ssl);
 		closesocket(vpninfo->ssl_fd);
 		vpninfo->ssl_fd = -1;
