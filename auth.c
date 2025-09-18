@@ -714,6 +714,12 @@ static int handle_auth_form(struct openconnect_info *vpninfo, struct oc_auth_for
 	int ret;
 	struct oc_vpn_option *opt, *next;
 
+	if (!form) {
+		vpn_progress(vpninfo, PRG_DEBUG,
+			     "The authentication form is NULL\n");
+		return -EPERM;
+	}
+
 	if (!strcmp(form->auth_id, "success"))
 		return OC_FORM_RESULT_LOGGEDIN;
 
