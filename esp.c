@@ -144,7 +144,7 @@ int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 	   reserve some extra space to handle that */
 	int receive_mtu = MAX(2048, vpninfo->ip_info.mtu + 256);
 
-	while (readable && vpninfo->dtls_fd != -1) {
+	while (readable && vpninfo->dtls_fd >= 0) {
 		int len = receive_mtu + vpninfo->pkt_trailer;
 		int i;
 		struct pkt *pkt;
@@ -446,7 +446,7 @@ void esp_close(struct openconnect_info *vpninfo)
 {
 	/* We close and reopen the socket in case we roamed and our
 	   local IP address has changed. */
-	if (vpninfo->dtls_fd != -1) {
+	if (vpninfo->dtls_fd >= 0) {
 		unmonitor_fd(vpninfo, dtls);
 		closesocket(vpninfo->dtls_fd);
 		vpninfo->dtls_fd = -1;

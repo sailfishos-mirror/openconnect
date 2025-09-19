@@ -442,7 +442,7 @@ int openconnect_setup_tun_fd(struct openconnect_info *vpninfo, int tun_fd)
 {
 	set_fd_cloexec(tun_fd);
 
-	if (vpninfo->tun_fd != -1)
+	if (vpninfo->tun_fd >= 0)
 		unmonitor_fd(vpninfo, tun);
 
 	vpninfo->tun_fd = tun_fd;
@@ -580,7 +580,7 @@ void os_shutdown_tun(struct openconnect_info *vpninfo)
 #ifdef __sun__
 		close(vpninfo->ip_fd);
 		vpninfo->ip_fd = -1;
-		if (vpninfo->ip6_fd != -1) {
+		if (vpninfo->ip6_fd >= 0) {
 			close(vpninfo->ip6_fd);
 			vpninfo->ip6_fd = -1;
 		}

@@ -1568,7 +1568,7 @@ int ppp_tcp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readabl
 	/* If we're still attempting DTLS, do nothing yet. */
 	switch (vpninfo->dtls_state) {
 	case DTLS_ESTABLISHED:
-		if (vpninfo->ssl_fd != -1) {
+		if (vpninfo->ssl_fd >= 0) {
 			openconnect_close_https(vpninfo, 0); /* don't keep stale HTTPS socket */
 			vpn_progress(vpninfo, PRG_INFO,
 				     _("DTLS tunnel connected; exiting HTTPS mainloop.\n"));
@@ -1615,7 +1615,7 @@ int ppp_tcp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readabl
 		 * gets invoked. When f5_connect() actually establishes the tunnel,
 		 * it does so to start the PPP state machine for the TCP connection.
 		 */
-		if (vpninfo->ssl_fd != -1 && vpninfo->ppp->ppp_state != PPPS_DEAD)
+		if (vpninfo->ssl_fd >= 0 && vpninfo->ppp->ppp_state != PPPS_DEAD)
 			return ppp_mainloop(vpninfo, 0, &vpninfo->ssl_times, timeout, readable);
 
 		/* This will call *back* into the protocol's ->tcp_connect()

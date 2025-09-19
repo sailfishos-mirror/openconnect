@@ -101,7 +101,7 @@ static int connect_dtls_socket(struct openconnect_info *vpninfo, int *timeout)
 	int dtls_fd, ret;
 
 	/* Sanity check for the removal of new_dtls_{fd,ssl} */
-	if (vpninfo->dtls_fd != -1) {
+	if (vpninfo->dtls_fd >= 0) {
 		vpn_progress(vpninfo, PRG_ERR, _("DTLS connection attempted with an existing fd\n"));
 		vpninfo->dtls_attempt_period = 0;
 		return -EINVAL;

@@ -720,7 +720,7 @@ static int gpst_connect(struct openconnect_info *vpninfo)
 {
 	int ret;
 	struct oc_text_buf *reqbuf;
-	static const char start_tunnel[12] = "START_TUNNEL"; /* NOT zero-terminated */
+	static const char start_tunnel[12] __attribute__((nonstring)) = "START_TUNNEL"; /* NOT NUL-terminated */
 	char buf[256];
 
 	/* We do NOT actually start the HTTPS tunnel if ESP is enabled and we received
@@ -1430,7 +1430,7 @@ static inline uint16_t csum(void *buf, int nwords)
 	return csum_finish(csum_partial(buf, nwords));
 }
 
-static char magic_ping_payload[16] = "monitor\x00\x00pan ha ";
+static char magic_ping_payload[16] __attribute__((nonstring)) = "monitor\x00\x00pan ha "; /* NOT NUL-terminated */
 
 int gpst_esp_send_probes(struct openconnect_info *vpninfo)
 {

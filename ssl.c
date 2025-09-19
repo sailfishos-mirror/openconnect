@@ -867,7 +867,7 @@ int keystore_fetch(const char *key, unsigned char **result)
 
 void cmd_fd_set(struct openconnect_info *vpninfo, fd_set *fds, int *maxfd)
 {
-	if (vpninfo->cmd_fd != -1) {
+	if (vpninfo->cmd_fd >= 0) {
 		FD_SET(vpninfo->cmd_fd, fds);
 		if (vpninfo->cmd_fd > *maxfd)
 			*maxfd = vpninfo->cmd_fd;

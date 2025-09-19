@@ -3146,7 +3146,7 @@ int pulse_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 int pulse_bye(struct openconnect_info *vpninfo, const char *reason)
 {
 	int ret = -1;
-	if (vpninfo->ssl_fd != -1) {
+	if (vpninfo->ssl_fd >= 0) {
 		struct oc_text_buf *buf = buf_alloc();
 		buf_append_ift_hdr(buf, VENDOR_JUNIPER, 0x89);
 		if (!buf_error(buf))
