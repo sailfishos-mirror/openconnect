@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# openconnect will call this script with the follow command-line
+# openconnect will call this script with the following command-line
 # arguments, which are needed to populate the contents of the
 # HIP report:
 #
