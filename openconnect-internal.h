@@ -1154,7 +1154,7 @@ static inline int set_fd_cloexec(int fd)
 static inline int tun_is_up(struct openconnect_info *vpninfo)
 {
 #ifdef _WIN32
-	return vpninfo->tun_fh != NULL;
+	return vpninfo->tun_fh != INVALID_HANDLE_VALUE;
 #else
 	return vpninfo->tun_fd != -1;
 #endif
