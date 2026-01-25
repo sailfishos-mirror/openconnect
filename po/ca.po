@@ -4173,7 +4173,7 @@ msgstr ""
 
 #: main.c:1130
 msgid "Disable HTTP connection reuse"
-msgstr ""
+msgstr "Inhabilita la reutilització de la connexió HTTP"
 
 #: main.c:1131
 msgid "Do not attempt XML POST authentication"
@@ -4417,6 +4417,8 @@ msgid ""
 "Disabling all HTTP connection reuse due to --no-http-keepalive option.\n"
 "If this helps, please report to <%s>.\n"
 msgstr ""
+"Deshabiliteu la reutilització de totes les connexions HTTP degut a \n"
+"l'opció --no-http-keepalive. Si això ajuda, informeu <%s>.\n"
 
 #: main.c:2138
 #, c-format

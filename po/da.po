@@ -4179,7 +4179,7 @@ msgstr ""
 
 #: main.c:1130
 msgid "Disable HTTP connection reuse"
-msgstr ""
+msgstr "Deaktivér genbrug af HTTP-forbindelse"
 
 #: main.c:1131
 msgid "Do not attempt XML POST authentication"
@@ -4433,6 +4433,8 @@ msgid ""
 "Disabling all HTTP connection reuse due to --no-http-keepalive option.\n"
 "If this helps, please report to <%s>.\n"
 msgstr ""
+"Deaktiverer al genbrug af HTTP-forbindelse pga. tilvalget --no-http-keepalive.\n"
+"Hvis det hjælper, så rapportér det venligst til <%s>.\n"
 
 #: main.c:2138
 #, c-format
