@@ -289,6 +289,8 @@ msgid ""
 "When SAML authentication is complete, specify destination form field by "
 "appending field_name to login URL.\n"
 msgstr ""
+"Når SAML-godkendelse er færdig, så angiv destinationens formularfelt ved at "
+"tilføje field_name til login-URL.\n"
 
 #: auth-globalprotect.c:167
 msgid "Please enter your username and password"

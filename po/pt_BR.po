@@ -297,6 +297,8 @@ msgid ""
 "When SAML authentication is complete, specify destination form field by "
 "appending field_name to login URL.\n"
 msgstr ""
+"Quando autenticação SAML for completada, especifique o campo de formulário "
+"do destino anexado nome_do_campo para entrar na URL.\n"
 
 #: auth-globalprotect.c:167
 msgid "Please enter your username and password"
