@@ -528,6 +528,8 @@ struct openconnect_info {
 	time_t last_trojan;
 	int no_http_keepalive;
 	int dump_http_traffic;
+	int tcp_keepalive_enabled;
+	int tcp_keepalive_idle;
 
 	int token_mode;
 	int token_bypassed;
@@ -1410,6 +1412,7 @@ int lzs_compress(unsigned char *dst, int dstlen, const unsigned char *src, int s
 /* ssl.c */
 unsigned string_is_hostname(const char *str);
 int connect_https_socket(struct openconnect_info *vpninfo);
+int set_tcp_keepalive(struct openconnect_info *vpninfo, int ssl_sock);
 int __attribute__ ((format(printf, 4, 5)))
     request_passphrase(struct openconnect_info *vpninfo, const char *label,
 		       char **response, const char *fmt, ...);

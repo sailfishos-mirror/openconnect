@@ -2482,6 +2482,9 @@ int openconnect_open_https(struct openconnect_info *vpninfo)
 	if (err)
 		return err;
 
+	/* Ensure that this channel remains open even when most traffic passes through UDP */
+	set_tcp_keepalive(vpninfo, ssl_sock);
+
 	vpninfo->ssl_fd = ssl_sock;
 
 	vpninfo->ssl_read = openconnect_gnutls_read;

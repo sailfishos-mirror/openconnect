@@ -261,6 +261,51 @@ static int set_tcp_nodelay(struct openconnect_info *vpninfo, int ssl_sock)
 	return 0;
 }
 
+int set_tcp_keepalive(struct openconnect_info *vpninfo, int ssl_sock)
+{
+	int keepalive = vpninfo->tcp_keepalive_enabled;
+	if (!keepalive) {
+		return 0;
+	}
+
+	int keepidle = vpninfo->tcp_keepalive_idle;
+
+	/* Enable TCP keepalive */
+	if (setsockopt(ssl_sock, SOL_SOCKET, SO_KEEPALIVE, (void *)&keepalive, sizeof(keepalive)) < 0) {
+		vpn_perror(vpninfo,
+			   _("Failed setsockopt(SO_KEEPALIVE) on TLS socket:"));
+#ifdef _WIN32
+		return WSAGetLastError();
+#else
+		return -errno;
+#endif
+	}
+
+#ifdef TCP_KEEPIDLE
+	/* Linux, FreeBSD */
+	if (keepidle >= 0 && setsockopt(ssl_sock, IPPROTO_TCP, TCP_KEEPIDLE, (void *)&keepidle, sizeof(keepidle)) < 0) {
+		vpn_perror(vpninfo,
+			_("Failed setsockopt(TCP_KEEPIDLE) on TLS socket:"));
+	}
+#elif defined(TCP_KEEPALIVE)
+	/* macOS */
+	if (keepidle >= 0 && setsockopt(ssl_sock, IPPROTO_TCP, TCP_KEEPALIVE, (void *)&keepidle, sizeof(keepidle)) < 0) {
+		vpn_perror(vpninfo,
+			_("Failed setsockopt(TCP_KEEPALIVE) on TLS socket:"));
+	}
+#endif
+
+	if (keepidle > 0) {
+		vpn_progress(vpninfo, PRG_DEBUG,
+			   _("TCP keepalive enabled: idle=%ds\n"), keepidle);
+	} else {
+		vpn_progress(vpninfo, PRG_DEBUG,
+			   _("TCP keepalive enabled with system defaults\n"));
+	}
+
+	return 0;
+}
+
 
 int connect_https_socket(struct openconnect_info *vpninfo)
 {

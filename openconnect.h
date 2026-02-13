@@ -653,6 +653,7 @@ const char *openconnect_get_ifname(struct openconnect_info *);
 void openconnect_set_reqmtu(struct openconnect_info *, int reqmtu);
 void openconnect_set_dpd(struct openconnect_info *, int min_seconds);
 void openconnect_set_trojan_interval(struct openconnect_info *, int seconds);
+void openconnect_set_tcp_keepalive(struct openconnect_info *, int seconds);
 int openconnect_get_idle_timeout(struct openconnect_info *);
 time_t openconnect_get_auth_expiration(struct openconnect_info *);
 

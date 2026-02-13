@@ -2059,6 +2059,9 @@ int openconnect_open_https(struct openconnect_info *vpninfo)
 		closesocket(ssl_sock);
 		return -ENOMEM;
 	}
+	
+	/* Ensure that this channel remains open even when most traffic passes through UDP */
+	set_tcp_keepalive(vpninfo, ssl_sock);
 
 	vpninfo->ssl_fd = ssl_sock;
 	vpninfo->https_ssl = https_ssl;
@@ -2066,6 +2069,7 @@ int openconnect_open_https(struct openconnect_info *vpninfo)
 	vpninfo->ssl_read = openconnect_openssl_read;
 	vpninfo->ssl_write = openconnect_openssl_write;
 	vpninfo->ssl_gets = openconnect_openssl_gets;
+
 
 
 	vpn_progress(vpninfo, PRG_INFO, _("Connected to HTTPS on %s with ciphersuite %s\n"),
