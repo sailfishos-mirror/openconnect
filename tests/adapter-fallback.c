@@ -66,9 +66,9 @@ struct openconnect_info {
 #include "../tun-win32.c"
 
 #define NORMAL_CASE L"www.vpnserver.org"
-#define EDGE_CASE L"AVeryLongAdapterWhoseNameConsistsOfExactlyOneHundredTwentySevenCharactersAndNeedsTooManyWordsToSatifyThisLoooongParticularLimit"
-#define LONG_CASE L"AnotherVeryLongAdapterWhoseNameConsistsOfExactlyOneHundredTwentySevenCharactersAndNeedsTooManyWordsToSatifyThisLoooongParticularLimit+PlusMoreToTruncate"
-#define LONG_CASE_EXPECT L"AnotherVeryLongAdapterWhoseNameConsistsOfExactlyOneHundredTwentySevenCharactersAndNeedsTooManyWordsToSatifyThisLoooongParticula"
+#define EDGE_CASE L"AVeryLongAdapterWhoseNameConsistsOfExactlyOneHundredTwentySevenCharactersAndNeedsTooManyWordsToSatisfyThisLooongParticularLimit"
+#define LONG_CASE L"AnotherVeryLongAdapterWhoseNameConsistsOfExactlyOneHundredTwentySevenCharactersAndNeedsTooManyWordsToSatisfyThisLooongParticularLimit+PlusMoreToTruncate"
+#define LONG_CASE_EXPECT L"AnotherVeryLongAdapterWhoseNameConsistsOfExactlyOneHundredTwentySevenCharactersAndNeedsTooManyWordsToSatisfyThisLooongParticula"
 #define WC_ZERO 0xfeff0030 /* DIGIT ZERO (U+0030) */
 #define WC_GCLEF_HIGH 0xD834 /* U+1D11E Musical Symbol G Clef = 0xD834 0xDD1E */
 #define WC_GCLEF_LOW  0xDD1E /* U+1D11E Musical Symbol G Clef = 0xD834 0xDD1E */
