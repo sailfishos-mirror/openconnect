@@ -500,18 +500,21 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 						     "openconnect-devel@lists.infradead.org");
 			}
 		} else if (xmlnode_is_named(xml_node, "fos")) {
-			char platform[80], *p = platform, *e = platform + 80;
+			struct oc_text_buf *platform = buf_alloc();
 			if (!xmlnode_get_prop(xml_node, "platform", &s)) {
-				p+=snprintf(p, e-p, "%s", s);
-				if (!xmlnode_get_prop(xml_node, "major", &s))  p+=snprintf(p, e-p, " v%s", s);
-				if (!xmlnode_get_prop(xml_node, "minor", &s))  p+=snprintf(p, e-p, ".%s", s);
-				if (!xmlnode_get_prop(xml_node, "patch", &s))  p+=snprintf(p, e-p, ".%s", s);
-				if (!xmlnode_get_prop(xml_node, "build", &s))  p+=snprintf(p, e-p, " build %s", s);
-				if (!xmlnode_get_prop(xml_node, "branch", &s)) p+=snprintf(p, e-p, " branch %s", s);
-				if (!xmlnode_get_prop(xml_node, "mr_num", &s))    snprintf(p, e-p, " mr_num %s", s);
-				vpn_progress(vpninfo, PRG_INFO,
-					     _("Reported platform is %s\n"), platform);
+				buf_append(platform, "%s", s);
+				if (!xmlnode_get_prop(xml_node, "major", &s))  buf_append(platform, " v%s", s);
+				if (!xmlnode_get_prop(xml_node, "minor", &s))  buf_append(platform, ".%s", s);
+				if (!xmlnode_get_prop(xml_node, "patch", &s))  buf_append(platform, ".%s", s);
+				if (!xmlnode_get_prop(xml_node, "build", &s))  buf_append(platform, " build %s", s);
+				if (!xmlnode_get_prop(xml_node, "branch", &s)) buf_append(platform, " branch %s", s);
+				if (!xmlnode_get_prop(xml_node, "mr_num", &s)) buf_append(platform, " mr_num %s", s);
+				if (!buf_error(platform))
+					vpn_progress(vpninfo, PRG_INFO,
+						     _("Reported platform is %s\n"),
+						     platform->data);
 			}
+			buf_free(platform);
 		} else if (xmlnode_is_named(xml_node, "ipv4")) {
 			for (x = xml_node->children; x; x=x->next) {
 				if (xmlnode_is_named(x, "assigned-addr") && !xmlnode_get_prop(x, "ipv4", &s)) {

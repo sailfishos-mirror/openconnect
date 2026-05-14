@@ -237,26 +237,16 @@ static int process_split_xxclude(struct openconnect_info *vpninfo,
 
 static void setenv_cstp_opts(struct openconnect_info *vpninfo)
 {
-	char *env_buf;
-	int buflen = 0;
-	int bufofs = 0;
+	struct oc_text_buf *env_buf = buf_alloc();
 	struct oc_vpn_option *opt;
 
 	for (opt = vpninfo->cstp_options; opt; opt = opt->next)
-		buflen += 2 + strlen(opt->option) + strlen(opt->value);
+		buf_append(env_buf, "%s=%s\n", opt->option, opt->value);
 
-	env_buf = malloc(buflen + 1);
-	if (!env_buf)
-		return;
+	if (!buf_error(env_buf))
+		script_setenv(vpninfo, "CISCO_CSTP_OPTIONS", env_buf->data, 0, 0);
 
-	env_buf[buflen] = 0;
-
-	for (opt = vpninfo->cstp_options; opt; opt = opt->next)
-		bufofs += snprintf(env_buf + bufofs, buflen - bufofs,
-				   "%s=%s\n", opt->option, opt->value);
-
-	script_setenv(vpninfo, "CISCO_CSTP_OPTIONS", env_buf, 0, 0);
-	free(env_buf);
+	buf_free(env_buf);
 }
 
 static unsigned char nybble(unsigned char n)
