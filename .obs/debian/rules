@@ -15,7 +15,7 @@ override_dh_auto_configure:
 		--without-gnutls-version-check \
 		--with-vpnc-script=/usr/share/vpnc-scripts/vpnc-script
 	$(MAKE) version.c
-	sed -i -e 's|".*"|"v$(DEB_VERSION)"|' version.c
+	sed -i -e 's|".*"|"v$(DEB_VERSION_UPSTREAM)"|' version.c
 
 override_dh_installchangelogs:
 	dh_installchangelogs www/changelog.html
