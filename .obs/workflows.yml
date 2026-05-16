@@ -1,7 +1,7 @@
 pull_request:
   steps:
     - branch_package:
-        source_project: home:bluca:openconnect
+        source_project: network:vpn:openconnect
         source_package: openconnect
         target_project: home:bluca:openconnect:ci
   filters:
@@ -9,17 +9,10 @@ pull_request:
 rebuild:
   steps:
     - trigger_services:
-        project: home:bluca:openconnect
+        project: network:vpn:openconnect
         package: openconnect
   filters:
     event: push
     branches:
       only:
         - master
-release:
-  steps:
-    - trigger_services:
-        project: home:bluca:openconnect:release
-        package: openconnect
-  filters:
-    event: tag_push
