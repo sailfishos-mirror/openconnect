@@ -29,7 +29,7 @@ from dataclasses import dataclass
 
 host, port, *cert_and_maybe_keyfile = sys.argv[1:]
 
-context = ssl.SSLContext()
+context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
 context.load_cert_chain(*cert_and_maybe_keyfile)
 
 app = Flask(__name__)
@@ -39,7 +39,7 @@ app.config.update(SECRET_KEY=b'fake', DEBUG=True, HOST=host, PORT=int(port), SES
 ########################################
 
 def cookify(jsonable):
-    return base64.urlsafe_b64encode(dumps(jsonable).encode())
+    return base64.urlsafe_b64encode(dumps(jsonable).encode()).decode()
 
 
 def check_form_against_session(*fields, use_query=False, on_failure=None):
@@ -311,7 +311,7 @@ def gateway_login():
                    ipv6_support=request.form.get('ipv6-support'), preferred_ipv6=preferred_ipv6)
     session.setdefault('portal-prelogonuserauthcookie', '')
     session.setdefault('portal-userauthcookie', '')
-    session['authcookie'] = cookify(dict(session)).decode()
+    session['authcookie'] = cookify(dict(session))
 
     return '''<?xml version="1.0" encoding="utf-8"?> <jnlp> <application-desc>
         <argument>(null)</argument>
