@@ -909,7 +909,10 @@ void openconnect_vpninfo_free(struct openconnect_info *vpninfo)
 			pskc_done(vpninfo->pskc);
 		else
 #endif /* HAVE_LIBPSKC */
-		free_pass(&vpninfo->oath_secret);
+		{
+			clear_mem(vpninfo->oath_secret, vpninfo->oath_secret_len);
+			free(vpninfo->oath_secret);
+		}
 	}
 #ifdef HAVE_LIBPCSCLITE
 	release_pcsc_ctx(vpninfo);
