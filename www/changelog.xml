@@ -15,6 +15,12 @@
 <ul>
    <li><b>OpenConnect HEAD</b>
      <ul>
+       <li><i>No changelog entries yet</i></li>
+     </ul><br/>
+  </li>
+  <li><b><a href="https://www.infradead.org/openconnect/download/openconnect-9.20.tar.gz">OpenConnect v9.20</a></b>
+     <i>(<a href="https://www.infradead.org/openconnect/download/openconnect-9.20.tar.gz.asc">PGP signature</a>)</i> &#8212; 2026-06-13
+     <ul>
        <li>Use <tt>oc_text_buf</tt> for dynamic string construction instead of unsafe <tt>snprintf()</tt> cursor arithmetic.</li>
        <li>Handle short reads from Pulse server during packet reassembly (<a href="https://gitlab.com/openconnect/openconnect/-/issues/456">#456</a>, <a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/608">!608</a>).</li>
        <li>Support non-default TOTP period from PSKC token data (<a href="https://gitlab.com/openconnect/openconnect/-/issues/843">#843</a>).</li>
