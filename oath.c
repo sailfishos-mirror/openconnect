@@ -175,6 +175,8 @@ static int pskc_decode(struct openconnect_info *vpninfo, const char *token_str,
 	const char *key_algo;
 	const char *want_algo;
 	size_t klen;
+	int present;
+	uint32_t interval;
 
 	if (pskc_global_init())
 		return -EIO;
@@ -209,6 +211,10 @@ static int pskc_decode(struct openconnect_info *vpninfo, const char *token_str,
 	}
 	vpninfo->token_time = pskc_get_key_data_counter(key, NULL);
 
+	interval = pskc_get_key_data_timeinterval(key, &present);
+	if (present && interval > 0)
+		vpninfo->token_period = interval;
+
 	vpninfo->pskc = container;
 	vpninfo->pskc_key = key;
 
@@ -234,6 +240,7 @@ int set_oath_mode(struct openconnect_info *vpninfo, const char *token_str,
 
 	if (strncmp(token_str, "<?xml", 5) == 0) {
 		vpninfo->hotp_secret_format = HOTP_SECRET_PSKC;
+		vpninfo->token_period = 30;
 		ret = pskc_decode(vpninfo, token_str, toklen, token_mode);
 		if (ret)
 			return -EINVAL;
@@ -298,6 +305,7 @@ int set_oath_mode(struct openconnect_info *vpninfo, const char *token_str,
 	}
 
 	vpninfo->token_mode = token_mode;
+	vpninfo->token_period = 30;
 	return 0;
 }
 
@@ -316,7 +324,7 @@ int can_gen_totp_code(struct openconnect_info *vpninfo,
 	} else if (vpninfo->token_tries == 1) {
 		vpn_progress(vpninfo, PRG_DEBUG,
 			     _("OK to generate NEXT tokencode\n"));
-		vpninfo->token_time += 30;
+		vpninfo->token_time += vpninfo->token_period;
 	} else {
 		/* limit the number of retries, to avoid account lockouts */
 		vpn_progress(vpninfo, PRG_INFO,
@@ -379,8 +387,8 @@ int do_gen_totp_code(struct openconnect_info *vpninfo,
 
 	vpn_progress(vpninfo, PRG_INFO, _("Generating OATH TOTP token code\n"));
 
-	/* XXX: Support non-standard start time and step size */
-	challenge = vpninfo->token_time / 30;
+	/* XXX: Support non-standard start time */
+	challenge = vpninfo->token_time / vpninfo->token_period;
 
 	if (gen_hotp(vpninfo, challenge, tokencode))
 		return -EIO;

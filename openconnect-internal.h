@@ -533,6 +533,7 @@ struct openconnect_info {
 	int token_bypassed;
 	int token_tries;
 	time_t token_time;
+	int token_period;
 #ifdef HAVE_LIBSTOKEN
 	struct stoken_ctx *stoken_ctx;
 	char *stoken_pin;
