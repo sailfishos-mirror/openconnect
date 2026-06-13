@@ -26,9 +26,14 @@ from textwrap import dedent
 import xmltodict
 import OpenSSL
 from OpenSSL.crypto import X509, X509Store, X509StoreContext, load_certificate
-from cryptography.hazmat.primitives.serialization.pkcs7 import load_der_pkcs7_certificates
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import padding, ec, utils
+try:
+    from cryptography.hazmat.primitives.serialization.pkcs7 import load_der_pkcs7_certificates
+    from cryptography.hazmat.primitives import hashes
+    from cryptography.hazmat.primitives.asymmetric import padding, ec
+    USE_CRYPTOGRAPHY = True
+except ImportError:
+    from OpenSSL.crypto import _lib, load_pkcs7_data, FILETYPE_ASN1, verify
+    USE_CRYPTOGRAPHY = False
 
 app = Flask(__name__)
 app.config.update(SECRET_KEY=b'fake', DEBUG=True, SESSION_COOKIE_NAME='fake')
@@ -52,8 +57,21 @@ def get_certs(certs_der):
     #
     # Testing shows that Cisco servers can handle any order
 
-    crypto_certs = load_der_pkcs7_certificates(certs_der)
-    pycerts = [X509.from_cryptography(c) for c in crypto_certs]
+    if USE_CRYPTOGRAPHY:
+        crypto_certs = load_der_pkcs7_certificates(certs_der)
+        pycerts = [X509.from_cryptography(c) for c in crypto_certs]
+    else:
+        p7 = load_pkcs7_data(FILETYPE_ASN1, certs_der)
+        if p7.type_is_signed():
+            certs = p7._pkcs7.d.sign.cert
+        elif p7.type_is_signedAndEnveloped():
+            certs = p7._pkcs7.d.signed_and_enveloped.cert
+        else:
+            return ()
+        pycerts = []
+        for i in range(_lib.sk_X509_num(certs)):
+            cert = _lib.X509_dup(_lib.sk_X509_value(certs, i))
+            pycerts.append(X509._from_raw_x509_ptr(cert))
 
     # Ensure that we have exactly one usercert, and that
     # all the rest are (possibly-intermediate) CA certs
@@ -195,12 +213,15 @@ def auth_reply(dict_req):
 
     # Verify that the client has signed the INITIAL_RESPONSE using the private key corresponding to
     # the appropriate certificate (rooted in one of the ca_certs), and using the chosen hash algorithm.
-    hash_algs = {'sha256': hashes.SHA256(), 'sha384': hashes.SHA384(), 'sha512': hashes.SHA512()}
-    pub_key = certs[0].get_pubkey().to_cryptography_key()
-    if isinstance(pub_key, ec.EllipticCurvePublicKey):
-        pub_key.verify(signature, INITIAL_RESPONSE.encode(), ec.ECDSA(hash_algs[algo]))
+    if USE_CRYPTOGRAPHY:
+        hash_algs = {'sha256': hashes.SHA256(), 'sha384': hashes.SHA384(), 'sha512': hashes.SHA512()}
+        pub_key = certs[0].get_pubkey().to_cryptography_key()
+        if isinstance(pub_key, ec.EllipticCurvePublicKey):
+            pub_key.verify(signature, INITIAL_RESPONSE.encode(), ec.ECDSA(hash_algs[algo]))
+        else:
+            pub_key.verify(signature, INITIAL_RESPONSE.encode(), padding.PKCS1v15(), hash_algs[algo])
     else:
-        pub_key.verify(signature, INITIAL_RESPONSE.encode(), padding.PKCS1v15(), hash_algs[algo])
+        verify(certs[0], signature, INITIAL_RESPONSE.encode(), algo)
 
     return AUTH_COMPLETE_RESPONSE
 
