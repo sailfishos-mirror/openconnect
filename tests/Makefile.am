@@ -69,14 +69,15 @@ EXTRA_DIST = certs/ca.pem certs/ca-key.pem certs/user-cert.pem $(USER_KEYS) $(US
 	softhsm2.conf.in softhsm ns.sh configs/test-dtls-psk.config \
 	scripts/vpnc-script scripts/vpnc-script-detect-disconnect \
 	suppressions.lsan fake-fortinet-server.py fake-f5-server.py fake-juniper-server.py \
-	fake-juniper-sso-server.py fake-tncc.py fake-gp-server.py fake-cisco-server.py
+	fake-juniper-sso-server.py fake-tncc.py fake-gp-server.py fake-cisco-server.py \
+	fake-pulse-server.py
 
 dist_check_SCRIPTS = autocompletion symbols
 TESTS = autocompletion symbols
 
-dist_check_SCRIPTS += dtls-psk sigterm
+dist_check_SCRIPTS += dtls-psk sigterm pulse-ping
 if HAVE_NETNS
-TESTS += dtls-psk sigterm
+TESTS += dtls-psk sigterm pulse-ping
 endif
 
 dist_check_SCRIPTS += ppp-over-tls ppp-over-tls-sync

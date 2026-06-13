@@ -55,11 +55,11 @@
 #define EAP_SUCCESS 3
 #define EAP_FAILURE 4
 
-#define EAP_TYPE_IDENTITY 1
-#define EAP_TYPE_GTC 6
-#define EAP_TYPE_TLS 0x0d
-#define EAP_TYPE_TTLS 0x15
-#define EAP_TYPE_EXPANDED 0xfe
+#define EAP_TYPE_IDENTITY ((uint32_t)1)
+#define EAP_TYPE_GTC ((uint32_t)6)
+#define EAP_TYPE_TLS ((uint32_t)0x0d)
+#define EAP_TYPE_TTLS ((uint32_t)0x15)
+#define EAP_TYPE_EXPANDED ((uint32_t)0xfe)
 
 #define EXPANDED_JUNIPER ((EAP_TYPE_EXPANDED << 24) | VENDOR_JUNIPER)
 
