@@ -226,6 +226,108 @@ static int pskc_decode(struct openconnect_info *vpninfo, const char *token_str,
 #endif /* HAVE_LIBPSKC */
 }
 
+static int parse_otpauth_uri(struct openconnect_info *vpninfo,
+			     const char *uri, int token_mode)
+{
+	char *secret = NULL, *p, *uricopy;
+	int toklen, ret;
+
+	/* Strip trailing newline/CR (from file read) */
+	toklen = strlen(uri);
+	while (toklen && (uri[toklen - 1] == '\n' || uri[toklen - 1] == '\r'))
+		toklen--;
+
+	uricopy = strndup(uri, toklen);
+	if (!uricopy)
+		return -ENOMEM;
+	uri = uricopy;
+
+	/* Validate scheme matches token_mode */
+	if (token_mode == OC_TOKEN_MODE_TOTP && strncasecmp(uri + 10, "totp/", 5)) {
+		ret = -EINVAL;
+		goto out;
+	}
+	if (token_mode == OC_TOKEN_MODE_HOTP && strncasecmp(uri + 10, "hotp/", 5)) {
+		ret = -EINVAL;
+		goto out;
+	}
+
+	vpninfo->token_period = 30;
+	vpninfo->oath_hmac_alg = OATH_ALG_HMAC_SHA1;
+
+	/* Extract label (path component between type/ and ?) */
+	p = strchr(uri + 15, '?');
+	if (!p) {
+		ret = -EINVAL;
+		goto out;
+	}
+	free(vpninfo->oath_label);
+	vpninfo->oath_label = strndup(uri + 15, p - (uri + 15));
+	p++;
+
+	/* Parse query parameters */
+	while (*p) {
+		if (!strncasecmp(p, "secret=", 7)) {
+			p += 7;
+			secret = p;
+			while (*p && *p != '&') p++;
+		} else if (!strncasecmp(p, "period=", 7)) {
+			p += 7;
+			vpninfo->token_period = atoi(p);
+			if (vpninfo->token_period <= 0)
+				vpninfo->token_period = 30;
+			while (*p && *p != '&') p++;
+		} else if (!strncasecmp(p, "algorithm=", 10)) {
+			p += 10;
+			if (!strncasecmp(p, "SHA256", 6))
+				vpninfo->oath_hmac_alg = OATH_ALG_HMAC_SHA256;
+			else if (!strncasecmp(p, "SHA512", 6))
+				vpninfo->oath_hmac_alg = OATH_ALG_HMAC_SHA512;
+			else if (!strncasecmp(p, "SHA1", 4))
+				vpninfo->oath_hmac_alg = OATH_ALG_HMAC_SHA1;
+			else {
+				ret = -EINVAL;
+				goto out;
+			}
+			while (*p && *p != '&') p++;
+		} else if (!strncasecmp(p, "counter=", 8)) {
+			p += 8;
+			vpninfo->token_time = strtol(p, NULL, 10);
+			while (*p && *p != '&') p++;
+		} else if (!strncasecmp(p, "issuer=", 7)) {
+			char *start;
+			int len;
+			p += 7;
+			start = p;
+			while (*p && *p != '&') p++;
+			len = p - start;
+			free(vpninfo->oath_issuer);
+			vpninfo->oath_issuer = strndup(start, len);
+		} else {
+			while (*p && *p != '&') p++;
+		}
+		if (*p == '&') p++;
+	}
+
+	if (!secret) {
+		ret = -EINVAL;
+		goto out;
+	}
+
+	/* secret is always base32 in otpauth URIs */
+	toklen = 0;
+	while (secret[toklen] && secret[toklen] != '&')
+		toklen++;
+	ret = decode_base32(vpninfo, secret, toklen);
+	if (!ret) {
+		vpninfo->hotp_secret_format = HOTP_SECRET_OTPAUTH;
+		vpninfo->token_mode = token_mode;
+	}
+ out:
+	free(uricopy);
+	return ret;
+}
+
 int set_oath_mode(struct openconnect_info *vpninfo, const char *token_str,
 		  oc_token_mode_t token_mode)
 {
@@ -238,6 +340,7 @@ int set_oath_mode(struct openconnect_info *vpninfo, const char *token_str,
 	while (toklen && isspace((int)(unsigned char)token_str[toklen-1]))
 		toklen--;
 
+	/* First the self-contained standard forms (PSKC and otpauth:// URIs) */
 	if (strncmp(token_str, "<?xml", 5) == 0) {
 		vpninfo->hotp_secret_format = HOTP_SECRET_PSKC;
 		vpninfo->token_period = 30;
@@ -248,6 +351,10 @@ int set_oath_mode(struct openconnect_info *vpninfo, const char *token_str,
 		return 0;
 	}
 
+	if (!strncasecmp(token_str, "otpauth://", 10))
+		return parse_otpauth_uri(vpninfo, token_str, token_mode);
+
+	/* Now the OpenConnect special forms, starting with HMAC type... */
 	if (!strncasecmp(token_str, "sha1:", 5)) {
 		token_str += 5;
 		toklen -= 5;
@@ -478,6 +585,31 @@ static char *regen_hotp_secret(struct openconnect_info *vpninfo)
 		buf_append_bytes(buf, vpninfo->oath_secret,
 				 vpninfo->oath_secret_len);
 		break;
+
+	case HOTP_SECRET_OTPAUTH:
+		buf = buf_alloc();
+		buf_append(buf, "otpauth://%s/%s?secret=",
+			   vpninfo->token_mode == OC_TOKEN_MODE_HOTP ? "hotp" : "totp",
+			   vpninfo->oath_label ? vpninfo->oath_label : "openconnect");
+		buf_append_base32(buf, vpninfo->oath_secret,
+				  vpninfo->oath_secret_len);
+		if (vpninfo->token_mode == OC_TOKEN_MODE_HOTP)
+			buf_append(buf, "&counter=%ld", (long)vpninfo->token_time);
+		if (vpninfo->token_period != 30)
+			buf_append(buf, "&period=%d", vpninfo->token_period);
+		if (vpninfo->oath_hmac_alg == OATH_ALG_HMAC_SHA256)
+			buf_append(buf, "&algorithm=SHA256");
+		else if (vpninfo->oath_hmac_alg == OATH_ALG_HMAC_SHA512)
+			buf_append(buf, "&algorithm=SHA512");
+		if (vpninfo->oath_issuer)
+			buf_append(buf, "&issuer=%s", vpninfo->oath_issuer);
+		buf_append(buf, "\n");
+		if (!buf_error(buf)) {
+			new_secret = buf->data;
+			buf->data = NULL;
+		}
+		buf_free(buf);
+		return new_secret;
 
 	case HOTP_SECRET_PSKC:
 #ifdef HAVE_LIBPSKC

@@ -1,0 +1,122 @@
+#!/bin/sh
+#
+# Copyright © 2026 David Woodhouse
+#
+# This file is part of openconnect.
+#
+# This is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public License
+# as published by the Free Software Foundation; either version 2.1 of
+# the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>
+
+# This test uses LD_PRELOAD
+PRELOAD=1
+srcdir=${srcdir:-.}
+top_builddir=${top_builddir:-..}
+
+. `dirname $0`/common.sh
+
+FINGERPRINT="--servercert=pin-sha256:xp3scfzy3rO"
+CERT=$certdir/server-cert.pem
+KEY=$certdir/server-key.pem
+
+echo "Testing OATH token generation and persistence ..."
+
+OCSERV=${srcdir}/fake-juniper-server.py
+launch_simple_sr_server $ADDRESS 443 $CERT $KEY > /dev/null 2>&1
+PID=$!
+wait_server $PID
+
+cleanup() {
+    test -n "${PID}" && kill ${PID} >/dev/null 2>&1
+    rm -f "$TOKFILE"
+}
+trap cleanup EXIT
+
+SERVURL="https://$ADDRESS:443"
+TOKFILE="${SOCKDIR}/token.tmp"
+
+# Configure server to require token in frmTotpToken form
+curl -sk $SERVURL/CONFIGURE -d token_form=frmTotpToken
+
+# RFC 4226 test vector: secret = "12345678901234567890" (ASCII) =
+#   base32: GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ
+# Counter 0 → 755224, Counter 1 → 287082
+
+RFC_SECRET="GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ"
+
+#
+# Test 1: HOTP with base32: prefix (existing format)
+#
+echo -n "HOTP base32 format... "
+echo "base32:${RFC_SECRET},0" > "$TOKFILE"
+( echo "test" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT -q $SWRESOLVE sockwrap:443 \
+    -u test $FINGERPRINT --token-mode=hotp --token-secret=@$TOKFILE \
+    --cookieonly >/dev/null 2>&1) ||
+    fail $PID "HOTP base32 auth failed"
+# Check counter was incremented
+grep -q ',1$' "$TOKFILE" || fail $PID "HOTP counter not incremented (expected ,1)"
+echo ok
+
+#
+# Test 2: HOTP with otpauth:// URI
+#
+echo -n "HOTP otpauth:// URI... "
+echo "otpauth://hotp/Test:user@example.com?secret=${RFC_SECRET}&counter=1" > "$TOKFILE"
+( echo "test" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT -q $SWRESOLVE sockwrap:443 \
+    -u test $FINGERPRINT --token-mode=hotp --token-secret=@$TOKFILE \
+    --cookieonly >/dev/null 2>&1) ||
+    fail $PID "HOTP otpauth auth failed"
+# Check counter was incremented and URI preserved
+grep -q 'otpauth://hotp/Test:user@example.com' "$TOKFILE" ||
+    fail $PID "HOTP otpauth label not preserved"
+grep -q 'counter=2' "$TOKFILE" ||
+    fail $PID "HOTP otpauth counter not incremented (expected counter=2)"
+echo ok
+
+#
+# Test 3: HOTP with otpauth:// URI + algorithm=SHA256
+#
+echo -n "HOTP otpauth:// SHA256... "
+echo "otpauth://hotp/Issuer:sha256test?secret=${RFC_SECRET}&counter=0&algorithm=SHA256" > "$TOKFILE"
+( echo "test" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT -q $SWRESOLVE sockwrap:443 \
+    -u test $FINGERPRINT --token-mode=hotp --token-secret=@$TOKFILE \
+    --cookieonly >/dev/null 2>&1) ||
+    fail $PID "HOTP otpauth SHA256 auth failed"
+grep -q 'algorithm=SHA256' "$TOKFILE" ||
+    fail $PID "HOTP otpauth algorithm=SHA256 not preserved"
+grep -q 'counter=1' "$TOKFILE" ||
+    fail $PID "HOTP otpauth SHA256 counter not incremented"
+echo ok
+
+#
+# Test 4: TOTP with otpauth:// URI + period=60
+#
+echo -n "TOTP otpauth:// period=60... "
+( echo "test" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT -q $SWRESOLVE sockwrap:443 \
+    -u test $FINGERPRINT \
+    --token-mode=totp --token-secret="otpauth://totp/MyVPN:user?secret=${RFC_SECRET}&period=60" \
+    --cookieonly >/dev/null 2>&1) ||
+    fail $PID "TOTP otpauth period=60 auth failed"
+echo ok
+
+#
+# Test 5: TOTP with otpauth:// URI (default period)
+#
+echo -n "TOTP otpauth:// default period... "
+( echo "test" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT -q $SWRESOLVE sockwrap:443 \
+    -u test $FINGERPRINT \
+    --token-mode=totp --token-secret="otpauth://totp/Default:test?secret=${RFC_SECRET}" \
+    --cookieonly >/dev/null 2>&1) ||
+    fail $PID "TOTP otpauth default period auth failed"
+echo ok
+
+ok

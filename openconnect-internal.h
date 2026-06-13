@@ -546,6 +546,8 @@ struct openconnect_info {
 #endif
 	char *oath_secret;
 	size_t oath_secret_len;
+	char *oath_label;
+	char *oath_issuer;
 	enum {
 		OATH_ALG_HMAC_SHA1 = 0,
 		OATH_ALG_HMAC_SHA256,
@@ -556,6 +558,7 @@ struct openconnect_info {
 		HOTP_SECRET_RAW,
 		HOTP_SECRET_HEX,
 		HOTP_SECRET_PSKC,
+		HOTP_SECRET_OTPAUTH,
 	} hotp_secret_format; /* We need to give it back in the same form */
 
 #ifdef HAVE_LIBPCSCLITE
