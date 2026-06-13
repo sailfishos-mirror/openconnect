@@ -36,7 +36,9 @@
 #endif
 
 /* setsockopt and TCP_NODELAY */
-#ifndef _WIN32
+#ifdef _WIN32
+#include <mstcpip.h>
+#else
 #include <netinet/tcp.h>
 #include <sys/socket.h>
 #endif
@@ -293,6 +295,26 @@ int set_tcp_keepalive(struct openconnect_info *vpninfo, int ssl_sock)
 		vpn_perror(vpninfo,
 			_("Failed setsockopt(TCP_KEEPALIVE) on TLS socket:"));
 	}
+#elif defined(_WIN32)
+	/* Windows: no setsockopt(TCP_KEEPIDLE) on older versions; SIO_KEEPALIVE_VALS
+	   requires an interval, so match the Linux TCP_KEEPINTVL default (75s). */
+	if (keepidle >= 0) {
+		struct tcp_keepalive alive = {
+			.onoff = 1,
+			.keepalivetime = (u_long)keepidle * 1000,
+			.keepaliveinterval = 75000,
+		};
+		DWORD bytes;
+		if (WSAIoctl(ssl_sock, SIO_KEEPALIVE_VALS, &alive, sizeof(alive),
+			     NULL, 0, &bytes, NULL, NULL) == SOCKET_ERROR) {
+			vpn_perror(vpninfo,
+				_("Failed WSAIoctl(SIO_KEEPALIVE_VALS) on TLS socket:"));
+		}
+	}
+#else
+	/* Other unsupported platform */
+	#warning Do not know how to set keepidle on this platform
+	keepidle = 0;  // indicate that system defaults have been accepted.
 #endif
 
 	if (keepidle > 0) {
