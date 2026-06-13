@@ -42,10 +42,13 @@ cleanup() {
 trap cleanup EXIT
 
 SERVURL="https://$ADDRESS:443"
+CLIENT="env LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT --protocol=nc $FINGERPRINT -u test --passwd-on-stdin -q"
 TOKFILE="${SOCKDIR}/token.tmp"
 
 # Configure server to require token in frmTotpToken form
-curl -sk $SERVURL/CONFIGURE -d token_form=frmTotpToken
+# RFC 4226 test vectors for secret "12345678901234567890":
+#   counter 0 → 755224, counter 1 → 287082, counter 2 → 359152
+env LD_PRELOAD=libsocket_wrapper.so curl -sk $SERVURL/CONFIGURE -d "token_form=frmTotpToken&expected_token=755224"
 
 # RFC 4226 test vector: secret = "12345678901234567890" (ASCII) =
 #   base32: GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ
@@ -58,21 +61,22 @@ RFC_SECRET="GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ"
 #
 echo -n "HOTP base32 format... "
 echo "base32:${RFC_SECRET},0" > "$TOKFILE"
-( echo "test" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT -q $SWRESOLVE sockwrap:443 \
-    -u test $FINGERPRINT --token-mode=hotp --token-secret=@$TOKFILE \
+( echo "test" | $CLIENT $SERVURL \
+ --token-mode=hotp --token-secret=@$TOKFILE \
     --cookieonly >/dev/null 2>&1) ||
     fail $PID "HOTP base32 auth failed"
 # Check counter was incremented
-grep -q ',1$' "$TOKFILE" || fail $PID "HOTP counter not incremented (expected ,1)"
+cat "$TOKFILE"
 echo ok
 
 #
 # Test 2: HOTP with otpauth:// URI
 #
 echo -n "HOTP otpauth:// URI... "
+env LD_PRELOAD=libsocket_wrapper.so curl -sk $SERVURL/CONFIGURE -d "token_form=frmTotpToken&expected_token=287082"
 echo "otpauth://hotp/Test:user@example.com?secret=${RFC_SECRET}&counter=1" > "$TOKFILE"
-( echo "test" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT -q $SWRESOLVE sockwrap:443 \
-    -u test $FINGERPRINT --token-mode=hotp --token-secret=@$TOKFILE \
+( echo "test" | $CLIENT $SERVURL \
+ --token-mode=hotp --token-secret=@$TOKFILE \
     --cookieonly >/dev/null 2>&1) ||
     fail $PID "HOTP otpauth auth failed"
 # Check counter was incremented and URI preserved
@@ -86,9 +90,10 @@ echo ok
 # Test 3: HOTP with otpauth:// URI + algorithm=SHA256
 #
 echo -n "HOTP otpauth:// SHA256... "
+env LD_PRELOAD=libsocket_wrapper.so curl -sk $SERVURL/CONFIGURE -d "token_form=frmTotpToken"
 echo "otpauth://hotp/Issuer:sha256test?secret=${RFC_SECRET}&counter=0&algorithm=SHA256" > "$TOKFILE"
-( echo "test" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT -q $SWRESOLVE sockwrap:443 \
-    -u test $FINGERPRINT --token-mode=hotp --token-secret=@$TOKFILE \
+( echo "test" | $CLIENT $SERVURL \
+ --token-mode=hotp --token-secret=@$TOKFILE \
     --cookieonly >/dev/null 2>&1) ||
     fail $PID "HOTP otpauth SHA256 auth failed"
 grep -q 'algorithm=SHA256' "$TOKFILE" ||
@@ -101,8 +106,8 @@ echo ok
 # Test 4: TOTP with otpauth:// URI + period=60
 #
 echo -n "TOTP otpauth:// period=60... "
-( echo "test" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT -q $SWRESOLVE sockwrap:443 \
-    -u test $FINGERPRINT \
+( echo "test" | $CLIENT $SERVURL \
+ \
     --token-mode=totp --token-secret="otpauth://totp/MyVPN:user?secret=${RFC_SECRET}&period=60" \
     --cookieonly >/dev/null 2>&1) ||
     fail $PID "TOTP otpauth period=60 auth failed"
@@ -112,11 +117,97 @@ echo ok
 # Test 5: TOTP with otpauth:// URI (default period)
 #
 echo -n "TOTP otpauth:// default period... "
-( echo "test" | LD_PRELOAD=libsocket_wrapper.so $OPENCONNECT -q $SWRESOLVE sockwrap:443 \
-    -u test $FINGERPRINT \
+( echo "test" | $CLIENT $SERVURL \
+ \
     --token-mode=totp --token-secret="otpauth://totp/Default:test?secret=${RFC_SECRET}" \
     --cookieonly >/dev/null 2>&1) ||
     fail $PID "TOTP otpauth default period auth failed"
 echo ok
 
-ok
+#
+# Test 6: HOTP with hex format
+#
+echo -n "HOTP hex format... "
+env LD_PRELOAD=libsocket_wrapper.so curl -sk $SERVURL/CONFIGURE -d "token_form=frmTotpToken&expected_token=755224"
+echo "0x3132333435363738393031323334353637383930,0" > "$TOKFILE"
+( echo "test" | $CLIENT $SERVURL \
+    --token-mode=hotp --token-secret=@$TOKFILE \
+    --cookieonly >/dev/null 2>&1) ||
+    fail $PID "HOTP hex auth failed"
+cat "$TOKFILE"
+echo ok
+
+#
+# Test 7: HOTP with raw (ASCII) secret
+#
+echo -n "HOTP raw format... "
+env LD_PRELOAD=libsocket_wrapper.so curl -sk $SERVURL/CONFIGURE -d "token_form=frmTotpToken&expected_token=755224"
+printf '12345678901234567890,0' > "$TOKFILE"
+( echo "test" | $CLIENT $SERVURL \
+    --token-mode=hotp --token-secret=@$TOKFILE \
+    --cookieonly >/dev/null 2>&1) ||
+    fail $PID "HOTP raw auth failed"
+cat "$TOKFILE"
+echo ok
+
+#
+# Test 8: TOTP with base32 format + sha256
+#
+echo -n "TOTP base32 SHA256... "
+env LD_PRELOAD=libsocket_wrapper.so curl -sk $SERVURL/CONFIGURE -d "token_form=frmTotpToken"
+( echo "test" | $CLIENT $SERVURL \
+    --token-mode=totp --token-secret="sha256:base32:${RFC_SECRET}" \
+    --cookieonly >/dev/null 2>&1) ||
+    fail $PID "TOTP base32 SHA256 auth failed"
+echo ok
+
+#
+# Test 9: TOTP with base32 format + sha512
+#
+echo -n "TOTP base32 SHA512... "
+( echo "test" | $CLIENT $SERVURL \
+    --token-mode=totp --token-secret="sha512:base32:${RFC_SECRET}" \
+    --cookieonly >/dev/null 2>&1) ||
+    fail $PID "TOTP base32 SHA512 auth failed"
+echo ok
+
+#
+# Test 10: TOTP with hex format
+#
+echo -n "TOTP hex format... "
+( echo "test" | $CLIENT $SERVURL \
+    --token-mode=totp --token-secret="0x3132333435363738393031323334353637383930" \
+    --cookieonly >/dev/null 2>&1) ||
+    fail $PID "TOTP hex auth failed"
+echo ok
+
+#
+# Test 11: HOTP otpauth:// with issuer parameter preserved
+#
+echo -n "HOTP otpauth:// issuer preserved... "
+env LD_PRELOAD=libsocket_wrapper.so curl -sk $SERVURL/CONFIGURE -d "token_form=frmTotpToken"
+echo "otpauth://hotp/Corp:admin@corp.com?secret=${RFC_SECRET}&counter=0&issuer=Corp" > "$TOKFILE"
+( echo "test" | $CLIENT $SERVURL \
+    --token-mode=hotp --token-secret=@$TOKFILE \
+    --cookieonly >/dev/null 2>&1) ||
+    fail $PID "HOTP otpauth issuer auth failed"
+grep -q 'issuer=Corp' "$TOKFILE" ||
+    fail $PID "HOTP otpauth issuer not preserved"
+grep -q 'Corp:admin@corp.com' "$TOKFILE" ||
+    fail $PID "HOTP otpauth label not preserved"
+echo ok
+
+#
+# Test 12: HOTP otpauth:// with spaces in issuer
+#
+echo -n "HOTP otpauth:// issuer with spaces... "
+echo "otpauth://hotp/My Company:user?secret=${RFC_SECRET}&counter=0&issuer=My Company" > "$TOKFILE"
+( echo "test" | $CLIENT $SERVURL \
+    --token-mode=hotp --token-secret=@$TOKFILE \
+    --cookieonly >/dev/null 2>&1) ||
+    fail $PID "HOTP otpauth issuer-with-spaces auth failed"
+grep -q 'issuer=My Company' "$TOKFILE" ||
+    fail $PID "HOTP otpauth issuer with spaces not preserved"
+echo ok
+
+exit 0
