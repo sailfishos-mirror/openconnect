@@ -55,7 +55,7 @@ app.config.update(SECRET_KEY=b'fake', DEBUG=True, HOST=host, PORT=int(port), SES
 ########################################
 
 def cookify(jsonable):
-    return base64.urlsafe_b64encode(dumps(jsonable).encode())
+    return base64.urlsafe_b64encode(dumps(jsonable).encode()).decode()
 
 
 def require_SVPNCOOKIE(fn):
