@@ -4,7 +4,7 @@
 # Mads Bille Lundby <lundbymads@gmail.com>, 2009.
 # Kim Iskov <kimiskov@gmail.com>, 2010.
 # Joe Hansen <joedalton2@yahoo.dk>, 2011, 2012.
-# Alan Mortensen <alanmortensen.am@gmail.com>, 2017-19, 2022-25.
+# Alan Mortensen <over.tackinesss223@passinbox.com>, 2017-19, 2022-26.
 # scootergrisen, 2020-2021.
 #
 # Using -> Anvender (for at undgå forvirring om Bruger er navne- eller udsagnsord)
@@ -13,10 +13,10 @@ msgid ""
 msgstr ""
 "Project-Id-Version: network-manager-openconnect master\n"
 "Report-Msgid-Bugs-To: openconnect-devel@lists.infradead.org\n"
-"POT-Creation-Date: 2026-01-25 10:43-0800\n"
-"PO-Revision-Date: 2025-02-18 18:46+0100\n"
-"Last-Translator: Alan Mortensen <alanmortensen.am@gmail.com>\n"
-"Language-Team: Danish <dansk@dansk-gruppen.dk>\n"
+"POT-Creation-Date: 2026-06-13 10:04+0100\n"
+"PO-Revision-Date: 2026-03-14 12:58+0100\n"
+"Last-Translator: Alan Mortensen <over.tackinesss223@passinbox.com>\n"
+"Language-Team: Danish <danskgruppen@groups.io>\n"
 "Language: da\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -1116,6 +1116,8 @@ msgid ""
 "Received unexpected packet (type 0x%02x, %d bytes, expected %d) in MTU "
 "detection; skipping.\n"
 msgstr ""
+"Modtog en uventet pakke (type 0x%02x, %d byte, forventet %d) under MTU-"
+"detektering; springes over.\n"
 
 #: dtls.c:584
 #, c-format
@@ -1125,7 +1127,7 @@ msgstr "Modtog MTU DPD-sonde (%u byte)\n"
 #: dtls.c:592
 #, c-format
 msgid "No response to size %u after %d tries (min %d max %d)\n"
-msgstr ""
+msgstr "Intet svar til størrelse %u efter %d forsøg (min %d max %d)\n"
 
 #: dtls.c:602
 #, c-format
@@ -2297,174 +2299,174 @@ msgstr "Forbundet til HTTPS på %s med ciphersuite %s\n"
 msgid "Renegotiated SSL on %s with ciphersuite %s\n"
 msgstr "Genforhandlede SSL på %s med ciphersuite %s\n"
 
-#: gnutls.c:2697 openssl-pkcs11.c:206
+#: gnutls.c:2713 openssl-pkcs11.c:206
 #, c-format
 msgid "PIN required for %s"
 msgstr "PIN påkrævet til %s"
 
-#: gnutls.c:2701 openssl-pkcs11.c:209
+#: gnutls.c:2717 openssl-pkcs11.c:209
 msgid "Wrong PIN"
 msgstr "Forkert PIN"
 
-#: gnutls.c:2704
+#: gnutls.c:2720
 msgid "This is the final try before locking!"
 msgstr "Dette er sidste forsøg, før der låses!"
 
-#: gnutls.c:2706
+#: gnutls.c:2722
 msgid "Only a few tries left before locking!"
 msgstr "Kun nogle få forsøg tilbage, før der låses!"
 
-#: gnutls.c:2711 openssl-pkcs11.c:213
+#: gnutls.c:2727 openssl-pkcs11.c:213
 msgid "Enter PIN:"
 msgstr "Indtast PIN:"
 
-#: gnutls.c:2797 openssl.c:2199
+#: gnutls.c:2813 openssl.c:2199
 msgid "Unsupported OATH HMAC algorithm\n"
 msgstr "OATH HMAC-algoritmen understøttes ikke\n"
 
-#: gnutls.c:2806
+#: gnutls.c:2822
 #, c-format
 msgid "Failed to calculate OATH HMAC: %s\n"
 msgstr "Kunne ikke beregne OATH HMAC: %s\n"
 
-#: gnutls.c:2820
+#: gnutls.c:2836
 #, c-format
 msgid "%s %dms\n"
 msgstr "%s %dms\n"
 
-#: gnutls.c:2861
+#: gnutls.c:2877
 #, c-format
 msgid "Could not set ciphersuites: %s\n"
 msgstr "Kunne ikke indstille ciphersuites: %s\n"
 
-#: gnutls.c:2868 openssl.c:2314
+#: gnutls.c:2884 openssl.c:2314
 msgid "Established EAP-TTLS session\n"
 msgstr "Etablerede EAP-TTLS-session\n"
 
-#: gnutls.c:2961
+#: gnutls.c:2977
 #, c-format
 msgid "Failed to generate STRAP key: %s\n"
 msgstr "Kunne ikke generere STRAP-nøgle: %s\n"
 
-#: gnutls.c:2970
+#: gnutls.c:2986
 #, c-format
 msgid "Failed to generate STRAP DH key: %s\n"
 msgstr "Kunne ikke generere STRAP-DH-nøgle: %s\n"
 
-#: gnutls.c:3003
+#: gnutls.c:3019
 #, c-format
 msgid "Failed to decode server DH key: %s\n"
 msgstr "Kunne ikke afkode serverens DH-nøgle: %s\n"
 
-#: gnutls.c:3015
+#: gnutls.c:3031
 #, c-format
 msgid "Failed to export DH private key parameters: %s\n"
 msgstr "Kunne ikke eksportere privat DH-nøgles parametre: %s\n"
 
-#: gnutls.c:3021
+#: gnutls.c:3037
 #, c-format
 msgid "Failed to export server DH key parameters: %s\n"
 msgstr "Kunne ikke eksportere server-DH-nøgles parametre: %s\n"
 
-#: gnutls.c:3029
+#: gnutls.c:3045
 #, c-format
 msgid "HPKE uses unsupported EC curve (%d, %d)\n"
 msgstr "HPKE bruger EC-curve (%d, %d), som ikke understøttes\n"
 
-#: gnutls.c:3042
+#: gnutls.c:3058
 msgid "Failed to create ECC public point for ECDH\n"
 msgstr "Kunne ikke oprette offentligt ECC-punkt til ECDH\n"
 
-#: gnutls.c:3085
+#: gnutls.c:3101
 #, c-format
 msgid "HKDF extract failed: %s\n"
 msgstr "HKDF-udtrækning mislykkedes: %s\n"
 
-#: gnutls.c:3095
+#: gnutls.c:3111
 #, c-format
 msgid "HKDF expand failed: %s\n"
 msgstr "HKDF-udvidelse mislykkedes: %s\n"
 
-#: gnutls.c:3114
+#: gnutls.c:3130
 #, c-format
 msgid "Failed to init AES-256-GCM cipher: %s\n"
 msgstr "Kunne ikke initialisere AES-256-GCM-krypteringsalgoritme: %s\n"
 
-#: gnutls.c:3123
+#: gnutls.c:3139
 #, c-format
 msgid "SSO token decryption failed: %s\n"
 msgstr "Dekryptering af SSO-symbol mislykkedes: %s\n"
 
-#: gnutls.c:3166
+#: gnutls.c:3182
 #, c-format
 msgid "Failed to decode STRAP key: %s\n"
 msgstr "Kunne ikke afkode STRAP-nøgle: %s\n"
 
-#: gnutls.c:3191
+#: gnutls.c:3207
 #, c-format
 msgid "Failed to generate channel bindings for STRAP key: %s\n"
 msgstr "Kunne ikke danne kanalbindinger for STRAP-nøgle: %s\n"
 
-#: gnutls.c:3210
+#: gnutls.c:3226
 #, c-format
 msgid "Failed to regenerate STRAP key: %s\n"
 msgstr "Kunne ikke regenerere STRAP-nøgle: %s\n"
 
-#: gnutls.c:3225 openssl.c:2576
+#: gnutls.c:3241 openssl.c:2576
 msgid "Failed to generate STRAP key DER\n"
 msgstr "Kunne ikke generere STRAP-nøgle-DER\n"
 
-#: gnutls.c:3250
+#: gnutls.c:3266
 #, c-format
 msgid "STRAP signature failed: %s\n"
 msgstr "STRAP-signatur mislykkedes: %s\n"
 
-#: gnutls.c:3341
+#: gnutls.c:3357
 msgid "Certificate may be multiple certificate authentication incompatible.\n"
 msgstr ""
 "Certifikat kan være inkompatibelt med godkendelse med flere certifikater.\n"
 
-#: gnutls.c:3379
+#: gnutls.c:3395
 #, c-format
 msgid "gnutls_x509_crt_get_key_purpose_oid: %s.\n"
 msgstr "gnutls_x509_crt_get_key_purpose_oid: %s.\n"
 
-#: gnutls.c:3402
+#: gnutls.c:3418
 #, c-format
 msgid "gnutls_X509_crt_get_key_usage: %s.\n"
 msgstr "gnutls_X509_crt_get_key_usage: %s.\n"
 
-#: gnutls.c:3419
+#: gnutls.c:3435
 msgid ""
 "The certificate specifies key usages incompatible with authentication.\n"
 msgstr ""
 "Certifikatet angiver nøglebrug, som er inkompatibel med godkendelsen.\n"
 
-#: gnutls.c:3428
+#: gnutls.c:3444
 msgid "Certificate doesn't specify key usage.\n"
 msgstr "Certifikat angiver ikke nøglebrug.\n"
 
-#: gnutls.c:3446
+#: gnutls.c:3462
 #, c-format
 msgid "Precondition failed %s[%s]:%d\n"
 msgstr "Forudsætning mislykkedes %s[%s]:%d\n"
 
-#: gnutls.c:3500
+#: gnutls.c:3516
 #, c-format
 msgid "Failed to generate the PKCS#7 structure: %s.\n"
 msgstr "Kunne ikke generere PKCS#7-strukturen: %s.\n"
 
-#: gnutls.c:3534
+#: gnutls.c:3550
 #, c-format
 msgid "Precondition failed %s[%s]:%d.\n"
 msgstr "Forudsætning mislykkedes %s[%s]:%d.\n"
 
-#: gnutls.c:3569
+#: gnutls.c:3585
 #, c-format
 msgid "gnutls_privkey_sign_data: %s.\n"
 msgstr "gnutls_privkey_sign_data: %s.\n"
 
-#: gnutls.c:3594
+#: gnutls.c:3610
 #, c-format
 msgid "Failed to sign data with second certificate: %s.\n"
 msgstr "Kunne ikke signere data med det andet certifikat: %s.\n"
@@ -4433,7 +4435,8 @@ msgid ""
 "Disabling all HTTP connection reuse due to --no-http-keepalive option.\n"
 "If this helps, please report to <%s>.\n"
 msgstr ""
-"Deaktiverer al genbrug af HTTP-forbindelse pga. tilvalget --no-http-keepalive.\n"
+"Deaktiverer al genbrug af HTTP-forbindelse pga. tilvalget --no-http-"
+"keepalive.\n"
 "Hvis det hjælper, så rapportér det venligst til <%s>.\n"
 
 #: main.c:2138
@@ -5021,7 +5024,7 @@ msgstr ""
 #: oncp.c:614
 #, c-format
 msgid "Read additional %d bytes of SSL record\n"
-msgstr ""
+msgstr "Læs yderligere %d byte af SSL-posten\n"
 
 #: oncp.c:619
 msgid "Invalid packet waiting for KMP 301\n"
@@ -6145,7 +6148,7 @@ msgstr ""
 #: pulse.c:549
 #, c-format
 msgid "Unknown attr 0x%04x len %d:%s\n"
-msgstr ""
+msgstr "Ukendt attr 0x%04x len %d:%s\n"
 
 #: pulse.c:560
 #, c-format

@@ -12,8 +12,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: network-manager-openconnect\n"
 "Report-Msgid-Bugs-To: openconnect-devel@lists.infradead.org\n"
-"POT-Creation-Date: 2026-01-25 10:43-0800\n"
-"PO-Revision-Date: 2025-08-26 21:50+0200\n"
+"POT-Creation-Date: 2026-06-13 10:04+0100\n"
+"PO-Revision-Date: 2026-02-15 21:50+0200\n"
 "Last-Translator: Miquel-Àngel Burgos i Fradeja <miquel.angel.burgos@gmail."
 "com>\n"
 "Language-Team: Catalan <kde-i18n-ca@kde.org>\n"
@@ -314,17 +314,17 @@ msgstr ""
 #: auth-globalprotect.c:374
 #, c-format
 msgid "GlobalProtect login returned %s=%s (expected %s)\n"
-msgstr "Nom d'usuari retornat GlobalProtect %s=%s (esperat %s)\n"
+msgstr "L'inici de sessió GlobalProtect ha retornat %s=%s (esperat %s)\n"
 
 #: auth-globalprotect.c:380
 #, c-format
 msgid "GlobalProtect login returned empty or missing %s\n"
-msgstr "El nom d'usuari retornat GlobalProtect està buit o s'ha perdut %s\n"
+msgstr "L'inici de sessió GlobalProtect ha retornat buit o s'ha perdut %s\n"
 
 #: auth-globalprotect.c:384
 #, c-format
 msgid "GlobalProtect login returned %s=%s\n"
-msgstr "Nom d'usuari retornat GlobalProtect %s=%s\n"
+msgstr "L'inici de sessió GlobalProtect ha retornat %s=%s\n"
 
 #: auth-globalprotect.c:398
 #, c-format
@@ -1899,7 +1899,7 @@ msgstr ""
 
 #: gnutls.c:1046
 msgid "This binary built without system key support\n"
-msgstr "Aquest binari està muntat sense suport de claus de sistema\n"
+msgstr "Aquest binari està compilat sense suport de claus de sistema\n"
 
 #: gnutls.c:1053
 msgid "This binary built without PKCS#11 support\n"
@@ -2274,172 +2274,172 @@ msgstr "Connectat a HTTPS a %s amb ciphersuite %s\n"
 msgid "Renegotiated SSL on %s with ciphersuite %s\n"
 msgstr "SSL renegociat a %s amb ciphersuite %s\n"
 
-#: gnutls.c:2697 openssl-pkcs11.c:206
+#: gnutls.c:2713 openssl-pkcs11.c:206
 #, c-format
 msgid "PIN required for %s"
 msgstr "Cal PIN en %s"
 
-#: gnutls.c:2701 openssl-pkcs11.c:209
+#: gnutls.c:2717 openssl-pkcs11.c:209
 msgid "Wrong PIN"
 msgstr "PIN incorrecte"
 
-#: gnutls.c:2704
+#: gnutls.c:2720
 msgid "This is the final try before locking!"
 msgstr "Aquest és l'últim intent abans de bloquejar-ho!"
 
-#: gnutls.c:2706
+#: gnutls.c:2722
 msgid "Only a few tries left before locking!"
 msgstr "Només alguns intents abans de bloquejar-ho!"
 
-#: gnutls.c:2711 openssl-pkcs11.c:213
+#: gnutls.c:2727 openssl-pkcs11.c:213
 msgid "Enter PIN:"
 msgstr "Introduïu el PIN:"
 
-#: gnutls.c:2797 openssl.c:2199
+#: gnutls.c:2813 openssl.c:2199
 msgid "Unsupported OATH HMAC algorithm\n"
 msgstr "Algoritme HMAC OATH no suportat\n"
 
-#: gnutls.c:2806
+#: gnutls.c:2822
 #, c-format
 msgid "Failed to calculate OATH HMAC: %s\n"
 msgstr "Error en calcular HMAC OATH: %s\n"
 
-#: gnutls.c:2820
+#: gnutls.c:2836
 #, c-format
 msgid "%s %dms\n"
 msgstr ""
 
-#: gnutls.c:2861
+#: gnutls.c:2877
 #, c-format
 msgid "Could not set ciphersuites: %s\n"
 msgstr ""
 
-#: gnutls.c:2868 openssl.c:2314
+#: gnutls.c:2884 openssl.c:2314
 msgid "Established EAP-TTLS session\n"
 msgstr "Establerta sessió EAP-TTLS\n"
 
-#: gnutls.c:2961
+#: gnutls.c:2977
 #, c-format
 msgid "Failed to generate STRAP key: %s\n"
 msgstr ""
 
-#: gnutls.c:2970
+#: gnutls.c:2986
 #, c-format
 msgid "Failed to generate STRAP DH key: %s\n"
 msgstr ""
 
-#: gnutls.c:3003
+#: gnutls.c:3019
 #, c-format
 msgid "Failed to decode server DH key: %s\n"
 msgstr ""
 
-#: gnutls.c:3015
+#: gnutls.c:3031
 #, c-format
 msgid "Failed to export DH private key parameters: %s\n"
 msgstr ""
 
-#: gnutls.c:3021
+#: gnutls.c:3037
 #, c-format
 msgid "Failed to export server DH key parameters: %s\n"
 msgstr ""
 
-#: gnutls.c:3029
+#: gnutls.c:3045
 #, c-format
 msgid "HPKE uses unsupported EC curve (%d, %d)\n"
 msgstr ""
 
-#: gnutls.c:3042
+#: gnutls.c:3058
 msgid "Failed to create ECC public point for ECDH\n"
 msgstr ""
 
-#: gnutls.c:3085
+#: gnutls.c:3101
 #, c-format
 msgid "HKDF extract failed: %s\n"
 msgstr ""
 
-#: gnutls.c:3095
+#: gnutls.c:3111
 #, c-format
 msgid "HKDF expand failed: %s\n"
 msgstr ""
 
-#: gnutls.c:3114
+#: gnutls.c:3130
 #, c-format
 msgid "Failed to init AES-256-GCM cipher: %s\n"
 msgstr ""
 
-#: gnutls.c:3123
+#: gnutls.c:3139
 #, c-format
 msgid "SSO token decryption failed: %s\n"
 msgstr ""
 
-#: gnutls.c:3166
+#: gnutls.c:3182
 #, c-format
 msgid "Failed to decode STRAP key: %s\n"
 msgstr ""
 
-#: gnutls.c:3191
+#: gnutls.c:3207
 #, c-format
 msgid "Failed to generate channel bindings for STRAP key: %s\n"
 msgstr ""
 
-#: gnutls.c:3210
+#: gnutls.c:3226
 #, c-format
 msgid "Failed to regenerate STRAP key: %s\n"
 msgstr ""
 
-#: gnutls.c:3225 openssl.c:2576
+#: gnutls.c:3241 openssl.c:2576
 msgid "Failed to generate STRAP key DER\n"
 msgstr ""
 
-#: gnutls.c:3250
+#: gnutls.c:3266
 #, c-format
 msgid "STRAP signature failed: %s\n"
 msgstr ""
 
-#: gnutls.c:3341
+#: gnutls.c:3357
 msgid "Certificate may be multiple certificate authentication incompatible.\n"
 msgstr ""
 
-#: gnutls.c:3379
+#: gnutls.c:3395
 #, c-format
 msgid "gnutls_x509_crt_get_key_purpose_oid: %s.\n"
 msgstr ""
 
-#: gnutls.c:3402
+#: gnutls.c:3418
 #, c-format
 msgid "gnutls_X509_crt_get_key_usage: %s.\n"
 msgstr ""
 
-#: gnutls.c:3419
+#: gnutls.c:3435
 msgid ""
 "The certificate specifies key usages incompatible with authentication.\n"
 msgstr ""
 
-#: gnutls.c:3428
+#: gnutls.c:3444
 msgid "Certificate doesn't specify key usage.\n"
 msgstr ""
 
-#: gnutls.c:3446
+#: gnutls.c:3462
 #, c-format
 msgid "Precondition failed %s[%s]:%d\n"
 msgstr ""
 
-#: gnutls.c:3500
+#: gnutls.c:3516
 #, c-format
 msgid "Failed to generate the PKCS#7 structure: %s.\n"
 msgstr ""
 
-#: gnutls.c:3534
+#: gnutls.c:3550
 #, c-format
 msgid "Precondition failed %s[%s]:%d.\n"
 msgstr ""
 
-#: gnutls.c:3569
+#: gnutls.c:3585
 #, c-format
 msgid "gnutls_privkey_sign_data: %s.\n"
 msgstr ""
 
-#: gnutls.c:3594
+#: gnutls.c:3610
 #, c-format
 msgid "Failed to sign data with second certificate: %s.\n"
 msgstr ""
@@ -3025,8 +3025,8 @@ msgid ""
 "Unexpected packet length. SSL_read returned %d (includes 16 header bytes) "
 "but header payload_len is %d\n"
 msgstr ""
-"Paquet gran inesperat. SSL_read mostra %d (inclou capçalera de 16 bytes) "
-"però payload_len de la capçalera és %d\n"
+"Llargada del paquet no esperada.. SSL_read mostra %d (inclou capçalera de 16 "
+"bytes) però payload_len de la capçalera és %d\n"
 
 #: gpst.c:1221
 msgid "Got GPST DPD/keepalive response\n"
@@ -3314,7 +3314,7 @@ msgstr "L'autenticació del certificat SSL ha fallat\n"
 #: http.c:367
 #, c-format
 msgid "Response body has negative size (%d)\n"
-msgstr "La resposta del cos té una mida negativa (%d)\n"
+msgstr "El cos de la resposta té una mida negativa (%d)\n"
 
 #: http.c:378
 #, c-format
@@ -3837,7 +3837,7 @@ msgstr "Llegeix les opcions del fitxer de configuració"
 
 #: main.c:1020
 msgid "Report version number"
-msgstr "Informa del nombre de versió"
+msgstr "Informa del número de versió"
 
 #: main.c:1021
 msgid "Display help text"

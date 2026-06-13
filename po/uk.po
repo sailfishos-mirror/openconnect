@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: network-manager-openconnect\n"
 "Report-Msgid-Bugs-To: openconnect-devel@lists.infradead.org\n"
-"POT-Creation-Date: 2026-01-25 10:43-0800\n"
-"PO-Revision-Date: 2026-01-26 02:08+0200\n"
+"POT-Creation-Date: 2026-06-13 10:04+0100\n"
+"PO-Revision-Date: 2026-04-01 15:53+0300\n"
 "Last-Translator: Yuri Chornoivan <yurchor@ukr.net>\n"
 "Language-Team: Ukrainian <trans-uk@lists.fedoraproject.org>\n"
 "Language: uk\n"
@@ -2325,176 +2325,176 @@ msgstr ""
 msgid "Renegotiated SSL on %s with ciphersuite %s\n"
 msgstr "Повторно узгоджено SSL на %s за допомогою комплексу шифрування %s\n"
 
-#: gnutls.c:2697 openssl-pkcs11.c:206
+#: gnutls.c:2713 openssl-pkcs11.c:206
 #, c-format
 msgid "PIN required for %s"
 msgstr "Потрібен пінкод для %s"
 
-#: gnutls.c:2701 openssl-pkcs11.c:209
+#: gnutls.c:2717 openssl-pkcs11.c:209
 msgid "Wrong PIN"
 msgstr "Помилковий код"
 
-#: gnutls.c:2704
+#: gnutls.c:2720
 msgid "This is the final try before locking!"
 msgstr "Це остання спроба перед блокуванням!"
 
-#: gnutls.c:2706
+#: gnutls.c:2722
 msgid "Only a few tries left before locking!"
 msgstr "Лишилося лише декілька спроб перед блокуванням!"
 
-#: gnutls.c:2711 openssl-pkcs11.c:213
+#: gnutls.c:2727 openssl-pkcs11.c:213
 msgid "Enter PIN:"
 msgstr "Вкажіть пінкод: "
 
-#: gnutls.c:2797 openssl.c:2199
+#: gnutls.c:2813 openssl.c:2199
 msgid "Unsupported OATH HMAC algorithm\n"
 msgstr "Непідтримуваний алгоритм HMAC OATH\n"
 
-#: gnutls.c:2806
+#: gnutls.c:2822
 #, c-format
 msgid "Failed to calculate OATH HMAC: %s\n"
 msgstr "Не вдалося обчислити HMAC OATH: %s\n"
 
-#: gnutls.c:2820
+#: gnutls.c:2836
 #, c-format
 msgid "%s %dms\n"
 msgstr "%s %dмс\n"
 
-#: gnutls.c:2861
+#: gnutls.c:2877
 #, c-format
 msgid "Could not set ciphersuites: %s\n"
 msgstr "Не вдалося встановити комплекси шифрування: %s\n"
 
-#: gnutls.c:2868 openssl.c:2314
+#: gnutls.c:2884 openssl.c:2314
 msgid "Established EAP-TTLS session\n"
 msgstr "Встановлено сеанс EAP-TTLS\n"
 
-#: gnutls.c:2961
+#: gnutls.c:2977
 #, c-format
 msgid "Failed to generate STRAP key: %s\n"
 msgstr "Не вдалося створити ключ STRAP: %s\n"
 
-#: gnutls.c:2970
+#: gnutls.c:2986
 #, c-format
 msgid "Failed to generate STRAP DH key: %s\n"
 msgstr "Не вдалося створити ключ DH STRAP: %s\n"
 
-#: gnutls.c:3003
+#: gnutls.c:3019
 #, c-format
 msgid "Failed to decode server DH key: %s\n"
 msgstr "Не вдалося декодувати ключ DH сервера: %s\n"
 
-#: gnutls.c:3015
+#: gnutls.c:3031
 #, c-format
 msgid "Failed to export DH private key parameters: %s\n"
 msgstr "Не вдалося експортувати параметри закритого ключа DH: %s\n"
 
-#: gnutls.c:3021
+#: gnutls.c:3037
 #, c-format
 msgid "Failed to export server DH key parameters: %s\n"
 msgstr "Не вдалося експортувати параметри ключа DH сервера: %s\n"
 
-#: gnutls.c:3029
+#: gnutls.c:3045
 #, c-format
 msgid "HPKE uses unsupported EC curve (%d, %d)\n"
 msgstr "У HPKE використано непідтримувану еліптичну криву (%d, %d)\n"
 
-#: gnutls.c:3042
+#: gnutls.c:3058
 msgid "Failed to create ECC public point for ECDH\n"
 msgstr "Не вдалося створити відкриту точку ECC для ECDH\n"
 
-#: gnutls.c:3085
+#: gnutls.c:3101
 #, c-format
 msgid "HKDF extract failed: %s\n"
 msgstr "Помилка видобування HKDF: %s\n"
 
-#: gnutls.c:3095
+#: gnutls.c:3111
 #, c-format
 msgid "HKDF expand failed: %s\n"
 msgstr "Помилка розгортання HKDF: %s\n"
 
-#: gnutls.c:3114
+#: gnutls.c:3130
 #, c-format
 msgid "Failed to init AES-256-GCM cipher: %s\n"
 msgstr "Не вдалося ініціалізувати шифр AES-256-GCM: %s\n"
 
-#: gnutls.c:3123
+#: gnutls.c:3139
 #, c-format
 msgid "SSO token decryption failed: %s\n"
 msgstr "невдала спроба розшифрування жетона SSO: %s\n"
 
-#: gnutls.c:3166
+#: gnutls.c:3182
 #, c-format
 msgid "Failed to decode STRAP key: %s\n"
 msgstr "Не вдалося декодувати ключ STRAP: %s\n"
 
-#: gnutls.c:3191
+#: gnutls.c:3207
 #, c-format
 msgid "Failed to generate channel bindings for STRAP key: %s\n"
 msgstr "Не вдалося створити прив'язки до каналу для ключа STRAP: %s\n"
 
-#: gnutls.c:3210
+#: gnutls.c:3226
 #, c-format
 msgid "Failed to regenerate STRAP key: %s\n"
 msgstr "Не вдалося повторно створити ключ STRAP: %s\n"
 
-#: gnutls.c:3225 openssl.c:2576
+#: gnutls.c:3241 openssl.c:2576
 msgid "Failed to generate STRAP key DER\n"
 msgstr "Не вдалося створити DER ключа STRAP\n"
 
-#: gnutls.c:3250
+#: gnutls.c:3266
 #, c-format
 msgid "STRAP signature failed: %s\n"
 msgstr "Не вдалося виконати підписування STRAP: %s\n"
 
-#: gnutls.c:3341
+#: gnutls.c:3357
 msgid "Certificate may be multiple certificate authentication incompatible.\n"
 msgstr ""
 "Сертифікат може бути несумісним із розпізнаванням за декількома "
 "сертифікатами.\n"
 
-#: gnutls.c:3379
+#: gnutls.c:3395
 #, c-format
 msgid "gnutls_x509_crt_get_key_purpose_oid: %s.\n"
 msgstr "gnutls_x509_crt_get_key_purpose_oid: %s.\n"
 
-#: gnutls.c:3402
+#: gnutls.c:3418
 #, c-format
 msgid "gnutls_X509_crt_get_key_usage: %s.\n"
 msgstr "gnutls_X509_crt_get_key_usage: %s.\n"
 
-#: gnutls.c:3419
+#: gnutls.c:3435
 msgid ""
 "The certificate specifies key usages incompatible with authentication.\n"
 msgstr ""
 "У сертифікаті вказано використання ключів, яке є несумісним із "
 "розпізнаванням.\n"
 
-#: gnutls.c:3428
+#: gnutls.c:3444
 msgid "Certificate doesn't specify key usage.\n"
 msgstr "У сертифікаті не вказано використання ключів.\n"
 
-#: gnutls.c:3446
+#: gnutls.c:3462
 #, c-format
 msgid "Precondition failed %s[%s]:%d\n"
 msgstr "Не виконано попередню умову %s[%s]:%d\n"
 
-#: gnutls.c:3500
+#: gnutls.c:3516
 #, c-format
 msgid "Failed to generate the PKCS#7 structure: %s.\n"
 msgstr "Не вдалося створити структуру PKCS#7: %s.\n"
 
-#: gnutls.c:3534
+#: gnutls.c:3550
 #, c-format
 msgid "Precondition failed %s[%s]:%d.\n"
 msgstr "Не виконано попередню умову %s[%s]:%d.\n"
 
-#: gnutls.c:3569
+#: gnutls.c:3585
 #, c-format
 msgid "gnutls_privkey_sign_data: %s.\n"
 msgstr "gnutls_privkey_sign_data: %s.\n"
 
-#: gnutls.c:3594
+#: gnutls.c:3610
 #, c-format
 msgid "Failed to sign data with second certificate: %s.\n"
 msgstr "Не вдалося підписати дані другим сертифікатом: %s.\n"
