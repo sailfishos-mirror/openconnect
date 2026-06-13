@@ -256,7 +256,7 @@ static int parse_otpauth_uri(struct openconnect_info *vpninfo,
 	vpninfo->oath_hmac_alg = OATH_ALG_HMAC_SHA1;
 
 	/* Extract label (path component between type/ and ?) */
-	p = strchr(uri + 15, '?');
+	p = (char *)strchr(uri + 15, '?');
 	if (!p) {
 		ret = -EINVAL;
 		goto out;
@@ -371,14 +371,16 @@ int set_oath_mode(struct openconnect_info *vpninfo, const char *token_str,
 		vpninfo->oath_hmac_alg = OATH_ALG_HMAC_SHA1;
 
 	if (token_mode == OC_TOKEN_MODE_HOTP) {
-		char *p = strrchr(token_str, ',');
+		const char *p = strrchr(token_str, ',');
 		if (p) {
 			long counter;
+			char *endp;
 			toklen = p - token_str;
 			p++;
-			counter = strtol(p, &p, 0);
+			counter = strtol(p, &endp, 0);
 			if (counter < 0)
 				return -EINVAL;
+			p = endp;
 			while (*p) {
 				if (isspace((int)(unsigned char)*p))
 					p++;

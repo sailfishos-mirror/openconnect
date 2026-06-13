@@ -942,7 +942,7 @@ static int ntlm_manual_challenge(struct openconnect_info *vpninfo, int proxy,
 	/* Mask in the NTLM2SESSION flag */
 	resp->data[NTLM_RESPONSE_FLAGS_OFFSET + 2] = token[NTLM_CHALLENGE_FLAGS_OFFSET + 2] & 8;
 
-	user = strchr(domuser, '\\');
+	user = (char *)strchr(domuser, '\\');
 	if (user) {
 		*user = 0;
 		ntlm_set_string_utf8(resp, NTLM_RESPONSE_DOMAIN_OFFSET, domuser);

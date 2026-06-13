@@ -226,7 +226,7 @@ int openconnect_ppp_new(struct openconnect_info *vpninfo,
 	if (vpninfo->ip_info.addr)
 		ppp->out_ipv4_addr.s_addr = inet_addr(vpninfo->ip_info.addr);
 	if (vpninfo->ip_info.netmask6) {
-		char *slash = strchr(vpninfo->ip_info.netmask6, '/');
+		char *slash = (char *)strchr(vpninfo->ip_info.netmask6, '/');
 		if (slash) *slash=0;
 		inet_pton(AF_INET6, vpninfo->ip_info.netmask6, &ppp->out_ipv6_addr);
 		if (slash) *slash='/';
