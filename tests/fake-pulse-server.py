@@ -125,6 +125,16 @@ def _send_ift(conn, data):
     conn.flush()
 
 
+def _send_ift_chunked(conn, data):
+    # send in chunks -- client should concatenate them
+    n = 1
+    i = 0
+    while i < len(data):
+        _send_ift(conn, data[i:i + n])
+        i += n
+        n = min(n * 2, 1024)
+
+
 def _expect_ift(conn, want_vendor, want_pkt_type):
     data = _recv_ift(conn)
 
@@ -332,9 +342,11 @@ def _handle_ssl_tunnel(args, conn):
     if not ip_pkt:
         return True
 
-    _send_ift(conn,
-              struct.pack('>LLLL', VENDOR_JUNIPER, 4, 0x10 + len(ip_pkt), 0)
-              + bytes(ip_pkt))
+    # send chunks, to test "short read" handling code
+    _send_ift_chunked(
+        conn,
+        struct.pack('>LLLL', VENDOR_JUNIPER, 4, 0x10 + len(ip_pkt), 0)
+        + bytes(ip_pkt))
 
     _status['ssl_ping'] = 'true'
 
