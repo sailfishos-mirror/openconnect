@@ -1,4 +1,5 @@
-%?mingw_package_header
+%{?mingw_package_header}
+%undefine _debugsource_packages
 
 %global gitsnapshot @ISSNAP@
 %if 0%{?gitsnapshot}
@@ -59,7 +60,7 @@ BuildRequires:  jq
 %description
 The OpenConnect multiprotocol VPN client library, cross-compiled for MinGW.
 
-%?mingw_debug_package
+%{?mingw_debug_package}
 
 # Win32
 %package -n mingw32-openconnect
@@ -132,9 +133,6 @@ rm -rf $RPM_BUILD_ROOT/%{mingw64_docdir}/openconnect
 rm -rf $RPM_BUILD_ROOT/%{mingw64_datadir}/bash-completion
 
 %mingw_find_lang openconnect
-# Surely this is supposed to happen automatically... but it doesn't seem to.
-%mingw_debug_install_post
-
 #Win32
 %files -n mingw32-openconnect -f mingw32-openconnect.lang
 %license COPYING.LGPL

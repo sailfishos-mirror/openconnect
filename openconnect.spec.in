@@ -40,8 +40,10 @@ BuildRequires:	pkgconfig(libxml-2.0) pkgconfig(libpcsclite) krb5-devel gnupg2
 BuildRequires:	autoconf automake libtool gettext pkgconfig(liblz4)
 BuildRequires:	pkgconfig(uid_wrapper) pkgconfig(socket_wrapper)
 BuildRequires:	pkgconfig(libproxy-1.0)
+%if ! 0%{?amzn}
 BuildRequires:  pkgconfig(stoken) pkgconfig(libpskc)
-%if 0%{?fedora}
+%endif
+%if 0%{?fedora} && ! 0%{?amzn}
 BuildRequires:  pkgconfig(json-parser)
 %endif
 %if 0%{?fedora} || 0%{?rhel} <= 7
@@ -60,7 +62,9 @@ BuildRequires: glibc-langpack-cs
 %if %{use_gnutls}
 BuildRequires:	pkgconfig(gnutls) trousers-devel
 # Anywhere we use GnuTLS ,there should be an ocserv package too
+%if (0%{?fedora} || 0%{?rhel} >= 8) && ! 0%{?amzn}
 BuildRequires:	ocserv
+%endif
 %else
 BuildRequires:	pkgconfig(openssl) pkgconfig(libp11) pkgconfig(p11-kit-1)
 %endif
@@ -68,7 +72,7 @@ BuildRequires:	pkgconfig(openssl) pkgconfig(libp11) pkgconfig(p11-kit-1)
 BuildRequires: pkgconfig(tss2-esys) pkgconfig(tss2-tctildr) pkgconfig(tss2-mu)
 # https://bugzilla.redhat.com/show_bug.cgi?id=1638961
 BuildRequires: libgcrypt-devel
-%if 0%{?fedora} > 32
+%if 0%{?fedora} > 32 && ! 0%{?amzn}
 # Older versions of tss2-esys don't have the swtpm TCTI
 BuildRequires: swtpm swtpm-tools
 %endif
@@ -128,7 +132,10 @@ rm -f $RPM_BUILD_ROOT/%{_libexecdir}/openconnect/hipreport-android.sh
 %if 0%{?fedora} || 0%{?rhel} > 7
 # Clear RDRAND capability bit to work around
 # https://bugzilla.redhat.com/show_bug.cgi?id=1831086
-make VERBOSE=1 OPENSSL_ia32cap=~0x4000000000000000 XFAIL_TESTS="obsolete-server-crypto" check
+%if 0%{?rhel} >= 10
+%global xfail_extra pfs
+%endif
+make VERBOSE=1 OPENSSL_ia32cap=~0x4000000000000000 XFAIL_TESTS="obsolete-server-crypto %{?xfail_extra}" check
 %else
 # Test setup for OpenSSL builds in RHEL6.
 make VERBOSE=1 XFAIL_TESTS="auth-nonascii bad_dtls_test" check
