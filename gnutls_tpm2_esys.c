@@ -170,6 +170,11 @@ static const TPML_PCR_SELECTION allCreationPCR = {
 
 static void install_tpm_passphrase(struct openconnect_info *vpninfo, TPM2B_DIGEST *auth, char *pass)
 {
+	if (!pass) {
+		auth->size = 0;
+		return;
+	}
+
 	int pwlen = strlen(pass);
 
 	if (pwlen > sizeof(auth->buffer) - 1) {
