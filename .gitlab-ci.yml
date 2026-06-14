@@ -14,7 +14,7 @@ variables:
   CENTOS8_BUILD: openconnect-cli-centos8
   CENTOS9_BUILD: openconnect-cli-centos9
   CENTOS10_BUILD: openconnect-cli-centos10
-  FEDORA_BUILD: openconnect-cli-fedora39
+  FEDORA_BUILD: openconnect-cli-fedora44
   MINGW32_BUILD: openconnect-cli-mingw32
   MINGW64_BUILD: openconnect-cli-mingw64
   UBUNTU18_BUILD: openconnect-cli-ubuntu18
