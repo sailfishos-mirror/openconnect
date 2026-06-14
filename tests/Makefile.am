@@ -305,7 +305,7 @@ SWTPM_PRELOAD := LD_PRELOAD=libsocket_wrapper.so SOCKET_WRAPPER_DIR=$(SWTPM_TMPD
 
 SWTPM_IOCTL_RUN = $(SWTPM_PRELOAD) $(SWTPM_IOCTL) --tcp 127.0.0.1:2322
 
-# This isn't safe for parallel builds, as it is invoked in mulltiple
+# This isn't safe for parallel builds, as it is invoked in multiple
 # places and has an obvious race condition.  However, this is only for
 # the one-time setup of the persistent swtpm state, and I can remember
 # not to use 'make -j' that one time. Fixing it to be a proper
