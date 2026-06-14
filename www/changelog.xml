@@ -15,6 +15,7 @@
 <ul>
    <li><b>OpenConnect HEAD</b>
      <ul>
+       <li>Accept base32 token secrets without trailing <tt>=</tt> padding (<a href="https://gitlab.com/openconnect/openconnect/-/issues/771">#771</a>).</li>
        <li>Fix crash on NULL passphrase from TPM2 auth dialog (<a href="https://gitlab.com/openconnect/openconnect/-/issues/842">#842</a>).</li>
      </ul><br/>
   </li>

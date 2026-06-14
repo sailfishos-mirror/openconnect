@@ -210,4 +210,69 @@ grep -q 'issuer=My Company' "$TOKFILE" ||
     fail $PID "HOTP otpauth issuer with spaces not preserved"
 echo ok
 
+#
+# Test 13: HOTP with unpadded base32 (final group 2 chars, would need ======)
+#   secret = "1234567890123456" (16 bytes), counter 0 → 504023
+#
+echo -n "HOTP unpadded base32 (2-char tail)... "
+env LD_PRELOAD=libsocket_wrapper.so curl -sk $SERVURL/CONFIGURE -d "token_form=frmTotpToken&expected_token=504023"
+echo "base32:GEZDGNBVGY3TQOJQGEZDGNBVGY,0" > "$TOKFILE"
+( echo "test" | $CLIENT $SERVURL \
+    --token-mode=hotp --token-secret=@$TOKFILE \
+    --cookieonly >/dev/null 2>&1) ||
+    fail $PID "HOTP unpadded base32 (2-char tail) auth failed"
+echo ok
+
+#
+# Test 14: HOTP with unpadded base32 (final group 4 chars, would need ====)
+#   secret = "12345678901234567" (17 bytes), counter 0 → 849617
+#
+echo -n "HOTP unpadded base32 (4-char tail)... "
+env LD_PRELOAD=libsocket_wrapper.so curl -sk $SERVURL/CONFIGURE -d "token_form=frmTotpToken&expected_token=849617"
+echo "base32:GEZDGNBVGY3TQOJQGEZDGNBVGY3Q,0" > "$TOKFILE"
+( echo "test" | $CLIENT $SERVURL \
+    --token-mode=hotp --token-secret=@$TOKFILE \
+    --cookieonly >/dev/null 2>&1) ||
+    fail $PID "HOTP unpadded base32 (4-char tail) auth failed"
+echo ok
+
+#
+# Test 15: HOTP with unpadded base32 (final group 5 chars, would need ===)
+#   secret = "123456789012345678" (18 bytes), counter 0 → 927811
+#
+echo -n "HOTP unpadded base32 (5-char tail)... "
+env LD_PRELOAD=libsocket_wrapper.so curl -sk $SERVURL/CONFIGURE -d "token_form=frmTotpToken&expected_token=927811"
+echo "base32:GEZDGNBVGY3TQOJQGEZDGNBVGY3TQ,0" > "$TOKFILE"
+( echo "test" | $CLIENT $SERVURL \
+    --token-mode=hotp --token-secret=@$TOKFILE \
+    --cookieonly >/dev/null 2>&1) ||
+    fail $PID "HOTP unpadded base32 (5-char tail) auth failed"
+echo ok
+
+#
+# Test 16: HOTP with unpadded base32 (final group 7 chars, would need =)
+#   secret = "1234567890123456789" (19 bytes), counter 0 → 682688
+#
+echo -n "HOTP unpadded base32 (7-char tail)... "
+env LD_PRELOAD=libsocket_wrapper.so curl -sk $SERVURL/CONFIGURE -d "token_form=frmTotpToken&expected_token=682688"
+echo "base32:GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOI,0" > "$TOKFILE"
+( echo "test" | $CLIENT $SERVURL \
+    --token-mode=hotp --token-secret=@$TOKFILE \
+    --cookieonly >/dev/null 2>&1) ||
+    fail $PID "HOTP unpadded base32 (7-char tail) auth failed"
+echo ok
+
+#
+# Test 17: the same unpadded secret in an otpauth:// URI (Google Authenticator
+#   style QR codes omit the padding), counter 0 → 504023
+#
+echo -n "HOTP otpauth:// unpadded base32 secret... "
+env LD_PRELOAD=libsocket_wrapper.so curl -sk $SERVURL/CONFIGURE -d "token_form=frmTotpToken&expected_token=504023"
+echo "otpauth://hotp/Test:nopad?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY&counter=0" > "$TOKFILE"
+( echo "test" | $CLIENT $SERVURL \
+    --token-mode=hotp --token-secret=@$TOKFILE \
+    --cookieonly >/dev/null 2>&1) ||
+    fail $PID "HOTP otpauth unpadded base32 auth failed"
+echo ok
+
 exit 0

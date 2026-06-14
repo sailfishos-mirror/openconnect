@@ -39,12 +39,16 @@ static int b32_char(char in)
 }
 
 /* Take a group of 8 base32 chars, convert to (up to) 5 bytes of data */
-static int decode_b32_group(unsigned char *out, const char *in)
+/* Decode a group of up to 8 base32 chars into (up to) 5 bytes of data.
+ * 'maxlen' is the number of chars available in 'in' (<= 8); a group which
+ * is not padded out to 8 chars with '=' simply runs out of input early,
+ * which is equivalent to encountering the padding. */
+static int decode_b32_group(unsigned char *out, const char *in, int maxlen)
 {
 	uint32_t d = 0;
 	int c, i, len;
 
-	for (i = 0; i < 8; i++) {
+	for (i = 0; i < maxlen; i++) {
 		c = b32_char(in[i]);
 		if (c == -1)
 			return -EINVAL;
@@ -67,7 +71,10 @@ static int decode_b32_group(unsigned char *out, const char *in)
 
 	if (i < 8) {
 		d <<= 5 * (8 - i);
-		while (++i < 8) {
+		/* Any remaining chars within the group must be '=' padding.
+		 * An unpadded group has none (maxlen == len) and this is a
+		 * no-op. */
+		while (++i < maxlen) {
 			if (in[i] != '=')
 				return -EINVAL;
 		}
@@ -98,14 +105,11 @@ static int decode_base32(struct openconnect_info *vpninfo, const char *b32, int 
 	int outlen;
 	int ret;
 
-	if (len % 8) {
-	invalid:
-		vpn_progress(vpninfo, PRG_ERR,
-			     _("Invalid base32 token string\n"));
-		free(output);
-		return -EINVAL;
-	}
-	outlen = len / 8 * 5;
+	/* Accept base32 strings which lack the trailing '=' padding to a
+	 * multiple of 8 characters. Other tools (and otpauth:// URIs) commonly
+	 * omit it. A final group with an invalid length (1, 3 or 6 chars) is
+	 * still rejected by decode_b32_group()'s length switch. */
+	outlen = (len + 7) / 8 * 5;
 	output = malloc(outlen);
 	if (!output) {
 		vpn_progress(vpninfo, PRG_ERR,
@@ -114,18 +118,28 @@ static int decode_base32(struct openconnect_info *vpninfo, const char *b32, int 
 	}
 	outpos = inpos = 0;
 	while (inpos < len) {
-		ret = decode_b32_group(output + outpos, b32 + inpos);
+		int grouplen = len - inpos;
+		if (grouplen > 8)
+			grouplen = 8;
+
+		ret = decode_b32_group(output + outpos, b32 + inpos, grouplen);
 		if (ret < 0)
 			goto invalid;
 
 		inpos += 8;
-		if (ret != 5 && inpos != len)
+		if (ret != 5 && inpos < len)
 			goto invalid;
 		outpos += ret;
 	}
 	vpninfo->oath_secret = (void *)output;
 	vpninfo->oath_secret_len = outpos;
 	return 0;
+
+ invalid:
+	vpn_progress(vpninfo, PRG_ERR,
+		     _("Invalid base32 token string\n"));
+	free(output);
+	return -EINVAL;
 }
 
 static char *parse_hex(const char *tok, int len)
