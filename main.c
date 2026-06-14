@@ -1111,7 +1111,7 @@ static void usage(void)
 	printf("      --no-dtls                   %s\n", _("Disable DTLS and ESP"));
 	printf("      --dtls-ciphers=LIST         %s\n", _("OpenSSL ciphers to support for DTLS"));
 	printf("  -Q, --queue-len=LEN             %s\n", _("Set packet queue limit to LEN pkts"));
-	printf("      --keepalive{=INTERVAL}      %s\n", _("Enable keepalive on the TCP channel (with an optinal interval in seconds)"));
+	printf("      --keepalive{=INTERVAL}      %s\n", _("Enable keepalive on the TCP channel (with an optional interval in seconds)"));
 
 	printf("\n%s:\n", _("Local system information"));
 	printf("      --useragent=STRING          %s\n", _("HTTP header User-Agent: field"));
