@@ -125,7 +125,7 @@ again:
 	js_top_location = strstr(resp_buf, "top.location=\"");
 	if (js_top_location) {
 		int top_location_str_len = strlen("top.location=\"");
-		char *js_top_location_end = strchrnul(js_top_location + top_location_str_len, '"');
+		const char *js_top_location_end = strchrnul(js_top_location + top_location_str_len, '"');
 		char *location = strndup(js_top_location + top_location_str_len, js_top_location_end - js_top_location - top_location_str_len);
 
 		/* Skip leading / if necessary */
