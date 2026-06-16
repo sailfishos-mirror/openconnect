@@ -20,6 +20,8 @@
 srcdir=${srcdir:-.}
 top_builddir=${top_builddir:-..}
 
+mytmp=$(mktemp -d)
+
 SERV=${srcdir}/fake-pulse-server.py
 CLI_PIDFILE=oc-pid.$$.tmp
 
@@ -33,10 +35,12 @@ finish() {
         kill $(cat "$CLI_PIDFILE") >/dev/null 2>&1
         rm -f "$CLI_PIDFILE"
     fi
+    rm -r $mytmp
 }
 
 start_client() {
-    echo '' | $CMDNS1 ${OPENCONNECT} --protocol=pulse $FINGERPRINT \
+    echo "$password" \
+        | $CMDNS1 ${OPENCONNECT} --protocol=pulse $FINGERPRINT \
                   --interface $TUNDEV \
                   -u test --passwd-on-stdin -s ${srcdir}/scripts/vpnc-script \
                   --pid-file=$CLI_PIDFILE -b \
@@ -74,44 +78,44 @@ sleep 5
 
 SERVURL="https://$ADDRESS:443"
 
-echo " * Doing ping over SSL..."
+do_test() {
+    conf="$1"
+    shift
 
-$CMDNS1 curl -k "$SERVURL/CONFIGURE" -d ''
+    echo " * Testing ping with config '${conf}'..."
 
-start_client
+    $CMDNS1 curl -sk "$SERVURL/CONFIGURE" -d "$conf" >/dev/null
 
-$CMDNS1 ping -c 1 $VPNADDR \
-    || fail "$PID" "Could not ping through tunnel"
+    start_client
 
-echo ok
+    $CMDNS1 ping -c 1 $VPNADDR \
+        || fail "$PID" "Could not ping through tunnel"
 
-kill $(cat "$CLI_PIDFILE")
+    echo ok
 
-sleep 2
+    kill $(cat "$CLI_PIDFILE")
 
-echo " * Checking SSL was used for tunnel..."
+    sleep 2
 
-$CMDNS1 curl -k "$SERVURL/STATUS" | grep 'ssl_ping=true' \
-    || fail "$PID" "ping was not over SSL"
+    echo " * Checking status..."
 
-echo " * Doing ping over UDP..."
+    $CMDNS1 curl -sk "$SERVURL/STATUS" | tr '&' '\n' >$mytmp/status.txt
 
-$CMDNS1 curl -k "$SERVURL/CONFIGURE" -d 'enable_udp=true'
+    for want_status in "$@"
+    do
+        grep "$want_status" $mytmp/status.txt \
+            || fail "$PID" "missing status '${want_status}'"
+    done
+}
 
-start_client
+password='mypassword'
 
-$CMDNS1 ping -c 1 $VPNADDR \
-    || fail "$PID" "Could not ping through tunnel"
+do_test '' '^in_pass=mypassword$' '^ssl_ping=true$'
+do_test 'enable_udp=true' '^in_pass=mypassword$' '^udp_ping=true$'
+do_test 'pass_req_type=juniper2021' '^in_pass_juniper2021=mypassword$'
 
-echo ok
+password='longpassword34567890'
 
-kill $(cat "$CLI_PIDFILE")
-
-sleep 2
-
-echo " * Checking UDP was used for tunnel..."
-
-$CMDNS1 curl -k "$SERVURL/STATUS" | grep 'udp_ping=true' \
-    || fail "$PID" "ping was not over UDP"
+do_test 'pass_req_type=juniper2021' '^in_pass_juniper2021=longpassword345678$'
 
 exit 0
