@@ -12,10 +12,10 @@ msgid ""
 msgstr ""
 "Project-Id-Version: network-manager-openconnect\n"
 "Report-Msgid-Bugs-To: openconnect-devel@lists.infradead.org\n"
-"POT-Creation-Date: 2026-06-13 10:04+0100\n"
+"POT-Creation-Date: 2026-06-15 16:10+0100\n"
 "PO-Revision-Date: 2026-02-15 21:50+0200\n"
-"Last-Translator: Miquel-Àngel Burgos i Fradeja <miquel.angel.burgos@gmail."
-"com>\n"
+"Last-Translator: Miquel-Àngel Burgos i Fradeja "
+"<miquel.angel.burgos@gmail.com>\n"
 "Language-Team: Catalan <kde-i18n-ca@kde.org>\n"
 "Language: ca\n"
 "MIME-Version: 1.0\n"
@@ -134,7 +134,7 @@ msgstr ""
 msgid "Receive control packet of type %x:\n"
 msgstr "Rep el paquet de control del tipus %x:\n"
 
-#: array.c:903 pulse.c:2886
+#: array.c:903 pulse.c:2894
 #, c-format
 msgid "Received data packet of %d bytes\n"
 msgstr "S'ha rebut el paquet de dades de %d bytes\n"
@@ -144,19 +144,19 @@ msgstr "S'ha rebut el paquet de dades de %d bytes\n"
 msgid "Moved down %d bytes after previous packet\n"
 msgstr ""
 
-#: array.c:961 cstp.c:1111 gpst.c:1283 oncp.c:1135 ppp.c:1376 pulse.c:3021
+#: array.c:961 cstp.c:1111 gpst.c:1283 oncp.c:1135 ppp.c:1376 pulse.c:3029
 #, c-format
 msgid "SSL wrote too few bytes! Asked for %d, sent %d\n"
 msgstr "SSL ha escrit molt pocs bytes! S'ha preguntat per %d, s'ha enviat %d\n"
 
 #. Not that this will ever happen; we don't even process
 #. the setting when we're asked for it.
-#: array.c:979 cstp.c:1139 oncp.c:1172 pulse.c:3048
+#: array.c:979 cstp.c:1139 oncp.c:1172 pulse.c:3056
 msgid "CSTP rekey due\n"
 msgstr "S'espera la reclau CSTP\n"
 
 #. if we failed rehandshake try establishing a new-tunnel instead of failing
-#: array.c:986 cstp.c:1146 oncp.c:1179 pulse.c:3055
+#: array.c:986 cstp.c:1146 oncp.c:1179 pulse.c:3063
 msgid "Rehandshake failed; attempting new-tunnel\n"
 msgstr "Reencaixada errònia; s'està intentant un túnel nou\n"
 
@@ -247,11 +247,11 @@ msgstr "Error en enviar la sol·licitud DPD. S'esperava la desconnexió\n"
 msgid "Sent DTLS packet of %d bytes; DTLS send returned %d\n"
 msgstr "S'ha enviat el paquet DTLS de %d bytes; DTLS envia %d retornats\n"
 
-#: array.c:1362 auth-globalprotect.c:887 f5.c:862 fortinet.c:892 oncp.c:1285
+#: array.c:1362 auth-globalprotect.c:887 f5.c:862 fortinet.c:895 oncp.c:1285
 msgid "Logout failed.\n"
 msgstr "Sortida de sessió errònia.\n"
 
-#: array.c:1364 auth-globalprotect.c:889 f5.c:864 fortinet.c:894 oncp.c:1287
+#: array.c:1364 auth-globalprotect.c:889 f5.c:864 fortinet.c:897 oncp.c:1287
 msgid "Logout successful.\n"
 msgstr "Sortida de sessió amb èxit.\n"
 
@@ -561,7 +561,7 @@ msgstr "Resposta buida des del servidor\n"
 msgid "Failed to parse server response\n"
 msgstr "Error en analitzar la resposta del servidor\n"
 
-#: auth.c:614 f5.c:422 f5.c:464 f5.c:489 f5.c:634 fortinet.c:445 fortinet.c:631
+#: auth.c:614 f5.c:422 f5.c:464 f5.c:489 f5.c:634 fortinet.c:445 fortinet.c:634
 #, c-format
 msgid "Response was:%s\n"
 msgstr "La resposta ha estat: %s\n"
@@ -925,7 +925,7 @@ msgstr "S'han rebut %s paquets de dades comprimides de %d bytes (eren %d)\n"
 msgid "deflate failed %d\n"
 msgstr "la deflació ha fallat %d\n"
 
-#: cstp.c:981 gpst.c:1194 pulse.c:2853
+#: cstp.c:981 gpst.c:1194 pulse.c:2874
 #, c-format
 msgid "Short packet received (%d bytes)\n"
 msgstr "S'ha rebut un paquet petit (%d bytes)\n"
@@ -974,20 +974,20 @@ msgstr "s'ha rebut el paquet de terminació del servidor\n"
 msgid "Unknown packet %02x %02x %02x %02x %02x %02x %02x %02x\n"
 msgstr "Paquet desconegut %02x %02x %02x %02x %02x %02x %02x %02x\n"
 
-#: cstp.c:1157 oncp.c:1190 pulse.c:3066
+#: cstp.c:1157 oncp.c:1190 pulse.c:3074
 msgid "CSTP Dead Peer Detection detected dead peer!\n"
 msgstr "El detector de parells morts CSTP ha detectat un parell mort!\n"
 
-#: cstp.c:1161 gpst.c:1331 oncp.c:1105 oncp.c:1194 ppp.c:1406 pulse.c:2991
-#: pulse.c:3071
+#: cstp.c:1161 gpst.c:1331 oncp.c:1105 oncp.c:1194 ppp.c:1406 pulse.c:2999
+#: pulse.c:3079
 msgid "Reconnect failed\n"
 msgstr "Reconnexió errònia\n"
 
-#: cstp.c:1177 oncp.c:1210 pulse.c:3087
+#: cstp.c:1177 oncp.c:1210 pulse.c:3095
 msgid "Send CSTP DPD\n"
 msgstr "Envia CSTP DPD\n"
 
-#: cstp.c:1189 oncp.c:1221 pulse.c:3099
+#: cstp.c:1189 oncp.c:1221 pulse.c:3107
 msgid "Send CSTP Keepalive\n"
 msgstr "Envia Keepalive CSTP\n"
 
@@ -1377,7 +1377,7 @@ msgstr ""
 msgid "Got WINS/NBNS server %s\n"
 msgstr ""
 
-#: f5.c:557 fortinet.c:522 fortinet.c:567
+#: f5.c:557 fortinet.c:525 fortinet.c:570
 #, c-format
 msgid "Got search domain %s\n"
 msgstr ""
@@ -1404,16 +1404,16 @@ msgid ""
 "    because HDLC prevents determination of efficient and consistent MTU.\n"
 msgstr ""
 
-#: f5.c:632 fortinet.c:629
+#: f5.c:632 fortinet.c:632
 msgid "Failed to find VPN options\n"
 msgstr ""
 
-#: f5.c:655 fortinet.c:518
+#: f5.c:655 fortinet.c:521
 #, c-format
 msgid "Got Legacy IP address %s\n"
 msgstr ""
 
-#: f5.c:660 fortinet.c:556 fortinet.c:561
+#: f5.c:660 fortinet.c:559 fortinet.c:564
 #, c-format
 msgid "Got IPv6 address %s\n"
 msgstr ""
@@ -1491,27 +1491,27 @@ msgstr ""
 "informeu a «%s»\n"
 "\n"
 
-#: fortinet.c:513
+#: fortinet.c:514
 #, c-format
 msgid "Reported platform is %s\n"
 msgstr ""
 
-#: fortinet.c:526 fortinet.c:571
+#: fortinet.c:529 fortinet.c:574
 #, c-format
 msgid "Got IPv%d DNS server %s\n"
 msgstr ""
 
-#: fortinet.c:532 fortinet.c:577
+#: fortinet.c:535 fortinet.c:580
 #, c-format
 msgid "WARNING: Got split-DNS domains %s (not yet implemented)\n"
 msgstr ""
 
-#: fortinet.c:537 fortinet.c:582
+#: fortinet.c:540 fortinet.c:585
 #, c-format
 msgid "WARNING: Got split-DNS server %s (not yet implemented)\n"
 msgstr ""
 
-#: fortinet.c:597
+#: fortinet.c:600
 #, c-format
 msgid ""
 "WARNING: Fortinet server does not specifically enable or disable "
@@ -1525,7 +1525,7 @@ msgstr ""
 "informeu dels\n"
 "   resultats a «%s»\n"
 
-#: fortinet.c:605
+#: fortinet.c:608
 #, c-format
 msgid ""
 "Server did not send <auth-ses tun-connect-without-reauth=\"0/1\"/>. "
@@ -1535,21 +1535,21 @@ msgid ""
 "work please report to <%s>\n"
 msgstr ""
 
-#: fortinet.c:612
+#: fortinet.c:615
 msgid "Received split routes; not setting default Legacy IP route\n"
 msgstr ""
 
-#: fortinet.c:614
+#: fortinet.c:617
 msgid "No split routes received; setting default Legacy IP route\n"
 msgstr ""
 
-#: fortinet.c:691
+#: fortinet.c:694
 msgid ""
 "Ancient Fortinet server (<v5?) only supports ancient HTML config, which is "
 "not implemented by OpenConnect.\n"
 msgstr ""
 
-#: fortinet.c:694
+#: fortinet.c:697
 #, c-format
 msgid ""
 "Fortinet server is rejecting request for connection options. This\n"
@@ -1559,19 +1559,19 @@ msgid ""
 "%s.\n"
 msgstr ""
 
-#: fortinet.c:734
+#: fortinet.c:737
 msgid "Error establishing Fortinet connection\n"
 msgstr ""
 
-#: fortinet.c:749
+#: fortinet.c:752
 msgid "No cookie named SVPNCOOKIE.\n"
 msgstr ""
 
-#: fortinet.c:844
+#: fortinet.c:847
 msgid "Did not receive expected svrhello response.\n"
 msgstr ""
 
-#: fortinet.c:855
+#: fortinet.c:858
 #, c-format
 msgid "svrhello status was \"%.*s\" rather than \"ok\"\n"
 msgstr ""
@@ -2598,172 +2598,172 @@ msgstr ""
 msgid "TPMv2 RSA sign called for unknown algorithm %s\n"
 msgstr ""
 
-#: gnutls_tpm2_esys.c:177
+#: gnutls_tpm2_esys.c:182
 msgid "TPM2 password too long; truncating\n"
 msgstr "Contrasenya TPM2 massa gran; s'està tallant\n"
 
-#: gnutls_tpm2_esys.c:195
+#: gnutls_tpm2_esys.c:200
 msgid "owner"
 msgstr "propietari"
 
-#: gnutls_tpm2_esys.c:196
+#: gnutls_tpm2_esys.c:201
 msgid "null"
 msgstr "nul"
 
-#: gnutls_tpm2_esys.c:197
+#: gnutls_tpm2_esys.c:202
 msgid "endorsement"
 msgstr "suport"
 
-#: gnutls_tpm2_esys.c:198
+#: gnutls_tpm2_esys.c:203
 msgid "platform"
 msgstr "plataforma"
 
-#: gnutls_tpm2_esys.c:202
+#: gnutls_tpm2_esys.c:207
 #, c-format
 msgid "Creating primary key under %s hierarchy.\n"
 msgstr "S'està creant la clau primària sota la jerarquia %s. \n"
 
-#: gnutls_tpm2_esys.c:210 gnutls_tpm2_ibm.c:266
+#: gnutls_tpm2_esys.c:215 gnutls_tpm2_ibm.c:266
 #, c-format
 msgid "Enter TPM2 %s hierarchy password:"
 msgstr "Introduïu la contrasenya de jerarquia %s TPM2:"
 
-#: gnutls_tpm2_esys.c:218 gnutls_tpm2_esys.c:316 gnutls_tpm2_esys.c:392
+#: gnutls_tpm2_esys.c:223 gnutls_tpm2_esys.c:321 gnutls_tpm2_esys.c:397
 #, c-format
 msgid "TPM2 Esys_TR_SetAuth failed: 0x%x\n"
 msgstr "Ha fallat  Esys_TR_SetAuth TPM2 : 0x%x \n"
 
-#: gnutls_tpm2_esys.c:230
+#: gnutls_tpm2_esys.c:235
 msgid "TPM2 Esys_CreatePrimary owner auth failed\n"
 msgstr "Ha fallat l'autenticació del propietari Esys_CreatePrimary TPM2 \n"
 
-#: gnutls_tpm2_esys.c:235
+#: gnutls_tpm2_esys.c:240
 #, c-format
 msgid "TPM2 Esys_CreatePrimary failed: 0x%x\n"
 msgstr "Ha fallat Esys_CreatePrimary TPM2: 0x%x \n"
 
-#: gnutls_tpm2_esys.c:254
+#: gnutls_tpm2_esys.c:259
 msgid "Establishing connection with TPM.\n"
 msgstr "Connexió establida amb TPM.\n"
 
-#: gnutls_tpm2_esys.c:259
+#: gnutls_tpm2_esys.c:264
 #, c-format
 msgid "TPM2 Esys_Initialize failed: 0x%x\n"
 msgstr "Ha fallat Esys_Initialize TPM2:  0x%x \n"
 
-#: gnutls_tpm2_esys.c:267
+#: gnutls_tpm2_esys.c:272
 msgid ""
 "TPM2 was already started up thus false positive failing in tpm2tss log.\n"
 msgstr ""
 "TPM2 es va iniciar per això hi ha un fals positiu en la fallada de registre "
 "tpm2tss. \n"
 
-#: gnutls_tpm2_esys.c:270
+#: gnutls_tpm2_esys.c:275
 #, c-format
 msgid "TPM2 Esys_Startup failed: 0x%x\n"
 msgstr ""
 "Ha fallat Esys_Startup TPM2: 0x%x \n"
 "\n"
 
-#: gnutls_tpm2_esys.c:283
+#: gnutls_tpm2_esys.c:288
 #, c-format
 msgid "Esys_TR_FromTPMPublic failed for handle 0x%x: 0x%x\n"
 msgstr "Ha fallat Esys_TR_FromTPMPublic  per a gestionar 0x%x: 0x%x \n"
 
-#: gnutls_tpm2_esys.c:307 gnutls_tpm2_ibm.c:285
+#: gnutls_tpm2_esys.c:312 gnutls_tpm2_ibm.c:285
 msgid "Enter TPM2 parent key password:"
 msgstr "Introduïu la contrasenya de la clau pare TPM2:"
 
-#: gnutls_tpm2_esys.c:308 gnutls_tpm2_ibm.c:286
+#: gnutls_tpm2_esys.c:313 gnutls_tpm2_ibm.c:286
 msgid "Enter secondary TPM2 parent key password:"
 msgstr ""
 
-#: gnutls_tpm2_esys.c:322
+#: gnutls_tpm2_esys.c:327
 #, c-format
 msgid "Loading TPM2 key blob, parent %x.\n"
 msgstr "S'està carregant la bombolla clau TPM2, pare %x. \n"
 
-#: gnutls_tpm2_esys.c:330
+#: gnutls_tpm2_esys.c:335
 msgid "TPM2 Esys_Load auth failed\n"
 msgstr "Ha fallat l'autenticació Esys_Load TPM2\n"
 
-#: gnutls_tpm2_esys.c:336
+#: gnutls_tpm2_esys.c:341
 #, c-format
 msgid "TPM2 Esys_Load failed: 0x%x\n"
 msgstr ""
 "Ha fallat Esys_Load TPM2: 0x%x \n"
 "\n"
 
-#: gnutls_tpm2_esys.c:346
+#: gnutls_tpm2_esys.c:351
 #, c-format
 msgid "TPM2 Esys_FlushContext for generated primary failed: 0x%x\n"
 msgstr "Ha fallat Esys_FlushContext TPM2 per al primari generat:  0x%x \n"
 
-#: gnutls_tpm2_esys.c:380 gnutls_tpm2_ibm.c:376 gnutls_tpm2_ibm.c:476
+#: gnutls_tpm2_esys.c:385 gnutls_tpm2_ibm.c:376 gnutls_tpm2_ibm.c:476
 msgid "Enter TPM2 key password:"
 msgstr "Introduïu la contrasenya TPM2:"
 
-#: gnutls_tpm2_esys.c:381 gnutls_tpm2_ibm.c:377
+#: gnutls_tpm2_esys.c:386 gnutls_tpm2_ibm.c:377
 msgid "Enter secondary TPM2 key password:"
 msgstr ""
 
-#: gnutls_tpm2_esys.c:414
+#: gnutls_tpm2_esys.c:419
 #, c-format
 msgid "TPM2 RSA sign function called for %d bytes, algo %s\n"
 msgstr ""
 
-#: gnutls_tpm2_esys.c:434
+#: gnutls_tpm2_esys.c:439
 msgid "TPM2 Esys_RSA_Decrypt auth failed\n"
 msgstr "Ha fallat l'autenticació Esys_RSA_Decrypt TPM2\n"
 
-#: gnutls_tpm2_esys.c:440 gnutls_tpm2_esys.c:530
+#: gnutls_tpm2_esys.c:445 gnutls_tpm2_esys.c:535
 #, c-format
 msgid "TPM2 failed to generate RSA signature: 0x%x\n"
 msgstr ""
 "TPM2 ha fallat en generar la signatura RSA:  0x%x \n"
 "\n"
 
-#: gnutls_tpm2_esys.c:484 gnutls_tpm2_ibm.c:420
+#: gnutls_tpm2_esys.c:489 gnutls_tpm2_ibm.c:420
 #, c-format
 msgid "TPM2 EC sign function called for %d bytes.\n"
 msgstr "La funció de signatura TPM2 EC ha cridat a %d bytes.\n"
 
-#: gnutls_tpm2_esys.c:504 gnutls_tpm2_ibm.c:445
+#: gnutls_tpm2_esys.c:509 gnutls_tpm2_ibm.c:445
 #, c-format
 msgid "Unknown TPM2 EC digest size %d for algo 0x%x\n"
 msgstr ""
 
-#: gnutls_tpm2_esys.c:524
+#: gnutls_tpm2_esys.c:529
 msgid "TPM2 Esys_Sign auth failed\n"
 msgstr "Ha fallat l'autenticació Esys_Sign TPM2 \n"
 
-#: gnutls_tpm2_esys.c:564 gnutls_tpm2_ibm.c:512
+#: gnutls_tpm2_esys.c:569 gnutls_tpm2_ibm.c:512
 #, c-format
 msgid "Invalid TPM2 parent handle 0x%08x\n"
 msgstr "Gestor pare TPM2 no vàlid 0x%08x \n"
 
-#: gnutls_tpm2_esys.c:581
+#: gnutls_tpm2_esys.c:586
 msgid "Using SWTPM due to TPM_INTERFACE_TYPE environment variable\n"
 msgstr ""
 
-#: gnutls_tpm2_esys.c:586
+#: gnutls_tpm2_esys.c:591
 #, c-format
 msgid "TSS2_TctiLdr_Initialize failed for swtpm: 0x%x\n"
 msgstr ""
 
-#: gnutls_tpm2_esys.c:596 gnutls_tpm2_ibm.c:529
+#: gnutls_tpm2_esys.c:601 gnutls_tpm2_ibm.c:529
 #, c-format
 msgid "Failed to import TPM2 private key data: 0x%x\n"
 msgstr "Error en importar les dades de la clau privada TPM2: 0x%x \n"
 
-#: gnutls_tpm2_esys.c:605 gnutls_tpm2_ibm.c:539
+#: gnutls_tpm2_esys.c:610 gnutls_tpm2_ibm.c:539
 #, c-format
 msgid "Failed to import TPM2 public key data: 0x%x\n"
 msgstr ""
 "Errada per a importar les dades de  la clau pública TPM2: 0x%x \n"
 "\n"
 
-#: gnutls_tpm2_esys.c:619 gnutls_tpm2_ibm.c:550
+#: gnutls_tpm2_esys.c:624 gnutls_tpm2_ibm.c:550
 #, c-format
 msgid "Unsupported TPM2 key type %d\n"
 msgstr ""
@@ -3228,17 +3228,17 @@ msgstr ""
 msgid "Invalid incoming external-browser request\n"
 msgstr ""
 
-#: hpke.c:267
+#: hpke.c:271
 #, c-format
 msgid "Got encrypted SSO token of %d bytes\n"
 msgstr ""
 
-#: hpke.c:335
+#: hpke.c:339
 #, c-format
 msgid "Failed to decode SSO token at %d:\n"
 msgstr ""
 
-#: hpke.c:363
+#: hpke.c:367
 msgid "SSO token not alphanumeric\n"
 msgstr ""
 
@@ -3665,21 +3665,21 @@ msgstr ""
 msgid "IPv6 configuration received but MTU %d is too small.\n"
 msgstr "S'ha rebut la configuració IPv6 però MTU %d és massa petit.\n"
 
-#: library.c:1275
+#: library.c:1278
 #, c-format
 msgid "Failed to parse server URL '%s'\n"
 msgstr "Error en analitzar el servidor URL  «%s»\n"
 
-#: library.c:1281
+#: library.c:1284
 msgid "Only https:// permitted for server URL\n"
 msgstr "Sols està permès https:// per a l'URL del servidor\n"
 
-#: library.c:1704
+#: library.c:1707
 #, c-format
 msgid "Unknown certificate hash: %s.\n"
 msgstr "Suma del certificat desconeguda: %s.\n"
 
-#: library.c:1738
+#: library.c:1741
 #, c-format
 msgid ""
 "The size of the provided fingerprint is less than the minimum required "
@@ -3688,15 +3688,15 @@ msgstr ""
 "La mida de l'empremta digital proporcionada és menor que el mínim requerit "
 "(%u).\n"
 
-#: library.c:1795
+#: library.c:1798
 msgid "No form handler; cannot authenticate.\n"
 msgstr "Sense formulari gestor; no es pot autenticar.\n"
 
-#: library.c:1799
+#: library.c:1802
 msgid "No form ID. This is a bug in OpenConnect's authentication code.\n"
 msgstr ""
 
-#: library.c:1870
+#: library.c:1873
 msgid "No SSO handler\n"
 msgstr ""
 
@@ -4808,37 +4808,37 @@ msgstr "S'està intentant l'autenticació NTLMv%d HTTP amb el servidor «%s»\n"
 msgid "Terminating because nullppp has reached network state.\n"
 msgstr ""
 
-#: oath.c:104
-msgid "Invalid base32 token string\n"
-msgstr "Cadena testimoni de base32 no vàlida\n"
-
-#: oath.c:112
+#: oath.c:116
 msgid "Failed to allocate memory to decode OATH secret\n"
 msgstr "Error en assignar memòria per a descodificar el secret OATH\n"
 
-#: oath.c:218
+#: oath.c:140
+msgid "Invalid base32 token string\n"
+msgstr "Cadena testimoni de base32 no vàlida\n"
+
+#: oath.c:238
 msgid "This version of OpenConnect was built without PSKC support\n"
 msgstr "Aquesta versió d'OpenConnect ha estat muntada sense suport PSKC\n"
 
-#: oath.c:314 oath.c:339 stoken.c:297 yubikey.c:507
+#: oath.c:445 oath.c:470 stoken.c:297 yubikey.c:507
 msgid "OK to generate INITIAL tokencode\n"
 msgstr "D'acord per a generar el codi testimoni INICIAL\n"
 
-#: oath.c:318 oath.c:342 stoken.c:302 yubikey.c:511
+#: oath.c:449 oath.c:473 stoken.c:302 yubikey.c:511
 msgid "OK to generate NEXT tokencode\n"
 msgstr "D'acord per a generar el codi testimoni SEGÜENT\n"
 
-#: oath.c:323 oath.c:346 stoken.c:307
+#: oath.c:454 oath.c:477 stoken.c:307
 msgid "Server is rejecting the soft token; switching to manual entry\n"
 msgstr ""
 "El servidor està rebutjant el testimoni tou; s'està canviant a entrada "
 "manual\n"
 
-#: oath.c:380
+#: oath.c:511
 msgid "Generating OATH TOTP token code\n"
 msgstr "S'està generant el codi testimoni TOTP OATH\n"
 
-#: oath.c:526
+#: oath.c:682
 msgid "Generating OATH HOTP token code\n"
 msgstr "S'està generant el codi testimoni HOTP OATH\n"
 
@@ -5057,11 +5057,11 @@ msgstr "Error en negociar les claus ESP\n"
 msgid "oNCP negotiation request outgoing:\n"
 msgstr "Sol·licitud de negociació oNCP sortint:\n"
 
-#: oncp.c:825 pulse.c:2916
+#: oncp.c:825 pulse.c:2924
 msgid "new incoming"
 msgstr "entrada nova"
 
-#: oncp.c:826 pulse.c:2917
+#: oncp.c:826 pulse.c:2925
 msgid "new outgoing"
 msgstr "sortida nova"
 
@@ -5116,7 +5116,7 @@ msgstr "Missatge KMP %d desconegut de mida %d:\n"
 msgid ".... + %d more bytes unreceived\n"
 msgstr ".... + %d bytes més sense rebre\n"
 
-#: oncp.c:1087 pulse.c:2973
+#: oncp.c:1087 pulse.c:2981
 msgid "Packet outgoing:\n"
 msgstr "Paquet de sortida:\n"
 
@@ -5124,7 +5124,7 @@ msgstr "Paquet de sortida:\n"
 msgid "Sent ESP enable control packet\n"
 msgstr "S'ha enviat habilitació ESP de control de paquets\n"
 
-#: openconnect-internal.h:1717 openconnect-internal.h:1727
+#: openconnect-internal.h:1721 openconnect-internal.h:1731
 #, c-format
 msgid "ERROR: %s() called with invalid UTF-8 for '%s' argument\n"
 msgstr "ERROR: %s() cridada amb UTF-8 no vàlida per a l'argument «%s»\n"
@@ -6508,23 +6508,23 @@ msgstr "l'identificador a la posició 0x20 és desconegut"
 msgid "Insufficient configuration found\n"
 msgstr ""
 
-#: pulse.c:2908
+#: pulse.c:2916
 msgid "ESP rekey failed\n"
 msgstr "Ha fallat la reclau ESP\n"
 
-#: pulse.c:2937
+#: pulse.c:2945
 #, c-format
 msgid "Pulse fatal error (reason: %ld): %s\n"
 msgstr ""
 
-#: pulse.c:2955
+#: pulse.c:2963
 #, c-format
 msgid ""
 "Unknown Pulse packet of %d bytes (vendor 0x%03x, type 0x%02x, hdr_len %d, "
 "ident %d)\n"
 msgstr ""
 
-#: pulse.c:3135
+#: pulse.c:3143
 #, c-format
 msgid "Sending IF-T/TLS data packet of %d bytes\n"
 msgstr "S'està enviant un paquet de dades IF-T/TLS de %d bytes\n"
@@ -6555,47 +6555,47 @@ msgstr ""
 "Avís: l'exclusió de la divisió «%s» té el conjunt de bits de l'amfitrió. "
 "S'està substituint per «%s/%d».\n"
 
-#: script.c:330
+#: script.c:320
 #, c-format
 msgid "Ignoring legacy network because address \"%s\" is invalid.\n"
 msgstr "S'està ignorant la xarxa antiga perquè l'adreça «%s» no és vàlida.\n"
 
-#: script.c:335
+#: script.c:325
 #, c-format
 msgid "Ignoring legacy network because netmask \"%s\" is invalid.\n"
 msgstr ""
 "S'està ignorant la xarxa antiga perquè la màscara de xarxa «%s» no és "
 "vàlida.\n"
 
-#: script.c:615
+#: script.c:605
 #, c-format
 msgid "Failed to get script exit status: %s\n"
 msgstr "No s'ha pogut obtenir l'estat de la sortida de l'script: %s\n"
 
-#: script.c:624
+#: script.c:614
 #, c-format
 msgid "Script '%s' returned error %ld\n"
 msgstr "L'script «%s» ha retornat l'error %ld\n"
 
-#: script.c:632
+#: script.c:622
 msgid "Script did not complete within 10 seconds.\n"
 msgstr "L'script no ha finalitzat en 10 segons.\n"
 
-#: script.c:645 script.c:696
+#: script.c:635 script.c:686
 #, c-format
 msgid "Failed to spawn script '%s' for %s: %s\n"
 msgstr "Error en engendrar el script  «%s» per %s: %s\n"
 
-#: script.c:682 tun.c:488
+#: script.c:672 tun.c:488
 msgid "setpgid"
 msgstr "setpgid"
 
-#: script.c:703
+#: script.c:693
 #, c-format
 msgid "Script '%s' exited abnormally (%x)\n"
 msgstr "El script «%s» ha acabat de forma anòmala (%x)\n"
 
-#: script.c:711
+#: script.c:701
 #, c-format
 msgid "Script '%s' returned error %d\n"
 msgstr "El script «%s» ha retornat l'error %d\n"

@@ -15,7 +15,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: network-manager-openconnect\n"
 "Report-Msgid-Bugs-To: openconnect-devel@lists.infradead.org\n"
-"POT-Creation-Date: 2026-01-25 10:43-0800\n"
+"POT-Creation-Date: 2026-06-15 16:10+0100\n"
 "PO-Revision-Date: 2025-01-26 21:15-0300\n"
 "Last-Translator: Rafael Fontenelle <rafaelff@gnome.org>\n"
 "Language-Team: Brazilian Portuguese <https://br.gnome.org/traducao>\n"
@@ -142,7 +142,7 @@ msgstr "Recebido pacote parcial, %d de %d bytes\n"
 msgid "Receive control packet of type %x:\n"
 msgstr "Recebido pacote de controle do tipo %x:\n"
 
-#: array.c:903 pulse.c:2886
+#: array.c:903 pulse.c:2894
 #, c-format
 msgid "Received data packet of %d bytes\n"
 msgstr "Recebido pacote de dados de %d bytes\n"
@@ -152,19 +152,19 @@ msgstr "Recebido pacote de dados de %d bytes\n"
 msgid "Moved down %d bytes after previous packet\n"
 msgstr "Movido %d bytes para baixo após o pacote anterior\n"
 
-#: array.c:961 cstp.c:1111 gpst.c:1283 oncp.c:1135 ppp.c:1376 pulse.c:3021
+#: array.c:961 cstp.c:1111 gpst.c:1283 oncp.c:1135 ppp.c:1376 pulse.c:3029
 #, c-format
 msgid "SSL wrote too few bytes! Asked for %d, sent %d\n"
 msgstr "SSL não escreveu bytes suficiente! Perguntou por %d, enviou %d\n"
 
 #. Not that this will ever happen; we don't even process
 #. the setting when we're asked for it.
-#: array.c:979 cstp.c:1139 oncp.c:1172 pulse.c:3048
+#: array.c:979 cstp.c:1139 oncp.c:1172 pulse.c:3056
 msgid "CSTP rekey due\n"
 msgstr "Renovação da chave CSTP falhou\n"
 
 #. if we failed rehandshake try establishing a new-tunnel instead of failing
-#: array.c:986 cstp.c:1146 oncp.c:1179 pulse.c:3055
+#: array.c:986 cstp.c:1146 oncp.c:1179 pulse.c:3063
 msgid "Rehandshake failed; attempting new-tunnel\n"
 msgstr "Re-negociação falhou; tentando novo túnel\n"
 
@@ -255,11 +255,11 @@ msgstr "Falha ao enviar requisição DPD. Esperar desconexão\n"
 msgid "Sent DTLS packet of %d bytes; DTLS send returned %d\n"
 msgstr "Enviou pacote DTLS de %d bytes; envio de DTLS retornou %d\n"
 
-#: array.c:1362 auth-globalprotect.c:887 f5.c:862 fortinet.c:892 oncp.c:1285
+#: array.c:1362 auth-globalprotect.c:887 f5.c:862 fortinet.c:895 oncp.c:1285
 msgid "Logout failed.\n"
 msgstr "Desconexão falhou\n"
 
-#: array.c:1364 auth-globalprotect.c:889 f5.c:864 fortinet.c:894 oncp.c:1287
+#: array.c:1364 auth-globalprotect.c:889 f5.c:864 fortinet.c:897 oncp.c:1287
 msgid "Logout successful.\n"
 msgstr "Desconexão feita com sucesso.\n"
 
@@ -574,7 +574,7 @@ msgstr "Resposta vazia do servidor\n"
 msgid "Failed to parse server response\n"
 msgstr "Falha ao analisar resposta do servidor\n"
 
-#: auth.c:614 f5.c:422 f5.c:464 f5.c:489 f5.c:634 fortinet.c:445 fortinet.c:631
+#: auth.c:614 f5.c:422 f5.c:464 f5.c:489 f5.c:634 fortinet.c:445 fortinet.c:634
 #, c-format
 msgid "Response was:%s\n"
 msgstr "Resposta foi:%s\n"
@@ -940,7 +940,7 @@ msgstr "Recebeu o pacote de dados comprimido %s de %d bytes (era %d)\n"
 msgid "deflate failed %d\n"
 msgstr "deflate falhou %d\n"
 
-#: cstp.c:981 gpst.c:1194 pulse.c:2853
+#: cstp.c:981 gpst.c:1194 pulse.c:2874
 #, c-format
 msgid "Short packet received (%d bytes)\n"
 msgstr "Pacote curto recebido (%d bytes)\n"
@@ -989,20 +989,20 @@ msgstr "recebeu pacote de terminação do servidor\n"
 msgid "Unknown packet %02x %02x %02x %02x %02x %02x %02x %02x\n"
 msgstr "Pacote desconhecido %02x %02x %02x %02x %02x %02x %02x %02x\n"
 
-#: cstp.c:1157 oncp.c:1190 pulse.c:3066
+#: cstp.c:1157 oncp.c:1190 pulse.c:3074
 msgid "CSTP Dead Peer Detection detected dead peer!\n"
 msgstr "Dead Peer Detection CSTP detectou par morto!\n"
 
-#: cstp.c:1161 gpst.c:1331 oncp.c:1105 oncp.c:1194 ppp.c:1406 pulse.c:2991
-#: pulse.c:3071
+#: cstp.c:1161 gpst.c:1331 oncp.c:1105 oncp.c:1194 ppp.c:1406 pulse.c:2999
+#: pulse.c:3079
 msgid "Reconnect failed\n"
 msgstr "Reconexão falhou\n"
 
-#: cstp.c:1177 oncp.c:1210 pulse.c:3087
+#: cstp.c:1177 oncp.c:1210 pulse.c:3095
 msgid "Send CSTP DPD\n"
 msgstr "Enviar DPD CSTP\n"
 
-#: cstp.c:1189 oncp.c:1221 pulse.c:3099
+#: cstp.c:1189 oncp.c:1221 pulse.c:3107
 msgid "Send CSTP Keepalive\n"
 msgstr "Enviar keepalive CSTP\n"
 
@@ -1391,7 +1391,7 @@ msgstr "Obteve servidor DNS %s\n"
 msgid "Got WINS/NBNS server %s\n"
 msgstr "Obteve servidor WINS/NBNS %s\n"
 
-#: f5.c:557 fortinet.c:522 fortinet.c:567
+#: f5.c:557 fortinet.c:525 fortinet.c:570
 #, c-format
 msgid "Got search domain %s\n"
 msgstr "Obteve domínio de pesquisa %s\n"
@@ -1420,16 +1420,16 @@ msgstr ""
 "AVISO: O servidor habilita DTLS mas também requer HDLC. Desabilitando DTLS,\n"
 "    pois o HDLC impede a determinação de MTU eficiente e consistente.\n"
 
-#: f5.c:632 fortinet.c:629
+#: f5.c:632 fortinet.c:632
 msgid "Failed to find VPN options\n"
 msgstr "Falha ao localizar parâmetros de VPN\n"
 
-#: f5.c:655 fortinet.c:518
+#: f5.c:655 fortinet.c:521
 #, c-format
 msgid "Got Legacy IP address %s\n"
 msgstr "Obteve endereços de IP legados %s\n"
 
-#: f5.c:660 fortinet.c:556 fortinet.c:561
+#: f5.c:660 fortinet.c:559 fortinet.c:564
 #, c-format
 msgid "Got IPv6 address %s\n"
 msgstr "Obteve endereço IPv6 %s\n"
@@ -1505,29 +1505,29 @@ msgstr ""
 "poderá reconectar se um par morto for detectado. Se a reconexão funcionar,\n"
 "por favor relate para <%s>\n"
 
-#: fortinet.c:513
+#: fortinet.c:514
 #, c-format
 msgid "Reported platform is %s\n"
 msgstr "A plataforma relatada é %s\n"
 
-#: fortinet.c:526 fortinet.c:571
+#: fortinet.c:529 fortinet.c:574
 #, c-format
 msgid "Got IPv%d DNS server %s\n"
 msgstr "Obteve IPv%d servidor DNS %s\n"
 
-#: fortinet.c:532 fortinet.c:577
+#: fortinet.c:535 fortinet.c:580
 #, c-format
 msgid "WARNING: Got split-DNS domains %s (not yet implemented)\n"
 msgstr ""
 "AVISO: Obteve domínios de DNS divididos %s (ainda não foi implementado)\n"
 
-#: fortinet.c:537 fortinet.c:582
+#: fortinet.c:540 fortinet.c:585
 #, c-format
 msgid "WARNING: Got split-DNS server %s (not yet implemented)\n"
 msgstr ""
 "AVISO: Obteve servidor de DNS dividido %s (ainda não foi implementado)\n"
 
-#: fortinet.c:597
+#: fortinet.c:600
 #, c-format
 msgid ""
 "WARNING: Fortinet server does not specifically enable or disable "
@@ -1539,7 +1539,7 @@ msgstr ""
 "    reconexão sem reautenticação. Se a reconexão automática funcionar,\n"
 "    informe os resultados para <%s>\n"
 
-#: fortinet.c:605
+#: fortinet.c:608
 #, c-format
 msgid ""
 "Server did not send <auth-ses tun-connect-without-reauth=\"0/1\"/>. "
@@ -1553,15 +1553,15 @@ msgstr ""
 "provavelmente não poderá reconectar a um par morto caso seja detectado.\n"
 "Se a reconexão FUNCIONAR, relate para <%s>\n"
 
-#: fortinet.c:612
+#: fortinet.c:615
 msgid "Received split routes; not setting default Legacy IP route\n"
 msgstr "Rotas divididas recebidas; não definindo a rota IP legado padrão\n"
 
-#: fortinet.c:614
+#: fortinet.c:617
 msgid "No split routes received; setting default Legacy IP route\n"
 msgstr "Nenhuma rota dividida recebida; definindo a rota dw IP legado padrão\n"
 
-#: fortinet.c:691
+#: fortinet.c:694
 msgid ""
 "Ancient Fortinet server (<v5?) only supports ancient HTML config, which is "
 "not implemented by OpenConnect.\n"
@@ -1569,7 +1569,7 @@ msgstr ""
 "Servidor Fortinet antigo (<v5?) somente oferece suporte à configuração HTML "
 "antiga, que não foi implementada pela OpenConnect.\n"
 
-#: fortinet.c:694
+#: fortinet.c:697
 #, c-format
 msgid ""
 "Fortinet server is rejecting request for connection options. This\n"
@@ -1585,19 +1585,19 @@ msgstr ""
 "%s e\n"
 "%s.\n"
 
-#: fortinet.c:734
+#: fortinet.c:737
 msgid "Error establishing Fortinet connection\n"
 msgstr "Erro ao estabelecer conexão Fortinet\n"
 
-#: fortinet.c:749
+#: fortinet.c:752
 msgid "No cookie named SVPNCOOKIE.\n"
 msgstr "Não há cookie nomeado como SVPNCOOKIE.\n"
 
-#: fortinet.c:844
+#: fortinet.c:847
 msgid "Did not receive expected svrhello response.\n"
 msgstr "Não foi recebida a resposta svrhello esperada.\n"
 
-#: fortinet.c:855
+#: fortinet.c:858
 #, c-format
 msgid "svrhello status was \"%.*s\" rather than \"ok\"\n"
 msgstr "status de svrhello foi “%.*s” ao invés de “ok”\n"
@@ -2300,175 +2300,175 @@ msgstr "Conectado ao HTTP no %s com suíte criptografada %s\n"
 msgid "Renegotiated SSL on %s with ciphersuite %s\n"
 msgstr "SSL renegociado em %s com suíte criptografada %s\n"
 
-#: gnutls.c:2697 openssl-pkcs11.c:206
+#: gnutls.c:2713 openssl-pkcs11.c:206
 #, c-format
 msgid "PIN required for %s"
 msgstr "PIN necessário para %s"
 
-#: gnutls.c:2701 openssl-pkcs11.c:209
+#: gnutls.c:2717 openssl-pkcs11.c:209
 msgid "Wrong PIN"
 msgstr "PIN incorreto"
 
-#: gnutls.c:2704
+#: gnutls.c:2720
 msgid "This is the final try before locking!"
 msgstr "Essa é a tentativa final antes de travar!"
 
-#: gnutls.c:2706
+#: gnutls.c:2722
 msgid "Only a few tries left before locking!"
 msgstr "Faltam poucas tentativas antes de travar!"
 
-#: gnutls.c:2711 openssl-pkcs11.c:213
+#: gnutls.c:2727 openssl-pkcs11.c:213
 msgid "Enter PIN:"
 msgstr "Insira o PIN:"
 
-#: gnutls.c:2797 openssl.c:2199
+#: gnutls.c:2813 openssl.c:2199
 msgid "Unsupported OATH HMAC algorithm\n"
 msgstr "Algoritmo HMAC de OATH sem suporte\n"
 
-#: gnutls.c:2806
+#: gnutls.c:2822
 #, c-format
 msgid "Failed to calculate OATH HMAC: %s\n"
 msgstr "Falha ao calcular HMAC de OATH: %s\n"
 
-#: gnutls.c:2820
+#: gnutls.c:2836
 #, c-format
 msgid "%s %dms\n"
 msgstr "%s %dms\n"
 
-#: gnutls.c:2861
+#: gnutls.c:2877
 #, c-format
 msgid "Could not set ciphersuites: %s\n"
 msgstr "Não foi possível definir suítes criptografadas: %s\n"
 
-#: gnutls.c:2868 openssl.c:2314
+#: gnutls.c:2884 openssl.c:2314
 msgid "Established EAP-TTLS session\n"
 msgstr "Sessão EAP-TTLS estabelecida\n"
 
-#: gnutls.c:2961
+#: gnutls.c:2977
 #, c-format
 msgid "Failed to generate STRAP key: %s\n"
 msgstr "Falha ao gerar chave STRAP: %s\n"
 
-#: gnutls.c:2970
+#: gnutls.c:2986
 #, c-format
 msgid "Failed to generate STRAP DH key: %s\n"
 msgstr "Falha ao gerar chave STRAP DH: %s\n"
 
-#: gnutls.c:3003
+#: gnutls.c:3019
 #, c-format
 msgid "Failed to decode server DH key: %s\n"
 msgstr "Falha ao decodificar a chave DH do servidor: %s\n"
 
-#: gnutls.c:3015
+#: gnutls.c:3031
 #, c-format
 msgid "Failed to export DH private key parameters: %s\n"
 msgstr "Falha ao exportar parâmetros de chave privada DH: %s\n"
 
-#: gnutls.c:3021
+#: gnutls.c:3037
 #, c-format
 msgid "Failed to export server DH key parameters: %s\n"
 msgstr "Falha ao exportar os parâmetros de chave DH do servidor: %s\n"
 
-#: gnutls.c:3029
+#: gnutls.c:3045
 #, c-format
 msgid "HPKE uses unsupported EC curve (%d, %d)\n"
 msgstr "HPKE usa curva de EC não suportada (%d, %d)\n"
 
-#: gnutls.c:3042
+#: gnutls.c:3058
 msgid "Failed to create ECC public point for ECDH\n"
 msgstr "Falha ao criar ponto público de CC para ECDH\n"
 
-#: gnutls.c:3085
+#: gnutls.c:3101
 #, c-format
 msgid "HKDF extract failed: %s\n"
 msgstr "Falha ao extrair HKDF: %s\n"
 
-#: gnutls.c:3095
+#: gnutls.c:3111
 #, c-format
 msgid "HKDF expand failed: %s\n"
 msgstr "Falha ao expandir HKDF: %s\n"
 
-#: gnutls.c:3114
+#: gnutls.c:3130
 #, c-format
 msgid "Failed to init AES-256-GCM cipher: %s\n"
 msgstr "Falha ao inicializar a cifra AES-256-GCM: %s\n"
 
-#: gnutls.c:3123
+#: gnutls.c:3139
 #, c-format
 msgid "SSO token decryption failed: %s\n"
 msgstr "Falha ao descriptografar o token SSO: %s\n"
 
-#: gnutls.c:3166
+#: gnutls.c:3182
 #, c-format
 msgid "Failed to decode STRAP key: %s\n"
 msgstr "Falha ao decodificar a chave STRAP: %s\n"
 
-#: gnutls.c:3191
+#: gnutls.c:3207
 #, c-format
 msgid "Failed to generate channel bindings for STRAP key: %s\n"
 msgstr "Falha ao gerar ligações de canal para a chave STRAP: %s\n"
 
-#: gnutls.c:3210
+#: gnutls.c:3226
 #, c-format
 msgid "Failed to regenerate STRAP key: %s\n"
 msgstr "Falha ao regerar a chave STRAP: %s\n"
 
-#: gnutls.c:3225 openssl.c:2576
+#: gnutls.c:3241 openssl.c:2576
 msgid "Failed to generate STRAP key DER\n"
 msgstr "Falha ao gerar DER da chave STRAP\n"
 
-#: gnutls.c:3250
+#: gnutls.c:3266
 #, c-format
 msgid "STRAP signature failed: %s\n"
 msgstr "Falha na assinatura de STRAP: %s\n"
 
-#: gnutls.c:3341
+#: gnutls.c:3357
 msgid "Certificate may be multiple certificate authentication incompatible.\n"
 msgstr ""
 "O certificado pode ser incompatível com a autenticação de vários "
 "certificados.\n"
 
-#: gnutls.c:3379
+#: gnutls.c:3395
 #, c-format
 msgid "gnutls_x509_crt_get_key_purpose_oid: %s.\n"
 msgstr "gnutls_x509_crt_get_key_purpose_oid: %s.\n"
 
-#: gnutls.c:3402
+#: gnutls.c:3418
 #, c-format
 msgid "gnutls_X509_crt_get_key_usage: %s.\n"
 msgstr "gnutls_X509_crt_get_key_usage: %s.\n"
 
-#: gnutls.c:3419
+#: gnutls.c:3435
 msgid ""
 "The certificate specifies key usages incompatible with authentication.\n"
 msgstr ""
 "O certificado especifica usos de chave incompatíveis com autenticação.\n"
 
-#: gnutls.c:3428
+#: gnutls.c:3444
 msgid "Certificate doesn't specify key usage.\n"
 msgstr "O certificado não especifica o uso da chave.\n"
 
-#: gnutls.c:3446
+#: gnutls.c:3462
 #, c-format
 msgid "Precondition failed %s[%s]:%d\n"
 msgstr "Falha na precondição %s[%s]:%d\n"
 
-#: gnutls.c:3500
+#: gnutls.c:3516
 #, c-format
 msgid "Failed to generate the PKCS#7 structure: %s.\n"
 msgstr "Falha ao gerar a estrutura PKCS#7: %s.\n"
 
-#: gnutls.c:3534
+#: gnutls.c:3550
 #, c-format
 msgid "Precondition failed %s[%s]:%d.\n"
 msgstr "Falha na precondição %s[%s]:%d.\n"
 
-#: gnutls.c:3569
+#: gnutls.c:3585
 #, c-format
 msgid "gnutls_privkey_sign_data: %s.\n"
 msgstr "gnutls_privkey_sign_data: %s.\n"
 
-#: gnutls.c:3594
+#: gnutls.c:3610
 #, c-format
 msgid "Failed to sign data with second certificate: %s.\n"
 msgstr "Falha ao assinar dados com um segundo certificado: %s.\n"
@@ -2629,164 +2629,164 @@ msgstr ""
 msgid "TPMv2 RSA sign called for unknown algorithm %s\n"
 msgstr "A assinatura do TPM2 RSA solicitou algoritmo desconhecido %s\n"
 
-#: gnutls_tpm2_esys.c:177
+#: gnutls_tpm2_esys.c:182
 msgid "TPM2 password too long; truncating\n"
 msgstr "Senha de TMP2 muito longa; truncando\n"
 
-#: gnutls_tpm2_esys.c:195
+#: gnutls_tpm2_esys.c:200
 msgid "owner"
 msgstr "dono"
 
-#: gnutls_tpm2_esys.c:196
+#: gnutls_tpm2_esys.c:201
 msgid "null"
 msgstr "nulo"
 
-#: gnutls_tpm2_esys.c:197
+#: gnutls_tpm2_esys.c:202
 msgid "endorsement"
 msgstr "endosso"
 
-#: gnutls_tpm2_esys.c:198
+#: gnutls_tpm2_esys.c:203
 msgid "platform"
 msgstr "plataforma"
 
-#: gnutls_tpm2_esys.c:202
+#: gnutls_tpm2_esys.c:207
 #, c-format
 msgid "Creating primary key under %s hierarchy.\n"
 msgstr "Criando a chave primária na hierarquia %s.\n"
 
-#: gnutls_tpm2_esys.c:210 gnutls_tpm2_ibm.c:266
+#: gnutls_tpm2_esys.c:215 gnutls_tpm2_ibm.c:266
 #, c-format
 msgid "Enter TPM2 %s hierarchy password:"
 msgstr "Insira a senha de hierarquia de TPM2 %s:"
 
-#: gnutls_tpm2_esys.c:218 gnutls_tpm2_esys.c:316 gnutls_tpm2_esys.c:392
+#: gnutls_tpm2_esys.c:223 gnutls_tpm2_esys.c:321 gnutls_tpm2_esys.c:397
 #, c-format
 msgid "TPM2 Esys_TR_SetAuth failed: 0x%x\n"
 msgstr "TPM2 Esys_TR_SetAuth falhou: 0x%x\n"
 
-#: gnutls_tpm2_esys.c:230
+#: gnutls_tpm2_esys.c:235
 msgid "TPM2 Esys_CreatePrimary owner auth failed\n"
 msgstr "Autenticação de dono de TPM2 Esys_CreatePrimary falhou\n"
 
-#: gnutls_tpm2_esys.c:235
+#: gnutls_tpm2_esys.c:240
 #, c-format
 msgid "TPM2 Esys_CreatePrimary failed: 0x%x\n"
 msgstr "TPM2 Esys_CreatePrimary falhou: 0x%x\n"
 
-#: gnutls_tpm2_esys.c:254
+#: gnutls_tpm2_esys.c:259
 msgid "Establishing connection with TPM.\n"
 msgstr "Estabelecendo conexão com TPM.\n"
 
-#: gnutls_tpm2_esys.c:259
+#: gnutls_tpm2_esys.c:264
 #, c-format
 msgid "TPM2 Esys_Initialize failed: 0x%x\n"
 msgstr "TPM2 Esys_Initialize falhou: 0x%x\n"
 
-#: gnutls_tpm2_esys.c:267
+#: gnutls_tpm2_esys.c:272
 msgid ""
 "TPM2 was already started up thus false positive failing in tpm2tss log.\n"
 msgstr ""
 "O TPM2 já foi iniciado, portanto falhando com positivo falso no log "
 "tpm2tss.\n"
 
-#: gnutls_tpm2_esys.c:270
+#: gnutls_tpm2_esys.c:275
 #, c-format
 msgid "TPM2 Esys_Startup failed: 0x%x\n"
 msgstr "TPM2 Esys_Startup falhou: 0x%x\n"
 
-#: gnutls_tpm2_esys.c:283
+#: gnutls_tpm2_esys.c:288
 #, c-format
 msgid "Esys_TR_FromTPMPublic failed for handle 0x%x: 0x%x\n"
 msgstr "Esys_TR_FromTPMPublic falhou para manipulador 0x%x: 0x%x\n"
 
-#: gnutls_tpm2_esys.c:307 gnutls_tpm2_ibm.c:285
+#: gnutls_tpm2_esys.c:312 gnutls_tpm2_ibm.c:285
 msgid "Enter TPM2 parent key password:"
 msgstr "Insira a senha da chave pai TMP2:"
 
-#: gnutls_tpm2_esys.c:308 gnutls_tpm2_ibm.c:286
+#: gnutls_tpm2_esys.c:313 gnutls_tpm2_ibm.c:286
 msgid "Enter secondary TPM2 parent key password:"
 msgstr "Insira a senha da chave pai TMP2 secundária:"
 
-#: gnutls_tpm2_esys.c:322
+#: gnutls_tpm2_esys.c:327
 #, c-format
 msgid "Loading TPM2 key blob, parent %x.\n"
 msgstr "Carregando o blob de chave TPM2, pai %x.\n"
 
-#: gnutls_tpm2_esys.c:330
+#: gnutls_tpm2_esys.c:335
 msgid "TPM2 Esys_Load auth failed\n"
 msgstr "Autenticação de TPM2 Esys_Load falhou\n"
 
-#: gnutls_tpm2_esys.c:336
+#: gnutls_tpm2_esys.c:341
 #, c-format
 msgid "TPM2 Esys_Load failed: 0x%x\n"
 msgstr "TPM2 Esys_Load falhou: 0x%x\n"
 
-#: gnutls_tpm2_esys.c:346
+#: gnutls_tpm2_esys.c:351
 #, c-format
 msgid "TPM2 Esys_FlushContext for generated primary failed: 0x%x\n"
 msgstr "TPM2 Esys_FlushContext para primária gerada falhou: 0x%x\n"
 
-#: gnutls_tpm2_esys.c:380 gnutls_tpm2_ibm.c:376 gnutls_tpm2_ibm.c:476
+#: gnutls_tpm2_esys.c:385 gnutls_tpm2_ibm.c:376 gnutls_tpm2_ibm.c:476
 msgid "Enter TPM2 key password:"
 msgstr "Insira a senha da chave TMP2:"
 
-#: gnutls_tpm2_esys.c:381 gnutls_tpm2_ibm.c:377
+#: gnutls_tpm2_esys.c:386 gnutls_tpm2_ibm.c:377
 msgid "Enter secondary TPM2 key password:"
 msgstr "Insira a senha da chave TMP2 secundária:"
 
-#: gnutls_tpm2_esys.c:414
+#: gnutls_tpm2_esys.c:419
 #, c-format
 msgid "TPM2 RSA sign function called for %d bytes, algo %s\n"
 msgstr "A função de assinatura do TPM2 RSA solicitou %d bytes, algoritmo %s\n"
 
-#: gnutls_tpm2_esys.c:434
+#: gnutls_tpm2_esys.c:439
 msgid "TPM2 Esys_RSA_Decrypt auth failed\n"
 msgstr "Autenticação de TPM2 Esys_RSA_Decrypt falhou\n"
 
-#: gnutls_tpm2_esys.c:440 gnutls_tpm2_esys.c:530
+#: gnutls_tpm2_esys.c:445 gnutls_tpm2_esys.c:535
 #, c-format
 msgid "TPM2 failed to generate RSA signature: 0x%x\n"
 msgstr "TPM2 falhou em gerar assinatura RSA: 0x%x\n"
 
-#: gnutls_tpm2_esys.c:484 gnutls_tpm2_ibm.c:420
+#: gnutls_tpm2_esys.c:489 gnutls_tpm2_ibm.c:420
 #, c-format
 msgid "TPM2 EC sign function called for %d bytes.\n"
 msgstr "A função de assinatura do TPM2 EC solicitou %d bytes.\n"
 
-#: gnutls_tpm2_esys.c:504 gnutls_tpm2_ibm.c:445
+#: gnutls_tpm2_esys.c:509 gnutls_tpm2_ibm.c:445
 #, c-format
 msgid "Unknown TPM2 EC digest size %d for algo 0x%x\n"
 msgstr "Digest TMP2 EC com tamanho desconhecido %d para algoritmo 0x%x\n"
 
-#: gnutls_tpm2_esys.c:524
+#: gnutls_tpm2_esys.c:529
 msgid "TPM2 Esys_Sign auth failed\n"
 msgstr "Autenticação de TPM2 Esys_Sign falhou\n"
 
-#: gnutls_tpm2_esys.c:564 gnutls_tpm2_ibm.c:512
+#: gnutls_tpm2_esys.c:569 gnutls_tpm2_ibm.c:512
 #, c-format
 msgid "Invalid TPM2 parent handle 0x%08x\n"
 msgstr "Manipulador pai de TMP2 inválido 0x%08x\n"
 
-#: gnutls_tpm2_esys.c:581
+#: gnutls_tpm2_esys.c:586
 msgid "Using SWTPM due to TPM_INTERFACE_TYPE environment variable\n"
 msgstr "Usando SWTPM devido a variável de ambiente TPM_INTERFACE_TYPE\n"
 
-#: gnutls_tpm2_esys.c:586
+#: gnutls_tpm2_esys.c:591
 #, c-format
 msgid "TSS2_TctiLdr_Initialize failed for swtpm: 0x%x\n"
 msgstr "TSS2_TctiLdr_Initialize falhou para swtpm: 0x%x\n"
 
-#: gnutls_tpm2_esys.c:596 gnutls_tpm2_ibm.c:529
+#: gnutls_tpm2_esys.c:601 gnutls_tpm2_ibm.c:529
 #, c-format
 msgid "Failed to import TPM2 private key data: 0x%x\n"
 msgstr "Falha ao importar dados de chave privada TPM2: 0x%x\n"
 
-#: gnutls_tpm2_esys.c:605 gnutls_tpm2_ibm.c:539
+#: gnutls_tpm2_esys.c:610 gnutls_tpm2_ibm.c:539
 #, c-format
 msgid "Failed to import TPM2 public key data: 0x%x\n"
 msgstr "Falha ao importar dados de chave pública TPM2: 0x%x\n"
 
-#: gnutls_tpm2_esys.c:619 gnutls_tpm2_ibm.c:550
+#: gnutls_tpm2_esys.c:624 gnutls_tpm2_ibm.c:550
 #, c-format
 msgid "Unsupported TPM2 key type %d\n"
 msgstr "Tipo de chave TMP2 sem suporte %d\n"
@@ -3246,17 +3246,17 @@ msgstr "Conexão de navegador externo de entrada aceita na porta 29786\n"
 msgid "Invalid incoming external-browser request\n"
 msgstr "Solicitação de navegador externo de entrada inválida\n"
 
-#: hpke.c:267
+#: hpke.c:271
 #, c-format
 msgid "Got encrypted SSO token of %d bytes\n"
 msgstr "Tem token SSO criptografado de %d bytes\n"
 
-#: hpke.c:335
+#: hpke.c:339
 #, c-format
 msgid "Failed to decode SSO token at %d:\n"
 msgstr "Falha ao decodificar o token SSO em %d:\n"
 
-#: hpke.c:363
+#: hpke.c:367
 msgid "SSO token not alphanumeric\n"
 msgstr "Token SSO não alfanumérico\n"
 
@@ -3668,21 +3668,21 @@ msgstr "Reconexão deu um endereço IPv6 diferente (%s != %s)\n"
 msgid "IPv6 configuration received but MTU %d is too small.\n"
 msgstr "Configuração IPv6 recebido, mas MTU %d é muito pequeno.\n"
 
-#: library.c:1275
+#: library.c:1278
 #, c-format
 msgid "Failed to parse server URL '%s'\n"
 msgstr "Falha ao analisar URL do servidor “%s”\n"
 
-#: library.c:1281
+#: library.c:1284
 msgid "Only https:// permitted for server URL\n"
 msgstr "Somente https:// é permitido como URL de servidor\n"
 
-#: library.c:1704
+#: library.c:1707
 #, c-format
 msgid "Unknown certificate hash: %s.\n"
 msgstr "Hash de certificado desconhecido: %s.\n"
 
-#: library.c:1738
+#: library.c:1741
 #, c-format
 msgid ""
 "The size of the provided fingerprint is less than the minimum required "
@@ -3691,16 +3691,16 @@ msgstr ""
 "O tamanho da impressão digital fornecida é menor do que o mínimo exigido "
 "(%u).\n"
 
-#: library.c:1795
+#: library.c:1798
 msgid "No form handler; cannot authenticate.\n"
 msgstr "Nenhum manipulador de forma; não foi possível autenticar.\n"
 
-#: library.c:1799
+#: library.c:1802
 msgid "No form ID. This is a bug in OpenConnect's authentication code.\n"
 msgstr ""
 "Sem ID de forma. Isso é um bug no código de autenticação do OpenConnect.\n"
 
-#: library.c:1870
+#: library.c:1873
 msgid "No SSO handler\n"
 msgstr "Sem tratador de SSO\n"
 
@@ -4434,7 +4434,8 @@ msgid ""
 "Disabling all HTTP connection reuse due to --no-http-keepalive option.\n"
 "If this helps, please report to <%s>.\n"
 msgstr ""
-"Desabilitando todo reuso de conexões HTTP devido ao parâmetro --no-http-keepalive.\n"
+"Desabilitando todo reuso de conexões HTTP devido ao parâmetro --no-http-"
+"keepalive.\n"
 "Se isso ajuda, por favor relate para <%s>.\n"
 
 #: main.c:2138
@@ -4827,37 +4828,37 @@ msgstr "Tentando autenticação HTTP NTLMv%d ao servidor “%s”\n"
 msgid "Terminating because nullppp has reached network state.\n"
 msgstr "Terminando pois nullppp atingiu o estado da rede.\n"
 
-#: oath.c:104
-msgid "Invalid base32 token string\n"
-msgstr "String de token base32 inválida\n"
-
-#: oath.c:112
+#: oath.c:116
 msgid "Failed to allocate memory to decode OATH secret\n"
 msgstr "Falha ao alocar memória para decodificar segredo OATH\n"
 
-#: oath.c:218
+#: oath.c:140
+msgid "Invalid base32 token string\n"
+msgstr "String de token base32 inválida\n"
+
+#: oath.c:238
 msgid "This version of OpenConnect was built without PSKC support\n"
 msgstr "Essa versão de OpenConnect foi compilada sem suporte a PSKC\n"
 
-#: oath.c:314 oath.c:339 stoken.c:297 yubikey.c:507
+#: oath.c:445 oath.c:470 stoken.c:297 yubikey.c:507
 msgid "OK to generate INITIAL tokencode\n"
 msgstr "OK para gerar tokencode INITIAL\n"
 
-#: oath.c:318 oath.c:342 stoken.c:302 yubikey.c:511
+#: oath.c:449 oath.c:473 stoken.c:302 yubikey.c:511
 msgid "OK to generate NEXT tokencode\n"
 msgstr "OK para gerar tokencode NEXT\n"
 
-#: oath.c:323 oath.c:346 stoken.c:307
+#: oath.c:454 oath.c:477 stoken.c:307
 msgid "Server is rejecting the soft token; switching to manual entry\n"
 msgstr ""
 "O servidor está rejeitando o token de software; alternando para entrada "
 "manual\n"
 
-#: oath.c:380
+#: oath.c:511
 msgid "Generating OATH TOTP token code\n"
 msgstr "Gerando código de token TOTP OATH\n"
 
-#: oath.c:526
+#: oath.c:682
 msgid "Generating OATH HOTP token code\n"
 msgstr "Gerando código de token HOTP OATH\n"
 
@@ -5074,11 +5075,11 @@ msgstr "Erro ao negociar chaves ESP\n"
 msgid "oNCP negotiation request outgoing:\n"
 msgstr "Saída da requisição de negociação oNCP:\n"
 
-#: oncp.c:825 pulse.c:2916
+#: oncp.c:825 pulse.c:2924
 msgid "new incoming"
 msgstr "nova entrada"
 
-#: oncp.c:826 pulse.c:2917
+#: oncp.c:826 pulse.c:2925
 msgid "new outgoing"
 msgstr "nova saída"
 
@@ -5133,7 +5134,7 @@ msgstr "Mensagem KMP desconhecida %d de tamanho %d:\n"
 msgid ".... + %d more bytes unreceived\n"
 msgstr ".... + mais %d bytes não recebidos\n"
 
-#: oncp.c:1087 pulse.c:2973
+#: oncp.c:1087 pulse.c:2981
 msgid "Packet outgoing:\n"
 msgstr "Pacote de saída:\n"
 
@@ -5141,7 +5142,7 @@ msgstr "Pacote de saída:\n"
 msgid "Sent ESP enable control packet\n"
 msgstr "Enviado pacote de controle com capacidade de ESP\n"
 
-#: openconnect-internal.h:1717 openconnect-internal.h:1727
+#: openconnect-internal.h:1721 openconnect-internal.h:1731
 #, c-format
 msgid "ERROR: %s() called with invalid UTF-8 for '%s' argument\n"
 msgstr "ERRO: %s() chamado com UTF-8 inválido para “%s” argumento\n"
@@ -6562,16 +6563,16 @@ msgstr "identificador do modelo 0x20 é desconhecido"
 msgid "Insufficient configuration found\n"
 msgstr "Localizada configuração insuficiente\n"
 
-#: pulse.c:2908
+#: pulse.c:2916
 msgid "ESP rekey failed\n"
 msgstr "Renovação da chave ESP falhou\n"
 
-#: pulse.c:2937
+#: pulse.c:2945
 #, c-format
 msgid "Pulse fatal error (reason: %ld): %s\n"
 msgstr "Erro fatal do Pulse (motivo: %ld): %s\n"
 
-#: pulse.c:2955
+#: pulse.c:2963
 #, c-format
 msgid ""
 "Unknown Pulse packet of %d bytes (vendor 0x%03x, type 0x%02x, hdr_len %d, "
@@ -6580,7 +6581,7 @@ msgstr ""
 "Pacote Pulse de %d bytes desconhecido (fornecedor 0x%03x, tipo 0x%02x, "
 "hdr_len %d, ident %d)\n"
 
-#: pulse.c:3135
+#: pulse.c:3143
 #, c-format
 msgid "Sending IF-T/TLS data packet of %d bytes\n"
 msgstr "Enviando pacote de dados IF-T/TLS de %d bytes\n"
@@ -6611,45 +6612,45 @@ msgstr ""
 "AVISO: Exclusão dividida “%s“ tem bits de host definidos sendo substituídos "
 "por “%s/%d“.\n"
 
-#: script.c:330
+#: script.c:320
 #, c-format
 msgid "Ignoring legacy network because address \"%s\" is invalid.\n"
 msgstr "Ignorando rede legado porque endereço “%s“ é inválido.\n"
 
-#: script.c:335
+#: script.c:325
 #, c-format
 msgid "Ignoring legacy network because netmask \"%s\" is invalid.\n"
 msgstr "Ignorando rede legado porque máscara de rede “%s“ é inválido.\n"
 
-#: script.c:615
+#: script.c:605
 #, c-format
 msgid "Failed to get script exit status: %s\n"
 msgstr "Falha ao obter status de saída do script: %s\n"
 
-#: script.c:624
+#: script.c:614
 #, c-format
 msgid "Script '%s' returned error %ld\n"
 msgstr "O script “%s” retornou erro %ld\n"
 
-#: script.c:632
+#: script.c:622
 msgid "Script did not complete within 10 seconds.\n"
 msgstr "O script não foi concluido em 10 segundos.\n"
 
-#: script.c:645 script.c:696
+#: script.c:635 script.c:686
 #, c-format
 msgid "Failed to spawn script '%s' for %s: %s\n"
 msgstr "Falha ao executar o script “%s” para %s: %s\n"
 
-#: script.c:682 tun.c:488
+#: script.c:672 tun.c:488
 msgid "setpgid"
 msgstr "setpgid"
 
-#: script.c:703
+#: script.c:693
 #, c-format
 msgid "Script '%s' exited abnormally (%x)\n"
 msgstr "O script “%s” saiu anormalmente (%x)\n"
 
-#: script.c:711
+#: script.c:701
 #, c-format
 msgid "Script '%s' returned error %d\n"
 msgstr "O script “%s” retornou erro %d\n"

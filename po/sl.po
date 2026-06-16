@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: network-manager-openconnect master\n"
 "Report-Msgid-Bugs-To: openconnect-devel@lists.infradead.org\n"
-"POT-Creation-Date: 2026-06-13 10:04+0100\n"
+"POT-Creation-Date: 2026-06-15 16:10+0100\n"
 "PO-Revision-Date: 2026-03-31 21:42+0200\n"
 "Last-Translator: Martin Srebotnjak <miles@filmsi.net>\n"
 "Language-Team: Slovenian GNOME Translation Team <gnome-si@googlegroups.com>\n"
@@ -134,7 +134,7 @@ msgstr "Prejeti delni paket, %d %d bajtov\n"
 msgid "Receive control packet of type %x:\n"
 msgstr "Prejmi kontrolni paket vrste %x:\n"
 
-#: array.c:903 pulse.c:2886
+#: array.c:903 pulse.c:2894
 #, c-format
 msgid "Received data packet of %d bytes\n"
 msgstr "Prejet je paket podatkov velikosti %d bajtov\n"
@@ -144,19 +144,19 @@ msgstr "Prejet je paket podatkov velikosti %d bajtov\n"
 msgid "Moved down %d bytes after previous packet\n"
 msgstr "Navzdol pomaknjenih %d bajtov po prejšnjem paketu\n"
 
-#: array.c:961 cstp.c:1111 gpst.c:1283 oncp.c:1135 ppp.c:1376 pulse.c:3021
+#: array.c:961 cstp.c:1111 gpst.c:1283 oncp.c:1135 ppp.c:1376 pulse.c:3029
 #, c-format
 msgid "SSL wrote too few bytes! Asked for %d, sent %d\n"
 msgstr "SSL je zapisal premalo bajtov! Zahtevanih je %d, poslanih pa %d\n"
 
 #. Not that this will ever happen; we don't even process
 #. the setting when we're asked for it.
-#: array.c:979 cstp.c:1139 oncp.c:1172 pulse.c:3048
+#: array.c:979 cstp.c:1139 oncp.c:1172 pulse.c:3056
 msgid "CSTP rekey due\n"
 msgstr "Protokol CSTP zahteva ponovno preverjanje ključa\n"
 
 #. if we failed rehandshake try establishing a new-tunnel instead of failing
-#: array.c:986 cstp.c:1146 oncp.c:1179 pulse.c:3055
+#: array.c:986 cstp.c:1146 oncp.c:1179 pulse.c:3063
 msgid "Rehandshake failed; attempting new-tunnel\n"
 msgstr "Ponovno rokovanje ni uspelo; sledi poskus novega predora\n"
 
@@ -253,11 +253,11 @@ msgid "Sent DTLS packet of %d bytes; DTLS send returned %d\n"
 msgstr ""
 "Poslan je bil paket DTLS dolžine %d bajtov; vrnjen paket DTLS pa je %d\n"
 
-#: array.c:1362 auth-globalprotect.c:887 f5.c:862 fortinet.c:892 oncp.c:1285
+#: array.c:1362 auth-globalprotect.c:887 f5.c:862 fortinet.c:895 oncp.c:1285
 msgid "Logout failed.\n"
 msgstr "Odjava ni uspela.\n"
 
-#: array.c:1364 auth-globalprotect.c:889 f5.c:864 fortinet.c:894 oncp.c:1287
+#: array.c:1364 auth-globalprotect.c:889 f5.c:864 fortinet.c:897 oncp.c:1287
 msgid "Logout successful.\n"
 msgstr "Odjava je bila uspešna.\n"
 
@@ -571,7 +571,7 @@ msgstr "Prazen odgovor strežnika\n"
 msgid "Failed to parse server response\n"
 msgstr "Razčlenjevanje odgovora strežnika je spodletelo.\n"
 
-#: auth.c:614 f5.c:422 f5.c:464 f5.c:489 f5.c:634 fortinet.c:445 fortinet.c:631
+#: auth.c:614 f5.c:422 f5.c:464 f5.c:489 f5.c:634 fortinet.c:445 fortinet.c:634
 #, c-format
 msgid "Response was:%s\n"
 msgstr "Odziv  je: %s\n"
@@ -933,7 +933,7 @@ msgstr "Prejet je stisnjen paket podatkov %s velikosti %d bajtov (prej %d)\n"
 msgid "deflate failed %d\n"
 msgstr "razširjanje je spodletelo %d\n"
 
-#: cstp.c:981 gpst.c:1194 pulse.c:2853
+#: cstp.c:981 gpst.c:1194 pulse.c:2874
 #, c-format
 msgid "Short packet received (%d bytes)\n"
 msgstr "Prejet kratki paket (%d bajtov)\n"
@@ -984,22 +984,22 @@ msgstr ""
 msgid "Unknown packet %02x %02x %02x %02x %02x %02x %02x %02x\n"
 msgstr "Neznan paket %02x %02x %02x %02x %02x %02x %02x %02x\n"
 
-#: cstp.c:1157 oncp.c:1190 pulse.c:3066
+#: cstp.c:1157 oncp.c:1190 pulse.c:3074
 msgid "CSTP Dead Peer Detection detected dead peer!\n"
 msgstr ""
 "Zaznava mrtvih omrežnih soležnikov CSTP je zaznala mrtvega omrežnega "
 "soležnika!\n"
 
-#: cstp.c:1161 gpst.c:1331 oncp.c:1105 oncp.c:1194 ppp.c:1406 pulse.c:2991
-#: pulse.c:3071
+#: cstp.c:1161 gpst.c:1331 oncp.c:1105 oncp.c:1194 ppp.c:1406 pulse.c:2999
+#: pulse.c:3079
 msgid "Reconnect failed\n"
 msgstr "Ponovna povezava je spodletela\n"
 
-#: cstp.c:1177 oncp.c:1210 pulse.c:3087
+#: cstp.c:1177 oncp.c:1210 pulse.c:3095
 msgid "Send CSTP DPD\n"
 msgstr "Pošlji zahtevo CSTP DPD\n"
 
-#: cstp.c:1189 oncp.c:1221 pulse.c:3099
+#: cstp.c:1189 oncp.c:1221 pulse.c:3107
 msgid "Send CSTP Keepalive\n"
 msgstr "Pošlji zahtevo CSTP Keepalive\n"
 
@@ -1388,7 +1388,7 @@ msgstr "Pridobljen strežnik DNS %s\n"
 msgid "Got WINS/NBNS server %s\n"
 msgstr "Pridobljen strežnik WINS / NBNS %s\n"
 
-#: f5.c:557 fortinet.c:522 fortinet.c:567
+#: f5.c:557 fortinet.c:525 fortinet.c:570
 #, c-format
 msgid "Got search domain %s\n"
 msgstr "Pridobljena iskalna domena »%s«\n"
@@ -1418,16 +1418,16 @@ msgstr ""
 "DTLS,\n"
 "    ker HDLC preprečuje določanje učinkovitega in doslednega MTU.\n"
 
-#: f5.c:632 fortinet.c:629
+#: f5.c:632 fortinet.c:632
 msgid "Failed to find VPN options\n"
 msgstr "Možnosti VPN ni bilo mogoče najti\n"
 
-#: f5.c:655 fortinet.c:518
+#: f5.c:655 fortinet.c:521
 #, c-format
 msgid "Got Legacy IP address %s\n"
 msgstr "Pridobljen opuščen naslov IP %s\n"
 
-#: f5.c:660 fortinet.c:556 fortinet.c:561
+#: f5.c:660 fortinet.c:559 fortinet.c:564
 #, c-format
 msgid "Got IPv6 address %s\n"
 msgstr "Prejet je naslov IPv6 %s\n"
@@ -1504,27 +1504,27 @@ msgstr ""
 "povezava DELUJE,\n"
 "o tem poročajte na <%s>\n"
 
-#: fortinet.c:513
+#: fortinet.c:514
 #, c-format
 msgid "Reported platform is %s\n"
 msgstr "Prijavljena platforma je %s\n"
 
-#: fortinet.c:526 fortinet.c:571
+#: fortinet.c:529 fortinet.c:574
 #, c-format
 msgid "Got IPv%d DNS server %s\n"
 msgstr "Pridobljen IPv%d DNS strežnika %s\n"
 
-#: fortinet.c:532 fortinet.c:577
+#: fortinet.c:535 fortinet.c:580
 #, c-format
 msgid "WARNING: Got split-DNS domains %s (not yet implemented)\n"
 msgstr "OPOZORILO: Prejet domene deljenega DNS %s (še ni implementirano)\n"
 
-#: fortinet.c:537 fortinet.c:582
+#: fortinet.c:540 fortinet.c:585
 #, c-format
 msgid "WARNING: Got split-DNS server %s (not yet implemented)\n"
 msgstr "OPOZORILO: Prejet strežnik deljenega DNS %s (še ni implementirano)\n"
 
-#: fortinet.c:597
+#: fortinet.c:600
 #, c-format
 msgid ""
 "WARNING: Fortinet server does not specifically enable or disable "
@@ -1538,7 +1538,7 @@ msgstr ""
 "deluje,\n"
 "    vas prosimo, da poročate o rezultatih <%s>\n"
 
-#: fortinet.c:605
+#: fortinet.c:608
 #, c-format
 msgid ""
 "Server did not send <auth-ses tun-connect-without-reauth=\"0/1\"/>. "
@@ -1553,18 +1553,18 @@ msgstr ""
 "vnovična povezava izvede,\n"
 "prosimo, pošljite poročilo na <%s>\n"
 
-#: fortinet.c:612
+#: fortinet.c:615
 msgid "Received split routes; not setting default Legacy IP route\n"
 msgstr ""
 "Prejete deljene poti; brez nastavljanja privzete poti zastarelega IP-ja\n"
 
-#: fortinet.c:614
+#: fortinet.c:617
 msgid "No split routes received; setting default Legacy IP route\n"
 msgstr ""
 "Deljene poti niso bile prejete; nastavitev privzete poti zastarelega naslova "
 "IP\n"
 
-#: fortinet.c:691
+#: fortinet.c:694
 msgid ""
 "Ancient Fortinet server (<v5?) only supports ancient HTML config, which is "
 "not implemented by OpenConnect.\n"
@@ -1572,7 +1572,7 @@ msgstr ""
 "Starodavni strežnik Fortinet (<v5?) podpira samo starodavno konfiguracijo "
 "HTML, ki je OpenConnect nima implementirane.\n"
 
-#: fortinet.c:694
+#: fortinet.c:697
 #, c-format
 msgid ""
 "Fortinet server is rejecting request for connection options. This\n"
@@ -1587,19 +1587,19 @@ msgstr ""
 "%s in\n"
 "%s.\n"
 
-#: fortinet.c:734
+#: fortinet.c:737
 msgid "Error establishing Fortinet connection\n"
 msgstr "Napaka pri vzpostavljanju povezave Fortinet\n"
 
-#: fortinet.c:749
+#: fortinet.c:752
 msgid "No cookie named SVPNCOOKIE.\n"
 msgstr "Ni piškotka z imenom SVPNCOOKIE.\n"
 
-#: fortinet.c:844
+#: fortinet.c:847
 msgid "Did not receive expected svrhello response.\n"
 msgstr "Pričakovani odziv svrhello ni prejet.\n"
 
-#: fortinet.c:855
+#: fortinet.c:858
 #, c-format
 msgid "svrhello status was \"%.*s\" rather than \"ok\"\n"
 msgstr "Stanje svrhello je bil »%.*s« in ne »v redu«\n"
@@ -2630,163 +2630,163 @@ msgstr ""
 msgid "TPMv2 RSA sign called for unknown algorithm %s\n"
 msgstr "Znak TPMv2 RSA je zahteval neznani algoritem %s\n"
 
-#: gnutls_tpm2_esys.c:177
+#: gnutls_tpm2_esys.c:182
 msgid "TPM2 password too long; truncating\n"
 msgstr "Geslo TPM2 je predolgo; obrezano bo\n"
 
-#: gnutls_tpm2_esys.c:195
+#: gnutls_tpm2_esys.c:200
 msgid "owner"
 msgstr "lastnik"
 
-#: gnutls_tpm2_esys.c:196
+#: gnutls_tpm2_esys.c:201
 msgid "null"
 msgstr "ničta vrednost"
 
-#: gnutls_tpm2_esys.c:197
+#: gnutls_tpm2_esys.c:202
 msgid "endorsement"
 msgstr "podpora"
 
-#: gnutls_tpm2_esys.c:198
+#: gnutls_tpm2_esys.c:203
 msgid "platform"
 msgstr "okolje"
 
-#: gnutls_tpm2_esys.c:202
+#: gnutls_tpm2_esys.c:207
 #, c-format
 msgid "Creating primary key under %s hierarchy.\n"
 msgstr "Ustvarjanje primarnega ključa v hierarhiji %s.\n"
 
-#: gnutls_tpm2_esys.c:210 gnutls_tpm2_ibm.c:266
+#: gnutls_tpm2_esys.c:215 gnutls_tpm2_ibm.c:266
 #, c-format
 msgid "Enter TPM2 %s hierarchy password:"
 msgstr "Vnesite geslo hierarhije TPM2 %s:"
 
-#: gnutls_tpm2_esys.c:218 gnutls_tpm2_esys.c:316 gnutls_tpm2_esys.c:392
+#: gnutls_tpm2_esys.c:223 gnutls_tpm2_esys.c:321 gnutls_tpm2_esys.c:397
 #, c-format
 msgid "TPM2 Esys_TR_SetAuth failed: 0x%x\n"
 msgstr "TPM2 Esys_TR_SetAuth ni uspel: 0x%x\n"
 
-#: gnutls_tpm2_esys.c:230
+#: gnutls_tpm2_esys.c:235
 msgid "TPM2 Esys_CreatePrimary owner auth failed\n"
 msgstr "Overitev lastnika TPM2 Esys_CreatePrimary ni uspela\n"
 
-#: gnutls_tpm2_esys.c:235
+#: gnutls_tpm2_esys.c:240
 #, c-format
 msgid "TPM2 Esys_CreatePrimary failed: 0x%x\n"
 msgstr "TPM2 Esys_CreatePrimary ni uspel: 0x%x\n"
 
-#: gnutls_tpm2_esys.c:254
+#: gnutls_tpm2_esys.c:259
 msgid "Establishing connection with TPM.\n"
 msgstr "Vzpostavljanje povezave s TPM.\n"
 
-#: gnutls_tpm2_esys.c:259
+#: gnutls_tpm2_esys.c:264
 #, c-format
 msgid "TPM2 Esys_Initialize failed: 0x%x\n"
 msgstr "TPM2 Esys_Initialize ni uspel: 0x%x\n"
 
-#: gnutls_tpm2_esys.c:267
+#: gnutls_tpm2_esys.c:272
 msgid ""
 "TPM2 was already started up thus false positive failing in tpm2tss log.\n"
 msgstr ""
 "TPM2 je bil že zagnan, odtod lažno pozitiven neuspeh v zapisniku tpm2tss.\n"
 
-#: gnutls_tpm2_esys.c:270
+#: gnutls_tpm2_esys.c:275
 #, c-format
 msgid "TPM2 Esys_Startup failed: 0x%x\n"
 msgstr "TPM2 Esys_Startup ni uspel: 0x%x\n"
 
-#: gnutls_tpm2_esys.c:283
+#: gnutls_tpm2_esys.c:288
 #, c-format
 msgid "Esys_TR_FromTPMPublic failed for handle 0x%x: 0x%x\n"
 msgstr "Esys_TR_FromTPMPublic ni uspelo za ročico 0x%x: 0x%x\n"
 
-#: gnutls_tpm2_esys.c:307 gnutls_tpm2_ibm.c:285
+#: gnutls_tpm2_esys.c:312 gnutls_tpm2_ibm.c:285
 msgid "Enter TPM2 parent key password:"
 msgstr "Vnesite geslo za nadrejeni ključ TPM2:"
 
-#: gnutls_tpm2_esys.c:308 gnutls_tpm2_ibm.c:286
+#: gnutls_tpm2_esys.c:313 gnutls_tpm2_ibm.c:286
 msgid "Enter secondary TPM2 parent key password:"
 msgstr "Vnesite sekundarno geslo nadrejenega ključa TPM2:"
 
-#: gnutls_tpm2_esys.c:322
+#: gnutls_tpm2_esys.c:327
 #, c-format
 msgid "Loading TPM2 key blob, parent %x.\n"
 msgstr "Nalaganje ključa TPM2, nadrejeni %x.\n"
 
-#: gnutls_tpm2_esys.c:330
+#: gnutls_tpm2_esys.c:335
 msgid "TPM2 Esys_Load auth failed\n"
 msgstr "TPM2 Esys_Load auth ni uspel\n"
 
-#: gnutls_tpm2_esys.c:336
+#: gnutls_tpm2_esys.c:341
 #, c-format
 msgid "TPM2 Esys_Load failed: 0x%x\n"
 msgstr "TPM2 Esys_Load ni uspel: 0x%x\n"
 
-#: gnutls_tpm2_esys.c:346
+#: gnutls_tpm2_esys.c:351
 #, c-format
 msgid "TPM2 Esys_FlushContext for generated primary failed: 0x%x\n"
 msgstr "TPM2 Esys_FlushContext za tvorjeni primarni ni uspel: 0x%x\n"
 
-#: gnutls_tpm2_esys.c:380 gnutls_tpm2_ibm.c:376 gnutls_tpm2_ibm.c:476
+#: gnutls_tpm2_esys.c:385 gnutls_tpm2_ibm.c:376 gnutls_tpm2_ibm.c:476
 msgid "Enter TPM2 key password:"
 msgstr "Vnesite geslo ključa TPM2:"
 
-#: gnutls_tpm2_esys.c:381 gnutls_tpm2_ibm.c:377
+#: gnutls_tpm2_esys.c:386 gnutls_tpm2_ibm.c:377
 msgid "Enter secondary TPM2 key password:"
 msgstr "Vnesite sekundarno geslo ključa TPM2:"
 
-#: gnutls_tpm2_esys.c:414
+#: gnutls_tpm2_esys.c:419
 #, c-format
 msgid "TPM2 RSA sign function called for %d bytes, algo %s\n"
 msgstr "Funkcija podpisovanja TPM2 RSA je klicana za %d bajtov, algo %s\n"
 
-#: gnutls_tpm2_esys.c:434
+#: gnutls_tpm2_esys.c:439
 msgid "TPM2 Esys_RSA_Decrypt auth failed\n"
 msgstr "Overjanje TPM2 Esys_RSA_Decrypt ni uspelo\n"
 
-#: gnutls_tpm2_esys.c:440 gnutls_tpm2_esys.c:530
+#: gnutls_tpm2_esys.c:445 gnutls_tpm2_esys.c:535
 #, c-format
 msgid "TPM2 failed to generate RSA signature: 0x%x\n"
 msgstr "TPM2 ni uspel ustvariti podpisa RSA: 0x%x\n"
 
-#: gnutls_tpm2_esys.c:484 gnutls_tpm2_ibm.c:420
+#: gnutls_tpm2_esys.c:489 gnutls_tpm2_ibm.c:420
 #, c-format
 msgid "TPM2 EC sign function called for %d bytes.\n"
 msgstr "Funkcija predznaka EC TPM2 je zahtevala %d bajtov.\n"
 
-#: gnutls_tpm2_esys.c:504 gnutls_tpm2_ibm.c:445
+#: gnutls_tpm2_esys.c:509 gnutls_tpm2_ibm.c:445
 #, c-format
 msgid "Unknown TPM2 EC digest size %d for algo 0x%x\n"
 msgstr "Neznana velikost izvlečka TPM2 EC %d za algo 0x%x\n"
 
-#: gnutls_tpm2_esys.c:524
+#: gnutls_tpm2_esys.c:529
 msgid "TPM2 Esys_Sign auth failed\n"
 msgstr "Preverjanje pristnosti TPM2 Esys_Sign ni uspelo\n"
 
-#: gnutls_tpm2_esys.c:564 gnutls_tpm2_ibm.c:512
+#: gnutls_tpm2_esys.c:569 gnutls_tpm2_ibm.c:512
 #, c-format
 msgid "Invalid TPM2 parent handle 0x%08x\n"
 msgstr "Neveljavna nadrejena ročica TPM2 0x%08x\n"
 
-#: gnutls_tpm2_esys.c:581
+#: gnutls_tpm2_esys.c:586
 msgid "Using SWTPM due to TPM_INTERFACE_TYPE environment variable\n"
 msgstr "Uporaba SWTPM zaradi spremenljivke okolja TPM_INTERFACE_TYPE\n"
 
-#: gnutls_tpm2_esys.c:586
+#: gnutls_tpm2_esys.c:591
 #, c-format
 msgid "TSS2_TctiLdr_Initialize failed for swtpm: 0x%x\n"
 msgstr "TSS2_TctiLdr_Initialize je spodletel za SWTPM: 0x%x\n"
 
-#: gnutls_tpm2_esys.c:596 gnutls_tpm2_ibm.c:529
+#: gnutls_tpm2_esys.c:601 gnutls_tpm2_ibm.c:529
 #, c-format
 msgid "Failed to import TPM2 private key data: 0x%x\n"
 msgstr "Nalaganje podatkov zasebnega ključa TPM2 je spodletelo: 0x%x\n"
 
-#: gnutls_tpm2_esys.c:605 gnutls_tpm2_ibm.c:539
+#: gnutls_tpm2_esys.c:610 gnutls_tpm2_ibm.c:539
 #, c-format
 msgid "Failed to import TPM2 public key data: 0x%x\n"
 msgstr "Uvoz podatkov javnega ključa TPM2 je spodletelo: 0x%x\n"
 
-#: gnutls_tpm2_esys.c:619 gnutls_tpm2_ibm.c:550
+#: gnutls_tpm2_esys.c:624 gnutls_tpm2_ibm.c:550
 #, c-format
 msgid "Unsupported TPM2 key type %d\n"
 msgstr "Nepodprta vrsta ključa TPM2 %d\n"
@@ -3246,17 +3246,17 @@ msgstr "Sprejeta dohodna povezava z zunanjim brskalnikom na vratih 29786\n"
 msgid "Invalid incoming external-browser request\n"
 msgstr "Neveljavna dohodna zahteva za zunanji brskalnik\n"
 
-#: hpke.c:267
+#: hpke.c:271
 #, c-format
 msgid "Got encrypted SSO token of %d bytes\n"
 msgstr "Dobili ste šifriran žeton SSO %d bajtov\n"
 
-#: hpke.c:335
+#: hpke.c:339
 #, c-format
 msgid "Failed to decode SSO token at %d:\n"
 msgstr "Žetona SSO ni bilo mogoče dekodirati pri %d:\n"
 
-#: hpke.c:363
+#: hpke.c:367
 msgid "SSO token not alphanumeric\n"
 msgstr "Žeton SSO ni alfanumeričen\n"
 
@@ -3678,21 +3678,21 @@ msgstr ""
 msgid "IPv6 configuration received but MTU %d is too small.\n"
 msgstr "Prejeta prilagoditev IPv6, vendar je %d MTU premajhna.\n"
 
-#: library.c:1275
+#: library.c:1278
 #, c-format
 msgid "Failed to parse server URL '%s'\n"
 msgstr "Napaka med razčlenjevanjem naslova URL strežnika '%s'\n"
 
-#: library.c:1281
+#: library.c:1284
 msgid "Only https:// permitted for server URL\n"
 msgstr "Za strežniški naslov URL je dovoljen le protokol https://\n"
 
-#: library.c:1704
+#: library.c:1707
 #, c-format
 msgid "Unknown certificate hash: %s.\n"
 msgstr "Neznana zgoščena vrednost potrdila: %s.\n"
 
-#: library.c:1738
+#: library.c:1741
 #, c-format
 msgid ""
 "The size of the provided fingerprint is less than the minimum required "
@@ -3701,17 +3701,17 @@ msgstr ""
 "Velikost zagotovljenega prstnega odtisa je manjša od najmanjše zahtevane "
 "(%u).\n"
 
-#: library.c:1795
+#: library.c:1798
 msgid "No form handler; cannot authenticate.\n"
 msgstr "Ni ročnika obrazca; vnosov ni mogoče overiti.\n"
 
-#: library.c:1799
+#: library.c:1802
 msgid "No form ID. This is a bug in OpenConnect's authentication code.\n"
 msgstr ""
 "Brez ID-ja obrazca. To je napaka v kodi za preverjanje pristnosti "
 "OpenConnect.\n"
 
-#: library.c:1870
+#: library.c:1873
 msgid "No SSO handler\n"
 msgstr "Brez upravljavca enotne prijave\n"
 
@@ -4848,37 +4848,37 @@ msgstr "Poskus preverjanja pristnosti HTTP NTLMv%d na strežniku »%s«\n"
 msgid "Terminating because nullppp has reached network state.\n"
 msgstr "Prenehanje, ker je nullppp dosegel stanje omrežja.\n"
 
-#: oath.c:104
-msgid "Invalid base32 token string\n"
-msgstr "Neveljaven niz žetona base32\n"
-
-#: oath.c:112
+#: oath.c:116
 msgid "Failed to allocate memory to decode OATH secret\n"
 msgstr "Dodeljevanje pomnilnika za dekodiranje skrivnosti OATH je spodletelo\n"
 
-#: oath.c:218
+#: oath.c:140
+msgid "Invalid base32 token string\n"
+msgstr "Neveljaven niz žetona base32\n"
+
+#: oath.c:238
 msgid "This version of OpenConnect was built without PSKC support\n"
 msgstr "Ta različica programa OpenConnect je izgrajena brez podpore za PSKC\n"
 
-#: oath.c:314 oath.c:339 stoken.c:297 yubikey.c:507
+#: oath.c:445 oath.c:470 stoken.c:297 yubikey.c:507
 msgid "OK to generate INITIAL tokencode\n"
 msgstr "Zahtevana je potrditev za ustvarjanje ZAŽETNE kode žetona.\n"
 
-#: oath.c:318 oath.c:342 stoken.c:302 yubikey.c:511
+#: oath.c:449 oath.c:473 stoken.c:302 yubikey.c:511
 msgid "OK to generate NEXT tokencode\n"
 msgstr "Zahtevana je potrditev za ustvarjanje NASLEDNJE kode žetona.\n"
 
-#: oath.c:323 oath.c:346 stoken.c:307
+#: oath.c:454 oath.c:477 stoken.c:307
 msgid "Server is rejecting the soft token; switching to manual entry\n"
 msgstr ""
 "Strežnik zavrača uporabniški prstni odtis; preklopljen bo način za ročni "
 "vnos.\n"
 
-#: oath.c:380
+#: oath.c:511
 msgid "Generating OATH TOTP token code\n"
 msgstr "Poteka ustvarjanje kode žetona OATH TOTP.\n"
 
-#: oath.c:526
+#: oath.c:682
 msgid "Generating OATH HOTP token code\n"
 msgstr "Tvorjenje kode žetona OATH TOTP\n"
 
@@ -5095,11 +5095,11 @@ msgstr "Napaka pri pogajanjih o ključih ESP\n"
 msgid "oNCP negotiation request outgoing:\n"
 msgstr "Izhodna zahteva za pogajanja oNCP:\n"
 
-#: oncp.c:825 pulse.c:2916
+#: oncp.c:825 pulse.c:2924
 msgid "new incoming"
 msgstr "novo dohodno"
 
-#: oncp.c:826 pulse.c:2917
+#: oncp.c:826 pulse.c:2925
 msgid "new outgoing"
 msgstr "novo odhodno"
 
@@ -5154,7 +5154,7 @@ msgstr "Neznano sporočilo KMP %d velikosti %d:\n"
 msgid ".... + %d more bytes unreceived\n"
 msgstr ".... + %d več neprejetih bajtov\n"
 
-#: oncp.c:1087 pulse.c:2973
+#: oncp.c:1087 pulse.c:2981
 msgid "Packet outgoing:\n"
 msgstr "Odhodni paket:\n"
 
@@ -5162,7 +5162,7 @@ msgstr "Odhodni paket:\n"
 msgid "Sent ESP enable control packet\n"
 msgstr "Poslan kontrolni paket omogočenega ESP\n"
 
-#: openconnect-internal.h:1717 openconnect-internal.h:1727
+#: openconnect-internal.h:1721 openconnect-internal.h:1731
 #, c-format
 msgid "ERROR: %s() called with invalid UTF-8 for '%s' argument\n"
 msgstr "NAPAKA: %s() klicana z neveljavnim UTF-8 za argument »%s«\n"
@@ -6591,16 +6591,16 @@ msgstr "Identifikator ob odmiku 0x20 ni znan"
 msgid "Insufficient configuration found\n"
 msgstr "Najdena je nezadostna prilagoditev\n"
 
-#: pulse.c:2908
+#: pulse.c:2916
 msgid "ESP rekey failed\n"
 msgstr "Ponovno uporaba ključa ESP je spodletela\n"
 
-#: pulse.c:2937
+#: pulse.c:2945
 #, c-format
 msgid "Pulse fatal error (reason: %ld): %s\n"
 msgstr "Usodna napaka Pulse (razlog: %ld): %s\n"
 
-#: pulse.c:2955
+#: pulse.c:2963
 #, c-format
 msgid ""
 "Unknown Pulse packet of %d bytes (vendor 0x%03x, type 0x%02x, hdr_len %d, "
@@ -6609,7 +6609,7 @@ msgstr ""
 "Neznani paket Pulse %d bajtov (prodajalec 0x%03x, vrsta 0x%02x, hdr_len %d, "
 "ident %d)\n"
 
-#: pulse.c:3135
+#: pulse.c:3143
 #, c-format
 msgid "Sending IF-T/TLS data packet of %d bytes\n"
 msgstr "Pošiljanje paketa podatkov IF-T/TLS velikosti %d bajtov\n"
@@ -6640,45 +6640,45 @@ msgstr ""
 "OPOZORILO: izključitev delitve »%s« ima nastavljene bite gostitelja, ki se "
 "nadomestijo z »%s/%d«.\n"
 
-#: script.c:330
+#: script.c:320
 #, c-format
 msgid "Ignoring legacy network because address \"%s\" is invalid.\n"
 msgstr "Prezrtje opuščenega omrežja, ker naslov »%s« ni veljaven.\n"
 
-#: script.c:335
+#: script.c:325
 #, c-format
 msgid "Ignoring legacy network because netmask \"%s\" is invalid.\n"
 msgstr "Ignoriranje opuščenega omrežja, ker omrežna maska »%s« ni veljaven.\n"
 
-#: script.c:615
+#: script.c:605
 #, c-format
 msgid "Failed to get script exit status: %s\n"
 msgstr "Ni uspelo pridobiti stanja izhoda iz skripta: %s\n"
 
-#: script.c:624
+#: script.c:614
 #, c-format
 msgid "Script '%s' returned error %ld\n"
 msgstr "Skript »%s« je vrnil napako %ld\n"
 
-#: script.c:632
+#: script.c:622
 msgid "Script did not complete within 10 seconds.\n"
 msgstr "Skript se ni dokončal v 10 sekundah.\n"
 
-#: script.c:645 script.c:696
+#: script.c:635 script.c:686
 #, c-format
 msgid "Failed to spawn script '%s' for %s: %s\n"
 msgstr "Oživljanje skripta »%s« za %s je spodletelo: %s\n"
 
-#: script.c:682 tun.c:488
+#: script.c:672 tun.c:488
 msgid "setpgid"
 msgstr "setpgid"
 
-#: script.c:703
+#: script.c:693
 #, c-format
 msgid "Script '%s' exited abnormally (%x)\n"
 msgstr "Skript »%s« se je nepričakovano končal (%x)\n"
 
-#: script.c:711
+#: script.c:701
 #, c-format
 msgid "Script '%s' returned error %d\n"
 msgstr "Pri izvedbi skript »%s« je vrnjena napaka %d\n"
