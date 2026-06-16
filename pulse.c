@@ -1077,9 +1077,9 @@ static int pulse_request_user_auth(struct openconnect_info *vpninfo, struct oc_t
 	}
 	if (o[1]._value) {
 		l = strlen(o[1]._value);
-		 /* For PROMPT_JUNIPER_2021, official client truncates password
-		  * at 18 characters. */
-		if (l > ((prompt_flags & PROMPT_JUNIPER_2021) ? 18 : 253)) {
+		/* For PROMPT_JUNIPER_2021, official client truncates password
+		 * at 18 characters. */
+		if (!(prompt_flags & PROMPT_JUNIPER_2021) && l > 253) {
 			free_pass(&o[1]._value);
 			return -EINVAL;
 		}
@@ -1096,11 +1096,13 @@ static int pulse_request_user_auth(struct openconnect_info *vpninfo, struct oc_t
 		avp_ofs = buf_append_avp_hdr(reqbuf, AVP_CODE_EAP_MESSAGE);
 		eap_ofs = buf_append_eap_hdr(reqbuf, EAP_RESPONSE, eap_ident, EAP_TYPE_EXPANDED, 5);
 		buf_append_bytes(reqbuf, "\x01", 1);
+		/* Truncate password at 18 characters. */
+		i = MIN(l, 18);
 		if (o[1]._value) {
-			buf_append_bytes(reqbuf, o[1]._value, l);
+			buf_append_bytes(reqbuf, o[1]._value, i);
 			free_pass(&o[1]._value);
 		}
-		for (i = l; i < 18; i++)
+		for ( ; i < 18; i++)
 			buf_append_bytes(reqbuf, "\0", 1);
 		buf_fill_eap_len(reqbuf, eap_ofs);
 		buf_fill_avp_len(reqbuf, avp_ofs);
