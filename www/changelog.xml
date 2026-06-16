@@ -15,6 +15,12 @@
 <ul>
    <li><b>OpenConnect HEAD</b>
      <ul>
+       <li><i>No changelog entries yet</i></li>
+     </ul><br/>
+  </li>
+  <li><b><a href="https://www.infradead.org/openconnect/download/openconnect-9.21.tar.gz">OpenConnect v9.21</a></b>
+     <i>(<a href="https://www.infradead.org/openconnect/download/openconnect-9.21.tar.gz.asc">PGP signature</a>)</i> &#8212; 2026-06-16
+     <ul>
        <li>Fix infinite loop in <tt>buf_append()</tt> when output exactly fills available buffer space (<a href="https://gitlab.com/openconnect/openconnect/-/issues/851">#851</a>).</li>
        <li>Accept base32 token secrets without trailing <tt>=</tt> padding (<a href="https://gitlab.com/openconnect/openconnect/-/issues/771">#771</a>).</li>
        <li>Fix crash on NULL passphrase from TPM2 auth dialog (<a href="https://gitlab.com/openconnect/openconnect/-/issues/842">#842</a>).</li>
