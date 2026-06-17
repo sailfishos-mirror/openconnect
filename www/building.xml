@@ -64,8 +64,8 @@ well without it, so you'll still have to install it later.</p>
 
 <h2>Building OpenConnect</h2>
 
-<p>If you checked the source code out from git rather from a release tarball
-  then run this command first to prepare the build system:</p>
+<p>If you used a 'nogen' source tarball or checked the source code out from
+  git, then run this command first to prepare the build system:</p>
   <ul>
     <li><tt>./autogen.sh</tt></li>
   </ul>
