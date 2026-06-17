@@ -1,5 +1,9 @@
 #
-# Usage: sed -Enf gensymbols.sed openconnect.h | sed -nf- libopenconnect.map.in
+# Usage: sed -Enf gensymbols.sed openconnect.h | sed -Enf- libopenconnect.map.in | \
+#          { IFS= read -r soname; printf '%s\n' "$soname"; LC_ALL=C sort; }
+#
+# The first (SONAME) line is kept at the top, the rest is sorted
+# as dpkg-gensymbols does.
 #
 # This sed script is used to process openconnect.h and emit another
 # sed script, which is used to process libopenconnect.map.in.
