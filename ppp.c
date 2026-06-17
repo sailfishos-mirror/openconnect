@@ -1256,8 +1256,12 @@ static int ppp_mainloop(struct openconnect_info *vpninfo, int dtls,
 		case PPP_LCP:
 		case PPP_IPCP:
 		case PPP_IP6CP:
-			if ((proto == PPP_IPCP && !ppp->want_ipv4) || (proto == PPP_IP6CP && !ppp->want_ipv6))
+			if ((proto == PPP_IPCP && !ppp->want_ipv4) || (proto == PPP_IP6CP && !ppp->want_ipv6)) {
+				vpn_progress(vpninfo, PRG_DEBUG,
+					     _("Sending Protocol-Reject for %s\n"),
+					     proto_names(proto));
 				goto reject;
+			}
 			if (payload_len < 4)
 				goto short_pkt;
 			if ((ret = handle_config_packet(vpninfo, proto, pp, payload_len)) < 0)
@@ -1301,12 +1305,10 @@ static int ppp_mainloop(struct openconnect_info *vpninfo, int dtls,
 			break;
 
 		default:
+			vpn_progress(vpninfo, PRG_INFO,
+				     _("Sending Protocol-Reject for unknown protocol 0x%04x\n"),
+				     proto);
 		reject:
-			vpn_progress(vpninfo, PRG_ERR,
-				     _("Sending Protocol-Reject for %s. Payload:\n"),
-				     proto_names(proto));
-			dump_buf_hex(vpninfo, PRG_ERR, '>', pp, payload_len);
-
 			/* The rejected protocol MUST occupy 2 bytes prior to the rejected packet contents.
 			 * (https://tools.ietf.org/html/rfc1661#section-5.7). We can clobber these bytes
 			 * because we are throwing out this packet anyway.
