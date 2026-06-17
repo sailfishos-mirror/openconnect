@@ -16,6 +16,7 @@
    <li><b>OpenConnect HEAD</b>
      <ul>
        <li>Handle "code 5" password request from Pulse server (<a href="https://gitlab.com/openconnect/openconnect/-/merge_requests/595">!595</a>).</li>
+       <li>Reduce PPP Protocol-Reject messages from error verbosity (<a href="https://gitlab.com/openconnect/openconnect/-/issues/845">#845</a>).</li>
      </ul><br/>
   </li>
   <li><b><a href="https://www.infradead.org/openconnect/download/openconnect-9.21.tar.gz">OpenConnect v9.21</a></b>
