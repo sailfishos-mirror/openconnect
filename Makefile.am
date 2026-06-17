@@ -219,7 +219,7 @@ AUTHORS: @GITVERSIONDEPS@
 	@git shortlog -sen > AUTHORS
 
 tmp-dist: uncommitted-check
-	$(MAKE) $(AM_MAKEFLAGS) VERSION=$(patsubst v%,%,$(shell git describe --tags)) DISTHOOK=0 dist
+	$(MAKE) $(AM_MAKEFLAGS) VERSION=$(patsubst v%,%,$(shell git describe --tags)) DISTHOOK=0 dist dist-nogen
 
 tmp-distdir: uncommitted-check
 	$(MAKE) $(AM_MAKEFLAGS) VERSION=$(patsubst v%,%,$(shell git describe --tags)) DISTHOOK=0 distdir
@@ -238,8 +238,12 @@ dist-hook: uncommitted-check
 		echo "*** ERROR: Git checkout not at version v$(VERSION)"; exit 1; fi ; \
 	fi
 
-sign-dist: dist
-	@for a in $(DIST_ARCHIVES); do \
+dist-nogen: dist-hook
+	git -C $(top_srcdir) archive --prefix=openconnect-$(VERSION)/ HEAD | \
+		gzip -9 > openconnect-nogen-$(VERSION).tar.gz
+
+sign-dist: dist dist-nogen
+	@for a in $(DIST_ARCHIVES) openconnect-nogen-$(VERSION).tar.gz; do \
 		gpg --default-key 67E2F359 --detach-sign -a $$a ; \
 	done
 
