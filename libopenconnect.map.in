@@ -137,14 +137,14 @@ OPENCONNECT_5_10 {
 	openconnect_set_tcp_keepalive;
 } OPENCONNECT_5_9;
 
-OPENCONNECT_PRIVATE {
+OPENCONNECT_PRIVATE { /* 6.00 */
  global: @SYMVER_TIME@ @SYMVER_GETLINE@ @SYMVER_JAVA@ @SYMVER_ASPRINTF@ @SYMVER_VASPRINTF@ @SYMVER_WIN32_STRERROR@ @SYMVER_WIN32_SETENV@
-	openconnect_get_tls_library_version;
-	openconnect_fopen_utf8;
-	openconnect_open_utf8;
-	openconnect_sha1;
-	openconnect_version_str;
-	openconnect_read_file;
+	openconnect_get_tls_library_version; /* 8.06 */
+	openconnect_fopen_utf8; /* 7.00 */
+	openconnect_open_utf8; /* 7.00 */
+	openconnect_sha1; /* 6.00 */
+	openconnect_version_str; /* 6.00 */
+	openconnect_read_file; /* 8.06 */
  local:
 	*;
 };

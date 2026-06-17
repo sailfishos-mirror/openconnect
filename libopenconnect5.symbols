@@ -9,10 +9,12 @@ libopenconnect.so.5 libopenconnect5 #MINVER#
  OPENCONNECT_5_7@OPENCONNECT_5_7 8.20
  OPENCONNECT_5_8@OPENCONNECT_5_8 9.00
  OPENCONNECT_5_9@OPENCONNECT_5_9 9.12
+ OPENCONNECT_PRIVATE@OPENCONNECT_PRIVATE 6.00
  openconnect_check_peer_cert_hash@OPENCONNECT_5.0 7.00
  openconnect_clear_cookie@OPENCONNECT_5.0 7.00
  openconnect_disable_dtls@OPENCONNECT_5_7 8.20
  openconnect_disable_ipv6@OPENCONNECT_5_3 7.07
+ openconnect_fopen_utf8@OPENCONNECT_PRIVATE 7.00
  openconnect_free_cert_info@OPENCONNECT_5.0 7.00
  openconnect_free_peer_cert_chain@OPENCONNECT_5_3 7.07
  openconnect_free_supported_protocols@OPENCONNECT_5_5 8.00
@@ -35,6 +37,7 @@ libopenconnect.so.5 libopenconnect5 #MINVER#
  openconnect_get_port@OPENCONNECT_5.0 7.00
  openconnect_get_protocol@OPENCONNECT_5_5 8.00
  openconnect_get_supported_protocols@OPENCONNECT_5_5 8.00
+ openconnect_get_tls_library_version@OPENCONNECT_PRIVATE 8.06
  openconnect_get_urlpath@OPENCONNECT_5.0 7.00
  openconnect_get_version@OPENCONNECT_5.0 7.00
  openconnect_has_oath_support@OPENCONNECT_5.0 7.00
@@ -48,9 +51,11 @@ libopenconnect.so.5 libopenconnect5 #MINVER#
  openconnect_mainloop@OPENCONNECT_5.0 7.00
  openconnect_make_cstp_connection@OPENCONNECT_5.0 7.00
  openconnect_obtain_cookie@OPENCONNECT_5.0 7.00
+ openconnect_open_utf8@OPENCONNECT_PRIVATE 7.00
  openconnect_override_getaddrinfo@OPENCONNECT_5_3 7.07
  openconnect_parse_url@OPENCONNECT_5.0 7.00
  openconnect_passphrase_from_fsid@OPENCONNECT_5.0 7.00
+ openconnect_read_file@OPENCONNECT_PRIVATE 8.06
  openconnect_reset_ssl@OPENCONNECT_5.0 7.00
  openconnect_set_allow_insecure_crypto@OPENCONNECT_5_7 8.20
  openconnect_set_cafile@OPENCONNECT_5.0 7.00
@@ -100,6 +105,8 @@ libopenconnect.so.5 libopenconnect5 #MINVER#
  openconnect_setup_tun_device@OPENCONNECT_5.0 7.00
  openconnect_setup_tun_fd@OPENCONNECT_5.0 7.00
  openconnect_setup_tun_script@OPENCONNECT_5.0 7.00
+ openconnect_sha1@OPENCONNECT_PRIVATE 6.00
+ openconnect_version_str@OPENCONNECT_PRIVATE 6.00
  openconnect_vpninfo_free@OPENCONNECT_5.0 7.00
  openconnect_vpninfo_new@OPENCONNECT_5.0 7.00
  openconnect_webview_load_changed@OPENCONNECT_5_7 8.20
