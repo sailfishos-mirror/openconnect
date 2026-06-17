@@ -32,6 +32,7 @@ import select
 import hmac
 import hashlib
 import subprocess
+import collections
 
 _logger = logging.getLogger(__name__)
 
@@ -44,6 +45,7 @@ IFT_CLIENT_AUTH_CHALLENGE = 5
 IFT_CLIENT_AUTH_RESPONSE = 6
 IFT_CLIENT_AUTH_SUCCESS = 7
 JUNIPER_1 = (VENDOR_JUNIPER << 8) | 1
+AVP_VENDOR = 0x80
 EAP_TYPE_EXPANDED = 0xfe
 EXPANDED_JUNIPER = (EAP_TYPE_EXPANDED << 24) | VENDOR_JUNIPER
 EAP_REQUEST = 1
@@ -54,6 +56,8 @@ UDP_PORT = 4500
 ESP_ENC_AES_128_CBC = 2
 ESP_HMAC_SHA1 = 2
 ESP_HMAC_LEN = 12
+
+Avp = collections.namedtuple('Avp', ('code', 'avp_len', 'data'))
 
 _status = {}
 
@@ -78,9 +82,32 @@ def _recv_http(conn):
 
     len_str = headers.get('content-length')
 
-    data = conn.read(int(len_str)) if len_str else ''
+    data = conn.read(int(len_str)) if len_str else b''
 
     return method, uri, headers, data
+
+
+def _pack_avps(avps):
+    res = []
+    for avp in avps:
+        res.append(struct.pack('>LL', avp.code, len(avp.data) + 8))
+        res.append(avp.data)
+        res.append(b'\0' * (3 - ((len(avp.data) + 3) % 4)))
+
+    return b''.join(res)
+
+
+def _unpack_avps(avp_data):
+    res = []
+    i = 0
+    while i < len(avp_data):
+        code, len_flags = struct.unpack('>LL', avp_data[i:i + 8])
+        avp_len = len_flags & 0xffffff
+        hdr_len = 12 if ((len_flags >> 24) & AVP_VENDOR) else 8
+        res.append(Avp(code, avp_len, avp_data[i + hdr_len:i + avp_len]))
+        i += (avp_len + 3) & ~3
+
+    return res
 
 
 def _send_ift_upgrade(conn):
@@ -104,8 +131,8 @@ def _set_status(conn, content):
     _logger.debug('content %r', content)
 
     _status.clear()
-    if content:
-        for kv in content.decode().split('&'):
+    for kv in content.decode().split('&'):
+        if kv:
             k, v = kv.split('=')
             _status[k] = v
 
@@ -183,10 +210,13 @@ def _send_ift_auth_eap(conn):
 
 
 def _send_ift_pass_req(conn):
-    eap = struct.pack('>HHLLB', EAP_REQUEST << 8, 12 + 1,
-                      EXPANDED_JUNIPER, 2, 1)
-    avp = (struct.pack('>LL', AVP_CODE_EAP_MESSAGE, len(eap) + 8)
-           + eap)
+    if _status.get('pass_req_type') == 'juniper2021':
+        eap = struct.pack('>HHLLBBBBBB', EAP_REQUEST << 8, 12 + 6,
+                          EXPANDED_JUNIPER, 5, 1, 0, 0, 0, 0, 0)
+    else:
+        eap = struct.pack('>HHLLB', EAP_REQUEST << 8, 12 + 1,
+                          EXPANDED_JUNIPER, 2, 1)
+    avp = _pack_avps([Avp(AVP_CODE_EAP_MESSAGE, None, eap)])
     _send_ift(conn,
               struct.pack('>LLLLLHHLL', VENDOR_TCG,
                           IFT_CLIENT_AUTH_CHALLENGE, 0x20 + len(avp),
@@ -194,6 +224,37 @@ def _send_ift_pass_req(conn):
                           EAP_REQUEST << 8, 0x0c + len(avp),
                           EXPANDED_JUNIPER, 1)
               + avp)
+
+
+def _expect_ift_user_pass(conn):
+    data = _expect_ift(conn, VENDOR_TCG, IFT_CLIENT_AUTH_RESPONSE)
+
+    assert len(data) % 4 == 0
+
+    avps = _unpack_avps(data[0x20:])
+
+    _logger.debug('avps %r', avps)
+
+    assert len(avps) == 2
+
+    assert avps[0].code == 0xd6d
+    _status['in_user'] = avps[0].data.decode()
+
+    assert avps[1].code == 79
+    (eap_code, eap_ident, eap_len,
+     jun_code, pass_req_code) = struct.unpack('>BBHLL', avps[1].data[:12])
+
+    if _status.get('pass_req_type') == 'juniper2021':
+        assert avps[1].avp_len == 39
+        assert eap_len == 31
+        assert len(avps[1].data) == 31
+        assert pass_req_code == 5
+        assert avps[1].data[12] == 1
+        _status['in_pass_juniper2021'] = avps[1].data[13:].rstrip(b'\0').decode()
+    else:
+        assert pass_req_code == 2
+        pass_len = avps[1].data[14] - 2
+        _status['in_pass'] = avps[1].data[15:15 + pass_len].decode()
 
 
 def _send_ift_auth_cookie(conn):
@@ -459,7 +520,7 @@ def _communicate(args, csock, conn, usock):
 
     _send_ift_pass_req(conn)
 
-    _expect_ift(conn, VENDOR_TCG, IFT_CLIENT_AUTH_RESPONSE)  # client user/pass
+    _expect_ift_user_pass(conn)
 
     _send_ift_auth_cookie(conn)
 

@@ -78,6 +78,7 @@
 #define PROMPT_USERNAME		2
 #define PROMPT_PASSWORD		4
 #define PROMPT_GTC_NEXT		0x10000
+#define PROMPT_JUNIPER_2021	0x20000
 
 /* Request codes for the Juniper Expanded/2 auth requests. */
 #define J2_PASSCHANGE	0x43
@@ -139,6 +140,29 @@ static void buf_fill_eap_len(struct oc_text_buf *buf, int ofs)
 	/* EAP length word is always at 0x16, and counts bytes from 0x14 */
 	if (ofs >= 0 && !buf_error(buf) && buf->pos >= ofs + 4)
 		store_be16(buf->data + ofs + 2, buf->pos - ofs);
+}
+
+static int buf_append_avp_hdr(struct oc_text_buf *buf, uint32_t code)
+{
+	int ofs = -1;
+
+	if (!buf_error(buf))
+		ofs = buf->pos;
+	buf_append_be32(buf, code);
+	buf_append_be32(buf, AVP_MANDATORY << 24); /* length filled later */
+	return ofs;
+}
+
+static void buf_fill_avp_len(struct oc_text_buf *buf, int ofs)
+{
+	if (ofs >= 0 && !buf_error(buf) && buf->pos >= ofs + 8) {
+		int len = buf->pos - ofs;
+		store_be32(buf->data + ofs + 4, (AVP_MANDATORY << 24) + len);
+		if (len & 3) {
+			uint32_t pad = 0;
+			buf_append_bytes(buf, &pad, 4 - (len & 3));
+		}
+	}
 }
 
 static void buf_append_avp(struct oc_text_buf *buf, uint32_t type, const void *bytes, int len)
@@ -1012,7 +1036,6 @@ static int pulse_request_user_auth(struct openconnect_info *vpninfo, struct oc_t
 {
 	struct oc_auth_form f;
 	struct oc_form_opt o[2];
-	unsigned char eap_avp[23];
 	int l;
 	int ret;
 
@@ -1054,7 +1077,9 @@ static int pulse_request_user_auth(struct openconnect_info *vpninfo, struct oc_t
 	}
 	if (o[1]._value) {
 		l = strlen(o[1]._value);
-		if (l > 253) {
+		/* For PROMPT_JUNIPER_2021, official client truncates password
+		 * at 18 characters. */
+		if (!(prompt_flags & PROMPT_JUNIPER_2021) && l > 253) {
 			free_pass(&o[1]._value);
 			return -EINVAL;
 		}
@@ -1065,32 +1090,35 @@ static int pulse_request_user_auth(struct openconnect_info *vpninfo, struct oc_t
 		l = 0;
 	}
 
-	/* AVP flags+mandatory+length */
-	store_be32(eap_avp, AVP_CODE_EAP_MESSAGE);
-	store_be32(eap_avp + 4, (AVP_MANDATORY << 24) + sizeof(eap_avp) + l);
+	if (prompt_flags & PROMPT_JUNIPER_2021) {
+		int avp_ofs, eap_ofs, i;
 
-	/* EAP header: code/ident/len */
-	eap_avp[8] = EAP_RESPONSE;
-	eap_avp[9] = eap_ident;
-	store_be16(eap_avp + 10, l + 15); /* EAP length */
-	store_be32(eap_avp + 12, EXPANDED_JUNIPER);
-	store_be32(eap_avp + 16, 2);
+		avp_ofs = buf_append_avp_hdr(reqbuf, AVP_CODE_EAP_MESSAGE);
+		eap_ofs = buf_append_eap_hdr(reqbuf, EAP_RESPONSE, eap_ident, EAP_TYPE_EXPANDED, 5);
+		buf_append_bytes(reqbuf, "\x01", 1);
+		/* Truncate password at 18 characters. */
+		i = MIN(l, 18);
+		if (o[1]._value) {
+			buf_append_bytes(reqbuf, o[1]._value, i);
+			free_pass(&o[1]._value);
+		}
+		for ( ; i < 18; i++)
+			buf_append_bytes(reqbuf, "\0", 1);
+		buf_fill_eap_len(reqbuf, eap_ofs);
+		buf_fill_avp_len(reqbuf, avp_ofs);
+	} else {
+		int avp_ofs, eap_ofs;
+		unsigned char hdr[3] = { 0x02, 0x02, l + 2 };
 
-	/* EAP Juniper/2 payload: 02 02 <len> <password> */
-	eap_avp[20] = eap_avp[21] = 0x02;
-	eap_avp[22] = l + 2; /* Why 2? */
-	buf_append_bytes(reqbuf, eap_avp, sizeof(eap_avp));
-	if (o[1]._value) {
-		buf_append_bytes(reqbuf, o[1]._value, l);
-		free_pass(&o[1]._value);
-	}
-
-	/* Padding */
-	if ((sizeof(eap_avp) + l) & 3) {
-		uint32_t pad = 0;
-
-		buf_append_bytes(reqbuf, &pad,
-				 4 - ((sizeof(eap_avp) + l) & 3));
+		avp_ofs = buf_append_avp_hdr(reqbuf, AVP_CODE_EAP_MESSAGE);
+		eap_ofs = buf_append_eap_hdr(reqbuf, EAP_RESPONSE, eap_ident, EAP_TYPE_EXPANDED, 2);
+		buf_append_bytes(reqbuf, hdr, 3);
+		if (o[1]._value) {
+			buf_append_bytes(reqbuf, o[1]._value, l);
+			free_pass(&o[1]._value);
+		}
+		buf_fill_eap_len(reqbuf, eap_ofs);
+		buf_fill_avp_len(reqbuf, avp_ofs);
 	}
 
 	ret = 0;
@@ -1841,6 +1869,22 @@ static int pulse_authenticate(struct openconnect_info *vpninfo, int connecting)
 						     _("Pulse server requested Host Checker; not yet supported\n"
 						       "Try Juniper mode (--protocol=nc)\n"));
 					goto bad_eap;
+
+				case 5: /* Recent Juniper password */
+					j2_found = 1;
+					j2_code = avp_c[12];
+					prompt_flags |= PROMPT_JUNIPER_2021;
+					if (j2_code == J2_PASSREQ) {
+						/* No idea what remaining 5 bytes do. */
+						if (avp_len != 18)
+							goto auth_unknown;
+					} else {
+						/* Unclear if other codes match "J2" codes.
+						 * I have observed 0x02 for "new PIN",
+						 * but no other codes. */
+						goto auth_unknown;
+					}
+					break;
 
 				default:
 					goto auth_unknown;
