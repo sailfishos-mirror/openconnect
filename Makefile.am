@@ -274,7 +274,9 @@ tag: uncommitted-check
 	@sed -Enf $(srcdir)/gensymbols.sed $(srcdir)/openconnect.h | \
 	  sed -Enf- $(srcdir)/libopenconnect.map.in > $(srcdir)/libopenconnect5.symbols
 # stupid syntax highlighting '
-	@cd $(srcdir) && git commit -s -m "Tag version $(VERSION)" configure.ac version.sh www/download.xml www/changelog.xml openconnect.h libopenconnect5.symbols
+	@cd $(srcdir) && git ls-files | grep -v '^\.source-sha256sums$$' | \
+		LC_ALL=C sort | xargs sha256sum > .source-sha256sums
+	@cd $(srcdir) && git commit -s -m "Tag version $(VERSION)" configure.ac version.sh www/download.xml www/changelog.xml openconnect.h libopenconnect5.symbols .source-sha256sums
 	@git tag v$(VERSION)
 	@cd $(srcdir) && ./autogen.sh
 

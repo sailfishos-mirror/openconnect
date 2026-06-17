@@ -13,6 +13,14 @@ if [ -d ${GIT_DIR:-.git} ] && tag=`git describe --tags`; then
 		v="$v"-dirty
 elif [ -n "$RPM_PACKAGE_VERSION" ] && [ -n "$RPM_PACKAGE_RELEASE" ]; then
 	v="v$RPM_PACKAGE_VERSION-$RPM_PACKAGE_RELEASE"
+elif [ -r ${srcdir:-.}/.source-sha256sums ]; then
+	# Verify source integrity against the checksums stored at release time.
+	# If all files match, the tree is pristine and we can use the clean version.
+	if (cd ${srcdir:-.} && sha256sum --quiet -c .source-sha256sums) > /dev/null 2>&1; then
+		: # v is already set to the release version above
+	else
+		v="$v"-modified
+	fi
 else # XXX: Equivalent for .deb packages?
 	v="$v"-unknown
 fi
