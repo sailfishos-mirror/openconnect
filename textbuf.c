@@ -188,6 +188,26 @@ void buf_append_le16(struct oc_text_buf *buf, uint16_t val)
 	buf_append_bytes(buf, b, 2);
 }
 
+void buf_append_le32(struct oc_text_buf *buf, uint32_t val)
+{
+	unsigned char b[4];
+
+	store_le32(b, val);
+
+	buf_append_bytes(buf, b, 4);
+}
+
+void buf_append_zeroes(struct oc_text_buf *buf, int len)
+{
+	if (!buf || buf->error)
+		return;
+	if (buf_ensure_space(buf, len + 1))
+		return;
+	memset(buf->data + buf->pos, 0, len);
+	buf->pos += len;
+	buf->data[buf->pos] = 0;
+}
+
 void buf_append_hex(struct oc_text_buf *buf, const void *str, unsigned len)
 {
 	const unsigned char *data = str;

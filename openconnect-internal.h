@@ -1607,6 +1607,8 @@ void buf_append_xmlescaped(struct oc_text_buf *buf, const char *str);
 void buf_append_be16(struct oc_text_buf *buf, uint16_t val);
 void buf_append_be32(struct oc_text_buf *buf, uint32_t val);
 void buf_append_le16(struct oc_text_buf *buf, uint16_t val);
+void buf_append_le32(struct oc_text_buf *buf, uint32_t val);
+void buf_append_zeroes(struct oc_text_buf *buf, int len);
 void buf_append_hex(struct oc_text_buf *buf, const void *str, unsigned len);
 int buf_append_utf16le(struct oc_text_buf *buf, const char *utf8);
 int get_utf8char(const char **utf8);

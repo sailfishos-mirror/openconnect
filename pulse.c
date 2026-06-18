@@ -2611,7 +2611,8 @@ static int handle_main_config_packet(struct openconnect_info *vpninfo,
    encryption key, however large the latter is.
 */
 static int handle_esp_config_packet(struct openconnect_info *vpninfo,
-				    unsigned char *bytes, int len)
+				    unsigned char *bytes, int len,
+				    struct oc_text_buf *resp)
 {
 #ifdef HAVE_ESP
 	struct esp *esp;
@@ -2662,29 +2663,32 @@ static int handle_esp_config_packet(struct openconnect_info *vpninfo,
 
 	esp = &vpninfo->esp_in[vpninfo->current_esp_in];
 
-	/* Now, using the buffer in which we received the original packet (which
-	 * we trust our caller made large enough), create an appropriate reply.
-	 * A reply packet contains two sets of ESP information, as we are expected
-	 * to send our own followed by a copy of what the server sent to us. */
+	/* Build the response in resp. A reply contains two sets of ESP
+	 * information: our own followed by a copy of what the server sent. */
+	buf_truncate(resp);
 
-	/* Adjust the length in the IF-T/TLS header */
-	store_be32(bytes + 8, 0x40 + 2 * secretslen);
+	/* IF-T/TLS header (length filled by send_ift_packet) */
+	buf_append_ift_hdr(resp, VENDOR_JUNIPER, 1);
 
-	/* Copy the server's own ESP information into place */
-	memmove(bytes + secretslen + 0x3a, bytes + 0x34, secretslen + 0x06);
+	/* 16 bytes zeroes + ESP identifier + 4 zeroes */
+	buf_append_zeroes(resp, 16);
+	buf_append_be32(resp, 0x21202400);
+	buf_append_be32(resp, 0);		/* 0x24: zeroes */
+	buf_append_be32(resp, 0x24 + 2 * (secretslen + 6));	/* 0x28: payload_len */
+	buf_append_be32(resp, 0x08 + 2 * (secretslen + 6));	/* 0x2c: inner_len */
+	buf_append_be32(resp, 0x01000000);	/* 0x30: constant (sub-type?) */
 
-	/* Adjust other length fields. */
-	store_be32(bytes + 0x28, 0x30 + 2 * secretslen);
-	store_be32(bytes + 0x2c, 0x14 + 2 * secretslen);
+	/* Our SPI (little-endian) + secrets length + our keys */
+	buf_append_le32(resp, load_be32(&esp->spi));
+	buf_append_be16(resp, secretslen);
+	buf_append_bytes(resp, esp->enc_key, vpninfo->enc_key_len);
+	buf_append_bytes(resp, esp->hmac_key, vpninfo->hmac_key_len);
+	buf_append_zeroes(resp, secretslen - vpninfo->enc_key_len - vpninfo->hmac_key_len);
 
-	/* Store the SPI. Bizarrely little-endian again. */
-	store_le32(bytes + 0x34, load_be32(&esp->spi));
-	memcpy(bytes + 0x3a, esp->enc_key, vpninfo->enc_key_len);
-	memcpy(bytes + 0x3a + vpninfo->enc_key_len, esp->hmac_key, vpninfo->hmac_key_len);
-	memset(bytes + 0x3a + vpninfo->enc_key_len + vpninfo->hmac_key_len,
-	       0, 0x40 - vpninfo->enc_key_len - vpninfo->hmac_key_len);
+	/* Copy of server's SPI + secrets_len + secrets */
+	buf_append_bytes(resp, bytes + 0x34, secretslen + 0x06);
 
-	return 0;
+	return buf_error(resp);
 #else
 	return -EINVAL;
 #endif
@@ -2703,6 +2707,8 @@ int pulse_connect(struct openconnect_info *vpninfo)
 		if (ret)
 			return ret;
 	}
+
+	reqbuf = buf_alloc();
 
 	while (1) {
 		uint32_t pkt_type, config_len;
@@ -2800,23 +2806,22 @@ int pulse_connect(struct openconnect_info *vpninfo)
 			break;
 
 		case 0x21202400:
-			ret = handle_esp_config_packet(vpninfo, bytes, config_len);
+			ret = handle_esp_config_packet(vpninfo, bytes, config_len, reqbuf);
 			if (ret) {
 				vpninfo->dtls_state = DTLS_DISABLED;
 				continue;
 			}
 
-			/* It has created a response packet to send. */
-			ret = send_ift_bytes(vpninfo, bytes, load_be32(bytes + 8));
+			/* Send the ESP response */
+			ret = send_ift_packet(vpninfo, reqbuf);
 			if (ret)
 				goto out;
 
 			/* Tell server to enable ESP handling */
-			reqbuf = buf_alloc();
+			buf_truncate(reqbuf);
 			buf_append_ift_hdr(reqbuf, VENDOR_JUNIPER, 5);
 			buf_append(reqbuf, "ncmo=1\n%c", 0);
 			ret = send_ift_packet(vpninfo, reqbuf);
-			buf_free(reqbuf);
 			if (ret)
 				goto out;
 
@@ -2853,6 +2858,7 @@ int pulse_connect(struct openconnect_info *vpninfo)
 
  out:
 	free(bytes);
+	buf_free(reqbuf);
 	return ret;
 }
 
@@ -2943,7 +2949,10 @@ int pulse_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			vpninfo->cstp_pkt = pkt = NULL;
 			work_done = 1;
 			continue;
-		case 1:
+		case 1: {
+			struct oc_text_buf *resp = NULL;
+			struct pkt *resp_pkt = NULL;
+
 			if (payload_len < 0x6a ||
 			    load_be32(pkt->data + 0x10) != 0x21202400 ||
 			    load_be32(pkt->data + 0x18) != payload_len ||
@@ -2954,20 +2963,30 @@ int pulse_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 
 			dump_buf_hex(vpninfo, PRG_TRACE, '<', (void *)&vpninfo->cstp_pkt->pulse.vendor, pkt_len);
 
-			ret = handle_esp_config_packet(vpninfo, (void *)&pkt->pulse.vendor, pkt_len);
-			if (ret) {
+			resp = buf_alloc();
+			ret = handle_esp_config_packet(vpninfo, (void *)&pkt->pulse.vendor, pkt_len, resp);
+			if (!ret) {
+				resp_pkt = alloc_pkt(vpninfo, resp->pos - 16);
+				if (!resp_pkt)
+					ret = -ENOMEM;
+			}
+			if (!ret) {
+				memcpy(&resp_pkt->pulse.vendor, resp->data, resp->pos);
+				store_be32(&resp_pkt->pulse.len, resp->pos);
+				resp_pkt->len = resp->pos - 16;
+				queue_packet(&vpninfo->tcp_control_queue, resp_pkt);
+
+				print_esp_keys(vpninfo, _("new incoming"), &vpninfo->esp_in[vpninfo->current_esp_in]);
+				print_esp_keys(vpninfo, _("new outgoing"), &vpninfo->esp_out);
+			} else {
 				vpn_progress(vpninfo, PRG_ERR,
 					     _("ESP rekey failed\n"));
 				vpninfo->proto->udp_close(vpninfo);
-				continue;
 			}
-			vpninfo->cstp_pkt = NULL;
-			pkt->len = load_be32(&pkt->pulse.len) - 16;
-			queue_packet(&vpninfo->tcp_control_queue, pkt);
 
-			print_esp_keys(vpninfo, _("new incoming"), &vpninfo->esp_in[vpninfo->current_esp_in]);
-			print_esp_keys(vpninfo, _("new outgoing"), &vpninfo->esp_out);
+			buf_free(resp);
 			continue;
+		}
 
 		case 0x93: {
 			/* Expected contents are "errorType=%d errorString=%s\n". Known values:
