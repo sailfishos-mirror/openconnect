@@ -278,7 +278,7 @@ def _send_ift_success(conn):
                           EAP_SUCCESS << 8, 0x04))
 
 
-def _send_ift_config(args, conn):
+def _build_ift_config(args):
     addr = sum((int(v) << ((3 - i) * 8))
                for i, v in enumerate(args.vpnnet[0].split('.')))
     netmask = (-1 << (32 - int(args.vpnnet[1]))) & 0xffffffff
@@ -309,13 +309,15 @@ def _send_ift_config(args, conn):
 
     conf += struct.pack('>L', 4 + len(more_conf)) + more_conf
 
-    _send_ift(conn,
-              struct.pack('>LLLLLLLLLLL', VENDOR_JUNIPER, 1, 0x2c + len(conf),
-                          0, 0, 0, 0, 0, 0x2e20f000, 0, 0x1c + len(conf))
-              + conf)
+    return struct.pack('>LLLLLLLLLLL', VENDOR_JUNIPER, 1, 0x2c + len(conf),
+                       0, 0, 0, 0, 0, 0x2e20f000, 0, 0x1c + len(conf)) + conf
 
 
-def _send_ift_config_udp(conn):
+def _send_ift_config(args, conn):
+    _send_ift(conn, _build_ift_config(args))
+
+
+def _build_ift_config_udp():
     _status['esp_in_spi'] = 0x12345678
     _status['esp_in_enc_key'] = b'e' * 16
     _status['esp_in_hmac_key'] = b'h' * 20
@@ -329,10 +331,12 @@ def _send_ift_config_udp(conn):
 
     conf = struct.pack('>L', 4 + len(more_conf)) + more_conf
 
-    _send_ift(conn,
-              struct.pack('>LLLLLLLLLLL', VENDOR_JUNIPER, 1, 0x2c + len(conf),
-                          0, 0, 0, 0, 0, 0x21202400, 0, 0x1c + len(conf))
-              + conf)
+    return struct.pack('>LLLLLLLLLLL', VENDOR_JUNIPER, 1, 0x2c + len(conf),
+                       0, 0, 0, 0, 0, 0x21202400, 0, 0x1c + len(conf)) + conf
+
+
+def _send_ift_config_udp(conn):
+    _send_ift(conn, _build_ift_config_udp())
 
 
 def _send_ift_config_end(conn):
@@ -528,16 +532,28 @@ def _communicate(args, csock, conn, usock):
 
     _send_ift_success(conn)
 
-    _send_ift_config(args, conn)
-
-    if _status.get('enable_udp') == 'true':
-        _send_ift_config_udp(conn)
+    if _status.get('coalesce_config') == 'true' and _status.get('enable_udp') == 'true':
+        # Send main config + ESP config + end-of-config in a single TLS write,
+        # to test client handling of coalesced IF-T/TLS packets (#821)
+        main_pkt = _build_ift_config(args)
+        esp_pkt = _build_ift_config_udp()
+        end_pkt = struct.pack('>LLLLL', VENDOR_JUNIPER, 0x8f, 0x14, 0, 0)
+        conn.write(main_pkt + esp_pkt + end_pkt)
+        conn.flush()
 
         _expect_ift_config_udp(conn)
-
         _expect_ift(conn, VENDOR_JUNIPER, 0x05)  # "ncmo=1"
+    else:
+        _send_ift_config(args, conn)
 
-    _send_ift_config_end(conn)
+        if _status.get('enable_udp') == 'true':
+            _send_ift_config_udp(conn)
+
+            _expect_ift_config_udp(conn)
+
+            _expect_ift(conn, VENDOR_JUNIPER, 0x05)  # "ncmo=1"
+
+        _send_ift_config_end(conn)
 
     while _handle_tunnels(args, csock, conn, usock):
         pass

@@ -2710,37 +2710,45 @@ int pulse_connect(struct openconnect_info *vpninfo)
 
 	reqbuf = buf_alloc();
 
+	int bytes_in_hand = 0;
+	unsigned int config_len = 0;
+
 	while (1) {
-		uint32_t pkt_type, config_len;
+		uint32_t pkt_type;
 
 	next_pkt:
-		free(bytes);
+		if (bytes_in_hand) {
+			memmove(bytes, bytes + config_len, bytes_in_hand);
+		} else {
+			free(bytes);
+			bytes = malloc(TLS_RECORD_MAX);
+		}
 		config_len = TLS_RECORD_MAX;
-		bytes = malloc(config_len);
 
-		for (int ii = 0; ii < config_len; ii += ret) {
+		for (int ii = 0, got_hdr = 0;
+		     ii < config_len; ii += ret) {
 			if (!bytes)
 				return -ENOMEM;
 
-			ret = recv_ift_packet(vpninfo, bytes + ii, MAX(config_len - ii, TLS_RECORD_MAX));
-			if (ret < 0)
-				goto out;
-
-			if (ii == 0) {
-				/* Check header, and reallocate if it exceeds one TLS record */
-				if (ret < 16) {
-					vpn_progress(vpninfo, PRG_ERR,
-						     _("Short IF-T/TLS packet when expecting configuration:\n"));
-					dump_buf_hex(vpninfo, PRG_ERR, '<', bytes, ret);
-					ret = -EINVAL;
+			if (ii < bytes_in_hand) {
+				/* We already have these bytes from previous overread */
+				ret = bytes_in_hand - ii;
+				bytes_in_hand = 0;
+			} else {
+				ret = recv_ift_packet(vpninfo, bytes + ii, config_len - ii);
+				if (ret < 0)
 					goto out;
-				}
+			}
+
+			if (!got_hdr && ii + ret >= 16) {
+				got_hdr = 1;
 
 				if (load_be32(bytes) != VENDOR_JUNIPER) {
 					vpn_progress(vpninfo, PRG_INFO,
 						     _("Unexpected IF-T/TLS packet when expecting configuration: wrong vendor\n"));
 				bad_pkt:
-					dump_buf_hex(vpninfo, PRG_DEBUG, '<', bytes, ret);
+					dump_buf_hex(vpninfo, PRG_DEBUG, '<', bytes, ii + ret);
+					bytes_in_hand = 0;
 					goto next_pkt;
 				}
 
@@ -2753,6 +2761,12 @@ int pulse_connect(struct openconnect_info *vpninfo)
 					goto out;
 				} else if (config_len > TLS_RECORD_MAX)
 					realloc_inplace(bytes, config_len);
+
+				/* First read may have got more than this packet */
+				if (ii + ret > (int)config_len) {
+					bytes_in_hand = ii + ret - config_len;
+					ret = config_len - ii;
+				}
 			}
 		}
 

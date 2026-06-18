@@ -118,4 +118,24 @@ password='longpassword34567890'
 
 do_test 'pass_req_type=juniper2021' '^in_pass_juniper2021=longpassword345678$'
 
+echo " * Doing ping over UDP with coalesced config packets (#821)..."
+
+$CMDNS1 curl -k "$SERVURL/CONFIGURE" -d 'enable_udp=true&coalesce_config=true'
+
+start_client
+
+$CMDNS1 ping -c 1 $VPNADDR \
+    || fail "$PID" "Could not ping through tunnel (coalesced config)"
+
+echo ok
+
+kill $(cat "$CLI_PIDFILE")
+
+sleep 2
+
+echo " * Checking UDP was used for tunnel (coalesced)..."
+
+$CMDNS1 curl -k "$SERVURL/STATUS" | grep 'udp_ping=true' \
+    || fail "$PID" "ping was not over UDP (coalesced config)"
+
 exit 0
