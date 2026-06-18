@@ -2017,7 +2017,9 @@ static int pulse_authenticate(struct openconnect_info *vpninfo, int connecting)
 
 	/* We're done, but need to send an empty response to the above information
 	 * in order that the EAP session can complete with 'success'. Not quite
-	 * sure why they didn't send it as payload on the success frame, mind you. */
+	 * sure why they didn't send it as payload on the success frame, mind you.
+	 * Include AVP 0xd6b which newer servers (Ivanti v22.7+) require. */
+	buf_append_avp_be32(reqbuf, 0xd6b, 0x10);
 	buf_fill_eap_len(reqbuf, eap_ofs);
 	ret = send_eap_packet(vpninfo, ttls, reqbuf);
 	if (ret)
@@ -2776,6 +2778,18 @@ int pulse_connect(struct openconnect_info *vpninfo)
 		if (pkt_type == 0x8f)
 			break;
 
+		/* Server sends licence/session ID (type 0x96). ACK it and continue
+		 * waiting for config. Some servers send this before config. */
+		if (pkt_type == 0x96) {
+			buf_truncate(reqbuf);
+			buf_append_ift_hdr(reqbuf, VENDOR_JUNIPER, 0x8a);
+			buf_append_bytes(reqbuf, "\x0a\x00", 2);
+			ret = send_ift_packet(vpninfo, reqbuf);
+			if (ret)
+				goto out;
+			goto next_pkt;
+		}
+
 		/* The main and ESP config packets both start like this. The word at
 		 * 0x20 is 0x2c20f000 for config and 0x0x21202400 for ESP, and the word
 		 * at 0x2c is the length of the payload (0x10 less than the overall
@@ -2846,6 +2860,21 @@ int pulse_connect(struct openconnect_info *vpninfo)
 				     _("Unexpected Pulse configuration packet: %s\n"),
 				     _("identifier at offset 0x20 is unknown"));
 			goto bad_pkt;
+		}
+	}
+
+	/* If 0x96 (licence/session ID) was coalesced after the 0x8f
+	 * end-of-config, it's sitting in bytes_in_hand. Consume it. */
+	if (bytes_in_hand >= 16) {
+		memmove(bytes, bytes + config_len, bytes_in_hand);
+		if (load_be32(bytes) == VENDOR_JUNIPER &&
+		    load_be32(bytes + 4) == 0x96) {
+			buf_truncate(reqbuf);
+			buf_append_ift_hdr(reqbuf, VENDOR_JUNIPER, 0x8a);
+			buf_append_bytes(reqbuf, "\x0a\x00", 2);
+			ret = send_ift_packet(vpninfo, reqbuf);
+			if (ret)
+				goto out;
 		}
 	}
 
@@ -3025,14 +3054,19 @@ int pulse_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 			return -EPIPE;
 		}
 
-		case 0x96:
-			/* It sends the licence information once the connection is set up. For
-			 * now, abuse this to deal with the race condition in ESP setup — it looks
-			 * like the server doesn't process the ESP config until after we've sent
-			 * the probes, in some cases. */
+		case 0x96: {
+			/* Server sends licence/session ID. Respond with type 0x8a ACK
+			 * as the official client does, then trigger ESP probes. */
+			struct oc_text_buf *ack = buf_alloc();
+			buf_append_ift_hdr(ack, VENDOR_JUNIPER, 0x8a);
+			buf_append_bytes(ack, "\x0a\x00", 2);
+			send_ift_packet(vpninfo, ack);
+			buf_free(ack);
+
 			if (vpninfo->dtls_state == DTLS_SLEEPING)
 				vpninfo->proto->udp_send_probes(vpninfo);
 			break;
+		}
 
 		default:
 		unknown_pkt:
