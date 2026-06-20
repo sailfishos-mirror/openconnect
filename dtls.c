@@ -69,8 +69,7 @@ char *openconnect_bin2hex(const char *prefix, const uint8_t *data, unsigned len)
 	buf_append_hex(buf, data, len);
 
 	if (!buf_error(buf)) {
-		p = buf->data;
-		buf->data = NULL;
+		p = buf_steal(buf);
 	}
 	buf_free(buf);
 
@@ -88,8 +87,7 @@ char *openconnect_bin2base64(const char *prefix, const uint8_t *data, unsigned l
 	buf_append_base64(buf, data, len, 0);
 
 	if (!buf_error(buf)) {
-		p = buf->data;
-		buf->data = NULL;
+		p = buf_steal(buf);
 	}
 	buf_free(buf);
 

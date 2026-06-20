@@ -736,8 +736,7 @@ static intptr_t open_tun(struct openconnect_info *vpninfo, int adapter_type, cha
 			buf_free(namebuf);
 			return OPEN_TUN_HARDFAIL;
 		}
-		vpninfo->ifname = namebuf->data;
-		namebuf->data = NULL;
+		vpninfo->ifname = buf_steal(namebuf);
 		buf_free(namebuf);
 	}
 
@@ -770,8 +769,7 @@ static intptr_t create_ifname_w(struct openconnect_info *vpninfo,
 	}
 
 	free(vpninfo->ifname_w);
-	vpninfo->ifname_w = (wchar_t *)ifname_buf->data;
-	ifname_buf->data = NULL;
+	vpninfo->ifname_w = (wchar_t *)buf_steal(ifname_buf);
 	buf_free(ifname_buf);
 	return 0;
 }

@@ -2441,8 +2441,7 @@ int openconnect_open_https(struct openconnect_info *vpninfo)
 				     _("Failed to construct GnuTLS priority string\n"));
 			return buf_free(buf);
 		}
-		vpninfo->ciphersuite_config = buf->data;
-		buf->data = NULL;
+		vpninfo->ciphersuite_config = buf_steal(buf);
 		buf_free(buf);
 	}
 
@@ -2948,8 +2947,7 @@ static int generate_strap_key(gnutls_privkey_t *key, char **pubkey,
 	*key = lkey;
 
 	free(*pubkey);
-	*pubkey = buf->data;
-	buf->data = NULL;
+	*pubkey = buf_steal(buf);
  out:
 	buf_free(buf);
 	gnutls_pubkey_deinit(pkey);

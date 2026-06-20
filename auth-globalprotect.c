@@ -404,8 +404,7 @@ static int parse_login_xml(struct openconnect_info *vpninfo, xmlNode *xml_node, 
 	}
 
 	if (!buf_error(cookie)) {
-		vpninfo->cookie = cookie->data;
-		cookie->data = NULL;
+		vpninfo->cookie = buf_steal(cookie);
 	}
 	return buf_free(cookie);
 

@@ -282,8 +282,7 @@ again:
 			if ((ret = buf_error(tokeninfo_buf)))
 				goto out;
 			free(tokeninfo_fields);
-			tokeninfo_fields = tokeninfo_buf->data;
-			tokeninfo_buf->data = NULL;
+			tokeninfo_fields = buf_steal(tokeninfo_buf);
 			buf_free(tokeninfo_buf);
 
 			if ((prompt = strstr(resp_buf, ",chal_msg="))) {

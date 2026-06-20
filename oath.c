@@ -621,8 +621,7 @@ static char *regen_hotp_secret(struct openconnect_info *vpninfo)
 			buf_append(buf, "&issuer=%s", vpninfo->oath_issuer);
 		buf_append(buf, "\n");
 		if (!buf_error(buf)) {
-			new_secret = buf->data;
-			buf->data = NULL;
+			new_secret = buf_steal(buf);
 		}
 		buf_free(buf);
 		return new_secret;
@@ -665,8 +664,7 @@ static char *regen_hotp_secret(struct openconnect_info *vpninfo)
 
 	buf_append(buf,",%ld", (long)vpninfo->token_time);
 	if (!buf_error(buf)) {
-		new_secret = buf->data;
-		buf->data = NULL;
+		new_secret = buf_steal(buf);
 	}
 	buf_free(buf);
 	return new_secret;

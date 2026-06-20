@@ -34,8 +34,7 @@ static int sspi_setup(struct openconnect_info *vpninfo, struct http_auth_state *
 	if (buf_error(buf))
 		return buf_free(buf);
 
-	auth_state->sspi_target_name = (wchar_t *)buf->data;
-	buf->data = NULL;
+	auth_state->sspi_target_name = (wchar_t *)buf_steal(buf);
 	buf_free(buf);
 
 	status = AcquireCredentialsHandleW(NULL, (SEC_WCHAR *)L"Negotiate",

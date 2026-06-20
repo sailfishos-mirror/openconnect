@@ -69,6 +69,21 @@ int buf_free(struct oc_text_buf *buf)
 	return error;
 }
 
+char *buf_steal(struct oc_text_buf *buf)
+{
+	char *data;
+
+	if (!buf)
+		return NULL;
+
+	data = buf->data;
+	buf->data = NULL;
+	buf->pos = 0;
+	buf->buf_len = 0;
+
+	return data;
+}
+
 int buf_ensure_space(struct oc_text_buf *buf, int len)
 {
 	unsigned int new_buf_len;

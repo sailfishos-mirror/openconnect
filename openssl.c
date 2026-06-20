@@ -1961,8 +1961,7 @@ int openconnect_open_https(struct openconnect_info *vpninfo)
 				return buf_free(buf);
 			}
 
-			vpninfo->ciphersuite_config = buf->data;
-			buf->data = NULL;
+			vpninfo->ciphersuite_config = buf_steal(buf);
 			buf_free(buf);
 		}
 
@@ -2380,7 +2379,7 @@ static int generate_strap_key(EC_KEY **key, char **pubkey,
 		free(der);
 	}
 
-	buf->data = NULL;
+	buf_steal(buf);
 	buf_free(buf);
 	return 0;
 }

@@ -530,8 +530,7 @@ static wchar_t *create_script_env(struct openconnect_info *vpninfo)
 	buf_append_bytes(envbuf, "\0\0", 2);
 
 	if (!buf_error(envbuf)) {
-		newenv = (wchar_t *)envbuf->data;
-		envbuf->data = NULL;
+		newenv = (wchar_t *)buf_steal(envbuf);
 	}
 
  err:

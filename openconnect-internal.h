@@ -1597,6 +1597,7 @@ int can_gen_tokencode(struct openconnect_info *vpninfo,
 struct oc_text_buf *buf_alloc(void);
 int buf_error(struct oc_text_buf *buf);
 int buf_free(struct oc_text_buf *buf);
+char *buf_steal(struct oc_text_buf *buf);
 void buf_truncate(struct oc_text_buf *buf);
 int buf_ensure_space(struct oc_text_buf *buf, int len);
 void buf_append_bytes(struct oc_text_buf *buf, const void *bytes, int len);

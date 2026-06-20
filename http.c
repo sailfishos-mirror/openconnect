@@ -618,8 +618,7 @@ char *internal_get_url(struct openconnect_info *vpninfo)
 		buf_free(buf);
 		return NULL;
 	} else {
-		url = buf->data;
-		buf->data = NULL;
+		url = buf_steal(buf);
 		buf_free(buf);
 		return url;
 	}
@@ -1000,8 +999,7 @@ int do_https_request(struct openconnect_info *vpninfo, const char *method, const
 	} else
 		result = buf->pos;
 
-	*form_buf = buf->data;
-	buf->data = NULL;
+	*form_buf = buf_steal(buf);
 
  out:
 	buf_free(buf);

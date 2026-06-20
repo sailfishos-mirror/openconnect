@@ -1706,8 +1706,7 @@ newgroup:
 	}
 
 	free(vpninfo->cookie);
-	vpninfo->cookie = cookie_buf->data;
-	cookie_buf->data = NULL;
+	vpninfo->cookie = buf_steal(cookie_buf);
 	buf_free(cookie_buf);
 
 	result = 0;

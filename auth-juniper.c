@@ -162,8 +162,7 @@ static int check_cookie_success(struct openconnect_info *vpninfo)
 	if (buf_error(buf))
 		return buf_free(buf);
 	free(vpninfo->cookie);
-	vpninfo->cookie = buf->data;
-	buf->data = NULL;
+	vpninfo->cookie = buf_steal(buf);
 	buf_free(buf);
 	return 0;
 }
