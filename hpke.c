@@ -170,7 +170,8 @@ int handle_external_browser(struct openconnect_info *vpninfo)
 			     vpninfo->sso_login);
 
 	char *returl = NULL;
-	struct oc_text_buf *b64_buf = NULL;
+	char *b64_data = NULL;
+	int b64_len = 0;
 
 	/* There may be other stray connections. Repeat until we have one
 	 * that looks like the actual auth attempt from the browser. */
@@ -218,22 +219,17 @@ int handle_external_browser(struct openconnect_info *vpninfo)
 
 		/* Attempt to decode the base64 */
 		urldecode_inplace(b64);
-		b64_buf = buf_alloc();
-		if (!b64_buf) {
-			ret = -ENOMEM;
-			closesocket(accept_fd);
-			goto out;
-		}
 
-		b64_buf->data = openconnect_base64_decode(&ret, b64);
+
+		b64_data = openconnect_base64_decode(&ret, b64);
 		if (ret < 0) {
 			/* If the final part of the URL after /api/sso/ is not
 			 * valid base64, give a 404 and wait for a valid req. */
-			buf_free(b64_buf);
-			b64_buf = NULL;
+			free(b64_data);
+			b64_data = NULL;
 			goto give_404;
 		}
-		b64_buf->pos = b64_buf->buf_len = ret;
+		b64_len = ret;
 
 		/* Decode and store the returl (since we'll reuse the line buf) */
 		if (returl) {
@@ -269,7 +265,7 @@ int handle_external_browser(struct openconnect_info *vpninfo)
 	}
 
 	vpn_progress(vpninfo, PRG_DEBUG, _("Got encrypted SSO token of %d bytes\n"),
-		     b64_buf->pos);
+		     b64_len);
 
 	/* Example encrypted token:
 	   < 0000:  00 01 00 01 00 5b 30 59  30 13 06 07 2a 86 48 ce  |.....[0Y0...*.H.|
@@ -299,15 +295,15 @@ int handle_external_browser(struct openconnect_info *vpninfo)
 
 	int pos = 0;
 	ret = 0;
-	while (pos < b64_buf->buf_len) {
+	while (pos < b64_len) {
 		uint16_t tag, len;
-		if (pos + 4 > b64_buf->pos) {
+		if (pos + 4 > b64_len) {
 			ret = -EINVAL;
 			break;
 		}
 
-		tag = load_be16(b64_buf->data + pos);
-		len = load_be16(b64_buf->data + pos + 2);
+		tag = load_be16(b64_data + pos);
+		len = load_be16(b64_data + pos + 2);
 
 		/* Special case, first word must be 0x0001 before the TLVs start */
 		if (!pos) {
@@ -320,12 +316,12 @@ int handle_external_browser(struct openconnect_info *vpninfo)
 		}
 
 		if (tag < HPKE_TAG_PUBKEY || tag > HPKE_TAG_IV ||
-		    tagdata[tag].p || pos + 4 + len > b64_buf->pos) {
+		    tagdata[tag].p || pos + 4 + len > b64_len) {
 			ret = -EINVAL;
 			break;
 		}
 
-		tagdata[tag].p = b64_buf->data + pos + 4;
+		tagdata[tag].p = b64_data + pos + 4;
 		tagdata[tag].len = len;
 		pos += len + 4;
 	}
@@ -338,7 +334,7 @@ int handle_external_browser(struct openconnect_info *vpninfo)
 	if (ret) {
 		vpn_progress(vpninfo, PRG_ERR, _("Failed to decode SSO token at %d:\n"),
 			     pos);
-		dump_buf_hex(vpninfo, PRG_ERR, '<', (void *)b64_buf->data, b64_buf->pos);
+		dump_buf_hex(vpninfo, PRG_ERR, '<', (void *)b64_data, b64_len);
 		goto out_b64;
 	}
 
@@ -375,7 +371,7 @@ int handle_external_browser(struct openconnect_info *vpninfo)
 		ret = -ENOMEM;
 
  out_b64:
-	buf_free(b64_buf);
+	free(b64_data);
  out:
 	closesocket(listen_fd);
 	return ret;
