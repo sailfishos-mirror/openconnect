@@ -619,7 +619,8 @@ static int parse_fortinet_xml_config(struct openconnect_info *vpninfo, char *buf
 	}
 	if (buf_error(domains) == 0 && domains->pos > 0) {
 		domains->data[domains->pos-1] = '\0';
-		new_ip_info.domain = add_option_steal(&new_opts, "search", &domains->data);
+		char *d = buf_steal(domains);
+		new_ip_info.domain = add_option_steal(&new_opts, "search", &d);
 	}
 
 	ret = install_vpn_opts(vpninfo, new_opts, &new_ip_info);

@@ -513,7 +513,8 @@ static int gpst_parse_config_xml(struct openconnect_info *vpninfo, xmlNode *xml_
 					buf_append(domains, "%s ", s);
 			if (buf_error(domains) == 0 && domains->pos > 0) {
 				domains->data[domains->pos-1] = '\0';
-				new_ip_info.domain = add_option_steal(&new_opts, "search", &domains->data);
+				char *d = buf_steal(domains);
+				new_ip_info.domain = add_option_steal(&new_opts, "search", &d);
 			}
 			buf_free(domains);
 		} else if (xmlnode_is_named(xml_node, "access-routes-v6") || xmlnode_is_named(xml_node, "exclude-access-routes-v6") ||

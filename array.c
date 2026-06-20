@@ -399,7 +399,8 @@ static int parse_search_domains(struct openconnect_info *vpninfo, struct oc_vpn_
 
 	if (domains->pos) {
 		domains->data[domains->pos - 1] = '\0';
-		ip_info->domain = add_option_steal(opts, "search", &domains->data);
+		char *d = buf_steal(domains);
+		ip_info->domain = add_option_steal(opts, "search", &d);
 	}
 
 	buf_free(domains);

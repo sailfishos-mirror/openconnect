@@ -618,7 +618,8 @@ static int parse_options(struct openconnect_info *vpninfo, char *buf, int len,
 		new_ip_info.netmask6 = add_option_dup(&new_opts, "netmask6", "::/0", -1);
 	if (buf_error(domains) == 0 && domains->pos > 0) {
 		domains->data[domains->pos-1] = '\0';
-		new_ip_info.domain = add_option_steal(&new_opts, "search", &domains->data);
+		char *d = buf_steal(domains);
+		new_ip_info.domain = add_option_steal(&new_opts, "search", &d);
 	}
 	buf_free(domains);
 
