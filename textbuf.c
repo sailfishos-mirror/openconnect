@@ -49,11 +49,27 @@ void buf_truncate(struct oc_text_buf *buf)
 	if (!buf)
 		return;
 
-	if (buf->data)
-		memset(buf->data, 0, buf->pos);
+	if (buf->alloc)
+		memset(buf->alloc, 0, buf->data - buf->alloc + buf->pos);
 
+	buf->data = buf->alloc;
 	buf->pos = 0;
 }
+
+void *buf_consume_bytes(struct oc_text_buf *buf, int len)
+{
+	char *data;
+
+	if (!buf || !buf->data || len > buf->pos)
+		return NULL;
+
+	data = buf->data;
+	buf->data += len;
+	buf->pos -= len;
+
+	return data;
+}
+
 
 int buf_free(struct oc_text_buf *buf)
 {
@@ -61,8 +77,7 @@ int buf_free(struct oc_text_buf *buf)
 
 	if (buf) {
 		buf_truncate(buf);
-		if (buf->data)
-			free(buf->data);
+		free(buf->alloc);
 		free(buf);
 	}
 
@@ -78,8 +93,9 @@ char *buf_steal(struct oc_text_buf *buf)
 
 	data = buf->data;
 	buf->data = NULL;
+	buf->alloc = NULL;
 	buf->pos = 0;
-	buf->buf_len = 0;
+	buf->alloc_len = 0;
 
 	return data;
 }
@@ -87,26 +103,46 @@ char *buf_steal(struct oc_text_buf *buf)
 int buf_ensure_space(struct oc_text_buf *buf, int len)
 {
 	unsigned int new_buf_len;
+	int head;
 
 	if (!buf)
 		return -ENOMEM;
 
-	new_buf_len = (buf->pos + len + BUF_CHUNK_SIZE - 1) & ~(BUF_CHUNK_SIZE - 1);
+	head = buf->data - buf->alloc;
+	new_buf_len = (head + buf->pos + len + BUF_CHUNK_SIZE - 1) & ~(BUF_CHUNK_SIZE - 1);
 
-	if (new_buf_len <= buf->buf_len)
-		return 0;
+	if (new_buf_len <= buf->alloc_len)
+		return buf->data ? 0 : -ENOMEM;
+
+	if (head) {
+		/* Compact before growing */
+		memmove(buf->alloc, buf->data, buf->pos);
+		buf->data = buf->alloc;
+
+		new_buf_len = (buf->pos + len + BUF_CHUNK_SIZE - 1) & ~(BUF_CHUNK_SIZE - 1);
+		if (new_buf_len <= buf->alloc_len)
+			return 0;
+	}
 
 	if (new_buf_len > OC_BUF_MAX) {
 		buf->error = -E2BIG;
 		return buf->error;
+	}
+
+	realloc_inplace(buf->alloc, new_buf_len);
+	if (!buf->alloc) {
+		buf->data = NULL;
+		buf->error = -ENOMEM;
 	} else {
-		realloc_inplace(buf->data, new_buf_len);
-		if (!buf->data)
-			buf->error = -ENOMEM;
-		else
-			buf->buf_len = new_buf_len;
+		buf->data = buf->alloc;
+		buf->alloc_len = new_buf_len;
 	}
 	return buf->error;
+}
+
+static int buf_tailroom(struct oc_text_buf *buf)
+{
+	return buf->alloc_len - (buf->data - buf->alloc) - buf->pos;
 }
 
 void buf_append_bytes(struct oc_text_buf *buf, const void *bytes, int len)
@@ -134,7 +170,7 @@ void  __attribute__ ((format (printf, 2, 3)))
 		return;
 
 	while (1) {
-		int max_len = buf->buf_len - buf->pos, ret;
+		int max_len = buf_tailroom(buf), ret;
 
 		va_start(ap, fmt);
 		ret = vsnprintf(buf->data + buf->pos, max_len, fmt, ap);
