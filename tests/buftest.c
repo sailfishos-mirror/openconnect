@@ -303,5 +303,32 @@ int main(void)
 	assert(buf->data == buf->alloc); /* compacted */
 	buf_free(buf);
 
+	/* Test buf_consume_be32 success */
+	buf = buf_alloc();
+	buf_append_be32(buf, 0xDEADBEEF);
+	buf_append_be32(buf, 0x12345678);
+	assert(!buf_error(buf));
+	{
+		uint32_t val;
+		assert(buf_consume_be32(buf, &val) == 0);
+		assert(val == 0xDEADBEEF);
+		assert(buf->pos == 4);
+		assert(buf_consume_be32(buf, &val) == 0);
+		assert(val == 0x12345678);
+		assert(buf->pos == 0);
+	}
+	buf_free(buf);
+
+	/* Test buf_consume_be32 failure (not enough bytes) */
+	buf = buf_alloc();
+	buf_append_bytes(buf, "AB", 2);
+	{
+		uint32_t val = 0x11111111;
+		assert(buf_consume_be32(buf, &val) != 0);
+		assert(val == 0x11111111);
+		assert(buf->pos == 2);
+	}
+	buf_free(buf);
+
 	return 0;
 }

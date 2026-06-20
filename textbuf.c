@@ -70,6 +70,16 @@ void *buf_consume_bytes(struct oc_text_buf *buf, int len)
 	return data;
 }
 
+int buf_consume_be32(struct oc_text_buf *buf, uint32_t *val)
+{
+	void *p = buf_consume_bytes(buf, 4);
+
+	if (!p)
+		return -EINVAL;
+
+	*val = load_be32(p);
+	return 0;
+}
 
 int buf_free(struct oc_text_buf *buf)
 {

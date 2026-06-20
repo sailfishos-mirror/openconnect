@@ -1601,6 +1601,7 @@ int buf_free(struct oc_text_buf *buf);
 char *buf_steal(struct oc_text_buf *buf);
 void buf_truncate(struct oc_text_buf *buf);
 void *buf_consume_bytes(struct oc_text_buf *buf, int len);
+int buf_consume_be32(struct oc_text_buf *buf, uint32_t *val);
 int buf_ensure_space(struct oc_text_buf *buf, int len);
 void buf_append_bytes(struct oc_text_buf *buf, const void *bytes, int len);
 void  __attribute__ ((format (printf, 2, 3)))
