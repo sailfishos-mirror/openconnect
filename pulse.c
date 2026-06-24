@@ -1656,22 +1656,19 @@ static int pulse_authenticate(struct openconnect_info *vpninfo, int connecting)
 	 */
 	buf_append_avp_string(reqbuf, 0xd5e, gpst_os_name(vpninfo));
 
-	/* XX: "Only the Pulse client supports IPv6", both according to user reports and
-	 * https://help.ivanti.com/ps/help/en_US/PCS/9.1R14/ag/network_n_host_admin.htm#network_and_host_administration_1399867268_681155
+	/*
+	 * Historically we only sent the Pulse-Secure/ useragent in 0xd70
+	 * when IPv6 wasn't disabled. Since 25.1.1.1, the Ivanti server
+	 * no longer accepts older clients, so always send it, and bump
+	 * the version we claim to be, to 22.8.5.41063.
 	 *
-	 * Therefore, unless IPv6 is explicitly disabled, we need to spoof
-	 * a "Pulse-Secure/" version string here. Only use the user-provided
-	 * UA string as is if it already matches this format.
-	 *
-	 * A certain minimum client version is apparently required to trigger the sending
-	 * of this flag as well. No official docs have been found, but 22.2.1.1295 works
-	 * (see https://gitlab.com/openconnect/openconnect/-/issues/506#note_1146848739).
+	 * https://gitlab.com/openconnect/openconnect/-/work_items/852#note_3476751024
 	 */
-	if (vpninfo->disable_ipv6 || !strncmp(vpninfo->useragent, "Pulse-Secure/", 13))
+	if (!strncmp(vpninfo->useragent, "Pulse-Secure/", 13))
 		buf_append_avp_string(reqbuf, 0xd70, vpninfo->useragent);
 	else {
 		char *pulse_version;
-		if (asprintf(&pulse_version, "Pulse-Secure/22.2.1.1295 (%s)", vpninfo->useragent) < 0)
+		if (asprintf(&pulse_version, "Pulse-Secure/22.8.5.41063 (%s)", vpninfo->useragent) < 0)
 			return -ENOMEM;
 		buf_append_avp_string(reqbuf, 0xd70, pulse_version);
 		free(pulse_version);
