@@ -9,14 +9,14 @@
 # Matheus Barbosa <mdpb.matheus@gmail.com>, 2022.
 # Diogo Leal <diogo@diogoleal.com>, 2022.
 # Juliano de Souza Camargo <julianosc@pm.me>, 2024.
-# Rafael Fontenelle <rafaelff@gnome.org>, 2013-2025.
+# Rafael Fontenelle <rafaelff@gnome.org>, 2013-2026.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: network-manager-openconnect\n"
 "Report-Msgid-Bugs-To: openconnect-devel@lists.infradead.org\n"
-"POT-Creation-Date: 2026-06-15 16:10+0100\n"
-"PO-Revision-Date: 2025-01-26 21:15-0300\n"
+"POT-Creation-Date: 2026-06-18 12:32+0100\n"
+"PO-Revision-Date: 2026-06-14 13:06-0300\n"
 "Last-Translator: Rafael Fontenelle <rafaelff@gnome.org>\n"
 "Language-Team: Brazilian Portuguese <https://br.gnome.org/traducao>\n"
 "Language: pt_BR\n"
@@ -24,7 +24,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1)\n"
-"X-Generator: Gtranslator 47.1\n"
+"X-Generator: Gtranslator 50.0\n"
 "X-Project-Style: gnome\n"
 "X-DL-Team: pt_BR\n"
 "X-DL-Module: NetworkManager-openconnect\n"
@@ -81,7 +81,7 @@ msgstr "Falha ao analisar resposta de vetor JSON\n"
 msgid "Error creating array negotiation request\n"
 msgstr "Erro ao criar requisição de negociação de vetor\n"
 
-#: array.c:675 f5.c:827 http.c:987 oncp.c:515 pulse.c:1400
+#: array.c:675 f5.c:827 http.c:987 oncp.c:515 pulse.c:1428
 #, c-format
 msgid "Unexpected %d result from server\n"
 msgstr "Resultado inesperado %d do servidor\n"
@@ -112,8 +112,8 @@ msgid "Failed to read ipff response\n"
 msgstr "Falha ao ler resposta ipff\n"
 
 #: array.c:831 array.c:1119 array.c:1229 cstp.c:970 dtls.c:283 dtls.c:643
-#: esp.c:155 gpst.c:1181 mainloop.c:63 oncp.c:921 ppp.c:1089 ppp.c:1676
-#: pulse.c:2841
+#: esp.c:155 gpst.c:1181 mainloop.c:63 oncp.c:921 ppp.c:1089 ppp.c:1678
+#: pulse.c:2891
 msgid "Allocation failed\n"
 msgstr "Alocação falhou\n"
 
@@ -142,7 +142,7 @@ msgstr "Recebido pacote parcial, %d de %d bytes\n"
 msgid "Receive control packet of type %x:\n"
 msgstr "Recebido pacote de controle do tipo %x:\n"
 
-#: array.c:903 pulse.c:2894
+#: array.c:903 pulse.c:2944
 #, c-format
 msgid "Received data packet of %d bytes\n"
 msgstr "Recebido pacote de dados de %d bytes\n"
@@ -152,19 +152,19 @@ msgstr "Recebido pacote de dados de %d bytes\n"
 msgid "Moved down %d bytes after previous packet\n"
 msgstr "Movido %d bytes para baixo após o pacote anterior\n"
 
-#: array.c:961 cstp.c:1111 gpst.c:1283 oncp.c:1135 ppp.c:1376 pulse.c:3029
+#: array.c:961 cstp.c:1111 gpst.c:1283 oncp.c:1135 ppp.c:1378 pulse.c:3092
 #, c-format
 msgid "SSL wrote too few bytes! Asked for %d, sent %d\n"
 msgstr "SSL não escreveu bytes suficiente! Perguntou por %d, enviou %d\n"
 
 #. Not that this will ever happen; we don't even process
 #. the setting when we're asked for it.
-#: array.c:979 cstp.c:1139 oncp.c:1172 pulse.c:3056
+#: array.c:979 cstp.c:1139 oncp.c:1172 pulse.c:3119
 msgid "CSTP rekey due\n"
 msgstr "Renovação da chave CSTP falhou\n"
 
 #. if we failed rehandshake try establishing a new-tunnel instead of failing
-#: array.c:986 cstp.c:1146 oncp.c:1179 pulse.c:3063
+#: array.c:986 cstp.c:1146 oncp.c:1179 pulse.c:3126
 msgid "Rehandshake failed; attempting new-tunnel\n"
 msgstr "Re-negociação falhou; tentando novo túnel\n"
 
@@ -193,11 +193,11 @@ msgstr "Enviando pacote de desligamento DTLS\n"
 msgid "Sending uncompressed data packet of %d bytes\n"
 msgstr "Enviando pacote com dados não comprimidos de %d bytes\n"
 
-#: array.c:1097 dtls.c:259 ppp.c:1790
+#: array.c:1097 dtls.c:259 ppp.c:1792
 msgid "Attempt new DTLS connection\n"
 msgstr "Tentar nova conexão DTLS\n"
 
-#: array.c:1131 ppp.c:1688
+#: array.c:1131 ppp.c:1690
 msgid "Failed to receive authentication response from DTLS\n"
 msgstr "Falha ao receber resposta de autenticação de DTLS\n"
 
@@ -217,11 +217,11 @@ msgstr "Recebido IPv6 sobre DTLS; presumindo estabelecido\n"
 msgid "Received unknown DTLS packet\n"
 msgstr "Recebido pacote DTLS desconhecido\n"
 
-#: array.c:1178 ppp.c:1742
+#: array.c:1178 ppp.c:1744
 msgid "Error creating connect request for DTLS session\n"
 msgstr "Erro ao criar requisição de conexão para sessão DTLS\n"
 
-#: array.c:1194 ppp.c:1758
+#: array.c:1194 ppp.c:1760
 msgid "Failed to write connect request to DTLS session\n"
 msgstr "Falha na escrita de requisição de conexão para sessão DTLS\n"
 
@@ -940,7 +940,7 @@ msgstr "Recebeu o pacote de dados comprimido %s de %d bytes (era %d)\n"
 msgid "deflate failed %d\n"
 msgstr "deflate falhou %d\n"
 
-#: cstp.c:981 gpst.c:1194 pulse.c:2874
+#: cstp.c:981 gpst.c:1194 pulse.c:2924
 #, c-format
 msgid "Short packet received (%d bytes)\n"
 msgstr "Pacote curto recebido (%d bytes)\n"
@@ -989,20 +989,20 @@ msgstr "recebeu pacote de terminação do servidor\n"
 msgid "Unknown packet %02x %02x %02x %02x %02x %02x %02x %02x\n"
 msgstr "Pacote desconhecido %02x %02x %02x %02x %02x %02x %02x %02x\n"
 
-#: cstp.c:1157 oncp.c:1190 pulse.c:3074
+#: cstp.c:1157 oncp.c:1190 pulse.c:3137
 msgid "CSTP Dead Peer Detection detected dead peer!\n"
 msgstr "Dead Peer Detection CSTP detectou par morto!\n"
 
-#: cstp.c:1161 gpst.c:1331 oncp.c:1105 oncp.c:1194 ppp.c:1406 pulse.c:2999
-#: pulse.c:3079
+#: cstp.c:1161 gpst.c:1331 oncp.c:1105 oncp.c:1194 ppp.c:1408 pulse.c:3062
+#: pulse.c:3142
 msgid "Reconnect failed\n"
 msgstr "Reconexão falhou\n"
 
-#: cstp.c:1177 oncp.c:1210 pulse.c:3095
+#: cstp.c:1177 oncp.c:1210 pulse.c:3158
 msgid "Send CSTP DPD\n"
 msgstr "Enviar DPD CSTP\n"
 
-#: cstp.c:1189 oncp.c:1221 pulse.c:3107
+#: cstp.c:1189 oncp.c:1221 pulse.c:3170
 msgid "Send CSTP Keepalive\n"
 msgstr "Enviar keepalive CSTP\n"
 
@@ -1131,6 +1131,8 @@ msgid ""
 "Received unexpected packet (type 0x%02x, %d bytes, expected %d) in MTU "
 "detection; skipping.\n"
 msgstr ""
+"Pacote inesperado recebido (tipo 0x%02x, %d bytes, esperado %d) na detecção "
+"de MTU; ignorando.\n"
 
 #: dtls.c:584
 #, c-format
@@ -1140,7 +1142,7 @@ msgstr "Recebida sonda DPD de MTU (%u bytes)\n"
 #: dtls.c:592
 #, c-format
 msgid "No response to size %u after %d tries (min %d max %d)\n"
-msgstr ""
+msgstr "Sem resposta para tamanho %u após %d tentativas (min %d max %d)\n"
 
 #: dtls.c:602
 #, c-format
@@ -4867,17 +4869,17 @@ msgstr "Gerando código de token HOTP OATH\n"
 msgid "Unexpected length %d for TLV %d/%d\n"
 msgstr "Comprimento %d inesperado para TLV %d/%d\n"
 
-#: oncp.c:82 pulse.c:371
+#: oncp.c:82 pulse.c:395
 #, c-format
 msgid "Received MTU %d from server\n"
 msgstr "Recebido MTU %d do servidor\n"
 
-#: oncp.c:91 pulse.c:253 pulse.c:312
+#: oncp.c:91 pulse.c:277 pulse.c:336
 #, c-format
 msgid "Received DNS server %s\n"
 msgstr "Recebido servidor DNS %s\n"
 
-#: oncp.c:102 pulse.c:380
+#: oncp.c:102 pulse.c:404
 #, c-format
 msgid "Received DNS search domain %.*s\n"
 msgstr "Recebido domínio de pesquisa DNS %.*s\n"
@@ -4887,27 +4889,27 @@ msgstr "Recebido domínio de pesquisa DNS %.*s\n"
 msgid "Received internal IP address %s\n"
 msgstr "Recebido endereço IP interno %s\n"
 
-#: oncp.c:121 pulse.c:244
+#: oncp.c:121 pulse.c:268
 #, c-format
 msgid "Received netmask %s\n"
 msgstr "Recebida máscara de rede %s\n"
 
-#: oncp.c:130 pulse.c:390
+#: oncp.c:130 pulse.c:414
 #, c-format
 msgid "Received internal gateway address %s\n"
 msgstr "Recebido endereço de gateway interno %s\n"
 
-#: oncp.c:143 pulse.c:2501
+#: oncp.c:143 pulse.c:2545
 #, c-format
 msgid "Received split include route %s\n"
 msgstr "Recebida rota de inclusão de split %s\n"
 
-#: oncp.c:163 pulse.c:2514
+#: oncp.c:163 pulse.c:2558
 #, c-format
 msgid "Received split exclude route %s\n"
 msgstr "Recebida rota de exclusão de split %s\n"
 
-#: oncp.c:181 pulse.c:268
+#: oncp.c:181 pulse.c:292
 #, c-format
 msgid "Received WINS server %s\n"
 msgstr "Recebido servidor WINS %s\n"
@@ -4927,37 +4929,37 @@ msgstr "HMAC ESP: 0x%02x (%s)\n"
 msgid "ESP compression: %d\n"
 msgstr "Compressão ESP: %d\n"
 
-#: oncp.c:242 pulse.c:470
+#: oncp.c:242 pulse.c:494
 #, c-format
 msgid "ESP port: %d\n"
 msgstr "Porta ESP: %d\n"
 
-#: oncp.c:249 pulse.c:453
+#: oncp.c:249 pulse.c:477
 #, c-format
 msgid "ESP key lifetime: %u bytes\n"
 msgstr "Tempo de vida de chave ESP: %u bytes\n"
 
-#: oncp.c:257 pulse.c:445
+#: oncp.c:257 pulse.c:469
 #, c-format
 msgid "ESP key lifetime: %u seconds\n"
 msgstr "Tempo de vida de chave ESP: %u segundos\n"
 
-#: oncp.c:265 pulse.c:477
+#: oncp.c:265 pulse.c:501
 #, c-format
 msgid "ESP to SSL fallback: %u seconds\n"
 msgstr "Fallback ESP para SSL: %u segundos\n"
 
-#: oncp.c:273 pulse.c:461
+#: oncp.c:273 pulse.c:485
 #, c-format
 msgid "ESP replay protection: %d\n"
 msgstr "Proteção de replay ESP: %d\n"
 
-#: oncp.c:281 pulse.c:2604
+#: oncp.c:281 pulse.c:2649
 #, c-format
 msgid "ESP SPI (outbound): %x\n"
 msgstr "SPI de ESP (saída): %x\n"
 
-#: oncp.c:290 pulse.c:2592
+#: oncp.c:290 pulse.c:2637
 #, c-format
 msgid "%d bytes of ESP secrets\n"
 msgstr "%d bytes de segredos ESP\n"
@@ -5023,7 +5025,7 @@ msgstr ""
 #: oncp.c:614
 #, c-format
 msgid "Read additional %d bytes of SSL record\n"
-msgstr ""
+msgstr "Lidos %d bytes adicionais do registro SSL\n"
 
 #: oncp.c:619
 msgid "Invalid packet waiting for KMP 301\n"
@@ -5075,11 +5077,11 @@ msgstr "Erro ao negociar chaves ESP\n"
 msgid "oNCP negotiation request outgoing:\n"
 msgstr "Saída da requisição de negociação oNCP:\n"
 
-#: oncp.c:825 pulse.c:2924
+#: oncp.c:825 pulse.c:2979
 msgid "new incoming"
 msgstr "nova entrada"
 
-#: oncp.c:826 pulse.c:2925
+#: oncp.c:826 pulse.c:2980
 msgid "new outgoing"
 msgstr "nova saída"
 
@@ -5134,7 +5136,7 @@ msgstr "Mensagem KMP desconhecida %d de tamanho %d:\n"
 msgid ".... + %d more bytes unreceived\n"
 msgstr ".... + mais %d bytes não recebidos\n"
 
-#: oncp.c:1087 pulse.c:2981
+#: oncp.c:1087 pulse.c:3044
 msgid "Packet outgoing:\n"
 msgstr "Pacote de saída:\n"
 
@@ -5142,7 +5144,7 @@ msgstr "Pacote de saída:\n"
 msgid "Sent ESP enable control packet\n"
 msgstr "Enviado pacote de controle com capacidade de ESP\n"
 
-#: openconnect-internal.h:1721 openconnect-internal.h:1731
+#: openconnect-internal.h:1723 openconnect-internal.h:1733
 #, c-format
 msgid "ERROR: %s() called with invalid UTF-8 for '%s' argument\n"
 msgstr "ERRO: %s() chamado com UTF-8 inválido para “%s” argumento\n"
@@ -6012,317 +6014,322 @@ msgid "Packet contains %d bytes after payload. Assuming concatenated packet.\n"
 msgstr ""
 "O pacote contém %d bytes após a carga. Presumindo pacote concatenado.\n"
 
-#: ppp.c:1273
+#: ppp.c:1261
+#, c-format
+msgid "Sending Protocol-Reject for %s\n"
+msgstr "Enviando o Rejeitar-Protocolo para %s.\n"
+
+#: ppp.c:1277
 #, c-format
 msgid "Unexpected IPv%d packet in PPP state %s.\n"
 msgstr "Pacote IPv%d inesperado no estado PPP %s.\n"
 
-#: ppp.c:1278
+#: ppp.c:1282
 #, c-format
 msgid "Received IPv%d data packet of %d bytes over %s\n"
 msgstr "Recebido pacote de dados IPv%d de %d bytes sobre %s\n"
 
-#: ppp.c:1284
+#: ppp.c:1288
 #, c-format
 msgid "Expected %d PPP header bytes but got %ld, shifting payload.\n"
 msgstr ""
 "Era esperado %d bytes de cabeçalho PPP mas obteve %ld, alternando carga.\n"
 
-#: ppp.c:1306
+#: ppp.c:1309
 #, c-format
-msgid "Sending Protocol-Reject for %s. Payload:\n"
-msgstr "Enviando o Rejeitar-Protocolo para %s. carga:\n"
+msgid "Sending Protocol-Reject for unknown protocol 0x%04x\n"
+msgstr "Enviando o Rejeitar-Protocolo para o protocolo desconhecido 0x%04x\n"
 
-#: ppp.c:1390
+#: ppp.c:1392
 msgid "Detected dead peer!\n"
 msgstr "Detectado ponto morto!\n"
 
-#: ppp.c:1400
+#: ppp.c:1402
 msgid "Failed to establish PPP\n"
 msgstr "Falha ao estabelecer PPP\n"
 
-#: ppp.c:1419
+#: ppp.c:1421
 msgid "Send PPP discard request as keepalive\n"
 msgstr "Enviar requisição de descarte PPP como keepalive\n"
 
-#: ppp.c:1423
+#: ppp.c:1425
 msgid "Send PPP echo request as DPD\n"
 msgstr "Enviar requisição de echo PPP como DPD\n"
 
-#: ppp.c:1489
+#: ppp.c:1491
 #, c-format
 msgid "Sending PPP %s %s packet over %s (id %d, %d bytes total)\n"
 msgstr "Enviando pacote PPP %s %s sobre %s (id %d, %d total de bytes)\n"
 
-#: ppp.c:1495
+#: ppp.c:1497
 #, c-format
 msgid "Sending PPP %s packet over %s (%d bytes total)\n"
 msgstr "Enviando pacote PPP %s sobre %s (%d total de bytes)\n"
 
-#: ppp.c:1553
+#: ppp.c:1555
 #, c-format
 msgid "PPP connect called with invalid DTLS state %d\n"
 msgstr "Chamada de conexão PPP com estado DTLS inválido %d\n"
 
-#: ppp.c:1574
+#: ppp.c:1576
 msgid "DTLS tunnel connected; exiting HTTPS mainloop.\n"
 msgstr "Túnel DTLS conectado; saindo do loop principal de HTTPS.\n"
 
-#: ppp.c:1608
+#: ppp.c:1610
 #, c-format
 msgid "Failed to connect DTLS tunnel; using HTTPS instead (state %d).\n"
 msgstr "Falha ao conectar a túnel DTLS; usando HTTPS no lugar (estado %d).\n"
 
-#: ppp.c:1633
+#: ppp.c:1635
 msgid "Establishing PPP tunnel over TLS failed\n"
 msgstr "Falha ao estabelecer túnel PPP sobre TLS\n"
 
-#: ppp.c:1644
+#: ppp.c:1646
 #, c-format
 msgid "Invalid DTLS state %d\n"
 msgstr "Estado DTLS inválido %d\n"
 
 #. This should never happen
-#: ppp.c:1711
+#: ppp.c:1713
 msgid "Reset PPP failed\n"
 msgstr "Reinício de PPP falhou\n"
 
-#: ppp.c:1732
+#: ppp.c:1734
 msgid "Failed to authenticate DTLS session\n"
 msgstr "Falha ao autenticar sessão DTLS\n"
 
-#: pulse.c:235
+#: pulse.c:259
 #, c-format
 msgid "Received internal Legacy IP address %s\n"
 msgstr "Recebido endereço IP legado interno %s\n"
 
-#: pulse.c:283 pulse.c:301 pulse.c:320 pulse.c:343 pulse.c:494
+#: pulse.c:307 pulse.c:325 pulse.c:344 pulse.c:367 pulse.c:518
 msgid "Failed to handle IPv6 address\n"
 msgstr "Falha ao tratar de endereço IPv6: %s\n"
 
-#: pulse.c:293
+#: pulse.c:317
 #, c-format
 msgid "Received internal IPv6 address %s\n"
 msgstr "Recebido endereço IPv6 interno %s\n"
 
-#: pulse.c:335
+#: pulse.c:359
 #, c-format
 msgid "Received IPv6 split include %s\n"
 msgstr "Recebida inclusão de split IPv6 %s\n"
 
-#: pulse.c:358
+#: pulse.c:382
 #, c-format
 msgid "Received IPv6 split exclude %s\n"
 msgstr "Recebida exclusão de split IPv6 %s\n"
 
-#: pulse.c:365
+#: pulse.c:389
 #, c-format
 msgid "Unexpected length %d for attr 0x%x\n"
 msgstr "Comprimento %d inesperado para atributo 0x%x\n"
 
-#: pulse.c:411
+#: pulse.c:435
 #, c-format
 msgid "ESP encryption: 0x%04x (%s)\n"
 msgstr "Criptografia ESP: 0x%04x (%s)\n"
 
-#: pulse.c:435
+#: pulse.c:459
 #, c-format
 msgid "ESP HMAC: 0x%04x (%s)\n"
 msgstr "ESP HMAC: 0x%04x (%s)\n"
 
 #. Amusingly, this isn't enforced. It's client-only
-#: pulse.c:485
+#: pulse.c:509
 #, c-format
 msgid "ESP only: %d\n"
 msgstr "ESP apenas: %d\n"
 
-#: pulse.c:498
+#: pulse.c:522
 #, c-format
 msgid "Received internal gateway IPv6 address %s\n"
 msgstr "Recebido endereço IPv6 de gateway interno %s\n"
 
-#: pulse.c:506
+#: pulse.c:530
 #, c-format
 msgid "Received proxy auto-config (PAC) payload of size %d\n"
 msgstr "Carga auto-config (PAC) proxy de tamanho %d\n"
 
-#: pulse.c:511
+#: pulse.c:535
 #, c-format
 msgid "Received proxy auto-config (PAC) URL: %.*s\n"
 msgstr "Recebido URL de auto-config (PAC) proxy: %.*s\n"
 
-#: pulse.c:525
+#: pulse.c:549
 #, c-format
 msgid "Pulse ESP tunnel allowed to carry 6in4 or 4in6 traffic: %d\n"
 msgstr "Túnel Pulse ESP permitido a carregar tráfego 6in4 ou 4in6: %d\n"
 
-#: pulse.c:549
+#: pulse.c:573
 #, c-format
 msgid "Unknown attr 0x%04x len %d:%s\n"
-msgstr ""
+msgstr "Atributo desconhecido 0x%04x tamanho %d:%s\n"
 
-#: pulse.c:560
+#: pulse.c:584
 #, c-format
 msgid "Read %d bytes of IF-T/TLS record\n"
 msgstr "Lidos %d bytes de registro IF-T/TLS\n"
 
-#: pulse.c:577
+#: pulse.c:601
 msgid "Short write to IF-T/TLS\n"
 msgstr "Escrita curta para IF-T/TLS\n"
 
-#: pulse.c:590
+#: pulse.c:614
 msgid "Error creating IF-T packet\n"
 msgstr "Erro ao criar pacote IF-T\n"
 
-#: pulse.c:610
+#: pulse.c:634
 msgid "Error creating EAP packet\n"
 msgstr "Erro ao criar pacote EAP\n"
 
-#: pulse.c:645 pulse.c:1467 pulse.c:1530
+#: pulse.c:669 pulse.c:1495 pulse.c:1558
 msgid "Unexpected IF-T/TLS authentication challenge:\n"
 msgstr "Desafio inesperado de autenticação IF-T/TLS:\n"
 
-#: pulse.c:663
+#: pulse.c:687
 msgid "Unexpected EAP-TTLS payload:\n"
 msgstr "Carga inesperada EAP-TTLS:\n"
 
-#: pulse.c:696
+#: pulse.c:720
 #, c-format
 msgid "AVP 0x%x/0x%x:%s\n"
 msgstr "AVP 0x%x/0x%x:%s\n"
 
-#: pulse.c:698
+#: pulse.c:722
 #, c-format
 msgid "AVP %d:%s\n"
 msgstr "AVP %d:%s\n"
 
-#: pulse.c:765
+#: pulse.c:789
 msgid "Enter Pulse user realm:"
 msgstr "Insira o reino do usuário Pulse:"
 
-#: pulse.c:770 pulse.c:816
+#: pulse.c:794 pulse.c:840
 msgid "Realm:"
 msgstr "Reino:"
 
-#: pulse.c:814
+#: pulse.c:838
 msgid "Choose Pulse user realm:"
 msgstr "Escolha o reino do usuário Pulse:"
 
-#: pulse.c:821
+#: pulse.c:845
 msgid "Choose Pulse region:"
 msgstr "Escolha a região Pulse:"
 
-#: pulse.c:823
+#: pulse.c:847
 msgid "Region:"
 msgstr "Região:"
 
-#: pulse.c:837 pulse.c:1597 pulse.c:1687
+#: pulse.c:861 pulse.c:1625 pulse.c:1715
 msgid "Failed to parse AVP\n"
 msgstr "Falha ao analisar AVP\n"
 
-#: pulse.c:904
+#: pulse.c:928
 msgid "Session limit reached. Choose session to kill:\n"
 msgstr "Limite de sessões atingido. Escolha a sessão para encerrar:\n"
 
-#: pulse.c:909
+#: pulse.c:933
 msgid "Session:"
 msgstr "Sessão:"
 
-#: pulse.c:929
+#: pulse.c:953
 msgid "Failed to parse session list\n"
 msgstr "Falha ao analisar lista de sessões\n"
 
-#: pulse.c:1024
+#: pulse.c:1047
 msgid "Enter secondary credentials:"
 msgstr "Insira as credenciais secundárias:"
 
 #. Point to password prompt in case that's all we use
-#: pulse.c:1024
+#: pulse.c:1047
 msgid "Enter user credentials:"
 msgstr "Insira as credenciais do usuário:"
 
-#: pulse.c:1034 pulse.c:1226
+#: pulse.c:1057 pulse.c:1254
 msgid "Secondary username:"
 msgstr "Nome de usuário secundário:"
 
-#: pulse.c:1034 pulse.c:1226
+#: pulse.c:1057 pulse.c:1254
 msgid "Username:"
 msgstr "Nome de usuário:"
 
-#: pulse.c:1044 stoken.c:115
+#: pulse.c:1067 stoken.c:115
 msgid "Password:"
 msgstr "Senha:"
 
-#: pulse.c:1044
+#: pulse.c:1067
 msgid "Secondary password:"
 msgstr "Senha secundária:"
 
-#: pulse.c:1115
+#: pulse.c:1143
 msgid "Password expired. Please change password:"
 msgstr "Senha expirada. Por favor mude a senha:"
 
-#: pulse.c:1119
+#: pulse.c:1147
 msgid "Current password:"
 msgstr "Senha atual:"
 
-#: pulse.c:1124
+#: pulse.c:1152
 msgid "New password:"
 msgstr "Nova senha:"
 
-#: pulse.c:1129
+#: pulse.c:1157
 msgid "Verify new password:"
 msgstr "Confirme a nova senha:"
 
-#: pulse.c:1141
+#: pulse.c:1169
 msgid "Passwords not provided.\n"
 msgstr "Senhas não fornecidas.\n"
 
-#: pulse.c:1147
+#: pulse.c:1175
 msgid "Passwords do not match.\n"
 msgstr "Senhas não coincidem.\n"
 
-#: pulse.c:1152
+#: pulse.c:1180
 msgid "Current password too long.\n"
 msgstr "Senha atual é muito longa.\n"
 
-#: pulse.c:1157
+#: pulse.c:1185
 msgid "New password too long.\n"
 msgstr "A nova senha é muito longa.\n"
 
-#: pulse.c:1216
+#: pulse.c:1244
 msgid "Token code request:"
 msgstr "Requisição de código do token:"
 
-#: pulse.c:1240
+#: pulse.c:1268
 msgid "Please enter response:"
 msgstr "Por favor, insira a resposta:"
 
-#: pulse.c:1244
+#: pulse.c:1272
 msgid "Please enter your passcode:"
 msgstr "Por favor, insira sua senha:"
 
-#: pulse.c:1246
+#: pulse.c:1274
 msgid "Please enter your secondary token information:"
 msgstr "Por favor, insira as informações do token secundário:"
 
-#: pulse.c:1383
+#: pulse.c:1411
 msgid "Error creating Pulse connection request\n"
 msgstr "Erro ao criar requisição de conexão Pulse\n"
 
-#: pulse.c:1426
+#: pulse.c:1454
 msgid "Unexpected response to IF-T/TLS version negotiation:\n"
 msgstr "Resposta inesperada a negociação de versão IF-T/TLS:\n"
 
-#: pulse.c:1431
+#: pulse.c:1459
 #, c-format
 msgid "IF-T/TLS version from server: %d\n"
 msgstr "Versão IF-T/TLS do servidor: %d\n"
 
-#: pulse.c:1559
+#: pulse.c:1587
 msgid "Failed to establish EAP-TTLS session\n"
 msgstr "Falha ao estabelecer sessão EAP-TTLS\n"
 
-#: pulse.c:1703
+#: pulse.c:1731
 msgid ""
 "WARNING: Server provided certificate MD5 does not match its actual "
 "certificate.\n"
@@ -6330,36 +6337,36 @@ msgstr ""
 "AVISO: Certificado MD5 provido pelo servidor não coincide com o certificado "
 "verdadeiro.\n"
 
-#: pulse.c:1717
+#: pulse.c:1745
 msgid "Authentication failure: Account locked out\n"
 msgstr "Falha na autenticação: Conta bloqueada\n"
 
-#: pulse.c:1720
+#: pulse.c:1748
 msgid "Authentication failure: Client certificate required\n"
 msgstr "Falha na autenticação: Requer certificado do cliente\n"
 
-#: pulse.c:1723
+#: pulse.c:1751
 #, c-format
 msgid "Authentication failure: Code 0x%02x\n"
 msgstr "Falha na autenticação: Código 0x%02x\n"
 
-#: pulse.c:1757
+#: pulse.c:1785
 #, c-format
 msgid ""
 "Unknown D73 prompt value 0x%x. Will prompt for both username and password.\n"
 msgstr ""
 "Valor do prompt D73 desconhecido 0x%x. Solicitará nome de usuário e senha.\n"
 
-#: pulse.c:1760
+#: pulse.c:1788
 msgid "Please report this value and the behaviour of the official client.\n"
 msgstr "Por favor informe esse valor e o comportamento do cliente oficial.\n"
 
-#: pulse.c:1831
+#: pulse.c:1859
 #, c-format
 msgid "Authentication failure: %.*s\n"
 msgstr "Falha na autenticação: %.*s\n"
 
-#: pulse.c:1841
+#: pulse.c:1869
 msgid ""
 "Pulse server requested Host Checker; not yet supported\n"
 "Try Juniper mode (--protocol=nc)\n"
@@ -6367,7 +6374,7 @@ msgstr ""
 "Servidor Pulse requisitou Host Checker; ainda não suportado\n"
 "Tente o modo Juniper (--protocol=nc)\n"
 
-#: pulse.c:1856
+#: pulse.c:1900
 #, c-format
 msgid ""
 "Pulse server is trying to authenticate via EAP-TLS over EAP-TTLS, which we\n"
@@ -6386,193 +6393,193 @@ msgstr ""
 "        --useragent=\"Pulse-Secure/3.0.0\"\n"
 "Por favor, relate resultados a <%s>.\n"
 
-#: pulse.c:1865
+#: pulse.c:1909
 #, c-format
 msgid "Pulse server requested unexpected EAP type 0x%x\n"
 msgstr "O servidor Pulse requisitou um tipo 0x%x de EAP inesperado\n"
 
-#: pulse.c:1878
+#: pulse.c:1922
 msgid "Unhandled Pulse authentication packet, or authentication failure\n"
 msgstr "Pacote de autenticação Pulse não tratado ou falha de autenticação\n"
 
-#: pulse.c:1894
+#: pulse.c:1938
 msgid "Pulse authentication cookie not accepted\n"
 msgstr "Cookie de autenticação Pulse não aceito\n"
 
-#: pulse.c:1900
+#: pulse.c:1944
 msgid "Pulse realm entry\n"
 msgstr "Entrada de área Pulse\n"
 
-#: pulse.c:1906
+#: pulse.c:1950
 msgid "Pulse realm choice\n"
 msgstr "Escolha de área Pulse\n"
 
-#: pulse.c:1912
+#: pulse.c:1956
 msgid "Pulse region choice\n"
 msgstr "Escolha de região Pulse\n"
 
-#: pulse.c:1919
+#: pulse.c:1963
 #, c-format
 msgid "Pulse password auth request, code 0x%02x\n"
 msgstr "Requisição de autenticação por senha Pulse, código 0x%02x\n"
 
-#: pulse.c:1932
+#: pulse.c:1976
 #, c-format
 msgid "Pulse password request with unknown code 0x%02x. Please report.\n"
 msgstr ""
 "Solicitação de senha Pulse com código desconhecido 0x%02x. Por favor, "
 "relate.\n"
 
-#: pulse.c:1941
+#: pulse.c:1985
 msgid "Pulse password general token code request\n"
 msgstr "Requisição de código de token geral por senha Pulse\n"
 
-#: pulse.c:1952
+#: pulse.c:1996
 #, c-format
 msgid "Pulse session limit, %d sessions\n"
 msgstr "Limite de sessão de Pulse, %d sessões\n"
 
-#: pulse.c:1961
+#: pulse.c:2005
 msgid "Unhandled Pulse auth request\n"
 msgstr "Requisição de autenticação Pulse não tratada %d\n"
 
-#: pulse.c:1998
+#: pulse.c:2042
 msgid "Unexpected response instead of IF-T/TLS auth success:\n"
 msgstr "Resposta inesperada em vez de sucesso de autenticação IF-T/TLS:\n"
 
-#: pulse.c:2061
+#: pulse.c:2105
 msgid "EAP-TTLS failure: Flushing output with pending input bytes\n"
 msgstr "Falha EAP-TTLS: Limpeza da saída com bytes de entrada pendentes\n"
 
-#: pulse.c:2084
+#: pulse.c:2128
 msgid "Error creating EAP-TTLS buffer\n"
 msgstr "Erro ao criar buffer EAP-TTLS\n"
 
-#: pulse.c:2133
+#: pulse.c:2177
 #, c-format
 msgid "Failed to read EAP-TTLS Acknowledge: %s\n"
 msgstr "Falha ao ler reconhecimento EAP_TTLS: %s\n"
 
-#: pulse.c:2141 pulse.c:2183
+#: pulse.c:2185 pulse.c:2227
 #, c-format
 msgid "Read %d bytes of IF-T/TLS EAP-TTLS record\n"
 msgstr "Lidos %d bytes de registro IF-T/TLS EAP-TTLS\n"
 
-#: pulse.c:2152
+#: pulse.c:2196
 msgid "Bad EAP-TTLS Acknowledge packet\n"
 msgstr "Pacote de reconhecimento EAP-TTLS ruim\n"
 
-#: pulse.c:2194
+#: pulse.c:2238
 #, c-format
 msgid "Bad EAP-TTLS packet (len %d, left %d)\n"
 msgstr "Pacote EAP-TTLS ruim (tamanho %d, restante %d)\n"
 
-#: pulse.c:2380
+#: pulse.c:2424
 msgid "Unexpected Pulse config packet:\n"
 msgstr "Pacote de configuração Pulse inesperado:\n"
 
-#: pulse.c:2417
+#: pulse.c:2461
 msgid "Processing Pulse main config packet for server version >= 9.1R14\n"
 msgstr ""
 "Processando pacote de configuração principal Pulse para servidor versão >= "
 "9.1R14\n"
 
-#: pulse.c:2429
+#: pulse.c:2473
 msgid "attr_flag 0x2c00: known for Pulse version >= 9.1R14\n"
 msgstr "attr_flag 0x2c00: conhecida por Pulse versão >= 9.1R14\n"
 
-#: pulse.c:2433
+#: pulse.c:2477
 msgid "attr_flag 0x2e00: known for Pulse version >= 9.1R16\n"
 msgstr "attr_flag 0x2e00: conhecida por Pulse versão >= 9.1R16\n"
 
-#: pulse.c:2437
+#: pulse.c:2481
 #, c-format
 msgid "attr_flag 0x%04x: unknown Pulse version. Please report to <%s>\n"
 msgstr ""
 "attr_flag 0x%04x: versão Pulse desconhecida. Por favor, relate a <%s>\n"
 
-#: pulse.c:2452
+#: pulse.c:2496
 #, c-format
 msgid "If any of the above attributes are meaningful, please report to <%s>\n"
 msgstr "Se os atributos acima são significativos, por favor, relate a <%s>\n"
 
-#: pulse.c:2457
+#: pulse.c:2501
 msgid "Processing Pulse main config packet for server version < 9.1R14\n"
 msgstr ""
 "Processando pacote de configuração principal Pulse para servidor versão < "
 "9.1R14\n"
 
-#: pulse.c:2525
+#: pulse.c:2569
 #, c-format
 msgid "Receive route of unknown type 0x%08x\n"
 msgstr "Recebida rota de tipo desconhecido 0x%08x\n"
 
-#: pulse.c:2579
+#: pulse.c:2624
 msgid "Processing Pulse ESP config packet\n"
 msgstr "Processando pacote de configuração Pulse ESP\n"
 
-#: pulse.c:2585
+#: pulse.c:2630
 msgid "Invalid ESP config packet:\n"
 msgstr "Pacote de configuração ESP inválido:\n"
 
-#: pulse.c:2597
+#: pulse.c:2642
 msgid "Invalid ESP setup\n"
 msgstr "Configuração ESP inválida\n"
 
-#: pulse.c:2683
+#: pulse.c:2733
 msgid "Short IF-T/TLS packet when expecting configuration:\n"
 msgstr "Pacote IF-T/TLS pequeno ao esperar a configuração:\n"
 
-#: pulse.c:2691
+#: pulse.c:2741
 msgid "Unexpected IF-T/TLS packet when expecting configuration: wrong vendor\n"
 msgstr ""
 "Pacote IF-T/TLS inesperado ao esperar a configuração: fornecedor errado\n"
 
-#: pulse.c:2700
+#: pulse.c:2750
 #, c-format
 msgid ""
 "Unreasonably large IF-T/TLS packet (%u > 1 MiB) when expecting configuration"
 msgstr "Pacote IF-T/TLS muito grande (%u > 1 MiB) ao esperar a configuração"
 
-#: pulse.c:2727 pulse.c:2732 pulse.c:2739 pulse.c:2744 pulse.c:2783
+#: pulse.c:2777 pulse.c:2782 pulse.c:2789 pulse.c:2794 pulse.c:2832
 #, c-format
 msgid "Unexpected Pulse configuration packet: %s\n"
 msgstr "Pacote de configuração Pulse inesperado: %s\n"
 
-#: pulse.c:2728
+#: pulse.c:2778
 msgid "wrong type field (!= 1)"
 msgstr "Campo de tipo errado (!= 1)"
 
-#: pulse.c:2733
+#: pulse.c:2783
 msgid "too short"
 msgstr "muito curto"
 
-#: pulse.c:2740
+#: pulse.c:2790
 msgid "non-zero values at offsets 0x10, 0x14, 0x18, 0x1c, or 0x24"
 msgstr "valores non-zero nos modelos 0x10, 0x14, 0x18, 0x1c, ou 0x24"
 
-#: pulse.c:2745
+#: pulse.c:2795
 msgid "length at offset 0x28 != packet length - 0x10"
 msgstr "tamanho no modelo 0x28 != tamanho do pacote - 0x10"
 
-#: pulse.c:2784
+#: pulse.c:2833
 msgid "identifier at offset 0x20 is unknown"
 msgstr "identificador do modelo 0x20 é desconhecido"
 
-#: pulse.c:2791
+#: pulse.c:2840
 msgid "Insufficient configuration found\n"
 msgstr "Localizada configuração insuficiente\n"
 
-#: pulse.c:2916
+#: pulse.c:2983
 msgid "ESP rekey failed\n"
 msgstr "Renovação da chave ESP falhou\n"
 
-#: pulse.c:2945
+#: pulse.c:3008
 #, c-format
 msgid "Pulse fatal error (reason: %ld): %s\n"
 msgstr "Erro fatal do Pulse (motivo: %ld): %s\n"
 
-#: pulse.c:2963
+#: pulse.c:3026
 #, c-format
 msgid ""
 "Unknown Pulse packet of %d bytes (vendor 0x%03x, type 0x%02x, hdr_len %d, "
@@ -6581,7 +6588,7 @@ msgstr ""
 "Pacote Pulse de %d bytes desconhecido (fornecedor 0x%03x, tipo 0x%02x, "
 "hdr_len %d, ident %d)\n"
 
-#: pulse.c:3143
+#: pulse.c:3206
 #, c-format
 msgid "Sending IF-T/TLS data packet of %d bytes\n"
 msgstr "Enviando pacote de dados IF-T/TLS de %d bytes\n"
