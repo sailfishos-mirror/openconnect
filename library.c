@@ -942,6 +942,10 @@ void openconnect_vpninfo_free(struct openconnect_info *vpninfo)
 	free_pkt(vpninfo, vpninfo->dtls_pkt);
 	free_pkt(vpninfo, vpninfo->cstp_pkt);
 	struct pkt *pkt;
+	while ((pkt = dequeue_packet(&vpninfo->outgoing_queue)))
+		free_pkt(vpninfo, pkt);
+	while ((pkt = dequeue_packet(&vpninfo->tcp_control_queue)))
+		free_pkt(vpninfo, pkt);
 	while ((pkt = dequeue_packet(&vpninfo->free_queue)))
 		free(pkt);
 
