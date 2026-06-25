@@ -741,6 +741,8 @@ static int gpst_login(struct openconnect_info *vpninfo, int portal, struct login
 		append_opt(request_body, "os-version", vpninfo->platname);
 		append_opt(request_body, "server", vpninfo->hostname);
 		append_opt(request_body, "computer", vpninfo->localname);
+		if (vpninfo->host_id)
+			append_opt(request_body, "host-id", vpninfo->host_id);
 		if (ctx->portal_userauthcookie)
 			append_opt(request_body, "portal-userauthcookie", ctx->portal_userauthcookie);
 		if (ctx->portal_prelogonuserauthcookie)

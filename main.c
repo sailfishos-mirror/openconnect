@@ -184,6 +184,7 @@ enum {
 	OPT_FORCE_TROJAN,
 	OPT_GNUTLS_DEBUG,
 	OPT_JUNIPER,
+	OPT_HOST_ID,
 	OPT_KEY_PASSWORD_FROM_FSID,
 	OPT_LIBPROXY,
 	OPT_NO_CERT_CHECK,
@@ -303,6 +304,7 @@ static const struct option long_options[] = {
 	OPTION("force-dpd", 1, OPT_FORCE_DPD),
 	OPTION("force-trojan", 1, OPT_FORCE_TROJAN),
 	OPTION("tcp-keepalive", 2, OPT_TCP_KEEPALIVE),
+	OPTION("host-id", 1, OPT_HOST_ID),
 	OPTION("non-inter", 0, OPT_NON_INTER),
 	OPTION("dtls-local-port", 1, OPT_DTLS_LOCAL_PORT),
 	OPTION("token-mode", 1, OPT_TOKEN_MODE),
@@ -1112,7 +1114,7 @@ static void usage(void)
 	printf("      --dtls-ciphers=LIST         %s\n", _("OpenSSL ciphers to support for DTLS"));
 	printf("  -Q, --queue-len=LEN             %s\n", _("Set packet queue limit to LEN pkts"));
 	printf("      --tcp-keepalive{=INTERVAL}  %s\n", _("Enable TCP keepalive (with optional interval in seconds)"));
-
+	printf("      --host-id=ID                %s\n", _("Set host identifier for cookie tracking"));
 	printf("\n%s:\n", _("Local system information"));
 	printf("      --useragent=STRING          %s\n", _("HTTP header User-Agent: field"));
 	printf("      --local-hostname=STRING     %s\n", _("Local hostname to advertise to server"));
@@ -2211,6 +2213,9 @@ int main(int argc, char *argv[])
 			break;
 		case OPT_TCP_KEEPALIVE:
 			openconnect_set_tcp_keepalive(vpninfo, config_arg ? atoi(config_arg) : 0);
+			break;
+		case OPT_HOST_ID:
+			openconnect_set_host_id(vpninfo, config_arg);
 			break;
 		case OPT_DTLS_LOCAL_PORT:
 			assert_nonnull_config_arg("dtls-local-port", config_arg);

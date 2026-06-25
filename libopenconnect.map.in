@@ -135,6 +135,7 @@ OPENCONNECT_5_9 {
 OPENCONNECT_5_10 {
  global:
 	openconnect_set_tcp_keepalive;
+	openconnect_set_host_id;
 } OPENCONNECT_5_9;
 
 OPENCONNECT_PRIVATE {

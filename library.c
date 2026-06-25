@@ -43,6 +43,61 @@
 #include <stdlib.h>
 #include <ctype.h>
 
+static char *openconnect_get_machine_id(void)
+{
+#ifdef _WIN32
+	/* Windows: HKLM\SOFTWARE\Microsoft\Cryptography\MachineGuid */
+	HKEY key;
+	char guid[64];
+	DWORD size = sizeof(guid);
+
+	if (RegOpenKeyExA(HKEY_LOCAL_MACHINE,
+			  "SOFTWARE\\Microsoft\\Cryptography",
+			  0, KEY_READ, &key) == ERROR_SUCCESS) {
+		if (RegQueryValueExA(key, "MachineGuid", NULL, NULL,
+				     (LPBYTE)guid, &size) == ERROR_SUCCESS) {
+			RegCloseKey(key);
+			return strdup(guid);
+		}
+		RegCloseKey(key);
+	}
+#elif defined(__APPLE__)
+	/* macOS: IOPlatformUUID via ioreg, or fall through to /etc/machine-id */
+	FILE *f = popen("ioreg -rd1 -c IOPlatformExpertDevice 2>/dev/null | "
+			"awk -F'\"' '/IOPlatformUUID/{print $4}'", "r");
+	if (f) {
+		char buf[64] = {0};
+		if (fgets(buf, sizeof(buf), f) && buf[0]) {
+			pclose(f);
+			buf[strcspn(buf, "\n")] = 0;
+			return strdup(buf);
+		}
+		pclose(f);
+	}
+#endif
+	/* Linux/BSD: /etc/machine-id or /var/lib/dbus/machine-id */
+	{
+		static const char *paths[] = {
+			"/etc/machine-id",
+			"/var/lib/dbus/machine-id",
+			NULL
+		};
+		for (int i = 0; paths[i]; i++) {
+			FILE *f = fopen(paths[i], "r");
+			if (f) {
+				char buf[64] = {0};
+				if (fgets(buf, sizeof(buf), f) && buf[0]) {
+					fclose(f);
+					buf[strcspn(buf, "\n")] = 0;
+					return strdup(buf);
+				}
+				fclose(f);
+			}
+		}
+	}
+	return NULL;
+}
+
 struct openconnect_info *openconnect_vpninfo_new(const char *useragent,
 						 openconnect_validate_peer_cert_vfn validate_peer_cert,
 						 openconnect_write_new_config_vfn write_new_config,
@@ -232,6 +287,8 @@ struct openconnect_info *openconnect_vpninfo_new(const char *useragent,
 
 	if (!vpninfo->localname)
 		goto err;
+
+	vpninfo->host_id = openconnect_get_machine_id();
 
 	vpninfo->validate_peer_cert = validate_peer_cert;
 	vpninfo->write_new_config = write_new_config;
@@ -895,6 +952,7 @@ void openconnect_vpninfo_free(struct openconnect_info *vpninfo)
 	}
 
 	free(vpninfo->localname);
+	free(vpninfo->host_id);
 	free(vpninfo->useragent);
 	free(vpninfo->authgroup);
 #ifdef HAVE_LIBSTOKEN
@@ -1135,6 +1193,12 @@ void openconnect_set_tcp_keepalive(struct openconnect_info *vpninfo, int seconds
 	vpninfo->tcp_keepalive_enabled = 1;
 	if (seconds >= 0)
 		vpninfo->tcp_keepalive_idle = seconds;
+}
+
+void openconnect_set_host_id(struct openconnect_info *vpninfo, const char *host_id)
+{
+	free(vpninfo->host_id);
+	vpninfo->host_id = host_id ? strdup(host_id) : NULL;
 }
 
 int openconnect_get_idle_timeout(struct openconnect_info *vpninfo)
