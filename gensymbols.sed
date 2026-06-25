@@ -47,7 +47,7 @@ s/^ \* API version (5[._][0-9.]+) \(v([0-9.]+); 20.*/\
 1{x;s\/\(.*\)\/\\\
  OPENCONNECT_\1@OPENCONNECT_\1 \2\\1\/;x;\}\
 # Match actual symbols within the OPENCONNECT_\1 \{ ... \} range and print them with versions \
-\/^OPENCONNECT_\1\/,\/^\}\/s\/^\\t(openconnect_.*);\/ \\1@OPENCONNECT_\1 \2\/p\
+\/^OPENCONNECT_\1[ {]\/,\/^\}\/s\/^\\t(openconnect_.*);\/ \\1@OPENCONNECT_\1 \2\/p\
 /p
 
 # At the end of processing openconnect.h, therefore at the end
