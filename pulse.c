@@ -2875,6 +2875,22 @@ int pulse_connect(struct openconnect_info *vpninfo)
 	return ret;
 }
 
+#ifdef HAVE_ESP
+void pulse_esp_close(struct openconnect_info *vpninfo)
+{
+	/* Tell server to stop sending over ESP */
+	struct pkt *pkt = alloc_pkt(vpninfo, 0x18);
+	if (pkt) {
+		pkt->len = snprintf((char *)pkt->data, 8, "ncmo=0\n") + 1;
+		store_be32(&pkt->pulse.vendor, VENDOR_JUNIPER);
+		store_be32(&pkt->pulse.type, 5);
+		store_be32(&pkt->pulse.len, pkt->len + 16);
+		queue_packet(&vpninfo->tcp_control_queue, pkt);
+	}
+
+	esp_close(vpninfo);
+}
+#endif
 
 int pulse_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 {
