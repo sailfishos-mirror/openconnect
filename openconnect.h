@@ -33,9 +33,12 @@ extern "C" {
 #endif
 
 #define OPENCONNECT_API_VERSION_MAJOR 5
-#define OPENCONNECT_API_VERSION_MINOR 9
+#define OPENCONNECT_API_VERSION_MINOR 10
 
 /*
+ * API version 5.10:
+ *  - Add openconnect_set_tcp_keepalive()
+ *
  * API version 5.9 (v9.12; 2023-05-20):
  *  - Add openconnect_set_sni()
  *
@@ -653,6 +656,7 @@ const char *openconnect_get_ifname(struct openconnect_info *);
 void openconnect_set_reqmtu(struct openconnect_info *, int reqmtu);
 void openconnect_set_dpd(struct openconnect_info *, int min_seconds);
 void openconnect_set_trojan_interval(struct openconnect_info *, int seconds);
+void openconnect_set_tcp_keepalive(struct openconnect_info *, int seconds);
 int openconnect_get_idle_timeout(struct openconnect_info *);
 time_t openconnect_get_auth_expiration(struct openconnect_info *);
 
