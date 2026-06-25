@@ -285,20 +285,20 @@ static int set_tcp_keepalive(struct openconnect_info *vpninfo, int ssl_sock)
 
 #ifdef TCP_KEEPIDLE
 	/* Linux, FreeBSD */
-	if (keepidle >= 0 && setsockopt(ssl_sock, IPPROTO_TCP, TCP_KEEPIDLE, (void *)&keepidle, sizeof(keepidle)) < 0) {
+	if (keepidle > 0 && setsockopt(ssl_sock, IPPROTO_TCP, TCP_KEEPIDLE, (void *)&keepidle, sizeof(keepidle)) < 0) {
 		vpn_perror(vpninfo,
 			_("Failed setsockopt(TCP_KEEPIDLE) on TLS socket:"));
 	}
 #elif defined(TCP_KEEPALIVE)
 	/* macOS */
-	if (keepidle >= 0 && setsockopt(ssl_sock, IPPROTO_TCP, TCP_KEEPALIVE, (void *)&keepidle, sizeof(keepidle)) < 0) {
+	if (keepidle > 0 && setsockopt(ssl_sock, IPPROTO_TCP, TCP_KEEPALIVE, (void *)&keepidle, sizeof(keepidle)) < 0) {
 		vpn_perror(vpninfo,
 			_("Failed setsockopt(TCP_KEEPALIVE) on TLS socket:"));
 	}
 #elif defined(_WIN32)
 	/* Windows: no setsockopt(TCP_KEEPIDLE) on older versions; SIO_KEEPALIVE_VALS
 	   requires an interval, so match the Linux TCP_KEEPINTVL default (75s). */
-	if (keepidle >= 0) {
+	if (keepidle > 0) {
 		struct tcp_keepalive alive = {
 			.onoff = 1,
 			.keepalivetime = (u_long)keepidle * 1000,
