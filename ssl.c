@@ -36,7 +36,9 @@
 #endif
 
 /* setsockopt and TCP_NODELAY */
-#ifndef _WIN32
+#ifdef _WIN32
+#include <mstcpip.h>
+#else
 #include <netinet/tcp.h>
 #include <sys/socket.h>
 #endif
@@ -261,6 +263,70 @@ static int set_tcp_nodelay(struct openconnect_info *vpninfo, int ssl_sock)
 	return 0;
 }
 
+static int set_tcp_keepalive(struct openconnect_info *vpninfo, int ssl_sock)
+{
+	int keepalive = vpninfo->tcp_keepalive_enabled;
+	if (!keepalive) {
+		return 0;
+	}
+
+	int keepidle = vpninfo->tcp_keepalive_idle;
+
+	/* Enable TCP keepalive */
+	if (setsockopt(ssl_sock, SOL_SOCKET, SO_KEEPALIVE, (void *)&keepalive, sizeof(keepalive)) < 0) {
+		vpn_perror(vpninfo,
+			   _("Failed setsockopt(SO_KEEPALIVE) on TLS socket:"));
+#ifdef _WIN32
+		return WSAGetLastError();
+#else
+		return -errno;
+#endif
+	}
+
+#ifdef TCP_KEEPIDLE
+	/* Linux, FreeBSD */
+	if (keepidle >= 0 && setsockopt(ssl_sock, IPPROTO_TCP, TCP_KEEPIDLE, (void *)&keepidle, sizeof(keepidle)) < 0) {
+		vpn_perror(vpninfo,
+			_("Failed setsockopt(TCP_KEEPIDLE) on TLS socket:"));
+	}
+#elif defined(TCP_KEEPALIVE)
+	/* macOS */
+	if (keepidle >= 0 && setsockopt(ssl_sock, IPPROTO_TCP, TCP_KEEPALIVE, (void *)&keepidle, sizeof(keepidle)) < 0) {
+		vpn_perror(vpninfo,
+			_("Failed setsockopt(TCP_KEEPALIVE) on TLS socket:"));
+	}
+#elif defined(_WIN32)
+	/* Windows: no setsockopt(TCP_KEEPIDLE) on older versions; SIO_KEEPALIVE_VALS
+	   requires an interval, so match the Linux TCP_KEEPINTVL default (75s). */
+	if (keepidle >= 0) {
+		struct tcp_keepalive alive = {
+			.onoff = 1,
+			.keepalivetime = (u_long)keepidle * 1000,
+			.keepaliveinterval = 75000,
+		};
+		DWORD bytes;
+		if (WSAIoctl(ssl_sock, SIO_KEEPALIVE_VALS, &alive, sizeof(alive),
+			     NULL, 0, &bytes, NULL, NULL) == SOCKET_ERROR) {
+			vpn_perror(vpninfo,
+				_("Failed WSAIoctl(SIO_KEEPALIVE_VALS) on TLS socket:"));
+		}
+	}
+#else
+	/* Other unsupported platform */
+	#warning Do not know how to set keepidle on this platform
+	keepidle = 0;  // indicate that system defaults have been accepted.
+#endif
+
+	if (keepidle > 0) {
+		vpn_progress(vpninfo, PRG_DEBUG,
+			   _("TCP keepalive enabled: idle=%ds\n"), keepidle);
+	} else {
+		vpn_progress(vpninfo, PRG_DEBUG,
+			   _("TCP keepalive enabled with system defaults\n"));
+	}
+
+	return 0;
+}
 
 int connect_https_socket(struct openconnect_info *vpninfo)
 {
@@ -564,8 +630,13 @@ int connect_https_socket(struct openconnect_info *vpninfo)
 				goto reconnect;
 			}
 			ssl_sock = err;
+			goto out;
 		}
 	}
+
+	/* Ensure that this channel remains open even when most traffic passes through UDP */
+	set_tcp_keepalive(vpninfo, ssl_sock);
+
  out:
 	/* If proxy processing returned -EAGAIN to reconnect before attempting
 	   further auth, and we failed to reconnect, we have to clean up here. */

@@ -1130,6 +1130,13 @@ void openconnect_set_trojan_interval(struct openconnect_info *vpninfo, int secon
 	vpninfo->trojan_interval = seconds;
 }
 
+void openconnect_set_tcp_keepalive(struct openconnect_info *vpninfo, int seconds)
+{
+	vpninfo->tcp_keepalive_enabled = 1;
+	if (seconds >= 0)
+		vpninfo->tcp_keepalive_idle = seconds;
+}
+
 int openconnect_get_idle_timeout(struct openconnect_info *vpninfo)
 {
 	return vpninfo->idle_timeout;
