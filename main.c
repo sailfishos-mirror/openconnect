@@ -184,7 +184,6 @@ enum {
 	OPT_FORCE_TROJAN,
 	OPT_GNUTLS_DEBUG,
 	OPT_JUNIPER,
-	OPT_KEEPALIVE,
 	OPT_KEY_PASSWORD_FROM_FSID,
 	OPT_LIBPROXY,
 	OPT_NO_CERT_CHECK,
@@ -205,6 +204,7 @@ enum {
 	OPT_USERAGENT,
 	OPT_NON_INTER,
 	OPT_DTLS_LOCAL_PORT,
+	OPT_TCP_KEEPALIVE,
 	OPT_TOKEN_MODE,
 	OPT_TOKEN_SECRET,
 	OPT_OS,
@@ -302,7 +302,7 @@ static const struct option long_options[] = {
 	OPTION("no-cert-check", 0, OPT_NO_CERT_CHECK),
 	OPTION("force-dpd", 1, OPT_FORCE_DPD),
 	OPTION("force-trojan", 1, OPT_FORCE_TROJAN),
-	OPTION("keepalive", 2, OPT_KEEPALIVE),
+	OPTION("tcp-keepalive", 2, OPT_TCP_KEEPALIVE),
 	OPTION("non-inter", 0, OPT_NON_INTER),
 	OPTION("dtls-local-port", 1, OPT_DTLS_LOCAL_PORT),
 	OPTION("token-mode", 1, OPT_TOKEN_MODE),
@@ -1111,7 +1111,7 @@ static void usage(void)
 	printf("      --no-dtls                   %s\n", _("Disable DTLS and ESP"));
 	printf("      --dtls-ciphers=LIST         %s\n", _("OpenSSL ciphers to support for DTLS"));
 	printf("  -Q, --queue-len=LEN             %s\n", _("Set packet queue limit to LEN pkts"));
-	printf("      --keepalive{=INTERVAL}      %s\n", _("Enable keepalive on the TCP channel (with an optional interval in seconds)"));
+	printf("      --tcp-keepalive{=INTERVAL}  %s\n", _("Enable TCP keepalive (with optional interval in seconds)"));
 
 	printf("\n%s:\n", _("Local system information"));
 	printf("      --useragent=STRING          %s\n", _("HTTP header User-Agent: field"));
@@ -1591,7 +1591,7 @@ static int autocomplete(int argc, char **argv)
 			case OPT_VERSION: /* --version-string */
 			case OPT_FORCE_DPD: /* --force-dpd */
 			case OPT_FORCE_TROJAN: /* --force-trojan */
-			case OPT_KEEPALIVE: /* --keepalive */
+			case OPT_TCP_KEEPALIVE: /* --tcp-keepalive */
 			case OPT_DTLS_LOCAL_PORT: /* --dtls-local-port */
 			case 'F': /* --form-entry */
 			case OPT_GNUTLS_DEBUG: /* --gnutls-debug */
@@ -2209,7 +2209,7 @@ int main(int argc, char *argv[])
 			assert_nonnull_config_arg("force-trojan", config_arg);
 			openconnect_set_trojan_interval(vpninfo, atoi(config_arg));
 			break;
-		case OPT_KEEPALIVE:
+		case OPT_TCP_KEEPALIVE:
 			openconnect_set_tcp_keepalive(vpninfo, config_arg ? atoi(config_arg) : 0);
 			break;
 		case OPT_DTLS_LOCAL_PORT:
