@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: network-manager-openconnect master\n"
 "Report-Msgid-Bugs-To: openconnect-devel@lists.infradead.org\n"
-"POT-Creation-Date: 2026-06-15 16:10+0100\n"
-"PO-Revision-Date: 2026-03-31 21:42+0200\n"
+"POT-Creation-Date: 2026-06-18 12:32+0100\n"
+"PO-Revision-Date: 2026-06-18 17:10+0200\n"
 "Last-Translator: Martin Srebotnjak <miles@filmsi.net>\n"
 "Language-Team: Slovenian GNOME Translation Team <gnome-si@googlegroups.com>\n"
 "Language: sl_SI\n"
@@ -73,7 +73,7 @@ msgstr "Razčlenitev odziva polja JSON ni uspela\n"
 msgid "Error creating array negotiation request\n"
 msgstr "Napaka pri ustvarjanju zahteve za pogajanja s polji\n"
 
-#: array.c:675 f5.c:827 http.c:987 oncp.c:515 pulse.c:1400
+#: array.c:675 f5.c:827 http.c:987 oncp.c:515 pulse.c:1428
 #, c-format
 msgid "Unexpected %d result from server\n"
 msgstr "Nepričakovan odgovor strežnika %d.\n"
@@ -104,8 +104,8 @@ msgid "Failed to read ipff response\n"
 msgstr "Odgovora IPFF ni bilo mogoče prebrati\n"
 
 #: array.c:831 array.c:1119 array.c:1229 cstp.c:970 dtls.c:283 dtls.c:643
-#: esp.c:155 gpst.c:1181 mainloop.c:63 oncp.c:921 ppp.c:1089 ppp.c:1676
-#: pulse.c:2841
+#: esp.c:155 gpst.c:1181 mainloop.c:63 oncp.c:921 ppp.c:1089 ppp.c:1678
+#: pulse.c:2891
 msgid "Allocation failed\n"
 msgstr "Dodelitev ni uspela\n"
 
@@ -134,7 +134,7 @@ msgstr "Prejeti delni paket, %d %d bajtov\n"
 msgid "Receive control packet of type %x:\n"
 msgstr "Prejmi kontrolni paket vrste %x:\n"
 
-#: array.c:903 pulse.c:2894
+#: array.c:903 pulse.c:2944
 #, c-format
 msgid "Received data packet of %d bytes\n"
 msgstr "Prejet je paket podatkov velikosti %d bajtov\n"
@@ -144,19 +144,19 @@ msgstr "Prejet je paket podatkov velikosti %d bajtov\n"
 msgid "Moved down %d bytes after previous packet\n"
 msgstr "Navzdol pomaknjenih %d bajtov po prejšnjem paketu\n"
 
-#: array.c:961 cstp.c:1111 gpst.c:1283 oncp.c:1135 ppp.c:1376 pulse.c:3029
+#: array.c:961 cstp.c:1111 gpst.c:1283 oncp.c:1135 ppp.c:1378 pulse.c:3092
 #, c-format
 msgid "SSL wrote too few bytes! Asked for %d, sent %d\n"
 msgstr "SSL je zapisal premalo bajtov! Zahtevanih je %d, poslanih pa %d\n"
 
 #. Not that this will ever happen; we don't even process
 #. the setting when we're asked for it.
-#: array.c:979 cstp.c:1139 oncp.c:1172 pulse.c:3056
+#: array.c:979 cstp.c:1139 oncp.c:1172 pulse.c:3119
 msgid "CSTP rekey due\n"
 msgstr "Protokol CSTP zahteva ponovno preverjanje ključa\n"
 
 #. if we failed rehandshake try establishing a new-tunnel instead of failing
-#: array.c:986 cstp.c:1146 oncp.c:1179 pulse.c:3063
+#: array.c:986 cstp.c:1146 oncp.c:1179 pulse.c:3126
 msgid "Rehandshake failed; attempting new-tunnel\n"
 msgstr "Ponovno rokovanje ni uspelo; sledi poskus novega predora\n"
 
@@ -187,11 +187,11 @@ msgstr "Poteka pošiljanje paketa DTLS off\n"
 msgid "Sending uncompressed data packet of %d bytes\n"
 msgstr "Pošiljanje ne-stisnjenega paketa podatkov velikosti %d bajtov\n"
 
-#: array.c:1097 dtls.c:259 ppp.c:1790
+#: array.c:1097 dtls.c:259 ppp.c:1792
 msgid "Attempt new DTLS connection\n"
 msgstr "Poskus nove povezave DTLS\n"
 
-#: array.c:1131 ppp.c:1688
+#: array.c:1131 ppp.c:1690
 msgid "Failed to receive authentication response from DTLS\n"
 msgstr "Odgovor na preverjanje pristnosti od DTLS ni prejet\n"
 
@@ -213,11 +213,11 @@ msgstr ""
 msgid "Received unknown DTLS packet\n"
 msgstr "Prejeti neznani paket DTLS\n"
 
-#: array.c:1178 ppp.c:1742
+#: array.c:1178 ppp.c:1744
 msgid "Error creating connect request for DTLS session\n"
 msgstr "Napaka pri ustvarjanju zahteve za povezavo za sejo DTLS\n"
 
-#: array.c:1194 ppp.c:1758
+#: array.c:1194 ppp.c:1760
 msgid "Failed to write connect request to DTLS session\n"
 msgstr "Ni bilo mogoče napisati zahteve za povezavo s sejo DTLS\n"
 
@@ -933,7 +933,7 @@ msgstr "Prejet je stisnjen paket podatkov %s velikosti %d bajtov (prej %d)\n"
 msgid "deflate failed %d\n"
 msgstr "razširjanje je spodletelo %d\n"
 
-#: cstp.c:981 gpst.c:1194 pulse.c:2874
+#: cstp.c:981 gpst.c:1194 pulse.c:2924
 #, c-format
 msgid "Short packet received (%d bytes)\n"
 msgstr "Prejet kratki paket (%d bajtov)\n"
@@ -984,22 +984,22 @@ msgstr ""
 msgid "Unknown packet %02x %02x %02x %02x %02x %02x %02x %02x\n"
 msgstr "Neznan paket %02x %02x %02x %02x %02x %02x %02x %02x\n"
 
-#: cstp.c:1157 oncp.c:1190 pulse.c:3074
+#: cstp.c:1157 oncp.c:1190 pulse.c:3137
 msgid "CSTP Dead Peer Detection detected dead peer!\n"
 msgstr ""
 "Zaznava mrtvih omrežnih soležnikov CSTP je zaznala mrtvega omrežnega "
 "soležnika!\n"
 
-#: cstp.c:1161 gpst.c:1331 oncp.c:1105 oncp.c:1194 ppp.c:1406 pulse.c:2999
-#: pulse.c:3079
+#: cstp.c:1161 gpst.c:1331 oncp.c:1105 oncp.c:1194 ppp.c:1408 pulse.c:3062
+#: pulse.c:3142
 msgid "Reconnect failed\n"
 msgstr "Ponovna povezava je spodletela\n"
 
-#: cstp.c:1177 oncp.c:1210 pulse.c:3095
+#: cstp.c:1177 oncp.c:1210 pulse.c:3158
 msgid "Send CSTP DPD\n"
 msgstr "Pošlji zahtevo CSTP DPD\n"
 
-#: cstp.c:1189 oncp.c:1221 pulse.c:3107
+#: cstp.c:1189 oncp.c:1221 pulse.c:3170
 msgid "Send CSTP Keepalive\n"
 msgstr "Pošlji zahtevo CSTP Keepalive\n"
 
@@ -4887,17 +4887,17 @@ msgstr "Tvorjenje kode žetona OATH TOTP\n"
 msgid "Unexpected length %d for TLV %d/%d\n"
 msgstr "Nepričakovana dolžina %d za TLV %d/%d\n"
 
-#: oncp.c:82 pulse.c:371
+#: oncp.c:82 pulse.c:395
 #, c-format
 msgid "Received MTU %d from server\n"
 msgstr "Prejeto %d MTU s strežnika\n"
 
-#: oncp.c:91 pulse.c:253 pulse.c:312
+#: oncp.c:91 pulse.c:277 pulse.c:336
 #, c-format
 msgid "Received DNS server %s\n"
 msgstr "Prejeti strežnik DNS %s\n"
 
-#: oncp.c:102 pulse.c:380
+#: oncp.c:102 pulse.c:404
 #, c-format
 msgid "Received DNS search domain %.*s\n"
 msgstr "Prejeta domena za iskanje DNS %.*s\n"
@@ -4907,27 +4907,27 @@ msgstr "Prejeta domena za iskanje DNS %.*s\n"
 msgid "Received internal IP address %s\n"
 msgstr "Prejeti interni naslov IP %s\n"
 
-#: oncp.c:121 pulse.c:244
+#: oncp.c:121 pulse.c:268
 #, c-format
 msgid "Received netmask %s\n"
 msgstr "Prejeta maska omrežja %s\n"
 
-#: oncp.c:130 pulse.c:390
+#: oncp.c:130 pulse.c:414
 #, c-format
 msgid "Received internal gateway address %s\n"
 msgstr "Prejeti naslov notranjega prehoda %s\n"
 
-#: oncp.c:143 pulse.c:2501
+#: oncp.c:143 pulse.c:2545
 #, c-format
 msgid "Received split include route %s\n"
 msgstr "Prejeta razdelitev vključuje pot %s\n"
 
-#: oncp.c:163 pulse.c:2514
+#: oncp.c:163 pulse.c:2558
 #, c-format
 msgid "Received split exclude route %s\n"
 msgstr "Prejeta razdelitev izključuje pot %s\n"
 
-#: oncp.c:181 pulse.c:268
+#: oncp.c:181 pulse.c:292
 #, c-format
 msgid "Received WINS server %s\n"
 msgstr "Prejeti strežnik WINS %s\n"
@@ -4947,37 +4947,37 @@ msgstr "ESP HMAC: 0x%02x (%s)\n"
 msgid "ESP compression: %d\n"
 msgstr "Stiskanje ESP: %d\n"
 
-#: oncp.c:242 pulse.c:470
+#: oncp.c:242 pulse.c:494
 #, c-format
 msgid "ESP port: %d\n"
 msgstr "Vrata ESP: %d\n"
 
-#: oncp.c:249 pulse.c:453
+#: oncp.c:249 pulse.c:477
 #, c-format
 msgid "ESP key lifetime: %u bytes\n"
 msgstr "Življenjska doba ključa ESP: %u bajtov\n"
 
-#: oncp.c:257 pulse.c:445
+#: oncp.c:257 pulse.c:469
 #, c-format
 msgid "ESP key lifetime: %u seconds\n"
 msgstr "Življenjska doba ključa ESP: %u s\n"
 
-#: oncp.c:265 pulse.c:477
+#: oncp.c:265 pulse.c:501
 #, c-format
 msgid "ESP to SSL fallback: %u seconds\n"
 msgstr "Nadomestna povrnitev ESP v SSL: %u s\n"
 
-#: oncp.c:273 pulse.c:461
+#: oncp.c:273 pulse.c:485
 #, c-format
 msgid "ESP replay protection: %d\n"
 msgstr "Zaščita pred ponovitvijo ESP: %d\n"
 
-#: oncp.c:281 pulse.c:2604
+#: oncp.c:281 pulse.c:2649
 #, c-format
 msgid "ESP SPI (outbound): %x\n"
 msgstr "ESP SPI (odhodno): %x\n"
 
-#: oncp.c:290 pulse.c:2592
+#: oncp.c:290 pulse.c:2637
 #, c-format
 msgid "%d bytes of ESP secrets\n"
 msgstr "%d bajtov skrivnosti ESP\n"
@@ -5095,11 +5095,11 @@ msgstr "Napaka pri pogajanjih o ključih ESP\n"
 msgid "oNCP negotiation request outgoing:\n"
 msgstr "Izhodna zahteva za pogajanja oNCP:\n"
 
-#: oncp.c:825 pulse.c:2924
+#: oncp.c:825 pulse.c:2979
 msgid "new incoming"
 msgstr "novo dohodno"
 
-#: oncp.c:826 pulse.c:2925
+#: oncp.c:826 pulse.c:2980
 msgid "new outgoing"
 msgstr "novo odhodno"
 
@@ -5154,7 +5154,7 @@ msgstr "Neznano sporočilo KMP %d velikosti %d:\n"
 msgid ".... + %d more bytes unreceived\n"
 msgstr ".... + %d več neprejetih bajtov\n"
 
-#: oncp.c:1087 pulse.c:2981
+#: oncp.c:1087 pulse.c:3044
 msgid "Packet outgoing:\n"
 msgstr "Odhodni paket:\n"
 
@@ -5162,7 +5162,7 @@ msgstr "Odhodni paket:\n"
 msgid "Sent ESP enable control packet\n"
 msgstr "Poslan kontrolni paket omogočenega ESP\n"
 
-#: openconnect-internal.h:1721 openconnect-internal.h:1731
+#: openconnect-internal.h:1723 openconnect-internal.h:1733
 #, c-format
 msgid "ERROR: %s() called with invalid UTF-8 for '%s' argument\n"
 msgstr "NAPAKA: %s() klicana z neveljavnim UTF-8 za argument »%s«\n"
@@ -6030,323 +6030,328 @@ msgstr ""
 "Paket vsebuje %d bajtov po obremenitvi. Ob predpostavki sestavljenega "
 "paketa.\n"
 
-#: ppp.c:1273
+#: ppp.c:1261
+#, c-format
+msgid "Sending Protocol-Reject for %s\n"
+msgstr "Pošiljanje Protocol-Reject za %s\n"
+
+#: ppp.c:1277
 #, c-format
 msgid "Unexpected IPv%d packet in PPP state %s.\n"
 msgstr "Nepričakovan paket IPv%d v stanju PPP %s.\n"
 
-#: ppp.c:1278
+#: ppp.c:1282
 #, c-format
 msgid "Received IPv%d data packet of %d bytes over %s\n"
 msgstr "Prejeti podatkovni paket IPv%d %d bajtov prek %s\n"
 
-#: ppp.c:1284
+#: ppp.c:1288
 #, c-format
 msgid "Expected %d PPP header bytes but got %ld, shifting payload.\n"
 msgstr ""
 "Pričakovanih %d bajtov glave PPP, prejetih pa %ld, zamikanje obremenitve.\n"
 
-#: ppp.c:1306
+#: ppp.c:1309
 #, c-format
-msgid "Sending Protocol-Reject for %s. Payload:\n"
-msgstr "Pošiljanje Protocol-Reject za %s. Obremenitev:\n"
+msgid "Sending Protocol-Reject for unknown protocol 0x%04x\n"
+msgstr "Pošiljanje Protocol-Reject za neznani protokol 0x%04x\n"
 
-#: ppp.c:1390
+#: ppp.c:1392
 msgid "Detected dead peer!\n"
 msgstr "Zaznan mrtvi vrstnik!\n"
 
-#: ppp.c:1400
+#: ppp.c:1402
 msgid "Failed to establish PPP\n"
 msgstr "Ni uspelo vzpostaviti PPP\n"
 
-#: ppp.c:1419
+#: ppp.c:1421
 msgid "Send PPP discard request as keepalive\n"
 msgstr "Pošlji zahtevo za zavrženje PPP kot keepalive\n"
 
-#: ppp.c:1423
+#: ppp.c:1425
 msgid "Send PPP echo request as DPD\n"
 msgstr "Pošlji zahtevo za odmev PPP kot DPD\n"
 
-#: ppp.c:1489
+#: ppp.c:1491
 #, c-format
 msgid "Sending PPP %s %s packet over %s (id %d, %d bytes total)\n"
 msgstr "Pošiljanje paketa PPP %s %s prek %s (id %d, skupaj %d bajtov)\n"
 
-#: ppp.c:1495
+#: ppp.c:1497
 #, c-format
 msgid "Sending PPP %s packet over %s (%d bytes total)\n"
 msgstr "Pošiljanje paketa PPP %s prek %s (skupaj %d bajtov)\n"
 
-#: ppp.c:1553
+#: ppp.c:1555
 #, c-format
 msgid "PPP connect called with invalid DTLS state %d\n"
 msgstr "Povezava PPP klicana z neveljavnim stanjem DTLS %d\n"
 
-#: ppp.c:1574
+#: ppp.c:1576
 msgid "DTLS tunnel connected; exiting HTTPS mainloop.\n"
 msgstr "Predor DTLS priključen; poteka izhod iz glavne zanke HTTPS.\n"
 
-#: ppp.c:1608
+#: ppp.c:1610
 #, c-format
 msgid "Failed to connect DTLS tunnel; using HTTPS instead (state %d).\n"
 msgstr ""
 "Povezava s predorom DTLS ni uspela; namesto tega uporabite HTTPS (stanje "
 "%d).\n"
 
-#: ppp.c:1633
+#: ppp.c:1635
 msgid "Establishing PPP tunnel over TLS failed\n"
 msgstr "Vzpostavitev tunela PPP prek TLS ni uspela\n"
 
-#: ppp.c:1644
+#: ppp.c:1646
 #, c-format
 msgid "Invalid DTLS state %d\n"
 msgstr "Neveljavno stanje DTLS %d\n"
 
 #. This should never happen
-#: ppp.c:1711
+#: ppp.c:1713
 msgid "Reset PPP failed\n"
 msgstr "Ponastavitev PPP ni uspela\n"
 
-#: ppp.c:1732
+#: ppp.c:1734
 msgid "Failed to authenticate DTLS session\n"
 msgstr "Preverjanje pristnosti seje DTLS ni uspelo\n"
 
-#: pulse.c:235
+#: pulse.c:259
 #, c-format
 msgid "Received internal Legacy IP address %s\n"
 msgstr "Prejeti interni zastareli naslov IP %s\n"
 
-#: pulse.c:283 pulse.c:301 pulse.c:320 pulse.c:343 pulse.c:494
+#: pulse.c:307 pulse.c:325 pulse.c:344 pulse.c:367 pulse.c:518
 msgid "Failed to handle IPv6 address\n"
 msgstr "Obdelava naslova IPv6 ni uspela\n"
 
-#: pulse.c:293
+#: pulse.c:317
 #, c-format
 msgid "Received internal IPv6 address %s\n"
 msgstr "Prejeti interni naslov IPv6 %s\n"
 
-#: pulse.c:335
+#: pulse.c:359
 #, c-format
 msgid "Received IPv6 split include %s\n"
 msgstr "Prejeta razdelitev IPv6 vključujoč %s\n"
 
-#: pulse.c:358
+#: pulse.c:382
 #, c-format
 msgid "Received IPv6 split exclude %s\n"
 msgstr "Prejeta razdelitev IPv6 izključujoč %s\n"
 
-#: pulse.c:365
+#: pulse.c:389
 #, c-format
 msgid "Unexpected length %d for attr 0x%x\n"
 msgstr "Nepričakovana dolžina %d za atribut 0x%x\n"
 
-#: pulse.c:411
+#: pulse.c:435
 #, c-format
 msgid "ESP encryption: 0x%04x (%s)\n"
 msgstr "Šifriranje ESP: 0x%04x (%s)\n"
 
-#: pulse.c:435
+#: pulse.c:459
 #, c-format
 msgid "ESP HMAC: 0x%04x (%s)\n"
 msgstr "ESP HMAC: 0x%04x (%s)\n"
 
 #. Amusingly, this isn't enforced. It's client-only
-#: pulse.c:485
+#: pulse.c:509
 #, c-format
 msgid "ESP only: %d\n"
 msgstr "Samo ESP: %d\n"
 
-#: pulse.c:498
+#: pulse.c:522
 #, c-format
 msgid "Received internal gateway IPv6 address %s\n"
 msgstr "Prejeti naslov IPv6 notranjega prehoda %s\n"
 
-#: pulse.c:506
+#: pulse.c:530
 #, c-format
 msgid "Received proxy auto-config (PAC) payload of size %d\n"
 msgstr ""
 "Prejeto obremenitev samodejne konfiguracije posrednega strežnika (PAC) "
 "velikosti %d\n"
 
-#: pulse.c:511
+#: pulse.c:535
 #, c-format
 msgid "Received proxy auto-config (PAC) URL: %.*s\n"
 msgstr "Prejet URL samodejne konfiguracije posrednega strežnika (PAC): %.*s\n"
 
-#: pulse.c:525
+#: pulse.c:549
 #, c-format
 msgid "Pulse ESP tunnel allowed to carry 6in4 or 4in6 traffic: %d\n"
 msgstr "Predor Pulse ESP omogoča prenos prometa 6v4 ali 4v6: %d\n"
 
-#: pulse.c:549
+#: pulse.c:573
 #, c-format
 msgid "Unknown attr 0x%04x len %d:%s\n"
 msgstr "Neznan atribut 0x%04x dolž. %d:%s\n"
 
-#: pulse.c:560
+#: pulse.c:584
 #, c-format
 msgid "Read %d bytes of IF-T/TLS record\n"
 msgstr "Prebranig %d bajtov zapisa IF-T/TLS\n"
 
-#: pulse.c:577
+#: pulse.c:601
 msgid "Short write to IF-T/TLS\n"
 msgstr "Kratko pisanje v IF-T/TLS\n"
 
-#: pulse.c:590
+#: pulse.c:614
 msgid "Error creating IF-T packet\n"
 msgstr "Napaka pri ustvarjanju paketa IF-T\n"
 
-#: pulse.c:610
+#: pulse.c:634
 msgid "Error creating EAP packet\n"
 msgstr "Napaka pri ustvarjanju paketa EAP\n"
 
-#: pulse.c:645 pulse.c:1467 pulse.c:1530
+#: pulse.c:669 pulse.c:1495 pulse.c:1558
 msgid "Unexpected IF-T/TLS authentication challenge:\n"
 msgstr "Nepričakovan izziv preverjanja pristnosti IF-T/TLS:\n"
 
-#: pulse.c:663
+#: pulse.c:687
 msgid "Unexpected EAP-TTLS payload:\n"
 msgstr "Nepričakovana obremenitev EAP-TTLS:\n"
 
-#: pulse.c:696
+#: pulse.c:720
 #, c-format
 msgid "AVP 0x%x/0x%x:%s\n"
 msgstr "AVP 0x%x/0x%x:%s\n"
 
-#: pulse.c:698
+#: pulse.c:722
 #, c-format
 msgid "AVP %d:%s\n"
 msgstr "AVP %d:%s\n"
 
-#: pulse.c:765
+#: pulse.c:789
 msgid "Enter Pulse user realm:"
 msgstr "Vstopite v uporabniško področje Pulse:"
 
-#: pulse.c:770 pulse.c:816
+#: pulse.c:794 pulse.c:840
 msgid "Realm:"
 msgstr "Področje:"
 
-#: pulse.c:814
+#: pulse.c:838
 msgid "Choose Pulse user realm:"
 msgstr "Izberite uporabniško področje Pulse:"
 
-#: pulse.c:821
+#: pulse.c:845
 msgid "Choose Pulse region:"
 msgstr "Izberite območje Pulse:"
 
-#: pulse.c:823
+#: pulse.c:847
 msgid "Region:"
 msgstr "Območje:"
 
-#: pulse.c:837 pulse.c:1597 pulse.c:1687
+#: pulse.c:861 pulse.c:1625 pulse.c:1715
 msgid "Failed to parse AVP\n"
 msgstr "Razčlenjevanje AVP ni uspelo\n"
 
-#: pulse.c:904
+#: pulse.c:928
 msgid "Session limit reached. Choose session to kill:\n"
 msgstr "Dosežena omejitev seje. Izberite sejo, ki jo želite ubiti:\n"
 
-#: pulse.c:909
+#: pulse.c:933
 msgid "Session:"
 msgstr "Seja:"
 
-#: pulse.c:929
+#: pulse.c:953
 msgid "Failed to parse session list\n"
 msgstr "Razčlenjevanje seznama sej ni uspelo\n"
 
-#: pulse.c:1024
+#: pulse.c:1047
 msgid "Enter secondary credentials:"
 msgstr "Vnesite sekundarne poverilnice:"
 
 #. Point to password prompt in case that's all we use
-#: pulse.c:1024
+#: pulse.c:1047
 msgid "Enter user credentials:"
 msgstr "Vpis poverila:"
 
-#: pulse.c:1034 pulse.c:1226
+#: pulse.c:1057 pulse.c:1254
 msgid "Secondary username:"
 msgstr "Sekundarno uporabniško ime:"
 
-#: pulse.c:1034 pulse.c:1226
+#: pulse.c:1057 pulse.c:1254
 msgid "Username:"
 msgstr "Uporabniško ime:"
 
-#: pulse.c:1044 stoken.c:115
+#: pulse.c:1067 stoken.c:115
 msgid "Password:"
 msgstr "Geslo:"
 
-#: pulse.c:1044
+#: pulse.c:1067
 msgid "Secondary password:"
 msgstr "Sekundarno geslo:"
 
-#: pulse.c:1115
+#: pulse.c:1143
 msgid "Password expired. Please change password:"
 msgstr "Geslo je poteklo. Prosimo, spremenite geslo:"
 
-#: pulse.c:1119
+#: pulse.c:1147
 msgid "Current password:"
 msgstr "Trenutno geslo:"
 
-#: pulse.c:1124
+#: pulse.c:1152
 msgid "New password:"
 msgstr "Novo geslo:"
 
-#: pulse.c:1129
+#: pulse.c:1157
 msgid "Verify new password:"
 msgstr "Overi novo geslo:"
 
-#: pulse.c:1141
+#: pulse.c:1169
 msgid "Passwords not provided.\n"
 msgstr "Gesla niso podana.\n"
 
-#: pulse.c:1147
+#: pulse.c:1175
 msgid "Passwords do not match.\n"
 msgstr "Gesli se ne ujemata.\n"
 
-#: pulse.c:1152
+#: pulse.c:1180
 msgid "Current password too long.\n"
 msgstr "Trenutno geslo je predolgo.\n"
 
-#: pulse.c:1157
+#: pulse.c:1185
 msgid "New password too long.\n"
 msgstr ""
 "Novo geslo je predolgo.\n"
 "\n"
 
-#: pulse.c:1216
+#: pulse.c:1244
 msgid "Token code request:"
 msgstr "Zahteva za kodo žetona:"
 
-#: pulse.c:1240
+#: pulse.c:1268
 msgid "Please enter response:"
 msgstr "Prosimo, vnesite odgovor:"
 
-#: pulse.c:1244
+#: pulse.c:1272
 msgid "Please enter your passcode:"
 msgstr "Vnesite svoje geslo:"
 
-#: pulse.c:1246
+#: pulse.c:1274
 msgid "Please enter your secondary token information:"
 msgstr "Vnesite podatke o svojem sekundarnem žetonu:"
 
-#: pulse.c:1383
+#: pulse.c:1411
 msgid "Error creating Pulse connection request\n"
 msgstr "Napaka pri ustvarjanju zahteve za povezavo Pulse\n"
 
-#: pulse.c:1426
+#: pulse.c:1454
 msgid "Unexpected response to IF-T/TLS version negotiation:\n"
 msgstr "Nepričakovan odziv na pogajanja o različici IF-T/TLS:\n"
 
-#: pulse.c:1431
+#: pulse.c:1459
 #, c-format
 msgid "IF-T/TLS version from server: %d\n"
 msgstr "Različica IF-T/TLS s strežnika: %d\n"
 
-#: pulse.c:1559
+#: pulse.c:1587
 msgid "Failed to establish EAP-TTLS session\n"
 msgstr "Seja EAP-TTLS ni bilo možno vzpostaviti\n"
 
-#: pulse.c:1703
+#: pulse.c:1731
 msgid ""
 "WARNING: Server provided certificate MD5 does not match its actual "
 "certificate.\n"
@@ -6354,20 +6359,20 @@ msgstr ""
 "OPOZORILO: Potrdilo MD5, ki ga je podal strežnik, se ne ujema z njegovim "
 "dejanskim potrdilom.\n"
 
-#: pulse.c:1717
+#: pulse.c:1745
 msgid "Authentication failure: Account locked out\n"
 msgstr "Napaka pri overjanju pristnosti: račun je zaklenjen\n"
 
-#: pulse.c:1720
+#: pulse.c:1748
 msgid "Authentication failure: Client certificate required\n"
 msgstr "Napaka pri preverjanju pristnosti: zahtevano je potrdilo odjemalca\n"
 
-#: pulse.c:1723
+#: pulse.c:1751
 #, c-format
 msgid "Authentication failure: Code 0x%02x\n"
 msgstr "Napaka pri preverjanju pristnosti: koda 0x%02x\n"
 
-#: pulse.c:1757
+#: pulse.c:1785
 #, c-format
 msgid ""
 "Unknown D73 prompt value 0x%x. Will prompt for both username and password.\n"
@@ -6375,16 +6380,16 @@ msgstr ""
 "Neznana vrednost poziva D73 0x%x. Prikaže se poziv za uporabniško ime in "
 "geslo.\n"
 
-#: pulse.c:1760
+#: pulse.c:1788
 msgid "Please report this value and the behaviour of the official client.\n"
 msgstr "Prosimo, navedite to vrednost in vedenje uradnega odjemalca.\n"
 
-#: pulse.c:1831
+#: pulse.c:1859
 #, c-format
 msgid "Authentication failure: %.*s\n"
 msgstr "Overitev je spodletela: %.*s\n"
 
-#: pulse.c:1841
+#: pulse.c:1869
 msgid ""
 "Pulse server requested Host Checker; not yet supported\n"
 "Try Juniper mode (--protocol=nc)\n"
@@ -6392,7 +6397,7 @@ msgstr ""
 "Strežnik Pulse je zahteval preverjanje gostitelja; še ni podprto\n"
 "Poskusite v načinu Juniper (--protocol=nc)\n"
 
-#: pulse.c:1856
+#: pulse.c:1900
 #, c-format
 msgid ""
 "Pulse server is trying to authenticate via EAP-TLS over EAP-TTLS, which we\n"
@@ -6413,194 +6418,194 @@ msgstr ""
 "        --useragent=\"Pulse-Secure/3.0.0\"\n"
 "Rezultate sporočite na naslov <%s>.\n"
 
-#: pulse.c:1865
+#: pulse.c:1909
 #, c-format
 msgid "Pulse server requested unexpected EAP type 0x%x\n"
 msgstr "Strežnik Pulse je zahteval nepričakovan EAP vrste 0x%x\n"
 
-#: pulse.c:1878
+#: pulse.c:1922
 msgid "Unhandled Pulse authentication packet, or authentication failure\n"
 msgstr ""
 "Neobravnavan paket za preverjanje pristnosti Pulse ali napaka pri "
 "preverjanju pristnosti\n"
 
-#: pulse.c:1894
+#: pulse.c:1938
 msgid "Pulse authentication cookie not accepted\n"
 msgstr "Piškotek za preverjanje pristnosti Pulse ni sprejet\n"
 
-#: pulse.c:1900
+#: pulse.c:1944
 msgid "Pulse realm entry\n"
 msgstr "Vnos območja Pulse\n"
 
-#: pulse.c:1906
+#: pulse.c:1950
 msgid "Pulse realm choice\n"
 msgstr "Izbira območja Pulse\n"
 
-#: pulse.c:1912
+#: pulse.c:1956
 msgid "Pulse region choice\n"
 msgstr "Izbira območja Impulse\n"
 
-#: pulse.c:1919
+#: pulse.c:1963
 #, c-format
 msgid "Pulse password auth request, code 0x%02x\n"
 msgstr "Zahteva za overitev gesla Pulse, koda 0x%02x\n"
 
-#: pulse.c:1932
+#: pulse.c:1976
 #, c-format
 msgid "Pulse password request with unknown code 0x%02x. Please report.\n"
 msgstr "Zahteva za geslo Pulse z neznano kodo 0x%02x. Prosimo, poročajte.\n"
 
-#: pulse.c:1941
+#: pulse.c:1985
 msgid "Pulse password general token code request\n"
 msgstr "Zahteva za splošno kodo žetona za geslo Pulse\n"
 
-#: pulse.c:1952
+#: pulse.c:1996
 #, c-format
 msgid "Pulse session limit, %d sessions\n"
 msgstr "Omejitev seje Pulse, %d sej\n"
 
-#: pulse.c:1961
+#: pulse.c:2005
 msgid "Unhandled Pulse auth request\n"
 msgstr "Neobravnavana zahteva za preverjanje pristnosti Pulse\n"
 
-#: pulse.c:1998
+#: pulse.c:2042
 msgid "Unexpected response instead of IF-T/TLS auth success:\n"
 msgstr "Nepričakovan odziv namesto uspeha overitve IF-T/TLS:\n"
 
-#: pulse.c:2061
+#: pulse.c:2105
 msgid "EAP-TTLS failure: Flushing output with pending input bytes\n"
 msgstr "Napaka EAP-TTLS: Izpiranje izhoda s čakajočimi vhodnimi bajti\n"
 
-#: pulse.c:2084
+#: pulse.c:2128
 msgid "Error creating EAP-TTLS buffer\n"
 msgstr "Napaka pri ustvarjanju medpomnilnika EAP-TTLS\n"
 
-#: pulse.c:2133
+#: pulse.c:2177
 #, c-format
 msgid "Failed to read EAP-TTLS Acknowledge: %s\n"
 msgstr "Ni bilo mogoče prebrati potrditve EAP-TTLS: %s\n"
 
-#: pulse.c:2141 pulse.c:2183
+#: pulse.c:2185 pulse.c:2227
 #, c-format
 msgid "Read %d bytes of IF-T/TLS EAP-TTLS record\n"
 msgstr "Prebranih %d bajtov zapisa IF-T/TLS EAP-TTLS\n"
 
-#: pulse.c:2152
+#: pulse.c:2196
 msgid "Bad EAP-TTLS Acknowledge packet\n"
 msgstr "Slab paket potrditve EAP-TTLS (Acknowledge)\n"
 
-#: pulse.c:2194
+#: pulse.c:2238
 #, c-format
 msgid "Bad EAP-TTLS packet (len %d, left %d)\n"
 msgstr "Slab paket EAP-TTLS (dolž %d, preost %d)\n"
 
-#: pulse.c:2380
+#: pulse.c:2424
 msgid "Unexpected Pulse config packet:\n"
 msgstr "Nepričakovani paket prilagoditve Pulse:\n"
 
-#: pulse.c:2417
+#: pulse.c:2461
 msgid "Processing Pulse main config packet for server version >= 9.1R14\n"
 msgstr ""
 "Obdelava glavnega paketa prilagoditve Pulse za različico strežnika >= "
 "9.1R14\n"
 
-#: pulse.c:2429
+#: pulse.c:2473
 msgid "attr_flag 0x2c00: known for Pulse version >= 9.1R14\n"
 msgstr "attr_flag 0x2c00: znan po različici Pulse >= 9,1R14\n"
 
-#: pulse.c:2433
+#: pulse.c:2477
 msgid "attr_flag 0x2e00: known for Pulse version >= 9.1R16\n"
 msgstr "attr_flag 0x2e00: znan po različici Pulse >= 9,1R16\n"
 
-#: pulse.c:2437
+#: pulse.c:2481
 #, c-format
 msgid "attr_flag 0x%04x: unknown Pulse version. Please report to <%s>\n"
 msgstr ""
 "attr_flag 0x%04x: neznana različica Pulse. Prosimo, da poročate na <%s>\n"
 
-#: pulse.c:2452
+#: pulse.c:2496
 #, c-format
 msgid "If any of the above attributes are meaningful, please report to <%s>\n"
 msgstr "Če je kateri od zgornjih atributov smiseln, to sporočite <%s>\n"
 
-#: pulse.c:2457
+#: pulse.c:2501
 msgid "Processing Pulse main config packet for server version < 9.1R14\n"
 msgstr ""
 "Obdelava glavnega paketa prilagoditve Pulse za različico strežnika < 9.1R14\n"
 
-#: pulse.c:2525
+#: pulse.c:2569
 #, c-format
 msgid "Receive route of unknown type 0x%08x\n"
 msgstr "Prejmite pot neznanega tipa 0x%08x\n"
 
-#: pulse.c:2579
+#: pulse.c:2624
 msgid "Processing Pulse ESP config packet\n"
 msgstr "Obdelava paketa prilagoditve Pulse ESP\n"
 
-#: pulse.c:2585
+#: pulse.c:2630
 msgid "Invalid ESP config packet:\n"
 msgstr "Neveljaven paket prilagoditev ESP:\n"
 
-#: pulse.c:2597
+#: pulse.c:2642
 msgid "Invalid ESP setup\n"
 msgstr "Neveljavna nastavitev ESP\n"
 
-#: pulse.c:2683
+#: pulse.c:2733
 msgid "Short IF-T/TLS packet when expecting configuration:\n"
 msgstr "Kratek paket IF-T/TLS pri pričakovanju prilagoditev:\n"
 
-#: pulse.c:2691
+#: pulse.c:2741
 msgid "Unexpected IF-T/TLS packet when expecting configuration: wrong vendor\n"
 msgstr ""
 "Nepričakovan paket IF-T/TLS pri pričakovanju konfiguracije: napačen "
 "proizvajalec\n"
 
-#: pulse.c:2700
+#: pulse.c:2750
 #, c-format
 msgid ""
 "Unreasonably large IF-T/TLS packet (%u > 1 MiB) when expecting configuration"
 msgstr ""
 "Nerazumno velik paket IF-T/TLS (%u > 1 MiB) pri pričakovani konfiguraciji"
 
-#: pulse.c:2727 pulse.c:2732 pulse.c:2739 pulse.c:2744 pulse.c:2783
+#: pulse.c:2777 pulse.c:2782 pulse.c:2789 pulse.c:2794 pulse.c:2832
 #, c-format
 msgid "Unexpected Pulse configuration packet: %s\n"
 msgstr "Nepričakovani prilagoditveni paket Pulse: %s\n"
 
-#: pulse.c:2728
+#: pulse.c:2778
 msgid "wrong type field (!= 1)"
 msgstr "polje napačnega vrste (!= 1)"
 
-#: pulse.c:2733
+#: pulse.c:2783
 msgid "too short"
 msgstr "prekratko"
 
-#: pulse.c:2740
+#: pulse.c:2790
 msgid "non-zero values at offsets 0x10, 0x14, 0x18, 0x1c, or 0x24"
 msgstr "neničelne vrednosti pri odmikih 0x10, 0x14, 0x18, 0x1c ali 0x24"
 
-#: pulse.c:2745
+#: pulse.c:2795
 msgid "length at offset 0x28 != packet length - 0x10"
 msgstr "dolžina na odmiku 0x28 != dolžina paketa - 0x10"
 
-#: pulse.c:2784
+#: pulse.c:2833
 msgid "identifier at offset 0x20 is unknown"
 msgstr "Identifikator ob odmiku 0x20 ni znan"
 
-#: pulse.c:2791
+#: pulse.c:2840
 msgid "Insufficient configuration found\n"
 msgstr "Najdena je nezadostna prilagoditev\n"
 
-#: pulse.c:2916
+#: pulse.c:2983
 msgid "ESP rekey failed\n"
 msgstr "Ponovno uporaba ključa ESP je spodletela\n"
 
-#: pulse.c:2945
+#: pulse.c:3008
 #, c-format
 msgid "Pulse fatal error (reason: %ld): %s\n"
 msgstr "Usodna napaka Pulse (razlog: %ld): %s\n"
 
-#: pulse.c:2963
+#: pulse.c:3026
 #, c-format
 msgid ""
 "Unknown Pulse packet of %d bytes (vendor 0x%03x, type 0x%02x, hdr_len %d, "
@@ -6609,7 +6614,7 @@ msgstr ""
 "Neznani paket Pulse %d bajtov (prodajalec 0x%03x, vrsta 0x%02x, hdr_len %d, "
 "ident %d)\n"
 
-#: pulse.c:3143
+#: pulse.c:3206
 #, c-format
 msgid "Sending IF-T/TLS data packet of %d bytes\n"
 msgstr "Pošiljanje paketa podatkov IF-T/TLS velikosti %d bajtov\n"
