@@ -2719,8 +2719,10 @@ int pulse_connect(struct openconnect_info *vpninfo)
 		bytes = malloc(config_len);
 
 		for (int ii = 0; ii < config_len; ii += ret) {
-			if (!bytes)
-				return -ENOMEM;
+			if (!bytes) {
+				ret = -ENOMEM;
+				goto out;
+			}
 
 			ret = recv_ift_packet(vpninfo, bytes + ii, MAX(config_len - ii, TLS_RECORD_MAX));
 			if (ret < 0)
