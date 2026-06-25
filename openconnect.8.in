@@ -57,6 +57,7 @@ openconnect \- Multi-protocol VPN client, for Cisco AnyConnect VPNs and others
 .OP \-\-pfs
 .OP \-\-no\-dtls
 .OP \-\-no\-http\-keepalive
+.OP \-\-tcp\-keepalive interval
 .OP \-\-no\-passwd
 .OP \-\-no\-xmlpost
 .OP \-\-non\-inter
@@ -111,7 +112,9 @@ may be disabled with
 but is preferred when correctly supported by the server and network
 for performance reasons. (TCP performs poorly and unreliably over
 TCP-based tunnels; see
-.IR https://web.archive.org/web/20230228035749/https://sites.inka.de/~W1011/devel/tcp-tcp.html .)
+.UR https://web.archive.org/web/20230228035749/https://sites.inka.de/~W1011/devel/tcp-tcp.html
+tcp-tcp.html
+.UE .)
 
 .SH OPTIONS
 .TAG opt-config
@@ -632,6 +635,15 @@ setting.
 .B \-\-no\-dtls
 Disable DTLS and ESP
 .TAG opt-no-http-keepalive
+.TAG opt-tcp-keepalive
+.TP
+.B \-\-tcp\-keepalive\fR[=\fIINTERVAL\fR]
+Enable TCP keepalive on the TLS connection. This prevents stateful
+firewalls from dropping the idle TCP session when traffic is being
+carried over DTLS/ESP. If
+.I INTERVAL
+is specified, it sets the keepalive idle time in seconds; otherwise the
+system default is used.
 .TP
 .B \-\-no\-http\-keepalive
 Version 8.2.2.5 of the Cisco ASA software has a bug where it will forget
