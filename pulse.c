@@ -2819,21 +2819,21 @@ int pulse_connect(struct openconnect_info *vpninfo)
 			break;
 
 		case 0x21202400:
-			ret = handle_esp_config_packet(vpninfo, bytes, config_len, reqbuf);
-			if (ret) {
-				vpninfo->dtls_state = DTLS_DISABLED;
-				continue;
-			}
+			if (vpninfo->dtls_state != DTLS_DISABLED &&
+			    !handle_esp_config_packet(vpninfo, bytes, config_len, reqbuf)) {
 
-			/* Send the ESP response */
-			ret = send_ift_packet(vpninfo, reqbuf);
-			if (ret)
-				goto out;
+				/* Send the ESP response */
+				ret = send_ift_packet(vpninfo, reqbuf);
+				if (ret)
+					goto out;
+			} else {
+				vpninfo->dtls_state = DTLS_DISABLED;
+			}
 
 			/* Tell server to enable ESP handling */
 			buf_truncate(reqbuf);
 			buf_append_ift_hdr(reqbuf, VENDOR_JUNIPER, 5);
-			buf_append(reqbuf, "ncmo=1\n%c", 0);
+			buf_append(reqbuf, "ncmo=%d\n%c", vpninfo->dtls_state != DTLS_DISABLED, 0);
 			ret = send_ift_packet(vpninfo, reqbuf);
 			if (ret)
 				goto out;
