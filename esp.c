@@ -356,6 +356,8 @@ int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		break;
 
 	case KA_NONE:
+		vpn_progress(vpninfo, PRG_DEBUG, "No keepalive action. now %ld last_rx %ld last_dpd %ld dpd %d",
+			     time(NULL), vpninfo->dtls_times.last_rx, vpninfo->dtls_times.last_dpd, vpninfo->dtls_times.dpd);
 		break;
 	}
 	while (1) {
