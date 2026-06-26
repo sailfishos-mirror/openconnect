@@ -48,6 +48,15 @@ Changelog:
     else
       BASE=HEAD~1
     fi
+    # Ensure the base commit is available
+    if ! git rev-parse --verify "$BASE" >/dev/null 2>&1; then
+      git fetch origin "$BASE" --depth=1 2>/dev/null || true
+    fi
+    if ! git rev-parse --verify "$BASE" >/dev/null 2>&1; then
+      echo "Base commit $BASE not available; skipping check"
+      exit 0
+    fi
+    echo "Changelog check: BASE=$BASE"
     # Check if changelog was modified
     if ! git diff "$BASE"..HEAD --name-only | grep -q 'www/changelog.xml'; then
       echo "WARNING: No changelog entry. Please consider adding one to the OpenConnect HEAD section of www/changelog.xml."
