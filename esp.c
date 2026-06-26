@@ -93,6 +93,8 @@ int esp_setup(struct openconnect_info *vpninfo)
 	print_esp_keys(vpninfo, _("incoming"), &vpninfo->esp_in[vpninfo->current_esp_in]);
 	print_esp_keys(vpninfo, _("outgoing"), &vpninfo->esp_out);
 
+	vpninfo->new_dtls_started = time(NULL);
+
 	vpn_progress(vpninfo, PRG_DEBUG, _("Send ESP probes\n"));
 	if (vpninfo->proto->udp_send_probes)
 		vpninfo->proto->udp_send_probes(vpninfo);
