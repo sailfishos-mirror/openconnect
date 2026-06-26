@@ -299,6 +299,15 @@ int esp_mainloop(struct openconnect_info *vpninfo, int *timeout, int readable)
 		    ka_check_deadline(timeout, now, vpninfo->dtls_times.last_tx + 1)) {
 			/* Send repeat probe */
 			vpninfo->udp_probes_sent++;
+		} else if (vpninfo->esp_ssl_fallback &&
+			   ka_check_deadline(timeout, now, vpninfo->new_dtls_started +
+					     vpninfo->esp_ssl_fallback)) {
+			/* ESP probes have failed for longer than the server's
+			 * specified fallback timeout. Give up on ESP. */
+			vpn_progress(vpninfo, PRG_INFO,
+				     _("ESP failed to establish after %d seconds; falling back to TLS\n"),
+				     vpninfo->esp_ssl_fallback);
+			goto need_reconnect;
 		} else if (vpninfo->dtls_need_reconnect ||
 			   ka_check_deadline(timeout, now, vpninfo->new_dtls_started +
 					     vpninfo->dtls_attempt_period)) {

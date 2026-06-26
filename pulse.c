@@ -2889,6 +2889,8 @@ void pulse_esp_close(struct openconnect_info *vpninfo)
 	}
 
 	esp_close(vpninfo);
+	/* Pulse cannot re-establish ESP mid-session */
+	vpninfo->dtls_state = DTLS_DISABLED;
 }
 #endif
 
