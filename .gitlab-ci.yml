@@ -171,9 +171,9 @@ Fedora/OpenSSL:
 # For reasons that are unclear, GitLab disables IPv6 in CI runners, and this will
 # cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
   - sysctl -w net.ipv6.conf.all.disable_ipv6=0
-  script:
 # Re-enable DSA since we test it
   - update-crypto-policies --set LEGACY
+  script:
   - ./autogen.sh
   - ./configure --without-gnutls --with-openssl --without-openssl-version-check --disable-dsa-tests --enable-ppp-tests CFLAGS=-g
   - make tmp-distdir
@@ -358,9 +358,9 @@ CentOS9/OpenSSL:
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
-# ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
 # obsolete-server-crypto: unknown why the legacy openssl provider is not sufficient
-  - make VERBOSE=1 XFAIL_TESTS="auth-nonascii ppp-over-tls-sync obsolete-server-crypto" -j4 check
+# ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
+  - make VERBOSE=1 XFAIL_TESTS="auth-nonascii obsolete-server-crypto ppp-over-tls-sync" -j4 check
   tags:
   - saas-linux-small-amd64
   except:
@@ -374,11 +374,13 @@ CentOS9/OpenSSL:
 
 CentOS10/GnuTLS:
   stage: test-rest
-  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$CENTOS9_BUILD
+  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$CENTOS10_BUILD
   before_script:
 # For reasons that are unclear, GitLab disables IPv6 in CI runners, and this will
 # cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
   - sysctl -w net.ipv6.conf.all.disable_ipv6=0
+# Re-enable DSA since we test it
+  - update-crypto-policies --set LEGACY
   script:
   - ./autogen.sh
   - ./configure --with-java --without-gnutls-version-check --disable-dsa-tests --enable-ppp-tests CFLAGS=-g
@@ -386,8 +388,9 @@ CentOS10/GnuTLS:
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
+# obsolete-server-crypto: unknown why the legacy openssl provider is not sufficient
 # ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
-  - make VERBOSE=1 XFAIL_TESTS="auth-nonascii ppp-over-tls-sync" -j4 check
+  - make VERBOSE=1 XFAIL_TESTS="auth-nonascii obsolete-server-crypto ppp-over-tls-sync" -j4 check
   tags:
   - saas-linux-small-amd64
   except:
@@ -401,11 +404,13 @@ CentOS10/GnuTLS:
 
 CentOS10/OpenSSL:
   stage: test-rest
-  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$CENTOS9_BUILD
+  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$CENTOS10_BUILD
   before_script:
 # For reasons that are unclear, GitLab disables IPv6 in CI runners, and this will
 # cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
   - sysctl -w net.ipv6.conf.all.disable_ipv6=0
+# Re-enable DSA since we test it
+  - update-crypto-policies --set LEGACY
   script:
   - ./autogen.sh
   - ./configure --without-gnutls --with-openssl --with-java --without-openssl-version-check --disable-dsa-tests --enable-ppp-tests CFLAGS=-g
@@ -413,9 +418,9 @@ CentOS10/OpenSSL:
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
-# ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
 # obsolete-server-crypto: unknown why the legacy openssl provider is not sufficient
-  - make VERBOSE=1 XFAIL_TESTS="auth-nonascii ppp-over-tls-sync obsolete-server-crypto" -j4 check
+# ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
+  - make VERBOSE=1 XFAIL_TESTS="auth-nonascii obsolete-server-crypto ppp-over-tls-sync" -j4 check
   tags:
   - saas-linux-small-amd64
   except:
@@ -444,8 +449,9 @@ Fedora/GnuTLS/ibmtss:
   - make -j4
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
+# obsolete-server-crypto: unknown why the legacy openssl provider is not sufficient
 # ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
-  - make VERBOSE=1 XFAIL_TESTS="ppp-over-tls-sync" -j4 check
+  - make VERBOSE=1 XFAIL_TESTS="obsolete-server-crypto ppp-over-tls-sync" -j4 check
   tags:
   - saas-linux-small-amd64
   except:
@@ -578,7 +584,7 @@ Ubuntu18.04/OpenSSL:
 
 Ubuntu26.04/GnuTLS:
   stage: test-rest
-  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$UBUNTU18_BUILD
+  image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$UBUNTU26_BUILD
   before_script:
 # For reasons that are unclear, GitLab disables IPv6 in CI runners, and this will
 # cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
@@ -590,8 +596,9 @@ Ubuntu26.04/GnuTLS:
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
+# obsolete-server-crypto: obsolete crypto has been removed from LEGACY crypto policies
 # ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
-  - make VERBOSE=1 XFAIL_TESTS="auth-nonascii ppp-over-tls-sync" -j4 check
+  - make VERBOSE=1 XFAIL_TESTS="auth-nonascii obsolete-server-crypto ppp-over-tls-sync" -j4 check
   tags:
   - saas-linux-small-amd64
   except:

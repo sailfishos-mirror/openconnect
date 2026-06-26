@@ -34,6 +34,20 @@ PID=$!
 wait_server $PID
 
 for KEY in ${key_list}; do
+    # Test if OpenSSL can use this key
+    openssl pkey -in "$KEY" -text -noout -provider legacy >/dev/null 2>&1 || \
+    openssl pkey -in "$KEY" -text -noout >/dev/null 2>&1 || {
+        echo "Skipping key ${KEY##*/} unsupported by OpenSSL"
+        continue
+    }
+
+    # Test if GnuTLS can use this key
+    certtool --key-info --infile "$KEY" --sec-param=legacy >/dev/null 2>&1 || \
+    certtool --key-info --infile "$KEY" >/dev/null 2>&1 || {
+        echo "Skipping key ${KEY##*/} unsupported by GnuTLS"
+        continue
+    }
+
     echo -n "Connecting to obtain cookie (with key ${KEY##*/})... "
     if [ "${KEY%%.p12}" != "${KEY}" ]; then
 	CERTARGS="-c ${KEY} --key-password password"
