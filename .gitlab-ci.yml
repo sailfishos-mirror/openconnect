@@ -33,6 +33,54 @@ Signoff:
   - 'git log ceab1765db11c15a18a0c605812dbc11afd63e8b.. --grep "(^Signed-off-by)|(^Merge branch)|(^This reverts commit)" --extended-regexp --invert-grep --exit-code'
   - echo "None (good)"
 
+Changelog:
+  stage: signoff
+  allow_failure:
+    exit_codes: 1
+  script:
+  - 'echo "Checking changelog entries"'
+  - |
+    # Determine the base to diff against
+    if [ -n "$CI_MERGE_REQUEST_DIFF_BASE_SHA" ]; then
+      BASE=$CI_MERGE_REQUEST_DIFF_BASE_SHA
+    elif [ -n "$CI_COMMIT_DEFAULT_BRANCH_BASE_SHA" ]; then
+      BASE=$CI_COMMIT_DEFAULT_BRANCH_BASE_SHA
+    else
+      BASE=HEAD~1
+    fi
+    # Check if changelog was modified
+    if ! git diff "$BASE"..HEAD --name-only | grep -q 'www/changelog.xml'; then
+      echo "WARNING: No changelog entry. Please consider adding one to the OpenConnect HEAD section of www/changelog.xml."
+      exit 1
+    fi
+    # Find the line number of the first released version (not HEAD)
+    released=$(grep -n '<b><a href=' www/changelog.xml | head -1 | cut -d: -f1)
+    if [ -z "$released" ]; then
+      echo "Could not find released version marker in changelog.xml"
+      exit 0
+    fi
+    # Use git diff with line numbers to check placement
+    rc=0
+    git diff "$BASE"..HEAD -U0 -- www/changelog.xml | \
+      awk -v rel="$released" '
+        /^@@/ { split($3, a, /[+,]/); lineno = a[2]; next }
+        /^\+[^+]/ {
+          if (lineno >= rel) {
+            print "ERROR: Changelog entry at line " lineno " is in a released version section."
+            print "       Move it to the OpenConnect HEAD section at the top of www/changelog.xml."
+            print "       Line: " $0
+            err=1
+          }
+          lineno++
+        }
+        /^[^+-]/ { lineno++ }
+        END { exit err ? 1 : 0 }
+      ' || rc=$?
+    if [ "$rc" -ne 0 ]; then
+      exit 2
+    fi
+  - echo "Changelog entries are in the correct section (good)"
+
 ################################################################################
 # static-analysis
 ################################################################################
