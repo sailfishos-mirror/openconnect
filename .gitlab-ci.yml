@@ -136,6 +136,10 @@ static-analyzer/OpenSSL/Fedora:
 
 Fedora/GnuTLS:
   stage: test-first
+  before_script:
+# For reasons that are unclear, GitLab disables IPv6 in CI runners, and this will
+# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
+  - sysctl -w net.ipv6.conf.all.disable_ipv6=0
   script:
   - ./autogen.sh
   - ./configure --with-java --disable-dsa-tests --without-gnutls-version-check --enable-ppp-tests CFLAGS=-g
@@ -145,10 +149,6 @@ Fedora/GnuTLS:
   - TMPDISTDIR=../openconnect-$(git describe --tags | sed s/^v//)
   - ${TMPDISTDIR}/configure --with-java --disable-dsa-tests --without-gnutls-version-check --enable-ppp-tests CFLAGS=-g
   - make -j4
-# For reasons that are unclear, but probably also unimportant, IPv6 is disabled by default on this CI
-# image (verified in https://gitlab.com/openconnect/openconnect/-/jobs/1135199323#L335), and this will
-# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
-  - sysctl net.ipv6.conf.all.disable_ipv6=0
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
 # ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
@@ -167,6 +167,10 @@ Fedora/GnuTLS:
 Fedora/OpenSSL:
   stage: test-first
   image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$FEDORA_BUILD
+  before_script:
+# For reasons that are unclear, GitLab disables IPv6 in CI runners, and this will
+# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
+  - sysctl -w net.ipv6.conf.all.disable_ipv6=0
   script:
 # Re-enable DSA since we test it
   - update-crypto-policies --set LEGACY
@@ -178,10 +182,6 @@ Fedora/OpenSSL:
   - TMPDISTDIR=../openconnect-$(git describe --tags | sed s/^v//)
   - ${TMPDISTDIR}/configure --without-gnutls --with-openssl --without-openssl-version-check --disable-dsa-tests --enable-ppp-tests CFLAGS=-g
   - make -j4
-# For reasons that are unclear, but probably also unimportant, IPv6 is disabled by default on this CI
-# image (verified in https://gitlab.com/openconnect/openconnect/-/jobs/1135199323#L335), and this will
-# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
-  - sysctl net.ipv6.conf.all.disable_ipv6=0
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
 # auth-swtpm: XFAIL until we understand the TPM error
@@ -206,17 +206,17 @@ Fedora/OpenSSL:
 CentOS7/GnuTLS:
   stage: test-rest
   image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$CENTOS7_BUILD
+  before_script:
+# For reasons that are unclear, GitLab disables IPv6 in CI runners, and this will
+# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
+  - sysctl -w net.ipv6.conf.all.disable_ipv6=0
   script:
   - ./autogen.sh
-# For reasons that are not clear, OpenConnect fails to handshake a TLS connection to Python 3.6+Flask
+# For reasons that are unclear, OpenConnect fails to handshake a TLS connection to Python 3.6+Flask
 # (verified in https://gitlab.com/openconnect/openconnect/-/jobs/1135245618#L520), so we disable the
 # Flask-based authentication tests.
   - ./configure --with-java --enable-ppp-tests --disable-flask-tests CFLAGS=-g
   - make -j4
-# For reasons that are unclear, but probably also unimportant, IPv6 is disabled by default on this CI
-# image (verified in https://gitlab.com/openconnect/openconnect/-/jobs/1135199323#L335), and this will
-# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
-  - sysctl net.ipv6.conf.all.disable_ipv6=0
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
@@ -236,17 +236,17 @@ CentOS7/GnuTLS:
 CentOS7/OpenSSL:
   stage: test-rest
   image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$CENTOS7_BUILD
+  before_script:
+# For reasons that are unclear, GitLab disables IPv6 in CI runners, and this will
+# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
+  - sysctl -w net.ipv6.conf.all.disable_ipv6=0
   script:
   - ./autogen.sh
-# For reasons that are not clear, OpenConnect fails to handshake a TLS connection to Python 3.6+Flask
+# For reasons that are unclear, OpenConnect fails to handshake a TLS connection to Python 3.6+Flask
 # (verified in https://gitlab.com/openconnect/openconnect/-/jobs/1135245618#L520), so we disable the
 # Flask-based authentication tests.
   - ./configure --without-gnutls --with-openssl --with-java --without-openssl-version-check --enable-dtls-xfail --disable-dsa-tests --enable-ppp-tests --disable-flask-tests CFLAGS=-g
   - make -j4
-# For reasons that are unclear, but probably also unimportant, IPv6 is disabled by default on this CI
-# image (verified in https://gitlab.com/openconnect/openconnect/-/jobs/1135199323#L335), and this will
-# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
-  - sysctl net.ipv6.conf.all.disable_ipv6=0
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
@@ -266,14 +266,14 @@ CentOS7/OpenSSL:
 CentOS8/GnuTLS:
   stage: test-rest
   image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$CENTOS8_BUILD
+  before_script:
+# For reasons that are unclear, GitLab disables IPv6 in CI runners, and this will
+# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
+  - sysctl -w net.ipv6.conf.all.disable_ipv6=0
   script:
   - ./autogen.sh
   - ./configure --with-java --without-gnutls-version-check --disable-dsa-tests --enable-ppp-tests CFLAGS=-g
   - make -j4
-# For reasons that are unclear, but probably also unimportant, IPv6 is disabled by default on this CI
-# image (verified in https://gitlab.com/openconnect/openconnect/-/jobs/1135199323#L335), and this will
-# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
-  - sysctl net.ipv6.conf.all.disable_ipv6=0
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
@@ -293,14 +293,14 @@ CentOS8/GnuTLS:
 CentOS8/OpenSSL:
   stage: test-rest
   image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$CENTOS8_BUILD
+  before_script:
+# For reasons that are unclear, GitLab disables IPv6 in CI runners, and this will
+# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
+  - sysctl -w net.ipv6.conf.all.disable_ipv6=0
   script:
   - ./autogen.sh
   - ./configure --without-gnutls --with-openssl --with-java --without-openssl-version-check --disable-dsa-tests --enable-ppp-tests CFLAGS=-g
   - make -j4
-# For reasons that are unclear, but probably also unimportant, IPv6 is disabled by default on this CI
-# image (verified in https://gitlab.com/openconnect/openconnect/-/jobs/1135199323#L335), and this will
-# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
-  - sysctl net.ipv6.conf.all.disable_ipv6=0
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
@@ -320,14 +320,14 @@ CentOS8/OpenSSL:
 CentOS9/GnuTLS:
   stage: test-rest
   image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$CENTOS9_BUILD
+  before_script:
+# For reasons that are unclear, GitLab disables IPv6 in CI runners, and this will
+# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
+  - sysctl -w net.ipv6.conf.all.disable_ipv6=0
   script:
   - ./autogen.sh
   - ./configure --with-java --without-gnutls-version-check --disable-dsa-tests --enable-ppp-tests CFLAGS=-g
   - make -j4
-# For reasons that are unclear, but probably also unimportant, IPv6 is disabled by default on this CI
-# image (verified in https://gitlab.com/openconnect/openconnect/-/jobs/1135199323#L335), and this will
-# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
-  - sysctl net.ipv6.conf.all.disable_ipv6=0
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
@@ -347,14 +347,14 @@ CentOS9/GnuTLS:
 CentOS9/OpenSSL:
   stage: test-rest
   image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$CENTOS9_BUILD
+  before_script:
+# For reasons that are unclear, GitLab disables IPv6 in CI runners, and this will
+# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
+  - sysctl -w net.ipv6.conf.all.disable_ipv6=0
   script:
   - ./autogen.sh
   - ./configure --without-gnutls --with-openssl --with-java --without-openssl-version-check --disable-dsa-tests --enable-ppp-tests CFLAGS=-g
   - make -j4
-# For reasons that are unclear, but probably also unimportant, IPv6 is disabled by default on this CI
-# image (verified in https://gitlab.com/openconnect/openconnect/-/jobs/1135199323#L335), and this will
-# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
-  - sysctl net.ipv6.conf.all.disable_ipv6=0
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
@@ -375,14 +375,14 @@ CentOS9/OpenSSL:
 CentOS10/GnuTLS:
   stage: test-rest
   image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$CENTOS9_BUILD
+  before_script:
+# For reasons that are unclear, GitLab disables IPv6 in CI runners, and this will
+# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
+  - sysctl -w net.ipv6.conf.all.disable_ipv6=0
   script:
   - ./autogen.sh
   - ./configure --with-java --without-gnutls-version-check --disable-dsa-tests --enable-ppp-tests CFLAGS=-g
   - make -j4
-# For reasons that are unclear, but probably also unimportant, IPv6 is disabled by default on this CI
-# image (verified in https://gitlab.com/openconnect/openconnect/-/jobs/1135199323#L335), and this will
-# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
-  - sysctl net.ipv6.conf.all.disable_ipv6=0
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
@@ -402,14 +402,14 @@ CentOS10/GnuTLS:
 CentOS10/OpenSSL:
   stage: test-rest
   image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$CENTOS9_BUILD
+  before_script:
+# For reasons that are unclear, GitLab disables IPv6 in CI runners, and this will
+# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
+  - sysctl -w net.ipv6.conf.all.disable_ipv6=0
   script:
   - ./autogen.sh
   - ./configure --without-gnutls --with-openssl --with-java --without-openssl-version-check --disable-dsa-tests --enable-ppp-tests CFLAGS=-g
   - make -j4
-# For reasons that are unclear, but probably also unimportant, IPv6 is disabled by default on this CI
-# image (verified in https://gitlab.com/openconnect/openconnect/-/jobs/1135199323#L335), and this will
-# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
-  - sysctl net.ipv6.conf.all.disable_ipv6=0
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
@@ -429,6 +429,10 @@ CentOS10/OpenSSL:
 
 Fedora/GnuTLS/ibmtss:
   stage: test-rest
+  before_script:
+# For reasons that are unclear, GitLab disables IPv6 in CI runners, and this will
+# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
+  - sysctl -w net.ipv6.conf.all.disable_ipv6=0
   script:
   - ./autogen.sh
   - ./configure --with-java --disable-dsa-tests --without-gnutls-version-check --enable-ppp-tests CFLAGS=-g
@@ -438,10 +442,6 @@ Fedora/GnuTLS/ibmtss:
   - TMPDISTDIR=../openconnect-$(git describe --tags | sed s/^v//)
   - ${TMPDISTDIR}/configure --with-java --disable-dsa-tests --without-gnutls-version-check --enable-ppp-tests --with-gnutls-tss2=ibmtss CFLAGS=-g
   - make -j4
-# For reasons that are unclear, but probably also unimportant, IPv6 is disabled by default on this CI
-# image (verified in https://gitlab.com/openconnect/openconnect/-/jobs/1135199323#L335), and this will
-# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
-  - sysctl net.ipv6.conf.all.disable_ipv6=0
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
 # ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
@@ -459,6 +459,10 @@ Fedora/GnuTLS/ibmtss:
 
 Fedora/GnuTLS/clang:
   stage: test-rest
+  before_script:
+# For reasons that are unclear, GitLab disables IPv6 in CI runners, and this will
+# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
+  - sysctl -w net.ipv6.conf.all.disable_ipv6=0
   script:
   - ./autogen.sh
   - ./configure --with-java --disable-dsa-tests --without-gnutls-version-check CC=clang --enable-ppp-tests CFLAGS=-g
@@ -468,10 +472,6 @@ Fedora/GnuTLS/clang:
   - TMPDISTDIR=../openconnect-$(git describe --tags | sed s/^v//)
   - ${TMPDISTDIR}/configure --with-java --disable-dsa-tests --without-gnutls-version-check CC=clang --enable-ppp-tests CFLAGS=-g
   - make -j4
-# For reasons that are unclear, but probably also unimportant, IPv6 is disabled by default on this CI
-# image (verified in https://gitlab.com/openconnect/openconnect/-/jobs/1135199323#L335), and this will
-# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
-  - sysctl net.ipv6.conf.all.disable_ipv6=0
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
 # ppp-over-tls-sync: https://gitlab.com/openconnect/openconnect/-/issues/287#note_641198529)
@@ -490,6 +490,10 @@ Fedora/GnuTLS/clang:
 Fedora/OpenSSL/clang:
   stage: test-rest
   image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$FEDORA_BUILD
+  before_script:
+# For reasons that are unclear, GitLab disables IPv6 in CI runners, and this will
+# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
+  - sysctl -w net.ipv6.conf.all.disable_ipv6=0
   script:
 # Re-enable DSA since we test it
   - update-crypto-policies --set LEGACY
@@ -501,10 +505,6 @@ Fedora/OpenSSL/clang:
   - TMPDISTDIR=../openconnect-$(git describe --tags | sed s/^v//)
   - ${TMPDISTDIR}/configure CC=clang --without-gnutls --with-openssl --without-openssl-version-check --disable-dsa-tests --enable-ppp-tests CFLAGS=-g
   - make -j4
-# For reasons that are unclear, but probably also unimportant, IPv6 is disabled by default on this CI
-# image (verified in https://gitlab.com/openconnect/openconnect/-/jobs/1135199323#L335), and this will
-# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
-  - sysctl net.ipv6.conf.all.disable_ipv6=0
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
 # auth-swtpm: XFAIL until we understand the TPM error
@@ -525,14 +525,14 @@ Fedora/OpenSSL/clang:
 Ubuntu18.04/GnuTLS:
   stage: test-rest
   image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$UBUNTU18_BUILD
+  before_script:
+# For reasons that are unclear, GitLab disables IPv6 in CI runners, and this will
+# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
+  - sysctl -w net.ipv6.conf.all.disable_ipv6=0
   script:
   - ./autogen.sh
   - ./configure --with-java --enable-ppp-tests CFLAGS=-g
   - make -j4
-# For reasons that are unclear, but probably also unimportant, IPv6 is disabled by default on this CI
-# image (verified in https://gitlab.com/openconnect/openconnect/-/jobs/1135199323#L335), and this will
-# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
-  - sysctl net.ipv6.conf.all.disable_ipv6=0
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
@@ -551,14 +551,14 @@ Ubuntu18.04/GnuTLS:
 Ubuntu18.04/OpenSSL:
   stage: test-rest
   image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$UBUNTU18_BUILD
+  before_script:
+# For reasons that are unclear, GitLab disables IPv6 in CI runners, and this will
+# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
+  - sysctl -w net.ipv6.conf.all.disable_ipv6=0
   script:
   - ./autogen.sh
   - ./configure --without-gnutls --with-openssl --with-java --without-openssl-version-check --disable-dsa-tests --enable-ppp-tests CFLAGS=-g
   - make -j4
-# For reasons that are unclear, but probably also unimportant, IPv6 is disabled by default on this CI
-# image (verified in https://gitlab.com/openconnect/openconnect/-/jobs/1135199323#L335), and this will
-# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
-  - sysctl net.ipv6.conf.all.disable_ipv6=0
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
@@ -579,14 +579,14 @@ Ubuntu18.04/OpenSSL:
 Ubuntu26.04/GnuTLS:
   stage: test-rest
   image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$UBUNTU18_BUILD
+  before_script:
+# For reasons that are unclear, GitLab disables IPv6 in CI runners, and this will
+# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
+  - sysctl -w net.ipv6.conf.all.disable_ipv6=0
   script:
   - ./autogen.sh
   - ./configure --with-java --enable-ppp-tests CFLAGS=-g
   - make -j4
-# For reasons that are unclear, but probably also unimportant, IPv6 is disabled by default on this CI
-# image (verified in https://gitlab.com/openconnect/openconnect/-/jobs/1135199323#L335), and this will
-# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
-  - sysctl net.ipv6.conf.all.disable_ipv6=0
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
@@ -605,14 +605,14 @@ Ubuntu26.04/GnuTLS:
 Ubuntu26.04/OpenSSL:
   stage: test-rest
   image: $CI_REGISTRY/$BUILD_IMAGES_PROJECT:$UBUNTU18_BUILD
+  before_script:
+# For reasons that are unclear, GitLab disables IPv6 in CI runners, and this will
+# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
+  - sysctl -w net.ipv6.conf.all.disable_ipv6=0
   script:
   - ./autogen.sh
   - ./configure --without-gnutls --with-openssl --with-java --without-openssl-version-check --disable-dsa-tests --enable-ppp-tests CFLAGS=-g
   - make -j4
-# For reasons that are unclear, but probably also unimportant, IPv6 is disabled by default on this CI
-# image (verified in https://gitlab.com/openconnect/openconnect/-/jobs/1135199323#L335), and this will
-# cause PPP tests using IPv6 to fail. So we must explicitly enable IPv6:
-  - sysctl net.ipv6.conf.all.disable_ipv6=0
 # we don't want pppd to invoke any actual connection scripts
   - mv /etc/ppp /etc/ppp.DISABLED
 # auth-nonascii: UTF-8 support is not available in distro's ocserv package
