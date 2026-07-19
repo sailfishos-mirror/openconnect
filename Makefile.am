@@ -268,7 +268,9 @@ tag: uncommitted-check
 	@echo '/API version [0-9]\+\.[0-9]\+:$$/s/:/ (v$(VERSION); $(shell date +%Y-%m-%d)):/' | \
 		sed -f - -i $(srcdir)/openconnect.h
 	@sed -Enf $(srcdir)/gensymbols.sed $(srcdir)/openconnect.h | \
-	  sed -Enf- $(srcdir)/libopenconnect.map.in > $(srcdir)/libopenconnect5.symbols
+	  sed -Enf- $(srcdir)/libopenconnect.map.in | \
+	  { IFS= read -r soname; printf '%s\n' "$$soname"; LC_ALL=C sort; } \
+	  > $(srcdir)/libopenconnect5.symbols
 # stupid syntax highlighting '
 	@cd $(srcdir) && git commit -s -m "Tag version $(VERSION)" configure.ac version.sh www/download.xml www/changelog.xml openconnect.h libopenconnect5.symbols
 	@git tag v$(VERSION)

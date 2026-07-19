@@ -33,7 +33,8 @@ TMPSYMBOLS=symbols.$$.tmp
 trap "rm -f ${TMPSYMBOLS}" EXIT
 
 ( sed -Enf ${SEDFILE} ${OPENCONNECT_H} | \
-      sed -Enf- ${MAPFILE} ) > $TMPSYMBOLS
+      sed -Enf- ${MAPFILE} | \
+      { IFS= read -r soname; printf '%s\n' "$soname"; LC_ALL=C sort; } ) > $TMPSYMBOLS
 
 SYMSBAD=no
 

@@ -1,5 +1,9 @@
 #
-# Usage: sed -Enf gensymbols.sed openconnect.h | sed -nf- libopenconnect.map.in
+# Usage: sed -Enf gensymbols.sed openconnect.h | sed -Enf- libopenconnect.map.in | \
+#          { IFS= read -r soname; printf '%s\n' "$soname"; LC_ALL=C sort; }
+#
+# The first (SONAME) line is kept at the top, the rest is sorted
+# as dpkg-gensymbols does.
 #
 # This sed script is used to process openconnect.h and emit another
 # sed script, which is used to process libopenconnect.map.in.
@@ -54,7 +58,12 @@ s/^ \* API version (5[._][0-9.]+) \(v([0-9.]+); 20.*/\
 # of sed script we're generating, tell it to swap hold and pattern
 # spare one last time, prepend the header for the .symbol file,
 # then print it.
+#
+# Private symbols are annotated with the version in the map file,
+# so that they can be added to the symbols file as dpkg-gensymbols does.
 ${s/.*//;a\
 1{x;s\/\(.*\)\/libopenconnect.so.5 libopenconnect5 #MINVER#\\1\/p\
-}
+}\
+/^OPENCONNECT_PRIVATE/,/^}/s|^\\t(openconnect_[a-z0-9_]+); /[*] ([0-9.]+) [*]/$| \\1@OPENCONNECT_PRIVATE \\2|p\
+s|^OPENCONNECT_PRIVATE [{] /[*] ([0-9.]+) [*]/$| OPENCONNECT_PRIVATE@OPENCONNECT_PRIVATE \\1|p
 p;}
